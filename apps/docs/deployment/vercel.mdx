@@ -141,6 +141,18 @@ Production Vercel builds apply application migrations automatically. Preview bui
 
 Changing backends does not migrate existing sessions. Application migrations register existing conversations as PostgreSQL-backed, and Vercel builds reject a mismatched database. Keep the old deployment/database intact; use an isolated fresh database for previews and complete a verified migration before production cutover. Hosted conversation erasure remains unavailable.
 
+### Isolated preview databases
+
+Connect a dedicated, empty Neon resource to **Preview only**, using the custom environment variable prefix `CHATJS_PREVIEW`. In the connection settings, enable **Require Active Resource Before Deploy** and **Create Database Branch For Deployment → Preview**. Keep production data out of this resource.
+
+Set `CHATJS_PREVIEW_PARENT_HOST` in the Preview environment to the dedicated resource's direct parent hostname (for example, `ep-parent.eu-west-2.aws.neon.tech`). This lets the build reject the parent connection if automatic branching is unavailable. The integration supplies `CHATJS_PREVIEW_NEON_PROJECT_ID`, `CHATJS_PREVIEW_DATABASE_URL`, and `CHATJS_PREVIEW_DATABASE_URL_UNPOOLED` for each deployment.
+
+On Vercel previews with this integration configured, ChatJS uses the branch's pooled connection for application traffic and its direct connection for migrations. Builds automatically migrate the isolated application database before compiling EVE. Builds of the same branch serialize migrations through a PostgreSQL advisory lock. Production and local runs continue using their regular database variables. Previews without this integration retain the manual migration workflow.
+
+Generate independent Preview values for `AUTH_SECRET` and `EVE_GATEWAY_SECRET`. Leave `EVE_INTERNAL_ORIGIN` and `WORKFLOW_POSTGRES_URL` unset: the origin follows the deployment, and Vercel manages workflows. Database branches isolate application records; verify chat continuation across redeployments when changing workflow code.
+
+Neon removes an integrated preview branch after its last associated Vercel deployment is deleted. Configure Vercel deployment retention and remove closed-PR deployments when immediate cleanup is needed. Closing a PR alone does not guarantee branch deletion, and Vercel retention exceptions can keep deployments alive. See [Neon's cleanup guide](https://neon.com/docs/guides/vercel-branch-cleanup).
+
 ### Preview origins and OAuth
 
 Use a stable branch hostname for preview sign-in. Without an explicit `APP_URL`, ChatJS uses `VERCEL_BRANCH_URL` when `VERCEL_ENV=preview`, then falls back to `VERCEL_URL`. `APP_URL` takes precedence in every environment. Remove an inherited production or localhost value from preview settings.

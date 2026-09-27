@@ -1,6 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 
 import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
+import { resolvePreviewDatabaseEnvironment } from "./db/preview-environment";
 import { clientEnvSchema, serverEnvSchema } from "./env-schema";
 import { resolveEveEnvironment } from "./eve/environment";
 
@@ -8,7 +9,10 @@ export const env = createEnv({
   client: clientEnvSchema,
   experimental__runtimeEnv: {
     ...(typeof window === "undefined"
-      ? resolveEveEnvironment(process.env)
+      ? {
+          ...resolvePreviewDatabaseEnvironment(process.env),
+          ...resolveEveEnvironment(process.env),
+        }
       : {}),
     NEXT_PUBLIC_REACT_QUERY_DEVTOOLS:
       process.env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS,
