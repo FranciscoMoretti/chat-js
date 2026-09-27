@@ -9,6 +9,23 @@ export const resolveWorkflowDatabaseUrl = (source: Environment) =>
       source.DATABASE_MIGRATION_URL ||
       source.DATABASE_URL;
 
+/** Strip app/test URL paths only after checking the scheme and credentials.
+ * Preserve invalid input so runtime and CLI schema validation can reject it. */
+const applicationOrigin = (value: string | undefined) => {
+  if (!value || !URL.canParse(value)) {
+    return value;
+  }
+  const url = new URL(value);
+  if (
+    (url.protocol !== "http:" && url.protocol !== "https:") ||
+    url.username ||
+    url.password
+  ) {
+    return value;
+  }
+  return url.origin;
+};
+
 /** Only the server evaluates these defaults; no secret is a NEXT_PUBLIC value. */
 export const resolveEveEnvironment = (source: Environment) => ({
   EVE_GATEWAY_SECRET: source.EVE_GATEWAY_SECRET,
@@ -16,8 +33,7 @@ export const resolveEveEnvironment = (source: Environment) => ({
     source.EVE_INTERNAL_ORIGIN ||
     (source.VERCEL_URL
       ? `https://${source.VERCEL_URL}`
-      : source.APP_URL ||
-        source.PLAYWRIGHT_TEST_BASE_URL ||
+      : applicationOrigin(source.APP_URL || source.PLAYWRIGHT_TEST_BASE_URL) ||
         `http://localhost:${source.PORT || "3000"}`),
   WORKFLOW_POSTGRES_URL: resolveWorkflowDatabaseUrl(source),
 });
