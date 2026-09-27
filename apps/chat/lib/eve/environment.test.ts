@@ -132,14 +132,14 @@ describe("EVE environment defaults", () => {
     expect(schema.safeParse(resolveEveEnvironment({})).success).toBe(false);
   });
 
-  it("uses the same direct database for app resolution and provider initialization", () => {
+  it("uses runtime credentials for both app resolution and provider initialization", () => {
     const source = {
       ...base,
       DATABASE_MIGRATION_URL: "postgres://direct.example/chat",
     };
     const worker: Record<string, string | undefined> = { ...source };
     configureWorkflowEnvironment(worker);
-    expect(worker.WORKFLOW_POSTGRES_URL).toBe(source.DATABASE_MIGRATION_URL);
+    expect(worker.WORKFLOW_POSTGRES_URL).toBe(source.DATABASE_URL);
     expect(worker.WORKFLOW_POSTGRES_URL).toBe(
       resolveEveEnvironment(source).WORKFLOW_POSTGRES_URL
     );
@@ -149,6 +149,26 @@ describe("EVE environment defaults", () => {
     expect(worker.WORKFLOW_POSTGRES_URL).toBe(
       "postgres://separate.example/workflows"
     );
+  });
+
+  it("never borrows migration credentials, even when the runtime URL is missing or pooled", () => {
+    for (const DATABASE_URL of [
+      undefined,
+      "",
+      "postgres://runtime@ep-test-pooler.region.aws.neon.tech/chat",
+    ]) {
+      const source = {
+        ...base,
+        DATABASE_MIGRATION_URL: "postgres://admin:secret@direct.example/chat",
+        DATABASE_URL,
+      };
+      const worker: Record<string, string | undefined> = { ...source };
+      configureWorkflowEnvironment(worker);
+      expect(worker.WORKFLOW_POSTGRES_URL).toBe(DATABASE_URL || undefined);
+      expect(schema.safeParse(resolveEveEnvironment(source)).success).toBe(
+        false
+      );
+    }
   });
 
   it.each([
@@ -176,8 +196,8 @@ describe("EVE environment defaults", () => {
       schema.safeParse(
         resolveEveEnvironment({
           ...base,
-          DATABASE_MIGRATION_URL: "postgres://direct.example/chat",
           DATABASE_URL,
+          WORKFLOW_POSTGRES_URL: "postgres://runtime@direct.example/chat",
         })
       ).success
     ).toBe(true);

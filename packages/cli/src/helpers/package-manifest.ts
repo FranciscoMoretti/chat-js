@@ -60,8 +60,6 @@ const pinBetterAuthVersions = (
 };
 
 const normalizeChatAppScripts = (scripts: ScriptMap): void => {
-  const defaultBranchName = `\${1:-dev-local}`;
-
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
   scripts["dev:inspect"] = "tsx scripts/check-env.ts && next dev --inspect";
@@ -74,14 +72,15 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";
   scripts["db:migrate"] = "tsx lib/db/migrate.ts";
-  scripts["dev:neon"] =
-    "bash scripts/with-db.sh tsx scripts/check-env.ts && bash scripts/with-db.sh next dev";
-  scripts["db:migrate:neon"] = "bash scripts/with-db.sh tsx lib/db/migrate.ts";
-  scripts["db:branch:start"] =
-    `bash -c 'N=${defaultBranchName}; bash scripts/db-branch-create.sh "$N" && bash scripts/db-branch-use.sh "$N"' --`;
-  scripts["db:branch:stop"] =
-    `bash -c 'N=${defaultBranchName}; bash scripts/db-branch-use.sh main && bash scripts/db-branch-delete.sh "$N"' --`;
-  scripts["db:branch:list"] = "npx neonctl branches list";
+  for (const name of Object.keys(scripts)) {
+    if (
+      name.startsWith("db:branch:") ||
+      name === "dev:neon" ||
+      name === "db:migrate:neon"
+    ) {
+      Reflect.deleteProperty(scripts, name);
+    }
+  }
   scripts.test =
     "export PLAYWRIGHT=True && playwright test --workers=4 && vitest run";
   scripts["test:e2e"] = "export PLAYWRIGHT=True && playwright test --workers=4";

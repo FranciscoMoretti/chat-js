@@ -103,11 +103,11 @@ export const getEveRuntimeEnvOptions = (
             },
             {
               message:
-                "EVE needs a direct or session PostgreSQL connection; set DATABASE_MIGRATION_URL or WORKFLOW_POSTGRES_URL instead of a transaction pooler",
+                "EVE needs a direct or session PostgreSQL connection; set WORKFLOW_POSTGRES_URL to a runtime connection instead of a transaction pooler",
             }
           )
           .describe(
-            "Local/self-hosted workflow database override; defaults to DATABASE_MIGRATION_URL, then DATABASE_URL. Unused on Vercel"
+            "Local/self-hosted workflow database override; defaults to DATABASE_URL. Unused on Vercel"
           ),
 });
 
