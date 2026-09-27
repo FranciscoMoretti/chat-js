@@ -43,7 +43,7 @@ jobs:
         with:
           bun-version: 1.3.1
       - name: Test maintainer preview configuration
-        run: bun test scripts/vercel-preview-environment.test.ts
+        run: bun test scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts
       - name: Test release recovery
         run: bun test scripts/release-fallback.test.ts
       - uses: actions/cache@v4

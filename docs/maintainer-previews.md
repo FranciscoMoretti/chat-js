@@ -23,14 +23,16 @@ The project root is `apps/chat`. Its `vercel.json` intentionally leaves the buil
 
 ## Build and runtime behavior
 
-The root build script validates the expected Neon project, matching pooled and direct connections, and that the selected host differs from the parent. It fails closed on missing or invalid Preview configuration. It uses a direct PostgreSQL session advisory lock to serialize migrations of the same branch, invokes the application's existing `db:migrate`, and then runs its normal build. Production and non-preview builds run the normal build without this setup.
+The root build script validates the expected Neon project, matching pooled and direct connections, and that the selected host differs from the parent. It fails closed on missing or invalid Preview configuration. It normalizes hostname case and trailing dots, validates the parent as a hostname, and requires matching credentials and effective ports. It uses a direct PostgreSQL session advisory lock to serialize migrations of the same branch, invokes the application's existing `db:migrate`, and then runs its normal build. Production and non-preview builds run the normal build without this setup.
+
+Lock acquisition waits for the preceding migration; Vercel’s overall build deadline bounds that wait. Failures identify the phase (connection, lock acquisition, migration, cleanup, or build) and a safe error code when available. Provider messages and connection URLs are omitted.
 
 Runtime uses the integration-provided `DATABASE_URL` directly. The script does not rewrite application code, generate credential files, or rely on build-time environment changes reaching deployed functions. `DATABASE_MIGRATION_URL` is selected only for the build subprocesses. All Neon-specific logic lives in root `scripts/`, which the app template does not copy.
 
 Run the maintainer validation tests with:
 
 ```sh
-bun test scripts/vercel-preview-environment.test.ts
+bun test scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts
 ```
 
 After changing this setup, verify a real preview conversation, reload its history, and continue it after redeploying the same branch. Confirm the parent remains empty and the deployment reuses its preview branch.

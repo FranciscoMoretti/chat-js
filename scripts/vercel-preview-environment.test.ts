@@ -64,3 +64,76 @@ describe("isolated preview databases", () => {
     }
   );
 });
+
+it.each([
+  "EP-CHILD.EU.NEON.TECH",
+  "ep-child.eu.neon.tech.",
+  "EP-CHILD-POOLER.EU.NEON.TECH.",
+])("rejects the parent regardless of hostname spelling: %s", (parent) => {
+  expect(() =>
+    resolveMaintainerPreviewDatabase({
+      ...preview,
+      CHATJS_PREVIEW_PARENT_HOST: parent,
+    })
+  ).toThrow("not its parent");
+});
+
+it.each([
+  "https://ep-parent.eu.neon.tech",
+  "ep-parent.eu.neon.tech/path",
+  "ep-parent.eu.neon.tech:5432",
+  "user@ep-parent.eu.neon.tech",
+  "ep-parent.eu.neon.tech?x=1",
+  "not a hostname",
+])("rejects malformed parent configuration: %s", (parent) => {
+  expect(() =>
+    resolveMaintainerPreviewDatabase({
+      ...preview,
+      CHATJS_PREVIEW_PARENT_HOST: parent,
+    })
+  ).toThrow("parent must be a Neon hostname");
+});
+
+it("normalizes connection hostnames too when rejecting the parent", () => {
+  expect(() =>
+    resolveMaintainerPreviewDatabase({
+      ...preview,
+      CHATJS_PREVIEW_PARENT_HOST: "ep-child.eu.neon.tech",
+      DATABASE_URL: preview.DATABASE_URL.replace(
+        "ep-child-pooler.eu.neon.tech",
+        "EP-CHILD-POOLER.EU.NEON.TECH."
+      ),
+      DATABASE_URL_UNPOOLED: preview.DATABASE_URL_UNPOOLED.replace(
+        "ep-child.eu.neon.tech",
+        "EP-CHILD.EU.NEON.TECH."
+      ),
+    })
+  ).toThrow("not its parent");
+});
+
+it.each([
+  preview.DATABASE_URL_UNPOOLED.replace(":secret@", ":different@"),
+  preview.DATABASE_URL_UNPOOLED.replace("/neondb", ":6543/neondb"),
+  preview.DATABASE_URL_UNPOOLED.replace("preview:", "someone-else:"),
+  preview.DATABASE_URL_UNPOOLED.replace(":secret@", ":%invalid@"),
+])("rejects mismatched or invalid connection authorities", (direct) => {
+  expect(() =>
+    resolveMaintainerPreviewDatabase({
+      ...preview,
+      DATABASE_URL_UNPOOLED: direct,
+    })
+  ).toThrow("Preview database");
+});
+
+it("accepts equivalent default ports and percent-encoded credentials", () => {
+  const direct = preview.DATABASE_URL_UNPOOLED.replace(
+    "preview:secret",
+    "%70review:%73ecret"
+  ).replace("/neondb", ":5432/neondb");
+  expect(
+    resolveMaintainerPreviewDatabase({
+      ...preview,
+      DATABASE_URL_UNPOOLED: direct,
+    })?.DATABASE_MIGRATION_URL
+  ).toBe(direct);
+});
