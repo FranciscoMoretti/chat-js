@@ -53,7 +53,7 @@ For [Supabase transaction pooling](https://supabase.com/docs/guides/database/pos
 
 ## EVE workflow database
 
-ChatJS uses `DATABASE_URL` for application records everywhere. Vercel deployments use managed Workflow automatically. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` when set, otherwise `DATABASE_URL`. `DATABASE_MIGRATION_URL` is never used for workflow runtime or setup. Application and workflow schemas can share one database. EVE requires a direct or session connection for its queue and `LISTEN` sessions; validation rejects known transaction-pooler endpoints. If the app uses transaction pooling, supply a direct/session connection with runtime credentials through `WORKFLOW_POSTGRES_URL`. Application pooling settings do not configure EVE's connection.
+ChatJS uses `DATABASE_URL` for application records everywhere. Vercel deployments use managed Workflow automatically. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` when set, otherwise `DATABASE_URL`. `DATABASE_MIGRATION_URL` is never selected automatically for workflow runtime or setup. Application and workflow schemas can share one database. EVE requires a direct or session connection for its queue and `LISTEN` sessions; validation rejects known transaction-pooler endpoints. If the app uses transaction pooling, supply a direct/session connection with runtime credentials through `WORKFLOW_POSTGRES_URL`. Application pooling settings do not configure EVE's connection.
 
 ### Local workflow database
 
@@ -82,6 +82,27 @@ On Vercel, provision only the application database. `eve:setup` and `eve:check` 
 For a self-hosted, continuously running Node service, configure a direct or session connection through `WORKFLOW_POSTGRES_URL` or `DATABASE_URL`. Set `WORKFLOW_POSTGRES_URL` to use a separate workflow database. Run the same `bun run setup` command with permission to install the workflow provider schema.
 
 Outside Vercel, setup uses the same resolved workflow connection as the runtime. For loopback hosts, it also installs ChatJS's local lifecycle fences. Hosted setup initializes the provider schema but does not certify hosted deletion or lifecycle coverage.
+
+### Separate workflow setup credentials
+
+If your runtime role cannot create schemas, run workflow setup with a command-scoped connection that has schema-creation permissions. Keep the runtime connection in `.env.local` and pass the setup connection only to this process:
+
+```bash
+# Application migrations use DATABASE_MIGRATION_URL when configured.
+npm run db:migrate
+
+# Replace the example with setup credentials for the same workflow database.
+WORKFLOW_POSTGRES_URL='postgres://setup_role:password@direct-host/workflows' npm run eve:setup
+
+# This separate process uses the runtime credentials from your environment.
+npm run eve:check
+```
+
+Run these commands from the app directory. The inline assignment overrides `.env.local` for the setup process and its provider subprocess only. It does not export the value into your shell, update the file, or change later worker processes. Supply real setup credentials through your deployment secret tooling rather than committing them. If workflows use a separate database, the setup connection must target that database, not the application's migration database.
+
+Before starting the app, grant the runtime role the required access to the workflow tables, sequences, functions, and Graphile Worker schema created by setup. Setup does not grant access to another role automatically. The installed PostgreSQL provider calls Graphile migration checks during worker startup, so a restricted role must also satisfy those checks against the initialized schema. Apply provider upgrades with setup credentials first and verify an actual worker start and workflow execution using the runtime role. A successful `eve:check` only verifies connectivity and required table presence.
+
+The build-time `check-workflow-backend.ts` command is a separate application-database safeguard. It reads and registers `EveWorkflowBackend` in the application database using its migration connection. It must not use a separate workflow database, including on managed Vercel Workflow.
 
 ### Setup commands
 
