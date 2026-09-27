@@ -3,7 +3,10 @@ import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 import { databaseEnvOptions } from "./db/connection";
-import { isWorkflowTransactionPooler } from "./eve/environment";
+import {
+  isWorkflowTransactionPooler,
+  resolveEveEnvironment,
+} from "./eve/environment";
 import { resolveWorkflowWorld } from "./eve/world-config";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
@@ -20,6 +23,8 @@ const httpUrl = z.url().refine(
   },
   { message: "Must use an http:// or https:// URL" }
 );
+const ipv4Loopback = /^127\.\d+\.\d+\.\d+$/u;
+
 const postgresUrl = z.url().refine(
   (value) => {
     if (!URL.canParse(value)) {
@@ -41,6 +46,24 @@ export const getEveRuntimeEnvOptions = (
       "Required independent EVE gateway secret; generate with openssl rand -base64 32"
     ),
   EVE_INTERNAL_ORIGIN: httpUrl
+    .refine(
+      (value) => {
+        if (!URL.canParse(value)) {
+          return false;
+        }
+        const { protocol, hostname } = new URL(value);
+        return (
+          protocol === "https:" ||
+          (protocol === "http:" &&
+            (hostname === "localhost" ||
+              hostname === "[::1]" ||
+              ipv4Loopback.test(hostname)))
+        );
+      },
+      {
+        message: "EVE_INTERNAL_ORIGIN must use HTTPS, or HTTP on loopback only",
+      }
+    )
     .refine(
       (value) => {
         if (!URL.canParse(value)) {
@@ -171,8 +194,10 @@ export const serverEnvSchema = {
     (value) =>
       playwrightDefault(
         value,
-        process.env.PLAYWRIGHT_TEST_BASE_URL ??
-          `http://localhost:${process.env.PORT ?? "3000"}`
+        resolveEveEnvironment({
+          PLAYWRIGHT_TEST_BASE_URL: process.env.PLAYWRIGHT_TEST_BASE_URL,
+          PORT: process.env.PORT,
+        }).EVE_INTERNAL_ORIGIN
       ),
     eveRuntimeEnvOptions.EVE_INTERNAL_ORIGIN
   ),
