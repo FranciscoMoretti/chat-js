@@ -19,8 +19,14 @@ describe("EVE setup selection", () => {
     );
   });
 
-  it.each([undefined, "", "postgres://%", "https://example.com"])(
-    "rejects an absent or invalid workflow URL after connection resolution: %s",
+  it.each([undefined, ""])("explains missing database fallbacks: %s", (url) => {
+    expect(() => resolveEveSetup(world, url)).toThrow(
+      "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL URL, or provide DATABASE_MIGRATION_URL or DATABASE_URL (checked in that order as fallbacks)."
+    );
+  });
+
+  it.each(["postgres://%", "https://example.com"])(
+    "rejects an invalid workflow URL after connection resolution: %s",
     (url) => {
       expect(() => resolveEveSetup(world, url)).toThrow();
     }
@@ -45,8 +51,10 @@ describe("EVE setup selection", () => {
   );
 });
 
-it("rejects transaction-pooled connections during setup too", () => {
-  expect(() =>
-    resolveEveSetup(world, "postgres://db/workflows?pool_mode=transaction")
-  ).toThrow("direct or session");
+it.each([
+  "postgres://db/workflows?pool_mode=transaction",
+  "postgresql://postgres:secret@db.project.supabase.co:6543/postgres",
+])("rejects transaction-pooled connections during setup too: %s", (url) => {
+  expect(() => resolveEveSetup(world, url)).toThrow("direct or session");
+  expect(() => resolveEveSetup(world, url)).not.toThrow("secret");
 });

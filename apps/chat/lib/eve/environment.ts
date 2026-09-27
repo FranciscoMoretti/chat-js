@@ -40,6 +40,9 @@ export const isWorkflowTransactionPooler = (value: string) => {
     url.searchParams.get("pool_mode") === "transaction" ||
     (url.hostname.endsWith(".neon.tech") &&
       url.hostname.includes("-pooler.")) ||
-    (url.hostname.endsWith(".pooler.supabase.com") && url.port === "6543")
+    ((url.hostname.endsWith(".pooler.supabase.com") ||
+      (url.hostname.startsWith("db.") &&
+        url.hostname.endsWith(".supabase.co"))) &&
+      url.port === "6543")
   );
 };
