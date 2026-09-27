@@ -8,7 +8,9 @@ const appDirectory = fileURLToPath(new URL("../apps/chat/", import.meta.url));
 const require = createRequire(
   new URL("../apps/chat/package.json", import.meta.url)
 );
-const postgres: typeof postgresType = require("postgres");
+const { default: postgres }: { default: typeof postgresType } = await import(
+  require.resolve("postgres")
+);
 
 const run = async (args: string[], env: NodeJS.ProcessEnv) => {
   const child = Bun.spawn(["bun", ...args], {
