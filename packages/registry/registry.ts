@@ -120,6 +120,7 @@ export const codeExecutionItem = {
   dependencies: [
     "ai",
     "zod",
+    `@vercel/oidc@${registryPackage.devDependencies["@vercel/oidc"]}`,
     `@vercel/sandbox@${registryPackage.devDependencies["@vercel/sandbox"]}`,
   ],
   description: "Execute Python and JavaScript with Vercel Sandbox",

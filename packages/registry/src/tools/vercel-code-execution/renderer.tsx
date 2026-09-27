@@ -102,4 +102,5 @@ export const CodeExecution = defineToolRenderer({
   inputSchema: codeExecutionInput,
   outputSchema: codeExecutionResult,
   render: CodeExecutionView,
+  streamingInputSchema: codeExecutionInput.partial(),
 });

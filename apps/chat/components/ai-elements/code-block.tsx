@@ -1,14 +1,7 @@
 "use client";
 
 import { CheckIcon, CopyIcon } from "lucide-react";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { codeToHtml } from "shiki";
 import type { BundledLanguage, ShikiTransformer } from "shiki";
@@ -84,26 +77,25 @@ export const CodeBlock = ({
 }: CodeBlockProps) => {
   const [html, setHtml] = useState<string>("");
   const [darkHtml, setDarkHtml] = useState<string>("");
-  const mounted = useRef(false);
 
   useEffect(() => {
+    let cancelled = false;
     const updateHighlightedCode = async () => {
       const [light, dark] = await highlightCode(
         code,
         language,
         showLineNumbers
       );
-      if (!mounted.current) {
+      if (!cancelled) {
         setHtml(light);
         setDarkHtml(dark);
-        mounted.current = true;
       }
     };
 
     void updateHighlightedCode();
 
     return () => {
-      mounted.current = false;
+      cancelled = true;
     };
   }, [code, language, showLineNumbers]);
 
