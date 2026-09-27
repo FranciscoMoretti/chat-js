@@ -73,6 +73,43 @@ describe("EVE environment defaults", () => {
     ).toBe("http://localhost:3110");
   });
 
+  it.each(["APP_URL", "PLAYWRIGHT_TEST_BASE_URL"])(
+    "derives a bare origin from %s without accepting unsafe configuration",
+    (key) => {
+      const resolved = resolveEveEnvironment({
+        ...base,
+        [key]: "https://example.com:8443/chat?mode=test#section",
+      });
+      expect(resolved.EVE_INTERNAL_ORIGIN).toBe("https://example.com:8443");
+      expect(schema.safeParse(resolved).success).toBe(true);
+
+      for (const value of [
+        "not-a-url",
+        "https://user:password@example.com/chat",
+        "https://user@example.com/chat",
+        "blob:https://example.com/id",
+        "ftp://example.com/chat",
+        "http://example.com/chat",
+      ]) {
+        expect(
+          schema.safeParse(resolveEveEnvironment({ ...base, [key]: value }))
+            .success
+        ).toBe(false);
+      }
+    }
+  );
+
+  it("does not normalize an explicit origin override", () => {
+    const EVE_INTERNAL_ORIGIN = "https://example.com/chat?mode=test#section";
+    const resolved = resolveEveEnvironment({
+      ...base,
+      APP_URL: "https://valid.example/chat",
+      EVE_INTERNAL_ORIGIN,
+    });
+    expect(resolved.EVE_INTERNAL_ORIGIN).toBe(EVE_INTERNAL_ORIGIN);
+    expect(schema.safeParse(resolved).success).toBe(false);
+  });
+
   it("preserves explicit overrides and treats empty env-example values as absent", () => {
     const overrides = {
       EVE_GATEWAY_SECRET: "x".repeat(32),
@@ -182,4 +219,14 @@ it("does not expose server credentials to client components", async () => {
   const { env } = await import("../env");
   expect(() => env.EVE_GATEWAY_SECRET).toThrow();
   expect(() => env.WORKFLOW_POSTGRES_URL).toThrow();
+});
+
+it("normalizes the schema's Playwright fallback URL", async () => {
+  vi.stubEnv("PLAYWRIGHT", "True");
+  vi.stubEnv("PLAYWRIGHT_TEST_BASE_URL", "http://[::1]:3110/chat?test=1#chat");
+  vi.resetModules();
+  const { serverEnvSchema } = await import("../env-schema");
+  expect(serverEnvSchema.EVE_INTERNAL_ORIGIN.parse(undefined)).toBe(
+    "http://[::1]:3110"
+  );
 });
