@@ -19,21 +19,18 @@ const run = async () => {
   ) {
     throw new Error("Usage: eve-setup.ts [--check | --validate]");
   }
-  const databaseUrl = resolveWorkflowDatabaseUrl(process.env);
-  const { managed, local } = resolveEveSetup(
+  const setup = resolveEveSetup(
     resolveWorkflowWorld(),
-    databaseUrl
+    resolveWorkflowDatabaseUrl(process.env)
   );
-  if (managed) {
+  if (setup.managed) {
     console.log(
       "Workflow backend: Vercel (managed). No PostgreSQL workflow setup required."
     );
     return;
   }
+  const { databaseUrl, local } = setup;
   console.log("Workflow backend: PostgreSQL (local/self-hosted).");
-  if (!databaseUrl) {
-    throw new Error("Set WORKFLOW_POSTGRES_URL.");
-  }
   if (mode === "--validate") {
     return;
   }
