@@ -128,6 +128,7 @@ async function fixture() {
             id: revisionId,
             parentRevisionId: null,
             title: "Copied",
+            fileIds: [],
             content: `Image: /api/files/${targetKey}`,
             kind: "text",
             createdAt: new Date(0).toISOString(),

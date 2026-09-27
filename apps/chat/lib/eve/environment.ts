@@ -1,30 +1,17 @@
-import { hkdf } from "@noble/hashes/hkdf.js";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
+import { resolveWorkflowWorld } from "./world-config";
 
 type Environment = Record<string, string | undefined>;
 
 export const resolveWorkflowDatabaseUrl = (source: Environment) =>
-  source.WORKFLOW_POSTGRES_URL ||
-  source.DATABASE_MIGRATION_URL ||
-  source.DATABASE_URL;
+  resolveWorkflowWorld(source) === "vercel"
+    ? undefined
+    : source.WORKFLOW_POSTGRES_URL ||
+      source.DATABASE_MIGRATION_URL ||
+      source.DATABASE_URL;
 
-/** Browser-compatible because env.ts is also imported by client components.
- * Only the server evaluates these defaults; no secret is a NEXT_PUBLIC value. */
+/** Only the server evaluates these defaults; no secret is a NEXT_PUBLIC value. */
 export const resolveEveEnvironment = (source: Environment) => ({
-  EVE_GATEWAY_SECRET:
-    source.EVE_GATEWAY_SECRET ||
-    (source.AUTH_SECRET
-      ? bytesToHex(
-          hkdf(
-            sha256,
-            utf8ToBytes(source.AUTH_SECRET),
-            utf8ToBytes("chatjs"),
-            utf8ToBytes("eve-gateway/v1"),
-            32
-          )
-        )
-      : undefined),
+  EVE_GATEWAY_SECRET: source.EVE_GATEWAY_SECRET,
   EVE_INTERNAL_ORIGIN:
     source.EVE_INTERNAL_ORIGIN ||
     (source.VERCEL_URL

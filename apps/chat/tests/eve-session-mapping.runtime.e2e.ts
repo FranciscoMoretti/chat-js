@@ -19,7 +19,7 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
     ...actual,
     eveRequest: async (...args: Parameters<typeof actual.eveRequest>) => {
       const response = await actual.eveRequest(...args);
-      if (args[1] !== "/eve/v1/session") {
+      if (args[1] !== "/eve/chat/v1/session") {
         return response;
       }
       probe.dispatches += 1;
@@ -102,11 +102,11 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       };
       const foreign = await actual.eveRequest(
         "foreign",
-        "/eve/v1/session",
+        "/eve/chat/v1/session",
         init
       );
       expect(foreign.status).toBe(401);
-      const forged = await actual.eveRequest(owner, "/eve/v1/session", {
+      const forged = await actual.eveRequest(owner, "/eve/chat/v1/session", {
         ...init,
         body: JSON.stringify({
           forwardedPrincipal: { current: { principalId: "foreign" } },
@@ -119,7 +119,7 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
         [0, 1].map(() =>
           actual.eveRequest(
             owner,
-            "/eve/v1/session",
+            "/eve/chat/v1/session",
             init,
             "google/gemini-2.5-flash-lite"
           )
@@ -132,14 +132,14 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       expect(receipts[0].sessionId).toBe(receipts[1].sessionId);
       const ownReceipt = await actual.eveRequest(
         owner,
-        `/eve/v1/operation/${reservationId}`
+        `/eve/chat/v1/operation/${reservationId}`
       );
       expect(await ownReceipt.json()).toMatchObject({
         sessionId: receipts[0].sessionId,
       });
       const foreignReceipt = await actual.eveRequest(
         "foreign",
-        `/eve/v1/operation/${reservationId}`
+        `/eve/chat/v1/operation/${reservationId}`
       );
       expect(foreignReceipt.status).toBe(404);
       return receipts[0].sessionId;

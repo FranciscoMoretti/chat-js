@@ -14,6 +14,7 @@ const pendingMessage = z.object({
   modelId: z.string().optional(),
   operationId: z.uuid().optional(),
   rejection: z.string().optional(),
+  retryable: z.boolean().optional(),
   selectedTool: frontendToolsSchema.optional(),
 });
 
@@ -106,8 +107,29 @@ export const eveMessageDelivery = {
     storage: DeliveryStorage,
     sessionId: string,
     pending: PendingEveMessage,
-    rejection: string
-  ) => write(storage, sessionId, { ...pending, rejection }),
+    rejection: string,
+    retryable = false
+  ) => write(storage, sessionId, { ...pending, rejection, retryable }),
+  retry: (
+    storage: DeliveryStorage,
+    sessionId: string,
+    pending: PendingEveMessage
+  ): ActivePendingEveMessage | undefined => {
+    const current = read(storage, sessionId);
+    if (
+      !pending.operationId ||
+      !current?.retryable ||
+      current.operationId !== pending.operationId
+    ) {
+      return;
+    }
+    return write(storage, sessionId, {
+      ...current,
+      operationId: pending.operationId,
+      rejection: undefined,
+      retryable: undefined,
+    });
+  },
 };
 
 /** The proxy owns this metadata so caller input cannot forge an acknowledgement. */

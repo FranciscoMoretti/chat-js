@@ -20,7 +20,7 @@ import {
 import { env } from "../lib/env";
 import { purgeEveFamilyFiles } from "../lib/eve/purge-files";
 import {
-  createFileStorageKey,
+  createFileId,
   deleteFilesByUrls,
   getFileMetadata,
   uploadFileAtKey,
@@ -33,9 +33,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 
 test("storage purge removes files and recovers a lost deletion acknowledgement and an unwritten reservation", async () => {
   const owner = crypto.randomUUID();
-  const keys = Array.from({ length: 3 }, () =>
-    createFileStorageKey("purge.txt")
-  );
+  const keys = Array.from({ length: 3 }, () => createFileId());
   const urls = keys.map(createFileUrl);
   await db.insert(user).values({
     email: `${owner}@test.invalid`,

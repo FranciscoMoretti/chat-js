@@ -1,25 +1,10 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { MessageSquare, SearchIcon } from "lucide-react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  useDeferredValue,
-  useEffect,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -30,114 +15,103 @@ import {
 import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import { useTRPC } from "@/trpc/react";
 
-const createdGroup = (createdAt: string | Date) => {
-  const date = new Date(createdAt);
-  if (isToday(date)) {
-    return "Today";
-  }
-  if (isYesterday(date)) {
-    return "Yesterday";
-  }
-  if (date > subWeeks(new Date(), 1)) {
-    return "Last 7 days";
-  }
-  if (date > subMonths(new Date(), 1)) {
-    return "Last 30 days";
-  }
-  return "Older";
-};
+import { EveSearchResultsView } from "./eve-search-results-view";
+import { useDebouncedSearch } from "./use-debounced-search";
 
 const SearchResults = ({
   onSelect,
+  onClose,
   ownerId,
 }: {
   onSelect: (id: string) => void;
+  onClose: () => void;
   ownerId: string;
 }) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
-  const search = useDeferredValue(query.trim());
+  const search = useDebouncedSearch(query);
   const history = useInfiniteQuery(
     trpc.eve.list.infiniteQueryOptions(
-      { ownerScope: ownerId, search },
-      { getNextPageParam: (page) => page.nextCursor }
+      { ownerScope: ownerId },
+      {
+        enabled: !query.trim(),
+        getNextPageParam: (page) => page.nextCursor,
+        refetchOnWindowFocus: false,
+        staleTime: 0,
+      }
     )
   );
-  const items = history.data?.pages.flatMap((page) => page.items) ?? [];
+  const results = useInfiniteQuery(
+    trpc.eve.search.infiniteQueryOptions(
+      { ownerScope: ownerId, search },
+      {
+        enabled: Boolean(search) && search === query.trim(),
+        getNextPageParam: (page) => page.nextCursor,
+        refetchOnWindowFocus: false,
+        staleTime: 0,
+        trpc: { abortOnUnmount: true },
+      }
+    )
+  );
+  const isSearch = Boolean(query.trim());
+  const active = isSearch ? results : history;
+  const changingQuery = query.trim() !== search;
+  const waiting =
+    changingQuery ||
+    active.isPending ||
+    (active.isFetching && !active.isFetchingNextPage);
+  const failed = !changingQuery && active.isError;
+  const recentItems =
+    history.data?.pages
+      .flatMap((page) => page.items)
+      .filter((item) => item.state === "bound")
+      .map((item) => ({
+        ...item,
+        conversationId: item.conversationId ?? item.id,
+        excerpt: "",
+      })) ?? [];
+  const matchedItems = results.data?.pages.flatMap((page) => page.items) ?? [];
+  const currentItems = isSearch ? matchedItems : recentItems;
+  const items = waiting || failed ? [] : currentItems;
   const seen = new Set<string>();
   const distinct = items.filter((item) => {
     if (seen.has(item.id)) {
       return false;
     }
     seen.add(item.id);
-    return item.state === "bound";
+    return true;
   });
-  const groups = [
-    "Today",
-    "Yesterday",
-    "Last 7 days",
-    "Last 30 days",
-    "Older",
-  ].map((label) => ({
-    items: distinct.filter((item) => createdGroup(item.createdAt) === label),
-    label,
-  }));
   return (
-    <Command
-      className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
-      shouldFilter={false}
-    >
-      <CommandInput
-        placeholder="Search your chats..."
-        value={query}
-        onValueChange={setQuery}
-        maxLength={255}
-      />
-      <CommandList>
-        {history.isPending && (
-          <p className="text-muted-foreground p-4 text-sm">Loading chats…</p>
-        )}
-        {history.isError && (
-          <div className="p-4 text-sm" role="alert">
-            Could not load chats.{" "}
-            <Button variant="ghost" onClick={() => history.refetch()}>
-              Retry
-            </Button>
-          </div>
-        )}
-        {!history.isPending && !history.isError && (
-          <CommandEmpty>No chats found.</CommandEmpty>
-        )}
-        {groups
-          .filter((group) => group.items.length > 0)
-          .map((group) => (
-            <CommandGroup heading={group.label} key={group.label}>
-              {group.items.map((item) => (
-                <CommandItem
-                  className="flex cursor-pointer items-center gap-2 p-2"
-                  key={item.id}
-                  value={item.id}
-                  onSelect={() => onSelect(item.id)}
-                >
-                  <MessageSquare className="text-muted-foreground h-4 w-4" />
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate font-medium">{item.title}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          ))}
-        {history.hasNextPage && (
-          <Button
-            variant="ghost"
-            disabled={history.isFetching}
-            onClick={() => history.fetchNextPage()}
-          >
-            {history.isFetchingNextPage ? "Loading…" : "Load more chats"}
-          </Button>
-        )}
-      </CommandList>
-    </Command>
+    <EveSearchResultsView
+      onClose={onClose}
+      query={query}
+      onQueryChange={(value) => {
+        if (value.trim() !== query.trim()) {
+          // Cancel immediately, not after the debounce: an old response must
+          // never publish while the user is already typing a different query.
+          void queryClient.cancelQueries({
+            exact: true,
+            queryKey: trpc.eve.search.infiniteQueryKey({
+              ownerScope: ownerId,
+              search,
+            }),
+          });
+        }
+        setQuery(value);
+      }}
+      searching={waiting}
+      pending={waiting && !failed}
+      error={failed}
+      items={distinct}
+      isSearch={isSearch}
+      onSelect={onSelect}
+      onRetry={() => active.refetch()}
+      hasMore={!waiting && !failed && Boolean(active.hasNextPage)}
+      loadingMore={active.isFetchingNextPage}
+      onLoadMore={() => active.fetchNextPage()}
+      disableLoadMore={active.isFetching || changingQuery}
+    />
   );
 };
 
@@ -175,7 +149,10 @@ export const EveSearchChats = ({ ownerId }: { ownerId?: string }) => {
         </span>
       </SidebarMenuButton>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="overflow-hidden p-0" showCloseButton={false}>
+        <DialogContent
+          className="overflow-hidden p-0"
+          showCloseButton={!ownerId}
+        >
           <DialogHeader className="sr-only">
             <DialogTitle>Search chats</DialogTitle>
             <DialogDescription>
@@ -189,7 +166,9 @@ export const EveSearchChats = ({ ownerId }: { ownerId?: string }) => {
           )}
           {open && ownerId && (
             <SearchResults
+              key={ownerId}
               ownerId={ownerId}
+              onClose={() => setOpen(false)}
               onSelect={(id) => {
                 setOpen(false);
                 setOpenMobile(false);

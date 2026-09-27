@@ -77,6 +77,7 @@ test("internal retirement settles usage after access revocation and is retryable
     conversationId: binding.id,
     documentId: crypto.randomUUID(),
     expectedRevisionId: null,
+    fileIds: [],
     kind: "text",
     operationId: crypto.randomUUID(),
     ownerId: owner,

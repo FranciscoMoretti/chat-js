@@ -13,7 +13,7 @@ vi.mock("../db/eve-files", () => ({
   writeEveGeneratedFile: mocks.write,
 }));
 vi.mock("../file-storage", () => ({
-  createFileStorageKey: () => "abcdefghijklmnopqrstuvwx.png",
+  createFileId: () => "abcdefghijklmnopqrstuvwx.png",
   uploadFileAtKey: mocks.upload,
 }));
 vi.mock("./conversation-scope", () => ({

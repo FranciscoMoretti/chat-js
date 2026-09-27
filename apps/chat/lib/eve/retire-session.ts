@@ -9,6 +9,7 @@ import { env } from "../env";
 import { getEveConnectionOptions } from "./connection-options";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
+import { resolveWorkflowWorld } from "./world-config";
 
 /** Retirement and cost settlement precede erasure; this never marks deletion complete. */
 export const retireEveSessionForDeletion = async (
@@ -62,8 +63,13 @@ export const retireEveFamilyForDeletion = async (
 ) => {
   assertEveConfigured();
   const databaseUrl = env.WORKFLOW_POSTGRES_URL;
-  if (!databaseUrl) {
-    throw new Error("EVE Postgres is not configured.");
+  if (
+    resolveWorkflowWorld(env) !== "@workflow/world-postgres" ||
+    !databaseUrl
+  ) {
+    throw new Error(
+      "This deletion operation requires the PostgreSQL workflow backend."
+    );
   }
   const family = await beginEveConversationDeletion(ownerId, conversationId);
   if (!family) {

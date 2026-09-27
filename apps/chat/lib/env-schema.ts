@@ -4,6 +4,7 @@ import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 import { databaseEnvOptions } from "./db/connection";
 import { isWorkflowTransactionPooler } from "./eve/environment";
+import { resolveWorkflowWorld } from "./eve/world-config";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
   process.env
@@ -30,12 +31,14 @@ const postgresUrl = z.url().refine(
   { message: "Must use a postgres:// or postgresql:// URL" }
 );
 
-export const eveRuntimeEnvOptions = {
+export const getEveRuntimeEnvOptions = (
+  environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env
+) => ({
   EVE_GATEWAY_SECRET: z
     .string()
     .min(32)
     .describe(
-      "Optional EVE credential override; otherwise derived from AUTH_SECRET"
+      "Required independent EVE gateway secret; generate with openssl rand -base64 32"
     ),
   EVE_INTERNAL_ORIGIN: httpUrl
     .refine(
@@ -58,26 +61,34 @@ export const eveRuntimeEnvOptions = {
       }
     )
     .describe(
-      "Optional worker origin override; defaults to the current deployment or local app"
+      "Optional application gateway origin serving /eve/chat/v1; defaults to the current deployment or local app"
     ),
-  WORKFLOW_POSTGRES_URL: postgresUrl
-    .refine(
-      (value) => {
-        try {
-          return !isWorkflowTransactionPooler(value);
-        } catch {
-          return false;
-        }
-      },
-      {
-        message:
-          "EVE needs a direct or session PostgreSQL connection; set DATABASE_MIGRATION_URL or WORKFLOW_POSTGRES_URL instead of a transaction pooler",
-      }
-    )
-    .describe(
-      "Optional workflow database override; defaults to DATABASE_MIGRATION_URL, then DATABASE_URL"
-    ),
-};
+  WORKFLOW_POSTGRES_URL:
+    resolveWorkflowWorld(environment) === "vercel"
+      ? z
+          .string()
+          .optional()
+          .describe("Unused on Vercel; local/self-hosted workflows only")
+      : postgresUrl
+          .refine(
+            (value) => {
+              try {
+                return !isWorkflowTransactionPooler(value);
+              } catch {
+                return false;
+              }
+            },
+            {
+              message:
+                "EVE needs a direct or session PostgreSQL connection; set DATABASE_MIGRATION_URL or WORKFLOW_POSTGRES_URL instead of a transaction pooler",
+            }
+          )
+          .describe(
+            "Local/self-hosted workflow database override; defaults to DATABASE_MIGRATION_URL, then DATABASE_URL. Unused on Vercel"
+          ),
+});
+
+const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 
 export const clientEnvSchema = {
   NEXT_PUBLIC_REACT_QUERY_DEVTOOLS: z.enum(["0", "1"]).optional(),
@@ -208,6 +219,7 @@ export const serverEnvSchema = {
     .describe(
       "Self-hosted reverse proxy header containing one verified client IP; the proxy must overwrite it"
     ),
+  VERCEL: z.string().optional(),
   VERCEL_APP_CLIENT_ID: z
     .string()
     .optional()

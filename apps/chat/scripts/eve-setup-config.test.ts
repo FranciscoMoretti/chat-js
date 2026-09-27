@@ -5,6 +5,14 @@ import { resolveEveSetup } from "./eve-setup-config";
 const world = "@workflow/world-postgres";
 
 describe("EVE setup selection", () => {
+  it("skips PostgreSQL provisioning on Vercel even with a stale URL", () => {
+    expect(resolveEveSetup("vercel")).toEqual({ local: false, managed: true });
+    expect(resolveEveSetup("vercel", "not-a-database")).toEqual({
+      local: false,
+      managed: true,
+    });
+  });
+
   it("rejects unsupported worlds before considering database configuration", () => {
     expect(() => resolveEveSetup("@workflow/world-other")).toThrow(
       "does not support world"

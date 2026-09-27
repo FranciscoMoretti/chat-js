@@ -15,6 +15,41 @@
       "when": 1789979176755,
       "tag": "0001_brainy_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790322833272,
+      "tag": "0002_nappy_caretaker",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790322966590,
+      "tag": "0003_ambitious_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790352034533,
+      "tag": "0004_misty_next_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790414931030,
+      "tag": "0005_managed_workflow_safeguards",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790415355244,
+      "tag": "0006_unpriced_usage_index",
+      "breakpoints": true
     }
   ]
 }

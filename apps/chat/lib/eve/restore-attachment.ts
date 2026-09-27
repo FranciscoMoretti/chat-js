@@ -35,7 +35,7 @@ export const restoreEveAttachment = async (
   }
   const response = await fetch(source, {
     credentials: "same-origin",
-    redirect: "error",
+    redirect: "follow",
     signal: AbortSignal.timeout(20_000),
   });
   if (!response.ok) {

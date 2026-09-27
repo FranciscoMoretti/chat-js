@@ -99,7 +99,7 @@ export const executeEveConversationCreation = async (
         const existing = await requestEveCreation(
           "lookup",
           ownerId,
-          `/eve/v1/operation/${operationId}`,
+          `/eve/chat/v1/operation/${operationId}`,
           {
             signal: AbortSignal.timeout(15_000),
           }
@@ -143,7 +143,7 @@ export const executeEveConversationCreation = async (
         const result = await requestEveCreation(
           "dispatch",
           ownerId,
-          "/eve/v1/session",
+          "/eve/chat/v1/session",
           {
             body: JSON.stringify({
               fork,

@@ -68,10 +68,14 @@ export const executeEveResearch = async function* executeEveResearch(
           saveReport: async (content) => {
             options.abortSignal.throwIfAborted();
             const document = eveDocumentResult.parse(
-              await executeEveDocumentTool("createTextDocument", content, {
-                ...context,
-                abortSignal: options.abortSignal,
-              })
+              await executeEveDocumentTool(
+                "createTextDocument",
+                { ...content, fileIds: [] },
+                {
+                  ...context,
+                  abortSignal: options.abortSignal,
+                }
+              )
             );
             return { ...document, result: "Research report saved." };
           },

@@ -1,20 +1,31 @@
 import { Client } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
 
-import { advanceEveUsageCursor, getEveUsageCursor } from "../db/eve-billing";
+import {
+  advanceEveUsageCursor,
+  getEveUsageCursor,
+  withManagedUsageReconciliation,
+} from "../db/eve-billing";
 import { listEveOwnerBindings } from "../db/eve-queries";
-import { getEvePostgresStreamPositions } from "../db/eve-stream-positions";
 import { env } from "../env";
 import { ingestEveActivity } from "./activity";
 import { getEveConnectionOptions } from "./connection-options";
 import { recoverEveCreations } from "./recover-creations";
 import { assertEveConfigured } from "./server";
+import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
+import { resolveWorkflowWorld } from "./world-config";
 
 /** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
-export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
+export const reconcileEveUsage = async (
+  ownerId: string,
+  sessionId: string,
+  replayUnpriced = false
+) => {
   assertEveConfigured();
-  const startIndex = await getEveUsageCursor(ownerId, sessionId);
+  const startIndex = replayUnpriced
+    ? 0
+    : await getEveUsageCursor(ownerId, sessionId);
   const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
   let streamIndex = startIndex;
@@ -56,8 +67,10 @@ export const reconcileEveUsage = async (ownerId: string, sessionId: string) => {
   }
 };
 
-export const reconcileEveOwnerUsage = async (ownerId: string) => {
-  await recoverEveCreations(ownerId);
+const reconcileAllOwnerUsage = async (
+  ownerId: string,
+  unpricedSessions = new Set<string>()
+) => {
   const bindings = await listEveOwnerBindings(ownerId);
   if (bindings.some((row) => row.state !== "bound" || !row.sessionId)) {
     throw new Error(
@@ -65,8 +78,7 @@ export const reconcileEveOwnerUsage = async (ownerId: string) => {
     );
   }
   assertEveConfigured();
-  const positions = await getEvePostgresStreamPositions(
-    env.WORKFLOW_POSTGRES_URL ?? "",
+  const positions = await getEveStreamPositions(
     bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : []))
   );
   for (const row of bindings) {
@@ -80,7 +92,9 @@ export const reconcileEveOwnerUsage = async (ownerId: string) => {
   const pending = bindings
     .filter(
       (row) =>
-        !row.sessionId || positions.get(row.sessionId) !== row.usageStreamIndex
+        !row.sessionId ||
+        unpricedSessions.has(row.sessionId) ||
+        positions.get(row.sessionId) !== row.usageStreamIndex
     )
     .values();
   let failure:
@@ -99,7 +113,11 @@ export const reconcileEveOwnerUsage = async (ownerId: string) => {
       try {
         if (next.value.sessionId) {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
-          await reconcileEveUsage(ownerId, next.value.sessionId);
+          await reconcileEveUsage(
+            ownerId,
+            next.value.sessionId,
+            unpricedSessions.has(next.value.sessionId)
+          );
         }
       } catch (error) {
         failure ??= { cause: error };
@@ -112,4 +130,29 @@ export const reconcileEveOwnerUsage = async (ownerId: string) => {
   if (failure) {
     throw failure.cause;
   }
+};
+
+export const reconcileEveOwnerUsage = async (
+  ownerId: string,
+  sessionId?: string
+) => {
+  await recoverEveCreations(ownerId);
+  if (resolveWorkflowWorld(env) !== "vercel") {
+    return await reconcileAllOwnerUsage(ownerId);
+  }
+  // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:
+  // settled history must not be streamed on every message or new conversation.
+  await withManagedUsageReconciliation(
+    ownerId,
+    async (sweepDue, unpricedSessions) => {
+      if (sweepDue || unpricedSessions.size > 0) {
+        // Older cursors can have passed failed attempts before their explicit
+        // zero-charge classification; replay that evidence rather than strand it.
+        await reconcileAllOwnerUsage(ownerId, unpricedSessions);
+      } else if (sessionId) {
+        // The conversation receiving new work is never covered by the cooldown.
+        await reconcileEveUsage(ownerId, sessionId);
+      }
+    }
+  );
 };

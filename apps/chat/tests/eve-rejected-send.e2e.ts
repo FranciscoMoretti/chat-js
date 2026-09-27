@@ -12,7 +12,7 @@ assertEveTestDatabase(env.DATABASE_URL);
 test("rejected send survives reload as an unsent draft and can be restored and sent once", async ({
   page,
 }, testInfo) => {
-  test.setTimeout(150_000);
+  test.setTimeout(210_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const created = await page.request.post("/api/agent-conversations", {
@@ -107,11 +107,59 @@ test("rejected send survives reload as an unsent draft and can be restored and s
     page.getByRole("button", { exact: true, name: "Restore draft" })
   ).toHaveCount(0);
 
-  // An unmarked upstream error is ambiguous even when its HTTP status is 4xx.
   const commandUrl = new URL(
     `/api/eve/v1/session/${binding.sessionId}`,
     page.url()
   ).href;
+  const operationIds: string[] = [];
+  await page.route(commandUrl, (route) => {
+    operationIds.push(route.request().headers()["x-chatjs-message-operation"]);
+    return route.fulfill({
+      body: JSON.stringify({
+        code: "usage_reconciliation_busy",
+        error: "Usage reconciliation is busy.",
+        retryable: true,
+      }),
+      contentType: "application/json",
+      headers: { "Retry-After": "2" },
+      status: 503,
+    });
+  });
+  const retryMessage = "Reply only with busy-message-74.";
+  await composer.fill(retryMessage);
+  await page.getByRole("button", { exact: true, name: "Send" }).click();
+  const retryButton = page.getByRole("button", {
+    exact: true,
+    name: "Retry message",
+  });
+  await expect(retryButton).toBeVisible({ timeout: 45_000 });
+  expect(operationIds.length).toBeGreaterThan(1);
+  expect(new Set(operationIds).size).toBe(1);
+  await page.reload();
+  await expect(retryButton).toBeVisible();
+  await page.screenshot({
+    animations: "disabled",
+    path: testInfo.outputPath("busy-message-retry.png"),
+    style: "nextjs-portal { display: none !important; }",
+  });
+  await page.unroute(commandUrl);
+  const retriedRequest = page.waitForRequest(
+    (request) => request.method() === "POST" && request.url() === commandUrl
+  );
+  await retryButton.click();
+  const retryRequest = await retriedRequest;
+  expect(retryRequest.headers()["x-chatjs-message-operation"]).toBe(
+    operationIds[0]
+  );
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
+    timeout: 90_000,
+  });
+  await expect(
+    page.getByRole("log").getByText(retryMessage, { exact: true })
+  ).toHaveCount(1);
+  await expect(retryButton).toHaveCount(0);
+
+  // An unmarked upstream error is ambiguous even when its HTTP status is 4xx.
   await page.route(commandUrl, (route) =>
     route.fulfill({
       body: JSON.stringify({ error: "Upstream response failed" }),

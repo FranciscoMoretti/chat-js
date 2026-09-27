@@ -2,17 +2,18 @@ import { env } from "@/lib/env";
 
 import type { UiToolName } from "../ai/types";
 import { getEveConnectionOptions } from "./connection-options";
+import { resolveWorkflowWorld } from "./world-config";
 
 export const assertEveConfigured = () => {
   if (
     !(
       env.EVE_INTERNAL_ORIGIN &&
       env.EVE_GATEWAY_SECRET &&
-      env.WORKFLOW_POSTGRES_URL
+      (resolveWorkflowWorld(env) === "vercel" || env.WORKFLOW_POSTGRES_URL)
     )
   ) {
     throw new Error(
-      "Configure the Eve worker, secret and World database before starting a conversation."
+      "Configure the Eve origin, gateway secret and local workflow database (outside Vercel) before starting a conversation."
     );
   }
 };

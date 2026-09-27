@@ -15,6 +15,7 @@ import { ANONYMOUS_LIMITS } from "../types/anonymous";
 import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
+import { resolveWorkflowWorld } from "./world-config";
 
 const checkpointLookupPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;
@@ -45,6 +46,7 @@ const authorizeDeletionRequest = async (
     !(
       path.endsWith("/sandbox-identity") &&
       request.method === "GET" &&
+      resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
       env.WORKFLOW_POSTGRES_URL &&
       (await getDeletingEveConversationForSession(owner, rootSessionId))
     )

@@ -4,6 +4,8 @@
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
+import assert from "node:assert/strict";
+
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
@@ -102,6 +104,7 @@ function draft(conversationId: string) {
     conversationId,
     documentId: crypto.randomUUID(),
     expectedRevisionId: null,
+    fileIds: [],
     kind: "text" as const,
     operationId: crypto.randomUUID(),
     ownerId: owner,
@@ -136,14 +139,15 @@ test("document purge requires the owned family fence, erases inherited revisions
   await expect(purgeEveFamilyDocuments(owner, root.id)).rejects.toThrow(
     "entire conversation family"
   );
-  await beginEveConversationDeletion(owner, child.id);
+  const deletion = await beginEveConversationDeletion(owner, child.id);
+  assert.ok(deletion);
   await expect(purgeEveFamilyDocuments(stranger, root.id)).rejects.toThrow();
   await expect(purgeEveFamilyDocuments(owner, child.id)).rejects.toThrow();
-  await expect(completeEveConversationDeletion(owner, root.id)).rejects.toThrow(
-    "content cleanup is incomplete"
-  );
-  await purgeEveFamilyDocuments(owner, root.id);
-  await purgeEveFamilyDocuments(owner, root.id);
+  await expect(
+    completeEveConversationDeletion(owner, deletion.rootId)
+  ).rejects.toThrow("content cleanup is incomplete");
+  await purgeEveFamilyDocuments(owner, deletion.rootId);
+  await purgeEveFamilyDocuments(owner, deletion.rootId);
   for (const table of [
     eveDocumentCheckpointEntry,
     eveDocumentCheckpoint,
@@ -525,7 +529,14 @@ test("native document calls replay safely and reject stale edits and cross-conve
       turn: { id: "turn_0", sequence: 0 },
     },
   };
-  const input = { content: "Original", title: "Native notes" };
+  const input = { content: "Original", fileIds: [], title: "Native notes" };
+  await expect(
+    executeEveDocumentTool(
+      "createTextDocument",
+      { content: input.content, title: input.title },
+      context
+    )
+  ).rejects.toThrow("fileIds");
   const [created, replay] = await Promise.all([
     executeEveDocumentTool("createTextDocument", input, context),
     executeEveDocumentTool("createTextDocument", input, context),
@@ -810,10 +821,16 @@ test("document references protect owned files across families and revision histo
   const input = {
     ...draft(destination.id),
     content: `![image](${prefix}${key})\nForeign URL: ${prefix}${foreignKey}`,
+    fileIds: [key],
   };
+  await expect(
+    saveEveDocumentRevision({ ...input, fileIds: [foreignKey] })
+  ).rejects.toThrow("unowned file");
   const revision = await saveEveDocumentRevision(input);
+  expect(revision.fileIds).toEqual([key]);
   await saveEveDocumentRevision({
     ...input,
+    fileIds: [],
     content: "Image removed from latest revision",
     expectedRevisionId: revision.id,
     operationId: crypto.randomUUID(),
@@ -952,12 +969,13 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
     crypto.randomUUID(),
     1
   );
-  await beginEveConversationDeletion(owner, chat.id);
+  const deletion = await beginEveConversationDeletion(owner, chat.id);
+  assert.ok(deletion);
   await expect(
     captureEveNamedDocumentCheckpoint(owner, chat.id, crypto.randomUUID(), 1)
   ).rejects.toThrow("not found");
-  await purgeEveFamilyDocuments(owner, chat.id);
-  await purgeEveFamilyDocuments(owner, chat.id);
+  await purgeEveFamilyDocuments(owner, deletion.rootId);
+  await purgeEveFamilyDocuments(owner, deletion.rootId);
   for (const table of [
     eveNamedDocumentCheckpointEntry,
     eveNamedDocumentCheckpoint,

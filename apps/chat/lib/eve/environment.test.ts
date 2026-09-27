@@ -1,9 +1,7 @@
-import { hkdfSync } from "node:crypto";
-
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { eveRuntimeEnvOptions } from "../env-schema";
+import { getEveRuntimeEnvOptions } from "../env-schema";
 import {
   configureWorkflowEnvironment,
   resolveEveEnvironment,
@@ -13,31 +11,49 @@ import {
 const base = {
   AUTH_SECRET: "existing-application-secret-at-least-32-characters",
   DATABASE_URL: "postgres://localhost/chat",
+  EVE_GATEWAY_SECRET: "independently-generated-gateway-secret-32-characters",
 };
-const schema = z.object(eveRuntimeEnvOptions);
+const schema = z.object(getEveRuntimeEnvOptions({}));
 
 describe("EVE environment defaults", () => {
-  it("derives a stable separate key matching Node's HKDF implementation", () => {
-    const first = resolveEveEnvironment(base);
-    expect(schema.safeParse(first).success).toBe(true);
-    expect(first.EVE_GATEWAY_SECRET).toBe(
-      Buffer.from(
-        hkdfSync("sha256", base.AUTH_SECRET, "chatjs", "eve-gateway/v1", 32)
-      ).toString("hex")
-    );
-    expect(resolveEveEnvironment({ ...base })).toEqual(first);
-    expect(first.EVE_GATEWAY_SECRET).not.toBe(base.AUTH_SECRET);
+  it("requires an independent gateway secret even when AUTH_SECRET is present", () => {
+    for (const EVE_GATEWAY_SECRET of [undefined, "", "short"]) {
+      const resolved = resolveEveEnvironment({ ...base, EVE_GATEWAY_SECRET });
+      expect(schema.safeParse(resolved).success).toBe(false);
+      expect(
+        z
+          .object(
+            getEveRuntimeEnvOptions({ VERCEL: "1", VERCEL_ENV: "preview" })
+          )
+          .safeParse(resolved).success
+      ).toBe(false);
+    }
     expect(
       resolveEveEnvironment({ ...base, AUTH_SECRET: "rotated" })
         .EVE_GATEWAY_SECRET
-    ).not.toBe(first.EVE_GATEWAY_SECRET);
-    expect(
-      resolveEveEnvironment({
-        ...base,
-        VERCEL_URL: "new-deployment.vercel.app",
-      }).EVE_GATEWAY_SECRET
-    ).toBe(first.EVE_GATEWAY_SECRET);
+    ).toBe(base.EVE_GATEWAY_SECRET);
   });
+
+  it.each(["preview", "production"])(
+    "does not initialize PostgreSQL workflows on Vercel %s",
+    (VERCEL_ENV) => {
+      const source = {
+        ...base,
+        DATABASE_URL: "postgres://ep-test-pooler.region.aws.neon.tech/chat",
+        VERCEL: "1",
+        VERCEL_ENV,
+      };
+      const worker: Record<string, string | undefined> = { ...source };
+      configureWorkflowEnvironment(worker);
+      expect(worker.WORKFLOW_POSTGRES_URL).toBeUndefined();
+      expect(resolveWorkflowDatabaseUrl(source)).toBeUndefined();
+      expect(
+        z
+          .object(getEveRuntimeEnvOptions(source))
+          .safeParse(resolveEveEnvironment(source)).success
+      ).toBe(true);
+    }
+  );
 
   it("uses the exact Vercel deployment ahead of app and branch aliases", () => {
     expect(
@@ -67,7 +83,6 @@ describe("EVE environment defaults", () => {
     expect(
       resolveEveEnvironment({
         ...base,
-        EVE_GATEWAY_SECRET: "",
         EVE_INTERNAL_ORIGIN: "",
         WORKFLOW_POSTGRES_URL: "",
       })
@@ -126,9 +141,8 @@ afterEach(() => {
   vi.resetModules();
 });
 
-it("the application env exposes derived values without any EVE overrides", async () => {
+it("the application env resolves defaults with an explicit gateway secret", async () => {
   for (const key of [
-    "EVE_GATEWAY_SECRET",
     "EVE_INTERNAL_ORIGIN",
     "WORKFLOW_POSTGRES_URL",
     "DATABASE_MIGRATION_URL",
@@ -136,6 +150,8 @@ it("the application env exposes derived values without any EVE overrides", async
     vi.stubEnv(key, "");
   }
   vi.stubEnv("AUTH_SECRET", base.AUTH_SECRET);
+  vi.stubEnv("EVE_GATEWAY_SECRET", base.EVE_GATEWAY_SECRET);
+  vi.stubEnv("VERCEL", "");
   vi.stubEnv("DATABASE_URL", base.DATABASE_URL);
   vi.stubEnv("VERCEL_URL", "deployment.vercel.app");
   const { env } = await import("../env");
@@ -146,9 +162,11 @@ it("the application env exposes derived values without any EVE overrides", async
   expect(env.WORKFLOW_POSTGRES_URL).toBe(base.DATABASE_URL);
 });
 
-it("does not expose derived server credentials to client components", async () => {
+it("does not expose server credentials to client components", async () => {
   vi.stubGlobal("window", {});
   vi.stubEnv("AUTH_SECRET", base.AUTH_SECRET);
+  vi.stubEnv("EVE_GATEWAY_SECRET", base.EVE_GATEWAY_SECRET);
+  vi.stubEnv("VERCEL", "");
   const { env } = await import("../env");
   expect(() => env.EVE_GATEWAY_SECRET).toThrow();
   expect(() => env.WORKFLOW_POSTGRES_URL).toThrow();

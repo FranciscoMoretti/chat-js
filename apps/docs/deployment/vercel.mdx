@@ -3,7 +3,7 @@ title: Deploy to Vercel
 description: Production deployment with Vercel's integrated platform
 ---
 
-You can deploy the Next.js application and its integrated EVE worker to one Vercel project. Configure a compatible database connection, `AUTH_SECRET`, and OAuth origins before deploying.
+You can deploy the Next.js application and its integrated EVE worker to one Vercel project. Configure your application database, private EVE credentials, and OAuth origins before deploying. Registered and guest agents use managed Vercel Workflow automatically.
 
 <Callout type="note">
   If you haven't set up your project yet, start with the
@@ -16,7 +16,8 @@ ChatJS uses several Vercel platform features. Enable them in your Vercel dashboa
 
 | Integration | Purpose | Required |
 | --- | --- | --- |
-| **Vercel Postgres** or **Neon** | Application database and EVE workflow database | Yes |
+| **PostgreSQL** (for example, Neon) | Application database | Yes |
+| **Vercel Workflow** | EVE execution and durable transcripts | Selected automatically |
 | **Vercel Blob** | File attachments, generated images | If using attachments/image gen |
 | **AI Gateway** | Unified access to 120+ AI models | Yes |
 
@@ -130,11 +131,15 @@ Sandboxes run with:
 
 ### Required
 
-Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL` and `AUTH_SECRET`. The integrated worker derives its credential from `AUTH_SECRET` and its origin from `VERCEL_URL`. Its database defaults to `DATABASE_MIGRATION_URL`, then `DATABASE_URL`. Use a direct or session connection; provide a direct URL if the app uses transaction pooling. Leave the three EVE overrides unset unless you need a separate worker, database, or independently rotated secret. The source credentials must be available during the build and at runtime.
+Keep **Automatically expose System Environment Variables** enabled in Vercel’s project settings for Preview and Production. Backend selection requires the platform-provided `VERCEL` and `VERCEL_ENV` values.
 
-Initialize both schemas using the [database setup guide](../reference/database#hosted-workflow-database). Use separate databases for previews and production, with branch-scoped preview credentials.
+Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL` and an independently generated `EVE_GATEWAY_SECRET` (`openssl rand -base64 32`). Keep `EVE_INTERNAL_ORIGIN` unset to use the exact deployment URL from `VERCEL_URL`. These settings must be available during the build and at runtime.
 
-Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Neither build path provisions the workflow database.
+Initialize the application schema using the [database setup guide](../reference/database#hosted-workflow-database). Use separate application databases for previews and production, with branch-scoped preview credentials. Omit `WORKFLOW_POSTGRES_URL` on Vercel. It is required only for local/self-hosted registered-chat workflows.
+
+Production Vercel builds apply application migrations automatically. Preview builds skip them, so run those migrations explicitly before testing a preview. Managed Workflow does not require PostgreSQL workflow provisioning.
+
+Changing backends does not migrate existing sessions. Application migrations register existing conversations as PostgreSQL-backed, and Vercel builds reject a mismatched database. Keep the old deployment/database intact; use an isolated fresh database for previews and complete a verified migration before production cutover. Hosted conversation erasure remains unavailable.
 
 ### Preview origins and OAuth
 
@@ -142,7 +147,7 @@ Use a stable branch hostname for preview sign-in. Without an explicit `APP_URL`,
 
 Register `https://<branch-hostname>/api/auth/callback/<provider>` in each enabled OAuth provider. For production, set `APP_URL` to your public domain and register callbacks against that domain. If `APP_URL` is unset on a production Vercel deployment, Better Auth uses `appUrl` from `chat.config.ts` instead. A successful preview deployment does not configure these provider allowlists.
 
-Internal EVE calls default to the exact deployment URL (`https://${VERCEL_URL}`), so requests do not move to a newer deployment when a branch alias changes. Keep `EVE_INTERNAL_ORIGIN` unset for this behavior. An explicit override still takes precedence.
+Set `EVE_INTERNAL_ORIGIN` separately for each environment. With the integrated worker, it can use the stable branch origin for previews. It is not automatically derived from `APP_URL`.
 
 ### Protected previews
 

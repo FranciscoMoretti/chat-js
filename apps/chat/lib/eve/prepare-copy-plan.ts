@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { parseSessionTranscriptSeed } from "eve/transcript";
 
 import type { snapshotPublicEveCopyDocuments } from "../db/eve-copy-documents";
-import { createFileStorageKey } from "../file-storage";
+import { createFileId } from "../file-storage";
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
@@ -43,7 +43,7 @@ export const prepareEveCopyPlan = async (
     const source = await readPublicFile(key);
     // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
     const bytes = Buffer.from(await source.arrayBuffer());
-    const destination = createFileStorageKey(key);
+    const destination = createFileId();
     allocations.files.set(key, destination);
     files.push({
       key: destination,
@@ -54,7 +54,7 @@ export const prepareEveCopyPlan = async (
     });
   }
   for (const inline of eveCopyInlineAttachments(projection.seed)) {
-    const destination = createFileStorageKey("attachment");
+    const destination = createFileId();
     allocations.inlineFiles.set(inline.id, destination);
     files.push({
       key: destination,
@@ -106,6 +106,7 @@ export const prepareEveCopyPlan = async (
           parentRevisionId: revision.parentRevisionId,
           title: revision.title,
           content: revision.content,
+          fileIds: revision.fileIds,
           kind: revision.kind,
           createdAt: revision.createdAt.toISOString(),
         })),

@@ -14,7 +14,7 @@ export const readEveCheckpoint = async (
   checkpointId?: string,
   signal: AbortSignal = AbortSignal.timeout(15_000)
 ) => {
-  const path = `/eve/v1/session/${encodeURIComponent(sessionId)}/checkpoint${checkpointId ? `/${encodeURIComponent(checkpointId)}` : ""}?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
+  const path = `/eve/chat/v1/session/${encodeURIComponent(sessionId)}/checkpoint${checkpointId ? `/${encodeURIComponent(checkpointId)}` : ""}?beforeTurnId=${encodeURIComponent(beforeTurnId)}`;
   const result = await eveRequest(ownerId, path, { signal });
   const body: unknown = await result.json();
   if (result.ok) {

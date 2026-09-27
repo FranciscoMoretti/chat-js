@@ -34,7 +34,7 @@ it("restores exact bytes and filename from relative and absolute owned file URLs
   }
   expect(fetcher).toHaveBeenCalledWith(
     path,
-    expect.objectContaining({ credentials: "same-origin", redirect: "error" })
+    expect.objectContaining({ credentials: "same-origin", redirect: "follow" })
   );
 });
 

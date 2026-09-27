@@ -663,3 +663,17 @@ it.each([sourceUrl, `${sourceUrl}?dpl=dpl_test`])(
     );
   }
 );
+
+it("copies explicit file identities alongside their stable URLs", () => {
+  const source = {
+    fileId: sourceFile,
+    fileIds: [sourceFile],
+    imageUrl: sourceUrl,
+  };
+  expect(eveCopyResources(source).fileKeys).toEqual([sourceFile]);
+  expect(rewriteEveCopyResources(source, allocations)).toEqual({
+    fileId: allocations.files.get(sourceFile),
+    fileIds: [allocations.files.get(sourceFile)],
+    imageUrl: copiedUrl,
+  });
+});

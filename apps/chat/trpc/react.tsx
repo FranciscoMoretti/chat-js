@@ -12,6 +12,7 @@ import { env } from "@/lib/env";
 import { getBaseUrl } from "@/lib/url";
 import type { AppRouter } from "@/trpc/routers/_app";
 
+import { isAbortedRequest } from "./is-aborted-request";
 import { makeQueryClient } from "./query-client";
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
@@ -51,9 +52,15 @@ export const TRPCReactProvider = (props: { children: React.ReactNode }) => {
     createTRPCClient<AppRouter>({
       links: [
         loggerLink({
-          enabled: (op) =>
-            process.env.NODE_ENV === "development" ||
-            (op.direction === "down" && op.result instanceof Error),
+          enabled: (op) => {
+            if (op.direction === "down" && isAbortedRequest(op.result)) {
+              return false;
+            }
+            return (
+              process.env.NODE_ENV === "development" ||
+              (op.direction === "down" && op.result instanceof Error)
+            );
+          },
         }),
         httpBatchLink({
           headers: () => {

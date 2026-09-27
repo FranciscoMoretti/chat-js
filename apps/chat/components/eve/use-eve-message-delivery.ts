@@ -84,12 +84,13 @@ export const useEveMessageDelivery = (sessionId: string) => {
     ),
     pending,
     reject: useCallback(
-      (delivery: PendingEveMessage, message: string) => {
+      (delivery: PendingEveMessage, message: string, retryable = false) => {
         const rejected = eveMessageDelivery.reject(
           sessionStorage,
           sessionId,
           delivery,
-          message
+          message,
+          retryable
         );
         pendingRef.current = rejected;
         setPending(rejected);
@@ -109,6 +110,21 @@ export const useEveMessageDelivery = (sessionId: string) => {
         setPending((current) =>
           current?.operationId === delivery.operationId ? null : current
         );
+      },
+      [sessionId]
+    ),
+    retry: useCallback(
+      (delivery: PendingEveMessage) => {
+        const retried = eveMessageDelivery.retry(
+          sessionStorage,
+          sessionId,
+          delivery
+        );
+        if (retried) {
+          pendingRef.current = retried;
+          setPending(retried);
+        }
+        return retried;
       },
       [sessionId]
     ),

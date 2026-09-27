@@ -4,8 +4,8 @@ import {
   reserveEveGeneratedFile,
   writeEveGeneratedFile,
 } from "../db/eve-files";
-import { createFileStorageKey, uploadFileAtKey } from "../file-storage";
-import type { uploadFile } from "../file-storage";
+import { createFileId, uploadFileAtKey } from "../file-storage";
+import type { FileUploader } from "../file-storage";
 import { resolveEveConversationScope } from "./conversation-scope";
 
 export const eveGeneratedFileUploader =
@@ -20,7 +20,7 @@ export const eveGeneratedFileUploader =
         };
       };
     }
-  ): typeof uploadFile =>
+  ): FileUploader =>
   async (filename, body, contentType) => {
     if (!context.session) {
       throw new Error("Generated files require a native session.");
@@ -30,7 +30,7 @@ export const eveGeneratedFileUploader =
       context.session.id,
       context.abortSignal
     );
-    const key = createFileStorageKey(filename);
+    const key = createFileId();
     await reserveEveGeneratedFile(scope.ownerId, scope.conversationId, key);
     return await writeEveGeneratedFile(
       scope.ownerId,

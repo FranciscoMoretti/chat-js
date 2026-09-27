@@ -53,19 +53,17 @@ For [Supabase transaction pooling](https://supabase.com/docs/guides/database/pos
 
 ## EVE workflow database
 
-ChatJS uses `DATABASE_URL` for application records. EVE messages and execution state use `WORKFLOW_POSTGRES_URL` when set, otherwise `DATABASE_MIGRATION_URL`, then `DATABASE_URL`. Application and workflow schemas can share one database. Set an explicit workflow URL to keep them separate. The application pooling settings above do not configure EVE's connection.
-
-EVE needs a direct or session connection for its queue and `LISTEN` sessions. Validation rejects known transaction-pooler URLs (including Neon pooled endpoints and Supabase transaction endpoints), but cannot identify every custom pooler. Verify your endpoint with your provider. If your migration role has more privileges than you want to grant the worker, set `WORKFLOW_POSTGRES_URL` to a dedicated runtime role on a compatible endpoint.
+ChatJS uses `DATABASE_URL` for application records everywhere. Vercel deployments use managed Workflow automatically. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` when set, otherwise `DATABASE_MIGRATION_URL`, then `DATABASE_URL`. Application and workflow schemas can share one database. EVE requires a direct or session connection for its queue and `LISTEN` sessions; validation rejects known transaction-pooler endpoints. If the migration role has excessive privileges for the worker, supply a dedicated runtime role through `WORKFLOW_POSTGRES_URL`. Application pooling settings do not configure EVE's connection.
 
 ### Local workflow database
 
-With PostgreSQL installed and running, create the database:
+With PostgreSQL installed and running, create the application database:
 
 ```bash
 createdb chatjs
 ```
 
-Set its connection in `.env.local`, adjusting credentials and ports for your installation:
+Set the connection in `.env.local`, adjusting credentials and ports for your installation:
 
 ```dotenv
 DATABASE_URL=postgres://localhost:5432/chatjs
@@ -79,9 +77,11 @@ npm run setup
 
 ### Hosted workflow database
 
-Create a database with your provider and configure a direct or session connection through `DATABASE_MIGRATION_URL` or `DATABASE_URL`. Alternatively, set `WORKFLOW_POSTGRES_URL` for a separate workflow database. Run the same `npm run setup` command with permission to install the workflow provider schema.
+On Vercel, provision only the application database. `eve:setup` and `eve:check` skip workflow SQL setup. Omit `WORKFLOW_POSTGRES_URL`.
 
-The setup command and runtime use the same connection precedence. When no workflow override is set, setup installs the workflow schemas in the application database. For loopback hosts, it also installs ChatJS's local lifecycle fences. Hosted setup initializes the provider schema but does not certify hosted deletion or lifecycle coverage.
+For a self-hosted, continuously running Node service, configure a direct or session connection through `DATABASE_MIGRATION_URL` or `DATABASE_URL`. Set `WORKFLOW_POSTGRES_URL` to use a separate workflow database. Run the same `bun run setup` command with permission to install the workflow provider schema.
+
+Outside Vercel, setup uses the same resolved workflow connection as the runtime. For loopback hosts, it also installs ChatJS's local lifecycle fences. Hosted setup initializes the provider schema but does not certify hosted deletion or lifecycle coverage.
 
 ### Setup commands
 
@@ -90,14 +90,14 @@ The setup command and runtime use the same connection precedence. When no workfl
 | `npm run setup` | Validate the selected world, apply application migrations, and prepare EVE | Fresh installation or an upgrade requiring schema changes |
 | `npm run db:migrate` | Apply pending application migrations only | Application schema changes |
 | `npm run eve:setup` | Prepare the configured EVE world | Fresh workflow database or a provider upgrade requiring setup |
-| `npm run eve:check` | Check workflow connectivity and required tables without changing the schema | Troubleshooting or deployment checks |
+| `npm run eve:check` | Check PostgreSQL connectivity/tables locally, or report managed Workflow on Vercel | Troubleshooting or deployment checks |
 | `npm run dev` | Start the app and integrated EVE runtime | Everyday development |
 
 Setup uses your configured connections and does not create databases or provision a hosting account. It is safe to rerun against an initialized database. If one stage fails, fix the reported problem and rerun it. Application and workflow changes are separate operations, not one transaction.
 
-The agent and setup commands share the world setting in `lib/eve/world-config.ts`, currently `@workflow/world-postgres`. Other worlds fail setup explicitly until their setup and ChatJS lifecycle support are implemented and verified. Changing the world requires rebuilding EVE and planning any data migration. The CLI does not offer a world chooser yet.
+The agent and setup commands share backend selection in `lib/eve/world-config.ts`: managed Workflow on Vercel, PostgreSQL locally/self-hosted. Managed setup skips PostgreSQL initialization. Changing the world requires rebuilding EVE and planning any data migration. The CLI does not offer a world chooser yet.
 
-In the monorepo, these setup commands also work from the repository root. Neither an application build nor a successful connectivity check initializes the workflow database. `eve:check` checks required tables, not every schema version, permission, or end-to-end lifecycle behavior.
+In the monorepo, these setup commands also work from the repository root. Neither an application build nor a successful connectivity check initializes the workflow database. `eve:check` checks required tables only for PostgreSQL; on Vercel it reports the managed backend without checking SQL tables. Neither check verifies end-to-end lifecycle behavior.
 
 ## Database Management
 

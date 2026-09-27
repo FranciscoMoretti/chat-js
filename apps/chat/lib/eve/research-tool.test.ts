@@ -120,7 +120,7 @@ it("persists through the owning native call and includes research progress and a
   });
   expect(mocks.save).toHaveBeenCalledExactlyOnceWith(
     "createTextDocument",
-    { content: "# Research", title: "Report" },
+    { content: "# Research", fileIds: [], title: "Report" },
     expect.objectContaining({
       callId: context.callId,
       session: context.session,

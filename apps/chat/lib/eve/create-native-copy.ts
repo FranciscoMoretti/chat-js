@@ -10,7 +10,7 @@ export const createNativeEveCopy = async (
 ) => {
   const existing = await eveRequest(
     ownerId,
-    `/eve/v1/operation/${operationId}?kind=seed`,
+    `/eve/chat/v1/operation/${operationId}?kind=seed`,
     {
       signal: AbortSignal.timeout(15_000),
     }
@@ -27,7 +27,7 @@ export const createNativeEveCopy = async (
   }
   const result = await eveRequest(
     ownerId,
-    "/eve/v1/session",
+    "/eve/chat/v1/session",
     {
       body: JSON.stringify({ operationId, seed: true }),
       method: "POST",

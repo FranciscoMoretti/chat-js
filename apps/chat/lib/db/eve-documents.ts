@@ -2,6 +2,7 @@ import { and, eq, inArray, lt, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { artifactKinds } from "../artifacts/artifact-kind";
+import { documentFileIds } from "../eve/document-contracts";
 import { db } from "./client";
 import { retainEveDocumentFiles } from "./eve-files";
 import {
@@ -21,6 +22,7 @@ const revisionInput = z.object({
   conversationId: z.uuid(),
   documentId: z.uuid(),
   expectedRevisionId: z.uuid().nullable(),
+  fileIds: documentFileIds,
   kind: z.enum(artifactKinds),
   operationId: z.string().min(1).max(512),
   ownerId: z.string().min(1),
@@ -330,6 +332,7 @@ export const saveEveDocumentRevision = async (
         replay.turnIndex !== input.turnIndex ||
         replay.title !== input.title ||
         replay.content !== input.content ||
+        JSON.stringify(replay.fileIds) !== JSON.stringify(input.fileIds) ||
         replay.kind !== input.kind
       ) {
         throw new Error("Document operation changed during replay.");
@@ -366,7 +369,7 @@ export const saveEveDocumentRevision = async (
       tx,
       input.ownerId,
       input.conversationId,
-      input.content
+      input.fileIds
     );
     await prepareManualRevision(tx, input, historicalTurns);
     signal?.throwIfAborted();
@@ -376,6 +379,7 @@ export const saveEveDocumentRevision = async (
         content: input.content,
         conversationId: input.conversationId,
         documentId: input.documentId,
+        fileIds: input.fileIds,
         kind: input.kind,
         operationId: input.operationId,
         ownerId: input.ownerId,

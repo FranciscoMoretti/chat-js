@@ -43,10 +43,14 @@ describe("file route", () => {
     async (managed) => {
       mocks.access.mockResolvedValue({ allowed: true, managed });
       const response = await getFile();
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(managed ? 200 : 404);
+      if (!managed) {
+        expect(mocks.serve).not.toHaveBeenCalled();
+        return;
+      }
       expect(mocks.access).toHaveBeenCalledWith(key, "owner");
       expect(mocks.serve).toHaveBeenCalledWith(request, key, {
-        allowRedirect: !managed,
+        allowRedirect: true,
       });
     }
   );

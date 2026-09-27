@@ -3,11 +3,14 @@ import type { Body } from "files-sdk";
 import { nanoid } from "nanoid";
 
 import { FILE_STORAGE_PREFIX } from "./constants";
+import {
+  fileIdsForStorageKeys,
+  storageKeyForFile,
+} from "./db/file-storage-keys";
 import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
 import { storageOptions } from "./storage-options";
 import { createStorageAdapter } from "./storage-provider";
 
-const SAFE_EXTENSION = /^\.[a-z0-9]{1,10}$/u;
 const PATH_SEPARATOR = /[\\/]/u;
 
 let files: Files | undefined;
@@ -32,13 +35,7 @@ const sanitizeFilename = (filename: string): string => {
   return withoutControlCharacters.trim() || "file";
 };
 
-export const createFileStorageKey = (filename: string): string => {
-  const clean = sanitizeFilename(filename);
-  const dot = clean.lastIndexOf(".");
-  const candidate = dot > 0 ? clean.slice(dot).toLowerCase() : "";
-  const extension = SAFE_EXTENSION.test(candidate) ? candidate : "";
-  return `${nanoid(24)}${extension}`;
-};
+export const createFileId = (): string => nanoid(24);
 
 /** Internal preallocated key, recorded by the caller before external storage I/O. */
 export const uploadFileAtKey = async (
@@ -51,50 +48,52 @@ export const uploadFileAtKey = async (
     throw new Error("Invalid storage key.");
   }
   const pathname = sanitizeFilename(filename);
-  const uploaded = await getFiles().upload(key, body, {
+  const uploaded = await getFiles().upload(await storageKeyForFile(key), body, {
     contentType,
   });
 
   return {
     contentType: uploaded.contentType,
+    fileId: key,
     pathname,
-    url: createFileUrl(uploaded.key),
+    url: createFileUrl(key),
   };
 };
 
-export const uploadFile = (
+export type FileUploader = (
   filename: string,
   body: Body,
   contentType?: string
-) =>
-  uploadFileAtKey(createFileStorageKey(filename), filename, body, contentType);
+) => ReturnType<typeof uploadFileAtKey>;
 
-export const listFiles = async () => {
-  const storedFiles: {
-    pathname: string;
-    uploadedAt: Date;
-    url: string;
-  }[] = [];
-  for await (const file of getFiles().listAll()) {
-    storedFiles.push({
-      pathname: file.key,
-      uploadedAt: new Date(file.lastModified ?? Date.now()),
-      url: createFileUrl(file.key),
-    });
-  }
-  return { files: storedFiles };
-};
-
-/** @yields {{ pathname: string; uploadedAt: Date; url: string }} stored file metadata. */
+/**
+ * Resolve one provider page at a time, bounding inventory memory and DB queries.
+ * @yields {{ pathname: string; uploadedAt: Date; url: string }} Registered file metadata.
+ */
 export const iterateStoredFiles = async function* iterateStoredFiles() {
-  for await (const file of getFiles().listAll()) {
-    yield {
-      pathname: file.key,
-      uploadedAt: new Date(file.lastModified ?? Date.now()),
-      url: createFileUrl(file.key),
-    };
-  }
+  let cursor: string | undefined;
+  do {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Each page requires the preceding cursor.
+    const page = await getFiles().list({ cursor, limit: 100 });
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Resolve only the current inventory page.
+    const ids = await fileIdsForStorageKeys(page.items.map((file) => file.key));
+    for (const file of page.items) {
+      const fileId = ids.get(file.key);
+      if (fileId) {
+        yield {
+          pathname: fileId,
+          uploadedAt: new Date(file.lastModified ?? Date.now()),
+          url: createFileUrl(fileId),
+        };
+      }
+    }
+    ({ cursor } = page);
+  } while (cursor);
 };
+
+export const listFiles = async () => ({
+  files: await Array.fromAsync(iterateStoredFiles()),
+});
 
 export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
   const keys = [
@@ -106,7 +105,9 @@ export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
     return;
   }
 
-  const result = await getFiles().delete(keys);
+  const result = await getFiles().delete(
+    await Promise.all(keys.map(storageKeyForFile))
+  );
   const errors = "errors" in result ? result.errors : undefined;
   if (errors?.length) {
     throw new AggregateError(
@@ -116,12 +117,17 @@ export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
   }
 };
 
-export const downloadFile = (
+export const downloadFile = async (
   key: string,
   range?: { start: number; end?: number }
-) => getFiles().download(key, range ? { range } : undefined);
+) =>
+  getFiles().download(
+    await storageKeyForFile(key),
+    range ? { range } : undefined
+  );
 
-export const getFileMetadata = (key: string) => getFiles().head(key);
+export const getFileMetadata = async (key: string) =>
+  getFiles().head(await storageKeyForFile(key));
 
 export const storageSupportsRange = (): boolean =>
   getFiles().capabilities.rangeRead;
@@ -133,7 +139,9 @@ export const getFileProviderUrl = async (
   if (!fileService.capabilities.signedUrl.supported) {
     return null;
   }
-  const value = await fileService.url(key);
+  const value = await fileService.url(await storageKeyForFile(key), {
+    expiresIn: 300,
+  });
   const url = new URL(value);
   return url.protocol === "http:" || url.protocol === "https:" ? value : null;
 };

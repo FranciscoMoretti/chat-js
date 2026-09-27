@@ -3,6 +3,7 @@ import { purgeEveNativeSession } from "../db/eve-native-purge";
 import { env } from "../env";
 import { purgeLocalEveFamilyResources } from "./purge-local-resources";
 import { retireEveSessionForDeletion } from "./retire-session";
+import { resolveWorkflowWorld } from "./world-config";
 
 /** Internal local-provider entry point. appRoot is the trusted worker root, never user input. */
 export const deleteLocalEveConversationFamily = async (
@@ -11,8 +12,13 @@ export const deleteLocalEveConversationFamily = async (
   appRoot: string
 ) => {
   const databaseUrl = env.WORKFLOW_POSTGRES_URL;
-  if (!databaseUrl) {
-    throw new Error("EVE Postgres is not configured.");
+  if (
+    resolveWorkflowWorld(env) !== "@workflow/world-postgres" ||
+    !databaseUrl
+  ) {
+    throw new Error(
+      "This deletion operation requires the PostgreSQL workflow backend."
+    );
   }
   // Retirement receipts make this replayable even after some native payloads were erased.
   const family = await purgeLocalEveFamilyResources(

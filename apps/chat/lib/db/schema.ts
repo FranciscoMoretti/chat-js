@@ -21,10 +21,21 @@ import {
 import type { EveCopyPlan, EveCopySeed } from "../eve/copy-journal-contract";
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
+/** One application database belongs to one durable workflow world. */
+export const eveWorkflowBackend = pgTable(
+  "EveWorkflowBackend",
+  {
+    id: integer("id").primaryKey().default(1),
+    world: text("world").notNull(),
+  },
+  (table) => [check("EveWorkflowBackend_singleton", sql`${table.id} = 1`)]
+);
+
 export const user = pgTable("user", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  eveUsageReconciledAt: timestamp("eve_usage_reconciled_at"),
   id: text("id").primaryKey(),
   image: text("image"),
   name: text("name").notNull(),
@@ -319,6 +330,10 @@ export const eveChat = pgTable(
   },
   (table) => [
     unique("EveChat_id_owner").on(table.id, table.ownerId),
+    index("EveChat_search_title").using(
+      "gin",
+      sql`to_tsvector('simple', ${table.title})`
+    ),
     index("EveChat_owner_activity").on(
       table.ownerId,
       table.isPinned,
@@ -593,6 +608,7 @@ export const eveStoredFile = pgTable(
   "EveStoredFile",
   {
     createdAt: timestamp("createdAt").notNull().defaultNow(),
+    /** Stable public file ID, independent of the storage object pathname. */
     key: text("key").primaryKey(),
     ownerId: text("ownerId")
       .notNull()
@@ -600,6 +616,10 @@ export const eveStoredFile = pgTable(
     state: text("state", { enum: ["active", "deleting", "deleted"] })
       .notNull()
       .default("active"),
+    storageKey: text("storageKey")
+      .notNull()
+      .default(sql`gen_random_uuid()::text`)
+      .unique(),
   },
   (table) => [
     index("EveStoredFile_owner").on(table.ownerId),
@@ -665,7 +685,12 @@ export const eveUsage = pgTable(
     sessionId: text("sessionId").notNull(),
     turnId: text("turnId").notNull(),
   },
-  (table) => [index("EveUsage_session_turn").on(table.sessionId, table.turnId)]
+  (table) => [
+    index("EveUsage_session_turn").on(table.sessionId, table.turnId),
+    index("EveUsage_unpriced_owner")
+      .on(table.ownerId)
+      .where(sql`${table.costUsd} is null`),
+  ]
 );
 
 export const eveDocumentRevision = pgTable(
@@ -675,6 +700,7 @@ export const eveDocumentRevision = pgTable(
     conversationId: uuid("conversationId").notNull(),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     documentId: uuid("documentId").notNull(),
+    fileIds: jsonb("fileIds").$type<string[]>().notNull().default([]),
     id: uuid("id").primaryKey().defaultRandom(),
     kind: varchar("kind", { enum: ["text", "code", "sheet"] }).notNull(),
     operationId: text("operationId").notNull(),
@@ -916,5 +942,28 @@ export const eveImportedDocumentCheckpointEntry = pgTable(
       ],
       name: "EveImportedDocumentCheckpointEntry_revision_owner_fk",
     }),
+  ]
+);
+
+/** Rebuildable display-text projection; EVE remains the transcript source of truth. */
+export const eveSearchText = pgTable(
+  "EveSearchText",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    key: text("key").notNull(),
+    ownerId: text("ownerId").notNull(),
+    text: text("text").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.conversationId, table.key] }),
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+    }).onDelete("cascade"),
+    index("EveSearchText_owner").on(table.ownerId),
+    index("EveSearchText_content").using(
+      "gin",
+      sql`to_tsvector('simple', ${table.text})`
+    ),
   ]
 );

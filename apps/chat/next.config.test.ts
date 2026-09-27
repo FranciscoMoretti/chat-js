@@ -22,23 +22,18 @@ const routes = async () => {
   const config = await configure("phase-production-build", {
     defaultConfig: {},
   });
-  return await config.rewrites();
+  return await config.rewrites?.();
 };
 
-test("local registered alias resolves before named agent rewrites", async () => {
-  vi.stubEnv("VERCEL_URL", "");
-  const result = await routes();
-  expect(result.beforeFiles[0]).toEqual({
-    destination: "/eve/chat/v1/:path*",
-    source: "/eve/v1/:path*",
-  });
-});
-
-test("Vercel registered alias re-enters platform routing for the named chat service", async () => {
+test("keeps EVE named-agent routing without an external deployment alias", async () => {
   vi.stubEnv("VERCEL_URL", "deployment.vercel.app");
   const result = await routes();
-  expect(result.beforeFiles[0]).toEqual({
-    destination: "https://deployment.vercel.app/eve/chat/v1/:path*",
-    source: "/eve/v1/:path*",
+  expect(result).toEqual({
+    beforeFiles: [
+      {
+        destination: "http://worker/eve/v1/:path*",
+        source: "/eve/chat/v1/:path*",
+      },
+    ],
   });
 });

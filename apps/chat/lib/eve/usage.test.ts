@@ -50,6 +50,7 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
     })
   ).toBe(true);
   expect(record).toHaveBeenCalledTimes(2);
+  expect(record.mock.calls[1][0].costUsd).toBe(0);
 });
 
 it("retains failed-step evidence without reporting an unpriced completed call", async () => {
@@ -68,7 +69,7 @@ it("retains failed-step evidence without reporting an unpriced completed call", 
   expect(await ingestEveUsage("owner", "session", event)).toBeUndefined();
   expect(record).toHaveBeenCalledWith(
     expect.objectContaining({
-      costUsd: undefined,
+      costUsd: 0,
       eventId: "failed-before-model",
     })
   );

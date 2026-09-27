@@ -31,7 +31,7 @@ Fill in `.env.local` using the generated example. You need:
 | Authentication provider credentials and secrets | [Authentication](./core/authentication) and [environment variables](./reference/env-vars) |
 | Credentials for any optional features you selected | [Environment variables](./reference/env-vars) |
 
-Generate `AUTH_SECRET` with `openssl rand -base64 32`. Leave the three EVE overrides blank for the integrated worker: its credential is derived from `AUTH_SECRET`, its origin follows the deployment or local app, and its database defaults to `DATABASE_MIGRATION_URL`, then `DATABASE_URL`. Use a direct or session database connection; transaction pooling is not supported for workflows.
+Generate `AUTH_SECRET` and `EVE_GATEWAY_SECRET` independently by running `openssl rand -base64 32` once for each. Leave `EVE_INTERNAL_ORIGIN` blank for the integrated worker; it follows the deployment or local app. Local/self-hosted workflows default to `DATABASE_MIGRATION_URL`, then `DATABASE_URL`, and require a direct or session connection. Set `WORKFLOW_POSTGRES_URL` to use a separate workflow database. Vercel deployments use managed Workflow and do not need that variable.
 
 ## 3. Set up the application
 

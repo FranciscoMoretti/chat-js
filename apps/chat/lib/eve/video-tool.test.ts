@@ -60,6 +60,7 @@ test("native video uses the selected model and persists its upload with the prov
     video: { mediaType: "video/mp4", uint8Array: new Uint8Array([1]) },
   });
   provider.upload.mockResolvedValue({
+    fileId: "abcdefghijklmnopqrstuvwx.mp4",
     url: "/api/files/abcdefghijklmnopqrstuvwx.mp4",
   });
   const results = await Array.fromAsync(

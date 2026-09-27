@@ -2,10 +2,12 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { createEveConversationOperation } from "./create-conversation-operation";
+import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
 const mocks = vi.hoisted(() => ({
   creation: vi.fn(),
   readiness: vi.fn(),
+  reconcile: vi.fn(),
   request: vi.fn(),
   reserve: vi.fn(),
   source: vi.fn(),
@@ -33,7 +35,9 @@ vi.mock("./model-selection", () => ({ loadEveModelDefinition: vi.fn() }));
 vi.mock("./prepare-message", () => ({
   prepareEveMessage: (message: string) => Promise.resolve(message),
 }));
-vi.mock("./reconcile-usage", () => ({ reconcileEveOwnerUsage: vi.fn() }));
+vi.mock("./reconcile-usage", () => ({
+  reconcileEveOwnerUsage: mocks.reconcile,
+}));
 vi.mock("./conversation-title", () => ({
   eveConversationTitleFallback: (message: string) => `Fallback: ${message}`,
 }));
@@ -53,7 +57,7 @@ beforeEach(() => {
   );
   mocks.request.mockImplementation((_owner, path) =>
     Promise.resolve(
-      path.startsWith("/eve/v1/operation/")
+      path.startsWith("/eve/chat/v1/operation/")
         ? Response.json({ code: "eve_operation_not_found" }, { status: 404 })
         : Response.json({ sessionId: "child" })
     )
@@ -65,7 +69,7 @@ it("does not allocate a native child before the initial checkpoint is ready", as
   expect(response.status).toBe(409);
   expect(await response.json()).not.toHaveProperty("creationRejected");
   expect(mocks.request.mock.calls.map((call) => call[1])).toEqual([
-    `/eve/v1/operation/${input.operationId}`,
+    `/eve/chat/v1/operation/${input.operationId}`,
   ]);
   mocks.readiness.mockResolvedValue(undefined);
   const retry = await createEveConversationOperation("owner", input);
@@ -218,4 +222,18 @@ it("recovers an accepted fork after the source was deleted", async () => {
   expect(await response.json()).toEqual({ sessionId: "accepted-child" });
   expect(mocks.source).not.toHaveBeenCalled();
   expect(mocks.request).toHaveBeenCalledTimes(1);
+});
+
+it("preserves creation identity when billing recovery is busy", async () => {
+  mocks.reconcile.mockRejectedValue(new EveUsageReconciliationBusyError());
+  const response = await createEveConversationOperation("owner", input);
+  expect(response.status).toBe(503);
+  expect(response.headers.get("Retry-After")).toBe("2");
+  const body = await response.json();
+  expect(body).toMatchObject({
+    code: "usage_reconciliation_busy",
+    retryable: true,
+  });
+  expect(body).not.toHaveProperty("creationRejected");
+  expect(mocks.reserve).not.toHaveBeenCalled();
 });

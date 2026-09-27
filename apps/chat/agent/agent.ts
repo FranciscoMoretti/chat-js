@@ -3,7 +3,7 @@ import { defineState } from "eve/context";
 
 import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { resolveEveModel } from "../lib/eve/model-selection";
-import { workflowWorld } from "../lib/eve/world-config";
+import { resolveWorkflowWorld } from "../lib/eve/world-config";
 
 configureWorkflowEnvironment(process.env);
 
@@ -16,7 +16,7 @@ export default defineAgent({
   build: { externalDependencies: ["pino", "pino-pretty", "thread-stream"] },
   // ChatJS owns tool selection, execution, rendered results, and usage accounting.
   defaultTools: false,
-  experimental: { workflow: { world: workflowWorld } },
+  experimental: { workflow: { world: resolveWorkflowWorld() } },
   model: defineDynamic({
     events: {
       "step.started": (_event, context) => {

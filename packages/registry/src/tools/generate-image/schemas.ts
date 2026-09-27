@@ -9,6 +9,7 @@ export const generateImageInput = z.object({
 });
 
 export const generateImageResult = z.object({
+  fileId: z.string().optional(),
   imageUrl: z.string(),
   prompt: z.string(),
 });

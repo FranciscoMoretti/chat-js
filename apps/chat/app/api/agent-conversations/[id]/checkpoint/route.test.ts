@@ -79,7 +79,7 @@ it("returns readiness only after the matching immutable checkpoint is available"
   });
   expect(mocks.capture.mock.calls[0].slice(0, 2)).toEqual([
     "owner",
-    "/eve/v1/session/native-source/checkpoint",
+    "/eve/chat/v1/session/native-source/checkpoint",
   ]);
   expect(JSON.parse(mocks.capture.mock.calls[0][2].body)).toEqual(input);
   expect(mocks.ready).toHaveBeenCalledWith(

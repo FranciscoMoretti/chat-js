@@ -10,6 +10,7 @@ import { registry } from "../registry";
 // A deliberate customization should be recorded here with its reason.
 const referenceItems = new Set([
   "vercel-gateway",
+  "vercel-blob-storage",
   "word-count",
   "get-weather",
   "retrieve-url",
