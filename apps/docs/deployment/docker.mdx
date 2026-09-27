@@ -17,7 +17,8 @@ An EVE-aware container deployment needs all of the following:
 
 - **Node.js 24+** for the application and EVE runtime
 - The complete EVE `.output` tree produced by `eve build`, including `.output/server`; copying only `.next/standalone` and `.next/static` omits EVE output
-- An application origin in `APP_URL` (or an explicit `EVE_INTERNAL_ORIGIN` for another application gateway)
+- Your public application origin in `APP_URL` (for example, `https://chat.example.com`), required for application URLs and authentication on non-Vercel deployments
+- Optionally, `EVE_INTERNAL_ORIGIN` to override the application gateway serving `/eve/chat/v1/*`. It defaults to `APP_URL` on non-Vercel deployments and does not configure the authentication origin or replace `APP_URL`
 - Independently generated `AUTH_SECRET` and `EVE_GATEWAY_SECRET`, plus database credentials, at build and runtime
 - A compatible direct/session Postgres connection with application and workflow schemas initialized; they may share one database
 
