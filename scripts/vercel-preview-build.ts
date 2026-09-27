@@ -7,56 +7,39 @@ import {
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
 
-type Phase =
-  | "validation"
-  | "connection"
-  | "lock acquisition"
-  | "migration"
-  | "lock cleanup"
-  | "build";
-type Connection = {
-  close: () => Promise<void>;
-  execute: (query: string) => Promise<void>;
-};
 type BuildOperations = {
-  openDatabase: (url: string) => Connection;
+  openDatabase: (url: string) => {
+    close: () => Promise<void>;
+    execute: (query: string) => Promise<void>;
+  };
   run: (
     command: "db:migrate" | "build",
     env: NodeJS.ProcessEnv
   ) => Promise<void>;
 };
 
-const safeErrorCode = (error: unknown) => {
+const formatBuildFailure = (phase: string, error: unknown) => {
+  if (phase === "validation" && error instanceof PreviewConfigurationError) {
+    return `Maintainer build failed during validation: ${error.message}`;
+  }
   const code =
     error && typeof error === "object" && "code" in error
       ? error.code
       : undefined;
-  if (typeof code !== "string") {
-    return;
-  }
-  if (
-    /^(?:[0-9]{2}|F0|HV|P0|XX)[0-9A-Z]{3}$/u.test(code) ||
-    /^(?:ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|SUBPROCESS_EXIT_\d{1,3})$/u.test(
+  // Only known code formats are safe to log; provider messages may contain URLs.
+  const safeCode =
+    typeof code === "string" &&
+    /^(?:(?:[0-9]{2}|F0|HV|P0|XX)[0-9A-Z]{3}|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|SUBPROCESS_EXIT_\d{1,3})$/u.test(
       code
-    )
-  ) {
-    return code;
-  }
-};
-
-export const formatBuildFailure = (phase: Phase, error: unknown) => {
-  if (phase === "validation" && error instanceof PreviewConfigurationError) {
-    return `Maintainer build failed during validation: ${error.message}`;
-  }
-  const code = safeErrorCode(error);
-  return `Maintainer build failed during ${phase}${code ? ` (${code})` : ""}.`;
+    );
+  return `Maintainer build failed during ${phase}${safeCode ? ` (${code})` : ""}.`;
 };
 
 export const runMaintainerBuild = async (
   source: NodeJS.ProcessEnv,
   operations: BuildOperations
 ) => {
-  let phase: Phase = "validation";
+  let phase = "validation";
   let failureMessage: string | undefined;
   try {
     const preview = resolveMaintainerPreviewDatabase(source);
@@ -66,7 +49,6 @@ export const runMaintainerBuild = async (
       const connection = operations.openDatabase(
         preview.DATABASE_MIGRATION_URL
       );
-      let failure: { error: unknown; phase: Phase } | undefined;
       try {
         await connection.execute("SELECT 1");
         phase = "lock acquisition";
@@ -79,21 +61,20 @@ export const runMaintainerBuild = async (
         phase = "migration";
         await operations.run("db:migrate", env);
       } catch (error) {
-        failure = { error, phase };
-      }
-      try {
-        await connection.close();
-      } catch (error) {
-        // Retain the original failure if cleanup also fails.
-        failure ??= { error, phase: "lock cleanup" };
-      }
-      if (failure) {
-        ({ phase } = failure);
-        throw failure.error;
+        failureMessage = formatBuildFailure(phase, error);
+      } finally {
+        try {
+          await connection.close();
+        } catch (error) {
+          // A cleanup failure must not hide the original migration failure.
+          failureMessage ??= formatBuildFailure("lock cleanup", error);
+        }
       }
     }
-    phase = "build";
-    await operations.run("build", env);
+    if (!failureMessage) {
+      phase = "build";
+      await operations.run("build", env);
+    }
   } catch (error) {
     // Never attach provider errors as a cause: they can contain credentials.
     failureMessage = formatBuildFailure(phase, error);

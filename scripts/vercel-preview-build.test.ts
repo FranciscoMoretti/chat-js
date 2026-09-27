@@ -1,7 +1,7 @@
 import { expect, it } from "bun:test";
 import { setTimeout as delay } from "node:timers/promises";
 
-import { formatBuildFailure, runMaintainerBuild } from "./vercel-preview-build";
+import { runMaintainerBuild } from "./vercel-preview-build";
 
 const preview = {
   CHATJS_PREVIEW_NEON_PROJECT_ID: "test",
@@ -14,14 +14,22 @@ const preview = {
   VERCEL_ENV: "preview",
 };
 
-const harness = (failAt?: string, cleanupFails = false) => {
+const lockQuery =
+  "SELECT pg_advisory_lock(hashtextextended('chatjs-preview-migrations', 0))";
+
+const harness = (
+  failAt?: string,
+  cleanupFails = false,
+  code = "53000",
+  lockWait = Promise.resolve()
+) => {
   const events: string[] = [];
   const commands: { command: string; env: NodeJS.ProcessEnv }[] = [];
   const step = (name: string) => {
     events.push(name);
     if (name === failAt || (name === "close" && cleanupFails)) {
       throw Object.assign(new Error("postgres://user:secret@host/db"), {
-        code: "53000",
+        code,
       });
     }
   };
@@ -39,7 +47,7 @@ const harness = (failAt?: string, cleanupFails = false) => {
           },
           execute: (query: string) => {
             step(query);
-            return Promise.resolve();
+            return query === lockQuery ? lockWait : Promise.resolve();
           },
         };
       },
@@ -51,8 +59,6 @@ const harness = (failAt?: string, cleanupFails = false) => {
     },
   };
 };
-const lockQuery =
-  "SELECT pg_advisory_lock(hashtextextended('chatjs-preview-migrations', 0))";
 
 it("locks before migration, releases before build, and passes direct credentials to both commands", async () => {
   const test = harness();
@@ -96,55 +102,36 @@ it("rejects invalid configuration before opening a connection or invoking a comm
 });
 
 it.each([
-  ["SELECT 1", "connection"],
-  [lockQuery, "lock acquisition"],
-  ["db:migrate", "migration"],
+  ["open", "connection", false],
+  ["SELECT 1", "connection", true],
+  ["SET lock_timeout = 0", "lock acquisition", true],
+  [lockQuery, "lock acquisition", true],
+  ["db:migrate", "migration", true],
+  ["close", "lock cleanup", true],
+  ["build", "build", true],
 ])(
-  "closes the lock and never builds after failure at %s",
-  async (step, phase) => {
-    const test = harness(step);
-    await expect(runMaintainerBuild(preview, test.operations)).rejects.toThrow(
-      `during ${phase} (53000)`
+  "reports failure at %s without leaking credentials",
+  async (step, phase, closes) => {
+    // Also fail cleanup to prove it cannot hide an earlier failure.
+    const test = harness(step, step === "db:migrate");
+    const failure = await runMaintainerBuild(preview, test.operations).catch(
+      (error: Error) => error
     );
-    expect(test.events.at(-1)).toBe("close");
-    expect(test.events).not.toContain("build");
+    expect(failure).toBeInstanceOf(Error);
+    expect(failure?.message).toBe(
+      `Maintainer build failed during ${phase} (53000).`
+    );
+    expect(failure?.cause).toBeUndefined();
+    expect(failure?.stack).not.toContain("postgres://");
+    expect(test.events.includes("close")).toBe(closes);
+    expect(test.events.includes("build")).toBe(step === "build");
   }
 );
 
-it("preserves migration failure when closing the connection also fails", async () => {
-  const test = harness("db:migrate", true);
-  await expect(runMaintainerBuild(preview, test.operations)).rejects.toThrow(
-    "during migration"
-  );
-});
-
-it.each([
-  ["close", "lock cleanup"],
-  ["build", "build"],
-  ["open", "connection"],
-])("identifies failure at %s", async (step, phase) => {
-  const test = harness(step);
-  await expect(runMaintainerBuild(preview, test.operations)).rejects.toThrow(
-    `during ${phase} (53000)`
-  );
-});
-
 it("does not start migration until the advisory lock is acquired", async () => {
-  const test = harness();
   const { promise: pending, resolve: acquired } =
     Promise.withResolvers<undefined>();
-  const baseOpen = test.operations.openDatabase;
-  test.operations.openDatabase = (url) => {
-    const connection = baseOpen(url);
-    const { execute } = connection;
-    connection.execute = async (query) => {
-      await execute(query);
-      if (query === lockQuery) {
-        await pending;
-      }
-    };
-    return connection;
-  };
+  const test = harness(undefined, false, "53000", pending);
   const build = runMaintainerBuild(preview, test.operations);
   await delay(0);
   expect(test.events).toContain(lockQuery);
@@ -157,47 +144,14 @@ it("does not start migration until the advisory lock is acquired", async () => {
   ]);
 });
 
-it("logs a safe code without messages, URLs, details or arbitrary code text", () => {
-  expect(
-    formatBuildFailure("connection", {
-      code: "ECONNREFUSED",
-      detail: preview.DATABASE_URL,
-      message: preview.DATABASE_URL,
-    })
-  ).toBe("Maintainer build failed during connection (ECONNREFUSED).");
-  expect(
-    formatBuildFailure("connection", {
-      code: preview.DATABASE_URL,
-      message: preview.DATABASE_URL,
-    })
-  ).toBe("Maintainer build failed during connection.");
-  expect(formatBuildFailure("lock acquisition", { code: "55P03" })).toContain(
-    "55P03"
+it.each([
+  ["ECONNREFUSED", " (ECONNREFUSED)"],
+  ["55P03", " (55P03)"],
+  ["SUBPROCESS_EXIT_1", " (SUBPROCESS_EXIT_1)"],
+  [preview.DATABASE_URL, ""],
+])("only includes safe error codes: %s", async (code, suffix) => {
+  const test = harness("SELECT 1", false, code);
+  await expect(runMaintainerBuild(preview, test.operations)).rejects.toThrow(
+    `Maintainer build failed during connection${suffix}.`
   );
-  expect(formatBuildFailure("build", { code: "SUBPROCESS_EXIT_1" })).toContain(
-    "SUBPROCESS_EXIT_1"
-  );
-  expect(
-    formatBuildFailure(
-      "validation",
-      new Error("Preview database postgres://user:secret@host")
-    )
-  ).toBe("Maintainer build failed during validation.");
-});
-
-it("discarded provider errors cannot leak through a cause or stack", async () => {
-  const test = harness("SELECT 1");
-  try {
-    await runMaintainerBuild(preview, test.operations);
-    throw new Error("Expected connection failure");
-  } catch (error) {
-    expect(error).toBeInstanceOf(Error);
-    if (error instanceof Error) {
-      expect(error.cause).toBeUndefined();
-      expect(error.stack).not.toContain("postgres://");
-      expect(error.message).toBe(
-        "Maintainer build failed during connection (53000)."
-      );
-    }
-  }
 });
