@@ -102,4 +102,10 @@ export const CodeExecution = defineToolRenderer({
   inputSchema: codeExecutionInput,
   outputSchema: codeExecutionResult,
   render: CodeExecutionView,
+  streamingInputSchema: codeExecutionInput.partial().extend({
+    // oxlint-disable-next-line promise/prefer-await-to-then -- Zod schema fallback, not a Promise.
+    language: codeExecutionInput.shape.language.optional().catch(undefined),
+    // oxlint-disable-next-line promise/prefer-await-to-then -- Zod schema fallback, not a Promise.
+    title: codeExecutionInput.shape.title.optional().catch(undefined),
+  }),
 });

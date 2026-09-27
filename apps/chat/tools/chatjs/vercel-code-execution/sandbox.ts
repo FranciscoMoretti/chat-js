@@ -1,3 +1,4 @@
+import { getVercelOidcTokenSync } from "@vercel/oidc";
 import { APIError, Sandbox } from "@vercel/sandbox";
 
 import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
@@ -78,7 +79,13 @@ export const resolveSandboxAuth = (): SandboxAuth => {
       token: configured.token,
     };
   }
-  const token = env.VERCEL_OIDC_TOKEN;
+  // Vercel supplies production tokens through the current request context.
+  let token: string;
+  try {
+    token = getVercelOidcTokenSync();
+  } catch {
+    throw new Error("Sandbox provider identity is unavailable.");
+  }
   const identity = token ? tokenClaims(token) : undefined;
   if (!(identity && token)) {
     throw new Error("Sandbox provider identity is unavailable.");
