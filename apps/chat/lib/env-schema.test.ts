@@ -18,6 +18,9 @@ describe("EVE runtime environment", () => {
 
   test.each([
     { ...valid, EVE_GATEWAY_SECRET: "short" },
+    { ...valid, EVE_INTERNAL_ORIGIN: "not-a-url" },
+    { ...valid, EVE_INTERNAL_ORIGIN: "https://example.com/api/eve" },
+    { ...valid, WORKFLOW_POSTGRES_URL: "not-a-url" },
     { ...valid, EVE_INTERNAL_ORIGIN: "postgresql://localhost/eve" },
     { ...valid, WORKFLOW_POSTGRES_URL: "https://localhost/eve" },
   ])("rejects malformed runtime configuration", (value) => {

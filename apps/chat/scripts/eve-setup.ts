@@ -5,6 +5,7 @@ import postgres from "postgres";
 
 import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
 import { installEvePostgresResourceFence } from "../lib/db/eve-resource-fence";
+import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 import { resolveEveSetup } from "./eve-setup-config";
 
@@ -18,7 +19,7 @@ const run = async () => {
   ) {
     throw new Error("Usage: eve-setup.ts [--check | --validate]");
   }
-  const databaseUrl = process.env.WORKFLOW_POSTGRES_URL;
+  const databaseUrl = resolveWorkflowDatabaseUrl(process.env);
   const { managed, local } = resolveEveSetup(
     resolveWorkflowWorld(),
     databaseUrl
@@ -45,7 +46,11 @@ const run = async () => {
         "-e",
         'import("@workflow/world-postgres/cli").then(({ setupDatabase }) => setupDatabase())',
       ],
-      { stdio: "pipe", timeout: 120_000 }
+      {
+        env: { ...process.env, WORKFLOW_POSTGRES_URL: databaseUrl },
+        stdio: "pipe",
+        timeout: 120_000,
+      }
     );
   }
   const connection = postgres(databaseUrl, { connect_timeout: 10, max: 1 });

@@ -21,6 +21,7 @@ import {
 } from "../lib/config-requirements";
 import { databaseEnvOptions } from "../lib/db/connection";
 import { getEveRuntimeEnvOptions } from "../lib/env-schema";
+import { resolveEveEnvironment } from "../lib/eve/environment";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
 
@@ -228,7 +229,9 @@ const checkEnv = async (): Promise<void> => {
         },
       ];
 
-  const eveOptions = z.object(getEveRuntimeEnvOptions(env)).safeParse(env);
+  const eveOptions = z
+    .object(getEveRuntimeEnvOptions(env))
+    .safeParse(resolveEveEnvironment(env));
   const eveErrors = eveOptions.success
     ? []
     : [
