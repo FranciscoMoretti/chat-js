@@ -11,20 +11,17 @@ import {
   getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
 } from "./migration-history";
-import { resolvePreviewDatabaseEnvironment } from "./preview-environment";
 
 config({
   path: ".env.local",
 });
 
 const runMigrate = async () => {
-  const previewDatabase = resolvePreviewDatabaseEnvironment(process.env);
   // Deployment builds preserve the Vercel preview safeguard. Explicit db:migrate
   // runs on every host and never relies on a deployment vendor's environment.
   if (
     process.argv.includes("--deployment") &&
-    process.env.VERCEL_ENV !== "production" &&
-    !previewDatabase
+    process.env.VERCEL_ENV !== "production"
   ) {
     console.log(
       "Skipping automatic migrations outside a production Vercel deployment"
@@ -36,7 +33,6 @@ const runMigrate = async () => {
     {
       DATABASE_MIGRATION_URL: process.env.DATABASE_MIGRATION_URL,
       DATABASE_URL: process.env.DATABASE_URL,
-      ...previewDatabase,
     },
     "migration"
   );
@@ -48,11 +44,6 @@ const runMigrate = async () => {
 
   const start = Date.now();
   try {
-    if (previewDatabase) {
-      // Serialize builds of the same Git branch through this direct session.
-      await connection.unsafe("SET lock_timeout = '60s'");
-      await connection`select pg_advisory_lock(hashtextextended('chatjs-preview-migrations', 0))`;
-    }
     const migrations = readMigrationFiles({ migrationsFolder });
     if (migrations.length === 0) {
       throw new Error("Expected at least one EVE database migration.");

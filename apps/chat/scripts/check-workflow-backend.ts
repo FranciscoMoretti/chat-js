@@ -1,7 +1,6 @@
 import postgres from "postgres";
 
 import { databaseConnection } from "../lib/db/connection";
-import { resolvePreviewDatabaseEnvironment } from "../lib/db/preview-environment";
 import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 
@@ -11,7 +10,6 @@ const check = async () => {
     {
       DATABASE_MIGRATION_URL: process.env.DATABASE_MIGRATION_URL,
       DATABASE_URL: process.env.DATABASE_URL,
-      ...resolvePreviewDatabaseEnvironment(process.env),
     },
     "migration"
   );

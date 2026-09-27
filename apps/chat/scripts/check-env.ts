@@ -20,7 +20,6 @@ import {
   isRequirementSatisfied,
 } from "../lib/config-requirements";
 import { databaseEnvOptions } from "../lib/db/connection";
-import { resolvePreviewDatabaseEnvironment } from "../lib/db/preview-environment";
 import { getEveRuntimeEnvOptions } from "../lib/env-schema";
 import { resolveEveEnvironment } from "../lib/eve/environment";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
@@ -208,10 +207,7 @@ const checkGatewaySnapshot = (): string | null => {
 };
 
 const checkEnv = async (): Promise<void> => {
-  const env = {
-    ...process.env,
-    ...resolvePreviewDatabaseEnvironment(process.env),
-  };
+  const { env } = process;
   if (isPlaywrightTestEnvironment(env)) {
     console.log(
       "✅ Skipping optional environment validation in Playwright test mode"
