@@ -5,9 +5,7 @@ type Environment = Record<string, string | undefined>;
 export const resolveWorkflowDatabaseUrl = (source: Environment) =>
   resolveWorkflowWorld(source) === "vercel"
     ? undefined
-    : source.WORKFLOW_POSTGRES_URL ||
-      source.DATABASE_MIGRATION_URL ||
-      source.DATABASE_URL;
+    : source.WORKFLOW_POSTGRES_URL || source.DATABASE_URL;
 
 /** Strip app/test URL paths only after checking the scheme and credentials.
  * Preserve invalid input so runtime and CLI schema validation can reject it. */

@@ -11,6 +11,8 @@ Schema changes during development can corrupt or pollute your main database. You
 
 Neon's branching feature creates instant copy-on-write database branches from your main database. Each branch is isolated, cheap (only stores diffs), and can be created/deleted in seconds.
 
+The helpers below are available only in the ChatJS monorepo, under `apps/chat/scripts/`. Generated apps do not include these scripts or the `db:branch:*`, `dev:neon`, and `db:migrate:neon` commands. Run the examples from `apps/chat` in a repository checkout.
+
 ## Implementation
 
 ### Setup

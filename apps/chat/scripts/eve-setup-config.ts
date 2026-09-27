@@ -16,7 +16,7 @@ export const resolveEveSetup = (
   }
   if (!databaseUrl) {
     throw new Error(
-      "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL URL, or provide DATABASE_MIGRATION_URL or DATABASE_URL (checked in that order as fallbacks)."
+      "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL runtime URL, or provide DATABASE_URL as the fallback."
     );
   }
   const validated = getEveRuntimeEnvOptions({}).WORKFLOW_POSTGRES_URL.safeParse(

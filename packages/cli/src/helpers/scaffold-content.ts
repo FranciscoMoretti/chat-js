@@ -4,6 +4,10 @@ import path from "node:path";
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  "scripts/db-branch-create.sh",
+  "scripts/db-branch-delete.sh",
+  "scripts/db-branch-use.sh",
+  "scripts/with-db.sh",
   "components/model-toolbar-visual-fixture.tsx",
   "components/ui/layout-primitives-visual-fixture.tsx",
   "components/ui/ui-primitives-visual-fixture.tsx",

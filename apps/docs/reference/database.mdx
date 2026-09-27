@@ -53,7 +53,7 @@ For [Supabase transaction pooling](https://supabase.com/docs/guides/database/pos
 
 ## EVE workflow database
 
-ChatJS uses `DATABASE_URL` for application records everywhere. Vercel deployments use managed Workflow automatically. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` when set, otherwise `DATABASE_MIGRATION_URL`, then `DATABASE_URL`. Application and workflow schemas can share one database. EVE requires a direct or session connection for its queue and `LISTEN` sessions; validation rejects known transaction-pooler endpoints. If the migration role has excessive privileges for the worker, supply a dedicated runtime role through `WORKFLOW_POSTGRES_URL`. Application pooling settings do not configure EVE's connection.
+ChatJS uses `DATABASE_URL` for application records everywhere. Vercel deployments use managed Workflow automatically. Local/self-hosted registered chats use `WORKFLOW_POSTGRES_URL` when set, otherwise `DATABASE_URL`. `DATABASE_MIGRATION_URL` is never used for workflow runtime or setup. Application and workflow schemas can share one database. EVE requires a direct or session connection for its queue and `LISTEN` sessions; validation rejects known transaction-pooler endpoints. If the app uses transaction pooling, supply a direct/session connection with runtime credentials through `WORKFLOW_POSTGRES_URL`. Application pooling settings do not configure EVE's connection.
 
 ### Local workflow database
 
@@ -79,7 +79,7 @@ npm run setup
 
 On Vercel, provision only the application database. `eve:setup` and `eve:check` skip workflow SQL setup. Omit `WORKFLOW_POSTGRES_URL`.
 
-For a self-hosted, continuously running Node service, configure a direct or session connection through `DATABASE_MIGRATION_URL` or `DATABASE_URL`. Set `WORKFLOW_POSTGRES_URL` to use a separate workflow database. Run the same `bun run setup` command with permission to install the workflow provider schema.
+For a self-hosted, continuously running Node service, configure a direct or session connection through `WORKFLOW_POSTGRES_URL` or `DATABASE_URL`. Set `WORKFLOW_POSTGRES_URL` to use a separate workflow database. Run the same `bun run setup` command with permission to install the workflow provider schema.
 
 Outside Vercel, setup uses the same resolved workflow connection as the runtime. For loopback hosts, it also installs ChatJS's local lifecycle fences. Hosted setup initializes the provider schema but does not certify hosted deletion or lifecycle coverage.
 
