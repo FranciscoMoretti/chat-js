@@ -318,13 +318,19 @@ test("sync preserves request-context auth and environment credential fallbacks",
   await installExecution(root, "vercel-runner");
   const descriptor = join(root, "tools/chatjs/vercel-runner/chatjs.json");
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-  definition.runtimeAuth = "vercel-oidc";
+  definition.envRequirements[0].runtimeAuth = "vercel-oidc";
   await writeFile(descriptor, JSON.stringify(definition));
   await syncTools(root);
   const { codeExecutionEnvRequirement } = await import(
     join(root, "tools/chatjs/code-execution-config.ts")
   );
-  expect(codeExecutionEnvRequirement.runtimeAuth).toBe("vercel-oidc");
+  expect(codeExecutionEnvRequirement.allOf).toEqual([
+    {
+      options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]],
+      runtimeAuth: "vercel-oidc",
+    },
+    { options: [["RUNNER_REGION"]] },
+  ]);
   expect(codeExecutionEnvRequirement.options).toEqual([
     ["RUNNER_TOKEN", "RUNNER_REGION"],
     ["RUNNER_ID", "RUNNER_SECRET", "RUNNER_REGION"],

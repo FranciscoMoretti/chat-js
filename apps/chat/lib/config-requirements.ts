@@ -9,6 +9,7 @@ import type { AiConfig, AuthenticationConfig } from "./config-schema";
 type EnvVarName = keyof NodeJS.ProcessEnv;
 
 export interface EnvRequirement {
+  allOf?: EnvRequirement[];
   description?: string;
   options: EnvVarName[][];
   runtimeAuth?: string;
@@ -56,9 +57,17 @@ export const authEnvRequirements: Record<
 export const isRequirementSatisfied = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
-): boolean =>
-  (requirement.runtimeAuth === "vercel-oidc" && env.VERCEL === "1") ||
-  requirement.options.some((option) => option.every((name) => !!env[name]));
+): boolean => {
+  if (requirement.allOf) {
+    return requirement.allOf.every((group) =>
+      isRequirementSatisfied(group, env)
+    );
+  }
+  return (
+    (requirement.runtimeAuth === "vercel-oidc" && env.VERCEL === "1") ||
+    requirement.options.some((option) => option.every((name) => !!env[name]))
+  );
+};
 
 export const getMissingRequirement = (
   requirement: EnvRequirement,

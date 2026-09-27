@@ -43,3 +43,33 @@ test("Vercel runtime authentication does not bypass unrelated environment requir
     )
   ).not.toBeNull();
 });
+
+test("Vercel OIDC satisfies credentials without bypassing a separate region requirement", () => {
+  const requirement: EnvRequirement = {
+    allOf: [sandbox, { options: [["RUNNER_REGION"]] }],
+    options: [["VERCEL_OIDC_TOKEN", "RUNNER_REGION"]],
+  };
+  expect(
+    getMissingRequirement(requirement, { NODE_ENV: "test", VERCEL: "1" })
+  ).not.toBeNull();
+  expect(
+    getMissingRequirement(requirement, {
+      NODE_ENV: "test",
+      RUNNER_REGION: "eu",
+      VERCEL: "1",
+    })
+  ).toBeNull();
+  expect(
+    getMissingRequirement(requirement, {
+      NODE_ENV: "test",
+      RUNNER_REGION: "eu",
+    })
+  ).not.toBeNull();
+  expect(
+    getMissingRequirement(requirement, {
+      NODE_ENV: "test",
+      RUNNER_REGION: "eu",
+      VERCEL_OIDC_TOKEN: "token",
+    })
+  ).toBeNull();
+});
