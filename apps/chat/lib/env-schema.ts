@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 import { databaseEnvOptions } from "./db/connection";
+import { isWorkflowTransactionPooler } from "./eve/environment";
 import { resolveWorkflowWorld } from "./eve/world-config";
 
 const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
@@ -11,6 +12,9 @@ const isPlaywrightTestEnvironmentEnabled = isPlaywrightTestEnvironment(
 
 const httpUrl = z.url().refine(
   (value) => {
+    if (!URL.canParse(value)) {
+      return false;
+    }
     const { protocol } = new URL(value);
     return protocol === "http:" || protocol === "https:";
   },
@@ -18,6 +22,9 @@ const httpUrl = z.url().refine(
 );
 const postgresUrl = z.url().refine(
   (value) => {
+    if (!URL.canParse(value)) {
+      return false;
+    }
     const { protocol } = new URL(value);
     return protocol === "postgres:" || protocol === "postgresql:";
   },
@@ -30,19 +37,55 @@ export const getEveRuntimeEnvOptions = (
   EVE_GATEWAY_SECRET: z
     .string()
     .min(32)
-    .describe("Private EVE gateway secret (at least 32 characters)"),
-  EVE_INTERNAL_ORIGIN: httpUrl.describe(
-    "Application gateway origin serving the named EVE chat worker"
-  ),
+    .describe(
+      "Required independent EVE gateway secret; generate with openssl rand -base64 32"
+    ),
+  EVE_INTERNAL_ORIGIN: httpUrl
+    .refine(
+      (value) => {
+        if (!URL.canParse(value)) {
+          return false;
+        }
+        const url = new URL(value);
+        return (
+          url.pathname === "/" &&
+          !url.search &&
+          !url.hash &&
+          !url.username &&
+          !url.password
+        );
+      },
+      {
+        message:
+          "EVE_INTERNAL_ORIGIN must be an origin without a path, query, or credentials",
+      }
+    )
+    .describe(
+      "Optional application gateway origin serving /eve/chat/v1; defaults to the current deployment or local app"
+    ),
   WORKFLOW_POSTGRES_URL:
     resolveWorkflowWorld(environment) === "vercel"
       ? z
           .string()
           .optional()
           .describe("Unused on Vercel; local/self-hosted workflows only")
-      : postgresUrl.describe(
-          "Required for local/self-hosted EVE workflows; unused on Vercel"
-        ),
+      : postgresUrl
+          .refine(
+            (value) => {
+              try {
+                return !isWorkflowTransactionPooler(value);
+              } catch {
+                return false;
+              }
+            },
+            {
+              message:
+                "EVE needs a direct or session PostgreSQL connection; set DATABASE_MIGRATION_URL or WORKFLOW_POSTGRES_URL instead of a transaction pooler",
+            }
+          )
+          .describe(
+            "Local/self-hosted workflow database override; defaults to DATABASE_MIGRATION_URL, then DATABASE_URL. Unused on Vercel"
+          ),
 });
 
 const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();

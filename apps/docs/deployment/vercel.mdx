@@ -133,7 +133,7 @@ Sandboxes run with:
 
 Keep **Automatically expose System Environment Variables** enabled in Vercel’s project settings for Preview and Production. Backend selection requires the platform-provided `VERCEL` and `VERCEL_ENV` values.
 
-Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL`, `EVE_GATEWAY_SECRET`, and `EVE_INTERNAL_ORIGIN`. EVE settings must be available during the build and at runtime.
+Configure the credentials listed in [Environment Variables](../reference/env-vars), including `DATABASE_URL` and an independently generated `EVE_GATEWAY_SECRET` (`openssl rand -base64 32`). Keep `EVE_INTERNAL_ORIGIN` unset to use the exact deployment URL from `VERCEL_URL`. These settings must be available during the build and at runtime.
 
 Initialize the application schema using the [database setup guide](../reference/database#hosted-workflow-database). Use separate application databases for previews and production, with branch-scoped preview credentials. Omit `WORKFLOW_POSTGRES_URL` on Vercel. It is required only for local/self-hosted registered-chat workflows.
 
