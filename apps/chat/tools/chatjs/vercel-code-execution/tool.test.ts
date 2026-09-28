@@ -172,3 +172,16 @@ it("retains ownership when creation outcome is unknown", async () => {
   expect(sandboxOwnership.created).not.toHaveBeenCalled();
   expect(sandboxOwnership.release).not.toHaveBeenCalled();
 });
+
+it("retains the completed execution charge when its result is invalid", async () => {
+  mocks.python.mockResolvedValue({ chart: 42, message: "4" });
+  const result = await codeExecution.execute?.(
+    { code: "source", language: "python", title: "Calculate" },
+    testToolContext()
+  );
+  expect(result).toMatchObject({
+    output: { message: expect.stringContaining("Sandbox execution failed") },
+    usage: { costUsd: 0.05 },
+  });
+  expect(mocks.cleanup).toHaveBeenCalledOnce();
+});
