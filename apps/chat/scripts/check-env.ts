@@ -40,6 +40,7 @@ const toolEnvironmentSchema = z.object({
       z.object({
         description: z.string().optional(),
         options: z.array(z.array(z.string()).min(1)).min(1),
+        runtimeAuth: z.literal("vercel-oidc").optional(),
       })
     )
     .default([]),

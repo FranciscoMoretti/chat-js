@@ -9,6 +9,7 @@ export const envRequirementSchema = z.object({
   options: z
     .array(z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/u)).min(1))
     .min(1),
+  runtimeAuth: z.literal("vercel-oidc").optional(),
 });
 const toolDefinitionBase = z.object({
   envRequirements: z.array(envRequirementSchema).default([]),

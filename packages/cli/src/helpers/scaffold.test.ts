@@ -397,12 +397,28 @@ describe("scaffoldFromTemplate", () => {
         "utf-8"
       )
     ).toContain("npm run fetch:models");
+    const neonFiles = [
+      "db-branch-create.sh",
+      "db-branch-delete.sh",
+      "db-branch-use.sh",
+      "with-db.sh",
+    ];
     expect(
-      await readFile(join(destination, "scripts", "with-db.sh"), "utf-8")
-    ).not.toContain("bun");
+      await Promise.all(
+        neonFiles.map((file) =>
+          Bun.file(join(destination, "scripts", file)).exists()
+        )
+      )
+    ).toEqual(neonFiles.map(() => false));
     expect(
-      await readFile(join(destination, "scripts", "db-branch-use.sh"), "utf-8")
-    ).not.toContain("bun");
+      Object.keys(packageJson.scripts).filter(
+        (name) =>
+          name.startsWith("db:branch:") ||
+          name === "dev:neon" ||
+          name === "db:migrate:neon"
+      )
+    ).toEqual([]);
+    expect(packageJson.scripts["db:migrate"]).toBe("tsx lib/db/migrate.ts");
   });
 
   it("allows known native package build scripts for pnpm scaffolds", async () => {

@@ -17,7 +17,7 @@ export const isValidatedToolRenderer = (
   renderer.validatedToolRenderer === true;
 
 type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
-  | { state: "input-streaming"; input?: undefined; output?: never }
+  | { state: "input-streaming"; input?: Partial<TInput>; output?: never }
   | { state: "input-available"; input: TInput; output?: never }
   | { state: "output-available"; input: TInput; output: TOutput }
 );
@@ -51,10 +51,12 @@ const InvalidResult = () => (
 /** Keep executable tools on the server and validate their persisted data at the UI boundary. */
 export const defineToolRenderer = <TInput, TOutput>({
   inputSchema,
+  streamingInputSchema,
   outputSchema,
   render: Renderer,
 }: {
   inputSchema: z.ZodType<TInput>;
+  streamingInputSchema?: z.ZodType<Partial<TInput>>;
   outputSchema: z.ZodType<TOutput>;
   render: ComponentType<{
     tool: RenderableTool<TInput, TOutput>;
@@ -91,8 +93,16 @@ export const defineToolRenderer = <TInput, TOutput>({
       return <p>Waiting for the tool.</p>;
     }
     if (value.state === "input-streaming") {
+      const input = streamingInputSchema?.safeParse(value.input);
       return (
-        <Renderer {...common} tool={{ ...identity, state: value.state }} />
+        <Renderer
+          {...common}
+          tool={{
+            ...identity,
+            input: input?.success ? input.data : undefined,
+            state: value.state,
+          }}
+        />
       );
     }
     const input = inputSchema.safeParse(value.input);

@@ -56,26 +56,6 @@ const shouldCopyChatAppFilePath = (
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
 
-const execCommand = (packageManager: PackageManager): string => {
-  switch (packageManager) {
-    case "bun": {
-      return "bunx";
-    }
-    case "pnpm": {
-      return "pnpm dlx";
-    }
-    case "yarn": {
-      return "yarn dlx";
-    }
-    case "npm": {
-      return "npx";
-    }
-    default: {
-      return packageManager;
-    }
-  }
-};
-
 const replaceInFile = async (
   filePath: string,
   replacements: [string, string][]
@@ -246,50 +226,6 @@ const normalizeChatAppFiles = async (
     join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
     [["bun fetch:models", runScript(packageManager, "fetch:models")]]
   );
-
-  await replaceInFile(join(destination, "scripts", "with-db.sh"), [
-    ["bunx neonctl", `${execCommand(packageManager)} neonctl`],
-    [
-      "filter out bun's package resolution output",
-      `filter out ${execCommand(packageManager)} resolution output`,
-    ],
-    [
-      "Run: bun db:branch:use main  (to switch back to main)",
-      "Run: bash scripts/db-branch-use.sh main  (to switch back to main)",
-    ],
-  ]);
-
-  await replaceInFile(join(destination, "scripts", "db-branch-create.sh"), [
-    ["bunx neonctl", `${execCommand(packageManager)} neonctl`],
-    [
-      'echo "To use it: bun db:branch:use $BRANCH_NAME"',
-      'echo "To use it: bash scripts/db-branch-use.sh $BRANCH_NAME"',
-    ],
-  ]);
-
-  await replaceInFile(join(destination, "scripts", "db-branch-use.sh"), [
-    ["bunx neonctl", `${execCommand(packageManager)} neonctl`],
-    [
-      'echo "Usage: bun db:branch:use <branch-name>"',
-      'echo "Usage: bash scripts/db-branch-use.sh <branch-name>"',
-    ],
-    [
-      'echo "       bun db:branch:use main  (switch to production)"',
-      'echo "       bash scripts/db-branch-use.sh main  (switch to production)"',
-    ],
-    [
-      'echo "Available branches: bun db:branch:list"',
-      `echo "Available branches: ${execCommand(packageManager)} neonctl branches list"`,
-    ],
-    [
-      'echo "Create branch: bun db:branch:create"',
-      'echo "Create branch: bash scripts/db-branch-create.sh"',
-    ],
-  ]);
-
-  await replaceInFile(join(destination, "scripts", "db-branch-delete.sh"), [
-    ["bunx neonctl", `${execCommand(packageManager)} neonctl`],
-  ]);
 
   await replaceInFile(join(destination, "scripts", "worktree-setup.sh"), [
     ["bun i", `${packageManager} install`],

@@ -10,7 +10,13 @@ import {
 
 test.each([
   {
-    excluded: ["evals/my-eval.eval.ts"],
+    excluded: [
+      "evals/my-eval.eval.ts",
+      "scripts/db-branch-create.sh",
+      "scripts/db-branch-delete.sh",
+      "scripts/db-branch-use.sh",
+      "scripts/with-db.sh",
+    ],
     filter: shouldCopyChatAppFile,
     name: "ChatJS",
   },

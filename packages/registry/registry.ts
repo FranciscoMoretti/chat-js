@@ -119,6 +119,7 @@ export const codeExecutionItem = {
   dependencies: [
     "ai",
     "zod",
+    `@vercel/oidc@${registryPackage.devDependencies["@vercel/oidc"]}`,
     `@vercel/sandbox@${registryPackage.devDependencies["@vercel/sandbox"]}`,
   ],
   description: "Execute Python and JavaScript with Vercel Sandbox",
@@ -145,6 +146,7 @@ export const codeExecutionItem = {
             ["VERCEL_OIDC_TOKEN"],
             ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
           ],
+          runtimeAuth: "vercel-oidc",
         },
       ],
       id: "vercel-code-execution",

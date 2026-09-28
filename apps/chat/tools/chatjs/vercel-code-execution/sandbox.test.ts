@@ -1,8 +1,8 @@
+import { getVercelOidcTokenSync } from "@vercel/oidc";
 import { APIError, Sandbox } from "@vercel/sandbox";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const envMock: {
-  VERCEL_OIDC_TOKEN: string | undefined;
   VERCEL_PROJECT_ID: string | undefined;
   VERCEL_SANDBOX_RUNTIME: string | undefined;
   VERCEL_SANDBOX_RUNTIME_PYTHON: string | undefined;
@@ -10,7 +10,6 @@ const envMock: {
   VERCEL_TEAM_ID: string | undefined;
   VERCEL_TOKEN: string | undefined;
 } = {
-  VERCEL_OIDC_TOKEN: undefined,
   VERCEL_PROJECT_ID: undefined,
   VERCEL_SANDBOX_RUNTIME: undefined,
   VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: undefined,
@@ -27,9 +26,15 @@ const jwt = (payload: unknown) =>
   `header.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.signature`;
 
 beforeEach(() => {
+  vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
   for (const key of Object.keys(envMock) as (keyof typeof envMock)[]) {
     envMock[key] = undefined;
   }
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("getSandboxRuntime", () => {
@@ -83,9 +88,25 @@ describe("getSandboxRuntime", () => {
 });
 
 describe("resolveSandboxAuth", () => {
+  it("resolves request-scoped OIDC credentials without an environment token", async () => {
+    const token = jwt({ owner_id: "team", project_id: "project" });
+    vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
+    vi.stubGlobal(Symbol.for("@vercel/request-context"), {
+      get: () => ({ headers: { "x-vercel-oidc-token": token } }),
+    });
+    expect(getVercelOidcTokenSync()).toBe(token);
+    const { resolveSandboxAuth } = await import("./sandbox");
+
+    expect(resolveSandboxAuth()).toEqual({
+      projectId: "project",
+      teamId: "team",
+      token,
+    });
+  });
+
   it("resolves the provider scope from an OIDC token", async () => {
     const token = jwt({ owner_id: "team", project_id: "project" });
-    envMock.VERCEL_OIDC_TOKEN = token;
+    vi.stubEnv("VERCEL_OIDC_TOKEN", token);
     const { resolveSandboxAuth } = await import("./sandbox");
 
     expect(resolveSandboxAuth()).toEqual({
@@ -135,12 +156,47 @@ describe("resolveSandboxAuth", () => {
   });
 
   it("does not expose malformed token contents in errors", async () => {
-    envMock.VERCEL_OIDC_TOKEN = jwt({ private: "secret-payload" });
+    vi.stubEnv("VERCEL_OIDC_TOKEN", jwt({ private: "secret-payload" }));
     const { resolveSandboxAuth } = await import("./sandbox");
 
     expect(() => resolveSandboxAuth()).toThrow(
       "Sandbox provider identity is unavailable."
     );
+  });
+
+  it("rejects missing credentials without leaking provider errors", async () => {
+    const { resolveSandboxAuth } = await import("./sandbox");
+
+    expect(() => resolveSandboxAuth()).toThrow(
+      "Sandbox provider identity is unavailable."
+    );
+  });
+
+  it("uses each request's token for execution and cleanup instead of a stale environment token", async () => {
+    vi.stubEnv(
+      "VERCEL_OIDC_TOKEN",
+      jwt({ owner_id: "stale", project_id: "stale" })
+    );
+    let token = jwt({ owner_id: "team", project_id: "first" });
+    vi.stubGlobal(Symbol.for("@vercel/request-context"), {
+      get: () => ({ headers: { "x-vercel-oidc-token": token } }),
+    });
+    const { resolveSandboxAuth, codeSandboxCleanupCapability } =
+      await import("./sandbox");
+
+    expect(resolveSandboxAuth()).toEqual({
+      projectId: "first",
+      teamId: "team",
+      token,
+    });
+    token = jwt({ owner_id: "team", project_id: "second" });
+    expect(
+      codeSandboxCleanupCapability.createCleanupSession().provider
+    ).toEqual({
+      projectId: "second",
+      teamId: "team",
+      token,
+    });
   });
 });
 

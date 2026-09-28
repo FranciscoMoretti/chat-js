@@ -21,7 +21,7 @@ describe("EVE setup selection", () => {
 
   it.each([undefined, ""])("explains missing database fallbacks: %s", (url) => {
     expect(() => resolveEveSetup(world, url)).toThrow(
-      "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL URL, or provide DATABASE_MIGRATION_URL or DATABASE_URL (checked in that order as fallbacks)."
+      "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL runtime URL, or provide DATABASE_URL as the fallback."
     );
   });
 
