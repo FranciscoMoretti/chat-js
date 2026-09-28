@@ -36,8 +36,9 @@ vi.mock("@/lib/eve/tool-models", () => ({
 vi.mock("@/lib/eve/generated-files", () => ({
   eveGeneratedFileUploader: () => mocks.upload,
 }));
-vi.mock("@/lib/eve/image-context", () => ({ eveImageContext: mocks.images }));
-vi.mock("@/lib/eve/tool-messages", () => ({ getToolMessages: () => [] }));
+vi.mock("@/lib/eve/tool-image-context", () => ({
+  eveToolImageContext: { get: mocks.images },
+}));
 vi.mock("@/lib/ai/active-gateway", () => ({
   getActiveGateway: () => ({ fetchModels: mocks.catalog }),
 }));

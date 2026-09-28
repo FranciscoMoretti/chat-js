@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { tools } from "../../tools/chatjs/tools";
 import type { ToolOutput } from "./tool-result";
-import { eveInstalledToolEnabled, eveToolAllowed } from "./turn-tools";
+import { eveToolAllowed } from "./turn-tools";
 
 type InvocableTool = Pick<
   ToolDefinition<unknown, ToolOutput>,
@@ -17,7 +17,11 @@ type InvocableTool = Pick<
   ): ToolModelOutput | Promise<ToolModelOutput>;
 };
 
-export const getInstalledTool = (name: string): InvocableTool | undefined => {
+// Composition is gated by the owning feature (research or document execution).
+// The standalone tool visibility flag does not disable that feature's dependency.
+export const getInstalledTool = (
+  name: "webSearch" | "codeExecution"
+): InvocableTool | undefined => {
   const installed: Readonly<
     Record<
       string,
@@ -29,7 +33,7 @@ export const getInstalledTool = (name: string): InvocableTool | undefined => {
     >
   > = tools;
   const definition = installed[name];
-  if (!definition || !eveInstalledToolEnabled(name) || !eveToolAllowed(name)) {
+  if (!definition || !eveToolAllowed(name)) {
     return;
   }
   // Nested model loops cannot present EVE's approval UI. Never bypass an authored policy.

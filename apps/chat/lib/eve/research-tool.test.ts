@@ -142,8 +142,9 @@ it("returns clarification without creating a document", async () => {
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("retains incurred cost if saving the report fails", async () => {
-  mocks.save.mockRejectedValue(new Error("database unavailable"));
+it("propagates report persistence failures through EVE", async () => {
+  const error = new Error("database unavailable");
+  mocks.save.mockRejectedValue(error);
   vi.mocked(runDeepResearchPipeline).mockImplementation(
     async (_input, _config, _stream, options) => {
       options.costAccumulator.addAPICost("search", 5);
@@ -153,13 +154,9 @@ it("retains incurred cost if saving the report fails", async () => {
       };
     }
   );
-  const outputs = await Array.fromAsync(executeEveResearch({}, context, []));
-  expect(outputs.at(-1)).toMatchObject({
-    error: expect.any(String),
-    output: null,
-    status: "error",
-    usage: { costUsd: 0.05 },
-  });
+  await expect(
+    Array.fromAsync(executeEveResearch({}, context, []))
+  ).rejects.toBe(error);
 });
 
 it("rejects disabled research before doing provider or database work", async () => {

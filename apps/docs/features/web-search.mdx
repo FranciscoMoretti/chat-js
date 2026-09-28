@@ -151,6 +151,6 @@ Use web search for discovery and URL retrieval for extracting content from known
 
 ## External search tools
 
-Pass an external registry item URL to `--search-tool`. The item exports a standard AI SDK tool and declares `slot: "webSearch"`. It owns its schema, output, credentials, and optional renderer. The multi-query schema and progress cards above describe the built-in items, not requirements for external search tools.
+Pass an external registry item URL to `--search-tool`. The item exports a native EVE tool using `defineTool` from `eve/tools` and declares `slot: "webSearch"`. It owns its schema, output, credentials, and optional renderer. The multi-query schema and progress cards above describe the built-in items, not requirements for external search tools.
 
 Chat and deep research both expose the selected tool to their models. See [Authoring tools](../tools/authoring#feature-selections) for metadata and renderer registration.

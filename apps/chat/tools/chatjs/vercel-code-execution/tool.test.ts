@@ -90,6 +90,7 @@ it("normalizes execution errors and cleans up the sandbox", async () => {
       chart: "",
       message: "Sandbox execution failed: remote execution failed",
     },
+    usage: { costUsd: 0 },
   });
   expect(mocks.cleanup).toHaveBeenCalledWith(
     sandbox,

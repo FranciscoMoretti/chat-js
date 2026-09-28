@@ -81,7 +81,7 @@ export const executeEveResearch = async function* executeEveResearch(
                 ...context,
                 abortSignal: options.abortSignal,
               }
-            ).catch(progress.usage.fail)
+            )
           );
           return { ...document, result: "Research report saved." };
         },

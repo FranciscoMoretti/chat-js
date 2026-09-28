@@ -39,7 +39,9 @@ export const createResearchSearchTool = (
         if (!receipt.success) {
           continue;
         }
-        for (const update of receipt.data.updates ?? []) {
+        // Entries can replace earlier running statuses in place. Replay the
+        // cumulative snapshot with stable IDs so consumers receive those changes.
+        for (const [index, update] of (receipt.data.updates ?? []).entries()) {
           const parsed = ResearchUpdateSchema.safeParse(update);
           if (
             parsed.success &&
@@ -48,7 +50,7 @@ export const createResearchSearchTool = (
           ) {
             dataStream.write({
               data: { ...parsed.data, toolCallId: context.callId },
-              id: `${options.toolCallId}:${receipt.data.updates?.indexOf(update)}`,
+              id: `${options.toolCallId}:${index}`,
               type: "data-researchUpdate",
             });
           }
