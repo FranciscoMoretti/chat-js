@@ -11,11 +11,15 @@ const mocks = await vi.hoisted(async () => {
   return {
     documents: { enabled: true, types: { text: true } },
     enabled: { enabled: true },
+    logError: vi.fn(),
     modelId: gatewayModelDefaults.workflows.chat,
     resolveModel: vi.fn(),
     save: vi.fn(),
   };
 });
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: mocks.logError }),
+}));
 vi.mock("../config", () => ({
   config: {
     ai: { tools: { deepResearch: mocks.enabled, documents: mocks.documents } },
@@ -142,7 +146,7 @@ it("returns clarification without creating a document", async () => {
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("propagates report persistence failures through EVE", async () => {
+it("retains research charges and logs the original report persistence failure", async () => {
   const error = new Error("database unavailable");
   mocks.save.mockRejectedValue(error);
   vi.mocked(runDeepResearchPipeline).mockImplementation(
@@ -154,9 +158,15 @@ it("propagates report persistence failures through EVE", async () => {
       };
     }
   );
-  await expect(
-    Array.fromAsync(executeEveResearch({}, context, []))
-  ).rejects.toBe(error);
+  const outputs = await Array.fromAsync(executeEveResearch({}, context, []));
+  expect(outputs.at(-1)).toMatchObject({
+    status: "error",
+    usage: { costUsd: 0.05 },
+  });
+  expect(mocks.logError).toHaveBeenCalledWith(
+    expect.objectContaining({ error }),
+    "Research report persistence failed"
+  );
 });
 
 it("rejects disabled research before doing provider or database work", async () => {

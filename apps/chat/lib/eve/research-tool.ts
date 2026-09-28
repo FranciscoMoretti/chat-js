@@ -8,12 +8,15 @@ import { z } from "zod";
 import { getDeepResearchConfig } from "../../tools/platform/deep-research/configuration";
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { config } from "../config";
+import { createModuleLogger } from "../logger";
 import { eveDocumentResult } from "./document-contracts";
 import { executeEveDocumentTool } from "./document-tools";
 import { loadEveModelDefinition, resolveEveModel } from "./model-selection";
 import { executeWithResearchProgress } from "./research-progress";
 import { createResearchSearchTool } from "./research-search";
 import { createEveToolCost } from "./tool-cost";
+
+const log = createModuleLogger("eve/research");
 
 export const eveResearchInput = z.object({});
 
@@ -73,17 +76,23 @@ export const executeEveResearch = async function* executeEveResearch(
         },
         saveReport: async (content) => {
           options.abortSignal.throwIfAborted();
-          const document = eveDocumentResult.parse(
-            await executeEveDocumentTool(
-              "createTextDocument",
-              { ...content, fileIds: [] },
-              {
-                ...context,
-                abortSignal: options.abortSignal,
-              }
-            )
-          );
-          return { ...document, result: "Research report saved." };
+          try {
+            const document = eveDocumentResult.parse(
+              await executeEveDocumentTool(
+                "createTextDocument",
+                { ...content, fileIds: [] },
+                { ...context, abortSignal: options.abortSignal }
+              )
+            );
+            return { ...document, result: "Research report saved." };
+          } catch (error) {
+            options.abortSignal.throwIfAborted();
+            log.error(
+              { callId: context.callId, error },
+              "Research report persistence failed"
+            );
+            return progress.usage.fail();
+          }
         },
         searchTool: createResearchSearchTool(
           context,

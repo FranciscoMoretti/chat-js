@@ -125,9 +125,8 @@ Output rules:
                   sandbox,
                 });
 
-          const output = codeExecutionResult.parse(result);
           usage.addCostUsd(COST_CENTS / 100);
-          return output;
+          return codeExecutionResult.parse(result);
         } catch (error) {
           log.error({ error, language, requestId }, "code execution failed");
           // The fixed application charge applies only to completed executions.
