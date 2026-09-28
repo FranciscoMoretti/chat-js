@@ -5,6 +5,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { executeEveResearch } from "./research-tool";
+import { EveSessionMappingError } from "./session-mapping-error";
 
 const mocks = await vi.hoisted(async () => {
   const { gatewayModelDefaults } = await import("../ai/gateway-model-defaults");
@@ -207,3 +208,18 @@ it("forwards configured reasoning options into the research provider request", a
 vi.mock("./research-search", () => ({
   createResearchSearchTool: () => {},
 }));
+
+it("preserves report authorization failures", async () => {
+  const error = new EveSessionMappingError("owner_mismatch");
+  mocks.save.mockRejectedValue(error);
+  vi.mocked(runDeepResearchPipeline).mockImplementation(
+    async (_input, _config, _stream, options) => ({
+      data: await options.saveReport({ content: "Content", title: "Report" }),
+      type: "report",
+    })
+  );
+  await expect(
+    Array.fromAsync(executeEveResearch({}, context, []))
+  ).rejects.toBe(error);
+  expect(mocks.logError).not.toHaveBeenCalled();
+});

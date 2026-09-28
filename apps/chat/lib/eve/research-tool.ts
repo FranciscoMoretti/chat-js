@@ -14,6 +14,7 @@ import { executeEveDocumentTool } from "./document-tools";
 import { loadEveModelDefinition, resolveEveModel } from "./model-selection";
 import { executeWithResearchProgress } from "./research-progress";
 import { createResearchSearchTool } from "./research-search";
+import { EveSessionMappingError } from "./session-mapping-error";
 import { createEveToolCost } from "./tool-cost";
 
 const log = createModuleLogger("eve/research");
@@ -87,6 +88,9 @@ export const executeEveResearch = async function* executeEveResearch(
             return { ...document, result: "Research report saved." };
           } catch (error) {
             options.abortSignal.throwIfAborted();
+            if (error instanceof EveSessionMappingError) {
+              throw error;
+            }
             log.error(
               { callId: context.callId, error },
               "Research report persistence failed"
