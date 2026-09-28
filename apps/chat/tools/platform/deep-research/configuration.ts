@@ -1,64 +1,17 @@
 import { config } from "@/lib/config";
 
-export interface DeepResearchRuntimeConfig {
-  allow_clarification: boolean;
-  compression_model: string;
-  compression_model_max_tokens: number;
-  final_report_model: string;
-  final_report_model_max_tokens: number;
-  max_concurrent_research_units: number;
-  max_researcher_iterations: number;
-  // General Configuration
-  max_structured_output_retries: number;
-
-  // MCP server configuration (not yet implemented)
-  mcp_config?: {
-    url?: string;
-    tools?: string[];
-    headers?: Record<string, string>;
-  };
-  mcp_prompt?: string;
-  research_model: string;
-  research_model_max_tokens: number;
-  search_api_max_queries: number;
-
-  // Research Configuration
-  search_enabled: boolean;
-  status_update_model: string;
-  status_update_model_max_tokens: number;
-
-  // Model Configuration
-  summarization_model: string;
-  summarization_model_max_tokens: number;
-}
-
-export const getDeepResearchConfig = (): DeepResearchRuntimeConfig => {
-  const {
-    defaultModel,
-    finalReportModel,
-    allowClarification,
-    maxConcurrentResearchUnits,
-    maxSearchQueries,
-    maxResearcherIterations,
-  } = config.ai.tools.deepResearch;
-
+export const getDeepResearchConfig = () => {
+  const options = config.ai.tools.deepResearch;
   return {
-    // General Configuration
-    allow_clarification: allowClarification,
-    compression_model: defaultModel,
+    allow_clarification: options.allowClarification,
+    compression_model: options.defaultModel,
     compression_model_max_tokens: 4000,
-    final_report_model: finalReportModel,
+    final_report_model: options.finalReportModel,
     final_report_model_max_tokens: 6000,
-    max_concurrent_research_units: maxConcurrentResearchUnits,
-    max_researcher_iterations: maxResearcherIterations,
-    max_structured_output_retries: 3,
-    research_model: defaultModel,
+    max_concurrent_research_units: options.maxConcurrentResearchUnits,
+    max_researcher_iterations: options.maxResearcherIterations,
+    research_model: options.defaultModel,
     research_model_max_tokens: 4000,
-    search_api_max_queries: maxSearchQueries,
-    search_enabled: true,
-    status_update_model: defaultModel,
-    status_update_model_max_tokens: 4000,
-    summarization_model: defaultModel,
-    summarization_model_max_tokens: 4000,
+    search_api_max_queries: options.maxSearchQueries,
   };
 };

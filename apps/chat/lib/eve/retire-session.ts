@@ -7,6 +7,7 @@ import {
 } from "../db/eve-queries";
 import { env } from "../env";
 import { getEveConnectionOptions } from "./connection-options";
+import { reconcileEveSubagentUsage } from "./reconcile-usage";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
@@ -47,6 +48,9 @@ export const retireEveSessionForDeletion = async (
     if ((await ingestEveUsage(ownerId, sessionId, event)) === false) {
       unresolved = true;
     }
+  }
+  if (!(await reconcileEveSubagentUsage(ownerId, sessionId))) {
+    unresolved = true;
   }
   if (unresolved) {
     throw new Error(

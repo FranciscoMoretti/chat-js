@@ -20,6 +20,7 @@ import {
   eveNamedDocumentCheckpointEntry,
   eveVote,
   eveSearchText,
+  eveSubagentSession,
 } from "./schema";
 
 /**
@@ -117,6 +118,9 @@ export const completeEveConversationDeletion = async (
     await tx
       .delete(eveSearchText)
       .where(inArray(eveSearchText.conversationId, ids));
+    await tx
+      .delete(eveSubagentSession)
+      .where(inArray(eveSubagentSession.conversationId, ids));
     await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
     await tx
       .update(eveConversation)

@@ -1,202 +1,171 @@
-import { generateText } from "ai";
-import { MockLanguageModelV3 } from "ai/test";
+import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { executeEveResearch } from "./research-tool";
 
-const mocks = await vi.hoisted(async () => {
-  const { gatewayModelDefaults } = await import("../ai/gateway-model-defaults");
-  return {
-    documents: { enabled: true, types: { text: true } },
-    enabled: { enabled: true },
-    modelId: gatewayModelDefaults.workflows.chat,
-    resolveModel: vi.fn(),
-    save: vi.fn(),
-  };
-});
-vi.mock("../config", () => ({
-  config: {
-    ai: { tools: { deepResearch: mocks.enabled, documents: mocks.documents } },
-  },
+const mocks = vi.hoisted(() => ({ prepare: vi.fn(), save: vi.fn() }));
+vi.mock("./research-steps", () => ({
+  prepareResearch: mocks.prepare,
+  researchCompletionTime: () => Promise.resolve(100),
+  saveResearchReport: mocks.save,
 }));
-vi.mock("../../tools/platform/deep-research/configuration", () => ({
-  getDeepResearchConfig: () => ({}),
-}));
-vi.mock("../../tools/platform/deep-research/pipeline", () => ({
-  runDeepResearchPipeline: vi.fn(),
-}));
-vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.save }));
-vi.mock("./model-selection", () => ({
-  loadEveModelDefinition: vi.fn(),
-  resolveEveModel: mocks.resolveModel,
-}));
-vi.mock("../ai/active-gateway", () => ({
-  getActiveGateway: () => ({
-    fetchModels: () =>
-      Promise.resolve([
-        {
-          id: mocks.modelId,
-          pricing: { input: "0.000001", output: "0.000002" },
-        },
-      ]),
-  }),
-}));
-vi.mock("../ai/to-model-data", () => ({
-  toModelData: (value: unknown) => value,
-}));
-const context = testToolContext({
-  abortSignal: new AbortController().signal,
-  callId: "research-call",
-  session: {
-    auth: {
-      current: null,
-      initiator: {
-        attributes: {},
-        authenticator: "test",
-        principalId: "owner",
-        principalType: "user",
-      },
-    },
-    id: "session",
-    turn: { id: "turn", sequence: 1 },
-  },
-});
+const agent = vi.fn();
+let controller: AbortController;
+let context: WorkflowToolContext;
 const document = {
-  date: "2026-09-10",
-  documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
+  date: "2026-09-28",
+  documentId: "doc",
   kind: "text",
-  revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
+  result: "Saved",
+  revisionId: "revision",
   status: "success",
   title: "Report",
 };
-
 beforeEach(() => {
-  vi.clearAllMocks();
-  mocks.enabled.enabled = true;
-  mocks.documents.enabled = true;
+  vi.resetAllMocks();
+  controller = new AbortController();
+  context = {
+    ...testToolContext({ abortSignal: controller.signal }),
+    agent,
+    agents: {},
+    ask: vi.fn(),
+  };
+  mocks.prepare.mockResolvedValue({
+    config: {
+      allow_clarification: false,
+      max_concurrent_research_units: 2,
+      max_researcher_iterations: 2,
+      search_api_max_queries: 3,
+    },
+    date: "Sep 28, 2026",
+    messages: "Research this",
+    timestamp: 0,
+  });
   mocks.save.mockResolvedValue(document);
 });
 
-it("persists through the owning native call and includes research progress and all nested costs", async () => {
-  vi.mocked(runDeepResearchPipeline).mockImplementation(
-    async (input, _config, stream, options) => {
-      expect(input.messages).toEqual([
-        { content: "Research this", role: "user" },
-      ]);
-      stream.write({
-        data: {
-          timestamp: 0,
-          title: "Researching",
-          toolCallId: input.toolCallId,
-          type: "started",
-        },
-        type: "data-researchUpdate",
-      });
-      options.costAccumulator.addAPICost("search", 5);
-      options.costAccumulator.addLLMCost(
-        mocks.modelId,
-        { inputTokens: 100, outputTokens: 200 },
-        "research"
-      );
-      return {
-        data: await options.saveReport({
-          content: "# Research",
-          title: "Report",
-        }),
-        type: "report",
-      };
-    }
+it("lets the supervisor request follow-up after receiving findings and synthesizes all rounds", async () => {
+  agent
+    .mockResolvedValueOnce({
+      research_brief: "Compare evidence",
+      title: "Report",
+    })
+    .mockResolvedValueOnce({ complete: false, topics: ["Initial topic"] })
+    .mockResolvedValueOnce({ findings: "Raw source https://example.test/one" })
+    .mockResolvedValueOnce({ findings: "First findings" })
+    .mockResolvedValueOnce({ complete: false, topics: ["Missing evidence"] })
+    .mockResolvedValueOnce({ findings: "Additional sources" })
+    .mockResolvedValueOnce({ findings: "Follow-up findings" })
+    .mockResolvedValueOnce({ complete: true, topics: [] })
+    .mockResolvedValueOnce({ content: "# Both findings", title: "Report" });
+  const outputs = await Array.fromAsync(executeEveResearch({}, context));
+  expect(agent.mock.calls.map(([name]) => name)).toEqual([
+    "researchPlanner",
+    "researchPlanner",
+    "researcher",
+    "researchCompressor",
+    "researchPlanner",
+    "researcher",
+    "researchCompressor",
+    "researchPlanner",
+    "researchWriter",
+  ]);
+  expect(agent.mock.calls[4][1].message).toContain("First findings");
+  expect(agent.mock.calls[7][1].message).toContain("Follow-up findings");
+  expect(agent.mock.calls[8][1].message).toContain(
+    "First findings\nFollow-up findings"
   );
-  const outputs = await Array.fromAsync(
-    executeEveResearch({}, context, [
-      { content: "Research this", role: "user" },
-    ])
-  );
-  expect(outputs[0].updates).toHaveLength(1);
   expect(outputs.at(-1)).toMatchObject({
     output: { ...document, format: "report" },
-    usage: { costUsd: 0.0505 },
+    usage: { costUsd: 0 },
   });
-  expect(mocks.save).toHaveBeenCalledExactlyOnceWith(
-    "createTextDocument",
-    { content: "# Research", fileIds: [], title: "Report" },
-    expect.objectContaining({
-      callId: context.callId,
-      session: context.session,
-    })
+  expect(outputs[0].updates).toContainEqual(
+    expect.objectContaining({ type: "started" })
   );
+  expect(outputs.at(-1)?.updates).toContainEqual(
+    expect.objectContaining({ type: "completed" })
+  );
+  expect(mocks.save).toHaveBeenCalledExactlyOnceWith(context, {
+    content: "# Both findings",
+    title: "Report",
+  });
 });
 
-it("returns clarification without creating a document", async () => {
-  vi.mocked(runDeepResearchPipeline).mockResolvedValue({
-    data: "Which topic?",
-    type: "clarifying_question",
+it("bounds adaptive decisions even when the supervisor never finishes", async () => {
+  agent.mockImplementation((name: string) => {
+    if (name === "researchPlanner") {
+      return Promise.resolve(
+        agent.mock.calls.length === 1
+          ? { research_brief: "Brief", title: "Report" }
+          : { complete: false, topics: ["Topic"] }
+      );
+    }
+    return Promise.resolve(
+      name === "researchWriter"
+        ? { content: "Content", title: "Report" }
+        : { findings: "Evidence" }
+    );
   });
-  const outputs = await Array.fromAsync(executeEveResearch({}, context, []));
-  expect(outputs.at(-1)?.output).toEqual({
-    answer: "Which topic?",
+  await Array.fromAsync(executeEveResearch({}, context));
+  expect(
+    agent.mock.calls.filter(([name]) => name === "researchPlanner")
+  ).toHaveLength(4);
+  expect(
+    agent.mock.calls.filter(([name]) => name === "researcher")
+  ).toHaveLength(3);
+  expect(mocks.save).toHaveBeenCalledOnce();
+});
+
+it("returns clarification without starting research or saving a document", async () => {
+  const prepared = await mocks.prepare();
+  mocks.prepare.mockResolvedValue({
+    ...prepared,
+    config: { ...prepared.config, allow_clarification: true },
+  });
+  agent.mockResolvedValue({
+    need_clarification: true,
+    question: "Which scope?",
+    verification: "",
+  });
+  const outputs = await Array.fromAsync(executeEveResearch({}, context));
+  expect(outputs).toHaveLength(1);
+  expect(outputs[0].output).toEqual({
+    answer: "Which scope?",
     format: "clarifying_questions",
   });
+  expect(agent).toHaveBeenCalledOnce();
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("retains incurred cost if saving the report fails", async () => {
-  mocks.save.mockRejectedValue(new Error("database unavailable"));
-  vi.mocked(runDeepResearchPipeline).mockImplementation(
-    async (_input, _config, _stream, options) => {
-      options.costAccumulator.addAPICost("search", 5);
-      return {
-        data: await options.saveReport({ content: "Content", title: "Report" }),
-        type: "report",
-      };
-    }
-  );
-  const outputs = await Array.fromAsync(executeEveResearch({}, context, []));
-  expect(outputs.at(-1)).toMatchObject({
-    error: expect.any(String),
-    output: null,
-    status: "error",
-    usage: { costUsd: 0.05 },
-  });
-});
-
-it("rejects disabled research before doing provider or database work", async () => {
-  mocks.enabled.enabled = false;
-  await expect(executeEveResearch({}, context, []).next()).rejects.toThrow(
-    "enabled text documents"
-  );
-  expect(runDeepResearchPipeline).not.toHaveBeenCalled();
+it("runs topics sequentially and stops before new work or saving after cancellation", async () => {
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
+    .mockImplementationOnce(() => {
+      controller.abort(new Error("Cancelled"));
+      return Promise.reject(controller.signal.reason);
+    });
+  await expect(
+    Array.fromAsync(executeEveResearch({}, context))
+  ).rejects.toThrow("Cancelled");
+  expect(agent).toHaveBeenCalledTimes(3);
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("forwards configured reasoning options into the research provider request", async () => {
-  const model = new MockLanguageModelV3({
-    doGenerate: () => Promise.reject(new Error("provider reached")),
-  });
-  mocks.resolveModel.mockResolvedValue({
-    model,
-    modelOptions: { providerOptions: { openai: { reasoningEffort: "high" } } },
-  });
-  vi.mocked(runDeepResearchPipeline).mockImplementation(
-    async (_input, _config, _stream, options) => {
-      await expect(
-        generateText({
-          maxRetries: 0,
-          model: await options.getLanguageModel(mocks.modelId),
-          prompt: "Research",
-        })
-      ).rejects.toThrow("provider reached");
-      return { data: "Scope?", type: "clarifying_question" };
-    }
-  );
-  await Array.fromAsync(executeEveResearch({}, context, []));
-  expect(model.doGenerateCalls[0].providerOptions).toMatchObject({
-    openai: { reasoningEffort: "high" },
-  });
+it("validates native outputs and propagates failures without a successful report receipt", async () => {
+  agent.mockResolvedValue({ research_brief: 12, title: "Report" });
+  await expect(
+    Array.fromAsync(executeEveResearch({}, context))
+  ).rejects.toThrow();
+  expect(mocks.save).not.toHaveBeenCalled();
+  agent
+    .mockReset()
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: true, topics: [] })
+    .mockResolvedValueOnce({ content: "Content", title: "Report" });
+  mocks.save.mockRejectedValue(new Error("Storage unavailable"));
+  await expect(
+    Array.fromAsync(executeEveResearch({}, context))
+  ).rejects.toThrow("Storage unavailable");
 });
-
-vi.mock("./research-search", () => ({
-  createResearchSearchTool: () => {},
-}));

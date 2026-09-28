@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ingestEveUsage } from "./usage";
 
 const record = vi.hoisted(() => vi.fn());
+vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => record.mockReset());
 it("records each auxiliary model attempt with replay-stable independent identities", async () => {
@@ -149,4 +150,36 @@ it("does not infer billing from ordinary tool output", async () => {
     toolEvent({ answer: "ordinary data", costUsd: 5 })
   );
   expect(record).not.toHaveBeenCalled();
+});
+
+it("attributes child model events to the root turn without billing delegation summaries", async () => {
+  const attribution = { sessionId: "root", turnId: "turn_7" };
+  const event: MessageStreamEvent = {
+    data: {
+      hookId: "aux",
+      modelCalls: [{ modelId: "model", usage: { costUsd: 0.03 } }],
+      turnId: "turn_0",
+    },
+    meta: { at: "2026-09-28T00:00:00Z", id: "event" },
+    type: "hook.result",
+  };
+  await ingestEveUsage("owner", "child", event, attribution);
+  await ingestEveUsage("owner", "child", event, attribution);
+  expect(record.mock.calls[0][0]).toMatchObject({
+    costUsd: 0.03,
+    eventId: "eve-child:child:event:model-call:0",
+    sessionId: "root",
+    turnId: "turn_7",
+  });
+  expect(record.mock.calls[1]).toEqual(record.mock.calls[0]);
+  await ingestEveUsage("owner", "root", {
+    data: {
+      callId: "delegation",
+      output: "Finished",
+      subagentName: "researcher",
+    },
+    meta: event.meta,
+    type: "subagent.completed",
+  });
+  expect(record).toHaveBeenCalledTimes(2);
 });

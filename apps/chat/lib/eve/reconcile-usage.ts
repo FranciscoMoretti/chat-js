@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/no-await-in-loop -- Settle evidence and advance durable cursors in stream order. */
 import { Client } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
 
@@ -7,6 +8,11 @@ import {
   withManagedUsageReconciliation,
 } from "../db/eve-billing";
 import { listEveOwnerBindings } from "../db/eve-queries";
+import {
+  advanceEveSubagentUsageCursor,
+  getEveSubagent,
+  listEveSubagents,
+} from "../db/eve-subagents";
 import { env } from "../env";
 import { ingestEveActivity } from "./activity";
 import { getEveConnectionOptions } from "./connection-options";
@@ -15,6 +21,68 @@ import { assertEveConfigured } from "./server";
 import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
+
+/** Settle native descendants before admission or erasing a root session. */
+export const reconcileEveSubagentUsage = async (
+  ownerId: string,
+  sessionId: string,
+  replayUnpriced = false
+) => {
+  const client = new Client(getEveConnectionOptions(ownerId));
+  let unresolved = false;
+  const descendants = await listEveSubagents(ownerId, sessionId);
+  const discovered = new Set(descendants.map((child) => child.sessionId));
+  const positions = await getEveStreamPositions(
+    descendants.map((child) => child.sessionId)
+  );
+  for (const child of descendants) {
+    const start = replayUnpriced ? 0 : child.usageStreamIndex;
+    const length = positions.get(child.sessionId);
+    if (length !== undefined && length < child.usageStreamIndex) {
+      throw new Error(
+        "Eve child stream is shorter than its durable billing cursor."
+      );
+    }
+    if (!replayUnpriced && length === start) {
+      continue;
+    }
+    let childIndex = start;
+    let childUnresolved = false;
+    for await (const event of client.sessions.attach(child.sessionId).stream({
+      follow: false,
+      signal: AbortSignal.timeout(15_000),
+      startIndex: start,
+    })) {
+      childIndex += 1;
+      if (
+        (await ingestEveUsage(ownerId, child.sessionId, event, {
+          sessionId,
+          turnId: child.rootTurnId,
+        })) === false
+      ) {
+        childUnresolved = true;
+      }
+      if (
+        event.type === "subagent.called" &&
+        !event.data.remote &&
+        !discovered.has(event.data.childSessionId)
+      ) {
+        const nested = await getEveSubagent(ownerId, event.data.childSessionId);
+        if (!nested || nested.rootSessionId !== sessionId) {
+          throw new Error("Delegated usage requires an owned root binding.");
+        }
+        discovered.add(nested.sessionId);
+        descendants.push(nested);
+      }
+    }
+    if (childUnresolved) {
+      unresolved = true;
+    } else if (childIndex > start) {
+      await advanceEveSubagentUsageCursor(ownerId, child.sessionId, childIndex);
+    }
+  }
+  return !unresolved;
+};
 
 /** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
 export const reconcileEveUsage = async (
@@ -54,6 +122,12 @@ export const reconcileEveUsage = async (
       unresolved = true;
     }
   }
+  if (
+    (await reconcileEveSubagentUsage(ownerId, sessionId, replayUnpriced)) ===
+    false
+  ) {
+    unresolved = true;
+  }
   if (latestActivity) {
     await ingestEveActivity(ownerId, sessionId, latestActivity);
   }
@@ -89,11 +163,21 @@ const reconcileAllOwnerUsage = async (
   }
   // Compare exact durable positions, not activity timestamps or terminal events:
   // old deployments and parked tools may append usage after a completed turn.
+  const rootsWithChildren = new Set<string>();
+  for (const binding of bindings) {
+    if (binding.sessionId) {
+      const children = await listEveSubagents(ownerId, binding.sessionId);
+      if (children.length > 0) {
+        rootsWithChildren.add(binding.sessionId);
+      }
+    }
+  }
   const pending = bindings
     .filter(
       (row) =>
         !row.sessionId ||
         unpricedSessions.has(row.sessionId) ||
+        rootsWithChildren.has(row.sessionId) ||
         positions.get(row.sessionId) !== row.usageStreamIndex
     )
     .values();

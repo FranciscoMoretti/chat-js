@@ -40,6 +40,9 @@ beforeAll(async () => {
     "0002_nappy_caretaker.sql",
     "0003_ambitious_oracle.sql",
     "0004_misty_next_avengers.sql",
+    "0005_managed_workflow_safeguards.sql",
+    "0006_unpriced_usage_index.sql",
+    "0007_kind_charles_xavier.sql",
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Apply the real migrations in sequence.
     await postgres.exec(

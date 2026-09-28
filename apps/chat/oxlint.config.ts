@@ -16,6 +16,8 @@ export default defineConfig({
     {
       files: [
         "agent/tools/confirm_note.ts",
+        "agent/tools/deepResearch.ts",
+        "agent/subagents/researcher/tools/webSearch.ts",
         "tests/eve-fixture/agent/tools/confirm_note.ts",
       ],
       rules: { "unicorn/filename-case": "off" },

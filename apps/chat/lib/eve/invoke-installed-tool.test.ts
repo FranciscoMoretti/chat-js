@@ -3,9 +3,6 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { invokeInstalledTool } from "./invoke-installed-tool";
-import { createResearchSearchTool } from "./research-search";
-import { toolResultSchema } from "./tool-result";
-import { createToolUsage } from "./tool-usage";
 
 const mocks = await vi.hoisted(async () => {
   const { defineTool, toolOutput } = await import("eve/tools");
@@ -97,36 +94,6 @@ test("nested invocation never bypasses disabled features or native approval poli
     )
   ).rejects.toThrow("approval policies");
   expect(mocks.execute).not.toHaveBeenCalled();
-});
-
-test("research preserves model projection and incorporates only the final receipt once", async () => {
-  const usage = createToolUsage();
-  const write = vi.fn();
-  const search = createResearchSearchTool(
-    testToolContext({ callId: "research" }),
-    usage,
-    { write }
-  );
-  if (!search?.execute || !search.toModelOutput) {
-    throw new Error("Missing research tool");
-  }
-  const input = { query: "evidence" };
-  const output = await search.execute(input, {
-    context: {},
-    messages: [],
-    toolCallId: "nested",
-  });
-  const receipt = toolResultSchema.parse(output);
-  expect(receipt.usage.costUsd).toBe(0.05);
-  expect(await usage.totalUsd()).toBe(0.05);
-  expect(write).toHaveBeenCalledWith(
-    expect.objectContaining({
-      data: expect.objectContaining({ toolCallId: "research", type: "web" }),
-    })
-  );
-  expect(
-    await search.toModelOutput({ input, output: receipt, toolCallId: "nested" })
-  ).toEqual({ type: "text", value: "Projected search answer" });
 });
 
 test("composition rejects policies requiring independent EVE dispatch", async () => {

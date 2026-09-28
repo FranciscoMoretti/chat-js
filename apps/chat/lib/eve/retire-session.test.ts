@@ -5,6 +5,10 @@ import {
   retireEveSessionForDeletion,
 } from "./retire-session";
 
+vi.mock("./reconcile-usage", () => ({
+  reconcileEveSubagentUsage: vi.fn(() => Promise.resolve(true)),
+}));
+
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
   client: vi.fn(),
