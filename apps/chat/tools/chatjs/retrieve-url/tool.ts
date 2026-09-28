@@ -38,7 +38,8 @@ Use for:
 Avoid:
 - General-purpose web searches`,
   execute: ({ url }, context) =>
-    executeWithToolUsage(context, async () => {
+    executeWithToolUsage(context, async (usage) => {
+      usage.addCostUsd(0);
       try {
         if (!app) {
           return {
@@ -55,6 +56,8 @@ Avoid:
 
         const redactedUrl = redactUrl(parsedUrl);
         const normalizedUrl = parsedUrl.toString();
+        // Firecrawl does not return a monetary receipt for scrape/extract.
+        usage.markUnknown();
         const content = await app.scrapeUrl(normalizedUrl);
         if (!(content.success && content.metadata)) {
           return {

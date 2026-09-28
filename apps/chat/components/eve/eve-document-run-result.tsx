@@ -4,6 +4,8 @@ import type { EveMessagePart } from "eve/client";
 import { eveCodeExecutionResult } from "@/lib/eve/document-execution-contracts";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
 
+import { CodeExecutionChart } from "../code-execution-chart";
+
 export const EveDocumentRunResult = ({
   part,
 }: {
@@ -27,7 +29,10 @@ export const EveDocumentRunResult = ({
   }
   const output = eveCodeExecutionResult.safeParse(result.data.output);
   return output.success ? (
-    <p>{output.data.message}</p>
+    <div className="space-y-3">
+      <p>{output.data.message}</p>
+      <CodeExecutionChart value={output.data.chart} />
+    </div>
   ) : (
     <p role="alert">This saved-code result could not be displayed.</p>
   );

@@ -25,7 +25,7 @@ You receive `tools/chatjs/generate-image/tool.ts`, `renderer.tsx`, and `chatjs.j
 
 ## Behavior
 
-The tool accepts a prompt and returns `{ imageUrl, prompt }`. It supports image creation and editing using attachments or the previous generated image. It uploads results through the configured Files SDK storage and reports model usage to the request's optional cost accumulator. See [Image Generation](../features/image-generation) for model selection and editing behavior.
+The tool accepts a prompt and returns `{ imageUrl, prompt }`. It supports image creation and editing using attachments or the previous generated image. It uploads results through the configured Files SDK storage and reports provider cost in the final tool receipt through `executeWithToolUsage` and its usage accumulator (`usage.addCostUsd()`). See [Image Generation](../features/image-generation) for model selection and editing behavior.
 
 ## External implementations
 

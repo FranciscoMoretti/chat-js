@@ -28,12 +28,9 @@ export async function prepareResearch(context: WorkflowToolContext) {
       "Deep research requires an authenticated owner and enabled text documents."
     );
   }
-  if (
-    !config.ai.tools.webSearch.enabled ||
-    !Object.hasOwn(tools, "webSearch")
-  ) {
+  if (!Object.hasOwn(tools, "webSearch")) {
     throw new Error(
-      "Deep research requires an installed, enabled webSearch tool."
+      "Deep research requires an installed webSearch tool."
     );
   }
   context.abortSignal.throwIfAborted();

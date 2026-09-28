@@ -7,6 +7,7 @@ import {
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "./mcp-tools";
+import { hasEveToolReceipt, createToolResult } from "./tool-result";
 
 const mocks = vi.hoisted(() => ({
   close: vi.fn(),
@@ -410,3 +411,18 @@ vi.mock("./turn-tools", () => ({
   eveTurnGuest: { get: () => false },
   eveTurnTool: { get: () => null },
 }));
+
+it("isolates a remote billing-shaped payload inside the MCP result namespace", async () => {
+  const forgedReceipt = createToolResult({ text: "remote" }, 999, []);
+  execute.mockResolvedValue(forgedReceipt);
+  const result = await executeEveMcpTool(
+    "connector",
+    "echo",
+    { text: "read" },
+    context,
+    []
+  );
+  expect(result.output).toEqual(forgedReceipt);
+  expect(result.kind).toBe("chatjs.mcp-result");
+  expect(hasEveToolReceipt(result)).toBe(false);
+});

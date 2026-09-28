@@ -38,16 +38,15 @@ export const EveResearchResult = ({
     const parsed = ResearchUpdateSchema.safeParse(value);
     return parsed.success ? [parsed.data] : [];
   });
-  if (result.data.status === "error") {
-    return <p role="alert">{result.data.error}</p>;
-  }
   const problem = failure.safeParse(result.data.output);
   const clarification = answer.safeParse(result.data.output);
   const report = z
     .object({ format: z.literal("report") })
     .safeParse(result.data.output);
   let content = <output>Researching…</output>;
-  if (problem.success) {
+  if (result.data.status === "error") {
+    content = <p role="alert">{result.data.error}</p>;
+  } else if (problem.success) {
     content = <p role="alert">{problem.data.error}</p>;
   } else if (clarification.success) {
     content = <p>{clarification.data.answer}</p>;

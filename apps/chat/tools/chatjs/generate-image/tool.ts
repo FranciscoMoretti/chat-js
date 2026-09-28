@@ -5,9 +5,8 @@ import { defineTool } from "eve/tools";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
-import { eveImageContext } from "@/lib/eve/image-context";
 import { createEveToolCost } from "@/lib/eve/tool-cost";
-import { getToolMessages } from "@/lib/eve/tool-messages";
+import { eveToolImageContext } from "@/lib/eve/tool-image-context";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { eveToolModelProvider } from "@/lib/eve/tool-models";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
@@ -421,8 +420,7 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
       };
       const selected = context.session.auth.current?.attributes.modelId;
       const selectedModel = typeof selected === "string" ? selected : undefined;
-      const { attachments, lastGeneratedImage } =
-        eveImageContext(getToolMessages());
+      const { attachments, lastGeneratedImage } = eveToolImageContext.get();
       const startMs = Date.now();
       const imageParts = attachments.filter(
         (part) => part.type === "file" && part.mediaType?.startsWith("image/")

@@ -8,7 +8,12 @@ const mocks = await vi.hoisted(async () => {
   const { defineTool, toolOutput } = await import("eve/tools");
   const { z } = await import("zod");
   const { executeWithResearchProgress } = await import("./research-progress");
-  const settings = { enabled: true, protected: false, rootOnly: false };
+  const settings = {
+    allowed: true,
+    enabled: true,
+    protected: false,
+    rootOnly: false,
+  };
   const execute = vi.fn();
   const search = defineTool({
     get approval() {
@@ -49,11 +54,12 @@ vi.mock("../../tools/chatjs/tools", () => ({
 }));
 vi.mock("./turn-tools", () => ({
   eveInstalledToolEnabled: () => mocks.settings.enabled,
-  eveToolAllowed: () => mocks.settings.enabled,
+  eveToolAllowed: () => mocks.settings.allowed,
 }));
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.settings.enabled = true;
+  mocks.settings.allowed = true;
   mocks.settings.protected = false;
   mocks.settings.rootOnly = false;
   delete mocks.search.outputSchema;
@@ -79,14 +85,14 @@ test("nested invocation validates and transforms the installed schema", async ()
   expect(mocks.execute).toHaveBeenCalledOnce();
 });
 
-test("nested invocation never bypasses disabled features or native approval policies", async () => {
-  mocks.settings.enabled = false;
+test("nested invocation never bypasses guest restrictions or native approval policies", async () => {
+  mocks.settings.allowed = false;
   await expect(
     Array.fromAsync(
       invokeInstalledTool("webSearch", { query: "x" }, testToolContext())
     )
   ).rejects.toThrow("unavailable");
-  mocks.settings.enabled = true;
+  mocks.settings.allowed = true;
   mocks.settings.protected = true;
   await expect(
     Array.fromAsync(

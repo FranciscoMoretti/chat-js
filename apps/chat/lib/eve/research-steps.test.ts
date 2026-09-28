@@ -76,7 +76,7 @@ it("uses the owned native transcript without feeding the live research invocatio
   expect(prepared.timestamp).toBeGreaterThan(0);
 });
 
-it("rejects disabled research, text documents, and search before reading the transcript", async () => {
+it("rejects disabled research and text documents before reading the transcript", async () => {
   mocks.features.deepResearch.enabled = false;
   await expect(prepareResearch(context())).rejects.toThrow(
     "enabled text documents"
@@ -86,10 +86,13 @@ it("rejects disabled research, text documents, and search before reading the tra
   await expect(prepareResearch(context())).rejects.toThrow(
     "enabled text documents"
   );
-  mocks.features.documents.types.text = true;
-  mocks.features.webSearch.enabled = false;
-  await expect(prepareResearch(context())).rejects.toThrow("enabled webSearch");
+
   expect(mocks.snapshot).not.toHaveBeenCalled();
+});
+
+it("allows installed research search when standalone search is disabled", async () => {
+  mocks.features.webSearch.enabled = false;
+  await expect(prepareResearch(context())).resolves.toMatchObject({ messages: expect.stringContaining("Research this") });
 });
 
 it("rejects guest and incompatible selected-tool invocations", async () => {

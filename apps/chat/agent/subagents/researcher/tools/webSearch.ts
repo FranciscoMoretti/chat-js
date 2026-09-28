@@ -1,7 +1,6 @@
 import { defineState } from "eve/context";
 import { defineDynamic } from "eve/tools";
 
-import { config } from "../../../../lib/config";
 import { tools } from "../../../../tools/chatjs/tools";
 
 const researchSteps = defineState<number>("chatjs.research-steps", () => 0);
@@ -9,10 +8,7 @@ const researchSteps = defineState<number>("chatjs.research-steps", () => 0);
 export default defineDynamic({
   events: {
     "step.started": (_event, context) => {
-      if (
-        !config.ai.tools.webSearch.enabled ||
-        context.session.auth.initiator?.attributes.chatjsGuest === "true"
-      ) {
+      if (context.session.auth.initiator?.attributes.chatjsGuest === "true") {
         throw new Error("Research search is unavailable.");
       }
       const search = Object.entries(tools).find(
