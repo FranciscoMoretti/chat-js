@@ -34,7 +34,7 @@ import {
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-import { createEvePlatformResult } from "../lib/eve/platform-result";
+import { createToolResult } from "../lib/eve/tool-result";
 import { ingestEveUsage } from "../lib/eve/usage";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
@@ -332,7 +332,10 @@ test.each(["codeExecution", "webSearch"])(
         result: {
           callId,
           kind: "tool-result",
-          output: createEvePlatformResult({ message: "42", chart: "" }, 0.05),
+          // oxlint-disable-next-line unicorn/prefer-structured-clone -- The event carries persisted JSON, not in-memory optional undefined fields.
+          output: JSON.parse(
+            JSON.stringify(createToolResult({ message: "42", chart: "" }, 0.05))
+          ),
           toolName,
         },
         sequence: 0,

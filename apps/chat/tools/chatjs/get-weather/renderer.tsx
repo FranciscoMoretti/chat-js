@@ -1,16 +1,21 @@
 "use client";
 
 import { format, isWithinInterval } from "date-fns";
+import type { z } from "zod";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { cn } from "@/lib/utils";
-import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
 
 import { weatherInput, weatherResult } from "./schemas";
-import type { getWeather, WeatherAtLocation } from "./tool";
 
-type GetWeatherRendererTool = ToolPartFromTool<typeof getWeather>;
+type WeatherAtLocation = z.output<typeof weatherResult>;
+
+type GetWeatherRendererTool = ToolRendererProps<
+  typeof weatherInput,
+  typeof weatherResult
+>["tool"];
 
 const SAMPLE = {
   current: { interval: 900, temperature_2m: 29.3, time: "2024-10-07T19:30" },

@@ -75,7 +75,7 @@ test("video tool streaming, loading, player, and error states", async () => {
       "Preparing prompt"
     );
     expect(container.firstElementChild?.textContent).not.toContain("Couldn");
-    expect(container.textContent).toContain("Couldn't generate video");
+    expect(container.textContent).toContain("Provider failed");
     await takeSnapshot("video-tool-states");
   } finally {
     await act(() => root.unmount());

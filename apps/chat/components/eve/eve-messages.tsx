@@ -27,13 +27,13 @@ import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
-import { isEvePlatformTool } from "@/lib/eve/platform-result";
 
 import { EveAttachment } from "./eve-attachment";
+import { EveDocumentRunResult } from "./eve-document-run-result";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
-import { EvePlatformToolResult } from "./eve-platform-tool-result";
+import { EveResearchResult } from "./eve-research-result";
 import { EveToolResult } from "./eve-tool-result";
 
 const PendingInput = ({
@@ -164,15 +164,19 @@ const Part = ({
       />
     );
   }
-  if (isEvePlatformTool(part.toolName)) {
+  if (part.toolName === "deepResearch") {
     return (
-      <EvePlatformToolResult
+      <EveResearchResult
         isReadonly={isReadonly}
         messageId={messageId}
         part={part}
       />
     );
   }
+  if (part.toolName === "runCodeDocument") {
+    return <EveDocumentRunResult part={part} />;
+  }
+
   if (
     Object.hasOwn(eveDocumentOperations, part.toolName) ||
     part.toolName === "readDocument"

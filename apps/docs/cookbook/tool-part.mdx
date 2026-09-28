@@ -1,165 +1,40 @@
 ---
-title: "Tool Part"
-description: "Backend tool definition to frontend UI component"
+title: Tool Part
+description: Render native EVE tool results with validated schema-inferred props
 ---
 
-> Give your AI tools custom UI components that show loading states and rich results.
+A registry tool can include a client renderer for its loading and result states. Put the implementation in `tools/chatjs/<id>/tool.ts`, shared schemas in `schemas.ts`, and the renderer in `renderer.tsx`.
 
-## Overview
+Define the server tool with EVE's `defineTool()`. Export a renderer with `defineToolRenderer` and reference its export in `chatjs.json`. The CLI generates the server and renderer registrations when you install or sync the item.
 
-Tools let the LLM perform actions (API calls, calculations, etc). This pattern connects a backend tool to a frontend component that renders its input/output with proper loading states.
-
-File convention: `lib/ai/tools/{name}.ts` → `components/part/{name}.tsx`
-
-## How it works
-
-1. **Define tool** with [Vercel AI SDK's `tool()`](https://ai-sdk.dev/docs/foundations/tools) - schema + execute function
-2. **Register** in `lib/ai/tools/tools.ts`
-3. **Route** tool type to component in `components/message-parts.tsx`
-4. **Render** with loading/complete states based on `tool.state`
-
-The AI SDK streams tool calls as parts with two states:
-
-| State    | `tool.state`         | Available                    |
-| -------- | -------------------- | ---------------------------- |
-| Loading  | `"input-available"`  | `tool.input`                 |
-| Complete | `"output-available"` | `tool.input` + `tool.output` |
-
-## Code
-
-### 1. Tool Definition
-
-```ts title="lib/ai/tools/get-weather.ts"
-import { tool } from "ai";
-import { z } from "zod";
-
-export const getWeather = tool({
-  description: "Get the current weather at a location",
-  inputSchema: z.object({
-    latitude: z.number(),
-    longitude: z.number(),
-  }),
-  execute: async ({
-    latitude,
-    longitude,
-  }: {
-    latitude: number;
-    longitude: number;
-  }) => {
-    const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&hourly=temperature_2m&daily=sunrise,sunset&timezone=auto`
-    );
-
-    const weatherData = await response.json();
-    return weatherData as WeatherAtLocation;
-  },
-});
-
-export type WeatherAtLocation = {
-  latitude: number;
-  longitude: number;
-  generationtime_ms: number;
-  utc_offset_seconds: number;
-  timezone: string;
-  timezone_abbreviation: string;
-  elevation: number;
-  current_units: {
-    time: string;
-    interval: string;
-    temperature_2m: string;
-  };
-  current: {
-    time: string;
-    interval: number;
-    temperature_2m: number;
-  };
-  hourly_units: {
-    time: string;
-    temperature_2m: string;
-  };
-  hourly: {
-    time: string[];
-    temperature_2m: number[];
-  };
-  daily_units: {
-    time: string;
-    sunrise: string;
-    sunset: string;
-  };
-  daily: {
-    time: string[];
-    sunrise: string[];
-    sunset: string[];
-  };
-};
-```
-
-### 2. Register Tool
-
-```ts title="lib/ai/tools/tools.ts"
-import { getWeather } from "./get-weather";
-
-export function getTools({/* ...params */}) {
-  return {
-    getWeather,
-    // ... other tools
-  };
-}
-```
-
-### 3. Route to Component
-
-```tsx title="components/message-parts.tsx"
-import { Weather } from "./part/weather";
-
-function ToolPart({
-  part,
-  messageId,
-  isReadonly,
-}: {
-  part: ToolUIPart<ChatTools>;
-  messageId: string;
-  isReadonly: boolean;
-}) {
-  if (part.type === "tool-getWeather") {
-    return <Weather tool={part} />;
-  }
-
-  // ... other tools
-
-  return null;
-}
-```
-
-### 4. UI Component
-
-```tsx title="components/part/weather.tsx"
+```tsx title="tools/chatjs/word-count/renderer.tsx"
 "use client";
 
-import type { WeatherAtLocation } from "@/lib/ai/tools/get-weather";
-import type { ChatMessage } from "@/lib/ai/types";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { wordCountInput, wordCountResult } from "./schemas";
 
-export type WeatherTool = Extract<
-  ChatMessage["parts"][number],
-  { type: "tool-getWeather" }
->;
-
-export function Weather({ tool }: { tool: WeatherTool }) {
-  const isLoading = tool.state === "input-available";
-
-  if (isLoading) {
-    return <div className="skeleton rounded-2xl bg-blue-400 p-4 h-24 w-48" />;
-  }
-
-  const data = tool.output;
-
-  return (
-    <div className="rounded-2xl bg-blue-400 p-4 text-white">
-      <div className="text-4xl">
-        {Math.round(data.current.temperature_2m)}
-        {data.current_units.temperature_2m}
-      </div>
-    </div>
-  );
-}
+export const WordCountRenderer = defineToolRenderer({
+  inputSchema: wordCountInput,
+  outputSchema: wordCountResult,
+  render: ({ tool }) => {
+    if (tool.state !== "output-available") {
+      return <p>Counting words…</p>;
+    }
+    return <p>{tool.output.words} words</p>;
+  },
+});
 ```
+
+The schemas determine the renderer's TypeScript props and validate persisted data at runtime. You do not need to import the server tool or infer an AI SDK tool type.
+
+| State              | Available data             |
+| ------------------ | -------------------------- |
+| `input-streaming`  | Tool call identity         |
+| `input-available`  | Validated input            |
+| `output-available` | Validated input and output |
+
+The shared renderer handles invalid data, pending approvals, denied requests, and execution errors. If the tool returns a ChatJS cost receipt, `EveToolResult` validates and unwraps it before passing visible output to the renderer.
+
+For an extracted view component, use `ToolRendererProps<typeof wordCountInput, typeof wordCountResult>` from `@/lib/ai/define-tool-renderer`. The props still come from the schemas used for runtime validation.
+
+See [Authoring Tools](../tools/authoring) for native execution, receipts, descriptor metadata, and registration.

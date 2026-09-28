@@ -73,14 +73,16 @@ it.each([
   "generateVideo",
   "generateImage",
   "deepResearch",
+  "externalPaidTool",
 ])(
   "shared %s results retain the output without billing metadata",
   (toolName) => {
     const [part] = sharedEvePart({
       input: { code: "console.log(42)", language: "javascript", title: "Test" },
       output: {
-        kind: "chatjs.platform-result",
+        kind: "chatjs.tool-result",
         output: { chart: "", message: "42" },
+        status: "success",
         usage: { costUsd: 0.05 },
         version: 1,
       },
@@ -162,13 +164,20 @@ it("removes owner approval and execution fields while preserving every tool stat
 
 it.each([
   {
-    kind: "chatjs.platform-result",
+    kind: "chatjs.tool-result",
     output: { message: "Unsupported version" },
+    status: "success",
     usage: { costUsd: 99 },
     version: 2,
   },
-  { kind: "chatjs.platform-result", usage: { costUsd: 99 }, version: 1 },
   {
+    kind: "chatjs.tool-result",
+    status: "success",
+    usage: { costUsd: 99 },
+    version: 1,
+  },
+  {
+    kind: "chatjs.tool-result",
     output: "Unrecognized envelope",
     privateRuntimeToken: "secret",
     usage: { costUsd: 99 },

@@ -8,7 +8,8 @@ import {
   documentExecutionLanguage,
   eveCodeExecutionResult,
 } from "./document-execution-contracts";
-import { executeEvePlatformTool } from "./platform-tools";
+import { invokeInstalledTool } from "./invoke-installed-tool";
+import { toolResultSchema } from "./tool-result";
 
 /**
  * Execute saved source, never model-supplied replacement code.
@@ -16,7 +17,7 @@ import { executeEvePlatformTool } from "./platform-tools";
  */
 export const executeEveCodeDocument = async function* executeEveCodeDocument(
   value: unknown,
-  context: Pick<ToolContext, "session" | "callId" | "abortSignal">
+  context: ToolContext
 ) {
   if (
     !(
@@ -48,12 +49,16 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
   }
   context.abortSignal.throwIfAborted();
   const source = { code: revision.content, language, title: revision.title };
-  for await (const result of executeEvePlatformTool(
+  for await (const toolOutput of invokeInstalledTool(
     "codeExecution",
     source,
-    context,
-    []
+    context
   )) {
+    const result = toolResultSchema.parse(toolOutput);
+    if (result.status === "error") {
+      yield result;
+      continue;
+    }
     const output = eveCodeExecutionResult.safeParse(result.output);
     yield {
       ...result,

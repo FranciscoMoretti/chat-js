@@ -1,9 +1,9 @@
 import { tavily } from "@tavily/core";
-import { tool } from "ai";
-import type { ToolExecutionOptions } from "ai";
+import { defineTool } from "eve/tools";
 
-import type { ChatToolContext } from "@/lib/ai/tool-context";
 import { env } from "@/lib/env";
+import { executeWithResearchProgress } from "@/lib/eve/research-progress";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { createModuleLogger } from "@/lib/logger";
 import {
   DEFAULT_MAX_RESULTS,
@@ -13,7 +13,7 @@ import {
 import { webSearchInput } from "./schemas";
 
 const TAVILY_COST_CENTS = 5;
-export const webSearch = tool({
+export const webSearch = defineTool({
   description: `Multi-query web search (supports depth, topic & result limits). Always cite sources inline.
 
 Use for:
@@ -21,84 +21,71 @@ Use for:
 
 Avoid:
 - Pulling content from a single known URL (use retrieveUrl instead)`,
-  execute: async (
-    {
-      search_queries,
-      topics,
-      searchDepth,
-      exclude_domains,
-    }: {
-      search_queries: { query: string; maxResults: number | null }[];
-      topics: ("general" | "news")[] | null;
-      searchDepth: "basic" | "advanced" | null;
-      exclude_domains: string[] | null;
-    },
-    {
-      toolCallId: sdkToolCallId,
+  execute: (
+    { search_queries, topics, searchDepth, exclude_domains },
+    context
+  ) =>
+    executeWithResearchProgress(
       context,
-    }: ToolExecutionOptions<ChatToolContext>
-  ) => {
-    const {
-      dataStream,
-      costAccumulator,
-      toolCallIdOverride,
-      writeTopLevelUpdates = true,
-    } = context ?? {};
-    const toolCallId = toolCallIdOverride ?? sdkToolCallId;
-    const log = createModuleLogger("tools/web-search");
-    log.debug(
-      {
-        exclude_domains,
-        queriesCount: search_queries.length,
-        searchDepth,
-        topics,
-      },
-      "webSearch.execute"
-    );
-    // Handle nullable arrays with defaults
-    const safeTopics = topics ?? ["general"];
-    const safeSearchDepth = searchDepth ?? "basic";
-    const safeExcludeDomains = exclude_domains ?? [];
-
-    const result = await executeMultiQuerySearch({
-      completeTitle: "Search complete",
-      dataStream,
-      search: async ({ query, maxResults }, index) => {
-        if (!env.TAVILY_API_KEY) {
-          throw new Error("Set TAVILY_API_KEY to enable Tavily search.");
-        }
-        const topic = safeTopics[index] ?? safeTopics[0] ?? "general";
-        const response = await tavily({ apiKey: env.TAVILY_API_KEY }).search(
-          query,
+      async ({ dataStream, usage, abortSignal }) => {
+        const toolCallId = context.callId;
+        const writeTopLevelUpdates = true;
+        abortSignal.throwIfAborted();
+        const log = createModuleLogger("tools/web-search");
+        log.debug(
           {
-            days: topic === "news" ? 7 : undefined,
-            excludeDomains: safeExcludeDomains,
-            includeAnswer: true,
-            maxResults,
-            searchDepth: safeSearchDepth,
-            topic,
-          }
+            exclude_domains,
+            queriesCount: search_queries.length,
+            searchDepth,
+            topics,
+          },
+          "webSearch.execute"
         );
-        return response.results.map(({ title, url, content }) => ({
-          content,
-          title,
-          url,
-        }));
-      },
-      search_queries: search_queries.map((query) => ({
-        maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
-        query: query.query,
-      })),
-      title: "Searching",
-      toolCallId,
-      writeTopLevelUpdates,
-    });
+        // Handle nullable arrays with defaults
+        const safeTopics = topics ?? ["general"];
+        const safeSearchDepth = searchDepth ?? "basic";
+        const safeExcludeDomains = exclude_domains ?? [];
 
-    // Report API cost
-    costAccumulator?.addAPICost("webSearch", TAVILY_COST_CENTS);
+        const result = await executeMultiQuerySearch({
+          completeTitle: "Search complete",
+          dataStream,
+          search: async ({ query, maxResults }, index) => {
+            if (!env.TAVILY_API_KEY) {
+              throw new Error("Set TAVILY_API_KEY to enable Tavily search.");
+            }
+            const topic = safeTopics[index] ?? safeTopics[0] ?? "general";
+            const response = await tavily({
+              apiKey: env.TAVILY_API_KEY,
+            }).search(query, {
+              days: topic === "news" ? 7 : undefined,
+              excludeDomains: safeExcludeDomains,
+              includeAnswer: true,
+              maxResults,
+              searchDepth: safeSearchDepth,
+              topic,
+            });
+            return response.results.map(({ title, url, content }) => ({
+              content,
+              title,
+              url,
+            }));
+          },
+          search_queries: search_queries.map((query) => ({
+            maxResults: query.maxResults ?? DEFAULT_MAX_RESULTS,
+            query: query.query,
+          })),
+          title: "Searching",
+          toolCallId,
+          writeTopLevelUpdates,
+        });
 
-    return result;
-  },
+        // Report API cost
+        usage.addCostUsd(TAVILY_COST_CENTS / 100);
+
+        return result;
+      }
+    ),
   // Keep defaultable fields required and nullable for strict tool calling.
   inputSchema: webSearchInput,
+  toModelOutput: toolResultToModelOutput,
 });

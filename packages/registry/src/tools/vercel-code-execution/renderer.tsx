@@ -1,18 +1,20 @@
 "use client";
 
-import type { UIToolInvocation } from "ai";
 import Image from "next/image";
 import { z } from "zod";
 
 import InteractiveChart from "@/components/interactive-charts";
 import type { BaseChart } from "@/components/interactive-charts";
 import { SandboxComposed } from "@/components/sandbox";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
-import type { codeExecution } from "./tool";
 
-export type CodeExecutionTool = UIToolInvocation<typeof codeExecution>;
+export type CodeExecutionTool = ToolRendererProps<
+  typeof codeExecutionInput,
+  typeof codeExecutionResult
+>["tool"];
 
 const chartLabels = {
   title: z.string().default(""),

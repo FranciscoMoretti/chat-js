@@ -2,9 +2,9 @@
 import type { EveMessagePart } from "eve/client";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { EvePlatformToolResult } from "../components/eve/eve-platform-tool-result";
+import { EveResearchResult } from "../components/eve/eve-research-result";
 import { ArtifactProvider } from "../hooks/use-artifact";
-import { createEvePlatformResult } from "../lib/eve/platform-result";
+import { createToolResult } from "../lib/eve/tool-result";
 
 const common = {
   input: {},
@@ -17,7 +17,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   { ...common, state: "input-available" },
   {
     ...common,
-    output: createEvePlatformResult({ searches: [] }, 0, [
+    output: createToolResult({ searches: [] }, 0, [
       {
         type: "started",
         title: "Research started",
@@ -29,7 +29,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   },
   {
     ...common,
-    output: createEvePlatformResult(
+    output: createToolResult(
       {
         format: "clarifying_questions",
         answer: "Which time period should the research cover?",
@@ -40,7 +40,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   },
   {
     ...common,
-    output: createEvePlatformResult(
+    output: createToolResult(
       {
         format: "report",
         status: "success",
@@ -66,10 +66,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   },
   {
     ...common,
-    output: createEvePlatformResult(
-      { error: "Report could not be saved." },
-      0.5
-    ),
+    output: createToolResult({ error: "Report could not be saved." }, 0.5),
     state: "output-available",
   },
   { ...common, output: { invalid: true }, state: "output-available" },
@@ -80,7 +77,7 @@ process.stdout.write(
       <main className="mx-auto max-w-3xl space-y-6 p-6">
         {parts.map((part) => (
           <section key={JSON.stringify(part)}>
-            <EvePlatformToolResult isReadonly messageId="fixture" part={part} />
+            <EveResearchResult isReadonly messageId="fixture" part={part} />
           </section>
         ))}
       </main>

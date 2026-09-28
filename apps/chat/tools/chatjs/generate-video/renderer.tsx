@@ -1,12 +1,14 @@
 "use client";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 
 import { generateVideoInput, generateVideoResult } from "./schemas";
-import type { generateVideoTool } from "./tool";
 
-type GenerateVideoTool = ToolPartFromTool<typeof generateVideoTool>;
+type GenerateVideoTool = ToolRendererProps<
+  typeof generateVideoInput,
+  typeof generateVideoResult
+>["tool"];
 
 const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
   if (tool.state === "input-streaming" || tool.state === "input-available") {
@@ -22,18 +24,6 @@ const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
   }
 
   const { output } = tool;
-  if (!output) {
-    const fallbackPrompt = tool.input?.prompt ?? "the same idea";
-
-    return (
-      <div className="text-muted-foreground flex w-full flex-col items-center justify-center gap-2 rounded-lg border p-4 text-sm">
-        <div>Couldn&apos;t generate video.</div>
-        <div className="text-xs">
-          Try again with a different prompt: &quot;{fallbackPrompt}&quot;
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex w-full flex-col gap-4 overflow-hidden rounded-lg border">

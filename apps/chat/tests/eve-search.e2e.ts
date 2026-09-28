@@ -10,8 +10,9 @@ import { db } from "../lib/db/client";
 import { eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-import { evePlatformResult } from "../lib/eve/platform-result";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
+import { toolResultSchema } from "../lib/eve/tool-result";
+import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -87,10 +88,12 @@ test("native search retains sources, progress and billing across reload", async 
     ) {
       throw new Error("Missing search receipt");
     }
-    const receipt = evePlatformResult.parse(call.data.result.output);
+    const receipt = toolResultSchema.parse(call.data.result.output);
     expect(receipt.usage.costUsd).toBe(0.05);
     expect(
-      receipt.updates?.filter((update) => update.type === "web")
+      receipt.updates?.filter(
+        (update) => ResearchUpdateSchema.parse(update).type === "web"
+      )
     ).toHaveLength(1);
     const rows = await db
       .select()

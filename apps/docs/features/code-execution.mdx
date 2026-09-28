@@ -164,4 +164,4 @@ The item includes `tool.ts`, `renderer.tsx`, `sandbox.ts`, `python.ts`, `javascr
 
 Edit the installed provider source to change its description, runtime, or packages. The app imports the registered tool. Its renderer understands the Vercel item’s `title`, `language`, `code`, `message`, and `chart` fields. External items own their input/output shapes and may provide a different renderer.
 
-Third-party providers use the [standard tool registration](../tools/authoring#selecting-tools-for-app-features). Their credentials and lifecycle belong in their own source. ChatJS does not expose a general-purpose sandbox API or load provider code dynamically.
+Third-party providers use the [standard tool registration](../tools/authoring#feature-selections). Their credentials and lifecycle belong in their own source. ChatJS does not expose a general-purpose sandbox API or load provider code dynamically.

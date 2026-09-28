@@ -3,11 +3,11 @@ import type { ToolExecutionOptions } from "ai";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { describeEveTool, executeEveTool } from "./adapt-tool";
+import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 
 describe("Eve tool contract", () => {
   it("removes executable schema metadata from the advertised JSON schema", async () => {
-    const adapted = await describeEveTool(
+    const adapted = await describeMcpTool(
       tool({
         description: "Count words",
         execute: ({ text }) => text.length,
@@ -22,7 +22,7 @@ describe("Eve tool contract", () => {
   });
   it("refuses to silently bypass an existing approval policy", async () => {
     await expect(
-      describeEveTool(
+      describeMcpTool(
         tool({
           description: "Protected",
           execute: () => "done",
@@ -33,28 +33,27 @@ describe("Eve tool contract", () => {
     ).rejects.toThrow("explicit Eve policy");
   });
 
-  it("passes native request services through the AI SDK execution context", async () => {
+  it("executes a discovered MCP tool with its native invocation identity", async () => {
     const services = { selectedModel: "selected/model" };
     const definition = tool({
       description: "Inspect context",
       execute: (_input, options: ToolExecutionOptions<typeof services>) =>
-        options.context,
+        options.toolCallId,
       inputSchema: z.object({}),
     });
 
     const output = await Array.fromAsync(
-      executeEveTool(
+      executeMcpTool(
         definition,
         {},
         {
           abortSignal: new AbortController().signal,
           callId: "context-test",
         },
-        [],
-        services
+        []
       )
     );
 
-    expect(output).toEqual([services]);
+    expect(output).toEqual(["context-test"]);
   });
 });

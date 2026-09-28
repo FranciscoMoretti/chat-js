@@ -19,7 +19,7 @@ export const codeExecutionResult = z.object({
   chart: z.union([
     z.string(),
     z.object({ base64: z.string(), format: z.string() }),
-    z.record(z.string(), z.unknown()),
+    z.record(z.string(), z.json()),
   ]),
   message: z.string(),
 });

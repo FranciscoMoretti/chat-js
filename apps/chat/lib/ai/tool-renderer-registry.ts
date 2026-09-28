@@ -5,9 +5,9 @@ import type { ComponentType } from "react";
 import { ui } from "@/tools/chatjs/ui";
 
 import { isValidatedToolRenderer } from "./define-tool-renderer";
-import type { InstalledTools, installedTools } from "./installed-tools";
+import type { InstalledTools } from "./installed-tools";
 
-export type InstalledToolName = keyof typeof installedTools;
+export type InstalledToolName = keyof InstalledTools;
 export type InstalledToolType = `tool-${InstalledToolName & string}`;
 export type InstalledToolUIPart = ToolUIPart<InstalledTools>;
 

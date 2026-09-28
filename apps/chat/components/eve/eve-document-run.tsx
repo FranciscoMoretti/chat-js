@@ -14,7 +14,7 @@ import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-acti
 import { documentExecutionLanguage } from "@/lib/eve/document-execution-contracts";
 import { latestDocumentRun } from "@/lib/eve/document-runs";
 
-import { EvePlatformToolResult } from "./eve-platform-tool-result";
+import { EveDocumentRunResult } from "./eve-document-run-result";
 
 export const EveDocumentRun = ({
   documentId,
@@ -84,7 +84,7 @@ export const EveDocumentRun = ({
             className="max-h-64 overflow-auto pt-2"
             data-testid="document-run-result"
           >
-            <EvePlatformToolResult {...run} isReadonly={!onAction} />
+            <EveDocumentRunResult part={run.part} />
           </div>
         </details>
       )}

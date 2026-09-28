@@ -3,7 +3,8 @@
 import type { EveMessagePart } from "eve/client";
 import { z } from "zod";
 
-import { evePlatformOutput } from "@/lib/eve/platform-result";
+import { toolOutputSchema } from "@/lib/eve/tool-result";
+import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
 
 import { ResearchUpdates } from "../part/message-annotations";
 import { EveDocumentTool } from "./eve-document-tool";
@@ -29,9 +30,16 @@ export const EveResearchResult = ({
   if (part.state !== "output-available") {
     return <output>Researching…</output>;
   }
-  const result = evePlatformOutput.safeParse(part.output);
+  const result = toolOutputSchema.safeParse(part.output);
   if (!result.success) {
     return <p role="alert">This research result could not be displayed.</p>;
+  }
+  const updates = (result.data.updates ?? []).flatMap((value) => {
+    const parsed = ResearchUpdateSchema.safeParse(value);
+    return parsed.success ? [parsed.data] : [];
+  });
+  if (result.data.status === "error") {
+    return <p role="alert">{result.data.error}</p>;
   }
   const problem = failure.safeParse(result.data.output);
   const clarification = answer.safeParse(result.data.output);
@@ -58,7 +66,7 @@ export const EveResearchResult = ({
   }
   return (
     <div className="space-y-3">
-      <ResearchUpdates updates={result.data.updates} />
+      <ResearchUpdates updates={updates} />
       {content}
     </div>
   );

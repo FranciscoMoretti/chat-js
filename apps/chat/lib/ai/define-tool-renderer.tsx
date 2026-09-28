@@ -17,10 +17,16 @@ export const isValidatedToolRenderer = (
   renderer.validatedToolRenderer === true;
 
 type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
-  | { state: "input-streaming"; input?: undefined }
-  | { state: "input-available"; input: TInput }
+  | { state: "input-streaming"; input?: undefined; output?: never }
+  | { state: "input-available"; input: TInput; output?: never }
   | { state: "output-available"; input: TInput; output: TOutput }
 );
+
+export type ToolRendererProps<I extends z.ZodType, O extends z.ZodType> = {
+  tool: RenderableTool<z.output<I>, z.output<O>>;
+  messageId: string;
+  isReadonly: boolean;
+};
 
 const envelope = z.object({
   errorText: z.string().optional(),

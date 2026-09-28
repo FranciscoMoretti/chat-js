@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
-import { createEvePlatformResult } from "../lib/eve/platform-result";
+import { createToolResult } from "../lib/eve/tool-result";
 
 const imageMode = process.argv.includes("--image");
 const common = {
@@ -17,7 +17,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   { ...common, state: "input-available" },
   {
     ...common,
-    output: createEvePlatformResult(
+    output: createToolResult(
       {
         ...(imageMode
           ? {
@@ -48,7 +48,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   },
   {
     ...common,
-    output: createEvePlatformResult(
+    output: createToolResult(
       { error: "Upload failed after provider work completed." },
       0.5
     ),

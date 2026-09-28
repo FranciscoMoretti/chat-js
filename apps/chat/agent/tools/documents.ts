@@ -1,4 +1,4 @@
-import { defineDynamic, defineTool, toolOutput } from "eve/tools";
+import { defineDynamic, defineTool } from "eve/tools";
 
 import { config } from "../../lib/config";
 import {
@@ -8,12 +8,9 @@ import {
   eveDocumentReadInput,
 } from "../../lib/eve/document-contracts";
 import { executeEveCodeDocument } from "../../lib/eve/document-execution";
-import {
-  documentExecutionInput,
-  eveCodeExecutionResult,
-} from "../../lib/eve/document-execution-contracts";
+import { documentExecutionInput } from "../../lib/eve/document-execution-contracts";
 import { executeEveDocumentTool } from "../../lib/eve/document-tools";
-import { evePlatformResult } from "../../lib/eve/platform-result";
+import { toolResultToModelOutput } from "../../lib/eve/tool-model-output";
 import { filterEveTools } from "../../lib/eve/turn-tools";
 import { codeGuidelines } from "../../tools/platform/documents/code-guidelines";
 import { sheetGuidelines } from "../../tools/platform/documents/sheet-guidelines";
@@ -54,24 +51,21 @@ export default defineDynamic({
           inputSchema: eveDocumentReadInput,
         });
       }
-      if (
+      const runCode =
         config.ai.tools.documents.types.code &&
         config.ai.tools.codeExecution.enabled
-      ) {
-        tools.runCodeDocument = defineTool<unknown, unknown>({
-          description:
-            "Run the exact saved Python or JavaScript code document revision in this conversation. Supply its document and revision IDs. Do not copy, rewrite, or substitute its source code.",
-          execute: (input, context) => executeEveCodeDocument(input, context),
-          inputSchema: documentExecutionInput,
-          toModelOutput: (output) =>
-            toolOutput.json(
-              eveCodeExecutionResult.parse(
-                evePlatformResult.parse(output).output
-              )
-            ),
-        });
-      }
-      return filterEveTools(tools);
+          ? {
+              runCodeDocument: defineTool({
+                description:
+                  "Run the exact saved Python or JavaScript code document revision in this conversation. Supply its document and revision IDs. Do not copy, rewrite, or substitute its source code.",
+                execute: (input, context) =>
+                  executeEveCodeDocument(input, context),
+                inputSchema: documentExecutionInput,
+                toModelOutput: toolResultToModelOutput,
+              }),
+            }
+          : {};
+      return filterEveTools({ ...tools, ...runCode });
     },
   },
 });

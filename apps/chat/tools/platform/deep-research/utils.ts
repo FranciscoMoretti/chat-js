@@ -1,21 +1,18 @@
 import { experimental_createMCPClient } from "@ai-sdk/mcp";
-import type { ToolSet } from "ai";
-
-import { installedTools } from "@/lib/ai/installed-tools";
+import type { Tool, ToolSet } from "ai";
 
 import type { DeepResearchRuntimeConfig } from "./configuration";
-
-const registeredTools: ToolSet = installedTools;
 
 // Keep the MCP transport alive for the entire research tool loop, including errors
 // and cancellation. The callback cannot accidentally outlive its connection.
 export const withResearchTools = async <T>(
   config: DeepResearchRuntimeConfig,
-  run: (tools: ToolSet) => Promise<T>
+  run: (tools: ToolSet) => Promise<T>,
+  searchTool?: Tool
 ): Promise<T> => {
   const tools: ToolSet = {};
-  if (config.search_enabled && registeredTools.webSearch) {
-    tools.webSearch = registeredTools.webSearch;
+  if (config.search_enabled && searchTool) {
+    tools.webSearch = searchTool;
   }
 
   if (!config.mcp_config?.url) {

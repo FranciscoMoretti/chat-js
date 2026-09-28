@@ -1,6 +1,8 @@
 import { getActiveGateway } from "../ai/active-gateway";
 import { toModelData } from "../ai/to-model-data";
 import type { UsageInfo } from "../credits/cost-accumulator";
+import { createToolUsage } from "./tool-usage";
+import type { ToolUsage } from "./tool-usage";
 
 const tokenCost = (tokens: number | undefined, price: string | undefined) => {
   if (tokens === undefined || tokens === 0) {
@@ -20,60 +22,47 @@ const tokenCost = (tokens: number | undefined, price: string | undefined) => {
 };
 
 /** Resolve provider usage before sealing a durable receipt; unknown pricing must not become free work. */
-export const createEveToolCost = () => {
-  let apiCostUsd = 0;
-  const images: { count: number; modelId: string }[] = [];
-  const llm: { modelId: string; usage: UsageInfo }[] = [];
-  return {
-    addAPICost(_name: string, costCents: number) {
-      if (!Number.isFinite(costCents) || costCents < 0) {
-        throw new Error("Invalid platform tool cost.");
-      }
-      apiCostUsd += costCents / 100;
-    },
-    addImageCost(
-      modelId: string,
-      count: number,
-      _usage: UsageInfo,
-      _source: string
-    ) {
+export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
+  addAPICost(_name: string, costCents: number) {
+    usage.addCostUsd(costCents / 100);
+  },
+  addImageCost(
+    modelId: string,
+    count: number,
+    _usage: UsageInfo,
+    _source: string
+  ) {
+    usage.addDeferredCost(async () => {
       if (!Number.isInteger(count) || count < 0) {
         throw new Error("Invalid generated image count.");
       }
-      images.push({ count, modelId });
-    },
-    addLLMCost(modelId: string, usage: UsageInfo, _source: string) {
-      llm.push({ modelId, usage });
-    },
-    async totalUsd() {
-      if (!(llm.length || images.length)) {
-        return apiCostUsd;
+      const fetchedModels = await getActiveGateway().fetchModels();
+      const models = fetchedModels.map(toModelData);
+      const rate = Number(
+        models.find((model) => model.id === modelId)?.pricing?.image
+      );
+      if (!Number.isFinite(rate) || rate < 0) {
+        throw new Error("Image provider pricing is unavailable.");
+      }
+      return count * rate;
+    });
+  },
+  addLLMCost(modelId: string, tokens: UsageInfo, _source: string) {
+    usage.addDeferredCost(async () => {
+      if (
+        tokens.inputTokens === undefined ||
+        tokens.outputTokens === undefined
+      ) {
+        throw new Error("Provider usage is unavailable.");
       }
       const fetchedModels = await getActiveGateway().fetchModels();
       const models = fetchedModels.map(toModelData);
-      let total = apiCostUsd;
-      for (const { count, modelId } of images) {
-        const rate = Number(
-          models.find((model) => model.id === modelId)?.pricing?.image
-        );
-        if (!Number.isFinite(rate) || rate < 0) {
-          throw new Error("Image provider pricing is unavailable.");
-        }
-        total += count * rate;
-      }
-      for (const { modelId, usage } of llm) {
-        const pricing = models.find((model) => model.id === modelId)?.pricing;
-        if (
-          usage.inputTokens === undefined ||
-          usage.outputTokens === undefined
-        ) {
-          throw new Error("Image provider usage is unavailable.");
-        }
-        total +=
-          tokenCost(usage.inputTokens, pricing?.input) +
-          tokenCost(usage.outputTokens, pricing?.output);
-      }
-      return total;
-    },
-  };
-};
+      const pricing = models.find((model) => model.id === modelId)?.pricing;
+      return (
+        tokenCost(tokens.inputTokens, pricing?.input) +
+        tokenCost(tokens.outputTokens, pricing?.output)
+      );
+    });
+  },
+  totalUsd: usage.totalUsd,
+});

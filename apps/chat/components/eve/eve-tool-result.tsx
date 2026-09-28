@@ -4,7 +4,7 @@ import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
-import { evePlatformOutput } from "@/lib/eve/platform-result";
+import { toolOutputSchema } from "@/lib/eve/tool-result";
 
 export const EveToolResult = ({
   part,
@@ -21,11 +21,21 @@ export const EveToolResult = ({
   }
   const platformOutput =
     part.state === "output-available"
-      ? evePlatformOutput.safeParse(part.output)
+      ? toolOutputSchema.safeParse(part.output)
       : null;
-  const tool =
-    platformOutput?.success === true
-      ? { ...part, output: platformOutput.data.output }
-      : part;
+  if (platformOutput?.success && platformOutput.data.status === "error") {
+    return createElement(Renderer, {
+      isReadonly,
+      messageId,
+      tool: {
+        ...part,
+        errorText: platformOutput.data.error,
+        state: "output-error",
+      },
+    });
+  }
+  const tool = platformOutput?.success
+    ? { ...part, output: platformOutput.data.output }
+    : part;
   return createElement(Renderer, { isReadonly, messageId, tool });
 };

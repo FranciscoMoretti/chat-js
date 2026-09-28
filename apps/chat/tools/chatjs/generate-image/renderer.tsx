@@ -6,12 +6,14 @@ import { useState } from "react";
 import { ImageActions, ImageModal } from "@/components/image-modal";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 
 import { generateImageInput, generateImageResult } from "./schemas";
-import type { generateImageTool } from "./tool";
 
-type GenerateImageTool = ToolPartFromTool<typeof generateImageTool>;
+type GenerateImageTool = ToolRendererProps<
+  typeof generateImageInput,
+  typeof generateImageResult
+>["tool"];
 
 const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
   const [dialogOpen, setDialogOpen] = useState(false);

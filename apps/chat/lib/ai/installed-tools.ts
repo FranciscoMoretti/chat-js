@@ -1,13 +1,6 @@
-import type { InferUITool } from "ai";
+import type { NativeToolUI } from "@/lib/eve/tool-types";
+import type { tools } from "@/tools/chatjs/tools";
 
-import { tools } from "@/tools/chatjs/tools";
-
-export const installedTools = tools;
-
-// Derive UI tool types automatically from the registered tools.
-// When the CLI adds an entry to tools in tools/chatjs/tools.ts, its typed
-// input/output automatically flows into ChatTools via the InstalledTools
-// intersection.
 export type InstalledTools = {
-  [K in keyof typeof installedTools]: InferUITool<(typeof installedTools)[K]>;
+  [K in keyof typeof tools]: NativeToolUI<(typeof tools)[K]>;
 };

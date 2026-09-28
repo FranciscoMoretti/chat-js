@@ -1,4 +1,4 @@
-import type { LanguageModel, ModelMessage } from "ai";
+import type { LanguageModel, ModelMessage, Tool } from "ai";
 import { z } from "zod";
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
@@ -14,6 +14,7 @@ import type { DeepResearchRuntimeConfig } from "./configuration";
 //##################
 
 export interface AgentOptions {
+  searchTool?: Tool;
   abortSignal?: AbortSignal;
   config: DeepResearchRuntimeConfig;
   costAccumulator?: Pick<CostAccumulator, "addLLMCost" | "addAPICost">;

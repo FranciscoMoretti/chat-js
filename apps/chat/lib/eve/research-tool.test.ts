@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { executeEveResearch } from "./research-tool";
 
@@ -45,7 +46,7 @@ vi.mock("../ai/active-gateway", () => ({
 vi.mock("../ai/to-model-data", () => ({
   toModelData: (value: unknown) => value,
 }));
-const context = {
+const context = testToolContext({
   abortSignal: new AbortController().signal,
   callId: "research-call",
   session: {
@@ -61,7 +62,7 @@ const context = {
     id: "session",
     turn: { id: "turn", sequence: 1 },
   },
-};
+});
 const document = {
   date: "2026-09-10",
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
@@ -154,7 +155,9 @@ it("retains incurred cost if saving the report fails", async () => {
   );
   const outputs = await Array.fromAsync(executeEveResearch({}, context, []));
   expect(outputs.at(-1)).toMatchObject({
-    output: { error: expect.any(String) },
+    error: expect.any(String),
+    output: null,
+    status: "error",
     usage: { costUsd: 0.05 },
   });
 });
@@ -193,3 +196,7 @@ it("forwards configured reasoning options into the research provider request", a
     openai: { reasoningEffort: "high" },
   });
 });
+
+vi.mock("./research-search", () => ({
+  createResearchSearchTool: () => {},
+}));

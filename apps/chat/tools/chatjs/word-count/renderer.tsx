@@ -1,12 +1,14 @@
 "use client";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 
 import { wordCountInput, wordCountResult } from "./schemas";
-import type { wordCount } from "./tool";
 
-type WordCountRendererTool = ToolPartFromTool<typeof wordCount>;
+type WordCountRendererTool = ToolRendererProps<
+  typeof wordCountInput,
+  typeof wordCountResult
+>["tool"];
 
 const Stat = ({ label, value }: { label: string; value: number }) => (
   <div className="flex flex-col items-center gap-1">

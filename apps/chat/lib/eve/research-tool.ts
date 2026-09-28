@@ -11,13 +11,15 @@ import { config } from "../config";
 import { eveDocumentResult } from "./document-contracts";
 import { executeEveDocumentTool } from "./document-tools";
 import { loadEveModelDefinition, resolveEveModel } from "./model-selection";
-import { executeEvePlatformOperation } from "./platform-operation";
+import { executeWithResearchProgress } from "./research-progress";
+import { createResearchSearchTool } from "./research-search";
+import { createEveToolCost } from "./tool-cost";
 
 export const eveResearchInput = z.object({});
 
 export const executeEveResearch = async function* executeEveResearch(
   input: unknown,
-  context: Pick<ToolContext, "session" | "callId" | "abortSignal">,
+  context: ToolContext,
   messages: ModelMessage[]
 ) {
   eveResearchInput.parse(input);
@@ -30,60 +32,68 @@ export const executeEveResearch = async function* executeEveResearch(
   ) {
     throw new Error("Deep research requires enabled text documents.");
   }
-  yield* executeEvePlatformOperation(
-    context.abortSignal,
-    async function* runResearchOperation(options) {
-      const result = await runDeepResearchPipeline(
-        {
-          messageId: context.callId,
-          messages,
-          requestId: randomUUID(),
-          toolCallId: context.callId,
+  yield* executeWithResearchProgress(context, async (progress) => {
+    const options = {
+      ...progress,
+      costAccumulator: createEveToolCost(progress.usage),
+      toolContext: context,
+      usage: progress.usage,
+    };
+    const result = await runDeepResearchPipeline(
+      {
+        messageId: context.callId,
+        messages,
+        requestId: randomUUID(),
+        toolCallId: context.callId,
+      },
+      getDeepResearchConfig(),
+      options.dataStream,
+      {
+        ...options,
+        getLanguageModel: async (id) => {
+          const resolved = await resolveEveModel(id);
+          return wrapLanguageModel({
+            middleware: {
+              specificationVersion: "v4",
+              transformParams: ({ params }) =>
+                Promise.resolve({
+                  ...params,
+                  providerOptions: {
+                    ...resolved.modelOptions.providerOptions,
+                    ...params.providerOptions,
+                  },
+                }),
+            },
+            model: resolved.model,
+          });
         },
-        getDeepResearchConfig(),
-        options.dataStream,
-        {
-          ...options,
-          getLanguageModel: async (id) => {
-            const resolved = await resolveEveModel(id);
-            return wrapLanguageModel({
-              middleware: {
-                specificationVersion: "v4",
-                transformParams: ({ params }) =>
-                  Promise.resolve({
-                    ...params,
-                    providerOptions: {
-                      ...resolved.modelOptions.providerOptions,
-                      ...params.providerOptions,
-                    },
-                  }),
-              },
-              model: resolved.model,
-            });
-          },
-          getModelContextWindow: async (id) => {
-            const model = await loadEveModelDefinition(id);
-            return model.context_window;
-          },
-          saveReport: async (content) => {
-            options.abortSignal.throwIfAborted();
-            const document = eveDocumentResult.parse(
-              await executeEveDocumentTool(
-                "createTextDocument",
-                { ...content, fileIds: [] },
-                {
-                  ...context,
-                  abortSignal: options.abortSignal,
-                }
-              )
-            );
-            return { ...document, result: "Research report saved." };
-          },
-        }
-      );
-      yield result.type === "report"
-        ? { ...result.data, format: "report" }
-        : { answer: result.data, format: "clarifying_questions" };
-    }
-  );
+        getModelContextWindow: async (id) => {
+          const model = await loadEveModelDefinition(id);
+          return model.context_window;
+        },
+        saveReport: async (content) => {
+          options.abortSignal.throwIfAborted();
+          const document = eveDocumentResult.parse(
+            await executeEveDocumentTool(
+              "createTextDocument",
+              { ...content, fileIds: [] },
+              {
+                ...context,
+                abortSignal: options.abortSignal,
+              }
+            ).catch(progress.usage.fail)
+          );
+          return { ...document, result: "Research report saved." };
+        },
+        searchTool: createResearchSearchTool(
+          context,
+          progress.usage,
+          progress.dataStream
+        ),
+      }
+    );
+    return result.type === "report"
+      ? { ...result.data, format: "report" }
+      : { answer: result.data, format: "clarifying_questions" };
+  });
 };

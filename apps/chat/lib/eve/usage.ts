@@ -1,7 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
 
 import { recordEveUsage } from "../db/eve-billing";
-import { evePlatformResult, isEvePlatformTool } from "./platform-result";
+import { toolResultSchema, hasEveToolReceipt } from "./tool-result";
 
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
 export const ingestEveUsage = async (
@@ -29,10 +29,12 @@ export const ingestEveUsage = async (
   }
   if (
     event.type === "action.result" &&
-    event.data.result.kind === "tool-result" &&
-    isEvePlatformTool(event.data.result.toolName)
+    event.data.result.kind === "tool-result"
   ) {
-    const result = evePlatformResult.safeParse(event.data.result.output);
+    const result = toolResultSchema.safeParse(event.data.result.output);
+    if (!hasEveToolReceipt(event.data.result.output)) {
+      return;
+    }
     const recordedCost = result.success ? result.data.usage.costUsd : undefined;
     return await recordEveUsage({
       costUsd: event.data.status === "rejected" ? 0 : recordedCost,

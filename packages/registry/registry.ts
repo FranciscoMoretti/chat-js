@@ -59,13 +59,12 @@ export const toolItems = [
       })),
       meta: {
         chatjs: toolDefinitionSchema.parse({
-          ...definition,
           contractVersion: 1,
+          ...definition,
           kind: "tool",
         }),
       },
       name: definition.id,
-      registryDependencies: ["@chatjs/toolkit-renderer"],
       type: "registry:item",
     }) satisfies RegistryItem
 );
@@ -167,16 +166,6 @@ export const registry = registrySchema.parse({
     ...toolItems,
     ...searchToolItems,
     codeExecutionItem,
-    {
-      dependencies: ["ai"],
-      files: [["tool-part.ts", "lib/tool-part.ts"]].map(([source, target]) => ({
-        path: `src/tools/toolkit-renderer/${source}`,
-        target: `~/tools/chatjs/_shared/${target}`,
-        type: "registry:file",
-      })),
-      name: "toolkit-renderer",
-      type: "registry:item",
-    },
   ],
   name: "chatjs",
 });

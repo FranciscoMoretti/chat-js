@@ -3,19 +3,25 @@ import { getInstanceByDom } from "echarts";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
+import type { z } from "zod";
 
-import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 
 import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
 import type {
-  getWeather,
-  WeatherAtLocation,
-} from "../src/tools/get-weather/tool";
+  weatherInput,
+  weatherResult,
+} from "../src/tools/get-weather/schemas";
 import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
-import type { retrieveUrl } from "../src/tools/retrieve-url/tool";
+import type {
+  retrievedInput,
+  retrievedResult,
+} from "../src/tools/retrieve-url/schemas";
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
 
 import "../../../apps/chat/app/globals.css";
+
+type WeatherAtLocation = z.output<typeof weatherResult>;
 
 vi.mock(
   "@/components/interactive-charts",
@@ -33,8 +39,14 @@ const malformed = [
   { elements: [], type: "unknown" },
 ];
 
-type GetWeatherRendererTool = ToolPartFromTool<typeof getWeather>;
-type RetrieveUrlRendererTool = ToolPartFromTool<typeof retrieveUrl>;
+type GetWeatherRendererTool = ToolRendererProps<
+  typeof weatherInput,
+  typeof weatherResult
+>["tool"];
+type RetrieveUrlRendererTool = ToolRendererProps<
+  typeof retrievedInput,
+  typeof retrievedResult
+>["tool"];
 
 const weather: WeatherAtLocation = {
   current: { interval: 900, temperature_2m: 20, time: "2026-09-08T12:00" },

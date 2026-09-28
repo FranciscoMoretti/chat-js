@@ -53,8 +53,9 @@ it("prepares exactly the public content without execution, approval or billing i
         {
           input: { prompt: "Image" },
           output: {
-            kind: "chatjs.platform-result",
+            kind: "chatjs.tool-result",
             output: { url: sourceUrl },
+            status: "success",
             usage: { costUsd: 3 },
             version: 1,
           },

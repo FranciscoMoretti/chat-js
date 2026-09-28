@@ -34,6 +34,6 @@ npx @chat-js/cli@latest create my-app --yes \
   --image-generation-tool https://example.com/r/image-tool.json
 ```
 
-Declare `slot: "generateImage"` in your registry metadata and installed descriptor. Export a standard AI SDK tool with your own input/output schemas. A renderer is optional. External tools do not need a gateway image default. Declare provider credentials in `envRequirements` for the CLI checklist and app validation. Only one item can occupy this selection.
+Declare `slot: "generateImage"` in your registry metadata and installed descriptor. Export a native EVE tool with your own input/output schemas. A renderer is optional. External tools do not need a gateway image default. Declare provider credentials in `envRequirements` for the CLI checklist and app validation. Only one item can occupy this selection.
 
-The host supplies optional `attachments`, `lastGeneratedImage`, `selectedModel`, and `costAccumulator` through `ChatToolContext`. The built-in previous-image helper recognizes an `imageUrl` result. Other result schemas work as tools but do not participate in that helper automatically. See [Authoring Tools](./authoring).
+The installed implementation reads the native session model selection and imports ChatJS helpers for image context, model pricing, and authorized file upload. The built-in previous-image helper recognizes an `imageUrl` result. Other result schemas work as tools but do not participate in that helper automatically. See [Authoring Tools](./authoring).
