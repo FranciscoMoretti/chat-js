@@ -2,7 +2,7 @@
 
 ## Approved scope
 
-Preserve the adaptive supervisor/researcher structure, clarification, brief creation, follow-up research, compression of findings, synthesis, report saving, and existing limits. Keep one user-facing research capability. This is an execution migration, not a research-algorithm redesign.
+Preserve the adaptive supervisor/researcher structure, clarification, brief creation, follow-up research, compression of findings, synthesis, report saving, and existing research-round and search-step limits. Keep one user-facing research capability. This is an execution migration, not a research-algorithm redesign.
 
 ## Execution
 
@@ -10,7 +10,7 @@ Preserve the adaptive supervisor/researcher structure, clarification, brief crea
 - Implement the outer capability as a static EVE workflow tool. Workflow bodies cannot be returned by the current dynamic ordinary-tool registry, so research needs its own native entry point with equivalent feature and access checks.
 - Run the adaptive supervisor as a native EVE agent returning typed decisions. The workflow invokes researchers sequentially and sends all collected findings into the next decision. It enforces the same `max_researcher_iterations + 1` decision bound as the previous SDK loop.
 - Native researchers receive only the installed search capability they need. Search executes through EVE's tool dispatch, eliminating the AI SDK search bridge and direct invocation of installed definitions for research.
-- Preserve the separate findings-compression and final-synthesis phases. Use native agent outputs with runtime schemas at orchestration boundaries. Keep the existing research prompts and model selections initially.
+- Preserve the separate findings-compression and final-synthesis phases. Use native agent outputs with runtime schemas at orchestration boundaries. Keep the existing model selections and adapt completion instructions to EVE’s typed final output. Use EVE/model output limits: the former 4,000-token cap can exhaust a reasoning model before it returns findings.
 - Save the final report in a durable step, retaining the existing idempotent document operation identity and access checks.
 
 Native workflow delegation and execution semantics: [pinned workflows docs](../apps/chat/node_modules/eve/docs/tools/workflows.mdx). Native agent result schemas and limits: [pinned agent configuration](../apps/chat/node_modules/eve/docs/agent-config.md).
@@ -65,3 +65,13 @@ No fixed-plan replacement, single-agent replacement, general-purpose workflow bu
 - Migration `0007_kind_charles_xavier.sql` adds descendant ownership and usage cursors; it must be applied before deploying native research. Model and search usage remain in the existing ledger.
 
 Static workflow tools remain in the authored native tool surface; runtime preparation rejects disabled research, guests, nested invocation, incompatible selected tools, missing search, and disabled text documents before any child model starts. Phase/topic progress is streamed through the outer receipt; individual search events stay on the native child stream.
+
+## Live provider smoke tests
+
+Run `bun test:tools:live` from the repository root against an already running `bun dev`. The command loads worktree-local credentials and ports, and uses Bun to load the application's ESM-only dependencies in Playwright. It runs the existing search, sandbox, document, and research browser scenarios with real configured models and providers; these calls incur provider usage.
+
+Use local PostgreSQL or an explicitly isolated test database accepted by `assertEveTestDatabase`. Run `bun setup` against that database first. The tests authenticate through `/api/dev-login` and create test conversations and documents. Research verifies a reloadable report, attributed child model/search costs, and unchanged ledger rows after full replay. The outer workflow receipt adds zero cost. Standalone search visibility can be disabled while research continues using its installed search definition.
+
+### Verification status (2026-09-28)
+
+Live search, sandbox execution, and the document scenario passed against the local test databases. Research reached native searches and compression, but end-to-end report persistence and billing replay remain unverified: inherited output caps caused empty responses, and the fresh run after removing them encountered long runtime/network gaps and provider timeouts. The smoke test now allows fifteen minutes and cancels outstanding root/child work on failure. Deterministic native workflow scenarios, unit tests, typechecks, and the EVE build pass.

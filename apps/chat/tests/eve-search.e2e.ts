@@ -16,7 +16,6 @@ import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema"
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-const SOURCES = /\d+ Sources/u;
 
 test("native search retains sources, progress and billing across reload", async ({
   page,
@@ -38,7 +37,10 @@ test("native search retains sources, progress and billing across reload", async 
     .object({ id: z.uuid(), sessionId: z.string() })
     .parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
-  const sources = page.getByRole("button", { name: SOURCES });
+  const sources = page.getByRole("button", {
+    exact: true,
+    name: "Show all sources",
+  });
   await expect(sources).toHaveCount(2, { timeout: 90_000 });
   const firstLinks: (string | null)[] = [];
   for (let index = 0; index < 2; index += 1) {

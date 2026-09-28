@@ -51,7 +51,8 @@
     "dev:health": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun scripts/dev-health.ts",
     "setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat setup",
     "eve:setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:setup",
-    "eve:check": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:check"
+    "eve:check": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:check",
+    "test:tools:live": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run test:tools:live"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",

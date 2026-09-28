@@ -133,7 +133,7 @@ You can use any of the tools provided to you to find resources that can help ans
 
 <Criteria for Finishing Research>
 - The user will give you a sense of how much effort you should put into the research. This does not translate ~directly~ to the number of tool calls you should make, but it does give you a sense of the depth of the research you should conduct.
-- Once you are satisfied with your research, stop making tool calls and provide your final findings as text.
+- Once you have enough evidence, stop searching and call final_output with your findings, including source URLs, citations, uncertainties, and conflicting evidence.
 - One case where you should stop is if your previous tool calls have stopped yielding useful information.
 </Criteria for Finishing Research>
 
@@ -145,7 +145,7 @@ You can use any of the tools provided to you to find resources that can help ans
 
 <Critical Reminders>
 - You MUST conduct research using web search or a different tool before finishing! You cannot finish without conducting research first!
-- Do not repeat or summarize your research findings unless the user explicitly asks you to do so. Your main job is to call tools. You should call tools until you are satisfied with the research findings, and then stop making tool calls.
+- The caller needs your findings, not just your search activity. Always finish by calling final_output with the collected evidence; a separate agent will compress it and write the user-facing report.
 </Critical Reminders>`;
 
 export const compressResearchSystemPrompt = ({

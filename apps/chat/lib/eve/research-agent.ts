@@ -1,4 +1,3 @@
-import { wrapLanguageModel } from "ai";
 import { defineAgent, defineDynamic } from "eve";
 
 import { getDeepResearchConfig } from "../../tools/platform/deep-research/configuration";
@@ -12,24 +11,8 @@ export const defineResearchAgent = (
     description: `Deep research ${phase} phase. Called by the research workflow.`,
     model: defineDynamic({
       events: {
-        "step.started": async () => {
-          const config = getDeepResearchConfig();
-          const selection = await resolveEveModel(config[`${phase}_model`]);
-          return {
-            ...selection,
-            model: wrapLanguageModel({
-              middleware: {
-                specificationVersion: "v4",
-                transformParams: ({ params }) =>
-                  Promise.resolve({
-                    ...params,
-                    maxOutputTokens: config[`${phase}_model_max_tokens`],
-                  }),
-              },
-              model: selection.model,
-            }),
-          };
-        },
+        "step.started": () =>
+          resolveEveModel(getDeepResearchConfig()[`${phase}_model`]),
       },
     }),
     tool: false,

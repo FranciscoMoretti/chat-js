@@ -69,6 +69,13 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   });
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  await page.context().addCookies([
+    {
+      name: "chat-model",
+      url: new URL(page.url()).origin,
+      value: encodeURIComponent("openai/gpt-4.1-mini"),
+    },
+  ]);
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
     origin: new URL(page.url()).origin,
   });
@@ -86,7 +93,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
     data: {
       message:
         'Call createTextDocument with title "Artifact notes" and content "# Orchard\n\nAmber apples.". Call createCodeDocument with title "orchard.py" and content "print(42)". Call createSheetDocument with title "Harvest" and content "Fruit,Count\nApple,3". Create exactly these three documents, use no other tools and finish briefly.',
-      modelId: "openai/gpt-4.1-mini-fast",
+      modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
     },
     headers: { origin: new URL(page.url()).origin },
@@ -170,7 +177,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(
     page.getByRole("button", { exact: true, name: 'Updated "Artifact notes"' })
   ).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByTestId("artifact")).toContainText("Version 1 of 2");
+  await expect(page.getByTestId("artifact")).toContainText("Version 2 of 2");
   const checkpoints = await db
     .select()
     .from(eveDocumentCheckpoint)

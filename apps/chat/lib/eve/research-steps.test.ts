@@ -92,7 +92,9 @@ it("rejects disabled research and text documents before reading the transcript",
 
 it("allows installed research search when standalone search is disabled", async () => {
   mocks.features.webSearch.enabled = false;
-  await expect(prepareResearch(context())).resolves.toMatchObject({ messages: expect.stringContaining("Research this") });
+  await expect(prepareResearch(context())).resolves.toMatchObject({
+    messages: expect.stringContaining("Research this"),
+  });
 });
 
 it("rejects guest and incompatible selected-tool invocations", async () => {

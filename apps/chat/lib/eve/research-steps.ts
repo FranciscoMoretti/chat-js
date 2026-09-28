@@ -29,9 +29,7 @@ export async function prepareResearch(context: WorkflowToolContext) {
     );
   }
   if (!Object.hasOwn(tools, "webSearch")) {
-    throw new Error(
-      "Deep research requires an installed webSearch tool."
-    );
+    throw new Error("Deep research requires an installed webSearch tool.");
   }
   context.abortSignal.throwIfAborted();
   const client = new Client(getEveConnectionOptions(owner.principalId));
