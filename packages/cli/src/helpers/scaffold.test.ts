@@ -289,7 +289,12 @@ describe("scaffoldFromTemplate", () => {
       expect(manifest.devDependencies[dependency]).toBeUndefined();
     }
     expect(manifest.overrides?.evalite).toBeUndefined();
-    for (const script of ["eval:dev", "eval:serve"]) {
+    for (const script of [
+      "eval:dev",
+      "eval:serve",
+      "test:research:native",
+      "test:tools:live",
+    ]) {
       expect(manifest.scripts[script]).toBeUndefined();
     }
   });

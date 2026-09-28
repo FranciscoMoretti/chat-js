@@ -100,7 +100,12 @@ export const normalizeScaffoldContent = async (destination: string) => {
   ]) {
     delete manifest.devDependencies?.[dependency];
   }
-  for (const script of ["eval:dev", "eval:serve"]) {
+  for (const script of [
+    "eval:dev",
+    "eval:serve",
+    "test:research:native",
+    "test:tools:live",
+  ]) {
     delete manifest.scripts?.[script];
   }
   delete manifest.overrides?.evalite;
