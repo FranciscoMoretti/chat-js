@@ -14,6 +14,8 @@ test.each([
       "evals/my-eval.eval.ts",
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
+      "lib/db/eve-subagents.test.ts",
+      "tests/native-research-runtime.ts",
       "scripts/db-branch-create.sh",
       "scripts/db-branch-delete.sh",
       "scripts/db-branch-use.sh",
