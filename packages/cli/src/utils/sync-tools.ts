@@ -4,6 +4,7 @@ import pathModule from "node:path";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import type { ToolDefinition } from "../../../registry/metadata";
+import { validateCustomToolKeys } from "./custom-tool-keys";
 import { preflight } from "./preflight";
 
 const { join } = pathModule;
@@ -413,6 +414,7 @@ export const syncTools = async (
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
   }
+  validateCustomToolKeys(cwd, definitions);
   if (options.checkOnly) {
     return definitions;
   }

@@ -469,9 +469,9 @@ describe("scaffoldFromTemplate", () => {
       "researchCompressor",
       "researchWriter",
     ]) {
-      expect(
-        existsSync(join(destination, "agent/subagents", name, "agent.ts"))
-      ).toBe(false);
+      expect(existsSync(join(destination, "agent/subagents", name))).toBe(
+        false
+      );
     }
     expect(
       existsSync(join(destination, "tools", "chatjs", "get-weather"))

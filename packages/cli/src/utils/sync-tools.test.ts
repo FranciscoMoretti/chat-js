@@ -284,19 +284,10 @@ test("tools register natively, retain renderers and cannot collide with custom t
     join(root, "tools/chatjs/custom-tools.ts"),
     "export const customTools = { countWords: {} };\n"
   );
-  await syncTools(root);
-  // Use a fresh entry point to bypass the module cache of the preceding import.
-  const source = await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8");
-  await writeFile(
-    join(root, "tools/chatjs/collision-custom.ts"),
-    "export const customTools = { countWords: {} };\n"
-  );
-  await writeFile(
-    join(root, "tools/chatjs/collision.ts"),
-    source.replace('"./custom-tools"', '"./collision-custom"')
-  );
-  await expect(import(join(root, "tools/chatjs/collision.ts"))).rejects.toThrow(
-    "Duplicate tool registration"
+  const before = await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8");
+  await expect(syncTools(root)).rejects.toThrow("Custom tools conflict");
+  expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8")).toBe(
+    before
   );
 });
 
@@ -435,8 +426,8 @@ test.each([false, true])(
         join(root, "tools/chatjs/custom-tools.ts"),
         "export const customTools = { research: {} };\n"
       );
-      await expect(import(join(root, "tools/chatjs/tools.ts"))).rejects.toThrow(
-        "Duplicate tool registration: research"
+      await expect(syncTools(root)).rejects.toThrow(
+        "Custom tools conflict with installed tools: research"
       );
       return;
     }

@@ -7,7 +7,6 @@ import { Command } from "commander";
 import { z } from "zod";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
-import { researchAgentFiles } from "../../../registry/src/tools/research";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
 import { collectEnvChecklist } from "../helpers/env-checklist";
@@ -28,6 +27,7 @@ import {
   promptVideoGenerationTool,
   promptCodeExecutionTool,
 } from "../helpers/prompts";
+import { removeClonedResearch } from "../helpers/remove-cloned-research";
 import {
   scaffoldElectron,
   scaffoldFromGit,
@@ -318,6 +318,10 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     options.yes,
     gatewaySelection.definition
   );
+  if (assistantTools.builtInTools.deepResearch) {
+    coreFeatures.documents = true;
+    documentTypes.text = true;
+  }
   const toolSources = await collectToolSources(
     options,
     assistantTools,
@@ -408,18 +412,10 @@ const prepareGitScaffold = async (targetDir: string): Promise<boolean> => {
     "chat.config.ts",
     "package.json",
   ]);
+  await removeClonedResearch(targetDir);
   await rm(path.join(targetDir, "lib/storage-provider.ts"), { force: true });
   await rm(path.join(targetDir, "lib/ai/gateway.ts"));
   await removeSelectedClonedTools(targetDir);
-  await rm(path.join(targetDir, "tools/chatjs/deep-research"), {
-    force: true,
-    recursive: true,
-  });
-  await Promise.all(
-    researchAgentFiles.map((file) =>
-      rm(path.join(targetDir, file), { force: true })
-    )
-  );
   return true;
 };
 

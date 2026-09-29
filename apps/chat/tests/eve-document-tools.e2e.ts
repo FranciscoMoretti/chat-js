@@ -177,6 +177,11 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await expect(
     page.getByRole("button", { exact: true, name: 'Updated "Artifact notes"' })
   ).toBeVisible({ timeout: 90_000 });
+  // Opening a receipt pins its revision; a later write must not steal that selection.
+  await expect(page.getByTestId("artifact")).toContainText("Version 1 of 2");
+  await page
+    .getByRole("button", { exact: true, name: 'Updated "Artifact notes"' })
+    .click();
   await expect(page.getByTestId("artifact")).toContainText("Version 2 of 2");
   const checkpoints = await db
     .select()

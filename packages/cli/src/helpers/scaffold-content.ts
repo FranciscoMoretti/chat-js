@@ -1,12 +1,24 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { researchAgentFiles } from "../../../registry/src/tools/research";
+import {
+  researchAgentFiles,
+  researchAgentDirectories,
+} from "../../../registry/src/tools/research";
+
+export const researchTestFiles = [
+  "lib/eve/research-availability.test.ts",
+  "lib/eve/research-tool.test.ts",
+  "lib/eve/research-steps.test.ts",
+  "lib/eve/research-search-updates.test.ts",
+  "tests/native-research-runtime.ts",
+];
 
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
   ...researchAgentFiles,
+  ...researchTestFiles,
   "scripts/db-branch-create.sh",
   "scripts/db-branch-delete.sh",
   "scripts/db-branch-use.sh",
@@ -22,15 +34,10 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",
   "lib/db/eve-subagents.test.ts",
-  "lib/eve/research-availability.test.ts",
-  "lib/eve/research-tool.test.ts",
-  "lib/eve/research-steps.test.ts",
-  "lib/eve/research-search-updates.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",
   "lib/eve/document-runs.test.ts",
   "lib/eve/saved-code-executor.test.ts",
-  "tests/native-research-runtime.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
   "lib/eve/purge-local-sandbox.test.ts",
   "lib/eve/verify-local-coverage.test.ts",
@@ -43,6 +50,9 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
   const file = relativePath.split(path.sep).join("/");
   return (
     REPOSITORY_ONLY_FILES.has(file) ||
+    researchAgentDirectories.some(
+      (directory) => file === directory || file.startsWith(`${directory}/`)
+    ) ||
     file === "evals" ||
     file.startsWith("evals/") ||
     file.startsWith("tests/eve-") ||

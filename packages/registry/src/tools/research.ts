@@ -15,6 +15,14 @@ export const researchAgentFiles = [
   "agent/subagents/researcher/hooks/billing.ts",
 ];
 
+export const researchAgentDirectories = [
+  ...new Set(
+    researchAgentFiles
+      .filter((file) => file.startsWith("agent/subagents/"))
+      .map((file) => file.split("/").slice(0, 3).join("/"))
+  ),
+];
+
 export const researchItem: RegistryItem = {
   description:
     "Native EVE research workflow, subagents, prompts, and progress UI",

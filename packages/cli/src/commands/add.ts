@@ -6,6 +6,7 @@ import { Command } from "commander";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { installItems, itemAddress, readItem } from "../registry/shadcn";
+import { validateCustomToolKeys } from "../utils/custom-tool-keys";
 import { handleError } from "../utils/handle-error";
 import { validateProviderSelection } from "../utils/provider-selection";
 import { syncTools } from "../utils/sync-tools";
@@ -61,6 +62,7 @@ export const add = new Command("add")
         addresses.push(address);
         expected.push(toolDefinitionSchema.parse(item.meta?.chatjs));
       }
+      validateCustomToolKeys(cwd, [...installed, ...expected]);
       if (!options.yes) {
         const answer = await confirm({
           message: `Install ${tools.join(", ")}?`,
