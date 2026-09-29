@@ -135,7 +135,7 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
         metadata.slot === "generateImage" ||
         metadata.slot === "generateVideo" ||
         (metadata.id === "retrieve-url" &&
-          metadata.toolExport === "retrieveUrl");
+          metadata.tools.some((tool) => tool.toolExport === "retrieveUrl"));
       if (usesSelectedSlot) {
         await rm(path.join(toolDirectory, entry.name), { recursive: true });
       }
@@ -323,6 +323,14 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
       return toolDefinitionSchema.parse(item.meta?.chatjs);
     })
   );
+  for (const kind of ["text", "code", "sheet"] as const) {
+    if (coreFeatures.documents && documentTypes[kind]) {
+      const source = itemAddress(`${kind}-documents`, "tool");
+      if (!toolSources.includes(source)) {
+        toolSources.push(source);
+      }
+    }
+  }
   const usesStorage =
     coreFeatures.attachments ||
     assistantTools.builtInTools.imageGeneration ||

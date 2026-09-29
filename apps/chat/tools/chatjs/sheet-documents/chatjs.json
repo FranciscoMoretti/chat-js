@@ -1,0 +1,16 @@
+{
+  "documentKind": "sheet",
+  "envRequirements": [],
+  "id": "sheet-documents",
+  "kind": "tool",
+  "requiresTools": ["readDocument"],
+  "tools": [
+    {
+      "toolExport": "createSheetDocument"
+    },
+    {
+      "toolExport": "editSheetDocument"
+    }
+  ],
+  "contractVersion": 1
+}

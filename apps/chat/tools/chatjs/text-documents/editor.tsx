@@ -18,7 +18,7 @@ import type { EditorState } from "lexical";
 import { $getRoot } from "lexical";
 import { memo, useEffect, useRef } from "react";
 
-import { createEditorConfig, handleEditorChange } from "@/lib/editor/config";
+import { createEditorConfig, handleEditorChange } from "./editor-config";
 
 interface EditorProps {
   content: string;

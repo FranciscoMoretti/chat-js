@@ -3,7 +3,11 @@
   "kind": "tool",
   "id": "generate-image",
   "slot": "generateImage",
-  "toolExport": "generateImageTool",
-  "rendererExport": "GenerateImageRenderer",
-  "envRequirements": []
+  "envRequirements": [],
+  "tools": [
+    {
+      "toolExport": "generateImageTool",
+      "rendererExport": "GenerateImageRenderer"
+    }
+  ]
 }

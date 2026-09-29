@@ -8,7 +8,7 @@ import { $createParagraphNode, $getRoot, TextNode } from "lexical";
 import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
 import { useEffect } from "react";
 
-import { createEditorConfig } from "@/lib/editor/config";
+import { createEditorConfig } from "./editor-config";
 
 const DiffType = {
   Deleted: -1,

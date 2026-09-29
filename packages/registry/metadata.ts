@@ -12,10 +12,11 @@ export const envRequirementSchema = z.object({
   runtimeAuth: z.literal("vercel-oidc").optional(),
 });
 const toolDefinitionBase = z.object({
+  documentKind: z.enum(["text", "code", "sheet"]).optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   kind: z.literal("tool"),
-  rendererExport: identifier.optional(),
+  requiresTools: z.array(identifier).default([]),
   slot: z
     .enum([
       "webSearch",
@@ -25,12 +26,23 @@ const toolDefinitionBase = z.object({
       "generateVideo",
     ])
     .optional(),
-  toolExport: identifier,
+  tools: z
+    .array(
+      z.object({
+        rendererExport: identifier.optional(),
+        toolExport: identifier,
+      })
+    )
+    .min(1),
 });
 // A single native EVE authoring contract. The version validates the descriptor format.
-export const toolDefinitionSchema = toolDefinitionBase.extend({
-  contractVersion: z.literal(1),
-});
+export const toolDefinitionSchema = toolDefinitionBase
+  .extend({
+    contractVersion: z.literal(1),
+  })
+  .refine((item) => !item.slot || item.tools.length === 1, {
+    message: "A provider slot must register exactly one tool",
+  });
 export type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
 
 export const storageDefinitionSchema = z.object({

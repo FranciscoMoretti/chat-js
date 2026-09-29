@@ -71,13 +71,18 @@ Declare standard shadcn files and dependencies in `packages/registry/registry.ts
   "contractVersion": 1,
   "kind": "tool",
   "id": "word-count",
-  "toolExport": "wordCount",
-  "rendererExport": "WordCountRenderer",
+  "tools": [
+    { "toolExport": "wordCount", "rendererExport": "WordCountRenderer" }
+  ],
   "envRequirements": []
 }
 ```
 
 `contractVersion: 1` is the single supported native EVE descriptor format. It does not select an execution implementation. The same metadata is emitted as `meta.chatjs` in the registry item and as an installed `tools/chatjs/word-count/chatjs.json` descriptor.
+
+A registry item can register several native tools through its `tools` array. Each export comes from the item’s `tool.ts`, and optional renderers come from `renderer.tsx`. Registration names must be unique across all installed items. Provider slots register exactly one tool.
+
+Document bundles also declare `documentKind` (`text`, `code`, or `sheet`) and export `documentUi` from `document.tsx`. The CLI generates the installed editor registry. Use `registryDependencies` to share `read-document` across bundles.
 
 Items target files under `~/tools/chatjs/<id>/`. Declare npm packages in `dependencies` or `devDependencies`, and shared registry items in `registryDependencies`. EVE and the ChatJS receipt/renderer helpers are supplied by the host app.
 

@@ -2,8 +2,6 @@
   "contractVersion": 1,
   "kind": "tool",
   "id": "vercel-code-execution",
-  "toolExport": "codeExecution",
-  "rendererExport": "CodeExecution",
   "slot": "codeExecution",
   "envRequirements": [
     {
@@ -13,6 +11,12 @@
         ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"]
       ],
       "runtimeAuth": "vercel-oidc"
+    }
+  ],
+  "tools": [
+    {
+      "toolExport": "codeExecution",
+      "rendererExport": "CodeExecution"
     }
   ]
 }
