@@ -141,7 +141,7 @@ test("search loading and failure states remain readable", async ({ page }) => {
   );
   await expect(page.getByRole("status")).toContainText("Searching");
   await expect(page.getByRole("alert")).toHaveCount(3);
-  await expect(page.getByText("Search declined.")).toBeVisible();
+  await expect(page.getByText("Request declined.")).toBeVisible();
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(
