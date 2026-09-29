@@ -1,6 +1,6 @@
 import type { EveMessage } from "eve/client";
 
-import { documentExecutionInput } from "./document-execution-contracts";
+import { documentExecutionInput } from "./schemas";
 
 /** Project the latest execution of this revision from the native transcript. */
 export const latestDocumentRun = (

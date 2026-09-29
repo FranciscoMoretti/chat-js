@@ -94,3 +94,49 @@ export const documentItems: RegistryItem[] = [
     type: "registry:item" as const,
   })),
 ];
+
+export const savedCodeExecutionItem: RegistryItem = {
+  dependencies: ["ajv"],
+  description: "Run saved code revisions with a compatible installed executor",
+  files: documentFiles("saved-code-execution", [
+    "tool.ts",
+    "execute.ts",
+    "invoke-executor.ts",
+    "schemas.ts",
+    "document.tsx",
+    "document-runs.ts",
+    "renderer.tsx",
+    "result.tsx",
+  ]),
+  meta: {
+    chatjs: toolDefinitionSchema.parse({
+      contractVersion: 1,
+      documentRunExport: "EveDocumentRun",
+      id: "saved-code-execution",
+      kind: "tool",
+      requiresTools: ["createCodeDocument", "readDocument", "codeExecution"],
+      tools: [
+        { rendererExport: "SavedCodeRenderer", toolExport: "runCodeDocument" },
+      ],
+    }),
+  },
+  name: "saved-code-execution",
+  registryDependencies: ["@chatjs/code-documents", "@chatjs/code-execution-ui"],
+  type: "registry:item",
+};
+
+export const codeExecutionUiItem: RegistryItem = {
+  dependencies: ["echarts", "echarts-for-react"],
+  description: "Shared chart renderer for installed code execution tools",
+  files: [
+    "code-execution-chart.tsx",
+    "interactive-charts.tsx",
+    "interactive-chart-impl.tsx",
+  ].map((file) => ({
+    path: `src/ui/code-execution/${file}`,
+    target: `~/tools/chatjs/_shared/code-execution/${file}`,
+    type: "registry:file",
+  })),
+  name: "code-execution-ui",
+  type: "registry:item",
+};

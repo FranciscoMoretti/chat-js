@@ -1,10 +1,10 @@
 "use client";
 import type { EveMessagePart } from "eve/client";
 
-import { eveCodeExecutionResult } from "@/lib/eve/document-execution-contracts";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
+import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 
-import { CodeExecutionChart } from "../code-execution-chart";
+import { eveCodeExecutionResult } from "./schemas";
 
 export const EveDocumentRunResult = ({
   part,

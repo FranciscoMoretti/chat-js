@@ -3,17 +3,18 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 
-import { EveDocumentRunResult } from "@/components/eve/eve-document-run-result";
 import { EveResearchResult } from "@/components/eve/eve-research-result";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
+import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
 
 import { chartsFinished } from "../../../../packages/registry/visual/charts-finished";
 
 import "./sandbox.css";
 
 vi.mock(
-  "@/components/interactive-charts",
-  () => import("../../components/interactive-chart-impl")
+  "@/tools/chatjs/_shared/code-execution/interactive-charts",
+  () =>
+    import("../../tools/chatjs/_shared/code-execution/interactive-chart-impl")
 );
 // Report documents are outside this error-receipt fixture.
 vi.mock("@/components/eve/eve-document-tool", () => ({

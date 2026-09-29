@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { isFileStorageKey } from "../file-url";
 
+export type DocumentAssistantRequest = { message: string; modelId: string };
+
 export const documentFileIds = z
   .array(z.string().refine(isFileStorageKey))
   .max(256)

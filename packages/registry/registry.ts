@@ -5,7 +5,11 @@ import { toolDefinitionSchema } from "./metadata";
 import registryPackage from "./package.json";
 import { builtInGateways } from "./src/gateways/catalog";
 import { builtInStorage } from "./src/storage/catalog";
-import { documentItems } from "./src/tools/documents";
+import {
+  documentItems,
+  savedCodeExecutionItem,
+  codeExecutionUiItem,
+} from "./src/tools/documents";
 
 export const toolItems = [
   {
@@ -158,11 +162,13 @@ export const codeExecutionItem = {
       ],
       id: "vercel-code-execution",
       kind: "tool",
+      savedCodeExecution: true,
       slot: "codeExecution",
       tools: [{ rendererExport: "CodeExecution", toolExport: "codeExecution" }],
     }),
   },
   name: "vercel-code-execution",
+  registryDependencies: ["@chatjs/code-execution-ui"],
   type: "registry:item",
 } satisfies RegistryItem;
 
@@ -173,6 +179,8 @@ export const registry = registrySchema.parse({
     ...builtInStorage,
     ...toolItems,
     ...documentItems,
+    savedCodeExecutionItem,
+    codeExecutionUiItem,
     ...searchToolItems,
     codeExecutionItem,
   ],

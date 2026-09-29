@@ -3,6 +3,7 @@ import { beforeEach, expect, expectTypeOf, test, vi } from "vitest";
 import type research from "../../agent/tools/deepResearch";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import type { readDocument } from "../../tools/chatjs/read-document/tool";
+import type { runCodeDocument } from "../../tools/chatjs/saved-code-execution/tool";
 import { createTextDocument } from "../../tools/chatjs/text-documents/tool";
 import type { editTextDocument } from "../../tools/chatjs/text-documents/tool";
 import type { NativeToolUI } from "./tool-types";
@@ -20,7 +21,6 @@ vi.mock("../config", () => ({
   },
 }));
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.execute }));
-vi.mock("./document-execution", () => ({ executeEveCodeDocument: vi.fn() }));
 vi.mock("./turn-tools", () => ({
   filterEveTools: <T>(tools: T): Partial<T> => ({ ...tools }),
 }));
@@ -74,5 +74,18 @@ test("native workflow outputs retain the report revision and clarification contr
   >().toEqualTypeOf<string>();
   expectTypeOf<
     Extract<Research["output"], { format: "clarifying_questions" }>["answer"]
+  >().toEqualTypeOf<string>();
+});
+
+test("saved-code registration retains its revision input and output contracts", () => {
+  expectTypeOf<NativeToolUI<typeof runCodeDocument>["input"]>().toEqualTypeOf<{
+    documentId: string;
+    revisionId: string;
+  }>();
+  expectTypeOf<
+    Extract<
+      NativeToolUI<typeof runCodeDocument>["output"],
+      { documentId: string }
+    >["documentId"]
   >().toEqualTypeOf<string>();
 });

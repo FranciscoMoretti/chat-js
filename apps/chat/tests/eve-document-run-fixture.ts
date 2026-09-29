@@ -3,7 +3,7 @@ import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { EveDocumentRun } from "../components/eve/eve-document-run";
+import { EveDocumentRun } from "../tools/chatjs/saved-code-execution/document";
 
 const input = {
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",

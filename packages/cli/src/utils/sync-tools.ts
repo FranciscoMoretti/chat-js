@@ -85,6 +85,7 @@ const registrationsFor = (definitions: ToolDefinition[]) =>
       ...tool,
       id: item.id,
       key: item.slot ?? tool.toolExport,
+      provider: Boolean(item.slot),
     }))
   );
 
@@ -110,7 +111,7 @@ const readToolDefinition = async (
   }
   await preflight(cwd, [
     `${directory}/${entryName}/tool.ts`,
-    ...(definition.documentKind
+    ...(definition.documentKind || definition.documentRunExport
       ? [`${directory}/${entryName}/document.tsx`]
       : []),
     ...(definition.tools.some((tool) => tool.rendererExport)
@@ -119,7 +120,7 @@ const readToolDefinition = async (
   ]);
   await Promise.all([
     readFile(join(cwd, directory, entryName, "tool.ts")),
-    ...(definition.documentKind
+    ...(definition.documentKind || definition.documentRunExport
       ? [readFile(join(cwd, directory, entryName, "document.tsx"))]
       : []),
     ...(definition.tools.some((tool) => tool.rendererExport)
@@ -246,7 +247,7 @@ const writeSelectionConfigs = async (
   await writeFile(
     join(dir, `${spec.file}-config.ts`),
     generatedSource(
-      `export const ${spec.requirement} = ${JSON.stringify({ ...(selected?.envRequirements.some((requirement) => requirement.runtimeAuth) ? { allOf: selected.envRequirements } : {}), description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n`
+      `export const ${spec.requirement} = ${JSON.stringify({ ...(selected?.envRequirements.some((requirement) => requirement.runtimeAuth) ? { allOf: selected.envRequirements } : {}), description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n${slot === "codeExecution" ? `export const supportsSavedDocuments = ${selected?.savedCodeExecution === true};\n` : ""}`
     )
   );
   await writeSelectionConfigs(dir, definitions, entries, index + 1);
@@ -284,17 +285,28 @@ const registrationImports = (
 
 const sourceFor = (
   registrations: Registration[]
-): { toolBody: string; uiBody: string } => {
+): { providerBody: string; toolBody: string; uiBody: string } => {
   const renderers = registrations.filter((item) => item.rendererExport);
+  const providers = registrations.filter((item) => item.provider);
   return {
-    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${registrationImports(
-      registrations.map((item, i) => ({
+    providerBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
+      providers.map((item, i) => ({
         alias: `tool${i}`,
         id: item.id,
         name: item.toolExport,
       })),
       "tool"
-    )}\n\nconst installed = defineToolSet({\n${orderedProperties(registrations.map((item) => ({ key: registrationKey(item), value: `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
+    )}\n\nexport const providers = defineToolSet({\n${orderedProperties(providers.map((item, i) => ({ key: registrationKey(item), value: `tool${i}` })))}\n});\n`,
+    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\nimport { providers } from "./providers";\n${registrationImports(
+      registrations
+        .filter((item) => !item.provider)
+        .map((item) => ({
+          alias: `tool${registrations.indexOf(item)}`,
+          id: item.id,
+          name: item.toolExport,
+        })),
+      "tool"
+    )}\n\nconst installed = defineToolSet({\n${orderedProperties(registrations.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
       renderers.flatMap((item, i) =>
         item.rendererExport
@@ -316,6 +328,8 @@ export const syncTools = async (
     "ui.ts",
     "document-ui.ts",
     "installed-features.ts",
+    "document-run.ts",
+    "providers.ts",
     "custom-tools.ts",
     "custom-ui.ts",
     ...selectionFiles,
@@ -336,14 +350,24 @@ export const syncTools = async (
   checkGenerated(previousTools, toolsPath);
   checkGenerated(previousUi, uiPath);
   await Promise.all(
-    ["document-ui.ts", "installed-features.ts"].map(async (file) => {
+    [
+      "document-ui.ts",
+      "installed-features.ts",
+      "document-run.ts",
+      "providers.ts",
+    ].map(async (file) => {
       checkGenerated(await readOptional(join(dir, file)), file);
     })
   );
   const definitions: ToolDefinition[] = [];
   await collectDefinitions(cwd, directory, entries, definitions);
   const ids = new Set(definitions.map((item) => item.id));
-  const missing = missingPreviousRegistration(previousTools, ids, entries);
+  const previousProviders = await readOptional(join(dir, "providers.ts"));
+  const missing = missingPreviousRegistration(
+    `${previousTools ?? ""}\n${previousProviders ?? ""}`,
+    ids,
+    entries
+  );
   if (missing) {
     throw new Error(
       `Missing descriptor for previously registered tool: ${missing}. Restore chatjs.json before syncing.`
@@ -364,6 +388,9 @@ export const syncTools = async (
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
   }
+  if (options.checkOnly) {
+    return definitions;
+  }
   for (const definition of definitions) {
     const missingTools = definition.requiresTools.filter(
       (name) => !keys.includes(name)
@@ -374,10 +401,17 @@ export const syncTools = async (
       );
     }
   }
-  if (options.checkOnly) {
-    return definitions;
+  const runners = definitions.filter((item) => item.documentRunExport);
+  if (runners.length > 1) {
+    throw new Error("Only one saved-document executor can be installed.");
   }
-  const { toolBody, uiBody } = sourceFor(registrations);
+  const executor = definitions.find((item) => item.slot === "codeExecution");
+  if (keys.includes("runCodeDocument") && !executor?.savedCodeExecution) {
+    throw new Error(
+      "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."
+    );
+  }
+  const { providerBody, toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });
   const [customTools, customUi] = await Promise.all([
     readOptional(join(dir, "custom-tools.ts")),
@@ -413,7 +447,15 @@ export const syncTools = async (
       `export const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item) => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
     )
   );
+  const [runner] = runners;
+  await writeFile(
+    join(dir, "document-run.ts"),
+    generatedSource(
+      `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/lib/eve/document-ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "./${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
+    )
+  );
   await writeSelectionConfigs(dir, definitions);
+  await writeFile(join(dir, "providers.ts"), generatedSource(providerBody));
   await writeFile(toolsPath, generatedSource(toolBody));
   await writeFile(uiPath, generatedSource(uiBody));
   return definitions;

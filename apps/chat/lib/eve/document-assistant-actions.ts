@@ -1,6 +1,5 @@
 import { config } from "../config";
-
-export type DocumentAssistantRequest = { message: string; modelId: string };
+import type { DocumentAssistantRequest } from "./document-contracts";
 
 export const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
   if (

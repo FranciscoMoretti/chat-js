@@ -1,0 +1,14 @@
+{
+  "documentRunExport": "EveDocumentRun",
+  "envRequirements": [],
+  "id": "saved-code-execution",
+  "kind": "tool",
+  "requiresTools": ["createCodeDocument", "readDocument", "codeExecution"],
+  "tools": [
+    {
+      "rendererExport": "SavedCodeRenderer",
+      "toolExport": "runCodeDocument"
+    }
+  ],
+  "contractVersion": 1
+}

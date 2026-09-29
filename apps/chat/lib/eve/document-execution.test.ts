@@ -1,7 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { executeEveCodeDocument } from "./document-execution";
+import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
 
 const mocks = vi.hoisted(() => ({
   documents: { enabled: true, types: { code: true } },
@@ -21,8 +21,8 @@ vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("./invoke-installed-tool", () => ({
-  invokeInstalledTool: mocks.execute,
+vi.mock("../../tools/chatjs/saved-code-execution/invoke-executor", () => ({
+  invokeSavedCodeExecutor: mocks.execute,
 }));
 
 const input = {
@@ -92,7 +92,6 @@ it("executes only the owned saved revision and preserves its billing receipt", a
     input.revisionId
   );
   expect(mocks.execute).toHaveBeenCalledWith(
-    "codeExecution",
     { code: "print(42)", language: "python", title: "saved.py" },
     context
   );

@@ -21,6 +21,9 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-subagents.test.ts",
   "lib/eve/research-availability.test.ts",
   "lib/eve/core-tool-types.test.ts",
+  "lib/eve/document-execution.test.ts",
+  "lib/eve/document-runs.test.ts",
+  "lib/eve/saved-code-executor.test.ts",
   "tests/native-research-runtime.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
   "lib/eve/purge-local-sandbox.test.ts",
@@ -105,6 +108,8 @@ export const normalizeScaffoldContent = async (destination: string) => {
         "diff",
         "papaparse",
         "react-data-grid",
+        "echarts",
+        "echarts-for-react",
       ].includes(name)
     ) {
       Reflect.deleteProperty(manifest.dependencies, name);

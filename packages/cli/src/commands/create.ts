@@ -331,6 +331,15 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
       }
     }
   }
+  if (
+    coreFeatures.documents &&
+    documentTypes.code &&
+    expectedTools.some(
+      (tool) => tool.slot === "codeExecution" && tool.savedCodeExecution
+    )
+  ) {
+    toolSources.push(itemAddress("saved-code-execution", "tool"));
+  }
   const usesStorage =
     coreFeatures.attachments ||
     assistantTools.builtInTools.imageGeneration ||
