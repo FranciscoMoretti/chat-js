@@ -44,7 +44,10 @@ test("cloning removes reference agents but refuses customized source", async () 
     fetch: () =>
       Response.json({
         ...researchItem,
-        files: researchAgentFiles.map((file) => ({
+        files: [
+          ...researchAgentFiles,
+          "tools/chatjs/deep-research/workflow.ts",
+        ].map((file) => ({
           content: 'export default { name: "research" };',
           path: file,
           target: `~/${file}`,
@@ -73,6 +76,26 @@ test("cloning removes reference agents but refuses customized source", async () 
     await expect(
       readFile(join(clean.root, "agent/subagents/researcher/agent.ts"))
     ).rejects.toThrow();
+    const customBundle = await project(true);
+    await writeFile(
+      join(customBundle.root, "tools/chatjs/deep-research/custom.ts"),
+      "export const custom = true;"
+    );
+    await expect(removeClonedResearch(customBundle.root)).rejects.toThrow(
+      "custom source"
+    );
+    expect(await Bun.file(customBundle.file).exists()).toBe(true);
+    const customWorkflow = await project(true);
+    const workflow = join(
+      customWorkflow.root,
+      "tools/chatjs/deep-research/workflow.ts"
+    );
+    await writeFile(workflow, 'export default { name: "custom workflow" };');
+    await expect(removeClonedResearch(customWorkflow.root)).rejects.toThrow(
+      "was customized"
+    );
+    expect(await readFile(workflow, "utf-8")).toContain("custom workflow");
+    expect(await Bun.file(customWorkflow.file).exists()).toBe(true);
     const custom = await project(true);
     await writeFile(custom.file, 'export default {name: "custom"};');
     await expect(removeClonedResearch(custom.root)).rejects.toThrow(

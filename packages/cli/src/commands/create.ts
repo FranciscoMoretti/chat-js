@@ -51,6 +51,7 @@ import { preflight } from "../utils/preflight";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
 import { syncTools } from "../utils/sync-tools";
+import { validateClonedBundle } from "../utils/validate-cloned-bundle";
 
 const resolveCreateTarget = (
   targetArg: string | undefined
@@ -137,6 +138,13 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
           metadata.tools.some((tool) => tool.toolExport === "retrieveUrl"))
       );
       return { metadata, name: entry.name, selected };
+    })
+  );
+  await Promise.all(
+    bundles.map(async (bundle) => {
+      if (bundle?.metadata.documentKind || bundle?.metadata.documentRunExport) {
+        await validateClonedBundle(targetDir, `tools/chatjs/${bundle.name}`);
+      }
     })
   );
   const needsReadDocument = bundles.some(
@@ -425,6 +433,10 @@ const prepareGitScaffold = async (targetDir: string): Promise<boolean> => {
   await rm(path.join(targetDir, "lib/storage-provider.ts"), { force: true });
   await rm(path.join(targetDir, "lib/ai/gateway.ts"));
   await removeSelectedClonedTools(targetDir);
+  await preflight(targetDir, ["lib/eve/core-tool-types.test.ts"]);
+  await rm(path.join(targetDir, "lib/eve/core-tool-types.test.ts"), {
+    force: true,
+  });
   return true;
 };
 

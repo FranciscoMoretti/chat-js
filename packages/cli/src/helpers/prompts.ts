@@ -357,7 +357,10 @@ export const promptAssistantTools = async (
 
   const installableItems = registryItems.filter(
     (item) =>
-      !item.hidden && !item.meta?.chatjs?.slot && !item.meta?.chatjs?.documentRunExport && item.name !== "deep-research"
+      !item.hidden &&
+      !item.meta?.chatjs?.slot &&
+      !item.meta?.chatjs?.documentRunExport &&
+      item.name !== "deep-research"
   );
   const supportedBuiltInTools = BUILT_IN_TOOL_KEYS;
 
