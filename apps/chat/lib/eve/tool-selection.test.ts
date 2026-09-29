@@ -10,6 +10,7 @@ import { expect, it, vi } from "vitest";
 
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
+import { config } from "../config";
 import { eveCreationContentHash } from "./creation-content-hash";
 import {
   moveRejectedProjectCreation,
@@ -17,7 +18,11 @@ import {
   readCreationRequest,
 } from "./pending-create";
 import { selectedEveTools } from "./selected-tools";
-import { eveTurnTool, filterEveTools } from "./turn-tools";
+import {
+  eveInstalledToolEnabled,
+  eveTurnTool,
+  filterEveTools,
+} from "./turn-tools";
 
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
@@ -194,4 +199,21 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
     await startTurn();
     expect(filterEveTools(tools)).toEqual(tools);
   });
+});
+
+it("withholds readDocument when every document kind is disabled", () => {
+  const original = structuredClone(config.ai.tools.documents);
+  try {
+    config.ai.tools.documents.enabled = true;
+    config.ai.tools.documents.types = {
+      code: false,
+      sheet: false,
+      text: false,
+    };
+    expect(eveInstalledToolEnabled("readDocument")).toBe(false);
+    config.ai.tools.documents.types.text = true;
+    expect(eveInstalledToolEnabled("readDocument")).toBe(true);
+  } finally {
+    config.ai.tools.documents = original;
+  }
 });
