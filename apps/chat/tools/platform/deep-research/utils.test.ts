@@ -1,3 +1,4 @@
+import { tool } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -12,9 +13,11 @@ const mocks = vi.hoisted(() => ({
   tools: vi.fn(),
 }));
 vi.mock("@ai-sdk/mcp", () => ({ experimental_createMCPClient: mocks.create }));
-vi.mock("@/lib/ai/installed-tools", () => ({
-  installedTools: { webSearch: mocks.searchTool },
-}));
+
+const searchTool = tool({
+  execute: ({ query }) => query,
+  inputSchema: z.object({ query: z.string() }),
+});
 
 const config: DeepResearchRuntimeConfig = {
   allow_clarification: false,
@@ -94,9 +97,10 @@ it("preserves the installed search tool over a remote name", async () => {
     },
     async (tools) => {
       expect(Object.keys(tools)).toEqual(["webSearch", "remote"]);
-      expect(tools.webSearch).toBe(mocks.searchTool);
+      expect(tools.webSearch).toBe(searchTool);
       await remote.execute();
-    }
+    },
+    searchTool
   );
 });
 

@@ -8,16 +8,22 @@ import { z } from "zod";
 import { getDeepResearchConfig } from "../../tools/platform/deep-research/configuration";
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { config } from "../config";
+import { createModuleLogger } from "../logger";
 import { eveDocumentResult } from "./document-contracts";
 import { executeEveDocumentTool } from "./document-tools";
 import { loadEveModelDefinition, resolveEveModel } from "./model-selection";
-import { executeEvePlatformOperation } from "./platform-operation";
+import { executeWithResearchProgress } from "./research-progress";
+import { createResearchSearchTool } from "./research-search";
+import { EveSessionMappingError } from "./session-mapping-error";
+import { createEveToolCost } from "./tool-cost";
+
+const log = createModuleLogger("eve/research");
 
 export const eveResearchInput = z.object({});
 
 export const executeEveResearch = async function* executeEveResearch(
   input: unknown,
-  context: Pick<ToolContext, "session" | "callId" | "abortSignal">,
+  context: ToolContext,
   messages: ModelMessage[]
 ) {
   eveResearchInput.parse(input);
@@ -30,60 +36,77 @@ export const executeEveResearch = async function* executeEveResearch(
   ) {
     throw new Error("Deep research requires enabled text documents.");
   }
-  yield* executeEvePlatformOperation(
-    context.abortSignal,
-    async function* runResearchOperation(options) {
-      const result = await runDeepResearchPipeline(
-        {
-          messageId: context.callId,
-          messages,
-          requestId: randomUUID(),
-          toolCallId: context.callId,
+  yield* executeWithResearchProgress(context, async (progress) => {
+    const options = {
+      ...progress,
+      costAccumulator: createEveToolCost(progress.usage),
+      toolContext: context,
+      usage: progress.usage,
+    };
+    const result = await runDeepResearchPipeline(
+      {
+        messageId: context.callId,
+        messages,
+        requestId: randomUUID(),
+        toolCallId: context.callId,
+      },
+      getDeepResearchConfig(),
+      options.dataStream,
+      {
+        ...options,
+        getLanguageModel: async (id) => {
+          const resolved = await resolveEveModel(id);
+          return wrapLanguageModel({
+            middleware: {
+              specificationVersion: "v4",
+              transformParams: ({ params }) =>
+                Promise.resolve({
+                  ...params,
+                  providerOptions: {
+                    ...resolved.modelOptions.providerOptions,
+                    ...params.providerOptions,
+                  },
+                }),
+            },
+            model: resolved.model,
+          });
         },
-        getDeepResearchConfig(),
-        options.dataStream,
-        {
-          ...options,
-          getLanguageModel: async (id) => {
-            const resolved = await resolveEveModel(id);
-            return wrapLanguageModel({
-              middleware: {
-                specificationVersion: "v4",
-                transformParams: ({ params }) =>
-                  Promise.resolve({
-                    ...params,
-                    providerOptions: {
-                      ...resolved.modelOptions.providerOptions,
-                      ...params.providerOptions,
-                    },
-                  }),
-              },
-              model: resolved.model,
-            });
-          },
-          getModelContextWindow: async (id) => {
-            const model = await loadEveModelDefinition(id);
-            return model.context_window;
-          },
-          saveReport: async (content) => {
-            options.abortSignal.throwIfAborted();
+        getModelContextWindow: async (id) => {
+          const model = await loadEveModelDefinition(id);
+          return model.context_window;
+        },
+        saveReport: async (content) => {
+          options.abortSignal.throwIfAborted();
+          try {
             const document = eveDocumentResult.parse(
               await executeEveDocumentTool(
                 "createTextDocument",
                 { ...content, fileIds: [] },
-                {
-                  ...context,
-                  abortSignal: options.abortSignal,
-                }
+                { ...context, abortSignal: options.abortSignal }
               )
             );
             return { ...document, result: "Research report saved." };
-          },
-        }
-      );
-      yield result.type === "report"
-        ? { ...result.data, format: "report" }
-        : { answer: result.data, format: "clarifying_questions" };
-    }
-  );
+          } catch (error) {
+            options.abortSignal.throwIfAborted();
+            if (error instanceof EveSessionMappingError) {
+              throw error;
+            }
+            log.error(
+              { callId: context.callId, error },
+              "Research report persistence failed"
+            );
+            return progress.usage.fail();
+          }
+        },
+        searchTool: createResearchSearchTool(
+          context,
+          progress.usage,
+          progress.dataStream
+        ),
+      }
+    );
+    return result.type === "report"
+      ? { ...result.data, format: "report" }
+      : { answer: result.data, format: "clarifying_questions" };
+  });
 };

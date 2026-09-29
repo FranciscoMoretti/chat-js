@@ -1,8 +1,15 @@
-import { generateImage, generateText, tool } from "ai";
-import type { FileUIPart, ToolExecutionOptions } from "ai";
+import { generateImage, generateText } from "ai";
+import type { FileUIPart } from "ai";
+import { defineTool } from "eve/tools";
 
-import type { ChatToolContext, ToolModelProvider } from "@/lib/ai/tool-context";
+import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
+import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
+import { createEveToolCost } from "@/lib/eve/tool-cost";
+import { eveToolImageContext } from "@/lib/eve/tool-image-context";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { eveToolModelProvider } from "@/lib/eve/tool-models";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { downloadFile } from "@/lib/file-storage";
 import type { FileUploader } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
@@ -180,7 +187,7 @@ const runGenerateImageTraditional = async ({
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
-  costAccumulator?: ChatToolContext["costAccumulator"];
+  costAccumulator?: ReturnType<typeof createEveToolCost>;
   abortSignal?: AbortSignal;
   storeFile: FileUploader;
   modelId: string;
@@ -280,7 +287,7 @@ const runGenerateImageMultimodal = async ({
   imageParts: FileUIPart[];
   lastGeneratedImage: { imageUrl: string; name: string } | null;
   startMs: number;
-  costAccumulator?: ChatToolContext["costAccumulator"];
+  costAccumulator?: ReturnType<typeof createEveToolCost>;
   abortSignal?: AbortSignal;
   storeFile: FileUploader;
   modelProvider: ToolModelProvider;
@@ -390,62 +397,80 @@ const runGenerateImageMultimodal = async ({
   return { fileId: result.fileId, imageUrl: result.url, prompt };
 };
 
-export const generateImageTool = tool({
+export const generateImageTool = defineTool({
   description: `Generate an image from a user-provided prompt.
 
 The assistant may make small, neutral adjustments to improve clarity, composition, or technical quality, while strictly preserving the user’s original intent, meaning, and message.
 
 The assistant must not add new subjects, claims, branding, or alter the tone or intent of the prompt.
 `,
-  execute: async (
-    { prompt },
-    { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
-  ): Promise<{ fileId?: string; imageUrl: string; prompt: string }> => {
-    const {
-      attachments = [],
-      lastGeneratedImage = null,
-      selectedModel,
-      costAccumulator,
-      modelProvider,
-      storeFile,
-    } = context ?? {};
-    if (!storeFile) {
-      throw new Error("File generation requires an authorized file uploader.");
-    }
-    const startMs = Date.now();
-    const imageParts = attachments.filter(
-      (part) => part.type === "file" && part.mediaType?.startsWith("image/")
-    );
+  execute: ({ prompt }, context) =>
+    executeWithToolUsage(context, async (usage) => {
+      const { abortSignal } = context;
+      const costAccumulator = createEveToolCost(usage);
+      const modelProvider = eveToolModelProvider;
+      const uploadFile = eveGeneratedFileUploader(context);
+      // A completed generation followed by a storage failure is an explicit domain result.
+      const storeFile: FileUploader = async (...args) => {
+        try {
+          return await uploadFile(...args);
+        } catch {
+          return usage.fail();
+        }
+      };
+      const selected = context.session.auth.current?.attributes.modelId;
+      const selectedModel = typeof selected === "string" ? selected : undefined;
+      const { attachments, lastGeneratedImage } = eveToolImageContext.get();
+      const startMs = Date.now();
+      const imageParts = attachments.filter(
+        (part) => part.type === "file" && part.mediaType?.startsWith("image/")
+      );
 
-    const mode: ImageMode =
-      imageParts.length > 0 || lastGeneratedImage !== null
-        ? "edit"
-        : "generate";
+      const mode: ImageMode =
+        imageParts.length > 0 || lastGeneratedImage !== null
+          ? "edit"
+          : "generate";
 
-    log.info(
-      {
-        attachmentCount: imageParts.length,
-        hasLastGeneratedImage: lastGeneratedImage !== null,
-        mode,
-        promptLength: prompt.length,
-        selectedModel,
-      },
-      "generateImage: start"
-    );
+      log.info(
+        {
+          attachmentCount: imageParts.length,
+          hasLastGeneratedImage: lastGeneratedImage !== null,
+          mode,
+          promptLength: prompt.length,
+          selectedModel,
+        },
+        "generateImage: start"
+      );
 
-    try {
-      if (!modelProvider) {
-        throw new Error("Image generation requires model provider context.");
-      }
-      const {
-        modelId: effectiveModelId,
-        multimodal,
-        usageModelId,
-      } = await resolveImageModel(modelProvider, selectedModel);
+      try {
+        if (!modelProvider) {
+          throw new Error("Image generation requires model provider context.");
+        }
+        const {
+          modelId: effectiveModelId,
+          multimodal,
+          usageModelId,
+        } = await resolveImageModel(modelProvider, selectedModel);
 
-      // Use multimodal path for language models with image generation
-      if (multimodal) {
-        return await runGenerateImageMultimodal({
+        // Use multimodal path for language models with image generation
+        if (multimodal) {
+          return await runGenerateImageMultimodal({
+            abortSignal,
+            costAccumulator,
+            imageParts,
+            lastGeneratedImage,
+            mode,
+            modelId: effectiveModelId,
+            modelProvider,
+            prompt,
+            startMs,
+            storeFile,
+            usageModelId,
+          });
+        }
+
+        // Traditional image generation for dedicated image models
+        return await runGenerateImageTraditional({
           abortSignal,
           costAccumulator,
           imageParts,
@@ -456,37 +481,22 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
           prompt,
           startMs,
           storeFile,
-          usageModelId,
         });
+      } catch (error) {
+        const resolvedError = await resolveError(error);
+        log.error(
+          {
+            error: serializeError(resolvedError),
+            mode,
+            ms: Date.now() - startMs,
+            selectedModel,
+            ...getErrorDebugInfo(resolvedError),
+          },
+          "generateImage: failure"
+        );
+        throw resolvedError;
       }
-
-      // Traditional image generation for dedicated image models
-      return await runGenerateImageTraditional({
-        abortSignal,
-        costAccumulator,
-        imageParts,
-        lastGeneratedImage,
-        mode,
-        modelId: effectiveModelId,
-        modelProvider,
-        prompt,
-        startMs,
-        storeFile,
-      });
-    } catch (error) {
-      const resolvedError = await resolveError(error);
-      log.error(
-        {
-          error: serializeError(resolvedError),
-          mode,
-          ms: Date.now() - startMs,
-          selectedModel,
-          ...getErrorDebugInfo(resolvedError),
-        },
-        "generateImage: failure"
-      );
-      throw resolvedError;
-    }
-  },
+    }),
   inputSchema: generateImageInput,
+  toModelOutput: toolResultToModelOutput,
 });

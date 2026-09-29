@@ -1,55 +1,44 @@
-import { asSchema, createUIMessageStream } from "ai";
-import type { UIMessage, UIMessageChunk } from "ai";
 import { expect, test, vi } from "vitest";
+import { z } from "zod";
 
-import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
+import { webSearchInput } from "./schemas";
 import { webSearch } from "./tool";
-
-type SearchMessage = UIMessage<unknown, { researchUpdate: ResearchUpdate }>;
 
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
 vi.mock("@tavily/core", () => ({ tavily: () => ({ search }) }));
 vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
 vi.mock("@/lib/utils", () => ({ generateUUID: () => "search-update" }));
-test("Tavily forwards native options and preserves source events", async () => {
+const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
+  const result = await value;
+  if (
+    typeof result !== "object" ||
+    result === null ||
+    !(Symbol.asyncIterator in result)
+  ) {
+    throw new Error("Expected streaming search results");
+  }
+  return Array.fromAsync(result);
+};
+
+test("native search streams sources and seals a final cost receipt", async () => {
   search.mockResolvedValue({
     results: [
       { content: "Evidence", title: "Source", url: "https://example.com" },
     ],
   });
-  const stream = createUIMessageStream<SearchMessage>({
-    execute: async ({ writer }) => {
-      const tool = webSearch;
-      const context = { dataStream: writer, writeTopLevelUpdates: true };
-      const result = await tool.execute?.(
-        {
-          exclude_domains: ["excluded.com"],
-          searchDepth: "advanced",
-          search_queries: [{ maxResults: 3, query: "news" }],
-          topics: ["news"],
-        },
-        { context, messages: [], toolCallId: "call" }
-      );
-      expect(result).toMatchObject({
-        searches: [
-          {
-            results: [
-              {
-                content: "Evidence",
-                title: "Source",
-                url: "https://example.com",
-              },
-            ],
-          },
-        ],
-      });
-    },
-  });
-  const events: UIMessageChunk[] = [];
-  for await (const event of stream) {
-    events.push(event);
-  }
+  const results = await collect(
+    webSearch.execute(
+      {
+        exclude_domains: ["excluded.com"],
+        searchDepth: "advanced",
+        search_queries: [{ maxResults: 3, query: "news" }],
+        topics: ["news"],
+      },
+      testToolContext({ callId: "call" })
+    )
+  );
   expect(search).toHaveBeenCalledWith(
     "news",
     expect.objectContaining({
@@ -60,58 +49,47 @@ test("Tavily forwards native options and preserves source events", async () => {
       topic: "news",
     })
   );
-  expect(events).toContainEqual(
+  expect(results.at(-1)).toMatchObject({
+    output: { searches: [{ results: [{ title: "Source" }] }] },
+    status: "success",
+    usage: { costUsd: 0.05 },
+  });
+  expect(results.at(-1)?.updates).toContainEqual(
     expect.objectContaining({
-      data: expect.objectContaining({
-        results: [expect.objectContaining({ source: "web", title: "Source" })],
-        status: "completed",
-        toolCallId: "call",
-        type: "web",
-      }),
-      type: "data-researchUpdate",
+      results: [expect.objectContaining({ source: "web", title: "Source" })],
+      status: "completed",
+      toolCallId: "call",
+      type: "web",
     })
   );
-  expect(events.some((event) => event.type === "error")).toBe(false);
+  expect(results.length).toBeGreaterThan(1);
 });
-
-test("strict tool fields remain required and explicit nulls apply defaults", async () => {
+test("strict fields remain required while explicit nulls apply defaults", async () => {
   search.mockResolvedValue({ results: [] });
-  const stream = createUIMessageStream<SearchMessage>({
-    execute: async ({ writer }) => {
-      const tool = webSearch;
-      const context = { dataStream: writer, writeTopLevelUpdates: false };
-      const schema = asSchema(tool.inputSchema);
-      const json = await schema.jsonSchema;
-      expect(json.required).toEqual(
-        expect.arrayContaining([
-          "search_queries",
-          "topics",
-          "searchDepth",
-          "exclude_domains",
-        ])
-      );
-      const input = {
+  const json = z.toJSONSchema(webSearchInput);
+  expect(json.required).toEqual(
+    expect.arrayContaining([
+      "search_queries",
+      "topics",
+      "searchDepth",
+      "exclude_domains",
+    ])
+  );
+  expect(
+    webSearchInput.safeParse({ search_queries: [{ query: "defaults" }] })
+      .success
+  ).toBe(false);
+  await collect(
+    webSearch.execute(
+      {
         exclude_domains: null,
         searchDepth: null,
         search_queries: [{ maxResults: null, query: "defaults" }],
         topics: null,
-      };
-      expect(await schema.validate?.(input)).toMatchObject({ success: true });
-      expect(
-        await schema.validate?.({ search_queries: [{ query: "defaults" }] })
-      ).toMatchObject({ success: false });
-      await tool.execute?.(input, {
-        context,
-        messages: [],
-        toolCallId: "defaults",
-      });
-    },
-  });
-  const events: UIMessageChunk[] = [];
-  for await (const event of stream) {
-    events.push(event);
-  }
-  expect(events.some((event) => event.type === "error")).toBe(false);
+      },
+      testToolContext()
+    )
+  );
   expect(search).toHaveBeenCalledWith(
     "defaults",
     expect.objectContaining({
@@ -121,24 +99,4 @@ test("strict tool fields remain required and explicit nulls apply defaults", asy
       topic: "general",
     })
   );
-});
-
-test("search executes without ChatJS progress services", async () => {
-  search.mockResolvedValue({
-    results: [
-      { content: "Evidence", title: "Source", url: "https://example.com" },
-    ],
-  });
-  const result = await webSearch.execute?.(
-    {
-      exclude_domains: null,
-      searchDepth: null,
-      search_queries: [{ maxResults: null, query: "test" }],
-      topics: null,
-    },
-    { context: {}, messages: [], toolCallId: "standalone" }
-  );
-  expect(result).toMatchObject({
-    searches: [{ results: [{ content: "Evidence" }] }],
-  });
 });

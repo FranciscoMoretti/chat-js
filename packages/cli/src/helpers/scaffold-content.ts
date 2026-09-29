@@ -33,6 +33,8 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
     file === "evals" ||
     file.startsWith("evals/") ||
     file.startsWith("tests/eve-") ||
+    file === "tests/visual" ||
+    file.startsWith("tests/visual/") ||
     file === "app/(chat)/visual-fixtures" ||
     file.startsWith("app/(chat)/visual-fixtures/") ||
     (file.startsWith("tests/") &&

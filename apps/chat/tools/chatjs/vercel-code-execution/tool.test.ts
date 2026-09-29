@@ -1,11 +1,14 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
+
 import { codeExecution } from "./tool";
 
 const mocks = vi.hoisted(() => ({
   cleanup: vi.fn(),
   create: vi.fn(),
   javascript: vi.fn(),
+  ownership: vi.fn(),
   python: vi.fn(),
   resolveAuth: vi.fn(),
 }));
@@ -25,9 +28,18 @@ vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
+vi.mock("@/lib/eve/code-sandbox-ownership", () => ({
+  eveCodeSandboxOwnership: mocks.ownership,
+}));
+
 const sandbox = { id: "isolated-sandbox", name: "owned-sandbox" };
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.ownership.mockReturnValue({
+    created: vi.fn(),
+    release: vi.fn(),
+    reserve: vi.fn(),
+  });
   mocks.create.mockResolvedValue(sandbox);
   mocks.python.mockResolvedValue({ chart: "", message: "4" });
   mocks.javascript.mockResolvedValue({ chart: "", message: "4" });
@@ -42,14 +54,17 @@ it.each(["python", "javascript"] as const)(
   async (language) => {
     const result = await codeExecution.execute?.(
       { code: "source", language, title: "Calculate" },
-      { context: {}, messages: [], toolCallId: "test" }
+      testToolContext()
     );
-    expect(result).toEqual({ chart: "", message: "4" });
+    expect(result).toMatchObject({
+      output: { chart: "", message: "4" },
+      usage: { costUsd: 0.05 },
+    });
     expect(mocks.create).toHaveBeenCalledWith(
       language,
+      expect.any(AbortSignal),
       undefined,
-      undefined,
-      undefined
+      expect.objectContaining({ projectId: "project" })
     );
     const executor = language === "python" ? mocks.python : mocks.javascript;
     const unused = language === "python" ? mocks.javascript : mocks.python;
@@ -68,11 +83,14 @@ it("normalizes execution errors and cleans up the sandbox", async () => {
   mocks.python.mockRejectedValue(new Error("remote execution failed"));
   const result = await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
-    { context: {}, messages: [], toolCallId: "test" }
+    testToolContext()
   );
-  expect(result).toEqual({
-    chart: "",
-    message: "Sandbox execution failed: remote execution failed",
+  expect(result).toMatchObject({
+    output: {
+      chart: "",
+      message: "Sandbox execution failed: remote execution failed",
+    },
+    usage: { costUsd: 0 },
   });
   expect(mocks.cleanup).toHaveBeenCalledWith(
     sandbox,
@@ -87,15 +105,11 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
     release: vi.fn(() => Promise.resolve()),
     reserve: vi.fn(() => Promise.resolve(sandbox.name)),
   };
+  mocks.ownership.mockReturnValue(sandboxOwnership);
   const abortSignal = new AbortController().signal;
   await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
-    {
-      abortSignal,
-      context: { sandboxOwnership },
-      messages: [],
-      toolCallId: "test",
-    }
+    testToolContext({ abortSignal })
   );
   expect(sandboxOwnership.reserve).toHaveBeenCalledWith(
     { projectId: "project", teamId: "team", token: "token" },
@@ -128,21 +142,14 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
       language: "javascript",
       title: "Long running",
     },
-    {
-      abortSignal: controller.signal,
-      context: {},
-      messages: [],
-      toolCallId: "cancel",
-    }
+    testToolContext({ abortSignal: controller.signal })
   );
   await vi.waitFor(() => expect(mocks.javascript).toHaveBeenCalledOnce());
   controller.abort();
   await vi.waitFor(() => expect(mocks.cleanup).toHaveBeenCalledOnce());
   // eslint-disable-next-line unicorn/no-useless-undefined -- PromiseWithResolvers requires its void argument.
   cleanup.resolve(undefined);
-  await expect(result).resolves.toMatchObject({
-    message: "Sandbox execution failed: Sandbox stopped",
-  });
+  await expect(result).rejects.toBe(controller.signal.reason);
 });
 
 it("retains ownership when creation outcome is unknown", async () => {
@@ -151,14 +158,30 @@ it("retains ownership when creation outcome is unknown", async () => {
     release: vi.fn(() => Promise.resolve()),
     reserve: vi.fn(() => Promise.resolve("reserved-sandbox")),
   };
+  mocks.ownership.mockReturnValue(sandboxOwnership);
   mocks.create.mockRejectedValueOnce(new Error("lost create response"));
 
   await expect(
     codeExecution.execute?.(
       { code: "source", language: "python", title: "Calculate" },
-      { context: { sandboxOwnership }, messages: [], toolCallId: "lost" }
+      testToolContext({ callId: "lost" })
     )
-  ).resolves.toMatchObject({ message: expect.stringContaining("lost create") });
+  ).resolves.toMatchObject({
+    output: { message: expect.stringContaining("lost create") },
+  });
   expect(sandboxOwnership.created).not.toHaveBeenCalled();
   expect(sandboxOwnership.release).not.toHaveBeenCalled();
+});
+
+it("retains the completed execution charge when its result is invalid", async () => {
+  mocks.python.mockResolvedValue({ chart: 42, message: "4" });
+  const result = await codeExecution.execute?.(
+    { code: "source", language: "python", title: "Calculate" },
+    testToolContext()
+  );
+  expect(result).toMatchObject({
+    output: { message: expect.stringContaining("Sandbox execution failed") },
+    usage: { costUsd: 0.05 },
+  });
+  expect(mocks.cleanup).toHaveBeenCalledOnce();
 });

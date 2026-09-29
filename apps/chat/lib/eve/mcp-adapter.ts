@@ -3,8 +3,6 @@ import type { ModelMessage, Tool } from "ai";
 import type { ToolContext } from "eve/tools";
 import { z } from "zod";
 
-import type { ChatToolContext } from "../ai/tool-context";
-
 const isAsyncIterable = <T>(
   value: T | AsyncIterable<T>
 ): value is AsyncIterable<T> =>
@@ -13,8 +11,8 @@ const isAsyncIterable = <T>(
   Symbol.asyncIterator in value &&
   typeof value[Symbol.asyncIterator] === "function";
 
-/** Adapt only ordinary application tools; approval and output policies need explicit Eve definitions. */
-export const describeEveTool = async <TInput, TOutput>(
+/** Describe discovered MCP tools; approval and output policies are handled by the MCP integration. */
+export const describeMcpTool = async <TInput, TOutput>(
   definition: Tool<TInput, TOutput>
 ) => {
   if (
@@ -46,12 +44,11 @@ export const describeEveTool = async <TInput, TOutput>(
  * Resolve module-level definitions at execution time, avoiding executable captures in durable closures.
  * @yields {unknown} Each output emitted by the installed AI SDK tool.
  */
-export const executeEveTool = async function* executeEveTool<TInput, TOutput>(
+export const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
   definition: Tool<TInput, TOutput>,
   input: unknown,
   context: Pick<ToolContext, "callId" | "abortSignal">,
-  messages: readonly ModelMessage[],
-  executionContext?: ChatToolContext
+  messages: readonly ModelMessage[]
 ) {
   const schema = asSchema(definition.inputSchema);
   if (!(schema.validate && definition.execute)) {
@@ -63,7 +60,7 @@ export const executeEveTool = async function* executeEveTool<TInput, TOutput>(
   }
   const output = await definition.execute(result.value, {
     abortSignal: context.abortSignal,
-    context: executionContext,
+    context: undefined,
     messages: [...messages],
     toolCallId: context.callId,
   });

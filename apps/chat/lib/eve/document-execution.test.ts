@@ -1,5 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { executeEveCodeDocument } from "./document-execution";
 
 const mocks = vi.hoisted(() => ({
@@ -20,7 +21,9 @@ vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("./platform-tools", () => ({ executeEvePlatformTool: mocks.execute }));
+vi.mock("./invoke-installed-tool", () => ({
+  invokeInstalledTool: mocks.execute,
+}));
 
 const input = {
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
@@ -33,7 +36,7 @@ const revision = {
   kind: "code",
   title: "saved.py",
 };
-const context = {
+const context = testToolContext({
   abortSignal: new AbortController().signal,
   callId: "run-code",
   session: {
@@ -49,7 +52,7 @@ const context = {
     id: "native-session",
     turn: { id: "turn", sequence: 1 },
   },
-};
+});
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -63,8 +66,9 @@ beforeEach(() => {
   mocks.read.mockResolvedValue(revision);
   mocks.execute.mockImplementation(function* fixtureOutput() {
     yield {
-      kind: "chatjs.platform-result",
+      kind: "chatjs.tool-result",
       output: { chart: "", message: "42" },
+      status: "success",
       usage: { costUsd: 0.05 },
       version: 1,
     };
@@ -90,8 +94,7 @@ it("executes only the owned saved revision and preserves its billing receipt", a
   expect(mocks.execute).toHaveBeenCalledWith(
     "codeExecution",
     { code: "print(42)", language: "python", title: "saved.py" },
-    context,
-    []
+    context
   );
   expect(result.value).toMatchObject({
     output: { ...input, code: "print(42)", message: "42" },
@@ -132,8 +135,9 @@ it("does not execute when cancelled during revision lookup", async () => {
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
   mocks.execute.mockImplementation(function* fixtureOutput() {
     yield {
-      kind: "chatjs.platform-result",
+      kind: "chatjs.tool-result",
       output: { chart: { elements: [], type: "pie" }, message: "Executed" },
+      status: "success",
       usage: { costUsd: 0.05 },
       version: 1,
     };

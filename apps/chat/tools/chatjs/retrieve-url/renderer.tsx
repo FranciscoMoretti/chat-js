@@ -4,12 +4,14 @@ import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-import type { ToolPartFromTool } from "@/tools/chatjs/_shared/lib/tool-part";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 
 import { retrievedInput, retrievedResult } from "./schemas";
-import type { retrieveUrl } from "./tool";
 
-type RetrieveUrlRendererTool = ToolPartFromTool<typeof retrieveUrl>;
+type RetrieveUrlRendererTool = ToolRendererProps<
+  typeof retrievedInput,
+  typeof retrievedResult
+>["tool"];
 
 const LoadingState = () => (
   <div className="border-border bg-card my-4 rounded-xl border p-4">

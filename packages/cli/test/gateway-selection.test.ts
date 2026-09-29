@@ -17,6 +17,10 @@ import { gatewayMetadata } from "../../registry/src/gateways/metadata";
 import cliPackage from "../package.json";
 import { GATEWAYS } from "../src/types";
 import { externalGatewayFixture } from "./external-gateway";
+import {
+  nativeToolFixture,
+  verifyNativeToolRuntime,
+} from "./native-tool-fixture";
 import { run } from "./run-command";
 
 const { dirname, join } = pathModule;
@@ -60,6 +64,9 @@ const external = externalGatewayFixture();
 const registryServer = Bun.serve({
   async fetch(request) {
     const path = new URL(request.url).pathname;
+    if (path === "/paid-counter.json") {
+      return Response.json(nativeToolFixture);
+    }
     if (path === "/external-storage.json") {
       return Response.json({
         dependencies: ["files-sdk@2.1.0"],
@@ -99,9 +106,9 @@ export function createStorageAdapter(options: {bucket: string}) {
             type: "registry:file",
           },
           {
-            content: `import { tool } from "ai";
+            content: `import { defineTool } from "eve/tools";
 import { z } from "zod";
-export const runCommand = tool({inputSchema: z.object({command: z.string()}),
+export const runCommand = defineTool({description: "External fixture",inputSchema: z.object({command: z.string()}),
     execute: async ({command}) => ({stdout: command, exitCode: 0})});`,
             path: "tool.ts",
             target: "~/tools/chatjs/acme-execution/tool.ts",
@@ -109,11 +116,12 @@ export const runCommand = tool({inputSchema: z.object({command: z.string()}),
           },
           {
             content: `"use client";
-import type { UIToolInvocation } from "ai";
-import type { runCommand } from "./tool";
-export function CommandRenderer({tool}: {tool: UIToolInvocation<typeof runCommand>}) {
- return <pre>{tool.state === "output-available" ? tool.output.stdout : tool.input?.command}</pre>;
-}`,
+import { z } from "zod";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+export const CommandRenderer = defineToolRenderer({
+ inputSchema: z.object({command: z.string()}), outputSchema: z.object({stdout: z.string(), exitCode: z.number()}),
+ render: ({tool}) => <pre>{tool.state === "output-available" ? tool.output.stdout : tool.input?.command}</pre>,
+});`,
             path: "renderer.tsx",
             target: "~/tools/chatjs/acme-execution/renderer.tsx",
             type: "registry:file",
@@ -143,9 +151,9 @@ export function CommandRenderer({tool}: {tool: UIToolInvocation<typeof runComman
             type: "registry:file",
           },
           {
-            content: `import {tool} from "ai";
+            content: `import {defineTool} from "eve/tools";
 import {z} from "zod";
-export const lookup = tool({inputSchema: z.object({query: z.string()}), execute: async ({query}) => ({documents: [{text: query, href: "https://example.com"}]})});`,
+export const lookup = defineTool({description: "External fixture",inputSchema: z.object({query: z.string()}), execute: async ({query}) => ({documents: [{text: query, href: "https://example.com"}]})});`,
             path: "tool.ts",
             target: "~/tools/chatjs/acme-search/tool.ts",
             type: "registry:file",
@@ -170,7 +178,7 @@ export const lookup = tool({inputSchema: z.object({query: z.string()}), execute:
         files: [
           {
             content:
-              'import { tool } from "ai"; import { z } from "zod"; export const animate = tool({ inputSchema: z.object({ subject: z.string() }), execute: async ({subject}) => ({ asset: subject }) });',
+              'import { defineTool } from "eve/tools"; import { z } from "zod"; export const animate = defineTool({description: "External fixture", inputSchema: z.object({ subject: z.string() }), execute: async ({subject}) => ({ asset: subject }) });',
             path: "tool.ts",
             target: "~/tools/chatjs/acme-video/tool.ts",
             type: "registry:file",
@@ -201,7 +209,7 @@ export const lookup = tool({inputSchema: z.object({query: z.string()}), execute:
         files: [
           {
             content:
-              'import { tool } from "ai"; import { z } from "zod"; export const paint = tool({ inputSchema: z.object({ subject: z.string() }), execute: async ({subject}) => ({ asset: subject }) });',
+              'import { defineTool } from "eve/tools"; import { z } from "zod"; export const paint = defineTool({description: "External fixture", inputSchema: z.object({ subject: z.string() }), execute: async ({subject}) => ({ asset: subject }) });',
             path: "tool.ts",
             target: "~/tools/chatjs/acme-image/tool.ts",
             type: "registry:file",
@@ -237,9 +245,9 @@ export const lookup = tool({inputSchema: z.object({query: z.string()}), execute:
             type: "registry:file",
           },
           {
-            content: `import {tool} from "ai";
+            content: `import {defineTool} from "eve/tools";
 import {z} from "zod";
-export const readPage = tool({inputSchema: z.object({target: z.string()}), execute: async ({target}) => ({text: "Page content", source: target})});`,
+export const readPage = defineTool({description: "External fixture",inputSchema: z.object({target: z.string()}), execute: async ({target}) => ({text: "Page content", source: target})});`,
             path: "tool.ts",
             target: "~/tools/chatjs/acme-retrieval/tool.ts",
             type: "registry:file",
@@ -573,19 +581,22 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         join(cwd, "verify-execution.ts"),
         `import assert from "node:assert/strict";
 import {tools} from "./tools/chatjs/tools";
+import type { ToolContext } from "eve/tools";
+const unavailable = () => { throw new Error("Unexpected resource access"); };
+const context: ToolContext = { callId: "fixture", toolName: "fixture", abortSignal: new AbortController().signal, session: { id: "fixture", auth: { current: null, initiator: null }, turn: { id: "turn", sequence: 0 } }, getSandbox: unavailable, getSkill: unavailable, getToken: unavailable, requireAuth: unavailable };
 const tool = tools.codeExecution;
 assert.ok(tool.execute);
-const result = await tool.execute({command: "echo hello"}, {toolCallId: "fixture", messages: [], context: {}});
+const result = await tool.execute({command: "echo hello"}, context);
 assert.deepEqual(result, {stdout: "echo hello", exitCode: 0});
 assert.ok(tools.webSearch.execute);
-const search = await tools.webSearch.execute({query: "independent schema"}, {toolCallId: "search", messages: [], context: {}});
+const search = await tools.webSearch.execute({query: "independent schema"}, context);
 assert.deepEqual(search, {documents: [{text: "independent schema", href: "https://example.com"}]});
 assert.ok(tools.retrieveUrl.execute);
 assert.ok(tools.generateVideo.execute);
-assert.deepEqual(await tools.generateVideo.execute({subject: "ocean"}, {toolCallId: "video", messages: [], context: {}}), {asset: "ocean"});
+assert.deepEqual(await tools.generateVideo.execute({subject: "ocean"}, context), {asset: "ocean"});
 assert.ok(tools.generateImage.execute);
-assert.deepEqual(await tools.generateImage.execute({subject: "mountains"}, {toolCallId: "image", messages: [], context: {}}), {asset: "mountains"});
-const page = await tools.retrieveUrl.execute({target: "https://example.com"}, {toolCallId: "retrieve", messages: [], context: {}});
+assert.deepEqual(await tools.generateImage.execute({subject: "mountains"}, context), {asset: "mountains"});
+const page = await tools.retrieveUrl.execute({target: "https://example.com"}, context);
 assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
 `
       );
@@ -761,3 +772,33 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
     ).toBe(false);
   }, 180_000);
 }
+
+it("native tools: a minimal scaffold installs external EVE tools and preserves durable usage", async () => {
+  const cwd = join(root, "native");
+  await run(root, [
+    "node",
+    cliEntry,
+    "create",
+    "native",
+    "--gateway",
+    "openai",
+    "--yes",
+    "--no-electron",
+  ]);
+  await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
+  await run(cwd, [
+    "node",
+    cliEntry,
+    "add",
+    `http://127.0.0.1:${registryServer.port}/paid-counter.json`,
+    "--yes",
+  ]);
+  const manifest = JSON.parse(
+    await readFile(join(cwd, "package.json"), "utf-8")
+  );
+  expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
+  expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
+  expect(manifest.dependencies["@mendable/firecrawl-js"]).toBeUndefined();
+  await run(cwd, ["bun", "run", "test:types"]);
+  await verifyNativeToolRuntime(cwd);
+}, 240_000);

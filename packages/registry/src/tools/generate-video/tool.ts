@@ -1,8 +1,14 @@
-import { experimental_generateVideo as generateVideo, tool } from "ai";
-import type { ToolExecutionOptions } from "ai";
+import { experimental_generateVideo as generateVideo } from "ai";
+import { defineTool } from "eve/tools";
 
-import type { ChatToolContext, ToolModelProvider } from "@/lib/ai/tool-context";
+import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
+import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
+import { createEveToolCost } from "@/lib/eve/tool-cost";
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+import { eveToolModelProvider } from "@/lib/eve/tool-models";
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+import type { FileUploader } from "@/lib/file-storage";
 import { createModuleLogger } from "@/lib/logger";
 
 import { generateVideoInput } from "./schemas";
@@ -60,108 +66,116 @@ const resolveVideoModel = async (
   return modelId;
 };
 
-export const generateVideoTool = tool({
+export const generateVideoTool = defineTool({
   description:
     "Generate a short video clip from a text prompt. Use this when the user asks to create, make, or generate a video.",
-  execute: async (
-    { prompt, aspectRatio, durationSeconds },
-    { abortSignal, context }: ToolExecutionOptions<ChatToolContext>
-  ): Promise<{ fileId?: string; videoUrl: string; prompt: string }> => {
-    const { costAccumulator, modelProvider, selectedModel, storeFile } =
-      context ?? {};
-    if (!storeFile) {
-      throw new Error("File generation requires an authorized file uploader.");
-    }
-    const startMs = Date.now();
-    const finalAspectRatio = aspectRatio ?? DEFAULT_ASPECT_RATIO;
-    const finalDurationSeconds = durationSeconds ?? DEFAULT_DURATION_SECONDS;
-
-    log.info(
-      {
-        aspectRatio: finalAspectRatio,
-        durationSeconds: finalDurationSeconds,
-        promptLength: prompt.length,
-        selectedModel,
-      },
-      "generateVideo: start"
-    );
-
-    try {
-      if (!modelProvider) {
-        throw new Error("Video generation requires model provider context.");
-      }
-      const modelId = await resolveVideoModel(modelProvider, selectedModel);
-      const isGoogleModel =
-        modelId.startsWith("google/") || modelId.includes("gemini");
-
-      log.debug({ modelId }, "generateVideo: resolved model");
-
-      const result = await generateVideo({
-        abortSignal,
-        aspectRatio: finalAspectRatio,
-        duration: finalDurationSeconds,
-        model: modelProvider.createVideoModel(modelId),
-        prompt,
-        providerOptions: {
-          ...(isGoogleModel && {
-            google: {
-              aspectRatio: finalAspectRatio,
-            },
-          }),
-        },
-      });
-
-      const { video } = result;
-      if (!video) {
-        throw new Error("No video generated");
-      }
-
-      // Provider usage is billable even if the subsequent storage upload fails.
-      costAccumulator?.addAPICost("generateVideo", COST_CENTS);
-
-      const buffer = Buffer.from(video.uint8Array);
-      const timestamp = Date.now();
-      const ext = resolveVideoExtension(video.mediaType);
-      const filename = `generated-video-${timestamp}.${ext}`;
-      const uploaded = await storeFile(filename, buffer, video.mediaType);
+  execute: ({ prompt, aspectRatio, durationSeconds }, context) =>
+    executeWithToolUsage(context, async (usage) => {
+      const { abortSignal } = context;
+      const costAccumulator = createEveToolCost(usage);
+      const modelProvider = eveToolModelProvider;
+      const uploadFile = eveGeneratedFileUploader(context);
+      // A completed generation followed by a storage failure is an explicit domain result.
+      const storeFile: FileUploader = async (...args) => {
+        try {
+          return await uploadFile(...args);
+        } catch {
+          return usage.fail();
+        }
+      };
+      const selected = context.session.auth.current?.attributes.modelId;
+      const selectedModel = typeof selected === "string" ? selected : undefined;
+      const startMs = Date.now();
+      const finalAspectRatio = aspectRatio ?? DEFAULT_ASPECT_RATIO;
+      const finalDurationSeconds = durationSeconds ?? DEFAULT_DURATION_SECONDS;
 
       log.info(
         {
-          modelId,
-          ms: Date.now() - startMs,
-          videoUrl: uploaded.url,
-        },
-        "generateVideo: success"
-      );
-
-      return { fileId: uploaded.fileId, prompt, videoUrl: uploaded.url };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "";
-      const isUnsupportedVideoGateway = errorMessage.includes(
-        "does not support video models"
-      );
-
-      log.error(
-        {
-          error:
-            error instanceof Error
-              ? { message: error.message, name: error.name }
-              : error,
-          ms: Date.now() - startMs,
+          aspectRatio: finalAspectRatio,
+          durationSeconds: finalDurationSeconds,
+          promptLength: prompt.length,
           selectedModel,
         },
-        "generateVideo: failure"
+        "generateVideo: start"
       );
 
-      if (isUnsupportedVideoGateway) {
-        throw new Error(
-          "Video generation is not available for the active gateway.",
-          { cause: error }
-        );
-      }
+      try {
+        if (!modelProvider) {
+          throw new Error("Video generation requires model provider context.");
+        }
+        const modelId = await resolveVideoModel(modelProvider, selectedModel);
+        const isGoogleModel =
+          modelId.startsWith("google/") || modelId.includes("gemini");
 
-      throw error;
-    }
-  },
+        log.debug({ modelId }, "generateVideo: resolved model");
+
+        const result = await generateVideo({
+          abortSignal,
+          aspectRatio: finalAspectRatio,
+          duration: finalDurationSeconds,
+          model: modelProvider.createVideoModel(modelId),
+          prompt,
+          providerOptions: {
+            ...(isGoogleModel && {
+              google: {
+                aspectRatio: finalAspectRatio,
+              },
+            }),
+          },
+        });
+
+        const { video } = result;
+        if (!video) {
+          throw new Error("No video generated");
+        }
+
+        // Provider usage is billable even if the subsequent storage upload fails.
+        costAccumulator?.addAPICost("generateVideo", COST_CENTS);
+
+        const buffer = Buffer.from(video.uint8Array);
+        const timestamp = Date.now();
+        const ext = resolveVideoExtension(video.mediaType);
+        const filename = `generated-video-${timestamp}.${ext}`;
+        const uploaded = await storeFile(filename, buffer, video.mediaType);
+
+        log.info(
+          {
+            modelId,
+            ms: Date.now() - startMs,
+            videoUrl: uploaded.url,
+          },
+          "generateVideo: success"
+        );
+
+        return { fileId: uploaded.fileId, prompt, videoUrl: uploaded.url };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "";
+        const isUnsupportedVideoGateway = errorMessage.includes(
+          "does not support video models"
+        );
+
+        log.error(
+          {
+            error:
+              error instanceof Error
+                ? { message: error.message, name: error.name }
+                : error,
+            ms: Date.now() - startMs,
+            selectedModel,
+          },
+          "generateVideo: failure"
+        );
+
+        if (isUnsupportedVideoGateway) {
+          throw new Error(
+            "Video generation is not available for the active gateway.",
+            { cause: error }
+          );
+        }
+
+        throw error;
+      }
+    }),
   inputSchema: generateVideoInput,
+  toModelOutput: toolResultToModelOutput,
 });

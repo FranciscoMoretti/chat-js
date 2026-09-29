@@ -3,24 +3,24 @@ import { generateUUID } from "@/lib/utils";
 
 import { deduplicateByDomainAndUrl } from "./search-utils";
 
-export interface SearchQuery {
+export type SearchQuery = {
   maxResults: number;
   query: string;
-}
+};
 
-interface MultiQuerySearchResult {
+export type MultiQuerySearchResult = {
   query: SearchQuery;
   results: {
     url: string;
     title: string;
     content: string;
   }[];
-}
+};
 
-export interface MultiQuerySearchResponse {
+export type MultiQuerySearchResponse = {
   error?: string;
   searches: MultiQuerySearchResult[];
-}
+};
 
 export const multiQueryWebSearchStep = async ({
   queries,

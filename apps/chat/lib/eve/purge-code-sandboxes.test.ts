@@ -10,8 +10,8 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   record: vi.fn(),
 }));
-vi.mock("../ai/installed-tools", () => ({
-  installedTools: { codeExecution: {} },
+vi.mock("../../tools/chatjs/tools", () => ({
+  tools: { codeExecution: {} },
 }));
 vi.mock("../ai/installed-tool-capabilities", () => ({
   getCodeSandboxCleanup: () =>

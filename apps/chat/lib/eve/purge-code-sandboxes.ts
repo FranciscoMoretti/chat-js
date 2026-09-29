@@ -1,14 +1,10 @@
-import type { ToolSet } from "ai";
-
+import { tools } from "../../tools/chatjs/tools";
 import { getCodeSandboxCleanup } from "../ai/installed-tool-capabilities";
-import { installedTools } from "../ai/installed-tools";
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
 } from "../db/eve-code-sandboxes";
 import { eveCodeSandboxName } from "./code-sandbox-name";
-
-const registeredTools: ToolSet = installedTools;
 
 /** Native work must already be retired. Never infer a failed create from provider absence. */
 export const purgeEveFamilyCodeSandboxes = async (
@@ -27,7 +23,9 @@ export const purgeEveFamilyCodeSandboxes = async (
     }
     return;
   }
-  const capability = getCodeSandboxCleanup(registeredTools.codeExecution);
+  const capability = getCodeSandboxCleanup(
+    Object.entries(tools).find(([name]) => name === "codeExecution")?.[1]
+  );
   if (!capability) {
     throw new Error(
       "Install the code execution tool to clean up its durable sandbox resources."

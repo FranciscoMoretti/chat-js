@@ -1,8 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
+import type { z } from "zod";
 
 import { GetWeatherRenderer } from "./renderer";
-import type { WeatherAtLocation } from "./tool";
+import type { weatherResult } from "./schemas";
+
+type WeatherAtLocation = z.output<typeof weatherResult>;
 
 const weather: WeatherAtLocation = {
   current: { interval: 900, temperature_2m: 20, time: "2026-09-08T20:00" },

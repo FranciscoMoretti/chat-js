@@ -23,79 +23,70 @@ export async function runResearcher(
   const model = await options.getLanguageModel(
     config.research_model as ModelId
   );
-  return withResearchTools(config, async (tools) => {
-    if (Object.keys(tools).length === 0) {
-      throw new Error(
-        "No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration."
-      );
-    }
+  return withResearchTools(
+    config,
+    async (tools) => {
+      if (Object.keys(tools).length === 0) {
+        throw new Error(
+          "No tools found to conduct research: Please configure either your search API or add MCP tools to your configuration."
+        );
+      }
 
-    dataStream.write({
-      data: {
-        message: topic,
-        status: "running",
-        title: "Starting research on topic",
-        toolCallId,
-        type: "thoughts",
-      },
-      type: "data-researchUpdate",
-    });
+      dataStream.write({
+        data: {
+          message: topic,
+          status: "running",
+          title: "Starting research on topic",
+          toolCallId,
+          type: "thoughts",
+        },
+        type: "data-researchUpdate",
+      });
 
-    const researcherAgent = new ToolLoopAgent({
-      model,
-      instructions: researchSystemPrompt({
-        date: getTodayStr(),
-        max_search_queries: config.search_api_max_queries,
-        mcp_prompt: config.mcp_prompt || "",
-      }),
-      tools,
-      maxOutputTokens: config.research_model_max_tokens,
-      prepareStep: () => ({
-        toolsContext: Object.fromEntries(
-          Object.keys(tools).map((name) => [
-            name,
-            {
-              costAccumulator: options.costAccumulator,
-              dataStream,
-              toolCallIdOverride: toolCallId,
-              writeTopLevelUpdates: false,
-            },
-          ])
-        ),
-      }),
-      ...createTelemetry("researcher", options),
-      onStepEnd: ({ usage }) => {
-        if (usage) {
-          options.costAccumulator?.addLLMCost(
-            config.research_model as AppModelId,
-            usage,
-            "deep-research-researcher"
-          );
-        }
-      },
-    });
+      const researcherAgent = new ToolLoopAgent({
+        model,
+        instructions: researchSystemPrompt({
+          date: getTodayStr(),
+          max_search_queries: config.search_api_max_queries,
+          mcp_prompt: config.mcp_prompt || "",
+        }),
+        tools,
+        maxOutputTokens: config.research_model_max_tokens,
+        ...createTelemetry("researcher", options),
+        onStepEnd: ({ usage }) => {
+          if (usage) {
+            options.costAccumulator?.addLLMCost(
+              config.research_model as AppModelId,
+              usage,
+              "deep-research-researcher"
+            );
+          }
+        },
+      });
 
-    const { responseMessages } = await researcherAgent.generate({
-      abortSignal,
-      prompt: topic,
-    });
+      const { responseMessages } = await researcherAgent.generate({
+        abortSignal,
+        prompt: topic,
+      });
 
-    // eslint-disable-next-line no-use-before-define -- Compression is the second phase of this pipeline.
-    const compressed = await compressResearch(responseMessages, options);
+      // eslint-disable-next-line no-use-before-define -- Compression is the second phase of this pipeline.
+      const compressed = await compressResearch(responseMessages, options);
 
-    dataStream.write({
-      data: {
-        message: topic,
-        status: "completed",
-        title: "Research topic completed",
-        toolCallId,
-        type: "thoughts",
-      },
-      type: "data-researchUpdate",
-    });
+      dataStream.write({
+        data: {
+          message: topic,
+          status: "completed",
+          title: "Research topic completed",
+          toolCallId,
+          type: "thoughts",
+        },
+        type: "data-researchUpdate",
+      });
 
-    return compressed;
-  });
+      return compressed;
+    },
+    options.searchTool
+  );
 }
 
 async function compressResearch(

@@ -14,7 +14,6 @@ import {
 import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
-import { eveCodeSandboxOwnership } from "../lib/eve/code-sandbox-ownership";
 import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
 import { createModuleLogger } from "../lib/logger";
 import { executeJavaScriptInSandbox } from "../tools/chatjs/vercel-code-execution/javascript";
@@ -26,6 +25,7 @@ import {
 } from "../tools/chatjs/vercel-code-execution/sandbox";
 import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
 import { assertEveTestDatabase } from "./eve-test-database";
+import { testToolContext } from "./helpers/eve-tool-context";
 
 for (const language of ["javascript", "python"] as const) {
   test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
@@ -99,13 +99,6 @@ test("native sandbox ownership is durably released after real provider cleanup",
     throw new Error("Missing native fixture session");
   }
   try {
-    const sandboxOwnership = eveCodeSandboxOwnership({
-      callId: "sdk-fixture",
-      session: {
-        auth: { initiator: { principalId: ownerId } },
-        id: row.sessionId,
-      },
-    });
     const tool = codeExecution;
     if (!tool.execute) {
       throw new Error("Missing code executor");
@@ -116,14 +109,28 @@ test("native sandbox ownership is durably released after real provider cleanup",
         language: "javascript",
         title: "Ownership check",
       },
-      {
+      testToolContext({
         abortSignal: AbortSignal.timeout(60_000),
-        context: { sandboxOwnership },
-        messages: [],
-        toolCallId: "sdk-fixture",
-      }
+        callId: "sdk-fixture",
+        session: {
+          auth: {
+            current: null,
+            initiator: {
+              attributes: {},
+              authenticator: "test",
+              principalId: ownerId,
+              principalType: "user",
+            },
+          },
+          id: row.sessionId,
+          turn: { id: "turn", sequence: 0 },
+        },
+        toolName: "codeExecution",
+      })
     );
-    expect(result).toMatchObject({ message: expect.stringContaining("42") });
+    expect(result).toMatchObject({
+      output: { message: expect.stringContaining("42") },
+    });
     const resources = await db
       .select()
       .from(eveCodeSandbox)

@@ -45,6 +45,9 @@ export default defineConfig({
       provider: playwright(),
       viewport: { height: 900, width: 1000 },
     },
-    include: ["visual/*.browser.test.tsx"],
+    include: [
+      "visual/*.browser.test.tsx",
+      "../../apps/chat/tests/visual/*.browser.tsx",
+    ],
   },
 });

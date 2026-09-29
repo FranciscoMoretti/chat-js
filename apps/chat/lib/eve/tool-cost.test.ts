@@ -30,10 +30,10 @@ test("includes dedicated image pricing in the durable total", async () => {
 test("missing pricing and missing usage remain unknown rather than free", async () => {
   const missing = createEveToolCost();
   missing.addLLMCost("missing", { inputTokens: 0, outputTokens: 1 }, "image");
-  await expect(missing.totalUsd()).rejects.toThrow("pricing is unavailable");
+  await expect(missing.totalUsd()).resolves.toBeUndefined();
   const empty = createEveToolCost();
   empty.addLLMCost("priced", {}, "image");
-  await expect(empty.totalUsd()).rejects.toThrow("usage is unavailable");
+  await expect(empty.totalUsd()).resolves.toBeUndefined();
 });
 
 test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
@@ -41,6 +41,6 @@ test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
   async (usage) => {
     const cost = createEveToolCost();
     cost.addLLMCost("priced", usage, "image");
-    await expect(cost.totalUsd()).rejects.toThrow("usage is unavailable");
+    await expect(cost.totalUsd()).resolves.toBeUndefined();
   }
 );

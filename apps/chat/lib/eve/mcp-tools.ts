@@ -13,7 +13,7 @@ import {
 } from "../db/mcp-queries";
 import type { McpConnector } from "../db/schema";
 import { createModuleLogger } from "../logger";
-import { describeEveTool, executeEveTool } from "./adapt-tool";
+import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 import { eveMcpResult } from "./mcp-result";
 
 const log = createModuleLogger("eve.mcp");
@@ -83,7 +83,7 @@ export const discoverEveMcpTools = async (
     return [];
   }
   const connectors = await getMcpConnectorsByUserId({ userId: ownerId });
-  const descriptions: (Awaited<ReturnType<typeof describeEveTool>> & {
+  const descriptions: (Awaited<ReturnType<typeof describeMcpTool>> & {
     name: string;
     connectorId: string;
     remoteName: string;
@@ -108,7 +108,7 @@ export const discoverEveMcpTools = async (
             } = tool;
             descriptions.push({
               // oxlint-disable-next-line eslint/no-await-in-loop -- Finish the scoped connector operation before releasing its client.
-              ...(await describeEveTool(definition)),
+              ...(await describeMcpTool(definition)),
               connectorId: connector.id,
               name: createToolId(
                 connector.nameId,
@@ -203,7 +203,7 @@ export const executeEveMcpTool = async (
       throw new Error("MCP approval policy changed; retry after rediscovery.");
     }
     let result: unknown;
-    for await (const output of executeEveTool(
+    for await (const output of executeMcpTool(
       validatedTool,
       input,
       context,

@@ -16,7 +16,6 @@ const referenceItems = new Set([
   "retrieve-url",
   "generate-image",
   "generate-video",
-  "toolkit-renderer",
 ]);
 const packageRoot = path.resolve(import.meta.dir, "..");
 const emitted = (source: string, fileName: string) =>

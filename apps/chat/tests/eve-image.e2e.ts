@@ -11,7 +11,7 @@ import {
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-import { evePlatformResult } from "../lib/eve/platform-result";
+import { toolResultSchema } from "../lib/eve/tool-result";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
 
@@ -81,7 +81,7 @@ test("native image generation, editing and sharing preserve stored results", asy
   ) {
     throw new Error("Missing native image result");
   }
-  const receipt = evePlatformResult.parse(result.data.result.output);
+  const receipt = toolResultSchema.parse(result.data.result.output);
   expect(receipt.output).toMatchObject({ imageUrl: src });
   expect(receipt.usage.costUsd).toBeGreaterThan(0);
   await image.screenshot({
@@ -156,7 +156,7 @@ test("native image generation, editing and sharing preserve stored results", asy
       throw new Error("Missing image result");
     }
     expect(
-      evePlatformResult.parse(event.data.result.output).usage.costUsd
+      toolResultSchema.parse(event.data.result.output).usage.costUsd
     ).toBeGreaterThan(0);
   }
   await page.getByRole("button", { exact: true, name: "Share chat" }).click();

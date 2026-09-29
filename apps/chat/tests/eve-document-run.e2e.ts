@@ -10,8 +10,8 @@ import { eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { conversationBinding } from "../lib/eve/contracts";
-import { evePlatformResult } from "../lib/eve/platform-result";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
+import { toolResultSchema } from "../lib/eve/tool-result";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -128,7 +128,7 @@ test("artifact Run executes saved source, retains output across reload and shari
   ) {
     throw new Error("Missing native saved-code result");
   }
-  const result = evePlatformResult.parse(event.data.result.output);
+  const result = toolResultSchema.parse(event.data.result.output);
   expect(result.output).toMatchObject({
     code: 'console.log("saved-revision-73")',
     language: "javascript",

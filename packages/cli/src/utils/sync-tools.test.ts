@@ -23,6 +23,18 @@ afterEach(async () => {
 const project = async (): Promise<string> => {
   const root = await mkdtemp(join(tmpdir(), "chatjs-sync-"));
   roots.push(root);
+  await mkdir(join(root, "lib/eve"), { recursive: true });
+  await symlink(
+    path.resolve(
+      import.meta.dir,
+      "../../../../apps/chat/lib/eve/tool-types.ts"
+    ),
+    join(root, "lib/eve/tool-types.ts")
+  );
+  await writeFile(
+    join(root, "tsconfig.json"),
+    JSON.stringify({ compilerOptions: { paths: { "@/*": ["./*"] } } })
+  );
   await syncTools(root);
   return root;
 };
@@ -102,32 +114,6 @@ test("duplicate keys and symlink directories fail before writing indexes", async
   );
   await expect(syncTools(root)).rejects.toThrow("symlinks");
 });
-test("known legacy registrations bootstrap descriptors without changing source", async () => {
-  const root = await project();
-  await install(root);
-  await rm(join(root, "tools/chatjs/word-count/chatjs.json"));
-  await writeFile(
-    join(root, "tools/chatjs/tools.ts"),
-    'import { wordCount } from "@/tools/chatjs/word-count/tool";\nexport const tools = { wordCount, } as const;'
-  );
-  await writeFile(
-    join(root, "tools/chatjs/ui.ts"),
-    'import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { WordCountRenderer } from "@/tools/chatjs/word-count/renderer";\nexport const ui = { "tool-wordCount": WordCountRenderer, } satisfies ToolRendererRegistry;'
-  );
-  await syncTools(root, { checkOnly: true });
-  expect(
-    await Bun.file(join(root, "tools/chatjs/word-count/chatjs.json")).exists()
-  ).toBe(false);
-  await syncTools(root);
-  expect(
-    JSON.parse(
-      await readFile(join(root, "tools/chatjs/word-count/chatjs.json"), "utf-8")
-    ).toolExport
-  ).toBe("wordCount");
-  expect(
-    await readFile(join(root, "tools/chatjs/word-count/tool.ts"), "utf-8")
-  ).toBe("export const wordCount = {};");
-});
 test("a requested tool cannot report successful registration without its descriptor", async () => {
   const root = await project();
   await expect(
@@ -144,35 +130,6 @@ test("a requested tool cannot report successful registration without its descrip
       ],
     })
   ).rejects.toThrow("does not match requested");
-});
-
-test("legacy CLI empty and reverse-order indexes migrate", async () => {
-  const root = await project();
-  const server = join(root, "tools/chatjs/tools.ts");
-  const client = join(root, "tools/chatjs/ui.ts");
-  await writeFile(server, "export const tools = {} as const;");
-  await writeFile(client, "export const ui = {};");
-  await syncTools(root);
-  await install(root);
-  await install(root, "get-weather", "getWeather");
-  await Promise.all(
-    ["word-count", "get-weather"].map((id) =>
-      rm(join(root, "tools/chatjs", id, "chatjs.json"))
-    )
-  );
-  await writeFile(
-    server,
-    'import { wordCount } from "@/tools/chatjs/word-count/tool";\nimport { getWeather } from "@/tools/chatjs/get-weather/tool";\nexport const tools = { wordCount, getWeather, } as const;'
-  );
-  await writeFile(
-    client,
-    'import { WordCountRenderer } from "@/tools/chatjs/word-count/renderer";\nimport { GetWeatherRenderer } from "@/tools/chatjs/get-weather/renderer";\nexport const ui = { "tool-wordCount": WordCountRenderer, "tool-getWeather": GetWeatherRenderer, };'
-  );
-  const definitions = await syncTools(root);
-  expect(definitions.map((item) => item.id)).toEqual([
-    "get-weather",
-    "word-count",
-  ]);
 });
 
 const installSearch = async (
@@ -310,6 +267,34 @@ test("URL retrieval uses the selected export and credentials and rejects duplica
   await expect(syncTools(root)).rejects.toThrow("Only one retrieveUrl");
   expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8")).toBe(
     server
+  );
+});
+
+test("tools register natively, retain renderers and cannot collide with custom tools", async () => {
+  const root = await project();
+  await install(root, "native-counter", "countWords");
+  await syncTools(root);
+  const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+  const { ui } = await import(join(root, "tools/chatjs/ui.ts"));
+  expect(Object.keys(tools)).toEqual(["countWords"]);
+  expect(Object.keys(ui)).toEqual(["tool-countWords"]);
+  await writeFile(
+    join(root, "tools/chatjs/custom-tools.ts"),
+    "export const customTools = { countWords: {} };\n"
+  );
+  await syncTools(root);
+  // Use a fresh entry point to bypass the module cache of the preceding import.
+  const source = await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8");
+  await writeFile(
+    join(root, "tools/chatjs/collision-custom.ts"),
+    "export const customTools = { countWords: {} };\n"
+  );
+  await writeFile(
+    join(root, "tools/chatjs/collision.ts"),
+    source.replace('"./custom-tools"', '"./collision-custom"')
+  );
+  await expect(import(join(root, "tools/chatjs/collision.ts"))).rejects.toThrow(
+    "Duplicate tool registration"
   );
 });
 

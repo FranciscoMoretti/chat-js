@@ -16,7 +16,7 @@ The npm package publishes `dist/r/`. Version 1 uses the standard registry format
 
 ## Tools
 
-Each tool item installs `tool.ts`, `renderer.tsx`, and `chatjs.json` under `~/tools/chatjs/<id>/`. The descriptor contains contractVersion 1, kind `tool`, id, named tool/renderer exports, and environment requirements. The build derives it from the same typed metadata used in the catalog.
+Each tool item installs `tool.ts`, `renderer.tsx`, and `chatjs.json` under `~/tools/chatjs/<id>/`. All tools use native EVE definitions and a single contractVersion 1 descriptor with kind `tool`, id, named tool/renderer exports, optional feature slot, and environment requirements. The version validates the format and never selects an execution adapter. The build derives it from the same typed metadata used in the catalog.
 
 `chat-js add` delegates installation to shadcn, then generates typed server and client indexes. Direct `shadcn add` installs are supported by running `chat-js sync` afterward. Custom registrations belong in `custom-tools.ts` and `custom-ui.ts`. Third-party items use the same shape and standard namespaces in `components.json`.
 
@@ -24,7 +24,7 @@ See [gateway authoring](./src/gateways/README.md) for adapter-specific metadata.
 
 ## Organization and naming
 
-Source folders group items by category. Each gateway has a `gateway.ts`; each tool has a `tool.ts` and `renderer.tsx`. Shared tool support lives under `src/tools/toolkit-renderer/`. Category-level gateway catalog, metadata, and defaults live directly under `src/gateways/`.
+Source folders group items by category. Each gateway has a `gateway.ts`; each tool has a `tool.ts` and `renderer.tsx`. Receipt and renderer helpers are supplied by the ChatJS scaffold. Category-level gateway catalog, metadata, and defaults live directly under `src/gateways/`.
 
 `meta.chatjs.kind` identifies a gateway or tool independently of its public name. Registry namespace aliases such as `@chatjs` identify a configured registry source. Public item names remain `vercel-gateway`, `word-count`, and the other existing names. Source folders do not determine registry addresses or installation targets.
 

@@ -19,6 +19,8 @@ Ask your chat model: “Count the words and characters in: Hello world.” Use a
 
 The tool accepts a `text` string and returns `words`, `characters`, `charactersNoSpaces`, and `sentences`. The example text produces two words, 12 characters, 11 characters without whitespace, and one sentence.
 
+Word Count uses a native EVE definition and reports an explicit zero-cost receipt. The renderer and model receive the counts, while the app keeps the usage receipt with the durable result.
+
 ## Behavior and limitations
 
 Words are split on whitespace and sentences on `.`, `!`, or `?`. These are simple counts rather than language-aware tokenization.

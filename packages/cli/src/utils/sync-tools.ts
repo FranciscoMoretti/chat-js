@@ -4,7 +4,6 @@ import pathModule from "node:path";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import type { ToolDefinition } from "../../../registry/metadata";
-import { legacyTools } from "./legacy-tools";
 import { preflight } from "./preflight";
 
 const { join } = pathModule;
@@ -25,6 +24,10 @@ const readOptional = async (path: string): Promise<string | null> => {
 };
 const generatedSource = (body: string): string => {
   const normalizedBody = body
+    .replace(
+      "const installed = defineToolSet({\n\n});",
+      "const installed = defineToolSet({});"
+    )
     .replace("const installed = {\n\n};", "const installed = {};")
     .replace(";\n\n\nconst installed", ";\n\nconst installed");
   return `${generated}// Content: ${hash(normalizedBody)}\n${normalizedBody}`;
@@ -215,22 +218,6 @@ const buildEnvironmentOptions = (
   return combinations;
 };
 
-const writeLegacyDescriptors = async (
-  dir: string,
-  legacy: ToolDefinition[],
-  index = 0
-): Promise<void> => {
-  const definition = legacy[index];
-  if (!definition) {
-    return;
-  }
-  const descriptor = join(dir, definition.id, "chatjs.json");
-  if ((await readOptional(descriptor)) === null) {
-    await writeFile(descriptor, `${JSON.stringify(definition, null, 2)}\n`);
-  }
-  await writeLegacyDescriptors(dir, legacy, index + 1);
-};
-
 const writeSelectionConfigs = async (
   dir: string,
   definitions: ToolDefinition[],
@@ -270,7 +257,7 @@ const sourceFor = (
 ): { toolBody: string; uiBody: string } => {
   const renderers = registrations.filter((item) => item.rendererExport);
   return {
-    toolBody: `import type { ToolSet } from "ai";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = {\n${orderedProperties(registrations.map((item, i) => ({ key: registrationKey(item), value: `tool${i}` })))}\n} satisfies ToolSet;\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
+    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = defineToolSet({\n${orderedProperties(registrations.map((item) => ({ key: registrationKey(item), value: `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${orderedProperties(renderers.map((item, i) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${i}` })))}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
   };
 };
@@ -299,16 +286,10 @@ export const syncTools = async (
   const uiPath = join(dir, "ui.ts");
   const previousTools = await readOptional(toolsPath);
   const previousUi = await readOptional(uiPath);
-  const legacy =
-    previousTools && previousUi && !previousTools.startsWith(generated)
-      ? await legacyTools(cwd, previousTools, previousUi)
-      : null;
   await validateGeneratedSelections(dir);
-  if (!legacy) {
-    checkGenerated(previousTools, toolsPath);
-    checkGenerated(previousUi, uiPath);
-  }
-  const definitions = [...(legacy ?? [])];
+  checkGenerated(previousTools, toolsPath);
+  checkGenerated(previousUi, uiPath);
+  const definitions: ToolDefinition[] = [];
   await collectDefinitions(cwd, directory, entries, definitions);
   const ids = new Set(definitions.map((item) => item.id));
   const missing = missingPreviousRegistration(previousTools, ids, entries);
@@ -339,7 +320,7 @@ export const syncTools = async (
       ? [
           writeFile(
             join(dir, "custom-tools.ts"),
-            'import type { ToolSet } from "ai";\n\nexport const customTools = {} satisfies ToolSet;\n'
+            'import { defineToolSet } from "@/lib/eve/tool-types";\n\nexport const customTools = defineToolSet({});\n'
           ),
         ]
       : []),
@@ -352,7 +333,6 @@ export const syncTools = async (
         ]
       : []),
   ]);
-  await writeLegacyDescriptors(dir, legacy ?? []);
   await writeSelectionConfigs(dir, definitions);
   await writeFile(toolsPath, generatedSource(toolBody));
   await writeFile(uiPath, generatedSource(uiBody));

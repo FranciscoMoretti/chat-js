@@ -34,6 +34,7 @@ export async function runDeepResearchPipeline(
   config: DeepResearchRuntimeConfig,
   dataStream: AgentOptions["dataStream"],
   options: {
+    searchTool?: AgentOptions["searchTool"];
     saveReport: (input: {
       title: string;
       content: string;
@@ -51,6 +52,7 @@ export async function runDeepResearchPipeline(
     config,
     costAccumulator,
     dataStream,
+    searchTool: options.searchTool,
     getLanguageModel: options.getLanguageModel,
     getModelContextWindow: options.getModelContextWindow,
     messageId: input.messageId,

@@ -2,19 +2,25 @@ import { generateText } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { runDeepResearchPipeline } from "../../tools/platform/deep-research/pipeline";
 import { executeEveResearch } from "./research-tool";
+import { EveSessionMappingError } from "./session-mapping-error";
 
 const mocks = await vi.hoisted(async () => {
   const { gatewayModelDefaults } = await import("../ai/gateway-model-defaults");
   return {
     documents: { enabled: true, types: { text: true } },
     enabled: { enabled: true },
+    logError: vi.fn(),
     modelId: gatewayModelDefaults.workflows.chat,
     resolveModel: vi.fn(),
     save: vi.fn(),
   };
 });
+vi.mock("../logger", () => ({
+  createModuleLogger: () => ({ error: mocks.logError }),
+}));
 vi.mock("../config", () => ({
   config: {
     ai: { tools: { deepResearch: mocks.enabled, documents: mocks.documents } },
@@ -45,7 +51,7 @@ vi.mock("../ai/active-gateway", () => ({
 vi.mock("../ai/to-model-data", () => ({
   toModelData: (value: unknown) => value,
 }));
-const context = {
+const context = testToolContext({
   abortSignal: new AbortController().signal,
   callId: "research-call",
   session: {
@@ -61,7 +67,7 @@ const context = {
     id: "session",
     turn: { id: "turn", sequence: 1 },
   },
-};
+});
 const document = {
   date: "2026-09-10",
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
@@ -141,8 +147,9 @@ it("returns clarification without creating a document", async () => {
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-it("retains incurred cost if saving the report fails", async () => {
-  mocks.save.mockRejectedValue(new Error("database unavailable"));
+it("retains research charges and logs the original report persistence failure", async () => {
+  const error = new Error("database unavailable");
+  mocks.save.mockRejectedValue(error);
   vi.mocked(runDeepResearchPipeline).mockImplementation(
     async (_input, _config, _stream, options) => {
       options.costAccumulator.addAPICost("search", 5);
@@ -154,9 +161,13 @@ it("retains incurred cost if saving the report fails", async () => {
   );
   const outputs = await Array.fromAsync(executeEveResearch({}, context, []));
   expect(outputs.at(-1)).toMatchObject({
-    output: { error: expect.any(String) },
+    status: "error",
     usage: { costUsd: 0.05 },
   });
+  expect(mocks.logError).toHaveBeenCalledWith(
+    expect.objectContaining({ error }),
+    "Research report persistence failed"
+  );
 });
 
 it("rejects disabled research before doing provider or database work", async () => {
@@ -192,4 +203,23 @@ it("forwards configured reasoning options into the research provider request", a
   expect(model.doGenerateCalls[0].providerOptions).toMatchObject({
     openai: { reasoningEffort: "high" },
   });
+});
+
+vi.mock("./research-search", () => ({
+  createResearchSearchTool: () => {},
+}));
+
+it("preserves report authorization failures", async () => {
+  const error = new EveSessionMappingError("owner_mismatch");
+  mocks.save.mockRejectedValue(error);
+  vi.mocked(runDeepResearchPipeline).mockImplementation(
+    async (_input, _config, _stream, options) => ({
+      data: await options.saveReport({ content: "Content", title: "Report" }),
+      type: "report",
+    })
+  );
+  await expect(
+    Array.fromAsync(executeEveResearch({}, context, []))
+  ).rejects.toBe(error);
+  expect(mocks.logError).not.toHaveBeenCalled();
 });

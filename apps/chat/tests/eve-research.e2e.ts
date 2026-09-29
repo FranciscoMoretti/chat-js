@@ -8,7 +8,8 @@ import { db } from "../lib/db/client";
 import { eveConversation, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
-import { evePlatformResult } from "../lib/eve/platform-result";
+import { toolResultSchema } from "../lib/eve/tool-result";
+import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -82,12 +83,16 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   ) {
     throw new Error("Missing research result");
   }
-  const receipt = evePlatformResult.parse(result.data.result.output);
+  const receipt = toolResultSchema.parse(result.data.result.output);
   expect(receipt.output).toMatchObject({
     format: "report",
     revisionId: expect.any(String),
     status: "success",
   });
   expect(receipt.usage.costUsd).toBeGreaterThan(0);
-  expect(receipt.updates?.some((update) => update.type === "web")).toBe(true);
+  expect(
+    receipt.updates?.some(
+      (update) => ResearchUpdateSchema.parse(update).type === "web"
+    )
+  ).toBe(true);
 });

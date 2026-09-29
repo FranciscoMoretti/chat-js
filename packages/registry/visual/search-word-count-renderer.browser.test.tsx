@@ -3,11 +3,22 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 
+import { EveToolResult } from "../../../apps/chat/components/eve/eve-tool-result";
+import {
+  createToolError,
+  createToolResult,
+} from "../../../apps/chat/lib/eve/tool-result";
 import { WebSearchRenderer as FirecrawlSearchRenderer } from "../src/tools/firecrawl-search/renderer";
 import { WebSearchRenderer as TavilySearchRenderer } from "../src/tools/tavily-search/renderer";
 import { WordCountRenderer } from "../src/tools/word-count/renderer";
 
 import "../../../apps/chat/app/globals.css";
+
+vi.mock("@/lib/ai/tool-renderer-registry", async () => {
+  const { WordCountRenderer: Renderer } =
+    await import("../src/tools/word-count/renderer");
+  return { getEveInstalledToolRenderer: () => Renderer };
+});
 
 vi.mock("@/components/part/message-annotations", () => ({
   ResearchUpdates: () => <span>Search updates</span>,
@@ -98,16 +109,58 @@ test("search and word-count renderers preserve their visible states", async () =
             }}
           />
         </section>
+        <section data-testid="native-receipt">
+          <EveToolResult
+            isReadonly
+            messageId="native-message"
+            part={{
+              input: { text: "one two" },
+              output: createToolResult(
+                {
+                  characters: 7,
+                  charactersNoSpaces: 6,
+                  sentences: 1,
+                  words: 2,
+                },
+                0
+              ),
+              state: "output-available",
+              toolCallId: "native-success",
+              toolName: "wordCount",
+              type: "dynamic-tool",
+            }}
+          />
+        </section>
+        <section data-testid="native-receipt-error">
+          <EveToolResult
+            isReadonly
+            messageId="native-message"
+            part={{
+              input: { text: "one two" },
+              output: createToolError(0.02),
+              state: "output-available",
+              toolCallId: "native-error",
+              toolName: "wordCount",
+              type: "dynamic-tool",
+            }}
+          />
+        </section>
       </>
     );
   });
 
   expect(
     container.querySelector("[data-testid=word-count-error]")?.textContent
-  ).toBe("");
+  ).toBe("Tool unavailable");
+  expect(
+    container.querySelector("[data-testid=native-receipt]")?.textContent
+  ).toContain("Words");
+  expect(
+    container.querySelector("[data-testid=native-receipt-error]")?.textContent
+  ).toBe("The tool did not complete.");
   expect(container.textContent).toContain("Counting words...");
   expect(container.textContent).toContain("No spaces");
-  expect(container.textContent).toContain("Search updates");
+  expect(container.textContent).toContain("Searching…");
   await takeSnapshot("search-and-word-count-renderers");
   await act(() => root.unmount());
   container.remove();

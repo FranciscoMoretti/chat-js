@@ -38,9 +38,10 @@ const parts: EveMessagePart[] = [
       title: "Public code result",
     },
     output: {
-      kind: "chatjs.platform-result",
+      kind: "chatjs.tool-result",
       output: "Unrecognized",
       privateRuntimeToken: "runtime-private",
+      status: "success",
       usage: { costUsd: 99 },
       version: 2,
     },

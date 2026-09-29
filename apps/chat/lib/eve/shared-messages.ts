@@ -2,8 +2,8 @@ import { defaultMessageReducer } from "eve/client";
 import type { EveMessagePart, MessageStreamEvent } from "eve/client";
 
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
-import { evePlatformOutput, isEvePlatformTool } from "./platform-result";
 import { responseModelReferences } from "./response-model";
+import { toolOutputSchema, hasEveToolReceipt } from "./tool-result";
 
 /** Keep visible tool content, never the owner's approval or runtime identities. */
 const sharedTool = (
@@ -58,8 +58,8 @@ const sharedTool = (
       return { ...base, errorText: part.errorText, state: part.state };
     }
     case "output-available": {
-      if (isEvePlatformTool(part.toolName)) {
-        const result = evePlatformOutput.safeParse(part.output);
+      const result = toolOutputSchema.safeParse(part.output);
+      if (hasEveToolReceipt(part.output)) {
         if (!result.success) {
           return {
             ...base,

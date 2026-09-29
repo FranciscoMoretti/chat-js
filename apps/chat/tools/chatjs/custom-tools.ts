@@ -1,3 +1,3 @@
-import type { ToolSet } from "ai";
+import { defineToolSet } from "@/lib/eve/tool-types";
 
-export const customTools = {} satisfies ToolSet;
+export const customTools = defineToolSet({});
