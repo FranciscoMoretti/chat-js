@@ -1,0 +1,45 @@
+name: Preview database cleanup
+
+on:
+  pull_request_target:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: Closed pull request number to retry
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: preview-database-cleanup-${{ github.event.pull_request.number || inputs.pull_request }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Never execute PR code with the cleanup credential.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/github-script@v7
+        env:
+          NEON_PREVIEW_API_KEY: ${{ secrets.NEON_PREVIEW_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pull_request }}
+        with:
+          script: |
+            const { cleanupPreviewDatabase } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/cleanup-preview-database.mjs`);
+            const number = Number(process.env.PR_NUMBER);
+            if (!Number.isSafeInteger(number) || number <= 0) {
+              throw new Error("A positive pull request number is required.");
+            }
+            core.info(await cleanupPreviewDatabase({
+              github, repository: context.repo, number,
+              apiKey: process.env.NEON_PREVIEW_API_KEY,
+            }));
