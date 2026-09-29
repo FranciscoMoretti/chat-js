@@ -39,4 +39,10 @@ After changing this setup, verify a real preview conversation, reload its histor
 
 ## Cleanup
 
-Neon removes an integrated preview branch after its last associated Vercel deployment is deleted. The demo project's deployment retention is 30 days. Closing a PR alone does not guarantee immediate branch deletion; retention exceptions can keep deployments alive. See the [Neon cleanup guide](https://neon.com/docs/guides/vercel-branch-cleanup).
+The `Preview database cleanup` workflow deletes `preview/<git-branch>` when a same-repository PR is merged or closed. It reads trusted default-branch code and rechecks the PR state and whether another PR still uses the branch. It only deletes direct, unprotected children of the empty parent in the dedicated `chatjs-previews` project. Fork PRs and already-absent databases are skipped. Cleanup runs are serialized across the preview project, follow all branch-list pages, and skip databases created after the PR closure (or with an unknown creation date). PR state and branch use are rechecked immediately before deletion. GitHub and Neon do not share an atomic lock: avoid reopening or reusing a branch while its cleanup is running; deploy again if reopening overlaps cleanup.
+
+The repository secret `NEON_PREVIEW_API_KEY` must contain a Neon API key scoped to that preview project. The project and parent IDs are fixed in `scripts/cleanup-preview-database.mjs`; update them deliberately when replacing the preview resource. No production credential is needed. The workflow becomes active after this change is merged into the default branch.
+
+Failed cleanups can be retried using **Actions → Preview database cleanup → Run workflow**, supplying the closed PR number. Reopening a PR requires a fresh Vercel deployment to create its database again. Old preview deployments lose database access after cleanup; this intentionally discards their test data.
+
+Vercel retention remains a fallback, but does not guarantee prompt deletion. See the [Neon cleanup guide](https://neon.com/docs/guides/vercel-branch-cleanup).
