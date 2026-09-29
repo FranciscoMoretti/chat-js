@@ -19,13 +19,15 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
       await readFile(nodePath.join(destination, "package.json"), "utf-8")
     );
     for (const dependency of [
-      "lexical",
+      "@lexical/markdown",
       "codemirror",
       "papaparse",
       "react-data-grid",
     ]) {
       expect(manifest.dependencies[dependency]).toBeUndefined();
     }
+    expect(manifest.dependencies.lexical).toBeDefined();
+    expect(manifest.dependencies["@lexical/react"]).toBeDefined();
     const chatApp = nodePath.resolve(import.meta.dir, "../../../../apps/chat");
     const dependencyPaths = createRequire(
       nodePath.join(chatApp, "package.json")

@@ -136,7 +136,11 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
         metadata.slot === "generateVideo" ||
         (metadata.id === "retrieve-url" &&
           metadata.tools.some((tool) => tool.toolExport === "retrieveUrl"));
-      if (usesSelectedSlot) {
+      if (
+        usesSelectedSlot ||
+        metadata.documentKind ||
+        metadata.id === "read-document"
+      ) {
         await rm(path.join(toolDirectory, entry.name), { recursive: true });
       }
     })
@@ -317,12 +321,6 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     assistantTools,
     targetDir
   );
-  const expectedTools = await Promise.all(
-    toolSources.map(async (source) => {
-      const item = await readItem(source, targetDir);
-      return toolDefinitionSchema.parse(item.meta?.chatjs);
-    })
-  );
   for (const kind of ["text", "code", "sheet"] as const) {
     if (coreFeatures.documents && documentTypes[kind]) {
       const source = itemAddress(`${kind}-documents`, "tool");
@@ -353,7 +351,6 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     auth,
     coreFeatures,
     documentTypes,
-    expectedTools,
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
     storage,
@@ -499,6 +496,12 @@ const installRegistryItems = async (
     "Installing selected registry items..."
   ).start();
   try {
+    const expected = await Promise.all(
+      setup.toolSources.map(async (source) => {
+        const item = await readItem(source, project.targetDir);
+        return toolDefinitionSchema.parse(item.meta?.chatjs);
+      })
+    );
     await installItems(
       [
         setup.gatewaySelection.source,
@@ -510,7 +513,7 @@ const installRegistryItems = async (
     await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
     await configureStorageProvider(project.targetDir, setup.storage);
     const installedTools = await syncTools(project.targetDir, {
-      expected: setup.expectedTools,
+      expected,
     });
     if (options.fromGit) {
       await removeUnavailableToolTests(project.targetDir, installedTools);
