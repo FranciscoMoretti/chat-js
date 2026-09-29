@@ -3,16 +3,18 @@ import type { ToolContext } from "eve/tools";
 
 import { tools } from "../../tools/chatjs/tools";
 import { config } from "../config";
+import { eveToolAllowed, eveTurnTool } from "./turn-tools";
 
 export const researchAvailable = (
   session: Pick<ToolContext["session"], "auth" | "parent">
 ) => {
   const owner = session.auth.initiator;
-  const selected = session.auth.current?.attributes.selectedTool;
+  const selected = eveTurnTool.get();
   return Boolean(
     owner &&
     !session.parent &&
     owner.attributes.chatjsGuest !== "true" &&
+    eveToolAllowed("deepResearch") &&
     (!selected || selected === "deepResearch") &&
     config.ai.tools.deepResearch.enabled &&
     config.ai.tools.documents.enabled &&

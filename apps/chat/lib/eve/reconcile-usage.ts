@@ -152,9 +152,11 @@ const reconcileAllOwnerUsage = async (
     );
   }
   assertEveConfigured();
-  const positions = await getEveStreamPositions(
-    bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : []))
-  );
+  const children = await listEveSubagents(ownerId);
+  const positions = await getEveStreamPositions([
+    ...bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : [])),
+    ...children.map((child) => child.sessionId),
+  ]);
   for (const row of bindings) {
     const length = row.sessionId ? positions.get(row.sessionId) : undefined;
     if (length !== undefined && length < row.usageStreamIndex) {
@@ -163,13 +165,19 @@ const reconcileAllOwnerUsage = async (
   }
   // Compare exact durable positions, not activity timestamps or terminal events:
   // old deployments and parked tools may append usage after a completed turn.
-  const rootsWithChildren = new Set<string>();
-  for (const binding of bindings) {
-    if (binding.sessionId) {
-      const children = await listEveSubagents(ownerId, binding.sessionId);
-      if (children.length > 0) {
-        rootsWithChildren.add(binding.sessionId);
-      }
+  const rootsWithPendingChildren = new Set<string>();
+  for (const child of children) {
+    const length = positions.get(child.sessionId);
+    if (length !== undefined && length < child.usageStreamIndex) {
+      throw new Error(
+        "Eve child stream is shorter than its durable billing cursor."
+      );
+    }
+    if (!child.rootSessionId) {
+      throw new Error("Native child has no owned root session.");
+    }
+    if (length !== child.usageStreamIndex) {
+      rootsWithPendingChildren.add(child.rootSessionId);
     }
   }
   const pending = bindings
@@ -177,7 +185,7 @@ const reconcileAllOwnerUsage = async (
       (row) =>
         !row.sessionId ||
         unpricedSessions.has(row.sessionId) ||
-        rootsWithChildren.has(row.sessionId) ||
+        rootsWithPendingChildren.has(row.sessionId) ||
         positions.get(row.sessionId) !== row.usageStreamIndex
     )
     .values();

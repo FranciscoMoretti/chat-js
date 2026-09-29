@@ -1,10 +1,22 @@
+import {
+  ContextContainer,
+  contextStorage,
+} from "@eve-test/dist/src/context/container.js";
+import {
+  deserializeContext,
+  serializeContext,
+} from "@eve-test/dist/src/context/serialize.js";
 import { generateText, tool, wrapLanguageModel } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { researchAvailabilityMiddleware } from "./research-availability";
+import {
+  researchAvailabilityMiddleware,
+  researchAvailable,
+} from "./research-availability";
+import { eveTurnGuest, eveTurnTool } from "./turn-tools";
 
 const mocks = vi.hoisted(() => {
   const tools: { webSearch?: object } = { webSearch: {} };
@@ -16,6 +28,9 @@ const mocks = vi.hoisted(() => {
     tools,
   };
 });
+vi.mock("../types/anonymous", () => ({
+  ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
+}));
 vi.mock("../config", () => ({ config: { ai: { tools: mocks.features } } }));
 vi.mock("../../tools/chatjs/tools", () => ({ tools: mocks.tools }));
 beforeEach(() => {
@@ -34,49 +49,91 @@ it.each([
   "guest",
   "anonymous",
   "uninstalled",
-])("offers research only when available: %s", async (scenario) => {
-  if (scenario === "uninstalled") {
-    delete mocks.tools.webSearch;
-  }
-  mocks.features.deepResearch.enabled = scenario !== "disabled";
-  mocks.features.documents.enabled = scenario !== "no-documents";
-  mocks.features.documents.types.text = scenario !== "no-text";
-  const principal = {
-    attributes: {
-      ...(scenario === "guest" ? { chatjsGuest: "true" } : {}),
-      ...(scenario === "selected" ? { selectedTool: "deepResearch" } : {}),
-      ...(scenario === "other-tool" ? { selectedTool: "webSearch" } : {}),
-    },
-    authenticator: "test",
-    principalId: "owner",
-    principalType: "user",
-  };
-  const { session } = testToolContext();
-  const provider = new MockLanguageModelV3({
-    doGenerate: () => Promise.reject(new Error("provider reached")),
-  });
-  const definition = tool({ inputSchema: z.object({}) });
-  await expect(
-    generateText({
-      maxRetries: 0,
-      model: wrapLanguageModel({
-        middleware: researchAvailabilityMiddleware({
-          ...session,
-          auth: {
-            current: principal,
-            initiator: scenario === "anonymous" ? null : principal,
-          },
+])("offers research only when available: %s", (scenario) =>
+  contextStorage.run(new ContextContainer(), async () => {
+    if (scenario === "uninstalled") {
+      delete mocks.tools.webSearch;
+    }
+    mocks.features.deepResearch.enabled = scenario !== "disabled";
+    mocks.features.documents.enabled = scenario !== "no-documents";
+    mocks.features.documents.types.text = scenario !== "no-text";
+    eveTurnTool.update(() => null);
+    if (scenario === "other-tool") {
+      eveTurnTool.update(() => "webSearch");
+    }
+    if (scenario === "selected") {
+      eveTurnTool.update(() => "deepResearch");
+    }
+    eveTurnGuest.update(() => scenario === "guest");
+    const principal = {
+      attributes: {
+        ...(scenario === "guest" ? { chatjsGuest: "true" } : {}),
+        ...(scenario === "selected" ? { selectedTool: "deepResearch" } : {}),
+        ...(scenario === "other-tool" ? { selectedTool: "webSearch" } : {}),
+      },
+      authenticator: "test",
+      principalId: "owner",
+      principalType: "user",
+    };
+    const { session } = testToolContext();
+    const provider = new MockLanguageModelV3({
+      doGenerate: () => Promise.reject(new Error("provider reached")),
+    });
+    const definition = tool({ inputSchema: z.object({}) });
+    await expect(
+      generateText({
+        maxRetries: 0,
+        model: wrapLanguageModel({
+          middleware: researchAvailabilityMiddleware({
+            ...session,
+            auth: {
+              current: principal,
+              initiator: scenario === "anonymous" ? null : principal,
+            },
+          }),
+          model: provider,
         }),
-        model: provider,
-      }),
-      prompt: "Research",
-      tools: { deepResearch: definition, webSearch: definition },
-    })
-  ).rejects.toThrow("provider reached");
-  const names = provider.doGenerateCalls[0].tools?.map((entry) => entry.name);
-  expect(names).toEqual(
-    ["automatic", "selected"].includes(scenario)
-      ? ["deepResearch", "webSearch"]
-      : ["webSearch"]
-  );
+        prompt: "Research",
+        tools: { deepResearch: definition, webSearch: definition },
+      })
+    ).rejects.toThrow("provider reached");
+    const names = provider.doGenerateCalls[0].tools?.map((entry) => entry.name);
+    expect(names).toEqual(
+      ["automatic", "selected"].includes(scenario)
+        ? ["deepResearch", "webSearch"]
+        : ["webSearch"]
+    );
+  })
+);
+
+it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
+  const original = new ContextContainer();
+  const saved = await contextStorage.run(original, () => {
+    eveTurnTool.update(() => "webSearch");
+    return serializeContext(original);
+  });
+  const resumed = await deserializeContext(saved);
+  await contextStorage.run(resumed, () => {
+    const { session } = testToolContext({
+      session: {
+        auth: {
+          current: {
+            attributes: {},
+            authenticator: "test",
+            principalId: "owner",
+            principalType: "user",
+          },
+          initiator: {
+            attributes: {},
+            authenticator: "test",
+            principalId: "owner",
+            principalType: "user",
+          },
+        },
+        id: "root",
+        turn: { id: "turn", sequence: 1 },
+      },
+    });
+    expect(researchAvailable(session)).toBe(false);
+  });
 });

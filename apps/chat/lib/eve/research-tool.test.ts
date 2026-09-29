@@ -194,3 +194,28 @@ it("rejects oversized topic batches before starting researchers", async () => {
   );
   expect(mocks.save).not.toHaveBeenCalled();
 });
+
+it("publishes completed searches when a researcher fails without masking the failure", async () => {
+  const error = new Error("Research provider failed");
+  const search = {
+    queries: ["evidence"],
+    status: "completed",
+    title: "Search",
+    toolCallId: "search",
+    type: "web",
+  };
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
+    .mockRejectedValueOnce(error);
+  mocks.searches.mockResolvedValue([search]);
+  const outputs: { updates?: unknown[] }[] = [];
+  const consume = async () => {
+    for await (const output of executeEveResearch({}, context)) {
+      outputs.push(output);
+    }
+  };
+  await expect(consume()).rejects.toBe(error);
+  expect(outputs.at(-1)?.updates).toContainEqual(search);
+  expect(mocks.save).not.toHaveBeenCalled();
+});

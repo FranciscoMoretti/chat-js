@@ -76,10 +76,11 @@ export const registerEveSubagent = async (
 
 export const listEveSubagents = async (
   ownerId: string,
-  rootSessionId: string
+  rootSessionId?: string
 ) =>
   await db
     .select({
+      rootSessionId: eveConversation.sessionId,
       rootTurnId: eveSubagentSession.rootTurnId,
       sessionId: eveSubagentSession.sessionId,
       usageStreamIndex: eveSubagentSession.usageStreamIndex,
@@ -95,7 +96,7 @@ export const listEveSubagents = async (
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
-        eq(eveConversation.sessionId, rootSessionId)
+        rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
       )
     );
 

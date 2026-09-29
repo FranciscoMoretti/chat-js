@@ -130,12 +130,25 @@ export async function* executeEveResearch(
         type: "thoughts",
       });
       yield progress();
-      const raw = researchFindings.parse(
-        await context.agent("researcher", {
-          message: `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "" })}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings, preserving source URLs, citations, relevant quotations, uncertainties, and conflicting evidence for the compression stage.`,
-          outputSchema: outputSchema(researchFindings),
-        })
-      );
+      let raw: z.infer<typeof researchFindings>;
+      try {
+        raw = researchFindings.parse(
+          await context.agent("researcher", {
+            message: `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "" })}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings, preserving source URLs, citations, relevant quotations, uncertainties, and conflicting evidence for the compression stage.`,
+            outputSchema: outputSchema(researchFindings),
+          })
+        );
+      } catch (error) {
+        // Keep completed search evidence even if the researcher later fails.
+        // Cancellation must stop promptly instead of starting more reads.
+        context.abortSignal.throwIfAborted();
+        const previousSearchUpdates = searchUpdates;
+        searchUpdates = await researchSearchUpdates(context).catch(
+          () => previousSearchUpdates
+        );
+        yield progress();
+        throw error;
+      }
       searchUpdates = await researchSearchUpdates(context);
       yield progress();
       const compressed = researchFindings.parse(

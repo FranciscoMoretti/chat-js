@@ -84,6 +84,10 @@ it("advances child cursors monotonically and revokes stream access when the root
   expect(await getEveSubagent("owner", "cursor-child")).toMatchObject({
     usageStreamIndex: 20,
   });
+  await registerEveSubagent("other", "foreign-root", "foreign-child", "turn_1");
+  const owned = await listEveSubagents("owner");
+  expect(owned.every((row) => row.rootSessionId === "root")).toBe(true);
+  expect(owned.some((row) => row.sessionId === "foreign-child")).toBe(false);
   const children = await listEveSubagents("owner", "root");
   expect(children.some((row) => row.sessionId === "cursor-child")).toBe(true);
   await postgres.exec(

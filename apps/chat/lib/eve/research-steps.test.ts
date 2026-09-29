@@ -11,7 +11,12 @@ const mocks = vi.hoisted(() => ({
     webSearch: { enabled: true },
   },
   save: vi.fn(),
+  selected: vi.fn(),
   snapshot: vi.fn(),
+}));
+vi.mock("./turn-tools", () => ({
+  eveToolAllowed: () => true,
+  eveTurnTool: { get: mocks.selected },
 }));
 vi.mock("../config", () => ({ config: { ai: { tools: mocks.features } } }));
 vi.mock("../../tools/chatjs/tools", () => ({ tools: { webSearch: {} } }));
@@ -63,6 +68,7 @@ const context = (): WorkflowToolContext => ({
 });
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.selected.mockReturnValue(null);
   mocks.features.deepResearch.enabled = true;
   mocks.features.documents.types.text = true;
   mocks.features.webSearch.enabled = true;
@@ -111,13 +117,14 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
       },
     })
   ).rejects.toThrow("authenticated owner");
+  mocks.selected.mockReturnValue("webSearch");
   await expect(
     prepareResearch({
       ...ctx,
       session: {
         ...ctx.session,
         auth: {
-          current: { ...owner, attributes: { selectedTool: "webSearch" } },
+          current: { ...owner, attributes: {} },
           initiator: owner,
         },
       },

@@ -244,7 +244,7 @@ export default [defineEval({ description: "adaptive native research", async test
   );
   console.log(`Native research fixture: ${fixture}`);
   const worker = spawn(
-    process.execPath,
+    "node",
     [
       "--import",
       "./environment.mjs",
