@@ -37,7 +37,11 @@ export const add = new Command("add")
         const executor =
           expected.find((item) => item.slot === "codeExecution") ??
           installed.find((item) => item.slot === "codeExecution");
-        if (executor && !executor.savedCodeExecution) {
+        if (
+          executor &&
+          expected.some((item) => item.documentRunExport) &&
+          !executor.savedCodeExecution
+        ) {
           throw new Error(
             "The installed codeExecution provider does not support saved documents. Select a compatible provider such as vercel-code-execution first."
           );
