@@ -93,14 +93,19 @@ export async function* executeEveResearch(
   yield progress();
 
   const notes: { topic: string; findings: string }[] = [];
+  const decisionSchema = researchDecision.extend({
+    topics: researchDecision.shape.topics.max(
+      config.max_concurrent_research_units
+    ),
+  });
   // Preserve the SDK's max_researcher_iterations + 1 decision steps, including
   // its allowance for research on the final step if the supervisor has not finished.
   for (let round = 0; round <= config.max_researcher_iterations; round += 1) {
     context.abortSignal.throwIfAborted();
-    const decision = researchDecision.parse(
+    const decision = decisionSchema.parse(
       await context.agent("researchPlanner", {
         message: `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + 1} of ${config.max_researcher_iterations + 1}. Return your next decision as JSON.`,
-        outputSchema: outputSchema(researchDecision),
+        outputSchema: outputSchema(decisionSchema),
       })
     );
     if (decision.complete) {

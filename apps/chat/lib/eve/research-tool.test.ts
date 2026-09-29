@@ -169,3 +169,20 @@ it("validates native outputs and propagates failures without a successful report
     Array.fromAsync(executeEveResearch({}, context))
   ).rejects.toThrow("Storage unavailable");
 });
+
+it("rejects oversized topic batches before starting researchers", async () => {
+  agent
+    .mockResolvedValueOnce({ research_brief: "Brief", title: "Report" })
+    .mockResolvedValueOnce({
+      complete: false,
+      topics: ["First", "Second", "Third"],
+    });
+  await expect(
+    Array.fromAsync(executeEveResearch({}, context))
+  ).rejects.toThrow();
+  expect(agent).toHaveBeenCalledTimes(2);
+  expect(agent.mock.calls[1][1].outputSchema.properties.topics.maxItems).toBe(
+    2
+  );
+  expect(mocks.save).not.toHaveBeenCalled();
+});
