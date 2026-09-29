@@ -339,6 +339,43 @@ const sourceFor = (
   };
 };
 
+const validateToolDependencies = (
+  definitions: ToolDefinition[],
+  pending: ToolDefinition[] = []
+): void => {
+  const availableKeys = new Set([
+    ...registrationsFor(definitions).map(registrationKey),
+    ...registrationsFor(pending).map(registrationKey),
+  ]);
+  for (const definition of definitions) {
+    const missingTools = definition.requiresTools.filter(
+      (name) => !availableKeys.has(name)
+    );
+    if (missingTools.length > 0) {
+      throw new Error(
+        `${definition.id} requires installed tools: ${missingTools.join(", ")}`
+      );
+    }
+  }
+  const runners = definitions.filter((item) => item.documentRunExport);
+  if (runners.length > 1) {
+    throw new Error("Only one saved-document executor can be installed.");
+  }
+  const executor = [...pending, ...definitions].find(
+    (item) => item.slot === "codeExecution"
+  );
+  if (
+    registrationsFor(definitions).some(
+      (item) => registrationKey(item) === "runCodeDocument"
+    ) &&
+    !executor?.savedCodeExecution
+  ) {
+    throw new Error(
+      "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."
+    );
+  }
+};
+
 export const syncTools = async (
   cwd: string,
   options: {
@@ -419,33 +456,7 @@ export const syncTools = async (
     throw new Error("Duplicate installed tool registration key.");
   }
   validateCustomToolKeys(cwd, definitions);
-  const pending = options.pending ?? [];
-  const availableKeys = new Set([
-    ...keys,
-    ...registrationsFor(pending).map(registrationKey),
-  ]);
-  for (const definition of definitions) {
-    const missingTools = definition.requiresTools.filter(
-      (name) => !availableKeys.has(name)
-    );
-    if (missingTools.length > 0) {
-      throw new Error(
-        `${definition.id} requires installed tools: ${missingTools.join(", ")}`
-      );
-    }
-  }
-  const runners = definitions.filter((item) => item.documentRunExport);
-  if (runners.length > 1) {
-    throw new Error("Only one saved-document executor can be installed.");
-  }
-  const executor = [...pending, ...definitions].find(
-    (item) => item.slot === "codeExecution"
-  );
-  if (keys.includes("runCodeDocument") && !executor?.savedCodeExecution) {
-    throw new Error(
-      "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."
-    );
-  }
+  validateToolDependencies(definitions, options.pending);
   if (options.checkOnly) {
     return definitions;
   }
@@ -485,7 +496,7 @@ export const syncTools = async (
       `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item) => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
     )
   );
-  const [runner] = runners;
+  const runner = definitions.find((item) => item.documentRunExport);
   await writeFile(
     join(dir, "document-run.ts"),
     generatedSource(
