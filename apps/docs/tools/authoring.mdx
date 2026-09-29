@@ -34,7 +34,7 @@ Call `usage.addCostUsd()` for known provider costs in US dollars. Report `0` for
 
 Use `return usage.fail()` only for an expected domain failure that should produce a sanitized error receipt with reported costs—for example, storage failing after a paid generation. This is a returned application result, so EVE records a completed action. Throwing instead produces EVE's native failed action and does not produce a final cost receipt. Do not wrap an entire tool or native authorization calls in `.catch(usage.fail)`.
 
-`executeWithToolProgress` uses the same receipts and accumulator for streaming executions. Its callback can publish intermediate output and JSON progress. Search and research use `executeWithResearchProgress` to collect their specific progress events. Research schemas are kept outside the generic receipt contract.
+`executeWithToolProgress` uses the same receipts and accumulator for streaming executions. Its callback can publish intermediate output and JSON progress. Search uses `executeWithResearchProgress` to collect its progress events. The native research workflow yields durable phase/topic snapshots with the same receipt shape. Research schemas are kept outside the generic receipt contract.
 
 EVE may interrupt execution before a final receipt settles. These helpers do not guarantee accounting for every external request or prevent duplicate provider work. Use provider idempotency and reconciliation where required. Workflow tools require their own integration with durable workflow steps.
 
@@ -95,7 +95,9 @@ An optional `slot` selects a product feature independently of the execution cont
 
 A slot does not impose an input schema, output schema, or renderer. For example, a code-execution item can accept `{ command: string }` and return `{ stdout: string, exitCode: number }`. The saved-document runner separately validates that an installed executor supports its saved-code input and output. A renderer is optional.
 
-Deep research bridges the installed native search definition into its nested AI SDK model loop, forwards progress, preserves model-output projection, and incorporates its final receipt once. Nested search and saved-code execution are internal function composition under the parent call: they retain its `callId` and `toolName`, and do not create separate EVE actions, checkpoints, or activity labels. This limited bridge rejects tools with approval policies, `availableInSubagents: false`, or an `outputSchema` that needs EVE validation. Native `getToken` and `requireAuth` are unavailable inside it. Invoke those tools directly through EVE instead. Feature and guest restrictions still apply; this bridge does not recreate EVE dispatch.
+Deep research exposes the installed search definition directly to a native EVE researcher. EVE owns its input/output validation, approvals, authorization, progress, and cancellation. Child model events and search receipts are attributed once to the originating root turn. The outer research receipt reports zero additional cost, so it does not charge the child usage again.
+
+Saved-code execution still uses restricted internal function composition under its parent call. It retains the parent's `callId` and `toolName`, without creating a separate EVE action. This helper rejects approval policies, `availableInSubagents: false`, and output schemas requiring EVE validation. Native `getToken` and `requireAuth` are unavailable inside it. Invoke tools needing those capabilities directly through EVE.
 
 ## Native services and custom tools
 

@@ -1,7 +1,7 @@
 import { defineDynamic, defineTool } from "eve/tools";
+import type { ToolDefinition } from "eve/tools";
 import { parse, stringify } from "superjson";
 
-import { eveMcpResult } from "../../lib/eve/mcp-result";
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
@@ -31,9 +31,15 @@ export default defineDynamic({
         }
       );
       const messages = stringify(context.messages);
-      const definitions: Record<string, ReturnType<typeof defineTool>> = {};
+      const definitions: Record<
+        string,
+        ToolDefinition<
+          Record<string, unknown>,
+          Awaited<ReturnType<typeof executeEveMcpTool>>
+        >
+      > = {};
       for (const { name, connectorId, remoteName, ...description } of tools) {
-        definitions[name] = defineTool<unknown, unknown>({
+        definitions[name] = defineTool({
           ...description,
           approval: {
             request: (approvalContext) =>
@@ -57,7 +63,7 @@ export default defineDynamic({
               toolContext,
               parse(messages)
             ),
-          toModelOutput: (output) => eveMcpResult.parse(output).modelOutput,
+          toModelOutput: (output) => output.modelOutput,
         });
       }
       return definitions;

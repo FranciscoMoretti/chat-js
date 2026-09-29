@@ -1,8 +1,10 @@
+/* oxlint-disable eslint/no-await-in-loop -- Exercise each denied child mutation independently. */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { authenticateEveGateway } from "./gateway-auth";
 
 const mocks = vi.hoisted(() => ({
+  child: vi.fn(),
   deleting: vi.fn(),
   descendant: vi.fn(),
   guest: vi.fn(),
@@ -10,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   model: vi.fn(),
   owns: vi.fn(),
 }));
+vi.mock("../db/eve-subagents", () => ({ getEveSubagent: mocks.child }));
 vi.mock("../db/eve-guests", () => ({ readEveGuestOwner: mocks.guest }));
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: {
@@ -36,6 +39,7 @@ const reservationId = "01912345-1234-7123-8123-123456789abc";
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.child.mockResolvedValue(undefined);
   mocks.guest.mockResolvedValue(undefined);
   mocks.mapping.mockResolvedValue({
     id: reservationId,
@@ -283,4 +287,36 @@ it("does not let a seed reservation use the message operation namespace", async 
   expect(await authenticateEveGateway(seed)).toMatchObject({
     attributes: { chatjsReservationId: reservationId },
   });
+});
+
+it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {
+  mocks.child.mockImplementation((owner, session) =>
+    owner === "owner" && session === "child"
+      ? Promise.resolve({ rootSessionId: "root" })
+      : Promise.resolve(undefined)
+  );
+  const read = new Request("http://localhost/eve/v1/session/child/stream", {
+    headers: {
+      authorization: "Bearer fixture-secret",
+      "x-chatjs-owner": "owner",
+    },
+  });
+  expect(await authenticateEveGateway(read)).toMatchObject({
+    principalId: "owner",
+  });
+  for (const suffix of ["", "/cancel", "/reset"]) {
+    expect(
+      await authenticateEveGateway(
+        new Request(`http://localhost/eve/v1/session/child${suffix}`, {
+          headers: read.headers,
+          method: "POST",
+        })
+      )
+    ).toBeNull();
+  }
+  const foreign = new Headers(read.headers);
+  foreign.set("x-chatjs-owner", "other");
+  expect(
+    await authenticateEveGateway(new Request(read.url, { headers: foreign }))
+  ).toBeNull();
 });

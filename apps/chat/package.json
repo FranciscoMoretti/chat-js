@@ -31,6 +31,7 @@
     "test": "bun test:e2e && bun test:unit",
     "test:e2e": "export PLAYWRIGHT=True && bunx playwright test --workers=4",
     "test:unit": "vitest run",
+    "test:research:native": "bun tests/native-research-runtime.ts",
     "test:types": "rm -rf .next/dev/types && next typegen . && tsc --noEmit",
     "ai:devtools": "bunx @ai-sdk/devtools",
     "fetch:models": "bun scripts/fetch-models.ts && bun format",
@@ -41,7 +42,8 @@
     "eve:start": "NODE_ENV=production eve start --host 127.0.0.1",
     "setup": "tsx scripts/eve-setup.ts --validate && tsx lib/db/migrate.ts && tsx scripts/eve-setup.ts",
     "eve:setup": "tsx scripts/eve-setup.ts",
-    "eve:check": "tsx scripts/eve-setup.ts --check"
+    "eve:check": "tsx scripts/eve-setup.ts --check",
+    "test:tools:live": "bunx --bun playwright test --config playwright.eve-live.config.ts eve-research.e2e.ts eve-search.e2e.ts eve-code-execution.e2e.ts eve-document-tools.e2e.ts --grep \"native deep research|native search retains|native code execution|native documents open\""
   },
   "dependencies": {
     "@ai-sdk/devtools": "1.0.22",

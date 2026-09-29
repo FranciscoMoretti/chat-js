@@ -1,16 +1,20 @@
-import type { ToolDefinition } from "eve/tools";
+import type { WorkflowToolDefinition, ToolDefinition } from "eve/tools";
 
 import type { ToolOutput, ToolResult } from "./tool-result";
 
+type ToolUI<I, O> = {
+  input: I;
+  output: O extends ToolResult<ToolOutput>
+    ? Extract<O, { status: "success" }>["output"]
+    : O;
+};
+
 export type NativeToolUI<T> =
   T extends ToolDefinition<infer I, infer O>
-    ? {
-        input: I;
-        output: O extends ToolResult<ToolOutput>
-          ? Extract<O, { status: "success" }>["output"]
-          : O;
-      }
-    : never;
+    ? ToolUI<I, O>
+    : T extends WorkflowToolDefinition<infer I, infer O>
+      ? ToolUI<I, O>
+      : never;
 
 /** Validate each declared EVE definition without widening its input/output types.
  * The pinned EVE DynamicToolSet erases generics and incorrectly fixes approval input to Record<string, unknown>.

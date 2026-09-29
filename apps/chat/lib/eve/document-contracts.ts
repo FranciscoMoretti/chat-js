@@ -49,3 +49,11 @@ export const eveDocumentResult = z.object({
   status: z.literal("success"),
   title: z.string(),
 });
+
+export const eveDocumentWriteResult = eveDocumentResult.extend({
+  result: z.string(),
+});
+export const eveDocumentReadResult = eveDocumentResult.extend({
+  content: z.string(),
+  fileIds: z.array(z.string()),
+});

@@ -671,6 +671,32 @@ export const eveCodeSandbox = pgTable(
   ]
 );
 
+/** Native child identity and billing progress; transcript stays in EVE. */
+export const eveSubagentSession = pgTable(
+  "EveSubagentSession",
+  {
+    conversationId: uuid("conversationId").notNull(),
+    ownerId: text("ownerId").notNull(),
+    parentSessionId: text("parentSessionId").notNull(),
+    rootTurnId: text("rootTurnId").notNull(),
+    sessionId: text("sessionId").primaryKey(),
+    usageStreamIndex: integer("usageStreamIndex").notNull().default(0),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.conversationId, table.ownerId],
+      foreignColumns: [eveConversation.id, eveConversation.ownerId],
+      name: "EveSubagentSession_conversation_owner_fk",
+    }).onDelete("cascade"),
+    index("EveSubagentSession_conversation").on(table.conversationId),
+    check(
+      "EveSubagentSession_not_self",
+      sql`${table.sessionId} <> ${table.parentSessionId}`
+    ),
+    check("EveSubagentSession_cursor", sql`${table.usageStreamIndex} >= 0`),
+  ]
+);
+
 export const eveUsage = pgTable(
   "EveUsage",
   {

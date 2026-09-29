@@ -1,20 +1,31 @@
+import type { MessageStreamEvent } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
 
 const mocks = vi.hoisted(() => ({
+  advanceChild: vi.fn(),
   bindings: vi.fn(),
+  child: vi.fn(),
+  children: vi.fn(),
   cursor: vi.fn(),
   env: {
     EVE_INTERNAL_ORIGIN: "http://worker.local",
     VERCEL: "",
     VERCEL_ENV: "preview",
   },
+  events: new Map<string, MessageStreamEvent[]>(),
+  ingest: vi.fn(),
   managed: vi.fn(),
   positions: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
   recover: vi.fn(),
   streamOptions: vi.fn(),
+}));
+vi.mock("../db/eve-subagents", () => ({
+  advanceEveSubagentUsageCursor: mocks.advanceChild,
+  getEveSubagent: mocks.child,
+  listEveSubagents: mocks.children,
 }));
 vi.mock("./recover-creations", () => ({ recoverEveCreations: mocks.recover }));
 vi.mock("../db/eve-queries", () => ({
@@ -33,7 +44,7 @@ vi.mock("./stream-positions", () => ({
 }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("./activity", () => ({ ingestEveActivity: vi.fn() }));
-vi.mock("./usage", () => ({ ingestEveUsage: vi.fn() }));
+vi.mock("./usage", () => ({ ingestEveUsage: mocks.ingest }));
 vi.mock("eve/client", () => ({
   Client: class {
     sessions = {
@@ -41,7 +52,7 @@ vi.mock("eve/client", () => ({
         async *stream(options: unknown) {
           mocks.streamOptions(options);
           await mocks.read(sessionId);
-          yield* [];
+          yield* mocks.events.get(sessionId) ?? [];
         },
       }),
     };
@@ -50,7 +61,10 @@ vi.mock("eve/client", () => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.events.clear();
+  mocks.ingest.mockResolvedValue(true);
   mocks.env.VERCEL = "";
+  mocks.children.mockResolvedValue([]);
   mocks.cursor.mockResolvedValue(0);
   mocks.positions.mockResolvedValue(new Map());
   mocks.bindings.mockResolvedValue(
@@ -235,4 +249,167 @@ it("replays historical unpriced evidence even when its stream cursor already adv
   expect(mocks.streamOptions).toHaveBeenCalledWith(
     expect.objectContaining({ startIndex: 0 })
   );
+});
+
+it("reconciles child tails even when the root cursor is unchanged and preserves original event identity", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "root", state: "bound", usageStreamIndex: 20 },
+  ]);
+  mocks.cursor.mockResolvedValue(20);
+  mocks.positions.mockResolvedValue(
+    new Map([
+      ["root", 20],
+      ["child", 3],
+    ])
+  );
+  mocks.children.mockResolvedValue([
+    {
+      rootSessionId: "root",
+      rootTurnId: "turn_4",
+      sessionId: "child",
+      usageStreamIndex: 2,
+    },
+  ]);
+  const event: MessageStreamEvent = {
+    data: {
+      code: "cancelled",
+      message: "Cancelled",
+      sequence: 0,
+      stepIndex: 0,
+      turnId: "turn_0",
+    },
+    meta: { at: "2026-09-28T00:00:00Z", id: "child-event" },
+    type: "step.failed",
+  };
+  mocks.events.set("child", [event]);
+  await reconcileEveOwnerUsage("owner");
+  expect(mocks.read.mock.calls).toEqual([["root"], ["child"]]);
+  expect(mocks.ingest).toHaveBeenCalledWith("owner", "child", event, {
+    sessionId: "root",
+    turnId: "turn_4",
+  });
+  expect(mocks.advanceChild).toHaveBeenCalledWith("owner", "child", 3);
+});
+
+it("blocks admission without advancing child progress when a completed child charge remains unknown", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "root", state: "bound", usageStreamIndex: 0 },
+  ]);
+  mocks.children.mockResolvedValue([
+    {
+      rootSessionId: "root",
+      rootTurnId: "turn_2",
+      sessionId: "child",
+      usageStreamIndex: 0,
+    },
+  ]);
+  mocks.events.set("child", [
+    {
+      data: {
+        hookId: "auxiliary",
+        modelCalls: [{ modelId: "model" }],
+        turnId: "turn_0",
+      },
+      meta: { at: "2026-09-28T00:00:00Z", id: "unpriced" },
+      type: "hook.result",
+    },
+  ]);
+  mocks.ingest.mockResolvedValue(false);
+  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
+    "Completed usage needs provider cost reconciliation"
+  );
+  expect(mocks.advanceChild).not.toHaveBeenCalled();
+});
+
+it("settles newly discovered descendants before admitting the next turn", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "root", state: "bound", usageStreamIndex: 0 },
+  ]);
+  mocks.children.mockResolvedValue([
+    {
+      rootSessionId: "root",
+      rootTurnId: "turn_1",
+      sessionId: "child",
+      usageStreamIndex: 0,
+    },
+  ]);
+  mocks.child.mockResolvedValue({
+    rootSessionId: "root",
+    rootTurnId: "turn_1",
+    sessionId: "grandchild",
+    usageStreamIndex: 0,
+  });
+  mocks.events.set("child", [
+    {
+      data: {
+        callId: "call",
+        childSessionId: "grandchild",
+        childStreamPath: "/stream",
+        name: "worker",
+        sequence: 0,
+        sessionId: "child",
+        toolName: "worker",
+        turnId: "turn_0",
+        workflowId: "workflow",
+      },
+      meta: { at: "2026-09-28T00:00:00Z", id: "delegation" },
+      type: "subagent.called",
+    },
+  ]);
+  await reconcileEveOwnerUsage("owner");
+  expect(mocks.read.mock.calls).toEqual([["root"], ["child"], ["grandchild"]]);
+});
+
+it("skips settled research history with one owner-wide child lookup", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "root", state: "bound", usageStreamIndex: 20 },
+    { sessionId: "other", state: "bound", usageStreamIndex: 5 },
+  ]);
+  mocks.children.mockResolvedValue([
+    {
+      rootSessionId: "root",
+      rootTurnId: "turn",
+      sessionId: "child",
+      usageStreamIndex: 3,
+    },
+  ]);
+  mocks.positions.mockResolvedValue(
+    new Map([
+      ["root", 20],
+      ["other", 5],
+      ["child", 3],
+    ])
+  );
+  await reconcileEveOwnerUsage("owner");
+  expect(mocks.children).toHaveBeenCalledExactlyOnceWith("owner");
+  expect(mocks.positions).toHaveBeenCalledExactlyOnceWith([
+    "root",
+    "other",
+    "child",
+  ]);
+  expect(mocks.read).not.toHaveBeenCalled();
+});
+
+it("rejects a rewound child even when its parent is settled", async () => {
+  mocks.bindings.mockResolvedValue([
+    { sessionId: "root", state: "bound", usageStreamIndex: 20 },
+  ]);
+  mocks.children.mockResolvedValue([
+    {
+      rootSessionId: "root",
+      rootTurnId: "turn",
+      sessionId: "child",
+      usageStreamIndex: 3,
+    },
+  ]);
+  mocks.positions.mockResolvedValue(
+    new Map([
+      ["root", 20],
+      ["child", 2],
+    ])
+  );
+  await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
+    "child stream is shorter"
+  );
+  expect(mocks.read).not.toHaveBeenCalled();
 });

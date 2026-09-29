@@ -10,6 +10,7 @@ import {
   readEveSessionMapping,
 } from "../db/eve-queries";
 import { isFencedEveDescendant } from "../db/eve-sandbox-coverage-proof";
+import { getEveSubagent } from "../db/eve-subagents";
 import { env } from "../env";
 import { ANONYMOUS_LIMITS } from "../types/anonymous";
 import { parseDeletionSessionRequest } from "./deletion-policy";
@@ -152,6 +153,22 @@ const guestAttributesAllowed = (
       (tool) => tool === attributes.selectedTool
     ));
 
+const ownsGatewaySession = async (
+  owner: string,
+  sessionId: string,
+  path: string,
+  method: string
+) => {
+  if (await ownsEveSession(owner, sessionId)) {
+    return true;
+  }
+  // Native child bindings authorize internal stream reads, never mutations.
+  if (method !== "GET" || path !== `/eve/v1/session/${sessionId}/stream`) {
+    return false;
+  }
+  return Boolean(await getEveSubagent(owner, sessionId));
+};
+
 export const authenticateEveGateway = async (request: Request) => {
   if (!env.EVE_GATEWAY_SECRET) {
     return null;
@@ -177,7 +194,17 @@ export const authenticateEveGateway = async (request: Request) => {
     )
   ) {
     const policy = gatewaySessionPolicy(path, request.method);
-    if (!(policy && (await ownsEveSession(owner, policy.sessionId)))) {
+    if (
+      !(
+        policy &&
+        (await ownsGatewaySession(
+          owner,
+          policy.sessionId,
+          path,
+          request.method
+        ))
+      )
+    ) {
       return null;
     }
   }

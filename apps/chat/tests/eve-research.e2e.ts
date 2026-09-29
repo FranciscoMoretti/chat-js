@@ -5,19 +5,39 @@ import { Client } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
-import { eveConversation, userCredit } from "../lib/db/schema";
+import { listEveSubagents } from "../lib/db/eve-subagents";
+import { eveConversation, eveUsage, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
+import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
-const createdReport = /^Created "/u;
+const createdReport = /^Created /u;
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) {
+    return;
+  }
+  const id = z.uuid().safeParse(new URL(page.url()).pathname.split("/").at(-1));
+  if (!id.success) {
+    return;
+  }
+  const [conversation] = await db
+    .select()
+    .from(eveConversation)
+    .where(eq(eveConversation.id, id.data));
+  if (conversation?.sessionId) {
+    await new Client(getEveConnectionOptions(conversation.ownerId)).sessions
+      .attach(conversation.sessionId)
+      .cancel({ signal: AbortSignal.timeout(15_000), tasks: true });
+  }
+});
 test("native deep research saves a reloadable report in ChatJS with a usage receipt", async ({
   page,
 }) => {
-  test.setTimeout(360_000);
+  test.setTimeout(900_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const session = z
@@ -34,8 +54,9 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     data: {
       message:
         "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Do not call any other tools yourself.",
-      modelId: "openai/gpt-4.1-mini-fast",
+      modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
+      selectedTool: "deepResearch",
     },
     headers: { origin: new URL(page.url()).origin },
   });
@@ -45,7 +66,7 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     .parse(await created.json());
   await page.goto(`/chat/${binding.id}`);
   const report = page.getByRole("button", { name: createdReport }).first();
-  await expect(report).toBeVisible({ timeout: 300_000 });
+  await expect(report).toBeVisible({ timeout: 840_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 30_000,
   });
@@ -89,10 +110,48 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     revisionId: expect.any(String),
     status: "success",
   });
-  expect(receipt.usage.costUsd).toBeGreaterThan(0);
+  expect(receipt.usage.costUsd).toBe(0);
   expect(
     receipt.updates?.some(
-      (update) => ResearchUpdateSchema.parse(update).type === "web"
+      (update) => ResearchUpdateSchema.parse(update).type === "writing"
     )
   ).toBe(true);
+  await reconcileEveUsage(conversation.ownerId, binding.sessionId);
+  const children = await listEveSubagents(
+    conversation.ownerId,
+    binding.sessionId
+  );
+  expect(children.length).toBeGreaterThan(0);
+  expect(children.every((child) => child.usageStreamIndex > 0)).toBe(true);
+  const usage = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, binding.sessionId));
+  const childModels = usage.filter((row) =>
+    row.eventId.startsWith("eve-child:")
+  );
+  const childSearch = usage.filter((row) =>
+    children.some((child) =>
+      row.eventId.startsWith(`eve-tool:${child.sessionId}:`)
+    )
+  );
+  expect(childModels.length).toBeGreaterThan(0);
+  expect(childSearch.some((row) => Number(row.costUsd) > 0)).toBe(true);
+  expect(
+    [...childModels, ...childSearch].every(
+      (row) => row.costUsd !== null && Number(row.costUsd) >= 0
+    )
+  ).toBe(true);
+  expect(new Set(usage.map((row) => row.turnId))).toEqual(
+    new Set(children.map((child) => child.rootTurnId))
+  );
+  // Full replay must preserve both receipt count and the root-turn rounding charge.
+  await reconcileEveUsage(conversation.ownerId, binding.sessionId, true);
+  const replayed = await db
+    .select()
+    .from(eveUsage)
+    .where(eq(eveUsage.sessionId, binding.sessionId));
+  expect(
+    replayed.toSorted((a, b) => a.eventId.localeCompare(b.eventId))
+  ).toEqual(usage.toSorted((a, b) => a.eventId.localeCompare(b.eventId)));
 });

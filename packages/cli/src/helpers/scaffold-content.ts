@@ -18,6 +18,9 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-sandbox-run-coverage.test.ts",
   "lib/db/migrations/eve-runtime-migration.test.ts",
   "lib/db/eve-search.test.ts",
+  "lib/db/eve-subagents.test.ts",
+  "lib/eve/research-availability.test.ts",
+  "tests/native-research-runtime.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
   "lib/eve/purge-local-sandbox.test.ts",
   "lib/eve/verify-local-coverage.test.ts",
@@ -100,7 +103,12 @@ export const normalizeScaffoldContent = async (destination: string) => {
   ]) {
     delete manifest.devDependencies?.[dependency];
   }
-  for (const script of ["eval:dev", "eval:serve"]) {
+  for (const script of [
+    "eval:dev",
+    "eval:serve",
+    "test:research:native",
+    "test:tools:live",
+  ]) {
     delete manifest.scripts?.[script];
   }
   delete manifest.overrides?.evalite;

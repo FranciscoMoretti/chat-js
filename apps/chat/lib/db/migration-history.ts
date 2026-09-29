@@ -26,6 +26,7 @@ export const KNOWN_CHATJS_TABLE_NAMES = [
   "EveNamedDocumentCheckpointEntry",
   "EveResponseGroup",
   "EveStoredFile",
+  "EveSubagentSession",
   "EveUsage",
   "EveWorkflowBackend",
   "EveVote",
