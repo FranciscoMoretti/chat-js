@@ -320,7 +320,11 @@ const sourceFor = (
 
 export const syncTools = async (
   cwd: string,
-  options: { checkOnly?: boolean; expected?: ToolDefinition[] } = {}
+  options: {
+    checkOnly?: boolean;
+    expected?: ToolDefinition[];
+    pending?: ToolDefinition[];
+  } = {}
 ): Promise<ToolDefinition[]> => {
   const directory = "tools/chatjs";
   const targets = [
@@ -388,9 +392,14 @@ export const syncTools = async (
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
   }
+  const pending = options.checkOnly ? (options.pending ?? []) : [];
+  const availableKeys = [
+    ...keys,
+    ...registrationsFor(pending).map(registrationKey),
+  ];
   for (const definition of definitions) {
     const missingTools = definition.requiresTools.filter(
-      (name) => !keys.includes(name)
+      (name) => !availableKeys.includes(name)
     );
     if (missingTools.length > 0) {
       throw new Error(
@@ -402,7 +411,9 @@ export const syncTools = async (
   if (runners.length > 1) {
     throw new Error("Only one saved-document executor can be installed.");
   }
-  const executor = definitions.find((item) => item.slot === "codeExecution");
+  const executor = [...pending, ...definitions].find(
+    (item) => item.slot === "codeExecution"
+  );
   if (keys.includes("runCodeDocument") && !executor?.savedCodeExecution) {
     throw new Error(
       "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."

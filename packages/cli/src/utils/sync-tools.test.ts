@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { toolDefinitionSchema } from "../../../registry/metadata";
 import { syncTools } from "./sync-tools";
 
 const roots: string[] = [];
@@ -377,10 +378,22 @@ test("sync rejects removing a dependency but permits uninstalling a complete bun
   await syncTools(root);
   const index = join(root, "tools/chatjs/tools.ts");
   const before = await readFile(index, "utf-8");
+  const requested = toolDefinitionSchema.parse(
+    JSON.parse(
+      await readFile(
+        join(root, "tools/chatjs/read-document/chatjs.json"),
+        "utf-8"
+      )
+    )
+  );
   await rm(join(root, "tools/chatjs/read-document"), { recursive: true });
   await expect(syncTools(root)).rejects.toThrow(
     "requires installed tools: readDocument"
   );
+  await expect(syncTools(root, { checkOnly: true })).rejects.toThrow(
+    "requires installed tools: readDocument"
+  );
+  await syncTools(root, { checkOnly: true, pending: [requested] });
   expect(await readFile(index, "utf-8")).toBe(before);
   await rm(join(root, "tools/chatjs/text-documents"), { recursive: true });
   await syncTools(root);

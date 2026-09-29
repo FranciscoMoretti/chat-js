@@ -29,7 +29,10 @@ export const add = new Command("add")
           return toolDefinitionSchema.parse(item.meta?.chatjs);
         })
       );
-      const installed = await syncTools(cwd, { checkOnly: true });
+      const installed = await syncTools(cwd, {
+        checkOnly: true,
+        pending: expected,
+      });
       validateProviderSelection(installed, expected);
       if (
         expected.some((item) => item.requiresTools.includes("codeExecution"))
