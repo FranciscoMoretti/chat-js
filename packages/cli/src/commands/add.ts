@@ -7,6 +7,7 @@ import { Command } from "commander";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { installItems, itemAddress, readItem } from "../registry/shadcn";
 import { handleError } from "../utils/handle-error";
+import { validateProviderSelection } from "../utils/provider-selection";
 import { syncTools } from "../utils/sync-tools";
 
 export const add = new Command("add")
@@ -29,6 +30,7 @@ export const add = new Command("add")
         })
       );
       const installed = await syncTools(cwd, { checkOnly: true });
+      validateProviderSelection(installed, expected);
       if (
         expected.some((item) => item.requiresTools.includes("codeExecution"))
       ) {

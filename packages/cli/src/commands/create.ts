@@ -139,6 +139,7 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
       if (
         usesSelectedSlot ||
         metadata.documentKind ||
+        metadata.documentRunExport ||
         metadata.id === "read-document"
       ) {
         await rm(path.join(toolDirectory, entry.name), { recursive: true });
