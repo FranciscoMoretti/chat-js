@@ -147,3 +147,65 @@ test("failed research keeps validated progress alongside its error", async () =>
     container.remove();
   }
 });
+
+test("installed saved-code transcript covers loading, completion and failure", async () => {
+  document.documentElement.classList.add("dark");
+  const container = document.createElement("main");
+  container.style.cssText = "padding:24px;width:900px;background:#171717";
+  document.body.append(container);
+  const root = createRoot(container);
+  const input = {
+    documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
+    revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
+  };
+  try {
+    await act(() =>
+      root.render(
+        <div className="grid gap-6">
+          <EveToolResult
+            isReadonly
+            messageId="saved-code"
+            part={{
+              ...common,
+              input,
+              state: "input-available",
+              toolName: "runCodeDocument",
+            }}
+          />
+          <EveToolResult
+            isReadonly
+            messageId="saved-code"
+            part={{
+              ...common,
+              input,
+              output: createToolResult(
+                { ...input, chart: "", message: "Saved revision completed" },
+                0
+              ),
+              toolName: "runCodeDocument",
+            }}
+          />
+          <EveToolResult
+            isReadonly
+            messageId="saved-code"
+            part={{
+              ...common,
+              input,
+              output: createToolError(0),
+              toolName: "runCodeDocument",
+            }}
+          />
+        </div>
+      )
+    );
+    expect(container.textContent).toContain("Running saved code");
+    expect(container.textContent).toContain("Saved revision completed");
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain(
+      "The tool did not complete"
+    );
+    await takeSnapshot("installed-saved-code-transcript");
+  } finally {
+    await act(() => root.unmount());
+    container.remove();
+  }
+});

@@ -126,7 +126,7 @@ export const savedCodeExecutionItem: RegistryItem = {
 };
 
 export const codeExecutionUiItem: RegistryItem = {
-  dependencies: ["echarts", "echarts-for-react"],
+  dependencies: ["echarts", "echarts-for-react", "motion"],
   description: "Shared chart renderer for installed code execution tools",
   files: [
     "code-execution-chart.tsx",

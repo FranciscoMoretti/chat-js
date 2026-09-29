@@ -106,10 +106,9 @@ export const normalizeScaffoldContent = async (destination: string) => {
   const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
   for (const name of Object.keys(manifest.dependencies ?? {})) {
     if (
-      name.startsWith("@lexical/") ||
+      (name.startsWith("@lexical/") && name !== "@lexical/react") ||
       name.startsWith("@codemirror/") ||
       [
-        "lexical",
         "codemirror",
         "diff",
         "papaparse",
