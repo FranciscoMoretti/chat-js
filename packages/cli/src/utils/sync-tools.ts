@@ -415,9 +415,6 @@ export const syncTools = async (
     throw new Error("Duplicate installed tool registration key.");
   }
   validateCustomToolKeys(cwd, definitions);
-  if (options.checkOnly) {
-    return definitions;
-  }
   for (const definition of definitions) {
     const missingTools = definition.requiresTools.filter(
       (name) => !keys.includes(name)
@@ -437,6 +434,9 @@ export const syncTools = async (
     throw new Error(
       "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."
     );
+  }
+  if (options.checkOnly) {
+    return definitions;
   }
   const { providerBody, toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });

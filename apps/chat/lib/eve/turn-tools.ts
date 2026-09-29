@@ -32,7 +32,10 @@ export const eveInstalledToolEnabled = (name: string) => {
     );
   }
   if (name === "readDocument") {
-    return config.ai.tools.documents.enabled;
+    return (
+      config.ai.tools.documents.enabled &&
+      Object.values(config.ai.tools.documents.types).some(Boolean)
+    );
   }
   if (name === "runCodeDocument") {
     return (

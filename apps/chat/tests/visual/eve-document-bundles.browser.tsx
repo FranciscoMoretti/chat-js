@@ -107,6 +107,11 @@ test("a removed editor has an explicit notice in panel and inline views", async 
     );
     expect(container.querySelectorAll("output")).toHaveLength(2);
     expect(container.textContent).toContain("Install text-documents");
+    expect(
+      [...container.querySelectorAll("pre")].map(
+        (element) => element.textContent
+      )
+    ).toEqual(["Saved content", "Saved content"]);
     await takeSnapshot("uninstalled-document-editor");
   } finally {
     documentUi.text = original;
