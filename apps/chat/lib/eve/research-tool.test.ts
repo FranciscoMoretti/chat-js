@@ -4,7 +4,14 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { executeEveResearch } from "./research-tool";
 
-const mocks = vi.hoisted(() => ({ prepare: vi.fn(), save: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  prepare: vi.fn(),
+  save: vi.fn(),
+  searches: vi.fn(),
+}));
+vi.mock("./research-search-updates", () => ({
+  researchSearchUpdates: mocks.searches,
+}));
 vi.mock("./research-steps", () => ({
   prepareResearch: mocks.prepare,
   researchCompletionTime: () => Promise.resolve(100),
@@ -43,6 +50,7 @@ beforeEach(() => {
     timestamp: 0,
   });
   mocks.save.mockResolvedValue(document);
+  mocks.searches.mockResolvedValue([]);
 });
 
 it("lets the supervisor request follow-up after receiving findings and synthesizes all rounds", async () => {

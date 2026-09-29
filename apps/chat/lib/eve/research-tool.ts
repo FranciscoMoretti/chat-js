@@ -21,6 +21,7 @@ import {
   researchFindings,
   researchReport,
 } from "./research-contracts";
+import { researchSearchUpdates } from "./research-search-updates";
 import {
   prepareResearch,
   researchCompletionTime,
@@ -44,9 +45,13 @@ export async function* executeEveResearch(
   "use workflow";
   const { config, date, messages, timestamp } = await prepareResearch(context);
   const updates: ResearchUpdate[] = [];
+  let searchUpdates: ResearchUpdate[] = [];
   // Native child events own model/search costs. This orchestration receipt adds no charge.
   const progress = () =>
-    createToolResult<ResearchOutput>({ searches: [] }, 0, [...updates]);
+    createToolResult<ResearchOutput>({ searches: [] }, 0, [
+      ...updates,
+      ...searchUpdates,
+    ]);
   if (config.allow_clarification) {
     const clarification = researchClarification.parse(
       await context.agent("researchPlanner", {
@@ -131,6 +136,8 @@ export async function* executeEveResearch(
           outputSchema: outputSchema(researchFindings),
         })
       );
+      searchUpdates = await researchSearchUpdates(context);
+      yield progress();
       const compressed = researchFindings.parse(
         await context.agent("researchCompressor", {
           message: `${compressResearchSystemPrompt({ date })}\n\n${raw.findings}\n\n${compressResearchSimpleHumanMessage}`,
@@ -176,5 +183,8 @@ export async function* executeEveResearch(
     toolCallId: context.callId,
     type: "completed",
   });
-  yield createToolResult({ ...saved, format: "report" }, 0, updates);
+  yield createToolResult({ ...saved, format: "report" }, 0, [
+    ...updates,
+    ...searchUpdates,
+  ]);
 }

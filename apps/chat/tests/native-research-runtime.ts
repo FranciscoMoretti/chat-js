@@ -31,6 +31,8 @@ const main = async () => {
     "agent/subagents/researcher/tools/webSearch.ts",
     "lib/eve/research-tool.ts",
     "lib/eve/research-contracts.ts",
+    "lib/eve/research-search-updates.ts",
+    "tools/platform/research-updates-schema.ts",
     "lib/eve/tool-result.ts",
     "lib/eve/tool-model-output.ts",
     "tools/platform/deep-research/prompts.ts",
@@ -105,6 +107,11 @@ export async function registerEveSubagent(owner, parent, session, turn) {
     'process.env.DOCKER_HOST="unix:///tmp/chatjs-native-test-no-docker.sock"; process.env.NODE_ENV="development"; process.env.EVE_MOCK_AUTHORED_MODELS="0";'
   );
   await write(
+    "lib/eve/connection-options.ts",
+    `import { readFileSync } from "node:fs";
+export const getEveConnectionOptions = () => ({ host: readFileSync(${JSON.stringify(path.join(fixture, "host"))}, "utf8") });`
+  );
+  await write(
     "lib/eve/research-steps.ts",
     `
 export async function prepareResearch() {
@@ -171,7 +178,7 @@ import { setTimeout } from "node:timers/promises";
 const webSearch = defineTool({ description: "Fixture search", inputSchema: z.object({ query: z.string() }),
  async execute(input, ctx) {
    await setTimeout(1000, undefined, { signal: ctx.abortSignal });
-   return { kind: "chatjs.tool-result", version: 1, status: "success", output: { result: input.query }, usage: { costUsd: 0.02 } };
+   return { kind: "chatjs.tool-result", version: 1, status: "success", output: { result: input.query }, usage: { costUsd: 0.02 }, updates: [{ type: "web", toolCallId: ctx.callId, title: "Search complete", status: "completed", queries: [input.query], results: [{ title: "Evidence", url: "https://example.com", content: input.query, source: "web" }] }] };
  },
 });
 export const tools = { webSearch };`
@@ -190,14 +197,16 @@ export const tools = { webSearch };`
 import assert from "node:assert/strict";
 import { defineEval } from "eve/evals";
 import { Client } from "eve/client";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 export default [defineEval({ description: "adaptive native research", async test(t) {
+  await writeFile(${JSON.stringify(path.join(fixture, "host"))}, t.target.url);
   const turn = await t.send("Research");
   turn.succeeded();
   const receipt = turn.requireToolCall("deepResearch").output;
   assert.equal(receipt.output.format, "report");
   assert.equal(receipt.output.content, "# Both rounds");
   assert.equal(receipt.usage.costUsd, 0);
+  assert.equal(receipt.updates.filter(u => u.type === "web").length, 2);
   const client = new Client({ host: t.target.url });
   const root = await client.sessions.attach(turn.sessionId).snapshot();
   const children = root.events.filter(e => e.type === "subagent.called");
@@ -216,6 +225,7 @@ export default [defineEval({ description: "adaptive native research", async test
   assert.ok(evidence.some(row => row.eventId.startsWith("eve-child:") && row.sessionId === turn.sessionId));
   assert.ok(root.events.some(e => e.type === "action.partial"));
 }}), defineEval({ description: "cancellation stops owned research", async test(t) {
+  await writeFile(${JSON.stringify(path.join(fixture, "host"))}, t.target.url);
   const session = await t.session();
   const live = await session.start("Research then cancel");
   const called = await live.waitForEvent("subagent.called", { data: { name: "researcher" } });
