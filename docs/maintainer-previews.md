@@ -39,7 +39,7 @@ After changing this setup, verify a real preview conversation, reload its histor
 
 ## Cleanup
 
-The `Preview database cleanup` workflow deletes `preview/<git-branch>` when a same-repository PR is merged or closed. It reads trusted default-branch code and rechecks the PR state and whether another PR still uses the branch. It only deletes direct, unprotected children of the empty parent in the dedicated `chatjs-previews` project. Fork PRs and already-absent databases are skipped.
+The `Preview database cleanup` workflow deletes `preview/<git-branch>` when a same-repository PR is merged or closed. It reads trusted default-branch code and rechecks the PR state and whether another PR still uses the branch. It only deletes direct, unprotected children of the empty parent in the dedicated `chatjs-previews` project. Fork PRs and already-absent databases are skipped. Cleanup runs are serialized across the preview project, follow all branch-list pages, and skip databases created after the PR closure (or with an unknown creation date). PR state and branch use are rechecked immediately before deletion. GitHub and Neon do not share an atomic lock: avoid reopening or reusing a branch while its cleanup is running; deploy again if reopening overlaps cleanup.
 
 The repository secret `NEON_PREVIEW_API_KEY` must contain a Neon API key scoped to that preview project. The project and parent IDs are fixed in `scripts/cleanup-preview-database.mjs`; update them deliberately when replacing the preview resource. No production credential is needed. The workflow becomes active after this change is merged into the default branch.
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test";
 import { cleanupPreviewDatabase } from "./cleanup-preview-database.mjs";
 
 const preview = {
+  created_at: "2026-09-28T00:00:00Z",
   id: "br-preview",
   name: "preview/feature",
   parent_id: "br-quiet-pine-za1aryyz",
@@ -13,19 +14,37 @@ const run = async ({
   open = false,
   branches = [preview],
   deleteStatus = 200,
+  pages = [{ branches, pagination: { next: "" } }],
+  stateBeforeDelete = state,
+  openBeforeDelete = open,
 } = {}) => {
   const calls: { method: string; url: string }[] = [];
+  let getCount = 0;
+  let listCount = 0;
+  let pageIndex = 0;
   const result = await cleanupPreviewDatabase({
     apiKey: "test-key",
     github: {
-      paginate: () => Promise.resolve(open ? [{}] : []),
+      paginate: (_method: unknown, params: unknown) => {
+        expect(params).toEqual({
+          head: "owner:feature",
+          owner: "owner",
+          per_page: 100,
+          repo: "repo",
+          state: "open",
+        });
+        return Promise.resolve(
+          ((listCount += 1) === 1 ? open : openBeforeDelete) ? [{}] : []
+        );
+      },
       rest: {
         pulls: {
           get: () =>
             Promise.resolve({
               data: {
+                closed_at: "2026-09-29T00:00:00Z",
                 head: { ref: "feature", repo: { full_name: repo } },
-                state,
+                state: (getCount += 1) === 1 ? state : stateBeforeDelete,
               },
             }),
           list: () => {},
@@ -39,7 +58,7 @@ const run = async ({
       return Promise.resolve(
         options.method === "DELETE"
           ? new Response(null, { status: deleteStatus })
-          : Response.json({ branches })
+          : Response.json(pages[(pageIndex += 1) - 1])
       );
     },
   });
@@ -67,6 +86,52 @@ describe("preview database cleanup", () => {
       expect(calls).toEqual([]);
     }
   );
+  it.each([{ stateBeforeDelete: "open" }, { openBeforeDelete: true }])(
+    "preserves a preview whose PR use changes during lookup %j",
+    async (options) => {
+      const { calls, result } = await run(options);
+      expect(calls.every((call) => call.method === "GET")).toBe(true);
+      expect(result).toContain("Skipped");
+    }
+  );
+  it.each(["2026-09-30T00:00:00Z", "invalid"])(
+    "preserves recreated previews or unknown creation dates %s",
+    async (created_at) => {
+      const { calls, result } = await run({
+        branches: [{ ...preview, created_at }],
+      });
+      expect(calls).toHaveLength(1);
+      expect(result).toContain("Skipped");
+    }
+  );
+  it("finds later-page previews using the opaque next cursor", async () => {
+    const { calls, result } = await run({
+      pages: [
+        { branches: [], pagination: { next: "next/page?" } },
+        { branches: [preview], pagination: { next: "" } },
+      ],
+    });
+    expect(calls[1]?.url).toEndWith("?cursor=next%2Fpage%3F");
+    expect(result).toContain("Deleted");
+  });
+  it("checks uniqueness across all pages and rejects looping pagination", async () => {
+    await expect(
+      run({
+        pages: [
+          { branches: [preview], pagination: { next: "page2" } },
+          { branches: [preview], pagination: { next: "" } },
+        ],
+      })
+    ).rejects.toThrow("ambiguous");
+    await expect(
+      run({
+        pages: [
+          { branches: [preview], pagination: { next: "page2" } },
+          { branches: [], pagination: { next: "page2" } },
+        ],
+      })
+    ).rejects.toThrow("repeated");
+  });
   it("treats a missing branch or concurrent deletion as successful cleanup", async () => {
     const absent = await run({ branches: [] });
     expect(absent.calls).toHaveLength(1);
