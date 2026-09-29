@@ -1,7 +1,8 @@
 import { defineAgent, defineDynamic } from "eve";
 
-import { getDeepResearchConfig } from "../../tools/platform/deep-research/configuration";
-import { resolveEveModel } from "./model-selection";
+import { resolveEveModel } from "@/lib/eve/model-selection";
+
+import { getDeepResearchConfig } from "./configuration";
 
 export const defineResearchAgent = (
   phase: "research" | "compression" | "final_report"

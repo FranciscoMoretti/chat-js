@@ -25,6 +25,14 @@ const readOptional = async (path: string): Promise<string | null> => {
 const generatedSource = (body: string): string => {
   const normalizedBody = body
     .replace(
+      "export type WorkflowTools = {\n\n};",
+      "export type WorkflowTools = Record<never, never>;"
+    )
+    .replace(
+      "export const toolAvailability: Record<string, ToolAvailability> = {\n\n};",
+      "export const toolAvailability: Record<string, ToolAvailability> = {};"
+    )
+    .replace(
       "const installed = defineToolSet({\n\n});",
       "const installed = defineToolSet({});"
     )
@@ -111,6 +119,12 @@ const readToolDefinition = async (
   }
   await preflight(cwd, [
     `${directory}/${entryName}/tool.ts`,
+    ...(definition.availabilityExport
+      ? [`${directory}/${entryName}/availability.ts`]
+      : []),
+    ...definition.tools
+      .filter((tool) => tool.workflow)
+      .map((tool) => `agent/tools/${tool.toolExport}.ts`),
     ...(definition.documentKind || definition.documentRunExport
       ? [`${directory}/${entryName}/document.tsx`]
       : []),
@@ -120,6 +134,11 @@ const readToolDefinition = async (
   ]);
   await Promise.all([
     readFile(join(cwd, directory, entryName, "tool.ts")),
+    ...definition.tools
+      .filter((tool) => tool.workflow)
+      .map((tool) =>
+        readFile(join(cwd, "agent/tools", `${tool.toolExport}.ts`))
+      ),
     ...(definition.documentKind || definition.documentRunExport
       ? [readFile(join(cwd, directory, entryName, "document.tsx"))]
       : []),
@@ -288,6 +307,7 @@ const sourceFor = (
 ): { providerBody: string; toolBody: string; uiBody: string } => {
   const renderers = registrations.filter((item) => item.rendererExport);
   const providers = registrations.filter((item) => item.provider);
+  const ordinary = registrations.filter((item) => !item.workflow);
   return {
     providerBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
       providers.map((item, i) => ({
@@ -298,7 +318,7 @@ const sourceFor = (
       "tool"
     )}\n\nexport const providers = defineToolSet({\n${orderedProperties(providers.map((item, i) => ({ key: registrationKey(item), value: `tool${i}` })))}\n});\n`,
     toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\nimport { providers } from "./providers";\n${registrationImports(
-      registrations
+      ordinary
         .filter((item) => !item.provider)
         .map((item) => ({
           alias: `tool${registrations.indexOf(item)}`,
@@ -306,7 +326,7 @@ const sourceFor = (
           name: item.toolExport,
         })),
       "tool"
-    )}\n\nconst installed = defineToolSet({\n${orderedProperties(registrations.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
+    )}\n\nconst installed = defineToolSet({\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
       renderers.flatMap((item, i) =>
         item.rendererExport
@@ -330,6 +350,8 @@ export const syncTools = async (
     "installed-features.ts",
     "document-run.ts",
     "providers.ts",
+    "workflow-types.ts",
+    "tool-availability.ts",
     "custom-tools.ts",
     "custom-ui.ts",
     ...selectionFiles,
@@ -355,6 +377,8 @@ export const syncTools = async (
       "installed-features.ts",
       "document-run.ts",
       "providers.ts",
+      "workflow-types.ts",
+      "tool-availability.ts",
     ].map(async (file) => {
       checkGenerated(await readOptional(join(dir, file)), file);
     })
@@ -363,8 +387,9 @@ export const syncTools = async (
   await collectDefinitions(cwd, directory, entries, definitions);
   const ids = new Set(definitions.map((item) => item.id));
   const previousProviders = await readOptional(join(dir, "providers.ts"));
+  const previousWorkflows = await readOptional(join(dir, "workflow-types.ts"));
   const missing = missingPreviousRegistration(
-    `${previousTools ?? ""}\n${previousProviders ?? ""}`,
+    `${previousTools ?? ""}\n${previousProviders ?? ""}\n${previousWorkflows ?? ""}`,
     ids,
     entries
   );
@@ -444,7 +469,7 @@ export const syncTools = async (
   await writeFile(
     join(dir, "installed-features.ts"),
     generatedSource(
-      `export const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item) => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
+      `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item) => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
     )
   );
   const [runner] = runners;
@@ -456,6 +481,20 @@ export const syncTools = async (
   );
   await writeSelectionConfigs(dir, definitions);
   await writeFile(join(dir, "providers.ts"), generatedSource(providerBody));
+  const workflows = registrations.filter((item) => item.workflow);
+  await writeFile(
+    join(dir, "workflow-types.ts"),
+    generatedSource(
+      `${workflows.map((item, i) => `import type { ${item.toolExport} as workflow${i} } from "./${item.id}/tool";`).join("\n")}\n\nexport type WorkflowTools = {\n${workflows.map((item, i) => `  ${item.key}: typeof workflow${i};`).join("\n")}\n};\n`
+    )
+  );
+  const availability = definitions.filter((item) => item.availabilityExport);
+  await writeFile(
+    join(dir, "tool-availability.ts"),
+    generatedSource(
+      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item, i) => `import { ${item.availabilityExport} as available${i} } from "./${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item, i) => item.tools.map((tool) => `  ${item.slot ?? tool.toolExport}: available${i},`)).join("\n")}\n};\n`
+    )
+  );
   await writeFile(toolsPath, generatedSource(toolBody));
   await writeFile(uiPath, generatedSource(uiBody));
   return definitions;

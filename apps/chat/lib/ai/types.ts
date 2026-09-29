@@ -1,7 +1,4 @@
-import type { UIMessage, UIMessageStreamWriter } from "ai";
 import { z } from "zod";
-
-import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import type { AppModelId } from "./app-models";
 
@@ -97,7 +94,3 @@ export const expandSelectedModelValue = (
   }
   return expanded;
 };
-
-type PlatformMessage = UIMessage<unknown, { researchUpdate: ResearchUpdate }>;
-
-export type StreamWriter = UIMessageStreamWriter<PlatformMessage>;

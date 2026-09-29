@@ -403,3 +403,49 @@ test("saved-code registration requires an explicitly compatible executor", async
     await readFile(join(root, "tools/chatjs/code-execution-config.ts"), "utf-8")
   ).toContain("supportsSavedDocuments = true");
 });
+
+test.each([false, true])(
+  "workflow installs stay static and reject custom collisions: %s",
+  async (collision) => {
+    const root = await project();
+    const dir = join(root, "tools/chatjs/workflow");
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      join(dir, "tool.ts"),
+      'export { default as research } from "@/agent/tools/research";'
+    );
+    await writeFile(
+      join(dir, "chatjs.json"),
+      JSON.stringify({
+        contractVersion: 1,
+        id: "workflow",
+        kind: "tool",
+        tools: [{ toolExport: "research", workflow: true }],
+      })
+    );
+    await expect(syncTools(root)).rejects.toThrow();
+    await mkdir(join(root, "agent/tools"), { recursive: true });
+    await writeFile(
+      join(root, "agent/tools/research.ts"),
+      'export default { execute: () => "report" };'
+    );
+    await syncTools(root);
+    if (collision) {
+      await writeFile(
+        join(root, "tools/chatjs/custom-tools.ts"),
+        "export const customTools = { research: {} };\n"
+      );
+      await expect(import(join(root, "tools/chatjs/tools.ts"))).rejects.toThrow(
+        "Duplicate tool registration: research"
+      );
+      return;
+    }
+    const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+    expect(Object.keys(tools)).toEqual([]);
+    expect(
+      await readFile(join(root, "tools/chatjs/workflow-types.ts"), "utf-8")
+    ).toContain("research: typeof workflow0");
+    await rm(join(dir, "chatjs.json"));
+    await expect(syncTools(root)).rejects.toThrow("Missing descriptor");
+  }
+);

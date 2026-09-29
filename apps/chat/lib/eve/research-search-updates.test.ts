@@ -1,8 +1,9 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { expect, it, vi } from "vitest";
 
+import { researchSearchUpdates } from "@/tools/chatjs/deep-research/search-updates";
+
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { researchSearchUpdates } from "./research-search-updates";
 import { createToolResult } from "./tool-result";
 
 const mocks = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));

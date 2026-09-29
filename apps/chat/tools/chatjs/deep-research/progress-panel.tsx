@@ -1,13 +1,13 @@
 import { Maximize2, Minimize2 } from "lucide-react";
 import React from "react";
 
-import { UpdateTitle } from "@/components/update-title";
 import { cn } from "@/lib/utils";
 // Type-only imports
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-import { ResearchTask } from "./research-task";
-import { ResearchTasks } from "./research-tasks";
+import { ResearchTask } from "./task";
+import { ResearchTasks } from "./tasks";
+import { UpdateTitle } from "./update-title";
 
 // Add the updateName mapping (consider moving to a shared util later)
 const updateName = {
@@ -20,11 +20,9 @@ const updateName = {
 
 export const ResearchProgress = ({
   updates,
-  totalExpectedSteps: _totalExpectedSteps,
   isComplete,
 }: {
   updates: ResearchUpdate[];
-  totalExpectedSteps: number;
   isComplete: boolean;
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);

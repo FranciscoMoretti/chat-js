@@ -2,9 +2,9 @@
 import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
 
-import { ResearchUpdateSchema } from "../../tools/platform/research-updates-schema";
-import { getEveConnectionOptions } from "./connection-options";
-import { toolOutputSchema } from "./tool-result";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+import { toolOutputSchema } from "@/lib/eve/tool-result";
+import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
 
 export async function researchSearchUpdates(context: WorkflowToolContext) {
   "use step";

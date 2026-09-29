@@ -11,11 +11,10 @@ import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
+import { researchAvailable } from "@/tools/chatjs/deep-research/availability";
+
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import {
-  researchAvailabilityMiddleware,
-  researchAvailable,
-} from "./research-availability";
+import { installedToolAvailabilityMiddleware } from "./tool-availability";
 import { eveTurnGuest, eveTurnTool } from "./turn-tools";
 
 const mocks = vi.hoisted(() => {
@@ -32,7 +31,7 @@ vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
 vi.mock("../config", () => ({ config: { ai: { tools: mocks.features } } }));
-vi.mock("../../tools/chatjs/tools", () => ({ tools: mocks.tools }));
+vi.mock("../../tools/chatjs/providers", () => ({ providers: mocks.tools }));
 beforeEach(() => {
   mocks.tools.webSearch = {};
   mocks.features.deepResearch.enabled = true;
@@ -84,7 +83,7 @@ it.each([
       generateText({
         maxRetries: 0,
         model: wrapLanguageModel({
-          middleware: researchAvailabilityMiddleware({
+          middleware: installedToolAvailabilityMiddleware({
             ...session,
             auth: {
               current: principal,

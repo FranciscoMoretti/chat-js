@@ -50,6 +50,15 @@ export const add = new Command("add")
           expected.push(toolDefinitionSchema.parse(item.meta?.chatjs));
         }
       }
+      if (
+        expected.some((item) => item.requiresTools.includes("webSearch")) &&
+        ![...expected, ...installed].some((item) => item.slot === "webSearch")
+      ) {
+        const address = itemAddress("tavily-search", "tool");
+        const item = await readItem(address, cwd);
+        addresses.push(address);
+        expected.push(toolDefinitionSchema.parse(item.meta?.chatjs));
+      }
       if (!options.yes) {
         const answer = await confirm({
           message: `Install ${tools.join(", ")}?`,

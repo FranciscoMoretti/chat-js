@@ -460,6 +460,19 @@ describe("scaffoldFromTemplate", () => {
 
     await scaffoldFromTemplate(destination);
 
+    expect(existsSync(join(destination, "agent/tools/deepResearch.ts"))).toBe(
+      false
+    );
+    for (const name of [
+      "researchPlanner",
+      "researcher",
+      "researchCompressor",
+      "researchWriter",
+    ]) {
+      expect(
+        existsSync(join(destination, "agent/subagents", name, "agent.ts"))
+      ).toBe(false);
+    }
     expect(
       existsSync(join(destination, "tools", "chatjs", "get-weather"))
     ).toBe(false);

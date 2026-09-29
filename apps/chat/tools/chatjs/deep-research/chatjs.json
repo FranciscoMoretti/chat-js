@@ -1,0 +1,14 @@
+{
+  "availabilityExport": "researchAvailable",
+  "contractVersion": 1,
+  "id": "deep-research",
+  "kind": "tool",
+  "requiresTools": ["createTextDocument", "readDocument", "webSearch"],
+  "tools": [
+    {
+      "rendererExport": "DeepResearchRenderer",
+      "toolExport": "deepResearch",
+      "workflow": true
+    }
+  ]
+}

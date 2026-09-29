@@ -42,6 +42,7 @@ const envelope = z.object({
     "output-denied",
   ]),
   toolCallId: z.string(),
+  updates: z.array(z.unknown()).optional(),
 });
 
 const InvalidResult = () => (
@@ -49,22 +50,26 @@ const InvalidResult = () => (
 );
 
 /** Keep executable tools on the server and validate their persisted data at the UI boundary. */
-export const defineToolRenderer = <TInput, TOutput>({
+export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
   inputSchema,
   streamingInputSchema,
   outputSchema,
+  updateSchema,
+  renderProgress: Progress,
   render: Renderer,
 }: {
   inputSchema: z.ZodType<TInput>;
   streamingInputSchema?: z.ZodType<Partial<TInput>>;
   outputSchema: z.ZodType<TOutput>;
+  updateSchema?: z.ZodType<TUpdate>;
+  renderProgress?: ComponentType<{ updates: TUpdate[] }>;
   render: ComponentType<{
     tool: RenderableTool<TInput, TOutput>;
     messageId: string;
     isReadonly: boolean;
   }>;
 }) => {
-  const ValidatedToolRenderer = ({
+  const ValidatedToolBody = ({
     tool,
     messageId,
     isReadonly,
@@ -131,6 +136,25 @@ export const defineToolRenderer = <TInput, TOutput>({
           state: value.state,
         }}
       />
+    );
+  };
+  const ValidatedToolRenderer = (props: {
+    tool: unknown;
+    messageId: string;
+    isReadonly: boolean;
+  }) => {
+    const parsed = envelope.safeParse(props.tool);
+    const updates = (parsed.success ? (parsed.data.updates ?? []) : []).flatMap(
+      (update) => {
+        const value = updateSchema?.safeParse(update);
+        return value?.success ? [value.data] : [];
+      }
+    );
+    return (
+      <>
+        {Progress && <Progress updates={updates} />}
+        <ValidatedToolBody {...props} />
+      </>
     );
   };
   return Object.assign(ValidatedToolRenderer, {

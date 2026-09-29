@@ -1,3 +1,3 @@
-import { defineResearchAgent } from "../../../lib/eve/research-agent";
+import { defineResearchAgent } from "@/tools/chatjs/deep-research/agent";
 
 export default defineResearchAgent("research");

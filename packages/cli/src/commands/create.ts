@@ -7,6 +7,7 @@ import { Command } from "commander";
 import { z } from "zod";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
+import { researchAgentFiles } from "../../../registry/src/tools/research";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
 import { collectEnvChecklist } from "../helpers/env-checklist";
@@ -331,6 +332,9 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
       }
     }
   }
+  if (assistantTools.builtInTools.deepResearch) {
+    toolSources.push(itemAddress("deep-research", "tool"));
+  }
   if (
     coreFeatures.documents &&
     documentTypes.code &&
@@ -403,6 +407,15 @@ const prepareGitScaffold = async (targetDir: string): Promise<boolean> => {
   await rm(path.join(targetDir, "lib/storage-provider.ts"), { force: true });
   await rm(path.join(targetDir, "lib/ai/gateway.ts"));
   await removeSelectedClonedTools(targetDir);
+  await rm(path.join(targetDir, "tools/chatjs/deep-research"), {
+    force: true,
+    recursive: true,
+  });
+  await Promise.all(
+    researchAgentFiles.map((file) =>
+      rm(path.join(targetDir, file), { force: true })
+    )
+  );
   return true;
 };
 

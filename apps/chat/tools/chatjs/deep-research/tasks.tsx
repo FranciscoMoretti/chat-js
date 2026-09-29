@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-import { ResearchTask } from "./research-task";
+import { ResearchTask } from "./task";
 
 const icons: Record<ResearchUpdate["type"], React.ElementType> = {
   completed: CircleCheck,

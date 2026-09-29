@@ -108,6 +108,18 @@ Deep research exposes the installed search definition directly to a native EVE r
 
 Saved-code execution still uses restricted internal function composition under its parent call. It retains the parent's `callId` and `toolName`, without creating a separate EVE action. This helper rejects approval policies, `availableInSubagents: false`, and output schemas requiring EVE validation. Native `getToken` and `requireAuth` are unavailable inside it. Invoke tools needing those capabilities directly through EVE.
 
+## Installable workflows
+
+`chat-js add deep-research` installs the research workflow, subagents, prompts, configuration, and progress renderer. It also installs text documents and reuses your selected search provider, or installs Tavily when none is selected. Enable research and text documents in `chat.config.ts` to expose the feature.
+
+Workflow registrations declare `workflow: true` alongside their `toolExport` and optional `rendererExport`. The bundle installs an ordinary EVE default export at `agent/tools/<toolExport>.ts`; its `tool.ts` re-exports that definition by name for type inference. The CLI keeps workflows out of the dynamic tool set and generates type-only registrations for their UI. EVE discovers and executes the static entry point itself.
+
+A bundle can declare `availabilityExport`, naming a predicate in `availability.ts`. The generated availability registry filters model exposure. Keep an execution guard in the workflow's preparation step as well. An unavailable tool must not rely on model filtering alone for authorization.
+
+To remove research, delete `tools/chatjs/deep-research`, `agent/tools/deepResearch.ts`, and the `researchPlanner`, `researcher`, `researchCompressor`, and `researchWriter` directories under `agent/subagents`, then run `chat-js sync`. These are installed source files, including the native EVE entry points.
+
+Renderers can declare an `updateSchema` and `renderProgress` component. ChatJS validates receipt updates before rendering them and retains valid progress when the receipt reports an error.
+
 ## Native services and custom tools
 
 Tools receive EVE's native context. Import only the ChatJS services your implementation needs: authorized file upload, model access and pricing, image context, or durable sandbox ownership. The official media and sandbox sources show these integrations. Services are not supplied through a second optional execution-context object.

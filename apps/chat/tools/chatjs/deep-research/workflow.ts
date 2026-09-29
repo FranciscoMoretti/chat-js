@@ -3,6 +3,10 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { z } from "zod";
 
+import { createToolResult } from "@/lib/eve/tool-result";
+import type { ToolResult } from "@/lib/eve/tool-result";
+import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -11,29 +15,23 @@ import {
   leadResearcherPrompt,
   researchSystemPrompt,
   transformMessagesIntoResearchTopicPrompt,
-} from "../../tools/platform/deep-research/prompts";
-import type { ResearchUpdate } from "../../tools/platform/research-updates-schema";
-import type { eveDocumentWriteResult } from "./document-contracts";
+} from "./prompts";
 import {
   researchBrief,
   researchClarification,
   researchDecision,
   researchFindings,
   researchReport,
-} from "./research-contracts";
-import { researchSearchUpdates } from "./research-search-updates";
+} from "./schemas";
+import type { researchOutput } from "./schemas";
+import { researchSearchUpdates } from "./search-updates";
 import {
   prepareResearch,
   researchCompletionTime,
   saveResearchReport,
-} from "./research-steps";
-import { createToolResult } from "./tool-result";
-import type { ToolResult } from "./tool-result";
+} from "./steps";
 
-type ResearchOutput =
-  | { searches: [] }
-  | { answer: string; format: "clarifying_questions" }
-  | (z.infer<typeof eveDocumentWriteResult> & { format: "report" });
+type ResearchOutput = z.infer<typeof researchOutput>;
 
 const outputSchema = (schema: z.ZodType) =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));

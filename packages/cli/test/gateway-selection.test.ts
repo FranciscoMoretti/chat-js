@@ -422,6 +422,33 @@ const toolArguments = (gateway: Gateway | "acme"): string[] => {
   return [];
 };
 
+const verifyResearchInstallation = async (
+  cwd: string,
+  gateway: Gateway | "acme"
+) => {
+  expect(
+    await Bun.file(join(cwd, "agent/tools/deepResearch.ts")).exists()
+  ).toBe(false);
+  if (gateway === "vercel") {
+    await run(cwd, ["bun", "run", "lint"]);
+    await run(cwd, ["node", cliEntry, "add", "deep-research", "--yes"]);
+    expect(
+      await Bun.file(join(cwd, "agent/tools/deepResearch.ts")).exists()
+    ).toBe(true);
+    expect(
+      await Bun.file(
+        join(cwd, "agent/subagents/researcher/tools/webSearch.ts")
+      ).exists()
+    ).toBe(true);
+    expect(
+      await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")
+    ).not.toContain('from "./deep-research/tool"');
+    expect(await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")).toContain(
+      'from "./deep-research/renderer"'
+    );
+  }
+};
+
 for (const gateway of [...GATEWAYS, "acme"]) {
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
     const cwd = join(root, gateway);
@@ -437,6 +464,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "--no-electron",
       ...toolArguments(gateway),
     ]);
+    await verifyResearchInstallation(cwd, gateway);
     expect(
       await Bun.file(join(cwd, "tools/platform/generate-image.ts")).exists()
     ).toBe(false);

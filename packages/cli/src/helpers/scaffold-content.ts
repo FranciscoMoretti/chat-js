@@ -1,9 +1,12 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { researchAgentFiles } from "../../../registry/src/tools/research";
+
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  ...researchAgentFiles,
   "scripts/db-branch-create.sh",
   "scripts/db-branch-delete.sh",
   "scripts/db-branch-use.sh",
@@ -20,6 +23,9 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-search.test.ts",
   "lib/db/eve-subagents.test.ts",
   "lib/eve/research-availability.test.ts",
+  "lib/eve/research-tool.test.ts",
+  "lib/eve/research-steps.test.ts",
+  "lib/eve/research-search-updates.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",
   "lib/eve/document-runs.test.ts",

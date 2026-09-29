@@ -3,7 +3,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
+import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import type * as ChatjsUI from "@/tools/chatjs/ui";
+
+vi.mock("@/components/eve/eve-document-tool", () => ({
+  EveDocumentTool: () => null,
+}));
 
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const { z } = await import("zod");
@@ -22,6 +27,13 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
             { "data-message": messageId, "data-readonly": isReadonly },
             tool.state === "output-available" ? tool.output.echoed : "Loading"
           ),
+        renderProgress: ({ updates }) =>
+          reactCreateElement(
+            "aside",
+            {},
+            updates.map((update) => update.label).join(", ")
+          ),
+        updateSchema: z.object({ label: z.string() }),
       }),
     },
   };
@@ -109,4 +121,28 @@ test("shows a failed tool instead of its loading skeleton", () => {
   expect(html).toContain('role="alert"');
   expect(html).toContain("Weather service unavailable");
   expect(html).not.toContain("skeleton");
+});
+
+test("validates receipt progress and retains completed evidence when execution fails", () => {
+  const updates = [
+    { label: "Source found" },
+    { label: 42 },
+    { unexpected: "ignored" },
+  ];
+  const success = renderResult(
+    "customEcho",
+    { text: "hello" },
+    createToolResult({ echoed: "hello" }, 0, updates)
+  );
+  const failure = renderResult(
+    "customEcho",
+    { text: "hello" },
+    createToolError(0, updates)
+  );
+  for (const html of [success, failure]) {
+    expect(html).toContain("Source found");
+    expect(html).not.toContain("42");
+    expect(html).not.toContain("ignored");
+  }
+  expect(failure).toContain("The tool did not complete.");
 });
