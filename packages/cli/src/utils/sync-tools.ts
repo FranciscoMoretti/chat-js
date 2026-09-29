@@ -392,14 +392,14 @@ export const syncTools = async (
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
   }
-  const pending = options.checkOnly ? (options.pending ?? []) : [];
-  const availableKeys = [
+  const pending = options.pending ?? [];
+  const availableKeys = new Set([
     ...keys,
     ...registrationsFor(pending).map(registrationKey),
-  ];
+  ]);
   for (const definition of definitions) {
     const missingTools = definition.requiresTools.filter(
-      (name) => !availableKeys.includes(name)
+      (name) => !availableKeys.has(name)
     );
     if (missingTools.length > 0) {
       throw new Error(
