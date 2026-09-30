@@ -10,6 +10,7 @@ import {
   savedCodeExecutionItem,
   codeExecutionUiItem,
 } from "./src/tools/documents";
+import { researchItem } from "./src/tools/research";
 
 export const toolItems = [
   {
@@ -180,6 +181,7 @@ export const registry = registrySchema.parse({
     ...toolItems,
     ...documentItems,
     savedCodeExecutionItem,
+    researchItem,
     codeExecutionUiItem,
     ...searchToolItems,
     codeExecutionItem,

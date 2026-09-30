@@ -27,6 +27,7 @@ import {
   promptVideoGenerationTool,
   promptCodeExecutionTool,
 } from "../helpers/prompts";
+import { removeClonedResearch } from "../helpers/remove-cloned-research";
 import {
   scaffoldElectron,
   scaffoldFromGit,
@@ -50,6 +51,7 @@ import { preflight } from "../utils/preflight";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
 import { syncTools } from "../utils/sync-tools";
+import { validateClonedBundle } from "../utils/validate-cloned-bundle";
 
 const resolveCreateTarget = (
   targetArg: string | undefined
@@ -136,6 +138,13 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
           metadata.tools.some((tool) => tool.toolExport === "retrieveUrl"))
       );
       return { metadata, name: entry.name, selected };
+    })
+  );
+  await Promise.all(
+    bundles.map(async (bundle) => {
+      if (bundle?.metadata.documentKind || bundle?.metadata.documentRunExport) {
+        await validateClonedBundle(targetDir, `tools/chatjs/${bundle.name}`);
+      }
     })
   );
   const needsReadDocument = bundles.some(
@@ -326,6 +335,10 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     options.yes,
     gatewaySelection.definition
   );
+  if (assistantTools.builtInTools.deepResearch) {
+    coreFeatures.documents = true;
+    documentTypes.text = true;
+  }
   const toolSources = await collectToolSources(
     options,
     assistantTools,
@@ -344,6 +357,9 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
         toolSources.push(source);
       }
     }
+  }
+  if (assistantTools.builtInTools.deepResearch) {
+    toolSources.push(itemAddress("deep-research", "tool"));
   }
   if (
     coreFeatures.documents &&
@@ -413,9 +429,14 @@ const prepareGitScaffold = async (targetDir: string): Promise<boolean> => {
     "chat.config.ts",
     "package.json",
   ]);
+  await removeClonedResearch(targetDir);
   await rm(path.join(targetDir, "lib/storage-provider.ts"), { force: true });
   await rm(path.join(targetDir, "lib/ai/gateway.ts"));
   await removeSelectedClonedTools(targetDir);
+  await preflight(targetDir, ["lib/eve/core-tool-types.test.ts"]);
+  await rm(path.join(targetDir, "lib/eve/core-tool-types.test.ts"), {
+    force: true,
+  });
   return true;
 };
 

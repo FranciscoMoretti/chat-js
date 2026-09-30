@@ -2,7 +2,7 @@
 import type { EveMessagePart } from "eve/client";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { EveResearchResult } from "../components/eve/eve-research-result";
+import { EveToolResult } from "../components/eve/eve-tool-result";
 import { ArtifactProvider } from "../hooks/use-artifact";
 import { createToolResult } from "../lib/eve/tool-result";
 
@@ -44,6 +44,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
       {
         format: "report",
         status: "success",
+        result: "Saved",
         documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
         revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
         title: "Research report",
@@ -77,7 +78,7 @@ process.stdout.write(
       <main className="mx-auto max-w-3xl space-y-6 p-6">
         {parts.map((part) => (
           <section key={JSON.stringify(part)}>
-            <EveResearchResult isReadonly messageId="fixture" part={part} />
+            <EveToolResult isReadonly messageId="fixture" part={part} />
           </section>
         ))}
       </main>

@@ -1,11 +1,11 @@
 import { Loader2, SearchIcon } from "lucide-react";
 import { motion } from "motion/react";
 
+import { WebSourceBadge } from "@/components/source-badge";
 import { Badge } from "@/components/ui/badge";
-import { UpdateTitle } from "@/components/update-title";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-import { WebSourceBadge } from "./source-badge";
+import { UpdateTitle } from "./update-title";
 
 export const ResearchTask = ({
   update,

@@ -4,7 +4,7 @@ import { defineState } from "eve/context";
 
 import { configureWorkflowEnvironment } from "../lib/eve/environment";
 import { resolveEveModel } from "../lib/eve/model-selection";
-import { researchAvailabilityMiddleware } from "../lib/eve/research-availability";
+import { installedToolAvailabilityMiddleware } from "../lib/eve/tool-availability";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 
 configureWorkflowEnvironment(process.env);
@@ -30,7 +30,7 @@ export default defineAgent({
         return {
           ...resolved,
           model: wrapLanguageModel({
-            middleware: researchAvailabilityMiddleware(context.session),
+            middleware: installedToolAvailabilityMiddleware(context.session),
             model: resolved.model,
           }),
         };

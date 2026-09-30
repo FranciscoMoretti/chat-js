@@ -12,6 +12,7 @@ export const envRequirementSchema = z.object({
   runtimeAuth: z.literal("vercel-oidc").optional(),
 });
 const toolDefinitionBase = z.object({
+  availabilityExport: identifier.optional(),
   documentKind: z.enum(["text", "code", "sheet"]).optional(),
   documentRunExport: identifier.optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
@@ -33,6 +34,7 @@ const toolDefinitionBase = z.object({
       z.object({
         rendererExport: identifier.optional(),
         toolExport: identifier,
+        workflow: z.literal(true).optional(),
       })
     )
     .min(1),
@@ -45,6 +47,9 @@ export const toolDefinitionSchema = toolDefinitionBase
   .refine((item) => !item.savedCodeExecution || item.slot === "codeExecution", {
     message:
       "Saved code compatibility applies only to a codeExecution provider",
+  })
+  .refine((item) => !item.slot || item.tools.every((tool) => !tool.workflow), {
+    message: "Provider slots require ordinary native tools",
   })
   .refine((item) => !item.slot || item.tools.length === 1, {
     message: "A provider slot must register exactly one tool",

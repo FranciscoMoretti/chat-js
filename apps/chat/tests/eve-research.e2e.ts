@@ -16,6 +16,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const createdReport = /^Created /u;
+const researchSummary = /^Researched for /u;
 test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status === testInfo.expectedStatus) {
     return;
@@ -38,11 +39,20 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   page,
 }) => {
   test.setTimeout(900_000);
+  const duplicateKeyErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().includes("same key")) {
+      duplicateKeyErrors.push(message.text());
+    }
+  });
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const session = z
-    .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+  const session = z.object({ user: z.object({ id: z.string() }) }).parse(
+    await page.evaluate(async () => {
+      const response = await fetch("/api/auth/get-session");
+      return response.json();
+    })
+  );
   await db
     .insert(userCredit)
     .values({ credits: 1000, userId: session.user.id })
@@ -50,32 +60,48 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
       set: { credits: sql`greatest(${userCredit.credits}, 1000)` },
       target: userCredit.userId,
     });
-  const created = await page.request.post("/api/agent-conversations", {
-    data: {
+  const created = await page.evaluate(
+    async (data) => {
+      const response = await fetch("/api/agent-conversations", {
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      return { body: await response.json(), ok: response.ok };
+    },
+    {
       message:
         "Call deepResearch exactly once. Research the purpose of the HTML dialog element and its accessibility behavior, using the current MDN documentation as the primary source. Audience: web developers. Scope: a short report under 300 words with citations, no historical comparison. All requirements are specified; no clarification is needed. Do not call any other tools yourself.",
       modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
       selectedTool: "deepResearch",
-    },
-    headers: { origin: new URL(page.url()).origin },
-  });
-  expect(created.ok(), await created.text()).toBe(true);
+    }
+  );
+  expect(created.ok, JSON.stringify(created.body)).toBe(true);
   const binding = z
     .object({ id: z.uuid(), sessionId: z.string() })
-    .parse(await created.json());
+    .parse(created.body);
   await page.goto(`/chat/${binding.id}`);
   const report = page.getByRole("button", { name: createdReport }).first();
   await expect(report).toBeVisible({ timeout: 840_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 30_000,
   });
+  await page.getByRole("button", { name: researchSummary }).click();
+  await expect(
+    page.getByRole("heading", { exact: true, name: "Research complete" })
+  ).toBeVisible();
+  expect(duplicateKeyErrors).toEqual([]);
+  await page.screenshot({
+    animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-native-research-timeline.png",
+  });
   const title = await report.textContent();
   await page.reload();
   await expect(report).toHaveText(title ?? "");
   await report.click();
   const panel = page.getByTestId("artifact");
-  await expect(panel).toContainText("showModal");
+  await expect(panel).toContainText(/dialog/iu);
   await expect(panel).toContainText("https://developer.mozilla.org/");
   await expect(panel).toContainText("Version 1 of 1");
   await panel.screenshot({

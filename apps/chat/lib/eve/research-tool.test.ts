@@ -1,18 +1,19 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
 
+import { executeEveResearch } from "@/tools/chatjs/deep-research/workflow";
+
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { executeEveResearch } from "./research-tool";
 
 const mocks = vi.hoisted(() => ({
   prepare: vi.fn(),
   save: vi.fn(),
   searches: vi.fn(),
 }));
-vi.mock("./research-search-updates", () => ({
+vi.mock("@/tools/chatjs/deep-research/search-updates", () => ({
   researchSearchUpdates: mocks.searches,
 }));
-vi.mock("./research-steps", () => ({
+vi.mock("@/tools/chatjs/deep-research/steps", () => ({
   prepareResearch: mocks.prepare,
   researchCompletionTime: () => Promise.resolve(100),
   saveResearchReport: mocks.save,

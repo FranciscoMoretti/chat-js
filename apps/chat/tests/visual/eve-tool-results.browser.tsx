@@ -3,7 +3,6 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 
-import { EveResearchResult } from "@/components/eve/eve-research-result";
 import { EveToolResult } from "@/components/eve/eve-tool-result";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
@@ -117,7 +116,7 @@ test("failed research keeps validated progress alongside its error", async () =>
   try {
     await act(() =>
       root.render(
-        <EveResearchResult
+        <EveToolResult
           isReadonly
           messageId="research"
           part={{

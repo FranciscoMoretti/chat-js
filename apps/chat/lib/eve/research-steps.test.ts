@@ -1,8 +1,12 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
 
+import {
+  prepareResearch,
+  saveResearchReport,
+} from "@/tools/chatjs/deep-research/steps";
+
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { prepareResearch, saveResearchReport } from "./research-steps";
 
 const mocks = vi.hoisted(() => ({
   features: {
@@ -19,8 +23,10 @@ vi.mock("./turn-tools", () => ({
   eveTurnTool: { get: mocks.selected },
 }));
 vi.mock("../config", () => ({ config: { ai: { tools: mocks.features } } }));
-vi.mock("../../tools/chatjs/tools", () => ({ tools: { webSearch: {} } }));
-vi.mock("../../tools/platform/deep-research/configuration", () => ({
+vi.mock("../../tools/chatjs/providers", () => ({
+  providers: { webSearch: {} },
+}));
+vi.mock("@/tools/chatjs/deep-research/configuration", () => ({
   getDeepResearchConfig: () => ({}),
 }));
 vi.mock("./connection-options", () => ({

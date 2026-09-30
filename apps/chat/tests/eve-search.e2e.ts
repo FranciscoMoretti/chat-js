@@ -22,20 +22,27 @@ test("native search retains sources, progress and billing across reload", async 
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const created = await page.request.post("/api/agent-conversations", {
-    data: {
+  const created = await page.evaluate(
+    async (data) => {
+      const response = await fetch("/api/agent-conversations", {
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      return { body: await response.json(), ok: response.ok };
+    },
+    {
       message:
         'Use webSearch exactly twice, separately: first query "IANA example domains", then query "MDN JavaScript Array". Each call should have one query, maximum 2 results, basic depth. Use no other tool. Summarize the sources in one sentence.',
-      modelId: "google/gemini-2.5-flash-lite",
+      modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
       selectedTool: "webSearch",
-    },
-    headers: { origin: new URL(page.url()).origin },
-  });
-  expect(created.ok(), await created.text()).toBe(true);
+    }
+  );
+  expect(created.ok, JSON.stringify(created.body)).toBe(true);
   const binding = z
     .object({ id: z.uuid(), sessionId: z.string() })
-    .parse(await created.json());
+    .parse(created.body);
   await page.goto(`/chat/${binding.id}`);
   const sources = page.getByRole("button", {
     exact: true,
@@ -141,7 +148,7 @@ test("search loading and failure states remain readable", async ({ page }) => {
   );
   await expect(page.getByRole("status")).toContainText("Searching");
   await expect(page.getByRole("alert")).toHaveCount(3);
-  await expect(page.getByText("Search declined.")).toBeVisible();
+  await expect(page.getByText("Request declined.")).toBeVisible();
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });
     expect(

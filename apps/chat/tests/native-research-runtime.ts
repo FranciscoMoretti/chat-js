@@ -29,13 +29,15 @@ const main = async () => {
     "agent/hooks/billing.ts",
     "lib/eve/usage.ts",
     "agent/subagents/researcher/tools/webSearch.ts",
-    "lib/eve/research-tool.ts",
-    "lib/eve/research-contracts.ts",
-    "lib/eve/research-search-updates.ts",
+    "tools/chatjs/deep-research/workflow.ts",
+    "tools/chatjs/deep-research/schemas.ts",
+    "tools/chatjs/deep-research/search-updates.ts",
     "tools/platform/research-updates-schema.ts",
     "lib/eve/tool-result.ts",
+    "lib/eve/document-contracts.ts",
+    "lib/file-url.ts",
     "lib/eve/tool-model-output.ts",
-    "tools/platform/deep-research/prompts.ts",
+    "tools/chatjs/deep-research/prompts.ts",
   ]) {
     await mkdir(path.dirname(path.join(fixture, name)), { recursive: true });
     await cp(path.join(app, name), path.join(fixture, name));
@@ -95,8 +97,10 @@ export async function registerEveSubagent(owner, parent, session, turn) {
     "tsconfig.json",
     JSON.stringify({
       compilerOptions: {
+        baseUrl: ".",
         module: "Preserve",
         moduleResolution: "bundler",
+        paths: { "@/*": ["./*"] },
         target: "ESNext",
         types: ["eve/workflow-modules"],
       },
@@ -112,7 +116,7 @@ export async function registerEveSubagent(owner, parent, session, turn) {
 export const getEveConnectionOptions = () => ({ host: readFileSync(${JSON.stringify(path.join(fixture, "host"))}, "utf8") });`
   );
   await write(
-    "lib/eve/research-steps.ts",
+    "tools/chatjs/deep-research/steps.ts",
     `
 export async function prepareResearch() {
   "use step";
@@ -170,7 +174,7 @@ export default defineAgent({ defaultTools: false, modelContextWindowTokens: 1280
 }`)
   );
   await write(
-    "tools/chatjs/tools.ts",
+    "tools/chatjs/providers.ts",
     `
 import { defineTool } from "eve/tools";
 import { z } from "zod";
@@ -181,7 +185,7 @@ const webSearch = defineTool({ description: "Fixture search", inputSchema: z.obj
    return { kind: "chatjs.tool-result", version: 1, status: "success", output: { result: input.query }, usage: { costUsd: 0.02 }, updates: [{ type: "web", toolCallId: ctx.callId, title: "Search complete", status: "completed", queries: [input.query], results: [{ title: "Evidence", url: "https://example.com", content: input.query, source: "web" }] }] };
  },
 });
-export const tools = { webSearch };`
+export const providers = { webSearch };`
   );
   await write(
     "lib/config.ts",

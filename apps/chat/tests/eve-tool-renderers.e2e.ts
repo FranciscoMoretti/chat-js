@@ -153,7 +153,7 @@ test("native research renderer covers progress, clarification, report and failur
   await expect(
     page.getByRole("button", { name: 'Created "Research report"' })
   ).toBeVisible();
-  await expect(page.getByText("Research declined.")).toBeVisible();
+  await expect(page.getByText("Request declined.")).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(3);
   for (const width of [1100, 390]) {
     await page.setViewportSize({ height: 850, width });

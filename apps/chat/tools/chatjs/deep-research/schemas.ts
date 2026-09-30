@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
+
+export const researchOutput = z.union([
+  z.object({ searches: z.tuple([]) }),
+  z.object({ answer: z.string(), format: z.literal("clarifying_questions") }),
+  eveDocumentWriteResult.extend({ format: z.literal("report") }),
+]);
+
 export const researchInput = z.object({});
 export const researchClarification = z.object({
   need_clarification: z.boolean(),

@@ -31,11 +31,16 @@ export const EveToolResult = ({
         ...part,
         errorText: platformOutput.data.error,
         state: "output-error",
+        updates: platformOutput.data.updates,
       },
     });
   }
   const tool = platformOutput?.success
-    ? { ...part, output: platformOutput.data.output }
+    ? {
+        ...part,
+        output: platformOutput.data.output,
+        updates: platformOutput.data.updates,
+      }
     : part;
   return createElement(Renderer, { isReadonly, messageId, tool });
 };

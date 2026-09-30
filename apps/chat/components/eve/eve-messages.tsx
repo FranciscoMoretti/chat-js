@@ -32,7 +32,6 @@ import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
-import { EveResearchResult } from "./eve-research-result";
 import { EveToolResult } from "./eve-tool-result";
 
 const PendingInput = ({
@@ -157,15 +156,6 @@ const Part = ({
   ) {
     return (
       <EveToolResult
-        isReadonly={isReadonly}
-        messageId={messageId}
-        part={part}
-      />
-    );
-  }
-  if (part.toolName === "deepResearch") {
-    return (
-      <EveResearchResult
         isReadonly={isReadonly}
         messageId={messageId}
         part={part}

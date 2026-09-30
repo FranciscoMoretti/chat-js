@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-import { ResearchTask } from "./research-task";
+import { ResearchTask } from "./task";
 
 const icons: Record<ResearchUpdate["type"], React.ElementType> = {
   completed: CircleCheck,
@@ -54,7 +54,7 @@ export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
     {updates.map((update, index) => (
       <StepWrapper
         isLast={index === updates.length - 1}
-        key={update.toolCallId}
+        key={`${update.toolCallId}-${index}`}
         update={update}
       >
         <ResearchTask

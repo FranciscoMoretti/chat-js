@@ -1,5 +1,8 @@
 import userConfig from "@/chat.config";
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/tools/chatjs/installed-features";
 
 import type { ActiveGatewayType } from "./ai/app-model-id";
 import { applyDefaults } from "./config-schema";
@@ -23,5 +26,7 @@ for (const kind of ["text", "code", "sheet"] as const) {
   config.ai.tools.documents.types[kind] &&= installedDocumentKinds.has(kind);
 }
 config.ai.tools.documents.enabled &&= installedDocumentKinds.size > 0;
+
+config.ai.tools.deepResearch.enabled &&= installedToolNames.has("deepResearch");
 
 export type { Config } from "./config-schema";

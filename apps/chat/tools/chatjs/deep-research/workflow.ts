@@ -3,6 +3,10 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { z } from "zod";
 
+import { createToolResult } from "@/lib/eve/tool-result";
+import type { ToolResult } from "@/lib/eve/tool-result";
+import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -11,29 +15,26 @@ import {
   leadResearcherPrompt,
   researchSystemPrompt,
   transformMessagesIntoResearchTopicPrompt,
-} from "../../tools/platform/deep-research/prompts";
-import type { ResearchUpdate } from "../../tools/platform/research-updates-schema";
-import type { eveDocumentWriteResult } from "./document-contracts";
+} from "./prompts";
 import {
   researchBrief,
   researchClarification,
   researchDecision,
   researchFindings,
   researchReport,
-} from "./research-contracts";
-import { researchSearchUpdates } from "./research-search-updates";
+} from "./schemas";
+import type { researchOutput } from "./schemas";
+import { researchSearchUpdates } from "./search-updates";
 import {
   prepareResearch,
   researchCompletionTime,
   saveResearchReport,
-} from "./research-steps";
-import { createToolResult } from "./tool-result";
-import type { ToolResult } from "./tool-result";
+} from "./steps";
 
-type ResearchOutput =
-  | { searches: [] }
-  | { answer: string; format: "clarifying_questions" }
-  | (z.infer<typeof eveDocumentWriteResult> & { format: "report" });
+type ResearchOutput = z.infer<typeof researchOutput>;
+
+const structuredMessage = (message: string) =>
+  `${message}\n\nDeliver the requested fields through the final_output tool. Put any Markdown inside its string fields; do not return prose or JSON text instead of calling the tool.`;
 
 const outputSchema = (schema: z.ZodType) =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));
@@ -55,7 +56,9 @@ export async function* executeEveResearch(
   if (config.allow_clarification) {
     const clarification = researchClarification.parse(
       await context.agent("researchPlanner", {
-        message: clarifyWithUserInstructions({ date, messages }),
+        message: structuredMessage(
+          clarifyWithUserInstructions({ date, messages })
+        ),
         outputSchema: outputSchema(researchClarification),
       })
     );
@@ -84,7 +87,9 @@ export async function* executeEveResearch(
   yield progress();
   const brief = researchBrief.parse(
     await context.agent("researchPlanner", {
-      message: transformMessagesIntoResearchTopicPrompt({ date, messages }),
+      message: structuredMessage(
+        transformMessagesIntoResearchTopicPrompt({ date, messages })
+      ),
       outputSchema: outputSchema(researchBrief),
     })
   );
@@ -109,7 +114,9 @@ export async function* executeEveResearch(
     context.abortSignal.throwIfAborted();
     const decision = decisionSchema.parse(
       await context.agent("researchPlanner", {
-        message: `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + 1} of ${config.max_researcher_iterations + 1}. Return your next decision as JSON.`,
+        message: structuredMessage(
+          `${leadResearcherPrompt({ date, max_concurrent_research_units: config.max_concurrent_research_units })}\n\nResearch brief: ${brief.research_brief}\n\nFindings so far:\n${JSON.stringify(notes)}\n\nDecision round ${round + 1} of ${config.max_researcher_iterations + 1}. Return your next decision.`
+        ),
         outputSchema: outputSchema(decisionSchema),
       })
     );
@@ -134,7 +141,9 @@ export async function* executeEveResearch(
       try {
         raw = researchFindings.parse(
           await context.agent("researcher", {
-            message: `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "" })}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings, preserving source URLs, citations, relevant quotations, uncertainties, and conflicting evidence for the compression stage.`,
+            message: structuredMessage(
+              `${researchSystemPrompt({ date, max_search_queries: config.search_api_max_queries, mcp_prompt: "" })}\n\nTopic:\n${topic}\n\nReturn comprehensive raw findings, preserving source URLs, citations, relevant quotations, uncertainties, and conflicting evidence for the compression stage.`
+            ),
             outputSchema: outputSchema(researchFindings),
           })
         );
@@ -153,7 +162,9 @@ export async function* executeEveResearch(
       yield progress();
       const compressed = researchFindings.parse(
         await context.agent("researchCompressor", {
-          message: `${compressResearchSystemPrompt({ date })}\n\n${raw.findings}\n\n${compressResearchSimpleHumanMessage}`,
+          message: structuredMessage(
+            `${compressResearchSystemPrompt({ date })}\n\n${raw.findings}\n\n${compressResearchSimpleHumanMessage}`
+          ),
           outputSchema: outputSchema(researchFindings),
         })
       );
@@ -178,7 +189,9 @@ export async function* executeEveResearch(
   yield progress();
   const report = researchReport.parse(
     await context.agent("researchWriter", {
-      message: `${finalReportGenerationPrompt({ date, findings: notes.map((note) => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`,
+      message: structuredMessage(
+        `${finalReportGenerationPrompt({ date, findings: notes.map((note) => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`
+      ),
       outputSchema: outputSchema(researchReport),
     })
   );

@@ -359,7 +359,8 @@ export const promptAssistantTools = async (
     (item) =>
       !item.hidden &&
       !item.meta?.chatjs?.slot &&
-      !item.meta?.chatjs?.documentRunExport
+      !item.meta?.chatjs?.documentRunExport &&
+      item.name !== "deep-research"
   );
   const supportedBuiltInTools = BUILT_IN_TOOL_KEYS;
 

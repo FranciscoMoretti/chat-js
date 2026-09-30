@@ -2,13 +2,14 @@
 import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
 
-import { getDeepResearchConfig } from "../../tools/platform/deep-research/configuration";
-import { getEveConnectionOptions } from "./connection-options";
-import { eveDocumentWriteResult } from "./document-contracts";
-import { executeEveDocumentTool } from "./document-tools";
-import { researchAvailable } from "./research-availability";
-import { researchReport } from "./research-contracts";
-import { sharedEveMessages } from "./shared-messages";
+import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
+import { executeEveDocumentTool } from "@/lib/eve/document-tools";
+import { sharedEveMessages } from "@/lib/eve/shared-messages";
+
+import { researchAvailable } from "./availability";
+import { getDeepResearchConfig } from "./configuration";
+import { researchReport } from "./schemas";
 
 export async function prepareResearch(context: WorkflowToolContext) {
   "use step";
