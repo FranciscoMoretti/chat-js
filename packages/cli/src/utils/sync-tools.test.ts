@@ -392,7 +392,33 @@ test("saved-code registration requires an explicitly compatible executor", async
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
   definition.codeExecutorExport = "executeCode";
   await writeFile(descriptor, JSON.stringify(definition));
+  await writeFile(
+    join(root, "tools/chatjs/external-runner/tool.ts"),
+    `import type { CodeExecutor } from "@/lib/eve/code-executor";
+export const executeCode: CodeExecutor = async () => ({
+  kind: "chatjs.tool-result",
+  status: "success",
+  version: 1,
+  output: { chart: null, message: "executed" },
+  usage: { costUsd: 0 },
+});
+export const runCode = {};`
+  );
   await syncTools(root);
+  const registration = await readFile(
+    join(root, "tools/chatjs/code-executor.ts"),
+    "utf-8"
+  );
+  expect(registration).toContain(
+    'import { executeCode as execute } from "./external-runner/tool"'
+  );
+  expect(registration).toContain(
+    "codeExecutor: CodeExecutor | undefined = execute"
+  );
+  const { codeExecutor } = await import(
+    join(root, "tools/chatjs/code-executor.ts")
+  );
+  expect(typeof codeExecutor).toBe("function");
   expect(
     await readFile(join(root, "tools/chatjs/code-execution-config.ts"), "utf-8")
   ).toContain("supportsSavedDocuments = true");
