@@ -1,13 +1,7 @@
-import { createHash } from "node:crypto";
-import { readdir, readFile, realpath } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import nodePath from "node:path";
 
 import { z } from "zod";
-
-// Pinned EVE 0.52.2 keys retain the complete native ULID before the node suffix.
-// Use this only to exclude unrelated old directories, never to authorize erasure.
-const legacyKeyPattern =
-  /^eve-sbx-ses-microsandbox-(?<sessionHash>[a-f0-9]{16})-[a-f0-9]{12}-(?<runId>wrun_[0-7][0-9A-HJKMNP-TV-Z]{25})-[a-zA-Z0-9._-]+$/u;
 
 export const localEveSandboxOwnerSchema = z.strictObject({
   backendName: z.literal("microsandbox"),
@@ -17,22 +11,10 @@ export const localEveSandboxOwnerSchema = z.strictObject({
   writeAheadResources: z.literal(true).optional(),
 });
 
-const isUnrelatedLegacyKey = (
-  key: string,
-  appScope: string,
-  family: Set<string>
-) => {
-  if (key.length > 120) {
-    return false;
-  }
-  const match = legacyKeyPattern.exec(key);
-  return Boolean(match && match[1] === appScope && !family.has(match[2]));
-};
-
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
- * coverage. Canonical keys may exclude unrelated older sessions, but never authorize erasure.
+ * coverage. Only explicit owner records establish resource ownership.
  */
 export const readLocalEveSandboxInventory = async (
   appRoot: string,
@@ -77,10 +59,6 @@ export const readLocalEveSandboxInventory = async (
       throw error;
     }
   );
-  const appScope = createHash("sha256")
-    .update(await realpath(appRoot))
-    .digest("hex")
-    .slice(0, 16);
   const family = new Set(sessionIds);
   const owned: {
     sessionDirectory: string;
@@ -110,12 +88,6 @@ export const readLocalEveSandboxInventory = async (
       }
       throw error;
     });
-    if (
-      raw === undefined &&
-      isUnrelatedLegacyKey(entry.name, appScope, family)
-    ) {
-      continue;
-    }
     let parsed: unknown;
     try {
       parsed = raw === undefined ? undefined : JSON.parse(raw);
