@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { and, eq, sql } from "drizzle-orm";
+import { Client } from "eve/client";
 import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { eveConversation, eveDocumentHead, userCredit } from "../lib/db/schema";
+import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
@@ -55,6 +57,7 @@ test("installed deleteDocument requires approval, survives reload, and honors re
     .select({
       conversationId: eveDocumentHead.conversationId,
       documentId: eveDocumentHead.documentId,
+      sessionId: eveConversation.sessionId,
     })
     .from(eveDocumentHead)
     .innerJoin(
@@ -67,10 +70,12 @@ test("installed deleteDocument requires approval, survives reload, and honors re
         eq(eveConversation.ownerId, session.user.id)
       )
     );
-  if (!document) {
+  if (!document?.sessionId) {
     throw new Error("Missing created document");
   }
   const { conversationId } = document;
+  const client = new Client(getEveConnectionOptions(session.user.id));
+  const native = client.sessions.attach(document.sessionId);
   const deletionPrompt = `Read document ${document.documentId} with readDocument and then call deleteDocument using its exact title and current revision. I want it removed from this conversation. Call the tool now; its built-in approval controls will ask me to approve. Do not ask for confirmation in a chat message.`;
   await composer.fill(deletionPrompt);
   await page.getByRole("button", { exact: true, name: "Send" }).click();
@@ -104,6 +109,7 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   await expect(
     page.getByRole("button", { exact: true, name: "Approve" })
   ).toBeVisible({ timeout: 90_000 });
+  const beforeApproval = await native.snapshot();
   await page.getByRole("button", { exact: true, name: "Approve" }).click();
   await expect(
     page.getByText("Tool completed.", { exact: true })
@@ -123,7 +129,23 @@ test("installed deleteDocument requires approval, survives reload, and honors re
       .last()
   ).toBeAttached();
   await page
-    .getByRole("region", { name: "Tool result" })
+    .getByTestId("document-preview")
     .last()
-    .screenshot({ path: testInfo.outputPath("deleted.png") });
+    .screenshot({ path: testInfo.outputPath("unavailable-preview.png") });
+  await expect(page.getByText("Ready", { exact: true })).toBeVisible();
+  const afterApproval = await native.snapshot();
+  const resumedSteps = afterApproval.events
+    .slice(beforeApproval.events.length)
+    .filter((event) => event.type === "step.started");
+  expect(resumedSteps.length).toBeGreaterThan(0);
+  for (const step of resumedSteps) {
+    expect(step.data.modelId).toBe("gateway/openai/gpt-4.1-mini");
+    expect(
+      afterApproval.events.some(
+        (event) =>
+          event.type === "turn.started" &&
+          event.data.turnId === step.data.turnId
+      )
+    ).toBe(true);
+  }
 });

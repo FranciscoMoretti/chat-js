@@ -31,9 +31,9 @@ shadcn resolves the item and its dependencies, installs packages, and writes the
 npx @chat-js/cli@latest add delete-document
 ```
 
-This optional bundle installs `deleteDocument` and its `readDocument` dependency. The tool reads the current document first, then asks the owner to approve the exact title and revision. Rejection leaves the document unchanged. If the document changes before approval, deletion fails and requires a fresh request.
+This optional bundle installs `deleteDocument` and its `readDocument` dependency. The agent first calls `readDocument`, then passes the exact title and revision to `deleteDocument` to request owner approval. Rejection leaves the document unchanged. If the document changes before approval, deletion fails and requires a fresh request.
 
-Deletion removes the document from the current conversation. Existing history snapshots and other branches retain their revisions; this is not permanent content erasure. The tool requires signed-in ownership, enabled document tools, and EVE's native approval receipt. It adds no provider credentials or tool usage charge.
+Deletion removes the document from the current conversation. Existing history snapshots and other branches retain their revisions. This is not permanent content erasure. The tool requires signed-in ownership, enabled document tools, and EVE's native approval receipt. It adds no provider credentials or tool usage charge.
 
 ## Installed files
 

@@ -44,7 +44,10 @@ export const EveDocumentPreview = ({
     <p className="text-muted-foreground">{loadingMessage}</p>
   );
   const isLatest = document.data?.history.at(-1)?.id === result.revisionId;
-  if (document.data && !document.isError) {
+  const accessUnavailable = ["NOT_FOUND", "FORBIDDEN", "UNAUTHORIZED"].includes(
+    document.error?.data?.code ?? ""
+  );
+  if (document.data && !accessUnavailable) {
     content = (
       <DocumentBody
         inline

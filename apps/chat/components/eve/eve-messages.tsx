@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Response } from "@/components/ai-elements/response";
+import { ToolInput } from "@/components/ai-elements/tool";
 import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view";
 import { MessageActionsView } from "@/components/message-actions-view";
 import { ReasoningPart } from "@/components/part/message-reasoning";
@@ -184,9 +185,7 @@ const Part = ({
     >
       <p className="font-medium">{part.toolName}</p>
       {part.input !== undefined && (
-        <pre className="overflow-x-auto text-sm whitespace-pre-wrap">
-          {JSON.stringify(part.input, null, 2)}
-        </pre>
+        <ToolInput className="p-0" input={part.input} />
       )}
       {part.state === "approval-requested" && request ? (
         <PendingInput
