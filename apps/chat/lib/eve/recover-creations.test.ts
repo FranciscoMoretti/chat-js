@@ -47,3 +47,18 @@ test("keeps admission closed when the bounded wait cannot prove a binding", asyn
   expect(mocks.read).toHaveBeenCalledTimes(8);
   expect(mocks.execute).toHaveBeenCalledTimes(1);
 });
+
+test("never reconstructs an admitted command from historical columns", async () => {
+  mocks.pending.mockResolvedValue([
+    {
+      firstMessage: "historical message",
+      initialContentHash: null,
+      initialRequest: null,
+      operationId,
+    },
+  ]);
+  await expect(recoverEveCreations("owner")).rejects.toThrow(
+    "still being recovered"
+  );
+  expect(mocks.execute).not.toHaveBeenCalled();
+});

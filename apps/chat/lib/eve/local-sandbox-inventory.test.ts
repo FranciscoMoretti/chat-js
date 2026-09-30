@@ -1,9 +1,7 @@
-import { createHash } from "node:crypto";
 import {
   mkdir,
   mkdtemp,
   readFile,
-  realpath,
   rm,
   symlink,
   writeFile,
@@ -96,7 +94,7 @@ test("local inventory selects exact native owners across versions and reports un
   }
 });
 
-test("only canonical unrelated legacy keys are excluded; possible family resources stay unresolved", async () => {
+test("unowned directories remain unattributed regardless of their names", async () => {
   const appRoot = await mkdtemp(
     nodePath.join(tmpdir(), "eve-legacy-inventory-")
   );
@@ -107,10 +105,7 @@ test("only canonical unrelated legacy keys are excluded; possible family resourc
     "microsandbox",
     "sessions"
   );
-  const scope = createHash("sha256")
-    .update(await realpath(appRoot))
-    .digest("hex")
-    .slice(0, 16);
+  const scope = "0123456789abcdef";
   const target = `wrun_0${"A".repeat(25)}`;
   const unrelated = `wrun_0${"B".repeat(25)}`;
   const prefix = `eve-sbx-ses-microsandbox-${scope}-0123456789ab-`;
@@ -126,7 +121,7 @@ test("only canonical unrelated legacy keys are excluded; possible family resourc
     const result = await readLocalEveSandboxInventory(appRoot, [target]);
     expect(result.owned).toEqual([]);
     expect(result.unattributedDirectories.toSorted()).toEqual(
-      [ownedCandidate, truncated, wrongScope]
+      [ownedCandidate, foreign, truncated, wrongScope]
         .map((key) => nodePath.join(directory, key))
         .toSorted()
     );
