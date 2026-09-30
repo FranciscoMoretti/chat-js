@@ -5,11 +5,9 @@ import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
-import { AttachmentsButton } from "@/components/attachments-button";
-import { ConnectorsDropdown } from "@/components/connectors-dropdown";
+import { ComposerMenu } from "@/components/composer/composer-menu";
 import { ContextBar } from "@/components/context-bar";
 import { ControlledChatComposer } from "@/components/controlled-chat-composer";
-import { ResponsiveTools } from "@/components/responsive-tools";
 import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
@@ -64,13 +62,13 @@ export const EveComposer = ({
       toast.error("Sign in to attach files.");
       return;
     }
-    if (!uploadLocked) {
+    if (!uploadLocked && config.features.attachments) {
       // oxlint-disable-next-line promise/prefer-await-to-then -- Dropzone callbacks intentionally fire-and-forget uploads.
       files.upload(incoming).catch(() => null);
     }
   };
   const { getRootProps } = useDropzone({
-    disabled: uploadLocked,
+    disabled: uploadLocked || !config.features.attachments,
     noClick: true,
     noKeyboard: true,
     onDrop: upload,
@@ -109,34 +107,36 @@ export const EveComposer = ({
         disabled={locked || unsupported}
         hasAttachments={files.attachments.length > 0}
         onPaste={(event) => {
-          if (event.clipboardData.files.length) {
+          if (config.features.attachments && event.clipboardData.files.length) {
             event.preventDefault();
             upload([...event.clipboardData.files]);
           }
         }}
         tools={
           <>
-            {config.features.attachments && (
-              <AttachmentsButton
-                acceptAll="image/jpeg,image/png,application/pdf"
-                acceptFiles="application/pdf"
-                acceptImages="image/jpeg,image/png"
-                fileInputRef={input}
-                status={uploadLocked ? "submitted" : "ready"}
-              />
-            )}
+            <ComposerMenu
+              disabled={uploadLocked}
+              selectedModelId={models[0]?.id ?? ""}
+              selectedTool={selectedTool}
+              onToolChange={onToolChange}
+              onAttach={(accept, capture) => {
+                if (!input.current) {
+                  return;
+                }
+                input.current.accept = accept;
+                if (capture) {
+                  input.current.capture = capture;
+                } else {
+                  input.current.removeAttribute("capture");
+                }
+                input.current.click();
+              }}
+            />
             <EveModelPicker
               disabled={locked || props.readOnly || !!retainedModelId}
               modelSelection={modelSelection}
               retainedModelId={retainedModelId}
               retainedModelIds={retainedModelIds}
-            />
-            <ConnectorsDropdown />
-            <ResponsiveTools
-              disabled={locked || props.readOnly}
-              selectedModelId={models[0]?.id ?? ""}
-              setTools={onToolChange}
-              tools={selectedTool}
             />
           </>
         }
