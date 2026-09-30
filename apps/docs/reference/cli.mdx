@@ -154,4 +154,4 @@ npm run db:push
 npm run dev
 ```
 
-Run `npx @chat-js/cli@latest sync` after a direct shadcn tool installation. For a recognized `--from-git` ChatJS clone, create replaces its selected gateway slot and writes a new configuration. Unsupported clones skip ChatJS installation.
+`create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. It does not contact the registry or apply feature-selection flags. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected features. Direct shadcn installations require `chat-js sync` afterward.
