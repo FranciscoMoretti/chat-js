@@ -16,6 +16,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 const createdReport = /^Created /u;
+const researchSummary = /^Researched for /u;
 test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status === testInfo.expectedStatus) {
     return;
@@ -86,6 +87,10 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 30_000,
   });
+  await page.getByRole("button", { name: researchSummary }).click();
+  await expect(
+    page.getByRole("heading", { exact: true, name: "Research complete" })
+  ).toBeVisible();
   expect(duplicateKeyErrors).toEqual([]);
   await page.screenshot({
     animations: "disabled",
