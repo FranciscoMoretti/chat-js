@@ -99,14 +99,21 @@ test("Python results render an interactive chart and survive reload", async ({
   await page.goto("/api/dev-login");
   const code =
     'chart = {"type": "bar", "title": "Counts", "elements": [{"label": "A", "group": "Series", "value": 2}, {"label": "B", "group": "Series", "value": 3}]}\nprint("chart-ready")';
-  const created = await page.request.post("/api/agent-conversations", {
-    data: {
+  const created = await page.evaluate(
+    async (data) => {
+      const response = await fetch("/api/agent-conversations", {
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      return { body: await response.json(), ok: response.ok };
+    },
+    {
       message: `Use the codeExecution tool exactly once with language python and title "Python chart". Execute this exact code, then report its output. Use no other tool:\n${code}`,
       modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
-    },
-    headers: { origin: new URL(page.url()).origin },
-  });
+    }
+  );
   expect(created.ok, JSON.stringify(created.body)).toBe(true);
   const binding = z.object({ id: z.uuid() }).parse(created.body);
   await page.goto(`/chat/${binding.id}`);
