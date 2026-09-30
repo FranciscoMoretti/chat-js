@@ -5,47 +5,55 @@ import { toolDefinitionSchema } from "./metadata";
 import registryPackage from "./package.json";
 import { builtInGateways } from "./src/gateways/catalog";
 import { builtInStorage } from "./src/storage/catalog";
+import { documentItems } from "./src/tools/documents";
 
 export const toolItems = [
   {
     dependencies: ["ai", "zod"],
     description: "Generate videos using the selected gateway and storage",
     id: "generate-video",
-    rendererExport: "GenerateVideoRenderer",
     slot: "generateVideo",
-    toolExport: "generateVideoTool",
+    tools: [
+      {
+        rendererExport: "GenerateVideoRenderer",
+        toolExport: "generateVideoTool",
+      },
+    ],
   },
   {
     dependencies: ["ai", "zod", "lucide-react"],
     description:
       "Generate and edit images using the selected gateway and storage",
     id: "generate-image",
-    rendererExport: "GenerateImageRenderer",
     slot: "generateImage",
-    toolExport: "generateImageTool",
+    tools: [
+      {
+        rendererExport: "GenerateImageRenderer",
+        toolExport: "generateImageTool",
+      },
+    ],
   },
   {
     dependencies: ["ai", "zod"],
     description: "Count words, characters, and sentences in text",
     id: "word-count",
-    rendererExport: "WordCountRenderer",
-    toolExport: "wordCount",
+    tools: [{ rendererExport: "WordCountRenderer", toolExport: "wordCount" }],
   },
   {
     dependencies: ["ai", "zod", "date-fns"],
     description: "Get the current weather at a location",
     id: "get-weather",
-    rendererExport: "GetWeatherRenderer",
-    toolExport: "getWeather",
+    tools: [{ rendererExport: "GetWeatherRenderer", toolExport: "getWeather" }],
   },
   {
     dependencies: ["ai", "zod", "@mendable/firecrawl-js"],
     description: "Fetch structured information from a single URL",
     envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
     id: "retrieve-url",
-    rendererExport: "RetrieveUrlRenderer",
     slot: "retrieveUrl",
-    toolExport: "retrieveUrl",
+    tools: [
+      { rendererExport: "RetrieveUrlRenderer", toolExport: "retrieveUrl" },
+    ],
   },
 ].map(
   ({ description, dependencies, ...definition }) =>
@@ -106,9 +114,8 @@ export const searchToolItems = [
       envRequirements: [{ options: [[key]] }],
       id,
       kind: "tool",
-      rendererExport: "WebSearchRenderer",
       slot: "webSearch",
-      toolExport: "webSearch",
+      tools: [{ rendererExport: "WebSearchRenderer", toolExport: "webSearch" }],
     }),
   },
   name: id,
@@ -151,9 +158,8 @@ export const codeExecutionItem = {
       ],
       id: "vercel-code-execution",
       kind: "tool",
-      rendererExport: "CodeExecution",
       slot: "codeExecution",
-      toolExport: "codeExecution",
+      tools: [{ rendererExport: "CodeExecution", toolExport: "codeExecution" }],
     }),
   },
   name: "vercel-code-execution",
@@ -166,6 +172,7 @@ export const registry = registrySchema.parse({
     ...builtInGateways,
     ...builtInStorage,
     ...toolItems,
+    ...documentItems,
     ...searchToolItems,
     codeExecutionItem,
   ],

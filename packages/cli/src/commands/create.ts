@@ -115,29 +115,42 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
     }
   );
 
-  await Promise.all(
+  const bundles = await Promise.all(
     entries.map(async (entry) => {
       if (!entry.isDirectory()) {
-        return;
+        return null;
       }
       const descriptor = path.join(toolDirectory, entry.name, "chatjs.json");
       if (!existsSync(descriptor)) {
-        return;
+        return null;
       }
       await preflight(targetDir, [`tools/chatjs/${entry.name}/chatjs.json`]);
       const metadata = toolDefinitionSchema.parse(
         JSON.parse(await readFile(descriptor, "utf-8"))
       );
-      const usesSelectedSlot =
-        metadata.slot === "webSearch" ||
-        metadata.slot === "codeExecution" ||
-        metadata.slot === "retrieveUrl" ||
-        metadata.slot === "generateImage" ||
-        metadata.slot === "generateVideo" ||
+      const selected = Boolean(
+        metadata.slot ||
+        metadata.documentKind ||
         (metadata.id === "retrieve-url" &&
-          metadata.toolExport === "retrieveUrl");
-      if (usesSelectedSlot) {
-        await rm(path.join(toolDirectory, entry.name), { recursive: true });
+          metadata.tools.some((tool) => tool.toolExport === "retrieveUrl"))
+      );
+      return { metadata, name: entry.name, selected };
+    })
+  );
+  const needsReadDocument = bundles.some(
+    (bundle) =>
+      bundle &&
+      !bundle.selected &&
+      bundle.metadata.requiresTools.includes("readDocument")
+  );
+  await Promise.all(
+    bundles.map(async (bundle) => {
+      if (
+        bundle &&
+        (bundle.selected ||
+          (bundle.metadata.id === "read-document" && !needsReadDocument))
+      ) {
+        await rm(path.join(toolDirectory, bundle.name), { recursive: true });
       }
     })
   );
@@ -317,12 +330,14 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     assistantTools,
     targetDir
   );
-  const expectedTools = await Promise.all(
-    toolSources.map(async (source) => {
-      const item = await readItem(source, targetDir);
-      return toolDefinitionSchema.parse(item.meta?.chatjs);
-    })
-  );
+  for (const kind of ["text", "code", "sheet"] as const) {
+    if (coreFeatures.documents && documentTypes[kind]) {
+      const source = itemAddress(`${kind}-documents`, "tool");
+      if (!toolSources.includes(source)) {
+        toolSources.push(source);
+      }
+    }
+  }
   const usesStorage =
     coreFeatures.attachments ||
     assistantTools.builtInTools.imageGeneration ||
@@ -345,7 +360,6 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     auth,
     coreFeatures,
     documentTypes,
-    expectedTools,
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
     storage,
@@ -491,6 +505,12 @@ const installRegistryItems = async (
     "Installing selected registry items..."
   ).start();
   try {
+    const expected = await Promise.all(
+      setup.toolSources.map(async (source) => {
+        const item = await readItem(source, project.targetDir);
+        return toolDefinitionSchema.parse(item.meta?.chatjs);
+      })
+    );
     await installItems(
       [
         setup.gatewaySelection.source,
@@ -502,7 +522,7 @@ const installRegistryItems = async (
     await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
     await configureStorageProvider(project.targetDir, setup.storage);
     const installedTools = await syncTools(project.targetDir, {
-      expected: setup.expectedTools,
+      expected,
     });
     if (options.fromGit) {
       await removeUnavailableToolTests(project.targetDir, installedTools);

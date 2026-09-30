@@ -10,7 +10,7 @@ import { useTRPC } from "@/trpc/react";
 const DiffView = dynamic(
   // next/dynamic requires a promise projection for named exports.
   // oxlint-disable-next-line promise/prefer-await-to-then
-  () => import("@/components/diffview").then((module) => module.DiffView),
+  () => import("./diffview").then((module) => module.DiffView),
   {
     loading: () => <DocumentSkeleton artifactKind="text" />,
     ssr: false,

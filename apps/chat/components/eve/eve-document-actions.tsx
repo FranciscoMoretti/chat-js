@@ -1,7 +1,6 @@
 "use client";
 
 import { Copy, History, Redo2, Undo2 } from "lucide-react";
-import { parse, unparse } from "papaparse";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -12,6 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { documentUi } from "@/tools/chatjs/document-ui";
 
 export const EveDocumentActions = ({
   kind,
@@ -40,13 +40,7 @@ export const EveDocumentActions = ({
 }) => {
   const copy = async () => {
     try {
-      let copied = content;
-      if (kind === "sheet") {
-        const parsed = parse<string[]>(content, { skipEmptyLines: true });
-        copied = unparse(
-          parsed.data.filter((row) => row.some((cell) => cell.trim() !== ""))
-        );
-      }
+      const copied = documentUi[kind]?.copyContent?.(content) ?? content;
       await navigator.clipboard.writeText(copied);
       toast.success(
         kind === "sheet" ? "Copied csv to clipboard!" : "Copied to clipboard!"

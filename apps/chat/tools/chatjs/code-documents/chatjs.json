@@ -1,0 +1,16 @@
+{
+  "documentKind": "code",
+  "envRequirements": [],
+  "id": "code-documents",
+  "kind": "tool",
+  "requiresTools": ["readDocument"],
+  "tools": [
+    {
+      "toolExport": "createCodeDocument"
+    },
+    {
+      "toolExport": "editCodeDocument"
+    }
+  ],
+  "contractVersion": 1
+}

@@ -1,6 +1,8 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { spawn } from "bun";
+
 import { registry } from "./registry";
 
 const cwd = import.meta.dir;
@@ -28,7 +30,7 @@ await writeFile(
   path.join(cwd, "registry.json"),
   `${JSON.stringify(registry, null, 2)}\n`
 );
-const process = Bun.spawn(
+const process = spawn(
   [
     "bunx",
     "--bun",

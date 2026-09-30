@@ -20,6 +20,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-search.test.ts",
   "lib/db/eve-subagents.test.ts",
   "lib/eve/research-availability.test.ts",
+  "lib/eve/core-tool-types.test.ts",
   "tests/native-research-runtime.ts",
   "lib/eve/local-sandbox-inventory.test.ts",
   "lib/eve/purge-local-sandbox.test.ts",
@@ -94,6 +95,16 @@ const REFERENCE_VISUAL_PROJECT =
 export const normalizeScaffoldContent = async (destination: string) => {
   const packagePath = path.join(destination, "package.json");
   const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
+  for (const name of Object.keys(manifest.dependencies ?? {})) {
+    if (
+      (name.startsWith("@lexical/") && name !== "@lexical/react") ||
+      name.startsWith("@codemirror/") ||
+      ["codemirror", "diff", "papaparse", "react-data-grid"].includes(name)
+    ) {
+      Reflect.deleteProperty(manifest.dependencies, name);
+    }
+  }
+  delete manifest.devDependencies?.["@types/papaparse"];
   for (const dependency of [
     "@electric-sql/pglite",
     "pg",

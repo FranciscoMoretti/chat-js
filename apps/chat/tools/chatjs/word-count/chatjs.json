@@ -2,7 +2,11 @@
   "contractVersion": 1,
   "kind": "tool",
   "id": "word-count",
-  "toolExport": "wordCount",
-  "rendererExport": "WordCountRenderer",
-  "envRequirements": []
+  "envRequirements": [],
+  "tools": [
+    {
+      "toolExport": "wordCount",
+      "rendererExport": "WordCountRenderer"
+    }
+  ]
 }

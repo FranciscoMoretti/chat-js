@@ -1,0 +1,16 @@
+{
+  "documentKind": "text",
+  "envRequirements": [],
+  "id": "text-documents",
+  "kind": "tool",
+  "requiresTools": ["readDocument"],
+  "tools": [
+    {
+      "toolExport": "createTextDocument"
+    },
+    {
+      "toolExport": "editTextDocument"
+    }
+  ],
+  "contractVersion": 1
+}

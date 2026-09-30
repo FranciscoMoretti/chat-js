@@ -29,7 +29,16 @@ const generatedSource = (body: string): string => {
       "const installed = defineToolSet({});"
     )
     .replace("const installed = {\n\n};", "const installed = {};")
-    .replace(";\n\n\nconst installed", ";\n\nconst installed");
+    .replace(
+      "export const documentUi: DocumentUiRegistry = {\n\n};",
+      "export const documentUi: DocumentUiRegistry = {};"
+    )
+    .replace(
+      "export const installedDocumentKinds: ReadonlySet<string> = new Set([\n\n]);",
+      "export const installedDocumentKinds: ReadonlySet<string> = new Set([]);"
+    )
+    .replace(";\n\n\nconst installed", ";\n\nconst installed")
+    .replace(";\n\n\nexport const documentUi", ";\n\nexport const documentUi");
   return `${generated}// Content: ${hash(normalizedBody)}\n${normalizedBody}`;
 };
 const checkGenerated = (content: string | null, path: string): void => {
@@ -70,8 +79,17 @@ const selectionFiles = Object.values(selections).flatMap(({ file }) => [
   `${file}.ts`,
   `${file}-config.ts`,
 ]);
-const registrationKey = (item: ToolDefinition): string =>
-  item.slot ?? item.toolExport;
+const registrationsFor = (definitions: ToolDefinition[]) =>
+  definitions.flatMap((item) =>
+    item.tools.map((tool) => ({
+      ...tool,
+      id: item.id,
+      key: item.slot ?? tool.toolExport,
+    }))
+  );
+
+type Registration = ReturnType<typeof registrationsFor>[number];
+const registrationKey = (item: Registration): string => item.key;
 
 const readToolDefinition = async (
   cwd: string,
@@ -92,13 +110,19 @@ const readToolDefinition = async (
   }
   await preflight(cwd, [
     `${directory}/${entryName}/tool.ts`,
-    ...(definition.rendererExport
+    ...(definition.documentKind
+      ? [`${directory}/${entryName}/document.tsx`]
+      : []),
+    ...(definition.tools.some((tool) => tool.rendererExport)
       ? [`${directory}/${entryName}/renderer.tsx`]
       : []),
   ]);
   await Promise.all([
     readFile(join(cwd, directory, entryName, "tool.ts")),
-    ...(definition.rendererExport
+    ...(definition.documentKind
+      ? [readFile(join(cwd, directory, entryName, "document.tsx"))]
+      : []),
+    ...(definition.tools.some((tool) => tool.rendererExport)
       ? [readFile(join(cwd, directory, entryName, "renderer.tsx"))]
       : []),
   ]);
@@ -155,20 +179,7 @@ const missingPreviousRegistration = (
     /from "\.\/(?<id>[a-z][a-z0-9-]*)\/tool"/gu
   ) ?? []) {
     const id = match.groups?.id;
-    const importLine = previousTools
-      ?.split("\n")
-      .find((line) => line.includes(`from "./${id}/tool"`));
-    const alias = importLine?.match(/ as (?<alias>tool[0-9]+) \}/u)?.groups
-      ?.alias;
-    const wasSelection =
-      alias &&
-      Object.keys(selections).some((slot) =>
-        previousTools?.includes(`  ${slot}: ${alias},`)
-      );
-    if (
-      !ids.has(id ?? "") &&
-      (!wasSelection || entries.some((entry) => entry.name === id))
-    ) {
+    if (!ids.has(id ?? "") && entries.some((entry) => entry.name === id)) {
       return id ?? "";
     }
   }
@@ -252,13 +263,46 @@ const orderedProperties = (properties: { key: string; value: string }[]) =>
     .map(({ key, value }) => `  ${key}: ${value},`)
     .join("\n");
 
+const registrationImports = (
+  entries: { id: string; name: string; alias: string }[],
+  file: "tool" | "renderer"
+) => {
+  const groups = new Map<string, string[]>();
+  for (const item of entries) {
+    const names = groups.get(item.id) ?? [];
+    names.push(`${item.name} as ${item.alias}`);
+    groups.set(item.id, names);
+  }
+  return [...groups]
+    .map(([id, names]) =>
+      names.length === 1
+        ? `import { ${names[0]} } from "./${id}/${file}";`
+        : `import {\n${names.map((name) => `  ${name},`).join("\n")}\n} from "./${id}/${file}";`
+    )
+    .join("\n");
+};
+
 const sourceFor = (
-  registrations: ToolDefinition[]
+  registrations: Registration[]
 ): { toolBody: string; uiBody: string } => {
   const renderers = registrations.filter((item) => item.rendererExport);
   return {
-    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${registrations.map((item, i) => `import { ${item.toolExport} as tool${i} } from "./${item.id}/tool";`).join("\n")}\n\nconst installed = defineToolSet({\n${orderedProperties(registrations.map((item) => ({ key: registrationKey(item), value: `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
-    uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${renderers.map((item, i) => `import { ${item.rendererExport} as renderer${i} } from "./${item.id}/renderer";`).join("\n")}\n\nconst installed = {\n${orderedProperties(renderers.map((item, i) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${i}` })))}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
+    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${registrationImports(
+      registrations.map((item, i) => ({
+        alias: `tool${i}`,
+        id: item.id,
+        name: item.toolExport,
+      })),
+      "tool"
+    )}\n\nconst installed = defineToolSet({\n${orderedProperties(registrations.map((item) => ({ key: registrationKey(item), value: `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
+    uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
+      renderers.flatMap((item, i) =>
+        item.rendererExport
+          ? [{ alias: `renderer${i}`, id: item.id, name: item.rendererExport }]
+          : []
+      ),
+      "renderer"
+    )}\n\nconst installed = {\n${orderedProperties(renderers.map((item, i) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${i}` })))}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
   };
 };
 
@@ -270,6 +314,8 @@ export const syncTools = async (
   const targets = [
     "tools.ts",
     "ui.ts",
+    "document-ui.ts",
+    "installed-features.ts",
     "custom-tools.ts",
     "custom-ui.ts",
     ...selectionFiles,
@@ -289,6 +335,11 @@ export const syncTools = async (
   await validateGeneratedSelections(dir);
   checkGenerated(previousTools, toolsPath);
   checkGenerated(previousUi, uiPath);
+  await Promise.all(
+    ["document-ui.ts", "installed-features.ts"].map(async (file) => {
+      checkGenerated(await readOptional(join(dir, file)), file);
+    })
+  );
   const definitions: ToolDefinition[] = [];
   await collectDefinitions(cwd, directory, entries, definitions);
   const ids = new Set(definitions.map((item) => item.id));
@@ -301,10 +352,27 @@ export const syncTools = async (
   validateExpected(definitions, options.expected ?? []);
   definitions.sort((a, b) => a.id.localeCompare(b.id));
   validateSelections(definitions);
-  const registrations = definitions;
+  const documents = definitions.filter((item) => item.documentKind);
+  if (
+    new Set(documents.map((item) => item.documentKind)).size !==
+    documents.length
+  ) {
+    throw new Error("Only one bundle per document kind can be installed.");
+  }
+  const registrations = registrationsFor(definitions);
   const keys = registrations.map(registrationKey);
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
+  }
+  for (const definition of definitions) {
+    const missingTools = definition.requiresTools.filter(
+      (name) => !keys.includes(name)
+    );
+    if (missingTools.length > 0) {
+      throw new Error(
+        `${definition.id} requires installed tools: ${missingTools.join(", ")}`
+      );
+    }
   }
   if (options.checkOnly) {
     return definitions;
@@ -333,6 +401,18 @@ export const syncTools = async (
         ]
       : []),
   ]);
+  await writeFile(
+    join(dir, "document-ui.ts"),
+    generatedSource(
+      `"use client";\n\nimport type { DocumentUiRegistry } from "@/lib/eve/document-ui";\n\n${documents.map((item, index) => `import { documentUi as document${index} } from "./${item.id}/document";`).join("\n")}\n\nexport const documentUi: DocumentUiRegistry = {\n${documents.map((item, index) => `  ${item.documentKind}: document${index},`).join("\n")}\n};\n`
+    )
+  );
+  await writeFile(
+    join(dir, "installed-features.ts"),
+    generatedSource(
+      `export const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item) => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
+    )
+  );
   await writeSelectionConfigs(dir, definitions);
   await writeFile(toolsPath, generatedSource(toolBody));
   await writeFile(uiPath, generatedSource(uiBody));

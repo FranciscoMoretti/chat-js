@@ -7,8 +7,12 @@ const definition = {
   contractVersion: 1,
   id: "paid-counter",
   kind: "tool",
-  rendererExport: "PaidCounterRenderer",
-  toolExport: "externalPaidCounter",
+  tools: [
+    {
+      rendererExport: "PaidCounterRenderer",
+      toolExport: "externalPaidCounter",
+    },
+  ],
 };
 
 export const nativeToolFixture = {
@@ -73,7 +77,7 @@ export const verifyNativeToolRuntime = async (cwd: string) => {
     // of a developer's potentially stopped Docker daemon.
     writeFile(
       path.join(fixture, "environment.mjs"),
-      'process.env.DOCKER_HOST = "unix:///tmp/chatjs-native-test-no-docker.sock";\nprocess.env.NODE_ENV = "development";\nprocess.env.EVE_MOCK_AUTHORED_MODELS = "0";\n'
+      'process.env.DOCKER_HOST = "unix:///tmp/chatjs-native-test-no-docker.sock";\nprocess.env.NODE_ENV = "development";\nprocess.env.PLAYWRIGHT = "True";\nprocess.env.EVE_MOCK_AUTHORED_MODELS = "0";\n'
     ),
     writeFile(
       path.join(fixture, "package.json"),

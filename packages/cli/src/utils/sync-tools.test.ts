@@ -50,8 +50,7 @@ const install = async (
     envRequirements: [],
     id,
     kind: "tool",
-    rendererExport: "WordCountRenderer",
-    toolExport,
+    tools: [{ rendererExport: "WordCountRenderer", toolExport }],
   };
   await writeFile(join(dir, "chatjs.json"), JSON.stringify(definition));
   await writeFile(join(dir, "tool.ts"), `export const ${toolExport} = {};`);
@@ -124,8 +123,8 @@ test("a requested tool cannot report successful registration without its descrip
           envRequirements: [],
           id: "missing",
           kind: "tool",
-          rendererExport: "Missing",
-          toolExport: "missing",
+          requiresTools: [],
+          tools: [{ rendererExport: "Missing", toolExport: "missing" }],
         },
       ],
     })
@@ -148,7 +147,7 @@ const installSearch = async (
       id,
       kind: "tool",
       slot: "webSearch",
-      toolExport: "webSearch",
+      tools: [{ toolExport: "webSearch" }],
     })
   );
 };
@@ -197,7 +196,7 @@ const installExecution = async (root: string, id: string): Promise<void> => {
       id,
       kind: "tool",
       slot: "codeExecution",
-      toolExport: "runCode",
+      tools: [{ toolExport: "runCode" }],
     })
   );
 };
@@ -248,7 +247,7 @@ test("URL retrieval uses the selected export and credentials and rejects duplica
         id,
         kind: "tool",
         slot: "retrieveUrl",
-        toolExport: "readPage",
+        tools: [{ toolExport: "readPage" }],
       })
     );
   };
@@ -320,4 +319,67 @@ test("sync preserves request-context auth and environment credential fallbacks",
     ["RUNNER_TOKEN", "RUNNER_REGION"],
     ["RUNNER_ID", "RUNNER_SECRET", "RUNNER_REGION"],
   ]);
+});
+
+test("a bundle registers each native tool and renderer and rejects cross-bundle collisions", async () => {
+  const root = await project();
+  const dir = join(root, "tools/chatjs/text-documents");
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    join(dir, "chatjs.json"),
+    JSON.stringify({
+      contractVersion: 1,
+      id: "text-documents",
+      kind: "tool",
+      tools: [
+        {
+          rendererExport: "DocumentRenderer",
+          toolExport: "createTextDocument",
+        },
+        { rendererExport: "DocumentRenderer", toolExport: "editTextDocument" },
+      ],
+    })
+  );
+  await writeFile(
+    join(dir, "tool.ts"),
+    "export const createTextDocument = {}; export const editTextDocument = {};"
+  );
+  await writeFile(
+    join(dir, "renderer.tsx"),
+    "export const DocumentRenderer = () => null;"
+  );
+  await syncTools(root);
+  const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+  const { ui } = await import(join(root, "tools/chatjs/ui.ts"));
+  expect(Object.keys(tools)).toEqual([
+    "createTextDocument",
+    "editTextDocument",
+  ]);
+  expect(Object.keys(ui)).toEqual([
+    "tool-createTextDocument",
+    "tool-editTextDocument",
+  ]);
+  await install(root, "other", "editTextDocument");
+  await expect(syncTools(root)).rejects.toThrow("Duplicate installed");
+});
+
+test("sync rejects removing a dependency but permits uninstalling a complete bundle", async () => {
+  const root = await project();
+  await install(root, "read-document", "readDocument");
+  await install(root, "text-documents", "createTextDocument");
+  const descriptor = join(root, "tools/chatjs/text-documents/chatjs.json");
+  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  definition.requiresTools = ["readDocument"];
+  await writeFile(descriptor, JSON.stringify(definition));
+  await syncTools(root);
+  const index = join(root, "tools/chatjs/tools.ts");
+  const before = await readFile(index, "utf-8");
+  await rm(join(root, "tools/chatjs/read-document"), { recursive: true });
+  await expect(syncTools(root)).rejects.toThrow(
+    "requires installed tools: readDocument"
+  );
+  expect(await readFile(index, "utf-8")).toBe(before);
+  await rm(join(root, "tools/chatjs/text-documents"), { recursive: true });
+  await syncTools(root);
+  expect(await readFile(index, "utf-8")).not.toContain("createTextDocument");
 });

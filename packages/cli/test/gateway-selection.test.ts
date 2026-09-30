@@ -56,9 +56,8 @@ const executionDefinition = {
   envRequirements: [{ options: [["ACME_EXECUTION_TOKEN"]] }],
   id: "acme-execution",
   kind: "tool",
-  rendererExport: "CommandRenderer",
   slot: "codeExecution",
-  toolExport: "runCommand",
+  tools: [{ rendererExport: "CommandRenderer", toolExport: "runCommand" }],
 };
 const external = externalGatewayFixture();
 const registryServer = Bun.serve({
@@ -139,7 +138,7 @@ export const CommandRenderer = defineToolRenderer({
         id: "acme-search",
         kind: "tool",
         slot: "webSearch",
-        toolExport: "lookup",
+        tools: [{ toolExport: "lookup" }],
       };
       return Response.json({
         dependencies: ["ai", "zod"],
@@ -171,7 +170,7 @@ export const lookup = defineTool({description: "External fixture",inputSchema: z
         id: "acme-video",
         kind: "tool",
         slot: "generateVideo",
-        toolExport: "animate",
+        tools: [{ toolExport: "animate" }],
       };
       return Response.json({
         dependencies: ["ai", "zod"],
@@ -202,7 +201,7 @@ export const lookup = defineTool({description: "External fixture",inputSchema: z
         id: "acme-image",
         kind: "tool",
         slot: "generateImage",
-        toolExport: "paint",
+        tools: [{ toolExport: "paint" }],
       };
       return Response.json({
         dependencies: ["ai", "zod"],
@@ -233,7 +232,7 @@ export const lookup = defineTool({description: "External fixture",inputSchema: z
         id: "acme-retrieval",
         kind: "tool",
         slot: "retrieveUrl",
-        toolExport: "readPage",
+        tools: [{ toolExport: "readPage" }],
       };
       return Response.json({
         dependencies: ["ai", "zod"],
@@ -600,7 +599,7 @@ const page = await tools.retrieveUrl.execute({target: "https://example.com"}, co
 assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
 `
       );
-      await run(cwd, ["bun", "verify-execution.ts"]);
+      await run(cwd, ["env", "PLAYWRIGHT=True", "bun", "verify-execution.ts"]);
       expect(manifest.dependencies["@mendable/firecrawl-js"]).toBeUndefined();
       expect(
         await Bun.file(join(cwd, "tools/chatjs/retrieve-url/tool.ts")).exists()
@@ -756,8 +755,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
           contractVersion: 1,
           id: "long-renderer",
           kind: "tool",
-          rendererExport,
-          toolExport,
+          tools: [{ rendererExport, toolExport }],
         })
       );
       await run(cwd, ["node", cliEntry, "sync"]);
