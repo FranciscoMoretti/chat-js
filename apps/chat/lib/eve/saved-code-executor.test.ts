@@ -1,68 +1,61 @@
-import type { ToolContext } from "eve/tools";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-import { invokeSavedCodeExecutor } from "../../tools/chatjs/saved-code-execution/invoke-executor";
+import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
+import type { CodeExecutor } from "./code-executor";
 
-const mocks = await vi.hoisted(async () => {
-  const { defineTool } = await import("eve/tools");
-  const { z } = await import("zod");
-  const settings = {
-    allowed: true,
-    compatible: true,
-    protected: false,
-    rootOnly: false,
-    transform: false,
-  };
-  const execute = vi.fn();
-  const executor = defineTool({
-    get approval() {
-      return settings.protected ? () => "user-approval" as const : undefined;
-    },
-    get availableInSubagents() {
-      return !settings.rootOnly;
-    },
-    description: "Saved-code executor fixture",
-    execute: (input, context) => execute(input, context),
-    inputSchema: z
-      .object({
-        code: z.string(),
-        language: z.enum(["python", "javascript"]),
-        title: z.string(),
-      })
-      .transform((input) =>
-        settings.transform ? { ...input, code: "print('changed')" } : input
-      ),
-  });
-  return { execute, executor, settings };
-});
-vi.mock("../../tools/chatjs/providers", () => ({
-  providers: { codeExecution: mocks.executor },
+const mocks = vi.hoisted(() => ({
+  execute: vi.fn<CodeExecutor>(),
+  read: vi.fn(),
+  scope: vi.fn(),
+  settings: { allowed: true, enabled: true, installed: true },
 }));
-vi.mock("../../tools/chatjs/code-execution-config", () => ({
-  get supportsSavedDocuments() {
-    return mocks.settings.compatible;
+vi.mock("../../tools/chatjs/code-executor", () => ({
+  get codeExecutor() {
+    return mocks.settings.installed ? mocks.execute : undefined;
   },
+}));
+vi.mock("../config", () => ({
+  config: {
+    ai: {
+      tools: {
+        codeExecution: { enabled: true },
+        documents: {
+          get enabled() {
+            return mocks.settings.enabled;
+          },
+          types: { code: true },
+        },
+      },
+    },
+  },
+}));
+vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
+vi.mock("./conversation-scope", () => ({
+  resolveEveConversationScope: mocks.scope,
 }));
 vi.mock("./turn-tools", () => ({
   eveToolAllowed: () => mocks.settings.allowed,
 }));
 const input = {
-  code: "print(42)",
-  language: "python" as const,
-  title: "saved.py",
+  documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
+  revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
 };
-
 beforeEach(() => {
   vi.resetAllMocks();
   Object.assign(mocks.settings, {
     allowed: true,
-    compatible: true,
-    protected: false,
-    rootOnly: false,
-    transform: false,
+    enabled: true,
+    installed: true,
   });
-  delete mocks.executor.outputSchema;
+  mocks.scope.mockResolvedValue({ conversationId: "chat", ownerId: "owner" });
+  mocks.read.mockResolvedValue({
+    content: "print(42)",
+    documentId: input.documentId,
+    id: input.revisionId,
+    kind: "code",
+    title: "saved.py",
+  });
   mocks.execute.mockResolvedValue({
     kind: "chatjs.tool-result",
     output: { chart: "", message: "42" },
@@ -72,76 +65,73 @@ beforeEach(() => {
   });
 });
 
-test("invokes the executor once with exact source and preserves its receipt", async () => {
-  const outputs = await Array.fromAsync(
-    invokeSavedCodeExecutor(input, testToolContext())
+test("executes owned saved source once, exposing only execution context and preserving the cost receipt", async () => {
+  const context = testToolContext();
+  const results = await Array.fromAsync(
+    executeEveCodeDocument({ ...input, code: "model replacement" }, context)
   );
-  expect(mocks.execute).toHaveBeenCalledOnce();
-  expect(mocks.execute).toHaveBeenCalledWith(
-    input,
-    expect.objectContaining({ callId: "test", toolName: "test" })
+  expect(mocks.read).toHaveBeenCalledWith(
+    "owner",
+    "chat",
+    input.documentId,
+    input.revisionId
   );
-  expect(outputs).toHaveLength(1);
-  expect(outputs[0]).toMatchObject({ usage: { costUsd: 0.05 } });
+  expect(mocks.execute).toHaveBeenCalledExactlyOnceWith(
+    { code: "print(42)", language: "python", title: "saved.py" },
+    {
+      abortSignal: context.abortSignal,
+      callId: context.callId,
+      session: context.session,
+    }
+  );
+  expect(results).toHaveLength(1);
+  expect(results[0]).toMatchObject({
+    output: { ...input, code: "print(42)", message: "42" },
+    usage: { costUsd: 0.05 },
+  });
 });
 
-test("rejects input transformations that alter the saved source before executing", async () => {
-  mocks.settings.transform = true;
-  await expect(
-    Array.fromAsync(invokeSavedCodeExecutor(input, testToolContext()))
-  ).rejects.toThrow("exact saved source");
-  expect(mocks.execute).not.toHaveBeenCalled();
-});
-
-test.each(["allowed", "compatible"] as const)(
-  "enforces the %s gate before executing",
+test.each(["allowed", "enabled", "installed"] as const)(
+  "enforces the %s gate",
   async (gate) => {
     mocks.settings[gate] = false;
     await expect(
-      Array.fromAsync(invokeSavedCodeExecutor(input, testToolContext()))
+      Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
     ).rejects.toThrow();
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
 
-test("rejects policies requiring independent EVE dispatch", async () => {
-  mocks.settings.protected = true;
+test("never executes a revision outside the resolved conversation", async () => {
+  mocks.read.mockResolvedValue(undefined);
   await expect(
-    Array.fromAsync(invokeSavedCodeExecutor(input, testToolContext()))
-  ).rejects.toThrow("approval policies");
-  mocks.settings.protected = false;
-  mocks.settings.rootOnly = true;
-  await expect(
-    Array.fromAsync(invokeSavedCodeExecutor(input, testToolContext()))
-  ).rejects.toThrow("directly through EVE");
-  mocks.settings.rootOnly = false;
-  mocks.executor.outputSchema = { type: "object" };
-  await expect(
-    Array.fromAsync(invokeSavedCodeExecutor(input, testToolContext()))
-  ).rejects.toThrow("directly through EVE");
+    Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
+  ).rejects.toThrow("Code document not found");
   expect(mocks.execute).not.toHaveBeenCalled();
 });
 
-test.each(["getToken", "requireAuth"] as const)(
-  "cannot use the parent's %s authorization scope",
-  async (accessor) => {
-    const auth = vi.fn();
-    mocks.execute.mockImplementation((_input: unknown, context: ToolContext) =>
-      context[accessor]({ getToken: auth })
-    );
-    await expect(
-      Array.fromAsync(
-        invokeSavedCodeExecutor(
-          input,
-          testToolContext({
-            getToken: auth,
-            requireAuth: () => {
-              throw new Error("Parent auth called");
-            },
-          })
-        )
+test("cancellation prevents execution and an error receipt is forwarded once", async () => {
+  const controller = new AbortController();
+  controller.abort();
+  await expect(
+    Array.fromAsync(
+      executeEveCodeDocument(
+        input,
+        testToolContext({ abortSignal: controller.signal })
       )
-    ).rejects.toThrow("direct EVE invocation");
-    expect(auth).not.toHaveBeenCalled();
-  }
-);
+    )
+  ).rejects.toThrow();
+  expect(mocks.execute).not.toHaveBeenCalled();
+  const receipt = {
+    error: "Execution failed",
+    kind: "chatjs.tool-result",
+    output: null,
+    status: "error",
+    usage: { costUsd: 0 },
+    version: 1,
+  } as const;
+  mocks.execute.mockResolvedValue(receipt);
+  expect(
+    await Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
+  ).toEqual([receipt]);
+});

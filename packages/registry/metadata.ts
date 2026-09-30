@@ -13,13 +13,13 @@ export const envRequirementSchema = z.object({
 });
 const toolDefinitionBase = z.object({
   availabilityExport: identifier.optional(),
+  codeExecutorExport: identifier.optional(),
   documentKind: z.enum(["text", "code", "sheet"]).optional(),
   documentRunExport: identifier.optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   kind: z.literal("tool"),
   requiresTools: z.array(identifier).default([]),
-  savedCodeExecution: z.literal(true).optional(),
   slot: z
     .enum([
       "webSearch",
@@ -44,9 +44,9 @@ export const toolDefinitionSchema = toolDefinitionBase
   .extend({
     contractVersion: z.literal(1),
   })
-  .refine((item) => !item.savedCodeExecution || item.slot === "codeExecution", {
+  .refine((item) => !item.codeExecutorExport || item.slot === "codeExecution", {
     message:
-      "Saved code compatibility applies only to a codeExecution provider",
+      "Code executor capabilities apply only to a codeExecution provider",
   })
   .refine((item) => !item.slot || item.tools.every((tool) => !tool.workflow), {
     message: "Provider slots require ordinary native tools",

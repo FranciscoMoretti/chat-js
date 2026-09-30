@@ -302,7 +302,7 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     coreFeatures.documents &&
     documentTypes.code &&
     selectedTools.some(
-      (tool) => tool.slot === "codeExecution" && tool.savedCodeExecution
+      (tool) => tool.slot === "codeExecution" && tool.codeExecutorExport
     )
   ) {
     toolSources.push(itemAddress("saved-code-execution", "tool"));

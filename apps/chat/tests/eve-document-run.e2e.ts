@@ -66,17 +66,24 @@ test("artifact Run executes saved source, retains output across reload and shari
   });
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const created = await page.request.post("/api/agent-conversations", {
-    data: {
+  const created = await page.evaluate(
+    async (data) => {
+      const response = await fetch("/api/agent-conversations", {
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      return { body: await response.json(), ok: response.ok };
+    },
+    {
       message:
         'Call createCodeDocument once with title "saved.js" and content "console.log(42)". Do not execute it. Use no other tools.',
-      modelId: "openai/gpt-4.1-mini-fast",
+      modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
-    },
-    headers: { origin: new URL(page.url()).origin },
-  });
-  expect(created.ok(), await created.text()).toBe(true);
-  const binding = conversationBinding.parse(await created.json());
+    }
+  );
+  expect(created.ok, JSON.stringify(created.body)).toBe(true);
+  const binding = conversationBinding.parse(created.body);
   await page.goto(`/chat/${binding.id}`);
   await page
     .getByRole("button", { exact: true, name: 'Created "saved.js"' })

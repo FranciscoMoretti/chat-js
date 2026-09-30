@@ -390,7 +390,7 @@ test("saved-code registration requires an explicitly compatible executor", async
   );
   const descriptor = join(root, "tools/chatjs/external-runner/chatjs.json");
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
-  definition.savedCodeExecution = true;
+  definition.codeExecutorExport = "executeCode";
   await writeFile(descriptor, JSON.stringify(definition));
   await syncTools(root);
   expect(

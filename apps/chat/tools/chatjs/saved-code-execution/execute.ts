@@ -3,9 +3,9 @@ import type { ToolContext } from "eve/tools";
 import { config } from "@/lib/config";
 import { getEveDocumentRevision } from "@/lib/db/eve-documents";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
-import { toolResultSchema } from "@/lib/eve/tool-result";
+import { eveToolAllowed } from "@/lib/eve/turn-tools";
+import { codeExecutor } from "@/tools/chatjs/code-executor";
 
-import { invokeSavedCodeExecutor } from "./invoke-executor";
 import {
   documentExecutionInput,
   documentExecutionLanguage,
@@ -50,27 +50,32 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
   }
   context.abortSignal.throwIfAborted();
   const source = { code: revision.content, language, title: revision.title };
-  for await (const toolOutput of invokeSavedCodeExecutor(source, context)) {
-    const result = toolResultSchema.parse(toolOutput);
-    if (result.status === "error") {
-      yield result;
-      continue;
-    }
-    const output = eveCodeExecutionResult.safeParse(result.output);
-    yield {
-      ...result,
-      output: {
-        ...(output.success
-          ? output.data
-          : {
-              chart: "",
-              message:
-                "Execution finished, but its output has an unsupported format.",
-            }),
-        ...source,
-        documentId: revision.documentId,
-        revisionId: revision.id,
-      },
-    };
+  if (!codeExecutor || !eveToolAllowed("codeExecution")) {
+    throw new Error("Installed code executor is unavailable.");
   }
+  const result = await codeExecutor(source, {
+    abortSignal: context.abortSignal,
+    callId: context.callId,
+    session: context.session,
+  });
+  if (result.status === "error") {
+    yield result;
+    return;
+  }
+  const output = eveCodeExecutionResult.safeParse(result.output);
+  yield {
+    ...result,
+    output: {
+      ...(output.success
+        ? output.data
+        : {
+            chart: "",
+            message:
+              "Execution finished, but its output has an unsupported format.",
+          }),
+      ...source,
+      documentId: revision.documentId,
+      revisionId: revision.id,
+    },
+  };
 };

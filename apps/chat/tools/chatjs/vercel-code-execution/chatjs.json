@@ -12,7 +12,7 @@
   "id": "vercel-code-execution",
   "kind": "tool",
   "requiresTools": [],
-  "savedCodeExecution": true,
+  "codeExecutorExport": "executeCode",
   "slot": "codeExecution",
   "tools": [
     {
