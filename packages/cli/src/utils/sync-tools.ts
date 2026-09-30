@@ -339,14 +339,10 @@ const sourceFor = (
   };
 };
 
-const validateToolDependencies = (
-  definitions: ToolDefinition[],
-  pending: ToolDefinition[] = []
-): void => {
-  const availableKeys = new Set([
-    ...registrationsFor(definitions).map(registrationKey),
-    ...registrationsFor(pending).map(registrationKey),
-  ]);
+const validateToolDependencies = (definitions: ToolDefinition[]): void => {
+  const availableKeys = new Set(
+    registrationsFor(definitions).map(registrationKey)
+  );
   for (const definition of definitions) {
     const missingTools = definition.requiresTools.filter(
       (name) => !availableKeys.has(name)
@@ -361,9 +357,7 @@ const validateToolDependencies = (
   if (runners.length > 1) {
     throw new Error("Only one saved-document executor can be installed.");
   }
-  const executor = [...pending, ...definitions].find(
-    (item) => item.slot === "codeExecution"
-  );
+  const executor = definitions.find((item) => item.slot === "codeExecution");
   if (
     registrationsFor(definitions).some(
       (item) => registrationKey(item) === "runCodeDocument"
@@ -376,13 +370,8 @@ const validateToolDependencies = (
   }
 };
 
-export const syncTools = async (
-  cwd: string,
-  options: {
-    checkOnly?: boolean;
-    expected?: ToolDefinition[];
-    pending?: ToolDefinition[];
-  } = {}
+export const readInstalledTools = async (
+  cwd: string
 ): Promise<ToolDefinition[]> => {
   const directory = "tools/chatjs";
   const targets = [
@@ -440,8 +429,13 @@ export const syncTools = async (
       `Missing descriptor for previously registered tool: ${missing}. Restore chatjs.json before syncing.`
     );
   }
-  validateExpected(definitions, options.expected ?? []);
-  definitions.sort((a, b) => a.id.localeCompare(b.id));
+  return definitions.toSorted((a, b) => a.id.localeCompare(b.id));
+};
+
+export const validateToolInstallation = (
+  cwd: string,
+  definitions: ToolDefinition[]
+): void => {
   validateSelections(definitions);
   const documents = definitions.filter((item) => item.documentKind);
   if (
@@ -450,16 +444,30 @@ export const syncTools = async (
   ) {
     throw new Error("Only one bundle per document kind can be installed.");
   }
-  const registrations = registrationsFor(definitions);
-  const keys = registrations.map(registrationKey);
+  const keys = registrationsFor(definitions).map(registrationKey);
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
   }
   validateCustomToolKeys(cwd, definitions);
-  validateToolDependencies(definitions, options.pending);
+  validateToolDependencies(definitions);
+};
+
+export const syncTools = async (
+  cwd: string,
+  options: { checkOnly?: boolean; expected?: ToolDefinition[] } = {}
+): Promise<ToolDefinition[]> => {
+  const definitions = await readInstalledTools(cwd);
+  validateExpected(definitions, options.expected ?? []);
+  validateToolInstallation(cwd, definitions);
   if (options.checkOnly) {
     return definitions;
   }
+  const dir = join(cwd, "tools/chatjs");
+  const toolsPath = join(dir, "tools.ts");
+  const uiPath = join(dir, "ui.ts");
+  const documents = definitions.filter((item) => item.documentKind);
+  const registrations = registrationsFor(definitions);
+  const keys = registrations.map(registrationKey);
   const { providerBody, toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });
   const [customTools, customUi] = await Promise.all([

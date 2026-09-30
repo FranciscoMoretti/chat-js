@@ -1,5 +1,4 @@
-import { existsSync } from "node:fs";
-import { readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { intro, outro } from "@clack/prompts";
@@ -27,7 +26,6 @@ import {
   promptVideoGenerationTool,
   promptCodeExecutionTool,
 } from "../helpers/prompts";
-import { removeClonedResearch } from "../helpers/remove-cloned-research";
 import {
   scaffoldElectron,
   scaffoldFromGit,
@@ -46,12 +44,11 @@ import type { PackageManager } from "../types";
 import { launcherPackageManager } from "../utils/get-package-manager";
 import { handleError } from "../utils/handle-error";
 import { highlighter } from "../utils/highlighter";
+import { planToolInstallation } from "../utils/installation-plan";
 import { logger } from "../utils/logger";
-import { preflight } from "../utils/preflight";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
 import { syncTools } from "../utils/sync-tools";
-import { validateClonedBundle } from "../utils/validate-cloned-bundle";
 
 const resolveCreateTarget = (
   targetArg: string | undefined
@@ -104,66 +101,6 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
     }
     i -= 1;
   }
-};
-
-const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
-  const toolDirectory = path.join(targetDir, "tools/chatjs");
-  const entries = await readdir(toolDirectory, { withFileTypes: true }).catch(
-    (error) => {
-      if (error.code === "ENOENT") {
-        return [];
-      }
-      throw error;
-    }
-  );
-
-  const bundles = await Promise.all(
-    entries.map(async (entry) => {
-      if (!entry.isDirectory()) {
-        return null;
-      }
-      const descriptor = path.join(toolDirectory, entry.name, "chatjs.json");
-      if (!existsSync(descriptor)) {
-        return null;
-      }
-      await preflight(targetDir, [`tools/chatjs/${entry.name}/chatjs.json`]);
-      const metadata = toolDefinitionSchema.parse(
-        JSON.parse(await readFile(descriptor, "utf-8"))
-      );
-      const selected = Boolean(
-        metadata.slot ||
-        metadata.documentKind ||
-        metadata.documentRunExport ||
-        (metadata.id === "retrieve-url" &&
-          metadata.tools.some((tool) => tool.toolExport === "retrieveUrl"))
-      );
-      return { metadata, name: entry.name, selected };
-    })
-  );
-  await Promise.all(
-    bundles.map(async (bundle) => {
-      if (bundle?.metadata.documentKind || bundle?.metadata.documentRunExport) {
-        await validateClonedBundle(targetDir, `tools/chatjs/${bundle.name}`);
-      }
-    })
-  );
-  const needsReadDocument = bundles.some(
-    (bundle) =>
-      bundle &&
-      !bundle.selected &&
-      bundle.metadata.requiresTools.includes("readDocument")
-  );
-  await Promise.all(
-    bundles.map(async (bundle) => {
-      if (
-        bundle &&
-        (bundle.selected ||
-          (bundle.metadata.id === "read-document" && !needsReadDocument))
-      ) {
-        await rm(path.join(toolDirectory, bundle.name), { recursive: true });
-      }
-    })
-  );
 };
 
 const createOptionsSchema = z.object({
@@ -401,73 +338,17 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   };
 };
 
-const prepareGitScaffold = async (targetDir: string): Promise<boolean> => {
-  if (!existsSync(path.join(targetDir, "lib/ai/gateway.ts"))) {
-    logger.warn(
-      "This repository has no ChatJS gateway slot. Skipping ChatJS configuration and installation."
-    );
-    return false;
-  }
-  if (!existsSync(path.join(targetDir, "lib/storage-options.ts"))) {
-    throw new Error(
-      "This ChatJS clone predates storage registry support. Update its storage integration before using create --from-git."
-    );
-  }
-  if (
-    existsSync(path.join(targetDir, "tools/platform/generate-image.ts")) ||
-    existsSync(path.join(targetDir, "tools/platform/generate-video.ts"))
-  ) {
-    throw new Error(
-      "This ChatJS clone uses legacy media tool factories. Update its image/video registry integration before using create --from-git."
-    );
-  }
-  // create owns the new clone's selected gateway. Remove this one slot before
-  // shadcn installs so skipping a file cannot mismatch defaults.
-  await preflight(targetDir, [
-    "lib/ai/gateway.ts",
-    "lib/storage-provider.ts",
-    "chat.config.ts",
-    "package.json",
-  ]);
-  await removeClonedResearch(targetDir);
-  await rm(path.join(targetDir, "lib/storage-provider.ts"), { force: true });
-  await rm(path.join(targetDir, "lib/ai/gateway.ts"));
-  await removeSelectedClonedTools(targetDir);
-  await preflight(targetDir, ["lib/eve/core-tool-types.test.ts"]);
-  await rm(path.join(targetDir, "lib/eve/core-tool-types.test.ts"), {
-    force: true,
-  });
-  return true;
-};
-
 const scaffoldProject = async (
-  options: CreateOptions,
   project: ProjectTarget,
   packageManager: PackageManager,
   withElectron: boolean
-): Promise<boolean> => {
-  const scaffoldSpinner = spinner("Scaffolding project...").start();
-  try {
-    if (options.fromGit) {
-      await scaffoldFromGit(options.fromGit, project.targetDir);
-      if (!(await prepareGitScaffold(project.targetDir))) {
-        scaffoldSpinner.succeed("Repository cloned.");
-        return false;
-      }
-    } else {
-      await scaffoldFromTemplate(project.targetDir, { packageManager });
-    }
-    if (withElectron) {
-      await scaffoldElectron(project.targetDir, {
-        packageManager,
-        projectName: project.projectName,
-      });
-    }
-    scaffoldSpinner.succeed("Project scaffolded.");
-    return true;
-  } catch (error) {
-    scaffoldSpinner.fail("Failed to scaffold project.");
-    throw error;
+): Promise<void> => {
+  await scaffoldFromTemplate(project.targetDir, { packageManager });
+  if (withElectron) {
+    await scaffoldElectron(project.targetDir, {
+      packageManager,
+      projectName: project.projectName,
+    });
   }
 };
 
@@ -520,20 +401,7 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
   return commands[packageManager];
 };
 
-const removeUnavailableToolTests = async (
-  targetDir: string,
-  installedTools: Awaited<ReturnType<typeof syncTools>>
-): Promise<void> => {
-  if (installedTools.some((tool) => tool.id === "vercel-code-execution")) {
-    return;
-  }
-  const sandboxLifecycleTest = "tests/eve-sandbox-lifecycle.e2e.ts";
-  await preflight(targetDir, [sandboxLifecycleTest]);
-  await rm(path.join(targetDir, sandboxLifecycleTest), { force: true });
-};
-
 const installRegistryItems = async (
-  options: CreateOptions,
   packageManager: PackageManager,
   project: ProjectTarget,
   setup: Awaited<ReturnType<typeof promptCreateSetup>>
@@ -542,36 +410,25 @@ const installRegistryItems = async (
     "Installing selected registry items..."
   ).start();
   try {
-    const expected = await Promise.all(
-      setup.toolSources.map(async (source) => {
-        const item = await readItem(source, project.targetDir);
-        return toolDefinitionSchema.parse(item.meta?.chatjs);
-      })
+    const plan = await planToolInstallation(
+      project.targetDir,
+      setup.toolSources
     );
     await installItems(
-      [
-        setup.gatewaySelection.source,
-        setup.storage.source,
-        ...setup.toolSources,
-      ],
+      [setup.gatewaySelection.source, setup.storage.source, ...plan.sources],
       project.targetDir
     );
     await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
     await configureStorageProvider(project.targetDir, setup.storage);
     const installedTools = await syncTools(project.targetDir, {
-      expected,
+      expected: plan.expected,
     });
-    if (options.fromGit) {
-      await removeUnavailableToolTests(project.targetDir, installedTools);
-    }
     await runCommand(packageManager, ["install"], project.targetDir);
-    if (!options.fromGit) {
-      await runCommand(
-        packageManager,
-        [...oxfmtCommandFor(packageManager), "oxfmt", "--write", "."],
-        project.targetDir
-      );
-    }
+    await runCommand(
+      packageManager,
+      [...oxfmtCommandFor(packageManager), "oxfmt", "--write", "."],
+      project.targetDir
+    );
     installSpinner.succeed("Registry items installed and configured.");
     return installedTools;
   } catch (error) {
@@ -640,21 +497,30 @@ const createProject = async (options: CreateOptions): Promise<void> => {
   }
   const project = await promptProjectTarget(options);
   await ensureTargetEmpty(project.targetDir);
-  const setup = await promptCreateSetup(options, project.targetDir);
-  logger.break();
-  if (
-    !(await scaffoldProject(
-      options,
-      project,
-      packageManager,
-      setup.withElectron
-    ))
-  ) {
+  if (options.fromGit) {
+    const selectionOptions = Object.entries(options).filter(
+      ([key, value]) =>
+        !["target", "fromGit", "yes"].includes(key) && value !== undefined
+    );
+    if (selectionOptions.length > 0) {
+      throw new Error(
+        "--from-git preserves the cloned application. Use chat-js add after cloning to change installed tools; selection flags apply only to fresh scaffolds."
+      );
+    }
+    await scaffoldFromGit(options.fromGit, project.targetDir);
+    outro(
+      "Repository cloned with its configuration and installed source unchanged."
+    );
+    logger.info(
+      `cd ${project.displayPath} and follow the repository's setup instructions. Use chat-js add to install additional tools.`
+    );
     return;
   }
+  const setup = await promptCreateSetup(options, project.targetDir);
+  logger.break();
+  await scaffoldProject(project, packageManager, setup.withElectron);
   await writeConfiguration(project, setup);
   const installedTools = await installRegistryItems(
-    options,
     packageManager,
     project,
     setup
