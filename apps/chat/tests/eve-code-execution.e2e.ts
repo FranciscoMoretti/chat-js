@@ -19,19 +19,26 @@ test("native code execution renders real output and reconciles its fixed charge 
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
-  const created = await page.request.post("/api/agent-conversations", {
-    data: {
+  const created = await page.evaluate(
+    async (data) => {
+      const response = await fetch("/api/agent-conversations", {
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      return { body: await response.json(), ok: response.ok };
+    },
+    {
       message:
         'Use the codeExecution tool exactly once with language javascript, title "JavaScript check", and code "console.log(6 * 7)". Use no other tool. Report its output.',
       modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
-    },
-    headers: { origin: new URL(page.url()).origin },
-  });
-  expect(created.ok(), await created.text()).toBe(true);
+    }
+  );
+  expect(created.ok, JSON.stringify(created.body)).toBe(true);
   const binding = z
     .object({ id: z.uuid(), sessionId: z.string() })
-    .parse(await created.json());
+    .parse(created.body);
   await page.goto(`/chat/${binding.id}`);
   await expect(
     page.getByRole("tab", { exact: true, name: "Output" })
@@ -92,16 +99,23 @@ test("Python results render an interactive chart and survive reload", async ({
   await page.goto("/api/dev-login");
   const code =
     'chart = {"type": "bar", "title": "Counts", "elements": [{"label": "A", "group": "Series", "value": 2}, {"label": "B", "group": "Series", "value": 3}]}\nprint("chart-ready")';
-  const created = await page.request.post("/api/agent-conversations", {
-    data: {
+  const created = await page.evaluate(
+    async (data) => {
+      const response = await fetch("/api/agent-conversations", {
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      return { body: await response.json(), ok: response.ok };
+    },
+    {
       message: `Use the codeExecution tool exactly once with language python and title "Python chart". Execute this exact code, then report its output. Use no other tool:\n${code}`,
       modelId: "openai/gpt-4.1-mini",
       operationId: crypto.randomUUID(),
-    },
-    headers: { origin: new URL(page.url()).origin },
-  });
-  expect(created.ok(), await created.text()).toBe(true);
-  const binding = z.object({ id: z.uuid() }).parse(await created.json());
+    }
+  );
+  expect(created.ok, JSON.stringify(created.body)).toBe(true);
+  const binding = z.object({ id: z.uuid() }).parse(created.body);
   await page.goto(`/chat/${binding.id}`);
   await expect(page.locator("canvas")).toBeVisible({ timeout: 150_000 });
   await page.getByRole("tab", { exact: true, name: "Output" }).click();

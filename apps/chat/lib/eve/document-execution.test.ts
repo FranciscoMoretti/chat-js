@@ -21,9 +21,11 @@ vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
-vi.mock("../../tools/chatjs/saved-code-execution/invoke-executor", () => ({
-  invokeSavedCodeExecutor: mocks.execute,
+vi.mock("../../tools/chatjs/code-executor", () => ({
+  codeExecutor: mocks.execute,
 }));
+
+vi.mock("./turn-tools", () => ({ eveToolAllowed: () => true }));
 
 const input = {
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
@@ -64,14 +66,12 @@ beforeEach(() => {
     ownerId: "owner",
   });
   mocks.read.mockResolvedValue(revision);
-  mocks.execute.mockImplementation(function* fixtureOutput() {
-    yield {
-      kind: "chatjs.tool-result",
-      output: { chart: "", message: "42" },
-      status: "success",
-      usage: { costUsd: 0.05 },
-      version: 1,
-    };
+  mocks.execute.mockResolvedValue({
+    kind: "chatjs.tool-result",
+    output: { chart: "", message: "42" },
+    status: "success",
+    usage: { costUsd: 0.05 },
+    version: 1,
   });
 });
 
@@ -93,7 +93,11 @@ it("executes only the owned saved revision and preserves its billing receipt", a
   );
   expect(mocks.execute).toHaveBeenCalledWith(
     { code: "print(42)", language: "python", title: "saved.py" },
-    context
+    {
+      abortSignal: context.abortSignal,
+      callId: context.callId,
+      session: context.session,
+    }
   );
   expect(result.value).toMatchObject({
     output: { ...input, code: "print(42)", message: "42" },
@@ -132,14 +136,12 @@ it("does not execute when cancelled during revision lookup", async () => {
 });
 
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
-  mocks.execute.mockImplementation(function* fixtureOutput() {
-    yield {
-      kind: "chatjs.tool-result",
-      output: { chart: { elements: [], type: "pie" }, message: "Executed" },
-      status: "success",
-      usage: { costUsd: 0.05 },
-      version: 1,
-    };
+  mocks.execute.mockResolvedValue({
+    kind: "chatjs.tool-result",
+    output: { chart: { elements: [], type: "pie" }, message: "Executed" },
+    status: "success",
+    usage: { costUsd: 0.05 },
+    version: 1,
   });
   const result = await executeEveCodeDocument(input, context).next();
   expect(result.value).toMatchObject({

@@ -96,12 +96,10 @@ export const documentItems: RegistryItem[] = [
 ];
 
 export const savedCodeExecutionItem: RegistryItem = {
-  dependencies: ["ajv"],
   description: "Run saved code revisions with a compatible installed executor",
   files: documentFiles("saved-code-execution", [
     "tool.ts",
     "execute.ts",
-    "invoke-executor.ts",
     "schemas.ts",
     "document.tsx",
     "document-runs.ts",

@@ -150,6 +150,7 @@ export const codeExecutionItem = {
   })),
   meta: {
     chatjs: toolDefinitionSchema.parse({
+      codeExecutorExport: "executeCode",
       contractVersion: 1,
       envRequirements: [
         {
@@ -163,7 +164,6 @@ export const codeExecutionItem = {
       ],
       id: "vercel-code-execution",
       kind: "tool",
-      savedCodeExecution: true,
       slot: "codeExecution",
       tools: [{ rendererExport: "CodeExecution", toolExport: "codeExecution" }],
     }),

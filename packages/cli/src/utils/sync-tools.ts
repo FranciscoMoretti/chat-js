@@ -267,7 +267,7 @@ const writeSelectionConfigs = async (
   await writeFile(
     join(dir, `${spec.file}-config.ts`),
     generatedSource(
-      `export const ${spec.requirement} = ${JSON.stringify({ ...(selected?.envRequirements.some((requirement) => requirement.runtimeAuth) ? { allOf: selected.envRequirements } : {}), description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n${slot === "codeExecution" ? `export const supportsSavedDocuments = ${selected?.savedCodeExecution === true};\n` : ""}`
+      `export const ${spec.requirement} = ${JSON.stringify({ ...(selected?.envRequirements.some((requirement) => requirement.runtimeAuth) ? { allOf: selected.envRequirements } : {}), description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n${slot === "codeExecution" ? `export const supportsSavedDocuments = ${Boolean(selected?.codeExecutorExport)};\n` : ""}`
     )
   );
   await writeSelectionConfigs(dir, definitions, entries, index + 1);
@@ -362,7 +362,7 @@ const validateToolDependencies = (definitions: ToolDefinition[]): void => {
     registrationsFor(definitions).some(
       (item) => registrationKey(item) === "runCodeDocument"
     ) &&
-    !executor?.savedCodeExecution
+    !executor?.codeExecutorExport
   ) {
     throw new Error(
       "Saved code execution requires a compatible codeExecution provider, such as vercel-code-execution."
@@ -381,6 +381,7 @@ export const readInstalledTools = async (
     "installed-features.ts",
     "document-run.ts",
     "providers.ts",
+    "code-executor.ts",
     "workflow-types.ts",
     "tool-availability.ts",
     "custom-tools.ts",
@@ -408,6 +409,7 @@ export const readInstalledTools = async (
       "installed-features.ts",
       "document-run.ts",
       "providers.ts",
+      "code-executor.ts",
       "workflow-types.ts",
       "tool-availability.ts",
     ].map(async (file) => {
@@ -513,6 +515,13 @@ export const syncTools = async (
   );
   await writeSelectionConfigs(dir, definitions);
   await writeFile(join(dir, "providers.ts"), generatedSource(providerBody));
+  const executor = definitions.find((item) => item.codeExecutorExport);
+  await writeFile(
+    join(dir, "code-executor.ts"),
+    generatedSource(
+      `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "./${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
+    )
+  );
   const workflows = registrations.filter((item) => item.workflow);
   await writeFile(
     join(dir, "workflow-types.ts"),
