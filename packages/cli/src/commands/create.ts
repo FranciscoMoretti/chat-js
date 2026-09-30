@@ -131,6 +131,7 @@ const removeSelectedClonedTools = async (targetDir: string): Promise<void> => {
       const selected = Boolean(
         metadata.slot ||
         metadata.documentKind ||
+        metadata.documentRunExport ||
         (metadata.id === "retrieve-url" &&
           metadata.tools.some((tool) => tool.toolExport === "retrieveUrl"))
       );
@@ -330,6 +331,12 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     assistantTools,
     targetDir
   );
+  const selectedTools = await Promise.all(
+    toolSources.map(async (source) => {
+      const item = await readItem(source, targetDir);
+      return toolDefinitionSchema.parse(item.meta?.chatjs);
+    })
+  );
   for (const kind of ["text", "code", "sheet"] as const) {
     if (coreFeatures.documents && documentTypes[kind]) {
       const source = itemAddress(`${kind}-documents`, "tool");
@@ -337,6 +344,15 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
         toolSources.push(source);
       }
     }
+  }
+  if (
+    coreFeatures.documents &&
+    documentTypes.code &&
+    selectedTools.some(
+      (tool) => tool.slot === "codeExecution" && tool.savedCodeExecution
+    )
+  ) {
+    toolSources.push(itemAddress("saved-code-execution", "tool"));
   }
   const usesStorage =
     coreFeatures.attachments ||

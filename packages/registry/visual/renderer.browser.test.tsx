@@ -24,8 +24,8 @@ import "../../../apps/chat/app/globals.css";
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
 vi.mock(
-  "@/components/interactive-charts",
-  () => import("../../../apps/chat/components/interactive-chart-impl")
+  "@/tools/chatjs/_shared/code-execution/interactive-charts",
+  () => import("../src/ui/code-execution/interactive-chart-impl")
 );
 
 // Focus this capture on chart output, independently of the code editor.

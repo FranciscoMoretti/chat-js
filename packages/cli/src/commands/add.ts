@@ -7,6 +7,7 @@ import { Command } from "commander";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { installItems, itemAddress, readItem } from "../registry/shadcn";
 import { handleError } from "../utils/handle-error";
+import { validateProviderSelection } from "../utils/provider-selection";
 import { syncTools } from "../utils/sync-tools";
 
 export const add = new Command("add")
@@ -28,6 +29,36 @@ export const add = new Command("add")
           return toolDefinitionSchema.parse(item.meta?.chatjs);
         })
       );
+      const installed = await syncTools(cwd, {
+        checkOnly: true,
+        pending: expected,
+      });
+      validateProviderSelection(installed, expected);
+      if (
+        expected.some((item) => item.requiresTools.includes("codeExecution"))
+      ) {
+        const executor =
+          expected.find((item) => item.slot === "codeExecution") ??
+          installed.find((item) => item.slot === "codeExecution");
+        if (
+          executor &&
+          expected.some((item) => item.documentRunExport) &&
+          !executor.savedCodeExecution
+        ) {
+          throw new Error(
+            "The installed codeExecution provider does not support saved documents. Select a compatible provider such as vercel-code-execution first."
+          );
+        }
+        if (
+          !executor &&
+          !expected.some((item) => item.slot === "codeExecution")
+        ) {
+          const address = itemAddress("vercel-code-execution", "tool");
+          const item = await readItem(address, cwd);
+          addresses.push(address);
+          expected.push(toolDefinitionSchema.parse(item.meta?.chatjs));
+        }
+      }
       if (!options.yes) {
         const answer = await confirm({
           message: `Install ${tools.join(", ")}?`,
@@ -36,7 +67,6 @@ export const add = new Command("add")
           return;
         }
       }
-      await syncTools(cwd, { checkOnly: true });
       await installItems(addresses, cwd, options.overwrite);
       try {
         await syncTools(cwd, { expected });

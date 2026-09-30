@@ -20,7 +20,7 @@ import {
   documentAssistantActions,
   documentAssistantRequest,
 } from "@/lib/eve/document-assistant-actions";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
+import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
 
 const helperIcon = (label: string) => {
   switch (label) {

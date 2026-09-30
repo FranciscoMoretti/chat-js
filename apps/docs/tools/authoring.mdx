@@ -86,6 +86,10 @@ Document bundles also declare `documentKind` (`text`, `code`, or `sheet`) and ex
 
 Items target files under `~/tools/chatjs/<id>/`. Declare npm packages in `dependencies` or `devDependencies`, and shared registry items in `registryDependencies`. EVE and the ChatJS receipt/renderer helpers are supplied by the host app.
 
+The `saved-code-execution` bundle requires code documents and a compatible `codeExecution` provider. A provider opts in with `savedCodeExecution: true`: it accepts `{ code, language, title }`, preserves the source and language during validation, and returns a standard ChatJS usage receipt with `{ message, chart }` output. The bundle rejects approval policies, parent-scoped auth, and other policies that require a separate native invocation. Its parent call forwards the executor receipt once.
+
+`chat-js add saved-code-execution` reuses the installed compatible provider or installs `vercel-code-execution` when none is selected. An incompatible selected provider produces an error before installation. Its chart packages and Run UI are installed with the execution bundles.
+
 For credentials, declare alternatives in the typed metadata:
 
 ```ts

@@ -6,7 +6,9 @@ import { CodeExecution } from "./renderer";
 vi.mock("@/components/sandbox", () => ({
   SandboxComposed: ({ code }: { code: string }) => <pre>{code}</pre>,
 }));
-vi.mock("@/components/interactive-charts", () => ({ default: () => null }));
+vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts", () => ({
+  default: () => null,
+}));
 
 test("passes validated partial code to the sandbox while input is streaming", () => {
   const html = renderToStaticMarkup(

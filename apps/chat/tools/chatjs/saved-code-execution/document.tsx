@@ -1,6 +1,5 @@
 "use client";
 
-import type { EveMessage } from "eve/client";
 import { Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,11 +9,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { config } from "@/lib/config";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
-import { documentExecutionLanguage } from "@/lib/eve/document-execution-contracts";
-import { latestDocumentRun } from "@/lib/eve/document-runs";
+import type { DocumentRunProps } from "@/lib/eve/document-ui";
 
-import { EveDocumentRunResult } from "./eve-document-run-result";
+import { latestDocumentRun } from "./document-runs";
+import { EveDocumentRunResult } from "./result";
+import { documentExecutionLanguage } from "./schemas";
 
 export const EveDocumentRun = ({
   documentId,
@@ -26,17 +25,7 @@ export const EveDocumentRun = ({
   onAction,
   buttonOnly = false,
   resultOnly = false,
-}: {
-  buttonOnly?: boolean;
-  resultOnly?: boolean;
-  documentId: string;
-  revisionId: string;
-  title: string;
-  kind: "text" | "code" | "sheet";
-  messages: readonly EveMessage[];
-  disabled: boolean;
-  onAction?: (request: DocumentAssistantRequest) => Promise<void>;
-}) => {
+}: DocumentRunProps) => {
   const run = latestDocumentRun(messages, documentId, revisionId);
   const canRun =
     onAction &&

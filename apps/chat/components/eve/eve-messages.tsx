@@ -29,7 +29,6 @@ import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 
 import { EveAttachment } from "./eve-attachment";
-import { EveDocumentRunResult } from "./eve-document-run-result";
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
@@ -172,9 +171,6 @@ const Part = ({
         part={part}
       />
     );
-  }
-  if (part.toolName === "runCodeDocument") {
-    return <EveDocumentRunResult part={part} />;
   }
 
   if (

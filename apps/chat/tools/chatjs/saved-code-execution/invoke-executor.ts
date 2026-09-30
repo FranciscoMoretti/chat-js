@@ -1,27 +1,25 @@
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
-import type { ToolContext, ToolDefinition, ToolModelOutput } from "eve/tools";
+import type { ToolContext, ToolDefinition } from "eve/tools";
 import { z } from "zod";
 
-import { tools } from "../../tools/chatjs/tools";
-import type { ToolOutput } from "./tool-result";
-import { eveToolAllowed } from "./turn-tools";
+import type { ToolOutput } from "@/lib/eve/tool-result";
+import { eveToolAllowed } from "@/lib/eve/turn-tools";
+import { supportsSavedDocuments } from "@/tools/chatjs/code-execution-config";
+import { providers } from "@/tools/chatjs/providers";
 
 type InvocableTool = Pick<
   ToolDefinition<unknown, ToolOutput>,
-  "description" | "execute" | "inputSchema"
-> & {
-  // oxlint-disable-next-line typescript/method-signature-style -- Bivariance is confined to dynamic invocation; authored registries retain exact output types.
-  toModelOutput?(
-    output: ToolOutput
-  ): ToolModelOutput | Promise<ToolModelOutput>;
-};
+  "execute" | "inputSchema"
+>;
 
-// Composition is gated by the owning feature (research or document execution).
+// Composition is gated by saved-document execution.
 // The standalone tool visibility flag does not disable that feature's dependency.
-export const getInstalledTool = (
-  name: "webSearch" | "codeExecution"
-): InvocableTool | undefined => {
+const getInstalledExecutor = (): InvocableTool | undefined => {
+  if (!supportsSavedDocuments) {
+    throw new Error("The installed executor does not support saved documents.");
+  }
+  const name = "codeExecution";
   const installed: Readonly<
     Record<
       string,
@@ -31,12 +29,12 @@ export const getInstalledTool = (
         outputSchema?: unknown;
       }
     >
-  > = tools;
+  > = providers;
   const definition = installed[name];
   if (!definition || !eveToolAllowed(name)) {
     return;
   }
-  // Nested model loops cannot present EVE's approval UI. Never bypass an authored policy.
+  // Internal execution cannot present EVE's approval UI. Never bypass an authored policy.
   if ("approval" in definition && definition.approval) {
     throw new Error(
       "Tools with approval policies must be called directly through EVE."
@@ -50,7 +48,7 @@ export const getInstalledTool = (
   return definition;
 };
 
-export const installedToolSchema = (tool: InvocableTool) => {
+const installedToolSchema = (tool: InvocableTool) => {
   const schema = tool.inputSchema;
   let json: unknown = schema;
   if ("~standard" in schema) {
@@ -91,17 +89,16 @@ const requireDirectInvocation = (): never => {
 /** Internal composition under the parent call, not a separate EVE dispatch.
  * @yields {unknown} The native tool outputs without altering its receipt.
  */
-export const invokeInstalledTool = async function* invokeInstalledTool(
-  name: "webSearch" | "codeExecution",
-  input: unknown,
+export const invokeSavedCodeExecutor = async function* invokeSavedCodeExecutor(
+  input: { code: string; language: "python" | "javascript"; title: string },
   context: ToolContext
 ) {
-  const tool = getInstalledTool(name);
+  const tool = getInstalledExecutor();
   if (!tool) {
-    throw new Error(`Installed tool is unavailable: ${name}`);
+    throw new Error("Installed code executor is unavailable.");
   }
   const schema = installedToolSchema(tool);
-  let validatedInput = input;
+  let validatedInput: unknown = input;
   const standard = tool.inputSchema["~standard"];
   if (
     standard &&
@@ -131,6 +128,23 @@ export const invokeInstalledTool = async function* invokeInstalledTool(
     if (!validate(input)) {
       throw new Error("Invalid tool input.");
     }
+  }
+  const source = z
+    .object({
+      code: z.string(),
+      language: z.enum(["python", "javascript"]),
+      title: z.string(),
+    })
+    .safeParse(validatedInput);
+  if (
+    !source.success ||
+    source.data.code !== input.code ||
+    source.data.language !== input.language ||
+    source.data.title !== input.title
+  ) {
+    throw new Error(
+      "The installed executor must preserve the exact saved source and language."
+    );
   }
   context.abortSignal.throwIfAborted();
   const result = await tool.execute(validatedInput, {

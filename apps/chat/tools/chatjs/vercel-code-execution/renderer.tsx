@@ -1,9 +1,9 @@
 "use client";
 
-import { CodeExecutionChart } from "@/components/code-execution-chart";
 import { SandboxComposed } from "@/components/sandbox";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
 

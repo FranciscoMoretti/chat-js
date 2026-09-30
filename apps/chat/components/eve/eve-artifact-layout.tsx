@@ -23,8 +23,9 @@ import {
 import { DocumentSkeleton } from "@/components/document-skeleton";
 import { Button } from "@/components/ui/button";
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
-import type { DocumentAssistantRequest } from "@/lib/eve/document-assistant-actions";
+import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
 import { eveDocumentResult } from "@/lib/eve/document-contracts";
+import { DocumentRun } from "@/tools/chatjs/document-run";
 import { useTRPC } from "@/trpc/react";
 
 import { EveDocumentActions } from "./eve-document-actions";
@@ -34,7 +35,6 @@ import {
   EveDocumentContext,
   EveDocumentReplayContext,
 } from "./eve-document-context";
-import { EveDocumentRun } from "./eve-document-run";
 import { useDocumentDraft } from "./use-document-draft";
 
 const artifactRegionProps = { role: "region" as const };
@@ -251,16 +251,18 @@ const EveArtifactPanel = ({
                 )
               }
               run={
-                <EveDocumentRun
-                  documentId={artifact.documentId}
-                  revisionId={revision.id}
-                  title={revision.title}
-                  kind={revision.kind}
-                  messages={messages}
-                  disabled={actionsDisabled}
-                  onAction={owned ? onDocumentAction : undefined}
-                  buttonOnly
-                />
+                DocumentRun && (
+                  <DocumentRun
+                    documentId={artifact.documentId}
+                    revisionId={revision.id}
+                    title={revision.title}
+                    kind={revision.kind}
+                    messages={messages}
+                    disabled={actionsDisabled}
+                    onAction={owned ? onDocumentAction : undefined}
+                    buttonOnly
+                  />
+                )
               }
             />
           )}
@@ -345,16 +347,18 @@ const EveArtifactPanel = ({
         </ArtifactContent>
         {revision && !document.isError && (
           <>
-            <EveDocumentRun
-              disabled={actionsDisabled}
-              documentId={artifact.documentId}
-              kind={revision.kind}
-              messages={messages}
-              onAction={owned ? onDocumentAction : undefined}
-              revisionId={revision.id}
-              title={revision.title}
-              resultOnly
-            />
+            {DocumentRun && (
+              <DocumentRun
+                disabled={actionsDisabled}
+                documentId={artifact.documentId}
+                kind={revision.kind}
+                messages={messages}
+                onAction={owned ? onDocumentAction : undefined}
+                revisionId={revision.id}
+                title={revision.title}
+                resultOnly
+              />
+            )}
             {owned && index !== -1 && index < history.length - 1 && (
               <div className="bg-background flex flex-col justify-between gap-4 border-t p-4 lg:flex-row">
                 <div>

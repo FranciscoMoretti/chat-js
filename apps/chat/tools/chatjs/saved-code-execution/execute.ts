@@ -1,15 +1,16 @@
 import type { ToolContext } from "eve/tools";
 
-import { config } from "../config";
-import { getEveDocumentRevision } from "../db/eve-documents";
-import { resolveEveConversationScope } from "./conversation-scope";
+import { config } from "@/lib/config";
+import { getEveDocumentRevision } from "@/lib/db/eve-documents";
+import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
+import { toolResultSchema } from "@/lib/eve/tool-result";
+
+import { invokeSavedCodeExecutor } from "./invoke-executor";
 import {
   documentExecutionInput,
   documentExecutionLanguage,
   eveCodeExecutionResult,
-} from "./document-execution-contracts";
-import { invokeInstalledTool } from "./invoke-installed-tool";
-import { toolResultSchema } from "./tool-result";
+} from "./schemas";
 
 /**
  * Execute saved source, never model-supplied replacement code.
@@ -49,11 +50,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
   }
   context.abortSignal.throwIfAborted();
   const source = { code: revision.content, language, title: revision.title };
-  for await (const toolOutput of invokeInstalledTool(
-    "codeExecution",
-    source,
-    context
-  )) {
+  for await (const toolOutput of invokeSavedCodeExecutor(source, context)) {
     const result = toolResultSchema.parse(toolOutput);
     if (result.status === "error") {
       yield result;

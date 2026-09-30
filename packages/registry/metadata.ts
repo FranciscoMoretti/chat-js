@@ -13,10 +13,12 @@ export const envRequirementSchema = z.object({
 });
 const toolDefinitionBase = z.object({
   documentKind: z.enum(["text", "code", "sheet"]).optional(),
+  documentRunExport: identifier.optional(),
   envRequirements: z.array(envRequirementSchema).default([]),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   kind: z.literal("tool"),
   requiresTools: z.array(identifier).default([]),
+  savedCodeExecution: z.literal(true).optional(),
   slot: z
     .enum([
       "webSearch",
@@ -39,6 +41,10 @@ const toolDefinitionBase = z.object({
 export const toolDefinitionSchema = toolDefinitionBase
   .extend({
     contractVersion: z.literal(1),
+  })
+  .refine((item) => !item.savedCodeExecution || item.slot === "codeExecution", {
+    message:
+      "Saved code compatibility applies only to a codeExecution provider",
   })
   .refine((item) => !item.slot || item.tools.length === 1, {
     message: "A provider slot must register exactly one tool",

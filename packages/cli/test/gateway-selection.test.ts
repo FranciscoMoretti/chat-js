@@ -497,14 +497,14 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         await Bun.file(join(cwd, "tools/chatjs/retrieve-url/tool.ts")).exists()
       ).toBe(true);
       expect(
-        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")
+        await readFile(join(cwd, "tools/chatjs/providers.ts"), "utf-8")
       ).toContain("vercel-code-execution/tool");
       expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
       expect(
         await Bun.file(join(cwd, "tools/chatjs/tavily-search/tool.ts")).exists()
       ).toBe(false);
       expect(
-        await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")
+        await readFile(join(cwd, "tools/chatjs/providers.ts"), "utf-8")
       ).toContain("firecrawl-search/tool");
       expect(
         await readFile(join(cwd, "tools/chatjs/search-config.ts"), "utf-8")
