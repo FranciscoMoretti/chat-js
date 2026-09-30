@@ -53,5 +53,3 @@ export const conversationBinding = z.object({
   id: z.uuid(),
   sessionId: z.string().min(1),
 });
-export const noteInput = z.object({ note: z.string().trim().min(1).max(500) });
-export const noteOutput = noteInput.extend({ confirmed: z.literal(true) });

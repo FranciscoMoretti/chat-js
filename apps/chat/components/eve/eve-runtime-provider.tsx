@@ -60,7 +60,8 @@ const NativeObserver = ({
       if (
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
-        Object.hasOwn(eveDocumentOperations, event.data.result.toolName)
+        (Object.hasOwn(eveDocumentOperations, event.data.result.toolName) ||
+          event.data.result.toolName === "deleteDocument")
       ) {
         void queryClient.invalidateQueries({
           queryKey: trpc.eve.document.pathKey(),

@@ -15,6 +15,7 @@ shadcn resolves the item and its dependencies, installs packages, and writes the
 
 | Tool | Purpose | Credentials |
 | --- | --- | --- |
+| Delete Document (`delete-document`) | Remove a document from the current conversation after owner approval | None |
 | [Word Count](./word-count) | Count words, characters, and sentences | None |
 | [Get Weather](./get-weather) | Fetch weather for coordinates | None |
 | [Tavily Search](../features/web-search) | Search with topic, depth, and domain options | `TAVILY_API_KEY` |
@@ -23,6 +24,16 @@ shadcn resolves the item and its dependencies, installs packages, and writes the
 | [Generate Video](./generate-video) | Generate video clips | Selected gateway and file storage |
 | [Generate Image](./generate-image) | Generate and edit images | Selected gateway and file storage |
 | [Retrieve URL](./retrieve-url) | Extract a page through Firecrawl | `FIRECRAWL_API_KEY` |
+
+## Document deletion with approval
+
+```bash
+npx @chat-js/cli@latest add delete-document
+```
+
+This optional bundle installs `deleteDocument` and its `readDocument` dependency. The tool reads the current document first, then asks the owner to approve the exact title and revision. Rejection leaves the document unchanged. If the document changes before approval, deletion fails and requires a fresh request.
+
+Deletion removes the document from the current conversation. Existing history snapshots and other branches retain their revisions; this is not permanent content erasure. The tool requires signed-in ownership, enabled document tools, and EVE's native approval receipt. It adds no provider credentials or tool usage charge.
 
 ## Installed files
 

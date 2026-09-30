@@ -50,6 +50,29 @@ const bundles = [
 export const documentItems: RegistryItem[] = [
   {
     description:
+      "Remove a document from this conversation with explicit owner approval",
+    files: documentFiles("delete-document", [
+      "tool.ts",
+      "execute.ts",
+      "schemas.ts",
+      "availability.ts",
+    ]),
+    meta: {
+      chatjs: toolDefinitionSchema.parse({
+        availabilityExport: "deleteDocumentAvailable",
+        contractVersion: 1,
+        id: "delete-document",
+        kind: "tool",
+        requiresTools: ["readDocument"],
+        tools: [{ toolExport: "deleteDocument" }],
+      }),
+    },
+    name: "delete-document",
+    registryDependencies: ["@chatjs/read-document"],
+    type: "registry:item",
+  },
+  {
+    description:
       "Read an owned document and its current revision before editing",
     files: documentFiles("read-document", ["tool.ts"]),
     meta: {

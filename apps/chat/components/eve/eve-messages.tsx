@@ -23,7 +23,6 @@ import { UserMessageView } from "@/components/user-message-view";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { config } from "@/lib/config";
-import { noteInput, noteOutput } from "@/lib/eve/contracts";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
@@ -38,17 +37,15 @@ const PendingInput = ({
   request,
   disabled,
   respond,
-  prompt,
 }: {
   request: EveMessageInputRequest;
   disabled: boolean;
   respond: (response: InputResponse) => void;
-  prompt?: string;
 }) => {
   const [text, setText] = useState("");
   return (
     <div className="space-y-3">
-      <p>{prompt ?? request.prompt}</p>
+      <p>{request.prompt}</p>
       <div className="flex flex-wrap gap-2">
         {request.options?.map((option) => (
           <Button
@@ -91,12 +88,8 @@ const PendingInput = ({
 };
 
 const toolStatus = (
-  part: Extract<EveMessagePart, { type: "dynamic-tool" }>,
-  confirmed: boolean
+  part: Extract<EveMessagePart, { type: "dynamic-tool" }>
 ) => {
-  if (confirmed) {
-    return "Note confirmed.";
-  }
   if (part.state === "approval-requested") {
     return "Waiting for input.";
   }
@@ -184,34 +177,26 @@ const Part = ({
     return <EveMcpResult part={part} />;
   }
   const request = part.toolMetadata?.eve?.inputRequest;
-  const input = noteInput.safeParse(part.input);
-  const output =
-    part.state === "output-available"
-      ? noteOutput.safeParse(part.output)
-      : null;
   return (
     <section
       aria-label="Tool result"
       className="space-y-3 rounded-lg border p-4"
     >
-      <p className="font-medium">
-        {part.toolName === "confirm_note" ? "Confirm note" : "Agent request"}
-      </p>
-      {input.success && <p>{input.data.note}</p>}
+      <p className="font-medium">{part.toolName}</p>
+      {part.input !== undefined && (
+        <pre className="overflow-x-auto text-sm whitespace-pre-wrap">
+          {JSON.stringify(part.input, null, 2)}
+        </pre>
+      )}
       {part.state === "approval-requested" && request ? (
         <PendingInput
           disabled={disabled}
           key={request.requestId}
-          prompt={
-            part.toolName === "confirm_note" ? "Confirm this note?" : undefined
-          }
           request={request}
           respond={respond}
         />
       ) : (
-        <p className="text-muted-foreground text-sm">
-          {toolStatus(part, output?.success === true)}
-        </p>
+        <p className="text-muted-foreground text-sm">{toolStatus(part)}</p>
       )}
     </section>
   );

@@ -1032,3 +1032,80 @@ export const getAccessibleEveDocument = async (
     },
   };
 };
+
+/** Remove only this conversation's current pointer; snapshots and other branches retain their revisions. */
+export const removeEveDocumentFromConversation = async (
+  input: { documentId: string; expectedRevisionId: string; title: string },
+  scope: { ownerId: string; conversationId: string },
+  signal: AbortSignal
+) =>
+  await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${scope.ownerId}`}, 0))`
+    );
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${scope.conversationId}`}, 0))`
+    );
+    signal.throwIfAborted();
+    const [conversation] = await tx
+      .select()
+      .from(eveConversation)
+      .where(
+        and(
+          eq(eveConversation.id, scope.conversationId),
+          eq(eveConversation.ownerId, scope.ownerId),
+          eq(eveConversation.state, "bound")
+        )
+      );
+    if (!conversation) {
+      throw new Error("Conversation not found.");
+    }
+    const [revision] = await tx
+      .select()
+      .from(eveDocumentRevision)
+      .where(
+        and(
+          eq(eveDocumentRevision.id, input.expectedRevisionId),
+          eq(eveDocumentRevision.documentId, input.documentId),
+          eq(eveDocumentRevision.ownerId, scope.ownerId)
+        )
+      );
+    if (!revision) {
+      throw new Error("Document not found.");
+    }
+    if (revision.title !== input.title) {
+      throw new Error("Document changed. Request approval again.");
+    }
+    const [head] = await tx
+      .select()
+      .from(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.conversationId, scope.conversationId),
+          eq(eveDocumentHead.documentId, input.documentId),
+          eq(eveDocumentHead.ownerId, scope.ownerId)
+        )
+      );
+    if (head && head.revisionId !== input.expectedRevisionId) {
+      throw new Error("Document changed. Request approval again.");
+    }
+    // An absent head is already removed; a retry must not erase a newly saved revision.
+    await tx
+      .delete(eveDocumentHead)
+      .where(
+        and(
+          eq(eveDocumentHead.conversationId, scope.conversationId),
+          eq(eveDocumentHead.documentId, input.documentId),
+          eq(eveDocumentHead.ownerId, scope.ownerId),
+          eq(eveDocumentHead.revisionId, input.expectedRevisionId)
+        )
+      );
+    signal.throwIfAborted();
+    return {
+      documentId: input.documentId,
+      result:
+        "Document removed from this conversation. Historical snapshots and other branches are unchanged.",
+      status: "success" as const,
+      title: revision.title,
+    };
+  });

@@ -142,7 +142,7 @@ for (const decision of ["Approve", "Cancel"]) {
     ).toBeVisible();
     await expect(
       page.getByText(
-        decision === "Approve" ? "Note confirmed." : "Request declined.",
+        decision === "Approve" ? "Tool completed." : "Request declined.",
         { exact: true }
       )
     ).toBeVisible();
