@@ -431,6 +431,26 @@ const verifyResearchInstallation = async (
   ).toBe(false);
   if (gateway === "vercel") {
     await run(cwd, ["bun", "run", "lint"]);
+    // Exercise namespaced transitive dependencies, including the shared UI item
+    // without a ChatJS tool descriptor, through actual installation and sync.
+    const sharedDirectory = join(cwd, "tools/chatjs/_shared/code-execution");
+    await rm(sharedDirectory, { force: true, recursive: true });
+    await run(cwd, ["node", cliEntry, "add", "saved-code-execution", "--yes"]);
+    expect(
+      await Bun.file(join(sharedDirectory, "interactive-charts.tsx")).exists()
+    ).toBe(true);
+    expect(
+      await Bun.file(
+        join(cwd, "tools/chatjs/code-execution-ui/chatjs.json")
+      ).exists()
+    ).toBe(false);
+    const registered = await readFile(
+      join(cwd, "tools/chatjs/tools.ts"),
+      "utf-8"
+    );
+    expect(registered).toContain('from "./saved-code-execution/tool"');
+    expect(registered).toContain('from "./code-documents/tool"');
+    expect(registered).toContain('from "./read-document/tool"');
     await run(cwd, ["node", cliEntry, "add", "deep-research", "--yes"]);
     expect(
       await Bun.file(join(cwd, "agent/tools/deepResearch.ts")).exists()
