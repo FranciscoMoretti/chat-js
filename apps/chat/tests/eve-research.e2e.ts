@@ -38,6 +38,12 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   page,
 }) => {
   test.setTimeout(900_000);
+  const duplicateKeyErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().includes("same key")) {
+      duplicateKeyErrors.push(message.text());
+    }
+  });
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
@@ -79,6 +85,11 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   await expect(report).toBeVisible({ timeout: 840_000 });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 30_000,
+  });
+  expect(duplicateKeyErrors).toEqual([]);
+  await page.screenshot({
+    animations: "disabled",
+    path: "tests/eve-results/screenshots/eve-native-research-timeline.png",
   });
   const title = await report.textContent();
   await page.reload();
