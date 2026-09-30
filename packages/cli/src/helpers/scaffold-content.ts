@@ -50,6 +50,11 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
   const file = relativePath.split(path.sep).join("/");
   return (
     REPOSITORY_ONLY_FILES.has(file) ||
+    (file.endsWith(".test.ts") &&
+      (file.startsWith("lib/ai/mcp/") ||
+        file.startsWith("lib/db/mcp-") ||
+        file === "lib/eve/mcp-tools.test.ts" ||
+        file === "lib/eve/mcp-registration.test.ts")) ||
     researchAgentDirectories.some(
       (directory) => file === directory || file.startsWith(`${directory}/`)
     ) ||

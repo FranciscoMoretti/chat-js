@@ -2,9 +2,11 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import pathModule from "node:path";
 
+import { mcpFiles } from "../../../registry/src/features/mcp";
 import { registryUrl } from "../registry/shadcn";
 import type { PackageManager } from "../types";
 import { runCommand } from "../utils/run-command";
+import { initializeFeatureUi } from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { resolvePackageDirectory } from "./resolve-package-directory";
@@ -362,6 +364,12 @@ export const scaffoldFromTemplate = async (
     "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
   };
   await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
+  await Promise.all(
+    [...mcpFiles, "features/mcp/chatjs.json"].map((file) =>
+      rm(join(destination, file), { force: true })
+    )
+  );
+  await initializeFeatureUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };
 

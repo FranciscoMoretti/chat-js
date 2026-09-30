@@ -7,13 +7,17 @@ import { Command } from "commander";
 import { installItems } from "../registry/shadcn";
 import { handleError } from "../utils/handle-error";
 import { planToolInstallation } from "../utils/installation-plan";
+import { syncFeatures } from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 export const add = new Command("add")
   .description(
-    "install registry tools and regenerate their ChatJS registrations"
+    "install registry tools or MCP and update their ChatJS registrations"
   )
-  .argument("<tools...>", "tool names or standard shadcn registry addresses")
+  .argument(
+    "<tools...>",
+    "tool names, mcp, or standard shadcn registry addresses"
+  )
   .option("-y, --yes", "skip confirmation", false)
   .option("-o, --overwrite", "overwrite existing installed source files", false)
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
@@ -33,6 +37,7 @@ export const add = new Command("add")
       await installItems(plan.sources, cwd, options.overwrite);
       try {
         await syncTools(cwd, { expected: plan.expected });
+        await syncFeatures(cwd, { addUi: plan.mcp, expectedMcp: plan.mcp });
       } catch (error) {
         throw new Error(
           `Source installation completed, but registration failed. Fix the problem and run chat-js sync. ${error instanceof Error ? error.message : error}`,

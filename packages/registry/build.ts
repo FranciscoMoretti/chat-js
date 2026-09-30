@@ -12,7 +12,7 @@ await mkdir(path.join(cwd, "dist/source"), { recursive: true });
 await Promise.all(
   registry.items.map(async (item) => {
     const metadata = item.meta?.chatjs;
-    if (metadata?.kind === "tool") {
+    if (metadata?.kind === "tool" || metadata?.kind === "feature") {
       const sourcePath = `dist/source/${item.name}.json`;
       const formatted = await format(sourcePath, JSON.stringify(metadata), {
         printWidth: 80,
@@ -25,7 +25,10 @@ await Promise.all(
       item.files ??= [];
       item.files.push({
         path: sourcePath,
-        target: `~/tools/chatjs/${item.name}/chatjs.json`,
+        target:
+          metadata.kind === "feature"
+            ? `~/features/${item.name}/chatjs.json`
+            : `~/tools/chatjs/${item.name}/chatjs.json`,
         type: "registry:file",
       });
     }
