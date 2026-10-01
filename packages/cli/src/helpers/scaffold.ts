@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
 import pathModule from "node:path";
 
 import { mcpFiles } from "../../../registry/src/features/mcp";
@@ -369,6 +369,32 @@ export const scaffoldFromTemplate = async (
       rm(join(destination, file), { force: true })
     )
   );
+  const directories = new Set<string>();
+  for (const file of [...mcpFiles, "features/mcp/chatjs.json"]) {
+    let directory = pathModule.dirname(file);
+    while (directory !== ".") {
+      directories.add(directory);
+      directory = pathModule.dirname(directory);
+    }
+  }
+  for (const directory of [...directories].toSorted(
+    (a, b) => b.length - a.length
+  )) {
+    try {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Remove children before their empty parents.
+      await rmdir(join(destination, directory));
+    } catch (error) {
+      if (
+        !(
+          error instanceof Error &&
+          "code" in error &&
+          ["ENOENT", "ENOTEMPTY", "EEXIST"].includes(String(error.code))
+        )
+      ) {
+        throw error;
+      }
+    }
+  }
   await initializeFeatureUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };

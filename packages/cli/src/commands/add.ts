@@ -1,7 +1,7 @@
 import { access } from "node:fs/promises";
 import path from "node:path";
 
-import { confirm, isCancel } from "@clack/prompts";
+import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
 
 import { installItems } from "../registry/shadcn";
@@ -38,9 +38,14 @@ export const add = new Command("add")
       try {
         await syncTools(cwd, { expected: plan.expected });
         await syncFeatures(cwd, { addUi: plan.mcp, expectedMcp: plan.mcp });
+        if (plan.mcp) {
+          log.info(
+            "MCP installed. Enable ai.tools.mcp.enabled in chat.config.ts and set MCP_ENCRYPTION_KEY before connecting servers."
+          );
+        }
       } catch (error) {
         throw new Error(
-          `Source installation completed, but registration failed. Fix the problem and run chat-js sync. ${error instanceof Error ? error.message : error}`,
+          `Source installation completed, but registration failed. Fix the problem and run ${plan.mcp ? "chat-js add mcp to retry UI integration (or integrate the UI manually and run chat-js sync)" : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
           { cause: error }
         );
       }

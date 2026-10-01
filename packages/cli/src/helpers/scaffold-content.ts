@@ -54,6 +54,7 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
       (file.startsWith("lib/ai/mcp/") ||
         file.startsWith("lib/db/mcp-") ||
         file === "lib/eve/mcp-tools.test.ts" ||
+        file === "lib/eve/mcp-adapter.test.ts" ||
         file === "lib/eve/mcp-registration.test.ts")) ||
     researchAgentDirectories.some(
       (directory) => file === directory || file.startsWith(`${directory}/`)

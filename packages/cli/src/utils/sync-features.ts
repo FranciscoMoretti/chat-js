@@ -18,14 +18,40 @@ const exists = async (file: string) => {
   }
 };
 
-// UI files are application-owned. Only append the newly installed contribution;
-// never recreate an existing array or change the user's ordering.
-const appendContribution = async (
+const contributionBinding = (
+  parsed: ts.SourceFile,
+  marker: string,
+  symbol: string
+) => {
+  const imports = parsed.statements.filter(ts.isImportDeclaration);
+  const imported = imports.find(
+    (node) =>
+      ts.isStringLiteral(node.moduleSpecifier) &&
+      node.moduleSpecifier.text === marker &&
+      !node.importClause?.isTypeOnly
+  );
+  const bindings = imported?.importClause?.namedBindings;
+  const specifier =
+    bindings && ts.isNamedImports(bindings)
+      ? bindings.elements.find(
+          (item) =>
+            !item.isTypeOnly && (item.propertyName ?? item.name).text === symbol
+        )
+      : undefined;
+  const binding =
+    bindings && ts.isNamespaceImport(bindings)
+      ? `${bindings.name.text}.${symbol}`
+      : (specifier?.name.text ?? symbol);
+  return { binding, bindings, specifier };
+};
+
+// Plan both application-owned UI edits before writing any registrations.
+const planContribution = async (
   file: string,
   name: string,
-  entry: string,
-  importLine: string,
-  marker: string
+  symbol: string,
+  marker: string,
+  entry: (binding: string) => string
 ) => {
   const source = await readFile(file, "utf-8");
   const parsed = ts.createSourceFile(
@@ -34,16 +60,6 @@ const appendContribution = async (
     ts.ScriptTarget.Latest,
     true
   );
-  if (
-    parsed.statements.some(
-      (node) =>
-        ts.isImportDeclaration(node) &&
-        ts.isStringLiteral(node.moduleSpecifier) &&
-        node.moduleSpecifier.text === marker
-    )
-  ) {
-    return;
-  }
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
     .flatMap((statement) => [...statement.declarationList.declarations])
@@ -53,21 +69,75 @@ const appendContribution = async (
     !ts.isArrayLiteralExpression(declaration.initializer)
   ) {
     throw new Error(
-      `Add the MCP contribution to ${file} manually: ${name} is no longer a literal array.`
+      `Add the MCP contribution to ${file} manually: ${name} is no longer a literal array. Then run chat-js sync. To retry automatic UI integration, restore a literal array and run chat-js add mcp.`
     );
   }
   const array = declaration.initializer;
+  const { binding, bindings, specifier } = contributionBinding(
+    parsed,
+    marker,
+    symbol
+  );
+  // The array determines presence; an unused import is not a contribution.
+  if (
+    array.elements.some(
+      (item) =>
+        item.getText(parsed) === binding ||
+        (ts.isObjectLiteralExpression(item) &&
+          item.properties.some(
+            (prop) =>
+              ts.isPropertyAssignment(prop) &&
+              ((prop.name
+                .getText(parsed)
+                .replaceAll('"', "")
+                .replaceAll("'", "") === "id" &&
+                ts.isStringLiteral(prop.initializer) &&
+                prop.initializer.text === "mcp") ||
+                (prop.name.getText(parsed) === "Component" &&
+                  prop.initializer.getText(parsed) === binding))
+          ))
+    )
+  ) {
+    return { content: source, file };
+  }
+  const edits: { start: number; text: string }[] = [];
+  if (!specifier && !(bindings && ts.isNamespaceImport(bindings))) {
+    // Avoid overwriting a user binding with the same name from another module.
+    const identifiers = new Set<string>();
+    const collect = (node: ts.Node) => {
+      if (ts.isIdentifier(node)) {
+        identifiers.add(node.text);
+      }
+      ts.forEachChild(node, collect);
+    };
+    collect(parsed);
+    if (identifiers.has(symbol)) {
+      throw new Error(
+        `Cannot import ${symbol} in ${file}: that name is already used. Add the MCP contribution manually and run chat-js sync.`
+      );
+    }
+    if (bindings && ts.isNamedImports(bindings)) {
+      const last = bindings.elements.at(-1);
+      if (last && !bindings.elements.hasTrailingComma) {
+        edits.push({ start: last.end, text: "," });
+      }
+      edits.push({ start: bindings.end - 1, text: ` ${symbol} ` });
+    } else {
+      const importEnd =
+        parsed.statements.findLast(
+          (node) =>
+            ts.isImportDeclaration(node) ||
+            (ts.isExpressionStatement(node) &&
+              ts.isStringLiteral(node.expression))
+        )?.end ?? 0;
+      edits.push({
+        start: importEnd,
+        text: `\nimport { ${symbol} } from "${marker}";\n`,
+      });
+    }
+  }
+  edits.push({ start: array.end - 1, text: `\n  ${entry(binding)},\n` });
   const last = array.elements.at(-1);
-  const importEnd =
-    parsed.statements.findLast(
-      (node) =>
-        ts.isImportDeclaration(node) ||
-        (ts.isExpressionStatement(node) && ts.isStringLiteral(node.expression))
-    )?.end ?? 0;
-  const edits = [
-    { start: array.end - 1, text: `\n  ${entry},\n` },
-    { start: importEnd, text: `\n${importLine}\n` },
-  ];
   if (last && !array.elements.hasTrailingComma) {
     edits.push({ start: last.end, text: "," });
   }
@@ -76,7 +146,7 @@ const appendContribution = async (
     content =
       content.slice(0, edit.start) + edit.text + content.slice(edit.start);
   }
-  await writeFile(file, content);
+  return { content, file };
 };
 
 export const syncFeatures = async (
@@ -85,43 +155,56 @@ export const syncFeatures = async (
 ) => {
   const descriptor = path.join(cwd, "features/mcp/chatjs.json");
   const mcp = await exists(descriptor);
-  if (options.expectedMcp && !mcp) {
-    throw new Error("MCP installation is missing features/mcp/chatjs.json.");
+  const presence = await Promise.all(
+    mcpFiles.map((file) => exists(path.join(cwd, file)))
+  );
+  if (!mcp && (options.expectedMcp || presence.some(Boolean))) {
+    throw new Error(
+      "MCP installation is missing features/mcp/chatjs.json. Run chat-js add mcp to complete the installation."
+    );
   }
   if (mcp) {
     featureDefinitionSchema.parse(
       JSON.parse(await readFile(descriptor, "utf-8"))
     );
-    for (const file of mcpFiles) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Validate before writing registrations.
-      await access(path.join(cwd, file));
+    const missing = mcpFiles.filter((_, index) => !presence[index]);
+    if (missing.length > 0) {
+      throw new Error(
+        `MCP installation is incomplete. Missing: ${missing.join(", ")}. Run chat-js add mcp to restore the missing files.`
+      );
     }
   }
+  const ui =
+    mcp && options.addUi
+      ? await Promise.all([
+          planContribution(
+            path.join(cwd, "composer-controls.ts"),
+            "composerControls",
+            "ConnectorsControl",
+            "@/features/mcp/composer",
+            (binding) => `{ Component: ${binding}, id: "mcp" }`
+          ),
+          planContribution(
+            path.join(cwd, "settings-items.ts"),
+            "settingsItems",
+            "mcpSettingsItem",
+            "@/features/mcp/settings",
+            (binding) => binding
+          ),
+        ])
+      : [];
   await mkdir(path.join(cwd, "features"), { recursive: true });
-  await writeFile(
-    path.join(cwd, "features/installed-routers.ts"),
-    `// Generated by chat-js sync.\n${mcp ? 'import { mcpRouter } from "@/trpc/routers/mcp.router";\n\n' : ""}export const installedRouters = {${mcp ? " mcp: mcpRouter " : ""}};\n`
-  );
-  await writeFile(
-    path.join(cwd, "features/installed.ts"),
-    `// Generated by chat-js sync.\nexport const installedFeatures: ReadonlySet<string> = new Set(${JSON.stringify(mcp ? ["mcp"] : [])});\n`
-  );
-  if (mcp && options.addUi) {
-    await appendContribution(
-      path.join(cwd, "composer-controls.ts"),
-      "composerControls",
-      '{ Component: ConnectorsControl, id: "mcp" }',
-      'import { ConnectorsControl } from "@/features/mcp/composer";',
-      "@/features/mcp/composer"
-    );
-    await appendContribution(
-      path.join(cwd, "settings-items.ts"),
-      "settingsItems",
-      "mcpSettingsItem",
-      'import { mcpSettingsItem } from "@/features/mcp/settings";',
-      "@/features/mcp/settings"
-    );
-  }
+  await Promise.all([
+    writeFile(
+      path.join(cwd, "features/installed-routers.ts"),
+      `// Generated by chat-js sync.\n${mcp ? 'import { mcpRouter } from "@/trpc/routers/mcp.router";\n\n' : ""}export const installedRouters = {${mcp ? " mcp: mcpRouter " : ""}};\n`
+    ),
+    writeFile(
+      path.join(cwd, "features/installed.ts"),
+      `// Generated by chat-js sync.\nexport const installedFeatures: ReadonlySet<string> = new Set(${mcp ? '["mcp"]' : ""});\n`
+    ),
+    ...ui.map(({ file, content }) => writeFile(file, content)),
+  ]);
 };
 
 // Only fresh scaffolds use defaults. Cloning and sync never call this function.
