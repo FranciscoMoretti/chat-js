@@ -90,7 +90,7 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
             <DropdownMenuCheckboxItem
               key={connector.id}
               checked={connector.enabled}
-              disabled={disabled}
+              disabled={disabled || connector.userId === null}
               onSelect={(event) => event.preventDefault()}
               onCheckedChange={(enabled) =>
                 toggleEnabled({ enabled, id: connector.id })

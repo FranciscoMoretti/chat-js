@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   authenticated: true,
   connectors: [{ enabled: true, id: "docs", name: "Documentation" }],
   error: false,
+  globalConnector: false,
   mobile: false,
   pending: false,
   toggle: vi.fn(),
@@ -75,7 +76,10 @@ vi.mock("@/trpc/react", () => ({
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ mutate: state.toggle }),
   useQuery: () => ({
-    data: state.connectors,
+    data: state.connectors.map((connector) => ({
+      ...connector,
+      userId: state.globalConnector ? null : "fixture",
+    })),
     isError: state.error,
     isPending: state.pending,
   }),
@@ -138,6 +142,7 @@ afterEach(() => {
   state.mobile = false;
   state.pending = false;
   state.error = false;
+  state.globalConnector = false;
   state.connectors = [{ enabled: true, id: "docs", name: "Documentation" }];
   vi.clearAllMocks();
 });
@@ -317,6 +322,18 @@ for (const selected of ["webSearch", "editTextDocument"] as const) {
           page.getByRole("menuitemcheckbox", { name: "Create an image" })
         )
         .toHaveAttribute("aria-disabled", "true");
+      if (selected === "editTextDocument") {
+        await expect
+          .element(
+            page.getByRole("menuitemcheckbox", { exact: true, name: "Canvas" })
+          )
+          .toBeChecked();
+      }
+      await expect
+        .element(
+          page.getByRole("menuitemcheckbox", { name: "Create an image" })
+        )
+        .toHaveTextContent("not supported");
       await takeSnapshot(`composer-clear-${selected}`);
       await act(() => page.getByRole("menuitem", { name: /^Clear /u }).click());
       await expect
@@ -341,6 +358,26 @@ test("missing catalog capability metadata does not block tool selection", async 
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .toHaveTextContent("Search");
+  } finally {
+    await cleanup();
+  }
+});
+
+test("global connectors remain visible but cannot invoke the own-only toggle", async () => {
+  state.globalConnector = true;
+  const cleanup = await mount();
+  try {
+    await act(() =>
+      page.getByRole("button", { name: "Composer options" }).click()
+    );
+    await act(() =>
+      page.getByRole("menuitem", { exact: true, name: "Connectors" }).hover()
+    );
+    await expect
+      .element(page.getByRole("menuitemcheckbox", { name: "Documentation" }))
+      .toHaveAttribute("aria-disabled", "true");
+    await takeSnapshot("composer-global-connectors");
+    expect(state.toggle).not.toHaveBeenCalled();
   } finally {
     await cleanup();
   }
