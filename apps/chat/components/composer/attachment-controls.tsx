@@ -68,3 +68,7 @@ export const TakePhotoControl = ({
     </DropdownMenuItem>
   );
 };
+
+AttachFilesControl.isAvailable = () => config.features.attachments;
+TakePhotoControl.isAvailable = (mobile: boolean) =>
+  config.features.attachments && mobile;

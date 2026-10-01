@@ -68,16 +68,21 @@ const ToolControl = ({
   );
 };
 
-export const CanvasControl = (props: ComposerControlProps) => {
+const canvasTools = {
+  code: "createCodeDocument",
+  sheet: "createSheetDocument",
+  text: "createTextDocument",
+} as const;
+const getCanvasTool = () => {
   const kind = (["text", "code", "sheet"] as const).find(
-    (entry) => config.ai.tools.documents.types[entry]
+    (entry) =>
+      config.ai.tools.documents.types[entry] &&
+      installedToolNames.has(canvasTools[entry])
   );
-  const tools = {
-    code: "createCodeDocument",
-    sheet: "createSheetDocument",
-    text: "createTextDocument",
-  } as const;
-  const tool = kind ? tools[kind] : undefined;
+  return kind ? canvasTools[kind] : undefined;
+};
+export const CanvasControl = (props: ComposerControlProps) => {
+  const tool = getCanvasTool();
   return config.ai.tools.documents.enabled && tool ? (
     <ToolControl {...props} tool={tool} />
   ) : null;
@@ -98,3 +103,15 @@ export const VideoControl = (props: ComposerControlProps) =>
   config.ai.tools.video.enabled ? (
     <ToolControl {...props} tool="generateVideo" />
   ) : null;
+
+CanvasControl.isAvailable = () =>
+  config.ai.tools.documents.enabled && Boolean(getCanvasTool());
+SearchControl.isAvailable = () =>
+  config.ai.tools.webSearch.enabled && installedToolNames.has("webSearch");
+ResearchControl.isAvailable = () =>
+  config.ai.tools.deepResearch.enabled &&
+  installedToolNames.has("deepResearch");
+ImageControl.isAvailable = () =>
+  config.ai.tools.image.enabled && installedToolNames.has("generateImage");
+VideoControl.isAvailable = () =>
+  config.ai.tools.video.enabled && installedToolNames.has("generateVideo");

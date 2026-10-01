@@ -12,5 +12,8 @@ export type ComposerControlProps = {
 
 export type ComposerControl = {
   id: string;
-  Component: ComponentType<ComposerControlProps>;
+  Component: ComponentType<ComposerControlProps> & {
+    /** Controls that can render nothing expose their availability to the menu. */
+    isAvailable?: (isMobile: boolean) => boolean;
+  };
 };
