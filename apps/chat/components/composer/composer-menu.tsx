@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -41,20 +42,22 @@ export const ComposerMenu = (props: ComposerControlProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        {controls.map(({ id, Component }) => (
-          <Component key={id} {...props} />
-        ))}
-        {props.selectedTool && (
-          <>
-            {controls.length > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuItem
-              disabled={props.disabled}
-              onSelect={() => props.onToolChange(null)}
-            >
-              Clear {toolDefinitions[props.selectedTool].shortName}
-            </DropdownMenuItem>
-          </>
-        )}
+        <DropdownMenuGroup>
+          {controls.map(({ id, Component }) => (
+            <Component key={id} {...props} />
+          ))}
+          {props.selectedTool && (
+            <>
+              {controls.length > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuItem
+                disabled={props.disabled}
+                onSelect={() => props.onToolChange(null)}
+              >
+                Clear {toolDefinitions[props.selectedTool].shortName}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

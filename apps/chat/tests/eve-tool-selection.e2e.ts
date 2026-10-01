@@ -63,9 +63,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await page
     .getByRole("button", { exact: true, name: "Composer options" })
     .click();
-  await page
-    .getByRole("menuitemcheckbox", { exact: true, name: "Canvas" })
-    .click();
+  await page.getByRole("menuitem", { exact: true, name: "Canvas" }).click();
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(intended.message);

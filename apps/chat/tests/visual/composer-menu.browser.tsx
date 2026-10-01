@@ -198,7 +198,7 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
       "Connectors",
     ]);
     await act(() =>
-      page.getByRole("menuitemcheckbox", { name: "Web Search" }).click()
+      page.getByRole("menuitem", { name: /Web Search/u }).click()
     );
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
@@ -207,11 +207,11 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
       page.getByRole("button", { name: "Composer options" }).click()
     );
     await expect
-      .element(page.getByRole("menuitemcheckbox", { name: "Web Search" }))
-      .toBeChecked();
+      .element(page.getByRole("menuitem", { name: /Web Search/u }))
+      .toHaveAttribute("data-selected", "true");
     await takeSnapshot("composer-selected-tool");
     await act(() =>
-      page.getByRole("menuitemcheckbox", { name: "Web Search" }).click()
+      page.getByRole("menuitem", { name: /Web Search/u }).click()
     );
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
@@ -255,9 +255,16 @@ test("mobile camera and guest controls respect the same order; disabled composer
     await expect
       .element(page.getByRole("menuitem", { name: "Take photo" }))
       .toBeVisible();
+    await act(() =>
+      page.getByRole("menuitem", { exact: true, name: "Connectors" }).hover()
+    );
     await expect
-      .element(page.getByRole("menuitem", { exact: true, name: "Connectors" }))
-      .toHaveAttribute("aria-disabled", "true");
+      .element(page.getByRole("menuitem", { exact: true, name: "Sign in" }))
+      .toHaveAttribute("href", "/login");
+    await takeSnapshot("composer-guest-connectors");
+    await act(() =>
+      page.getByRole("menuitem", { name: "Attach files" }).hover()
+    );
     await takeSnapshot("composer-mobile-guest");
     await act(() =>
       page.getByRole("menuitem", { name: "Attach files" }).click()
@@ -359,21 +366,15 @@ for (const selected of ["webSearch", "editTextDocument"] as const) {
         page.getByRole("button", { name: "Composer options" }).click()
       );
       await expect
-        .element(
-          page.getByRole("menuitemcheckbox", { name: "Create an image" })
-        )
+        .element(page.getByRole("menuitem", { name: "Create an image" }))
         .toHaveAttribute("aria-disabled", "true");
       if (selected === "editTextDocument") {
         await expect
-          .element(
-            page.getByRole("menuitemcheckbox", { exact: true, name: "Canvas" })
-          )
-          .toBeChecked();
+          .element(page.getByRole("menuitem", { name: /^Canvas/u }))
+          .toHaveAttribute("data-selected", "true");
       }
       await expect
-        .element(
-          page.getByRole("menuitemcheckbox", { name: "Create an image" })
-        )
+        .element(page.getByRole("menuitem", { name: /Create an image/u }))
         .toHaveTextContent("not supported");
       await takeSnapshot(`composer-clear-${selected}`);
       await act(() => page.getByRole("menuitem", { name: /^Clear /u }).click());
@@ -394,7 +395,7 @@ test("missing catalog capability metadata does not block tool selection", async 
       page.getByRole("button", { name: "Composer options" }).click()
     );
     await act(() =>
-      page.getByRole("menuitemcheckbox", { name: "Web Search" }).click()
+      page.getByRole("menuitem", { name: /Web Search/u }).click()
     );
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
