@@ -7,6 +7,7 @@ import { videoGenerationEnvRequirement } from "@/tools/chatjs/video-generation-c
 import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
+const ENV_VAR_NAME_PATTERN = /\b[A-Z_][A-Z0-9_]*\b/gu;
 
 export interface EnvRequirement {
   allOf?: EnvRequirement[];
@@ -26,10 +27,16 @@ export const formatRequirementDescription = (
   const keys = requirement.options
     .map((option) => option.join(" + "))
     .join(" or ");
-  if (requirement.description && keys && requirement.description !== keys) {
+  const describedKeys = new Set(
+    requirement.description?.match(ENV_VAR_NAME_PATTERN)
+  );
+  const namesAlreadyListed = requirement.options
+    .flat()
+    .every((name) => describedKeys.has(String(name)));
+  if (requirement.description && keys && !namesAlreadyListed) {
     return `${requirement.description} (${keys})`;
   }
-  return requirement.description ?? keys;
+  return requirement.description || keys;
 };
 
 export const aiToolEnvRequirements: Partial<
