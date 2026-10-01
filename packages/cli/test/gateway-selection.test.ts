@@ -796,6 +796,20 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
         )
       );
       await run(cwd, ["bun", "run", "lint"]);
+      // Core-only generation has already passed types and lint; add uploads independently.
+      expect(
+        await Bun.file(
+          join(cwd, "app/(chat)/api/files/upload/route.ts")
+        ).exists()
+      ).toBe(false);
+      await runCli(cwd, ["add", "attachment-uploads", "--yes"]);
+      expect(
+        await Bun.file(
+          join(cwd, "app/(chat)/api/files/upload/route.ts")
+        ).exists()
+      ).toBe(true);
+      await run(cwd, ["bun", "run", "test:types"]);
+      await run(cwd, ["bun", "run", "lint"]);
       const longDirectory = join(cwd, "tools/chatjs/long-renderer");
       await mkdir(longDirectory);
       const toolExport =

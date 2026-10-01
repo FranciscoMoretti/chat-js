@@ -8,9 +8,12 @@ import { page, userEvent } from "vitest/browser";
 import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
 import { EveComposer } from "@/components/eve/eve-composer";
+import { useEveAttachments } from "@/components/eve/use-eve-attachments";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { composerControls } from "@/composer-controls";
 import type { UiToolName } from "@/lib/ai/types";
+import type { DraftAttachment } from "@/lib/eve/draft";
+import type { AttachmentUploadState } from "@/lib/installation-contracts";
 import type { composerTools } from "@/tools/chatjs/composer-tools";
 
 import "./sandbox.css";
@@ -23,6 +26,7 @@ const state = vi.hoisted(() => ({
   featuresEnabled: true,
   globalConnector: false,
   handleSubmit: vi.fn(),
+  history: new Array<DraftAttachment>(),
   missingMetadata: false,
   mobile: false,
   pending: false,
@@ -30,6 +34,35 @@ const state = vi.hoisted(() => ({
   toggle: vi.fn(),
   toolCall: true,
   unknownCapabilities: false,
+  upload: vi.fn(),
+  uploadsInstalled: true,
+}));
+vi.mock("@/features/installed-uploads", async () => {
+  const { attachmentUploadIntegration } =
+    await import("@/features/attachment-uploads/integration");
+  const useFixtureUploads = (files: AttachmentUploadState) => {
+    const behavior = attachmentUploadIntegration.useUploads(files);
+    return state.uploadsInstalled
+      ? behavior
+      : { ...files, upload: () => Promise.resolve(), uploadQueue: [] };
+  };
+  return {
+    attachmentUploads: {
+      controls: attachmentUploadIntegration.controls,
+      useUploads: useFixtureUploads,
+    },
+  };
+});
+vi.mock("@/features/attachment-uploads/upload", () => ({
+  uploadAttachment: (file: File) => {
+    state.upload(file);
+    return Promise.resolve({
+      contentType: file.type,
+      digest: "fixture",
+      name: file.name,
+      url: `/api/files/${String(state.upload.mock.calls.length).padStart(24, "0")}.png`,
+    });
+  },
 }));
 vi.mock("@/providers/session-provider", () => ({
   useSession: () => ({
@@ -40,7 +73,7 @@ vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => state.mobile }));
 vi.mock("@/providers/chat-models-provider", () => ({
   useChatModels: () => ({
     getModelById: () => ({
-      input: { text: true },
+      input: { image: true, pdf: true, text: true },
       toolCall: state.unknownCapabilities ? undefined : state.toolCall,
     }),
   }),
@@ -77,15 +110,23 @@ vi.mock("@/lib/config", () => ({
         },
       },
     },
-    features: {
-      get attachments() {
-        return state.featuresEnabled;
+    attachments: {
+      acceptedTypes: {
+        "application/pdf": [".pdf"],
+        "image/jpeg": [".jpg"],
+        "image/png": [".png"],
       },
+      maxBytes: 1_048_576,
+      maxDimension: 2048,
     },
   },
 }));
 vi.mock("@/features/installed", () => ({
-  installedFeatures: { has: () => state.featuresEnabled },
+  installedFeatures: {
+    has: (id: string) =>
+      state.featuresEnabled &&
+      (id !== "attachment-uploads" || state.uploadsInstalled),
+  },
 }));
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedToolNames: {
@@ -168,18 +209,15 @@ const mount = async (
   document.body.append(container);
   const root = createRoot(container);
   const Fixture = () => {
+    const [attachments, setAttachments] = useState(state.history);
+    const files = useEveAttachments({ attachments, setAttachments });
     const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
       initialTool
     );
     if (fullComposer) {
       return (
         <EveComposer
-          files={{
-            attachments: [],
-            setAttachments: vi.fn(),
-            upload: vi.fn().mockResolvedValue(undefined),
-            uploadQueue: [],
-          }}
+          files={files}
           selectedTool={selectedTool}
           onToolChange={setSelectedTool}
           disabled={disabled}
@@ -224,6 +262,8 @@ const mount = async (
 };
 afterEach(() => {
   composerControls.splice(0, composerControls.length, ...originalControls);
+  state.history = [];
+  state.uploadsInstalled = true;
   state.removedTool = false;
   state.missingMetadata = false;
   state.authenticated = true;
@@ -283,7 +323,7 @@ test("one ordered menu selects and clears tools, attaches files, and toggles con
       page.getByRole("menuitem", { exact: true, name: "Attach files" }).click()
     );
     expect(state.attach).toHaveBeenCalledWith(
-      "image/jpeg,image/png,application/pdf"
+      "application/pdf,image/jpeg,image/png"
     );
     await act(() =>
       page.getByRole("button", { name: "Composer options" }).click()
@@ -621,5 +661,120 @@ test("installed tool without display metadata remains selectable and can send", 
     await takeSnapshot("composer-missing-display-metadata");
   } finally {
     await cleanup();
+  }
+});
+
+test("installed uploads handle picker, paste and drop; omitted uploads leave no input or upload handlers", async () => {
+  const cleanup = await mount(false, null, true);
+  try {
+    const file = new File([new Uint8Array([1, 2, 3])], "photo.png", {
+      type: "image/png",
+    });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    const input =
+      document.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!input) {
+      throw new Error("Missing installed upload picker");
+    }
+    await act(() => {
+      input.files = transfer.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await expect
+      .element(page.getByTestId("input-attachment-preview"))
+      .toBeVisible();
+    expect(state.upload).toHaveBeenCalledOnce();
+    await expect
+      .element(page.getByRole("button", { name: "Composer options" }))
+      .toBeEnabled();
+    await takeSnapshot("composer-installed-upload-preview");
+    const pasted = new DataTransfer();
+    pasted.items.add(file);
+    expect(pasted.files).toHaveLength(1);
+    const message = page
+      .getByRole("textbox", { exact: true, name: "Message" })
+      .element();
+    await act(() => {
+      message.dispatchEvent(
+        new ClipboardEvent("paste", {
+          bubbles: true,
+          cancelable: true,
+          clipboardData: pasted,
+        })
+      );
+    });
+    await vi.waitFor(() => expect(state.upload).toHaveBeenCalledTimes(2));
+    const composer = page
+      .getByRole("group", { name: "Message composer" })
+      .element();
+    await act(() => {
+      composer.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: pasted,
+        })
+      );
+    });
+    await vi.waitFor(() => expect(state.upload).toHaveBeenCalledTimes(3));
+  } finally {
+    await cleanup();
+  }
+  state.uploadsInstalled = false;
+  state.history = [
+    {
+      contentType: "application/pdf",
+      digest: "fixture",
+      name: "historical.pdf",
+      url: "/api/files/abcdefghijklmnopqrstuvwx.pdf",
+    },
+  ];
+  state.upload.mockClear();
+  const omittedCleanup = await mount(false, null, true);
+  try {
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+    await expect
+      .element(page.getByTestId("input-attachment-preview"))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Send" }))
+      .toBeEnabled();
+    const transfer = new DataTransfer();
+    transfer.items.add(
+      new File(["fixture"], "photo.png", { type: "image/png" })
+    );
+    const composer = page
+      .getByRole("group", { name: "Message composer" })
+      .element();
+    const message = page
+      .getByRole("textbox", { exact: true, name: "Message" })
+      .element();
+    await act(() => {
+      composer.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: transfer,
+        })
+      );
+      message.dispatchEvent(
+        new ClipboardEvent("paste", {
+          bubbles: true,
+          cancelable: true,
+          clipboardData: transfer,
+        })
+      );
+    });
+    expect(state.upload).not.toHaveBeenCalled();
+    await act(() =>
+      page.getByRole("button", { name: "Composer options" }).click()
+    );
+    await expect
+      .element(page.getByRole("menuitem", { name: "Attach files" }))
+      .not.toBeInTheDocument();
+    await takeSnapshot("composer-uploads-omitted");
+  } finally {
+    await omittedCleanup();
   }
 });

@@ -74,6 +74,7 @@ export const processFilesForUpload = async (
   options: {
     maxBytes: number;
     maxDimension: number;
+    acceptedTypes: Record<string, string[]>;
   }
 ): Promise<{
   processedImages: File[];
@@ -88,7 +89,9 @@ export const processFilesForUpload = async (
   const { maxBytes } = options;
 
   for (const file of files) {
-    if (file.type.startsWith("image/")) {
+    if (!Object.hasOwn(options.acceptedTypes, file.type)) {
+      unsupportedFiles.push(file);
+    } else if (file.type.startsWith("image/")) {
       // oxlint-disable-next-line no-await-in-loop -- Compress one image at a time to bound browser worker and memory use.
       const maybeCompressed = await compressImageIfNeeded(file, options);
       if (maybeCompressed.size > maxBytes) {

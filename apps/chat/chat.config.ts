@@ -112,7 +112,6 @@ const config = defineConfig({
   },
   features: {
     // Requires BLOB_READ_WRITE_TOKEN
-    attachments: true,
     parallelResponses: true,
   },
   legal: {

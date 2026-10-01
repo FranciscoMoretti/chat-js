@@ -95,9 +95,7 @@ describe("buildConfigTs", () => {
     expect(output).toContain("sheet: true");
     expect(output).toContain("codeExecution: {");
     expect(output).toContain("enabled: false");
-    expect(output).toContain(
-      "// File attachments (requires configured file storage)\n    attachments: false,"
-    );
+    expect(output).not.toContain("attachments: false");
   });
   it("writes desktopApp.enabled=true for Electron scaffolds", () => {
     const output = buildConfigTs({

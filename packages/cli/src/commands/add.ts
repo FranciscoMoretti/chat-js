@@ -39,10 +39,17 @@ export const add = new Command("add")
         }
       }
       const mcp = plan.features.some((feature) => feature.id === "mcp");
+      const uploads = plan.features.some(
+        (feature) => feature.id === "attachment-uploads"
+      );
       await installItems(plan.sources, cwd, options.overwrite);
       try {
         await syncTools(cwd, { expected: plan.expected });
-        await syncFeatures(cwd, { addUi: mcp, expectedMcp: mcp });
+        await syncFeatures(cwd, {
+          addUi: mcp || uploads,
+          expectedMcp: mcp,
+          expectedUploads: uploads,
+        });
         if (mcp) {
           log.info(
             "MCP installed. Set MCP_ENCRYPTION_KEY before connecting servers."

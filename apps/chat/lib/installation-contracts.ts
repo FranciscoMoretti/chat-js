@@ -1,5 +1,11 @@
 import type { AnyTRPCRouter } from "@trpc/server";
-import type { ComponentType, Dispatch, SetStateAction } from "react";
+import type {
+  ComponentType,
+  Dispatch,
+  HTMLAttributes,
+  ReactNode,
+  SetStateAction,
+} from "react";
 
 import type { ComposerControl } from "@/components/composer/control";
 import type { SettingsItem } from "@/components/settings/settings-item";
@@ -27,6 +33,11 @@ export interface AttachmentUploadState {
 export interface AttachmentUploadBehavior extends AttachmentUploadState {
   upload: (files: File[]) => Promise<void>;
   uploadQueue: string[];
+  composer?: (disabled: boolean) => {
+    rootProps: HTMLAttributes<HTMLDivElement>;
+    input: ReactNode;
+    onAttach: (accept: string, capture?: "user" | "environment") => void;
+  };
 }
 export interface AttachmentUploadIntegration {
   useUploads: (state: AttachmentUploadState) => AttachmentUploadBehavior;
