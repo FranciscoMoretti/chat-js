@@ -9,6 +9,7 @@ import {
 import { getMcpConnectorById, getSessionByState } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";
+import { MissingCredentialsError } from "@/lib/required-credentials";
 
 const log = createModuleLogger("mcp-oauth-callback");
 
@@ -60,7 +61,14 @@ export const GET = async (request: NextRequest) => {
     });
   }
 
-  requireMcpCredentials();
+  try {
+    requireMcpCredentials();
+  } catch (setupError) {
+    if (setupError instanceof MissingCredentialsError) {
+      return redirectToConnector({ errorMessage: setupError.message });
+    }
+    throw setupError;
+  }
 
   // Look up the session by state
   const session = await getSessionByState({ state });

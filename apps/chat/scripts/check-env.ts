@@ -174,7 +174,12 @@ const validateInstalledItems = async (
       return mod.envRequirements.flatMap((toolEnvVar) => {
         const missing = getMissingRequirement(toolEnvVar, env);
         return missing
-          ? [{ feature: `${directory}.${entry.name}`, missing: [missing] }]
+          ? [
+              {
+                feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+                missing: [missing],
+              },
+            ]
           : [];
       });
     })
