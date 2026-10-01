@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { toolDefinitions } from "@/components/chat-features-definitions";
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
@@ -11,6 +12,13 @@ import { useSession } from "@/providers/session-provider";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
 
 import type { ComposerControlProps } from "./control";
+
+const loginPrompt = (
+  <LoginPrompt
+    title="Sign in to use tools"
+    description="Sign in to use this feature in your conversation."
+  />
+);
 
 const ToolControl = ({
   tool,
@@ -29,13 +37,20 @@ const ToolControl = ({
   return (
     <DropdownMenuCheckboxItem
       checked={selectedTool === tool}
-      disabled={disabled || !getModelById(selectedModelId)?.input}
+      disabled={
+        disabled ||
+        (selectedTool !== tool && !getModelById(selectedModelId)?.toolCall)
+      }
       onSelect={() => {
-        if (!session?.user) {
-          toast.error("Sign in to use tools.");
+        if (selectedTool === tool) {
+          onToolChange(null);
           return;
         }
-        onToolChange(selectedTool === tool ? null : tool);
+        if (!session?.user) {
+          toast(loginPrompt);
+          return;
+        }
+        onToolChange(tool);
       }}
     >
       <Icon />
