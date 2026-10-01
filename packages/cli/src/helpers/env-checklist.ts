@@ -94,13 +94,14 @@ const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
       continue;
     }
 
-    addRequirementEntries(
-      featureItems,
-      coreFeatureEnvRequirements[
-        feature as keyof typeof coreFeatureEnvRequirements
-      ],
-      seen
-    );
+    for (const requirement of coreFeatureEnvRequirements[feature] ?? []) {
+      addRequirementEntries(
+        featureItems,
+        requirement,
+        seen,
+        JSON.stringify(requirement.options)
+      );
+    }
   }
 
   for (const tool of BUILT_IN_TOOL_KEYS) {

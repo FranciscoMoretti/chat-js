@@ -29,6 +29,7 @@ import {
   updateMcpConnector,
 } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
+import { MissingCredentialsError } from "@/lib/required-credentials";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 const log = createModuleLogger("mcp.router");
@@ -40,7 +41,18 @@ const assertMcpReady = () => {
       message: "MCP is not installed",
     });
   }
-  requireMcpCredentials();
+  try {
+    requireMcpCredentials();
+  } catch (error) {
+    if (error instanceof MissingCredentialsError) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: error.message,
+        cause: error,
+      });
+    }
+    throw error;
+  }
 };
 
 /**
