@@ -28,7 +28,7 @@ export const formatRequirementDescription = (
     .map((option) => option.join(" + "))
     .join(" or ");
   const describedKeys = new Set(
-    requirement.description?.match(ENV_VAR_NAME_PATTERN) ?? undefined
+    requirement.description?.match(ENV_VAR_NAME_PATTERN)
   );
   const namesAlreadyListed = requirement.options
     .flat()
