@@ -58,4 +58,4 @@ Additionally, a completed write leaves an already-visible artifact unchanged. Be
 
 Verify desktop/mobile, empty/populated projects, slow and rejected metadata mutations, project first send, document create/edit streaming, old revision viewing, and document visibility across branch selection. Keep these UI parity fixes separate from the accepted controller commit.
 
-Follow-up implementation and verification: [UI parity implementation](eve-ui-audit/implementation.md).
+Follow-up verification: [UI parity verification](eve-ui-audit/verification-2026-09-22.md).
