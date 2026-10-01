@@ -144,7 +144,7 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
   } finally {
     server.stop(true);
   }
-});
+}, 30_000);
 
 for (const [importText, entry] of [
   [

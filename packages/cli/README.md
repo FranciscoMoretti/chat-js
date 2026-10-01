@@ -52,8 +52,10 @@ Tools install under `tools/chatjs`; `paths.tools` is no longer configuration. Ge
 
 Selecting MCP during app creation installs its tRPC router, connector settings pages, OAuth callback, and agent integration. Skipping MCP leaves those source files out; its database tables and historical message rendering remain available. The MCP registry item reads the demo implementation directly.
 
-Use `chat-js add mcp` to install MCP later. Enable `ai.tools.mcp.enabled` in `chat.config.ts` when activating an installation that was configured without it. For a direct shadcn installation, run `chat-js sync` to register the server feature and add the MCP entries to the UI arrays yourself.
+Use `chat-js add mcp` to install MCP later. Enable `ai.tools.mcp.enabled` in `chat.config.ts` when activating an installation that was configured without it, and set `MCP_ENCRYPTION_KEY` in the environment before connecting servers. For a direct shadcn installation, run `chat-js sync` to register the server feature and add the MCP entries to the UI arrays yourself.
 
 `composer-controls.ts` contains the initial order of attachments, tool choices, and connectors in the single composer menu. The model picker stays visible beside it. `settings-items.ts` controls settings navigation. Both arrays belong to the application: reorder or extend them freely. `chat-js sync` preserves them; `chat-js add mcp` appends missing MCP contributions without reordering existing entries. If a customized array can no longer be extended automatically, the CLI reports the manual integration needed.
 
 `features/installed-routers.ts` and `features/installed.ts` are generated from installed feature descriptors. Keep application-specific routers in the main tRPC composition. Bundle and dependency optimization are separate from this source-installation boundary.
+
+Automatic MCP removal is not supported. To remove MCP manually, remove its entries and imports from `composer-controls.ts` and `settings-items.ts`, remove the installed MCP source and `features/mcp/chatjs.json`, then run `chat-js sync`. Sync preserves application-owned UI files. Disabling MCP in configuration keeps its source installed.

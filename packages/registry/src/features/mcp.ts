@@ -1,5 +1,7 @@
 import type { RegistryItem } from "shadcn/schema";
 
+import { featureDefinitionSchema } from "../../metadata";
+
 // The demo is the canonical implementation. Registry builds read these files directly.
 export const mcpFiles = [
   "agent/tools/mcp.ts",
@@ -35,7 +37,13 @@ export const mcpItem: RegistryItem = {
     target: `~/${file}`,
     type: "registry:file",
   })),
-  meta: { chatjs: { contractVersion: 1, id: "mcp", kind: "feature" } },
+  meta: {
+    chatjs: featureDefinitionSchema.parse({
+      contractVersion: 1,
+      id: "mcp",
+      kind: "feature",
+    }),
+  },
   name: "mcp",
   type: "registry:item",
 };
