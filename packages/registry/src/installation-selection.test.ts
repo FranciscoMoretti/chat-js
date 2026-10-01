@@ -15,10 +15,22 @@ test("selection accepts addresses and rejects unknown presence/config fields", (
       storage: { source: "memory" },
       tools: ["word-count"],
     })
-  ).toMatchObject({ storage: { options: {}, source: "memory" } });
+  ).toEqual({
+    features: ["@chatjs/mcp"],
+    gateway: "https://example.com/gateway.json",
+    storage: { options: {}, source: "memory" },
+    tools: ["word-count"],
+  });
   expect(() => installationSelectionSchema.parse({ mcp: true })).toThrow();
   expect(() =>
     installationSelectionSchema.parse({ storage: { source: "" } })
   ).toThrow();
   expect(() => installationSelectionSchema.parse({ features: [""] })).toThrow();
+  expect(() => installationSelectionSchema.parse({ gateway: "" })).toThrow();
+  expect(() => installationSelectionSchema.parse({ tools: [""] })).toThrow();
+  expect(() =>
+    installationSelectionSchema.parse({
+      storage: { enabled: true, source: "memory" },
+    })
+  ).toThrow();
 });

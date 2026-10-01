@@ -23,10 +23,13 @@ export const formatRequirementDescription = (
       .map((group) => `(${formatRequirementDescription(group)})`)
       .join(" and ");
   }
-  return (
-    requirement.description ??
-    requirement.options.map((option) => option.join(" + ")).join(" or ")
-  );
+  const keys = requirement.options
+    .map((option) => option.join(" + "))
+    .join(" or ");
+  if (requirement.description && keys && requirement.description !== keys) {
+    return `${requirement.description} (${keys})`;
+  }
+  return requirement.description ?? keys;
 };
 
 export const aiToolEnvRequirements: Partial<

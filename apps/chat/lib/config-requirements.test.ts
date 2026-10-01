@@ -85,3 +85,28 @@ test("formats nested allOf requirements without losing credential names", () => 
     )
   ).toContain("MISSING_KEY");
 });
+
+test("code execution credential descriptions retain actionable environment key names", () => {
+  const described: EnvRequirement = {
+    ...sandbox,
+    description: "Vercel OIDC or team/project/token credentials",
+  };
+  const missing = getMissingRequirement(
+    { allOf: [described], options: [] },
+    { NODE_ENV: "test" }
+  );
+  for (const key of [
+    "VERCEL_OIDC_TOKEN",
+    "VERCEL_TEAM_ID",
+    "VERCEL_PROJECT_ID",
+    "VERCEL_TOKEN",
+  ]) {
+    expect(missing).toContain(key);
+  }
+  expect(
+    getMissingRequirement(
+      { allOf: [described], options: [] },
+      { NODE_ENV: "test", VERCEL: "1" }
+    )
+  ).toBeNull();
+});
