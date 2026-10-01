@@ -3,7 +3,7 @@ title: "Configuration"
 description: "Customize ChatJS via chat.config.ts"
 ---
 
-All feature toggles and app settings live in `chat.config.ts`. It is parsed and exported as `config` from `@/lib/config`.
+App settings and runtime feature toggles live in `chat.config.ts`. MCP availability comes from its installed registrations. It is parsed and exported as `config` from `@/lib/config`.
 
 ## Config Structure
 
@@ -28,7 +28,6 @@ const config: ConfigInput = {
       webSearch: { enabled: true },
       urlRetrieval: { enabled: true },
       codeExecution: { enabled: true },
-      mcp: { enabled: false },
       followupSuggestions: { enabled: true, default: "openai/gpt-5-nano" },
       image: { enabled: true },
       video: { enabled: true },
@@ -83,14 +82,14 @@ See [Gateways](/gateways/overview) for detailed setup and comparison.
 
 ## Features
 
-Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. Application-level flags live under `features`. Missing env vars are caught at build time via `bun run prebuild`.
+Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. Application-level flags live under `features`. Missing env vars are caught at build time via `bun run prebuild`. Install MCP with `chat-js create my-chat --mcp` or `chat-js add mcp`. Its installed descriptor requires `MCP_ENCRYPTION_KEY`, even before you add connectors.
 
 | Feature | Config Key | Env Dependency |
 | --- | --- | --- |
 | Code Execution | `ai.tools.codeExecution.enabled` | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
 | Web Search | `ai.tools.webSearch.enabled` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
 | URL Retrieval | `ai.tools.urlRetrieval.enabled` | `FIRECRAWL_API_KEY` |
-| MCP Connectors | `ai.tools.mcp.enabled` | `MCP_ENCRYPTION_KEY` |
+| MCP Connectors | Installed with `chat-js add mcp` | `MCP_ENCRYPTION_KEY` |
 | Image Generation | `ai.tools.image.enabled` | Configured file storage provider |
 | Video Generation | `ai.tools.video.enabled` | Configured file storage provider |
 | Deep Research | `ai.tools.deepResearch.enabled` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
@@ -104,7 +103,6 @@ ai: {
     webSearch: { enabled: true },          // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
     urlRetrieval: { enabled: false },      // Requires FIRECRAWL_API_KEY
     codeExecution: { enabled: true },      // Vercel-native
-    mcp: { enabled: false },               // Requires MCP_ENCRYPTION_KEY
     image: { enabled: true },              // Requires durable file storage
     video: { enabled: false },             // Requires durable file storage
     deepResearch: { enabled: false },      // Requires search provider

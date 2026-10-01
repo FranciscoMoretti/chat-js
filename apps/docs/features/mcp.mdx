@@ -9,17 +9,15 @@ description: Connect Model Context Protocol servers to extend AI capabilities
 
 ## Quick Start
 
-Enable MCP in `chat.config.ts`:
+Install MCP during creation, or add it to an existing app:
 
-```typescript
-ai: {
-  tools: {
-    mcp: {
-      enabled: true, // Requires MCP_ENCRYPTION_KEY
-    },
-  },
-}
+```bash
+chat-js create my-chat --mcp
+# Or, inside an existing app:
+chat-js add mcp
 ```
+
+Installation adds the connector settings pages, OAuth callback, router and composer control. Installed registrations determine availability. You can create an app with `--no-mcp` to omit these files.
 
 Generate an encryption key (must be exactly 44 characters):
 
@@ -35,26 +33,7 @@ MCP_ENCRYPTION_KEY=your_generated_44_char_key
 
 ## Configuration
 
-### In chat.config.ts
-
-Enable the integration:
-
-```typescript title="chat.config.ts"
-import type { ConfigInput } from "@/lib/config-schema";
-
-const config: ConfigInput = {
-  ai: {
-    tools: {
-      mcp: {
-        enabled: true, // Requires MCP_ENCRYPTION_KEY
-      },
-    },
-  },
-  // ... rest of config
-};
-
-export default config;
-```
+MCP has no enable flag in `chat.config.ts`. Set `MCP_ENCRYPTION_KEY` whenever MCP is installed, even before you add connectors. Missing credentials produce an explicit setup error during environment validation and runtime discovery.
 
 ### Environment Variables
 

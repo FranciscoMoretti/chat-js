@@ -1,6 +1,10 @@
 import { expect, test } from "vitest";
 
-import { getMissingRequirement } from "./config-requirements";
+import {
+  authEnvRequirements,
+  formatRequirementDescription,
+  getMissingRequirement,
+} from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
 
 const sandbox: EnvRequirement = {
@@ -109,4 +113,50 @@ test("code execution credential descriptions retain actionable environment key n
       { NODE_ENV: "test", VERCEL: "1" }
     )
   ).toBeNull();
+});
+
+test("credential descriptions avoid duplicate exact key names across separators", () => {
+  const requirement = authEnvRequirements.github;
+  expect(
+    getMissingRequirement(
+      { ...requirement, description: "" },
+      { NODE_ENV: "test" }
+    )
+  ).toBe("AUTH_GITHUB_ID + AUTH_GITHUB_SECRET");
+  expect(getMissingRequirement(requirement, { NODE_ENV: "test" })).toBe(
+    requirement.description
+  );
+  expect(
+    getMissingRequirement(
+      {
+        ...requirement,
+        description: "AUTH_GITHUB_ID_EXTRA, AUTH_GITHUB_SECRET",
+      },
+      { NODE_ENV: "test" }
+    )
+  ).toContain("(AUTH_GITHUB_ID + AUTH_GITHUB_SECRET)");
+});
+
+test("credential descriptions retain the declared AND/OR grouping", () => {
+  expect(
+    formatRequirementDescription({
+      description: "A or B",
+      options: [["A", "B"]],
+    })
+  ).toBe("A or B (A + B)");
+  expect(
+    formatRequirementDescription({
+      description: "A + B",
+      options: [["A"], ["B"]],
+    })
+  ).toBe("A + B (A or B)");
+  expect(
+    formatRequirementDescription({ description: "B, A", options: [["A", "B"]] })
+  ).toBe("B, A");
+  expect(
+    formatRequirementDescription({
+      description: "B or A",
+      options: [["A"], ["B"]],
+    })
+  ).toBe("B or A");
 });

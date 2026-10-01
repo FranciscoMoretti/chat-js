@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
+import { coreFeatureEnvRequirements } from "./config-requirements";
 import { collectEnvChecklist } from "./env-checklist";
 
 describe("collectEnvChecklist", () => {
@@ -134,4 +135,46 @@ describe("collectEnvChecklist", () => {
 
     expect(entries.some((entry) => entry.vars === "CUSTOM_TOKEN")).toBe(true);
   });
+});
+
+it("includes every installed MCP requirement and preserves combined and alternative groups", () => {
+  const previous = coreFeatureEnvRequirements.mcp;
+  coreFeatureEnvRequirements.mcp = [
+    { description: "First", options: [["MCP_ENCRYPTION_KEY"]] },
+    { description: "Second", options: [["TEAM", "TOKEN"], ["OIDC_TOKEN"]] },
+  ];
+  try {
+    const entries = collectEnvChecklist({
+      auth: { github: false, google: false, vercel: false },
+      builtInTools: {
+        codeExecution: false,
+        deepResearch: false,
+        imageGeneration: false,
+        urlRetrieval: false,
+        videoGeneration: false,
+        webSearch: false,
+      },
+      coreFeatures: {
+        attachments: false,
+        documents: false,
+        followupSuggestions: false,
+        mcp: true,
+        parallelResponses: false,
+      },
+      gateway: "openai",
+      gatewayRequirements: [],
+    });
+    expect(entries.map((entry) => entry.vars)).toEqual(
+      expect.arrayContaining([
+        "MCP_ENCRYPTION_KEY",
+        "TEAM + TOKEN",
+        "OIDC_TOKEN",
+      ])
+    );
+    expect(
+      entries.filter((entry) => entry.oneOfGroup === "TEAM+TOKEN|OIDC_TOKEN")
+    ).toHaveLength(2);
+  } finally {
+    coreFeatureEnvRequirements.mcp = previous;
+  }
 });

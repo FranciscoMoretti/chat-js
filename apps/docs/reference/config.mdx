@@ -58,7 +58,6 @@ export type AiConfig = {
     webSearch: { enabled: boolean };
     urlRetrieval: { enabled: boolean };
     codeExecution: { enabled: boolean };
-    mcp: { enabled: boolean };
     followupSuggestions: { enabled: boolean; default: AppModelId };
     text: { polish: AppModelId };
     sheet: { format: AppModelId; analyze: AppModelId };
@@ -198,11 +197,14 @@ Feature flags live under `ai.tools`, `features`, and `authentication`. They're v
 - **`ai.tools.codeExecution.enabled`**: requires `VERCEL_OIDC_TOKEN` (on Vercel) _or_ `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` (self-hosted)
 - **`ai.tools.webSearch.enabled`**: requires `TAVILY_API_KEY` _or_ `FIRECRAWL_API_KEY`
 - **`ai.tools.urlRetrieval.enabled`**: requires `FIRECRAWL_API_KEY` - fetch structured content from URLs
-- **`ai.tools.mcp.enabled`**: requires `MCP_ENCRYPTION_KEY`
 - **`ai.tools.image.enabled`**: requires a configured file storage provider - AI-powered image generation tool
 - **`ai.tools.video.enabled`**: requires a configured file storage provider - AI-powered video generation tool
 - **`ai.tools.deepResearch.enabled`**: requires a configured search provider (`TAVILY_API_KEY` or `FIRECRAWL_API_KEY`)
 - **`ai.tools.followupSuggestions.enabled`**: no extra env var, uses configured language model
+
+### Installed MCP
+
+Create an app with `chat-js create my-chat --mcp`, or run `chat-js add mcp` in an existing app. Installed registrations determine availability. MCP requires `MCP_ENCRYPTION_KEY`, even when no connectors have been added.
 
 ### Features
 

@@ -288,7 +288,9 @@ export const promptCoreFeatures = async (
           ? "Create, edit, and review documents in chat"
           : coreFeatureEnvRequirements[
               key as keyof typeof coreFeatureEnvRequirements
-            ]?.description,
+            ]
+              ?.map((requirement) => requirement.description)
+              .join("; "),
       label: CORE_FEATURE_LABELS[key],
       value: key,
     })),

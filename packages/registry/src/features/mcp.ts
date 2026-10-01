@@ -31,6 +31,13 @@ export const mcpFiles = [
   "trpc/routers/mcp.router.ts",
 ];
 
+export const mcpDefinition = featureDefinitionSchema.parse({
+  contractVersion: 1,
+  envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
+  id: "mcp",
+  kind: "feature",
+});
+
 export const mcpItem: RegistryItem = {
   description: "MCP connectors, management pages, OAuth and composer control",
   files: mcpFiles.map((file) => ({
@@ -39,12 +46,7 @@ export const mcpItem: RegistryItem = {
     type: "registry:file",
   })),
   meta: {
-    chatjs: featureDefinitionSchema.parse({
-      contractVersion: 1,
-      envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
-      id: "mcp",
-      kind: "feature",
-    }),
+    chatjs: mcpDefinition,
   },
   name: "mcp",
   type: "registry:item",
