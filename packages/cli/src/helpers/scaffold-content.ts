@@ -43,6 +43,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/eve/purge-local-sandbox.test.ts",
   "lib/eve/verify-local-coverage.test.ts",
   "lib/eve/tool-selection.test.ts",
+  "lib/eve/mcp-setup.test.ts",
   "tests/fixtures/eve-oauth-mcp-server.ts",
   "vitest.eve.config.ts",
 ]);
@@ -55,7 +56,6 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
       (file.startsWith("lib/ai/mcp/") ||
         file.startsWith("lib/db/mcp-") ||
         file === "lib/eve/mcp-tools.test.ts" ||
-        file === "lib/eve/mcp-setup.test.ts" ||
         file === "lib/eve/mcp-adapter.test.ts" ||
         file === "lib/eve/mcp-registration.test.ts")) ||
     researchAgentDirectories.some(
