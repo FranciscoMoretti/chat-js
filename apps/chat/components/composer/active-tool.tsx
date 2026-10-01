@@ -5,7 +5,8 @@ import { CircleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { UiToolName } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
-import { composerTools } from "@/tools/chatjs/composer-tools";
+
+import { getToolDisplay } from "./tool-display";
 
 export const ActiveTool = ({
   selectedTool,
@@ -19,7 +20,7 @@ export const ActiveTool = ({
   if (!selectedTool) {
     return null;
   }
-  const definition = composerTools[selectedTool];
+  const definition = getToolDisplay(selectedTool);
   const Icon = definition?.icon ?? CircleAlert;
   const label = definition?.shortName ?? "Unavailable tool";
   return (

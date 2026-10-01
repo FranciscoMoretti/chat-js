@@ -23,6 +23,7 @@ const state = vi.hoisted(() => ({
   featuresEnabled: true,
   globalConnector: false,
   handleSubmit: vi.fn(),
+  missingMetadata: false,
   mobile: false,
   pending: false,
   removedTool: false,
@@ -89,13 +90,18 @@ vi.mock("@/lib/config", () => ({
   },
 }));
 vi.mock("@/tools/chatjs/installed-features", () => ({
-  installedToolNames: new Set([
-    "createTextDocument",
-    "webSearch",
-    "deepResearch",
-    "generateImage",
-    "generateVideo",
-  ]),
+  installedToolNames: {
+    has: (name: string) =>
+      name === "webSearch"
+        ? !state.removedTool
+        : [
+            "createTextDocument",
+            "editTextDocument",
+            "deepResearch",
+            "generateImage",
+            "generateVideo",
+          ].includes(name),
+  },
 }));
 vi.mock("@/trpc/react", () => ({
   useTRPC: () => ({
@@ -137,7 +143,9 @@ vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
     composerTools: {
       ...actual.composerTools,
       get webSearch() {
-        return state.removedTool ? undefined : actual.composerTools.webSearch;
+        return state.removedTool || state.missingMetadata
+          ? undefined
+          : actual.composerTools.webSearch;
       },
     },
   };
@@ -219,6 +227,7 @@ const mount = async (
 afterEach(() => {
   composerControls.splice(0, composerControls.length, ...originalControls);
   state.removedTool = false;
+  state.missingMetadata = false;
   state.authenticated = true;
   state.toolCall = true;
   state.unknownCapabilities = false;
@@ -556,7 +565,6 @@ test("removed tool keeps a clearable unavailable pill", async () => {
       .not.toBeInTheDocument();
   } finally {
     await cleanup();
-    vi.restoreAllMocks();
   }
 });
 
@@ -585,6 +593,34 @@ test("unavailable restored tool blocks submission until cleared", async () => {
       page.getByRole("button", { exact: true, name: "Send" }).click()
     );
     expect(state.handleSubmit).toHaveBeenCalledOnce();
+  } finally {
+    await cleanup();
+  }
+});
+
+test("installed tool without display metadata remains selectable and can send", async () => {
+  state.missingMetadata = true;
+  const cleanup = await mount(false, "webSearch", true);
+  try {
+    await expect
+      .element(page.getByRole("button", { name: "Clear webSearch tool" }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Send" }))
+      .toBeEnabled();
+    await act(() =>
+      page.getByRole("button", { exact: true, name: "Send" }).click()
+    );
+    expect(state.handleSubmit).toHaveBeenCalledOnce();
+    await act(() =>
+      page.getByRole("button", { name: "Composer options" }).click()
+    );
+    await expect
+      .element(
+        page.getByRole("menuitemcheckbox", { exact: true, name: "webSearch" })
+      )
+      .toBeChecked();
+    await takeSnapshot("composer-missing-display-metadata");
   } finally {
     await cleanup();
   }

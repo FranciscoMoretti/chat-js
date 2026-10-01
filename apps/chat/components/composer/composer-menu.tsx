@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { composerControls } from "@/composer-controls";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { composerTools } from "@/tools/chatjs/composer-tools";
 
 import type { ComposerControlProps } from "./control";
+import { getToolDisplay } from "./tool-display";
 
 export const ComposerMenu = (props: ComposerControlProps) => {
   const mobile = useIsMobile();
@@ -52,7 +52,7 @@ export const ComposerMenu = (props: ComposerControlProps) => {
                 onSelect={() => props.onToolChange(null)}
               >
                 Clear{" "}
-                {composerTools[props.selectedTool]?.shortName ??
+                {getToolDisplay(props.selectedTool)?.shortName ??
                   "unavailable tool"}
               </DropdownMenuItem>
             </>
