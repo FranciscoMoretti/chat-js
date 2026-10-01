@@ -206,28 +206,45 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
   page,
 }, testInfo) => {
   const recent = Promise.withResolvers<boolean>();
+  await page.route(
+    (url) =>
+      url.pathname.startsWith("/api/trpc/") &&
+      url.pathname.slice("/api/trpc/".length).split(",").includes("eve.list"),
+    async (route) => {
+      const procedures = new URL(route.request().url()).pathname
+        .slice("/api/trpc/".length)
+        .split(",");
+      // Preserve unrelated results when tRPC batches the sidebar queries.
+      const response = procedures.length > 1 ? await route.fetch() : undefined;
+      const data: unknown = response ? await response.json() : [];
+      if (!Array.isArray(data)) {
+        throw new TypeError("Expected a tRPC batch response");
+      }
+      await recent.promise;
+      await route.fulfill({
+        json: procedures.map((procedure, procedureIndex) =>
+          procedure === "eve.list"
+            ? {
+                result: {
+                  data: serialize({
+                    items: Array.from({ length: 8 }, (_, index) => ({
+                      conversationId: `branch-${index}`,
+                      createdAt: "2026-09-25T10:00:00Z",
+                      id: `chat-${index}`,
+                      state: "bound",
+                      title: `Recent conversation ${index + 1}`,
+                    })),
+                    nextCursor: null,
+                  }),
+                },
+              }
+            : data[procedureIndex]
+        ),
+        response,
+      });
+    }
+  );
   await page.goto("/api/dev-login");
-  await page.route("**/api/trpc/eve.list*", async (route) => {
-    await recent.promise;
-    await route.fulfill({
-      json: [
-        {
-          result: {
-            data: serialize({
-              items: Array.from({ length: 8 }, (_, index) => ({
-                conversationId: `branch-${index}`,
-                createdAt: "2026-09-25T10:00:00Z",
-                id: `chat-${index}`,
-                state: "bound",
-                title: `Recent conversation ${index + 1}`,
-              })),
-              nextCursor: null,
-            }),
-          },
-        },
-      ],
-    });
-  });
   await page.getByRole("button", { name: /Search chats/u }).click();
   const dialog = page.getByRole("dialog");
   await expect(
@@ -256,4 +273,29 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
   await expect(
     dialog.getByText("Search across your conversations")
   ).toHaveCount(0);
+
+  // Exercise the CI batch explicitly, regardless of local request timing.
+  const batch = await page.evaluate(async () => {
+    const input = encodeURIComponent(
+      JSON.stringify({ "0": { json: null }, "1": { json: {} } })
+    );
+    const response = await fetch(
+      `/api/trpc/project.list,eve.list?batch=1&input=${input}`
+    );
+    return await response.json();
+  });
+  expect(batch).toMatchObject([
+    { result: { data: { json: expect.any(Array) } } },
+    {
+      result: {
+        data: {
+          json: {
+            items: Array.from({ length: 8 }, (_, index) => ({
+              title: `Recent conversation ${index + 1}`,
+            })),
+          },
+        },
+      },
+    },
+  ]);
 });
