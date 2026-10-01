@@ -26,6 +26,7 @@ import {
   useModelChange,
 } from "@/providers/default-model-provider";
 
+import { EveChatError } from "./eve-chat-error";
 import { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
@@ -201,7 +202,7 @@ export const NewEveConversation = ({
         retainedModelIds={retainedModelIds}
         selectedTool={selectedTool}
       />
-      {failure && <p role="alert">{failure}</p>}
+      {failure && <EveChatError message={failure} />}
     </>
   );
   if (busy) {
