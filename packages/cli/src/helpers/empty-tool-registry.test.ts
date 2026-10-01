@@ -29,9 +29,8 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
     expect(manifest.dependencies.lexical).toBeDefined();
     expect(manifest.dependencies["@lexical/react"]).toBeDefined();
     const chatApp = nodePath.resolve(import.meta.dir, "../../../../apps/chat");
-    const dependencyPaths = createRequire(
-      nodePath.join(chatApp, "package.json")
-    ).resolve.paths("react");
+    const appRequire = createRequire(nodePath.join(chatApp, "package.json"));
+    const dependencyPaths = appRequire.resolve.paths("react");
     const nodeModules = dependencyPaths?.find((candidate) =>
       existsSync(nodePath.join(candidate, "react", "package.json"))
     );
@@ -56,7 +55,16 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
         nodePath.join(destination, "components/eve/eve-tool-result.tsx"),
         nodePath.join(destination, "components/eve/eve-document-body.tsx"),
       ],
-      { ...parsed.options, incremental: false }
+      {
+        ...parsed.options,
+        incremental: false,
+        // Bun can place React and Node types at different workspace levels.
+        typeRoots: [
+          nodePath.dirname(
+            nodePath.dirname(appRequire.resolve("@types/node/package.json"))
+          ),
+        ],
+      }
     );
     const diagnostics = ts.getPreEmitDiagnostics(program);
     expect(

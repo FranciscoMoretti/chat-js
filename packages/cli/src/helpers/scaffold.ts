@@ -1,10 +1,12 @@
 import { existsSync } from "node:fs";
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
 import pathModule from "node:path";
 
+import { mcpFiles } from "../../../registry/src/features/mcp";
 import { registryUrl } from "../registry/shadcn";
 import type { PackageManager } from "../types";
 import { runCommand } from "../utils/run-command";
+import { initializeFeatureUi } from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { resolvePackageDirectory } from "./resolve-package-directory";
@@ -362,6 +364,38 @@ export const scaffoldFromTemplate = async (
     "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
   };
   await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
+  await Promise.all(
+    [...mcpFiles, "features/mcp/chatjs.json"].map((file) =>
+      rm(join(destination, file), { force: true })
+    )
+  );
+  const directories = new Set<string>();
+  for (const file of [...mcpFiles, "features/mcp/chatjs.json"]) {
+    let directory = pathModule.dirname(file);
+    while (directory !== ".") {
+      directories.add(directory);
+      directory = pathModule.dirname(directory);
+    }
+  }
+  for (const directory of [...directories].toSorted(
+    (a, b) => b.length - a.length
+  )) {
+    try {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Remove children before their empty parents.
+      await rmdir(join(destination, directory));
+    } catch (error) {
+      if (
+        !(
+          error instanceof Error &&
+          "code" in error &&
+          ["ENOENT", "ENOTEMPTY", "EEXIST"].includes(String(error.code))
+        )
+      ) {
+        throw error;
+      }
+    }
+  }
+  await initializeFeatureUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };
 

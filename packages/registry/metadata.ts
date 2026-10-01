@@ -77,3 +77,11 @@ export const storageDefinitionSchema = z.object({
   optionalEnv: z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/u)).default([]),
 });
 export type StorageDefinition = z.infer<typeof storageDefinitionSchema>;
+
+// Web features currently have one supported implementation. Extend this contract
+// when another feature needs registration, rather than accepting unhandled metadata.
+export const featureDefinitionSchema = z.object({
+  contractVersion: z.literal(1),
+  id: z.literal("mcp"),
+  kind: z.literal("feature"),
+});

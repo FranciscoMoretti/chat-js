@@ -1,4 +1,7 @@
-import { toolDefinitionSchema } from "../../../registry/metadata";
+import {
+  featureDefinitionSchema,
+  toolDefinitionSchema,
+} from "../../../registry/metadata";
 import type { ToolDefinition } from "../../../registry/metadata";
 import { itemAddress, readItem } from "../registry/shadcn";
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
@@ -11,12 +14,17 @@ export const planToolInstallation = async (
   const installed = await readInstalledTools(cwd);
   const expected = new Map<string, ToolDefinition>();
   const sources = new Set<string>();
+  let mcp = false;
   const visit = async (source: string): Promise<void> => {
     if (sources.has(source)) {
       return;
     }
     sources.add(source);
     const item = await readItem(source, cwd);
+    if (item.meta?.chatjs?.kind === "feature") {
+      featureDefinitionSchema.parse(item.meta.chatjs);
+      mcp = true;
+    }
     if (item.meta?.chatjs?.kind === "tool") {
       const definition = toolDefinitionSchema.parse(item.meta.chatjs);
       const previous = expected.get(definition.id);
@@ -53,5 +61,5 @@ export const planToolInstallation = async (
     }
   }
   validateToolInstallation(cwd, target());
-  return { expected: [...expected.values()], sources: [...sources] };
+  return { expected: [...expected.values()], mcp, sources: [...sources] };
 };

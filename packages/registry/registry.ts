@@ -3,6 +3,7 @@ import type { RegistryItem } from "shadcn/schema";
 
 import { toolDefinitionSchema } from "./metadata";
 import registryPackage from "./package.json";
+import { mcpItem } from "./src/features/mcp";
 import { builtInGateways } from "./src/gateways/catalog";
 import { builtInStorage } from "./src/storage/catalog";
 import {
@@ -192,6 +193,7 @@ export const codeExecutionItem = {
 export const registry = registrySchema.parse({
   homepage: "https://chatjs.dev",
   items: [
+    mcpItem,
     ...builtInGateways,
     ...builtInStorage,
     ...toolItems,

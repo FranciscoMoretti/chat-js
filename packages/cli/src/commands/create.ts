@@ -48,6 +48,7 @@ import { planToolInstallation } from "../utils/installation-plan";
 import { logger } from "../utils/logger";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
+import { syncFeatures } from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 const resolveCreateTarget = (
@@ -410,10 +411,10 @@ const installRegistryItems = async (
     "Installing selected registry items..."
   ).start();
   try {
-    const plan = await planToolInstallation(
-      project.targetDir,
-      setup.toolSources
-    );
+    const plan = await planToolInstallation(project.targetDir, [
+      ...setup.toolSources,
+      ...(setup.coreFeatures.mcp ? ["@chatjs/mcp"] : []),
+    ]);
     await installItems(
       [setup.gatewaySelection.source, setup.storage.source, ...plan.sources],
       project.targetDir
@@ -422,6 +423,10 @@ const installRegistryItems = async (
     await configureStorageProvider(project.targetDir, setup.storage);
     const installedTools = await syncTools(project.targetDir, {
       expected: plan.expected,
+    });
+    await syncFeatures(project.targetDir, {
+      addUi: true,
+      expectedMcp: plan.mcp,
     });
     await runCommand(packageManager, ["install"], project.targetDir);
     await runCommand(

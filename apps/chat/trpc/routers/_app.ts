@@ -1,8 +1,8 @@
+import { installedRouters } from "@/features/installed-routers";
 import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
 
 import { creditsRouter } from "./credits.router";
 import { eveRouter } from "./eve.router";
-import { mcpRouter } from "./mcp.router";
 import { projectRouter } from "./project.router";
 import { settingsRouter } from "./settings.router";
 
@@ -15,7 +15,7 @@ import { settingsRouter } from "./settings.router";
 export const appRouter = createTRPCRouter({
   credits: creditsRouter,
   eve: eveRouter,
-  mcp: mcpRouter,
+  ...installedRouters,
   project: projectRouter,
   settings: settingsRouter,
 });
