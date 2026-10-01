@@ -15,9 +15,12 @@ const mocks = vi.hoisted(() => ({
   enabled: { enabled: true },
   get: vi.fn(),
   list: vi.fn(),
+  requireCredentials: vi.fn(),
   tools: vi.fn(),
 }));
-vi.mock("@/features/mcp/setup", () => ({ requireMcpCredentials: vi.fn() }));
+vi.mock("@/features/mcp/setup", () => ({
+  requireMcpCredentials: mocks.requireCredentials,
+}));
 vi.mock("@/features/installed", () => ({
   installedFeatures: { has: () => mocks.enabled.enabled },
 }));
@@ -80,6 +83,7 @@ const definition = tool({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.enabled.enabled = true;
+  mocks.requireCredentials.mockReset();
   mocks.list.mockResolvedValue([connector]);
   mocks.get.mockResolvedValue(connector);
   mocks.connect.mockResolvedValue(undefined);
@@ -435,5 +439,17 @@ it("does not discover or execute when the MCP registration is absent", async () 
   await expect(
     executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).rejects.toThrow("unavailable");
+  expect(mocks.connect).not.toHaveBeenCalled();
+});
+
+it("reports missing credentials even before an installed MCP feature has connectors", async () => {
+  mocks.list.mockResolvedValue([]);
+  mocks.requireCredentials.mockImplementation(() => {
+    throw new Error("Missing credentials for mcp: MCP_ENCRYPTION_KEY");
+  });
+  await expect(
+    discoverEveMcpTools("owner", context.abortSignal)
+  ).rejects.toThrow("Missing credentials for mcp: MCP_ENCRYPTION_KEY");
+  expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.connect).not.toHaveBeenCalled();
 });

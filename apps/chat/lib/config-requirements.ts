@@ -7,6 +7,14 @@ import { videoGenerationEnvRequirement } from "@/tools/chatjs/video-generation-c
 import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
+const ALTERNATIVE_SEPARATOR = /\s+or\s+/u;
+const CREDENTIAL_SEPARATOR = /[+,]/u;
+
+const normalizedCredentialGroups = (groups: readonly (readonly string[])[]) =>
+  groups
+    .map((group) => group.toSorted().join(" + "))
+    .toSorted()
+    .join(" or ");
 
 export interface EnvRequirement {
   allOf?: EnvRequirement[];
@@ -26,10 +34,21 @@ export const formatRequirementDescription = (
   const keys = requirement.options
     .map((option) => option.join(" + "))
     .join(" or ");
-  if (requirement.description && keys && requirement.description !== keys) {
+  const describedOptions = requirement.description
+    ?.split(ALTERNATIVE_SEPARATOR)
+    .map((option) =>
+      option.split(CREDENTIAL_SEPARATOR).map((name) => name.trim())
+    );
+  const groupsAlreadyListed =
+    describedOptions &&
+    normalizedCredentialGroups(describedOptions) ===
+      normalizedCredentialGroups(
+        requirement.options.map((option) => option.map(String))
+      );
+  if (requirement.description && keys && !groupsAlreadyListed) {
     return `${requirement.description} (${keys})`;
   }
-  return requirement.description ?? keys;
+  return requirement.description || keys;
 };
 
 export const aiToolEnvRequirements: Partial<

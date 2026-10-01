@@ -224,9 +224,11 @@ export const ConnectorsSettings = () => {
     shallow: true,
   });
 
-  const { data: connectors, isLoading } = useQuery(
-    trpc.mcp.list.queryOptions()
-  );
+  const {
+    data: connectors,
+    isLoading,
+    error,
+  } = useQuery(trpc.mcp.list.queryOptions());
 
   const createOpen = qs.dialog === "config";
   const connectOpen = qs.dialog === "connect";
@@ -345,6 +347,20 @@ export const ConnectorsSettings = () => {
           {[1, 2, 3].map((i) => (
             <div className="bg-muted/50 h-20 rounded-lg" key={i} />
           ))}
+        </div>
+      </SettingsPageContent>
+    );
+  }
+
+  if (error) {
+    return (
+      <SettingsPageContent className="gap-4">
+        <div
+          role="alert"
+          className="flex flex-col items-center justify-center py-12 text-center"
+        >
+          <p className="text-sm font-medium">Could not load connectors</p>
+          <p className="text-muted-foreground mt-1 text-xs">{error.message}</p>
         </div>
       </SettingsPageContent>
     );

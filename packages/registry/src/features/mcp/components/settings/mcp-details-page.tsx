@@ -201,9 +201,11 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
   const queryKey = trpc.mcp.list.queryKey();
 
-  const { data: connectors, isLoading: isLoadingConnectors } = useQuery(
-    trpc.mcp.list.queryOptions()
-  );
+  const {
+    data: connectors,
+    isLoading: isLoadingConnectors,
+    error: connectorsError,
+  } = useQuery(trpc.mcp.list.queryOptions());
 
   const connector = useMemo(
     () => connectors?.find((c) => c.id === connectorId) ?? null,
@@ -382,6 +384,22 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     );
   }
 
+  if (connectorsError) {
+    return (
+      <SettingsPageContent className="gap-4">
+        <div
+          role="alert"
+          className="flex flex-col items-center justify-center py-12 text-center"
+        >
+          <p className="text-sm font-medium">Could not load connectors</p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            {connectorsError.message}
+          </p>
+        </div>
+      </SettingsPageContent>
+    );
+  }
+
   if (!connector) {
     return (
       <SettingsPageContent className="gap-4">
@@ -403,7 +421,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   }
 
   const showConnectButton = needsOAuth && !isAuthenticated && !isIncompatible;
-  const showDiscovery = discovery && !needsOAuth && !isIncompatible;
+  const showDiscovery = Boolean(discovery) && !needsOAuth && !isIncompatible;
 
   return (
     <SettingsPageContent className="gap-4">
@@ -458,7 +476,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         needsOAuth={needsOAuth}
         onConnect={() => setConnectOpen(true)}
         showConnectButton={showConnectButton}
-        showDiscovery={showDiscovery ?? false}
+        showDiscovery={showDiscovery}
       />
 
       <McpConnectDialog
