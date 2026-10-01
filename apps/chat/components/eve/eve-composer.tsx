@@ -15,7 +15,7 @@ import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
-import { composerTools } from "@/tools/chatjs/composer-tools";
+import { installedToolNames } from "@/tools/chatjs/installed-features";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
@@ -57,7 +57,9 @@ export const EveComposer = ({
           : !model?.input.image
       )
     );
-  const unavailableTool = Boolean(selectedTool && !composerTools[selectedTool]);
+  const unavailableTool = Boolean(
+    selectedTool && !installedToolNames.has(selectedTool)
+  );
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
   const upload = (incoming: File[]) => {

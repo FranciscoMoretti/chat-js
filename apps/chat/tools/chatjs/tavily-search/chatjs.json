@@ -13,7 +13,7 @@
       "toolExport": "webSearch",
       "rendererExport": "WebSearchRenderer",
       "composer": {
-        "icon": "GlobeIcon",
+        "icon": "Globe",
         "name": "Web Search",
         "shortName": "Search"
       }

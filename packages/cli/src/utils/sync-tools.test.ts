@@ -499,3 +499,21 @@ test("composer metadata follows installation and removal without editing UI orde
     "// Application-owned ordering\n"
   );
 });
+
+test("invalid composer icon is rejected before generated files change", async () => {
+  const root = await project();
+  await install(root);
+  await syncTools(root);
+  const generated = join(root, "tools/chatjs/composer-tools.ts");
+  const before = await readFile(generated, "utf-8");
+  const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  definition.tools[0].composer = {
+    icon: "NotALucideIcon",
+    name: "Count words",
+    shortName: "Words",
+  };
+  await writeFile(descriptor, JSON.stringify(definition));
+  await expect(syncTools(root)).rejects.toThrow("icon");
+  expect(await readFile(generated, "utf-8")).toBe(before);
+});

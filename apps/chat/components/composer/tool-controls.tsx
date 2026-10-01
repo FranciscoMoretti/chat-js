@@ -8,10 +8,10 @@ import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
-import { composerTools } from "@/tools/chatjs/composer-tools";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
 
 import type { ComposerControlProps } from "./control";
+import { getToolDisplay } from "./tool-display";
 
 const loginPrompt = (
   <LoginPrompt
@@ -29,7 +29,7 @@ const ToolControl = ({
 }: ComposerControlProps & { tool: UiToolName }) => {
   const { data: session } = useSession();
   const { getModelById } = useChatModels();
-  const definition = composerTools[tool];
+  const definition = getToolDisplay(tool);
   if (!installedToolNames.has(tool) || !definition) {
     return null;
   }

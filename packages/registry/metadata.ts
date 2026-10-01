@@ -34,7 +34,15 @@ const toolDefinitionBase = z.object({
       z.object({
         composer: z
           .object({
-            icon: identifier,
+            icon: z.enum([
+              "Edit3",
+              "Globe",
+              "Hash",
+              "Images",
+              "Telescope",
+              "Video",
+              "Wrench",
+            ]),
             name: z.string().min(1),
             shortName: z.string().min(1),
           })

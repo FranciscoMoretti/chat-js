@@ -130,7 +130,7 @@ export const searchToolItems = [
       tools: [
         {
           composer: {
-            icon: "GlobeIcon",
+            icon: "Globe",
             name: "Web Search",
             shortName: "Search",
           },
