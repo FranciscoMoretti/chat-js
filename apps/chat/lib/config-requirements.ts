@@ -7,7 +7,14 @@ import { videoGenerationEnvRequirement } from "@/tools/chatjs/video-generation-c
 import type { AiConfig, AuthenticationConfig } from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
-const ENV_VAR_NAME_PATTERN = /\b[A-Z_][A-Z0-9_]*\b/gu;
+const ALTERNATIVE_SEPARATOR = /\s+or\s+/u;
+const CREDENTIAL_SEPARATOR = /[+,]/u;
+
+const normalizedCredentialGroups = (groups: readonly (readonly string[])[]) =>
+  groups
+    .map((group) => group.toSorted().join(" + "))
+    .toSorted()
+    .join(" or ");
 
 export interface EnvRequirement {
   allOf?: EnvRequirement[];
@@ -27,13 +34,18 @@ export const formatRequirementDescription = (
   const keys = requirement.options
     .map((option) => option.join(" + "))
     .join(" or ");
-  const describedKeys = new Set(
-    requirement.description?.match(ENV_VAR_NAME_PATTERN)
-  );
-  const namesAlreadyListed = requirement.options
-    .flat()
-    .every((name) => describedKeys.has(String(name)));
-  if (requirement.description && keys && !namesAlreadyListed) {
+  const describedOptions = requirement.description
+    ?.split(ALTERNATIVE_SEPARATOR)
+    .map((option) =>
+      option.split(CREDENTIAL_SEPARATOR).map((name) => name.trim())
+    );
+  const groupsAlreadyListed =
+    describedOptions &&
+    normalizedCredentialGroups(describedOptions) ===
+      normalizedCredentialGroups(
+        requirement.options.map((option) => option.map(String))
+      );
+  if (requirement.description && keys && !groupsAlreadyListed) {
     return `${requirement.description} (${keys})`;
   }
   return requirement.description || keys;

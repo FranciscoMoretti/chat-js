@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import {
   authEnvRequirements,
+  formatRequirementDescription,
   getMissingRequirement,
 } from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
@@ -134,4 +135,28 @@ test("credential descriptions avoid duplicate exact key names across separators"
       { NODE_ENV: "test" }
     )
   ).toContain("(AUTH_GITHUB_ID + AUTH_GITHUB_SECRET)");
+});
+
+test("credential descriptions retain the declared AND/OR grouping", () => {
+  expect(
+    formatRequirementDescription({
+      description: "A or B",
+      options: [["A", "B"]],
+    })
+  ).toBe("A or B (A + B)");
+  expect(
+    formatRequirementDescription({
+      description: "A + B",
+      options: [["A"], ["B"]],
+    })
+  ).toBe("A + B (A or B)");
+  expect(
+    formatRequirementDescription({ description: "B, A", options: [["A", "B"]] })
+  ).toBe("B, A");
+  expect(
+    formatRequirementDescription({
+      description: "B or A",
+      options: [["A"], ["B"]],
+    })
+  ).toBe("B or A");
 });
