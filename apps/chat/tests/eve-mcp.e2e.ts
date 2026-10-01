@@ -203,7 +203,9 @@ test("composer connector controls persist and fence native tool execution", asyn
     await expect(toggle).not.toBeChecked();
     await page
       .getByRole("menu")
-      .last()
+      .filter({
+        has: page.getByRole("menuitem", { name: "Manage connectors" }),
+      })
       .screenshot({
         animations: "disabled",
         path: testInfo.outputPath("connectors-disabled-mobile.png"),

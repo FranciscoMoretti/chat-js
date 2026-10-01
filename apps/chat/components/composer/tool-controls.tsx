@@ -35,15 +35,16 @@ const ToolControl = ({
   const model = getModelById(selectedModelId);
   const definition = toolDefinitions[tool];
   const Icon = definition.icon;
+  const checked =
+    selectedTool === tool ||
+    Boolean(tool.endsWith("Document") && selectedTool?.endsWith("Document"));
+  const unsupported = !model || model.toolCall === false;
   return (
     <DropdownMenuCheckboxItem
-      checked={selectedTool === tool}
-      disabled={
-        disabled ||
-        (selectedTool !== tool && (!model || model.toolCall === false))
-      }
+      checked={checked}
+      disabled={disabled || (!checked && unsupported)}
       onSelect={() => {
-        if (selectedTool === tool) {
+        if (checked) {
           onToolChange(null);
           return;
         }
@@ -55,7 +56,14 @@ const ToolControl = ({
       }}
     >
       <Icon />
-      {definition.name}
+      <span>
+        {definition.name}
+        {!checked && unsupported && (
+          <span className="text-muted-foreground block text-xs">
+            (not supported)
+          </span>
+        )}
+      </span>
     </DropdownMenuCheckboxItem>
   );
 };

@@ -7,7 +7,7 @@ export type ComposerControlProps = {
   selectedModelId: string;
   selectedTool: UiToolName | null;
   onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
-  onAttach: (accept: string, capture?: "environment") => void;
+  onAttach: (accept: string, capture?: "environment" | "user") => void;
 };
 
 export type ComposerControl = {
