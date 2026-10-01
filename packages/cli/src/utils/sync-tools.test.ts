@@ -517,3 +517,23 @@ test("invalid composer icon is rejected before generated files change", async ()
   await expect(syncTools(root)).rejects.toThrow("icon");
   expect(await readFile(generated, "utf-8")).toBe(before);
 });
+
+test.each(["GlobeIcon", "BookOpen", "Edit3"])(
+  "composer icon validation accepts %s",
+  async (icon) => {
+    const root = await project();
+    await install(root);
+    const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+    const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+    definition.tools[0].composer = {
+      icon,
+      name: "Count words",
+      shortName: "Words",
+    };
+    await writeFile(descriptor, JSON.stringify(definition));
+    await syncTools(root);
+    expect(
+      await readFile(join(root, "tools/chatjs/composer-tools.ts"), "utf-8")
+    ).toContain(`${icon} as Icon0`);
+  }
+);
