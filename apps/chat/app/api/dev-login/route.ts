@@ -69,7 +69,15 @@ export const GET = async () => {
         id,
         name: "Dev User",
       })
+      .onConflictDoNothing({ target: user.email })
       .returning();
+    if (!devUser) {
+      [devUser] = await db.select().from(user).where(eq(user.email, devEmail));
+    }
+  }
+
+  if (!devUser) {
+    throw new Error("Failed to create development user");
   }
 
   const token = crypto.randomUUID();

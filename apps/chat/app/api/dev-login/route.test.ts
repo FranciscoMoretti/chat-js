@@ -41,11 +41,27 @@ vi.mock("@/lib/db/client", async () => {
       insert: (table: unknown) => ({
         values: (row: Record<string, unknown>) => {
           const target = table === user ? state.data.user : state.data.session;
-          target.push(row);
-          return { returning: () => [row] };
+          if (table !== user) {
+            target.push(row);
+            return { returning: () => [row] };
+          }
+          const insertUser = (ignoreConflict: boolean) => {
+            if (target.some((existing) => existing.email === row.email)) {
+              if (ignoreConflict) {
+                return [];
+              }
+              throw new Error("duplicate key violates user_email_unique");
+            }
+            target.push(row);
+            return [row];
+          };
+          return {
+            onConflictDoNothing: () => ({ returning: () => insertUser(true) }),
+            returning: () => insertUser(false),
+          };
         },
       }),
-      select: () => ({ from: () => ({ where: () => state.data.user }) }),
+      select: () => ({ from: () => ({ where: () => [...state.data.user] }) }),
     },
   };
 });
@@ -72,7 +88,11 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
       secret: state.secret,
     });
     state.auth = auth;
-    const response = await GET();
+    const responses = await Promise.all(Array.from({ length: 4 }, () => GET()));
+    expect(responses.map((result) => result.status)).toEqual([
+      302, 302, 302, 302,
+    ]);
+    const [response] = responses;
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("/");
     const [cookie] = response.headers.getSetCookie();
@@ -86,7 +106,7 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
     });
     await GET();
     expect(state.data.user).toHaveLength(1);
-    expect(state.data.session).toHaveLength(2);
+    expect(state.data.session).toHaveLength(5);
   }
 );
 
