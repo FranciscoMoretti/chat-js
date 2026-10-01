@@ -1,6 +1,7 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { Toaster } from "sonner";
 import { afterEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
@@ -19,6 +20,7 @@ const state = vi.hoisted(() => ({
   mobile: false,
   pending: false,
   toggle: vi.fn(),
+  toolCall: true,
 }));
 vi.mock("@/providers/session-provider", () => ({
   useSession: () => ({
@@ -27,7 +29,9 @@ vi.mock("@/providers/session-provider", () => ({
 }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => state.mobile }));
 vi.mock("@/providers/chat-models-provider", () => ({
-  useChatModels: () => ({ getModelById: () => ({ input: { text: true } }) }),
+  useChatModels: () => ({
+    getModelById: () => ({ input: { text: true }, toolCall: state.toolCall }),
+  }),
 }));
 vi.mock("@/lib/config", () => ({
   config: {
@@ -83,19 +87,25 @@ vi.mock("@/components/internal-link", () => ({
 }));
 
 const originalControls = [...composerControls];
-const mount = async (disabled = false) => {
+const mount = async (
+  disabled = false,
+  initialTool: UiToolName | null = null
+) => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("main");
   container.style.cssText = `padding:32px;width:${state.mobile ? 350 : 900}px;min-height:540px;background:#171717`;
   document.body.append(container);
   const root = createRoot(container);
   const Fixture = () => {
-    const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
+    const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
+      initialTool
+    );
     return (
       <>
         <style>
           {"* { animation: none !important; transition: none !important; }"}
         </style>
+        <Toaster />
         <h1 style={{ marginBottom: 32 }}>Composer options</h1>
         <ComposerMenu
           disabled={disabled}
@@ -119,6 +129,7 @@ const mount = async (disabled = false) => {
 afterEach(() => {
   composerControls.splice(0, composerControls.length, ...originalControls);
   state.authenticated = true;
+  state.toolCall = true;
   state.mobile = false;
   state.pending = false;
   state.error = false;
@@ -211,6 +222,10 @@ test("mobile camera and guest controls respect the same order; disabled composer
       page.getByRole("menuitem", { name: "Attach files" }).click()
     );
     expect(state.attach).not.toHaveBeenCalled();
+    await expect
+      .element(page.getByRole("link", { exact: true, name: "Sign in" }))
+      .toHaveAttribute("href", "/login");
+    await takeSnapshot("composer-guest-sign-in");
   } finally {
     await cleanup();
   }
@@ -277,6 +292,31 @@ for (const status of ["loading", "error", "empty"] as const) {
         .element(page.getByRole("menuitem", { name: "Manage connectors" }))
         .toBeVisible();
       await takeSnapshot(`composer-connectors-${status}`);
+    } finally {
+      await cleanup();
+    }
+  });
+}
+
+for (const selected of ["webSearch", "editTextDocument"] as const) {
+  test(`can clear ${selected} after signing out and switching to a model without tools`, async () => {
+    state.authenticated = false;
+    state.toolCall = false;
+    const cleanup = await mount(false, selected);
+    try {
+      await act(() =>
+        page.getByRole("button", { name: "Composer options" }).click()
+      );
+      await expect
+        .element(
+          page.getByRole("menuitemcheckbox", { name: "Create an image" })
+        )
+        .toHaveAttribute("aria-disabled", "true");
+      await takeSnapshot(`composer-clear-${selected}`);
+      await act(() => page.getByRole("menuitem", { name: /^Clear /u }).click());
+      await expect
+        .element(page.getByRole("button", { name: "Composer options" }))
+        .toHaveTextContent("Add");
     } finally {
       await cleanup();
     }

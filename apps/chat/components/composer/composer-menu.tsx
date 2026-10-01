@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { composerControls } from "@/composer-controls";
@@ -33,6 +35,17 @@ export const ComposerMenu = (props: ComposerControlProps) => (
       {composerControls.map(({ id, Component }) => (
         <Component key={id} {...props} />
       ))}
+      {props.selectedTool && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={props.disabled}
+            onSelect={() => props.onToolChange(null)}
+          >
+            Clear {toolDefinitions[props.selectedTool].shortName}
+          </DropdownMenuItem>
+        </>
+      )}
     </DropdownMenuContent>
   </DropdownMenu>
 );
