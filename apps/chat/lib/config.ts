@@ -1,5 +1,4 @@
 import userConfig from "@/chat.config";
-import { installedFeatures } from "@/features/installed";
 import {
   installedDocumentKinds,
   installedToolNames,
@@ -31,5 +30,3 @@ config.ai.tools.documents.enabled &&= installedDocumentKinds.size > 0;
 config.ai.tools.deepResearch.enabled &&= installedToolNames.has("deepResearch");
 
 export type { Config } from "./config-schema";
-
-config.ai.tools.mcp.enabled &&= installedFeatures.has("mcp");

@@ -1,3 +1,4 @@
+import { mcpItem } from "../../../registry/src/features/mcp";
 import { builtInGateways } from "../registry/gateways";
 import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "../types";
 
@@ -26,7 +27,7 @@ export const coreFeatureEnvRequirements: Partial<
 > = {
   mcp: {
     description: "MCP_ENCRYPTION_KEY",
-    options: [["MCP_ENCRYPTION_KEY"]],
+    options: mcpItem.meta?.chatjs.envRequirements[0].options ?? [],
   },
 };
 

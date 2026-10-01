@@ -65,11 +65,6 @@ vi.mock("@/lib/config", () => ({
             return state.featuresEnabled;
           },
         },
-        mcp: {
-          get enabled() {
-            return state.featuresEnabled;
-          },
-        },
         video: {
           get enabled() {
             return state.featuresEnabled;
@@ -88,6 +83,9 @@ vi.mock("@/lib/config", () => ({
       },
     },
   },
+}));
+vi.mock("@/features/installed", () => ({
+  installedFeatures: { has: () => state.featuresEnabled },
 }));
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedToolNames: {

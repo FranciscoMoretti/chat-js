@@ -27,7 +27,6 @@ export interface GatewayModelDefaults<G extends AnyGatewayProvider> {
     webSearch: { enabled: boolean };
     urlRetrieval: { enabled: boolean };
     codeExecution: { enabled: boolean };
-    mcp: { enabled: boolean };
     documents: {
       enabled: boolean;
       types: {

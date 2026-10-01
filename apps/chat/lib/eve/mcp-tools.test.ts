@@ -17,14 +17,15 @@ const mocks = vi.hoisted(() => ({
   list: vi.fn(),
   tools: vi.fn(),
 }));
-vi.mock("../config", () => ({
-  config: { ai: { tools: { mcp: mocks.enabled } } },
+vi.mock("@/features/mcp/setup", () => ({ requireMcpCredentials: vi.fn() }));
+vi.mock("@/features/installed", () => ({
+  installedFeatures: { has: () => mocks.enabled.enabled },
 }));
-vi.mock("../db/mcp-queries", () => ({
+vi.mock("@/lib/db/mcp-queries", () => ({
   getMcpConnectorById: mocks.get,
   getMcpConnectorsByUserId: mocks.list,
 }));
-vi.mock("../ai/mcp/mcp-client", () => ({
+vi.mock("@/lib/ai/mcp/mcp-client", () => ({
   MCPClient: class {
     status = "connected";
     connect = mocks.connect;

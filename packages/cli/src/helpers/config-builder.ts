@@ -170,7 +170,6 @@ const toConfigInput = (input: {
       image: {
         enabled: input.builtInTools.imageGeneration,
       },
-      mcp: { enabled: input.coreFeatures.mcp },
       urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
       video: {
         enabled: input.builtInTools.videoGeneration,

@@ -2,7 +2,7 @@ import type { RegistryItem } from "shadcn/schema";
 
 import { featureDefinitionSchema } from "../../metadata";
 
-// The demo is the canonical implementation. Registry builds read these files directly.
+// Canonical MCP implementation; apps/chat contains installed demo copies.
 export const mcpFiles = [
   "agent/tools/mcp.ts",
   "app/(chat)/settings/connectors/page.tsx",
@@ -15,6 +15,7 @@ export const mcpFiles = [
   "components/settings/mcp-details-page.tsx",
   "features/mcp/composer.tsx",
   "features/mcp/settings.ts",
+  "features/mcp/setup.ts",
   "lib/ai/mcp/cache.ts",
   "lib/ai/mcp/mcp-client-manager.ts",
   "lib/ai/mcp/mcp-client.ts",
@@ -33,13 +34,14 @@ export const mcpFiles = [
 export const mcpItem: RegistryItem = {
   description: "MCP connectors, management pages, OAuth and composer control",
   files: mcpFiles.map((file) => ({
-    path: `../../apps/chat/${file}`,
+    path: `src/features/mcp/${file}`,
     target: `~/${file}`,
     type: "registry:file",
   })),
   meta: {
     chatjs: featureDefinitionSchema.parse({
       contractVersion: 1,
+      envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
       id: "mcp",
       kind: "feature",
     }),

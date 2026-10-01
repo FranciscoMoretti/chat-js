@@ -17,7 +17,6 @@ it("uses external defaults and every environment group with --yes", async () => 
     sheet: false,
     text: false,
   };
-  definition.defaults.tools.mcp.enabled = true;
   definition.defaults.tools.webSearch.enabled = true;
   definition.envRequirements = [
     { options: [["FIRST"]] },
@@ -26,7 +25,7 @@ it("uses external defaults and every environment group with --yes", async () => 
   const coreFeatures = await promptCoreFeatures(true, definition);
   const documentTypes = await promptDocumentTypes(true, true, definition);
   const { builtInTools } = await promptAssistantTools([], true, definition);
-  expect(coreFeatures.mcp).toBe(true);
+  expect(coreFeatures.mcp).toBe(false);
   expect(documentTypes).toEqual({ code: true, sheet: false, text: false });
   expect(builtInTools.webSearch).toBe(true);
   const input = {

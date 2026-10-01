@@ -38,10 +38,6 @@ export const aiToolEnvRequirements: Partial<
   codeExecution: codeExecutionEnvRequirement,
   deepResearch: searchEnvRequirement,
   image: imageGenerationEnvRequirement,
-  mcp: {
-    description: "MCP_ENCRYPTION_KEY",
-    options: [["MCP_ENCRYPTION_KEY"]],
-  },
   urlRetrieval: urlRetrievalEnvRequirement,
   video: videoGenerationEnvRequirement,
   webSearch: searchEnvRequirement,

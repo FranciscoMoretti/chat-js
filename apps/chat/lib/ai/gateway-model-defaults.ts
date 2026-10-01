@@ -51,9 +51,6 @@ export const gatewayModelDefaults = {
       default: "google/gemini-3-pro-image",
       enabled: false,
     },
-    mcp: {
-      enabled: false,
-    },
     sheet: {
       analyze: "openai/gpt-5-mini",
       format: "openai/gpt-5-mini",

@@ -37,7 +37,6 @@ export const gatewayDefinitionSchema = z
         }),
         followupSuggestions: toggle.extend({ default: model }),
         image: media,
-        mcp: toggle,
         sheet: z.object({ analyze: model, format: model }),
         text: z.object({ polish: model }),
         urlRetrieval: toggle,

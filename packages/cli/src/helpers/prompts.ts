@@ -269,7 +269,7 @@ export const promptCoreFeatures = async (
     attachments: FEATURES_DEFAULTS.attachments,
     documents: defaultTools.documents.enabled,
     followupSuggestions: defaultTools.followupSuggestions.enabled,
-    mcp: defaultTools.mcp.enabled,
+    mcp: false,
     parallelResponses: FEATURES_DEFAULTS.parallelResponses,
   };
 
