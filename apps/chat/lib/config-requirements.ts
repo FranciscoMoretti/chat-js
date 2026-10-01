@@ -36,7 +36,7 @@ export const formatRequirementDescription = (
   if (requirement.description && keys && !namesAlreadyListed) {
     return `${requirement.description} (${keys})`;
   }
-  return requirement.description ?? keys;
+  return requirement.description || keys;
 };
 
 export const aiToolEnvRequirements: Partial<

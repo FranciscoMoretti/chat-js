@@ -116,6 +116,12 @@ test("code execution credential descriptions retain actionable environment key n
 
 test("credential descriptions avoid duplicate exact key names across separators", () => {
   const requirement = authEnvRequirements.github;
+  expect(
+    getMissingRequirement(
+      { ...requirement, description: "" },
+      { NODE_ENV: "test" }
+    )
+  ).toBe("AUTH_GITHUB_ID + AUTH_GITHUB_SECRET");
   expect(getMissingRequirement(requirement, { NODE_ENV: "test" })).toBe(
     requirement.description
   );
