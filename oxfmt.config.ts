@@ -8,6 +8,7 @@ export default defineConfig({
   ignorePatterns: [
     ...(ultracite.ignorePatterns ?? []),
     "examples/**",
+    "**/composer-icons.generated.ts",
     "**/.eve/**",
     "**/tests/eve-results/**",
     // The model catalog is generator-owned; avoid unrelated snapshot churn.

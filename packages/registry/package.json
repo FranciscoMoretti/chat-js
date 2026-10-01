@@ -30,7 +30,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "bun build.ts",
+    "build": "bun scripts/generate-composer-icons.ts && bun build.ts",
     "prepublishOnly": "bun run build",
     "test:types": "tsc --noEmit",
     "test:unit": "bun test src",

@@ -1,12 +1,6 @@
-import * as lucide from "lucide-react";
 import { z } from "zod";
 
-const iconComponents = new Set<unknown>(Object.values(lucide.icons));
-const composerIconNames = new Set(
-  Object.entries(lucide)
-    .filter(([, value]) => iconComponents.has(value))
-    .map(([name]) => name)
-);
+import { composerIconNames } from "./composer-icons.generated";
 
 const identifier = z
   .string()
