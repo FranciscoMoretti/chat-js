@@ -14,12 +14,14 @@ import {
 import "./sandbox.css";
 
 const mocks = vi.hoisted(() => {
+  // oxlint-disable-next-line unicorn/consistent-function-scoping -- vi.hoisted must initialize the mock factory before module imports.
   const query = (name: string) => ({
     queryKey: () => [name],
     queryOptions: () => ({ queryKey: [name] }),
   });
   const mutation = { mutationOptions: () => ({}) };
   return {
+    listError: false,
     mcp: {
       authorize: mutation,
       checkAuth: query("checkAuth"),
@@ -31,7 +33,6 @@ const mocks = vi.hoisted(() => {
       testConnection: query("testConnection"),
       toggleEnabled: mutation,
     },
-    listError: false,
     mutate: vi.fn(),
     queryClient: { invalidateQueries: vi.fn() },
     refetch: vi.fn(),
@@ -153,7 +154,7 @@ test("connector list shows custom and shared connectors with their management li
       .element(page.getByRole("link", { name: "Configure" }))
       .toHaveAttribute("href", "/settings/connectors/documentation");
     await expect
-      .element(page.getByRole("link", { name: "View", exact: true }))
+      .element(page.getByRole("link", { exact: true, name: "View" }))
       .toHaveAttribute("href", "/settings/connectors/global");
     await takeSnapshot("mcp-connectors-list");
   } finally {

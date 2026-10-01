@@ -421,7 +421,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   }
 
   const showConnectButton = needsOAuth && !isAuthenticated && !isIncompatible;
-  const showDiscovery = discovery && !needsOAuth && !isIncompatible;
+  const showDiscovery = Boolean(discovery) && !needsOAuth && !isIncompatible;
 
   return (
     <SettingsPageContent className="gap-4">
@@ -476,7 +476,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         needsOAuth={needsOAuth}
         onConnect={() => setConnectOpen(true)}
         showConnectButton={showConnectButton}
-        showDiscovery={showDiscovery ?? false}
+        showDiscovery={showDiscovery}
       />
 
       <McpConnectDialog

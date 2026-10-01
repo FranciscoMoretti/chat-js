@@ -46,9 +46,9 @@ const assertMcpReady = () => {
   } catch (error) {
     if (error instanceof MissingCredentialsError) {
       throw new TRPCError({
+        cause: error,
         code: "PRECONDITION_FAILED",
         message: error.message,
-        cause: error,
       });
     }
     throw error;

@@ -20,7 +20,7 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   getSessionByState: mocks.getSession,
 }));
 vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ info: vi.fn(), error: vi.fn() }),
+  createModuleLogger: () => ({ error: vi.fn(), info: vi.fn() }),
 }));
 vi.mock("@/lib/nuqs/mcp-search-params.server", () => ({
   loadMcpOAuthCallbackSearchParams: () => ({
