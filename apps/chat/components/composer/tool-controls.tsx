@@ -32,6 +32,7 @@ const ToolControl = ({
   if (!installedToolNames.has(tool)) {
     return null;
   }
+  const model = getModelById(selectedModelId);
   const definition = toolDefinitions[tool];
   const Icon = definition.icon;
   return (
@@ -39,7 +40,7 @@ const ToolControl = ({
       checked={selectedTool === tool}
       disabled={
         disabled ||
-        (selectedTool !== tool && !getModelById(selectedModelId)?.toolCall)
+        (selectedTool !== tool && (!model || model.toolCall === false))
       }
       onSelect={() => {
         if (selectedTool === tool) {

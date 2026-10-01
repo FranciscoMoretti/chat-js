@@ -21,6 +21,7 @@ const state = vi.hoisted(() => ({
   pending: false,
   toggle: vi.fn(),
   toolCall: true,
+  unknownCapabilities: false,
 }));
 vi.mock("@/providers/session-provider", () => ({
   useSession: () => ({
@@ -30,7 +31,10 @@ vi.mock("@/providers/session-provider", () => ({
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => state.mobile }));
 vi.mock("@/providers/chat-models-provider", () => ({
   useChatModels: () => ({
-    getModelById: () => ({ input: { text: true }, toolCall: state.toolCall }),
+    getModelById: () => ({
+      input: { text: true },
+      toolCall: state.unknownCapabilities ? undefined : state.toolCall,
+    }),
   }),
 }));
 vi.mock("@/lib/config", () => ({
@@ -130,6 +134,7 @@ afterEach(() => {
   composerControls.splice(0, composerControls.length, ...originalControls);
   state.authenticated = true;
   state.toolCall = true;
+  state.unknownCapabilities = false;
   state.mobile = false;
   state.pending = false;
   state.error = false;
@@ -322,3 +327,21 @@ for (const selected of ["webSearch", "editTextDocument"] as const) {
     }
   });
 }
+
+test("missing catalog capability metadata does not block tool selection", async () => {
+  state.unknownCapabilities = true;
+  const cleanup = await mount();
+  try {
+    await act(() =>
+      page.getByRole("button", { name: "Composer options" }).click()
+    );
+    await act(() =>
+      page.getByRole("menuitemcheckbox", { name: "Web Search" }).click()
+    );
+    await expect
+      .element(page.getByRole("button", { name: "Composer options" }))
+      .toHaveTextContent("Search");
+  } finally {
+    await cleanup();
+  }
+});
