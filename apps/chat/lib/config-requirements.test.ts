@@ -73,3 +73,15 @@ test("Vercel OIDC satisfies credentials without bypassing a separate region requ
     })
   ).toBeNull();
 });
+
+test("formats nested allOf requirements without losing credential names", () => {
+  expect(
+    getMissingRequirement(
+      {
+        allOf: [{ allOf: [{ options: [["MISSING_KEY"]] }], options: [] }],
+        options: [],
+      },
+      { NODE_ENV: "test" }
+    )
+  ).toContain("MISSING_KEY");
+});

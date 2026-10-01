@@ -48,7 +48,10 @@ import { planInstallation } from "../utils/installation-plan";
 import { logger } from "../utils/logger";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
-import { syncFeatures } from "../utils/sync-features";
+import {
+  assertSupportedFeatureInstallation,
+  syncFeatures,
+} from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 const resolveCreateTarget = (
@@ -417,6 +420,7 @@ const installRegistryItems = async (
       storage: { options: setup.storage.options, source: setup.storage.source },
       tools: setup.toolSources,
     });
+    assertSupportedFeatureInstallation(plan.features);
     await installItems(plan.sources, project.targetDir);
     await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
     await configureStorageProvider(project.targetDir, setup.storage);

@@ -4,7 +4,20 @@ import path from "node:path";
 import ts from "typescript";
 
 import { featureDefinitionSchema } from "../../../registry/metadata";
+import type { FeatureDefinition } from "../../../registry/metadata";
 import { mcpFiles } from "../../../registry/src/features/mcp";
+
+/** Extend only when an implementation has complete installer/sync integration. */
+export const assertSupportedFeatureInstallation = (
+  features: readonly FeatureDefinition[]
+): void => {
+  const unsupported = features.filter((feature) => feature.id !== "mcp");
+  if (unsupported.length) {
+    throw new Error(
+      `Feature installation is not supported yet: ${unsupported.map((feature) => feature.id).join(", ")}. Only MCP has installation integration.`
+    );
+  }
+};
 
 const exists = async (file: string) => {
   try {

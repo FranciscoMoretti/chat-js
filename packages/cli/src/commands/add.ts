@@ -7,7 +7,10 @@ import { Command } from "commander";
 import { installItems } from "../registry/shadcn";
 import { handleError } from "../utils/handle-error";
 import { planInstallation } from "../utils/installation-plan";
-import { syncFeatures } from "../utils/sync-features";
+import {
+  assertSupportedFeatureInstallation,
+  syncFeatures,
+} from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 export const add = new Command("add")
@@ -26,6 +29,7 @@ export const add = new Command("add")
       const cwd = path.resolve(options.cwd);
       await access(path.join(cwd, "chat.config.ts"));
       const plan = await planInstallation(cwd, { features: [], tools });
+      assertSupportedFeatureInstallation(plan.features);
       if (!options.yes) {
         const answer = await confirm({
           message: `Install ${tools.join(", ")}?`,

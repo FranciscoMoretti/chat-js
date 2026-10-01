@@ -20,14 +20,29 @@ export class MissingCredentialsError extends Error {
   }
 }
 
+const missingRequirement = (
+  requirement: EnvRequirement,
+  env: NodeJS.ProcessEnv
+): EnvRequirement | null => {
+  if (requirement.allOf) {
+    const allOf = requirement.allOf.flatMap((group) => {
+      const missing = missingRequirement(group, env);
+      return missing ? [missing] : [];
+    });
+    return allOf.length ? { ...requirement, allOf } : null;
+  }
+  return isRequirementSatisfied(requirement, env) ? null : requirement;
+};
+
 export const requireCredentials = (
   integration: string,
   requirements: readonly EnvRequirement[],
   env: NodeJS.ProcessEnv
 ): void => {
-  const missing = requirements.filter(
-    (requirement) => !isRequirementSatisfied(requirement, env)
-  );
+  const missing = requirements.flatMap((requirement) => {
+    const group = missingRequirement(requirement, env);
+    return group ? [group] : [];
+  });
   if (missing.length) {
     throw new MissingCredentialsError(integration, missing);
   }

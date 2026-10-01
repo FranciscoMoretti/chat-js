@@ -17,9 +17,17 @@ export interface EnvRequirement {
 
 export const formatRequirementDescription = (
   requirement: EnvRequirement
-): string =>
-  requirement.description ??
-  requirement.options.map((option) => option.join(" + ")).join(" or ");
+): string => {
+  if (requirement.allOf) {
+    return requirement.allOf
+      .map((group) => `(${formatRequirementDescription(group)})`)
+      .join(" and ");
+  }
+  return (
+    requirement.description ??
+    requirement.options.map((option) => option.join(" + ")).join(" or ")
+  );
+};
 
 export const aiToolEnvRequirements: Partial<
   Record<keyof AiConfig["tools"], EnvRequirement>
