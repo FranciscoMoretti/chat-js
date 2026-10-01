@@ -78,10 +78,20 @@ export const storageDefinitionSchema = z.object({
 });
 export type StorageDefinition = z.infer<typeof storageDefinitionSchema>;
 
-// Web features currently have one supported implementation. Extend this contract
-// when another feature needs registration, rather than accepting unhandled metadata.
+// Supported web installation boundaries. Implementations are added by their owners.
+export const featureIdSchema = z.enum([
+  "mcp",
+  "attachment-uploads",
+  "vercel-analytics",
+  "vercel-speed-insights",
+  "langfuse",
+]);
 export const featureDefinitionSchema = z.object({
   contractVersion: z.literal(1),
-  id: z.literal("mcp"),
+  envRequirements: z.array(envRequirementSchema).optional(),
+  id: featureIdSchema,
   kind: z.literal("feature"),
+  requiresFeatures: z.array(featureIdSchema).optional(),
 });
+
+export type FeatureDefinition = z.infer<typeof featureDefinitionSchema>;

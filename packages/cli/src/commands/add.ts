@@ -6,8 +6,11 @@ import { Command } from "commander";
 
 import { installItems } from "../registry/shadcn";
 import { handleError } from "../utils/handle-error";
-import { planToolInstallation } from "../utils/installation-plan";
-import { syncFeatures } from "../utils/sync-features";
+import { planInstallation } from "../utils/installation-plan";
+import {
+  assertSupportedFeatureInstallation,
+  syncFeatures,
+} from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 export const add = new Command("add")
@@ -25,7 +28,8 @@ export const add = new Command("add")
     try {
       const cwd = path.resolve(options.cwd);
       await access(path.join(cwd, "chat.config.ts"));
-      const plan = await planToolInstallation(cwd, tools);
+      const plan = await planInstallation(cwd, { features: [], tools });
+      assertSupportedFeatureInstallation(plan.features);
       if (!options.yes) {
         const answer = await confirm({
           message: `Install ${tools.join(", ")}?`,
@@ -34,18 +38,19 @@ export const add = new Command("add")
           return;
         }
       }
+      const mcp = plan.features.some((feature) => feature.id === "mcp");
       await installItems(plan.sources, cwd, options.overwrite);
       try {
         await syncTools(cwd, { expected: plan.expected });
-        await syncFeatures(cwd, { addUi: plan.mcp, expectedMcp: plan.mcp });
-        if (plan.mcp) {
+        await syncFeatures(cwd, { addUi: mcp, expectedMcp: mcp });
+        if (mcp) {
           log.info(
             "MCP installed. Enable ai.tools.mcp.enabled in chat.config.ts and set MCP_ENCRYPTION_KEY before connecting servers."
           );
         }
       } catch (error) {
         throw new Error(
-          `Source installation completed, but registration failed. Fix the problem and run ${plan.mcp ? "chat-js add mcp to retry UI integration (or integrate the UI manually and run chat-js sync)" : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
+          `Source installation completed, but registration failed. Fix the problem and run ${mcp ? "chat-js add mcp to retry UI integration (or integrate the UI manually and run chat-js sync)" : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
           { cause: error }
         );
       }

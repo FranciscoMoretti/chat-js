@@ -44,11 +44,14 @@ import type { PackageManager } from "../types";
 import { launcherPackageManager } from "../utils/get-package-manager";
 import { handleError } from "../utils/handle-error";
 import { highlighter } from "../utils/highlighter";
-import { planToolInstallation } from "../utils/installation-plan";
+import { planInstallation } from "../utils/installation-plan";
 import { logger } from "../utils/logger";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
-import { syncFeatures } from "../utils/sync-features";
+import {
+  assertSupportedFeatureInstallation,
+  syncFeatures,
+} from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 const resolveCreateTarget = (
@@ -411,14 +414,14 @@ const installRegistryItems = async (
     "Installing selected registry items..."
   ).start();
   try {
-    const plan = await planToolInstallation(project.targetDir, [
-      ...setup.toolSources,
-      ...(setup.coreFeatures.mcp ? ["@chatjs/mcp"] : []),
-    ]);
-    await installItems(
-      [setup.gatewaySelection.source, setup.storage.source, ...plan.sources],
-      project.targetDir
-    );
+    const plan = await planInstallation(project.targetDir, {
+      features: setup.coreFeatures.mcp ? ["mcp"] : [],
+      gateway: setup.gatewaySelection.source,
+      storage: { options: setup.storage.options, source: setup.storage.source },
+      tools: setup.toolSources,
+    });
+    assertSupportedFeatureInstallation(plan.features);
+    await installItems(plan.sources, project.targetDir);
     await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
     await configureStorageProvider(project.targetDir, setup.storage);
     const installedTools = await syncTools(project.targetDir, {
@@ -426,7 +429,7 @@ const installRegistryItems = async (
     });
     await syncFeatures(project.targetDir, {
       addUi: true,
-      expectedMcp: plan.mcp,
+      expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
     });
     await runCommand(packageManager, ["install"], project.targetDir);
     await runCommand(

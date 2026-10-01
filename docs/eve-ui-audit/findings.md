@@ -2,7 +2,7 @@
 
 Read with the [100-file catalog](catalog.md). The previous [summary audit](../eve-ui-parity-audit.md) remains historical; this catalog supersedes its coverage. Main is pinned to `4584f093`; EVE to `da78b23a`. No UI fixes were made during this audit.
 
-For the subsequent fixes and verification, see [UI parity implementation](implementation.md).
+For subsequent verification, see [UI parity verification](verification-2026-09-22.md).
 
 ## Prioritized findings
 
