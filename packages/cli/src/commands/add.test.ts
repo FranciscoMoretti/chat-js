@@ -10,13 +10,7 @@ afterEach(async () => {
   );
 });
 
-test.each([
-  "attachment-uploads",
-  "vercel-analytics",
-  "vercel-speed-insights",
-  "langfuse",
-  "langfuse-dependency",
-])(
+test.each(["attachment-uploads", "attachment-uploads-dependency"])(
   "add rejects %s before installing source or generating registrations",
   async (requested) => {
     const id = requested.replace("-dependency", "");

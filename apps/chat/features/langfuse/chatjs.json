@@ -1,0 +1,8 @@
+{
+  "contractVersion": 1,
+  "kind": "feature",
+  "id": "langfuse",
+  "envRequirements": [
+    { "options": [["LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY"]] }
+  ]
+}

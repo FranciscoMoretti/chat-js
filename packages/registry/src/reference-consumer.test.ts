@@ -10,6 +10,9 @@ import { registry } from "../registry";
 // A deliberate customization should be recorded here with its reason.
 const referenceItems = new Set([
   "vercel-gateway",
+  "vercel-analytics",
+  "vercel-speed-insights",
+  "langfuse",
   "vercel-blob-storage",
   "word-count",
   "text-documents",
