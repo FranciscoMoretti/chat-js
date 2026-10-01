@@ -1,0 +1,128 @@
+import { beforeEach, expect, it, vi } from "vitest";
+
+import { testToolContext } from "../../tests/helpers/eve-tool-context";
+import {
+  executeDocumentDeletion,
+  requestDocumentDeletion,
+} from "../../tools/chatjs/delete-document/execute";
+
+const mocks = vi.hoisted(() => ({
+  documents: { enabled: true, types: { code: true, text: true } },
+  read: vi.fn(),
+  remove: vi.fn(),
+  resolve: vi.fn(),
+}));
+vi.mock("../config", () => ({
+  config: { ai: { tools: { documents: mocks.documents } } },
+}));
+vi.mock("../db/eve-documents", () => ({
+  getEveDocumentRevision: mocks.read,
+  removeEveDocumentFromConversation: mocks.remove,
+}));
+vi.mock("./conversation-scope", () => ({
+  resolveEveConversationScope: mocks.resolve,
+}));
+
+const input = {
+  documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
+  expectedRevisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
+  title: "Orchard notes",
+};
+const identity = {
+  authenticator: "test",
+  principalId: "owner",
+  principalType: "user",
+};
+const context = testToolContext({
+  session: {
+    auth: { current: null, initiator: { ...identity, attributes: {} } },
+    id: "native-session",
+    turn: { id: "turn", sequence: 1 },
+  },
+});
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  mocks.documents.enabled = true;
+  mocks.documents.types.text = true;
+  mocks.resolve.mockResolvedValue({
+    conversationId: "conversation",
+    ownerId: "owner",
+  });
+  mocks.read.mockResolvedValue({
+    id: input.expectedRevisionId,
+    kind: "text",
+    title: input.title,
+  });
+});
+
+it("requests native approval only for the current owned title and revision", async () => {
+  await expect(requestDocumentDeletion(input, context)).resolves.toBe(
+    "user-approval"
+  );
+  expect(mocks.resolve).toHaveBeenCalledWith(
+    "owner",
+    "native-session",
+    context.abortSignal
+  );
+  expect(mocks.read).toHaveBeenCalledWith(
+    "owner",
+    "conversation",
+    input.documentId
+  );
+  await expect(
+    requestDocumentDeletion({ ...input, title: "Misleading title" }, context)
+  ).rejects.toThrow("Document changed");
+  mocks.read.mockResolvedValue(undefined);
+  await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
+    "Document not found"
+  );
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+it("requires an owner receipt before performing the conditional deletion", async () => {
+  await expect(executeDocumentDeletion(input, context)).rejects.toThrow(
+    "owner's approval"
+  );
+  await expect(
+    executeDocumentDeletion(input, {
+      ...context,
+      approval: {
+        requestId: "approval",
+        responder: { ...identity, principalId: "other" },
+      },
+    })
+  ).rejects.toThrow("owner's approval");
+  expect(mocks.remove).not.toHaveBeenCalled();
+  await executeDocumentDeletion(input, {
+    ...context,
+    approval: { requestId: "approval", responder: identity },
+  });
+  expect(mocks.remove).toHaveBeenCalledExactlyOnceWith(
+    input,
+    { conversationId: "conversation", ownerId: "owner" },
+    context.abortSignal
+  );
+});
+
+it("rejects disabled documents before requesting approval or executing", async () => {
+  mocks.documents.enabled = false;
+  await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
+    "unavailable"
+  );
+  await expect(executeDocumentDeletion(input, context)).rejects.toThrow(
+    "unavailable"
+  );
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+it("rechecks kind availability after approval", async () => {
+  mocks.documents.types.text = false;
+  await expect(
+    executeDocumentDeletion(input, {
+      ...context,
+      approval: { requestId: "approval", responder: identity },
+    })
+  ).rejects.toThrow("disabled for this kind");
+  expect(mocks.remove).not.toHaveBeenCalled();
+});

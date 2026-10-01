@@ -276,49 +276,6 @@ test("the composer selects models for initial and subsequent durable turns", asy
   expect(
     snapshot.events.filter((event) => event.type === "message.received")
   ).toHaveLength(2);
-  await page
-    .getByRole("textbox", { exact: true, name: "Message" })
-    .fill(
-      'Call confirm_note with the note "model approval check" and wait for my approval.'
-    );
-  await page.getByRole("button", { exact: true, name: "Send" }).click();
-  await expect(
-    page.getByText("Waiting for your input", { exact: true })
-  ).toBeVisible({ timeout: 90_000 });
-  await page.reload();
-  await expect(
-    page.getByText("Waiting for your input", { exact: true })
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { exact: true, name: "Edit message" }).last()
-  ).toBeDisabled();
-  await expect(
-    page.getByRole("button", { exact: true, name: "Approve" })
-  ).toBeEnabled();
-  await page.getByRole("button", { exact: true, name: "Approve" }).click();
-  await expect(page.getByText("Ready", { exact: true })).toBeVisible({
-    timeout: 90_000,
-  });
-  const approved = await client.sessions
-    .attach(conversation.sessionId)
-    .snapshot();
-  const approvalSteps = approved.events
-    .slice(snapshot.events.length)
-    .filter((event) => event.type === "step.started");
-  expect(approvalSteps.length).toBeGreaterThanOrEqual(2);
-  for (const step of approvalSteps) {
-    if (step.type === "step.started") {
-      expect(step.data.modelId).toBe(`gateway/${selected}`);
-      expect(step.data.turnId).not.toBe("");
-      expect(
-        approved.events.some(
-          (event) =>
-            event.type === "turn.started" &&
-            event.data.turnId === step.data.turnId
-        )
-      ).toBe(true);
-    }
-  }
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
   const [activeConversation] = await db
     .select({
@@ -335,12 +292,12 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, conversation.sessionId));
-  expect(chargedUsage.length).toBeGreaterThanOrEqual(4);
+  expect(chargedUsage.length).toBeGreaterThanOrEqual(2);
   for (const entry of chargedUsage) {
     expect(entry.turnId).not.toBe("");
     expect(entry.costUsd).not.toBeNull();
     expect(
-      approved.events.some(
+      snapshot.events.some(
         (event) =>
           event.type === "turn.started" && event.data.turnId === entry.turnId
       )

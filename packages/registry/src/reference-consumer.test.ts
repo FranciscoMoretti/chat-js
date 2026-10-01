@@ -16,6 +16,7 @@ const referenceItems = new Set([
   "code-documents",
   "sheet-documents",
   "read-document",
+  "delete-document",
   "saved-code-execution",
   "deep-research",
   "code-execution-ui",

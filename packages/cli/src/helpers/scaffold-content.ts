@@ -36,6 +36,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/eve-subagents.test.ts",
   "lib/eve/core-tool-types.test.ts",
   "lib/eve/document-execution.test.ts",
+  "lib/eve/document-deletion.test.ts",
   "lib/eve/document-runs.test.ts",
   "lib/eve/saved-code-executor.test.ts",
   "lib/eve/local-sandbox-inventory.test.ts",

@@ -31,16 +31,13 @@ test("compiled ChatJS tools exclude optional Eve defaults that bypass applicatio
         )
       )
     );
-  // All application tools are dynamic so each turn applies the selected-tool policy.
-  expect(manifest.tools).toEqual([]);
+  expect(manifest.tools.map((tool) => tool.name).toSorted()).toEqual([
+    "deepResearch",
+  ]);
   expect(manifest.dynamicTools.map((tool) => tool.slug).toSorted()).toEqual([
-    "application",
-    "confirm_note",
     "connection_search",
-    "documents",
+    "installed",
     "mcp",
-    "platform",
-    "research",
   ]);
 });
 

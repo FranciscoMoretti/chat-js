@@ -33,15 +33,18 @@ export const EveDocumentPreview = ({
       revisionId: result.revisionId,
     })
   );
+  let loadingMessage = "Loading document…";
+  if (document.isError) {
+    loadingMessage =
+      document.error.data?.code === "NOT_FOUND"
+        ? "Document is no longer available in this conversation."
+        : "Open document to retry loading.";
+  }
   let content: ReactNode = (
-    <p className="text-muted-foreground">
-      {document.isError
-        ? "Open document to retry loading."
-        : "Loading document…"}
-    </p>
+    <p className="text-muted-foreground">{loadingMessage}</p>
   );
   const isLatest = document.data?.history.at(-1)?.id === result.revisionId;
-  if (document.data) {
+  if (document.data && !document.isError) {
     content = (
       <DocumentBody
         inline

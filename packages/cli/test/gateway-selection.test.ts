@@ -431,6 +431,19 @@ const verifyResearchInstallation = async (
   ).toBe(false);
   if (gateway === "vercel") {
     await run(cwd, ["bun", "run", "lint"]);
+    expect(
+      await Bun.file(join(cwd, "agent/tools/confirm_note.ts")).exists()
+    ).toBe(false);
+    expect(
+      await Bun.file(join(cwd, "tools/chatjs/delete-document/tool.ts")).exists()
+    ).toBe(false);
+    await run(cwd, ["node", cliEntry, "add", "delete-document", "--yes"]);
+    expect(
+      await readFile(join(cwd, "tools/chatjs/tools.ts"), "utf-8")
+    ).toContain('from "./delete-document/tool"');
+    expect(
+      await readFile(join(cwd, "tools/chatjs/tool-availability.ts"), "utf-8")
+    ).toContain("deleteDocumentAvailable");
     // Exercise namespaced transitive dependencies, including the shared UI item
     // without a ChatJS tool descriptor, through actual installation and sync.
     const sharedDirectory = join(cwd, "tools/chatjs/_shared/code-execution");

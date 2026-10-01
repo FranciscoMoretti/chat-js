@@ -1,0 +1,12 @@
+{
+  "contractVersion": 1,
+  "id": "delete-document",
+  "kind": "tool",
+  "availabilityExport": "deleteDocumentAvailable",
+  "requiresTools": ["readDocument"],
+  "tools": [
+    {
+      "toolExport": "deleteDocument"
+    }
+  ]
+}

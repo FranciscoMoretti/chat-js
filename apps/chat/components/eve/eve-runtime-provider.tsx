@@ -17,6 +17,7 @@ import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
+import { installedToolNames } from "@/tools/chatjs/installed-features";
 import { useTRPC } from "@/trpc/react";
 
 import { EveChatHeader } from "./eve-chat-header";
@@ -60,7 +61,9 @@ const NativeObserver = ({
       if (
         event.type === "action.result" &&
         event.data.result.kind === "tool-result" &&
-        Object.hasOwn(eveDocumentOperations, event.data.result.toolName)
+        (Object.hasOwn(eveDocumentOperations, event.data.result.toolName) ||
+          (installedToolNames.has("deleteDocument") &&
+            event.data.result.toolName === "deleteDocument"))
       ) {
         void queryClient.invalidateQueries({
           queryKey: trpc.eve.document.pathKey(),

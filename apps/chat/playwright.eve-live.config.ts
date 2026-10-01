@@ -28,6 +28,7 @@ export default defineConfig({
     "eve-create-recovery.e2e.ts",
     "eve-rejected-send.e2e.ts",
     "eve-document-run.e2e.ts",
+    "eve-delete-document.e2e.ts",
     "eve-document-tools.e2e.ts",
     "eve-document-auto-open.e2e.ts",
     "eve-response-cards.e2e.ts",

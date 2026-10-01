@@ -19,6 +19,7 @@ import {
   getEveDocumentRevision,
   initializeEveForkDocuments,
   purgeEveFamilyDocuments,
+  removeEveDocumentFromConversation,
   saveEveDocumentRevision,
 } from "../lib/db/eve-documents";
 import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
@@ -1200,4 +1201,85 @@ test("imported fork reservations retain their boundary across uncertain creation
       { fork }
     )
   ).toEqual(bound);
+});
+
+test("approved deletion is scoped, revision-checked, retryable, and preserves fork snapshots", async () => {
+  const root = await conversation();
+  const input = draft(root.id);
+  const original = await saveEveDocumentRevision(input);
+  await captureEveDocumentCheckpoint(owner, root.id, 1);
+  const child = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "Retained fork",
+    async () => crypto.randomUUID(),
+    {
+      fork: { beforeTurnId: "turn_1", conversationId: root.id },
+    }
+  );
+  const deletion = {
+    documentId: input.documentId,
+    expectedRevisionId: original.id,
+    title: original.title,
+  };
+  const scope = { ownerId: owner, conversationId: root.id };
+  const { signal } = new AbortController();
+  await expect(
+    removeEveDocumentFromConversation(
+      deletion,
+      { ...scope, ownerId: stranger },
+      signal
+    )
+  ).rejects.toThrow("Conversation not found");
+  await expect(
+    removeEveDocumentFromConversation(
+      { ...deletion, title: "Misleading title" },
+      scope,
+      signal
+    )
+  ).rejects.toThrow("Document changed");
+  const edited = await saveEveDocumentRevision({
+    ...input,
+    expectedRevisionId: original.id,
+    operationId: crypto.randomUUID(),
+    content: "New content",
+    turnIndex: 1,
+  });
+  await expect(
+    removeEveDocumentFromConversation(deletion, scope, signal)
+  ).rejects.toThrow("Document changed");
+  const currentDeletion = { ...deletion, expectedRevisionId: edited.id };
+  await removeEveDocumentFromConversation(currentDeletion, scope, signal);
+  await removeEveDocumentFromConversation(currentDeletion, scope, signal);
+  expect(
+    await getEveDocumentRevision(owner, root.id, input.documentId)
+  ).toBeUndefined();
+  expect(
+    (await getEveDocumentRevision(owner, child.id, input.documentId))?.id
+  ).toBe(original.id);
+  await captureEveDocumentCheckpoint(owner, root.id, 2);
+  const later = await createEveConversation(
+    owner,
+    crypto.randomUUID(),
+    "After deletion",
+    async () => crypto.randomUUID(),
+    {
+      fork: { beforeTurnId: "turn_2", conversationId: root.id },
+    }
+  );
+  expect(
+    await getEveDocumentRevision(owner, later.id, input.documentId)
+  ).toBeUndefined();
+  const replacement = await saveEveDocumentRevision({
+    ...input,
+    operationId: crypto.randomUUID(),
+    content: "Replacement",
+    turnIndex: 2,
+  });
+  await expect(
+    removeEveDocumentFromConversation(currentDeletion, scope, signal)
+  ).rejects.toThrow("Document changed");
+  expect(
+    (await getEveDocumentRevision(owner, root.id, input.documentId))?.id
+  ).toBe(replacement.id);
 });
