@@ -1,4 +1,12 @@
+import * as lucide from "lucide-react";
 import { z } from "zod";
+
+const iconComponents = new Set<unknown>(Object.values(lucide.icons));
+const composerIconNames = new Set(
+  Object.entries(lucide)
+    .filter(([, value]) => iconComponents.has(value))
+    .map(([name]) => name)
+);
 
 const identifier = z
   .string()
@@ -34,15 +42,10 @@ const toolDefinitionBase = z.object({
       z.object({
         composer: z
           .object({
-            icon: z.enum([
-              "Edit3",
-              "Globe",
-              "Hash",
-              "Images",
-              "Telescope",
-              "Video",
-              "Wrench",
-            ]),
+            icon: identifier.refine(
+              (name) => composerIconNames.has(name),
+              "Unknown Lucide icon export"
+            ),
             name: z.string().min(1),
             shortName: z.string().min(1),
           })
