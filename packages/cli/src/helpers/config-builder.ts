@@ -158,23 +158,9 @@ const toConfigInput = (input: {
   ai: {
     gateway: input.gateway,
     tools: {
-      codeExecution: { enabled: input.builtInTools.codeExecution },
-      deepResearch: { enabled: input.builtInTools.deepResearch },
-      documents: {
-        enabled: input.coreFeatures.documents,
-        types: input.documentTypes,
-      },
       followupSuggestions: {
         enabled: input.coreFeatures.followupSuggestions,
       },
-      image: {
-        enabled: input.builtInTools.imageGeneration,
-      },
-      urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
-      video: {
-        enabled: input.builtInTools.videoGeneration,
-      },
-      webSearch: { enabled: input.builtInTools.webSearch },
     },
   },
   appName: input.appName,

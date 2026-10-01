@@ -4,18 +4,15 @@ import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
 
 const mocks = vi.hoisted(() => ({
-  documents: { enabled: true, types: { code: true } },
+  code: true,
   execute: vi.fn(),
-  execution: { enabled: true },
+  execution: true,
   read: vi.fn(),
   resolve: vi.fn(),
 }));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      tools: { codeExecution: mocks.execution, documents: mocks.documents },
-    },
-  },
+vi.mock("@/tools/chatjs/installed-features", () => ({
+  installedDocumentKinds: { has: () => mocks.code },
+  installedToolNames: { has: () => mocks.execution },
 }));
 vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
@@ -58,9 +55,8 @@ const context = testToolContext({
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.documents.enabled = true;
-  mocks.documents.types.code = true;
-  mocks.execution.enabled = true;
+  mocks.code = true;
+  mocks.execution = true;
   mocks.resolve.mockResolvedValue({
     conversationId: "conversation",
     ownerId: "owner",
@@ -154,17 +150,14 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
   });
 });
 
-it.each(["documents", "code", "execution"])(
-  "enforces the %s configuration gate before accessing documents",
+it.each(["code", "execution"])(
+  "enforces the %s installation requirement before accessing documents",
   async (gate) => {
-    if (gate === "documents") {
-      mocks.documents.enabled = false;
-    }
     if (gate === "code") {
-      mocks.documents.types.code = false;
+      mocks.code = false;
     }
     if (gate === "execution") {
-      mocks.execution.enabled = false;
+      mocks.execution = false;
     }
     await expect(executeEveCodeDocument(input, context).next()).rejects.toThrow(
       "disabled"

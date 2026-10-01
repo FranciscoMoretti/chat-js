@@ -1,12 +1,10 @@
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+
 import { config } from "../config";
 import type { DocumentAssistantRequest } from "./document-contracts";
 
 export const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
-  if (
-    !(
-      config.ai.tools.documents.enabled && config.ai.tools.documents.types[kind]
-    )
-  ) {
+  if (!installedDocumentKinds.has(kind)) {
     return [];
   }
   switch (kind) {
@@ -41,7 +39,7 @@ export const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
           label: "Format and clean data",
           modelId: config.ai.tools.sheet.format,
         },
-        ...(config.ai.tools.documents.types.code
+        ...(installedDocumentKinds.has("code")
           ? [
               {
                 instruction:

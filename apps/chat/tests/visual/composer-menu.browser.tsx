@@ -47,36 +47,6 @@ vi.mock("@/providers/chat-models-provider", () => ({
 }));
 vi.mock("@/lib/config", () => ({
   config: {
-    ai: {
-      tools: {
-        deepResearch: {
-          get enabled() {
-            return state.featuresEnabled;
-          },
-        },
-        documents: {
-          get enabled() {
-            return state.featuresEnabled;
-          },
-          types: { text: true },
-        },
-        image: {
-          get enabled() {
-            return state.featuresEnabled;
-          },
-        },
-        video: {
-          get enabled() {
-            return state.featuresEnabled;
-          },
-        },
-        webSearch: {
-          get enabled() {
-            return state.featuresEnabled;
-          },
-        },
-      },
-    },
     features: {
       get attachments() {
         return state.featuresEnabled;
@@ -90,7 +60,8 @@ vi.mock("@/features/installed", () => ({
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedToolNames: {
     has: (name: string) =>
-      name === "webSearch"
+      state.featuresEnabled &&
+      (name === "webSearch"
         ? !state.removedTool
         : [
             "createTextDocument",
@@ -98,7 +69,7 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
             "deepResearch",
             "generateImage",
             "generateVideo",
-          ].includes(name),
+          ].includes(name)),
   },
 }));
 vi.mock("@/trpc/react", () => ({
@@ -506,10 +477,10 @@ test("no available controls hides the menu but still allows clearing a restored 
       page.getByRole("button", { name: "Composer options" }).click()
     );
     await expect
-      .element(page.getByRole("menuitem", { name: "Clear Search" }))
+      .element(page.getByRole("menuitem", { name: "Clear unavailable tool" }))
       .toBeVisible();
     await act(() =>
-      page.getByRole("menuitem", { name: "Clear Search" }).click()
+      page.getByRole("menuitem", { name: "Clear unavailable tool" }).click()
     );
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))

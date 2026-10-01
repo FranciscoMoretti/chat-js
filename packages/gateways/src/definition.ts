@@ -2,10 +2,7 @@ import { z } from "zod";
 
 const model = z.string().min(1);
 const toggle = z.object({ enabled: z.boolean() });
-const media = z.discriminatedUnion("enabled", [
-  z.object({ default: model, enabled: z.literal(true) }),
-  z.object({ default: model.optional(), enabled: z.literal(false) }),
-]);
+const media = z.object({ default: model.optional() });
 
 /** Serializable installation contract. Adapter behavior is checked by TypeScript and contract tests. */
 export const gatewayDefinitionSchema = z
@@ -19,8 +16,7 @@ export const gatewayDefinitionSchema = z
       providerOrder: z.array(z.string()),
       tools: z.object({
         code: z.object({ edits: model }),
-        codeExecution: toggle,
-        deepResearch: toggle.extend({
+        deepResearch: z.object({
           allowClarification: z.boolean(),
           defaultModel: model,
           finalReportModel: model,
@@ -28,20 +24,11 @@ export const gatewayDefinitionSchema = z
           maxResearcherIterations: z.number().int().min(1).max(10),
           maxSearchQueries: z.number().int().min(1).max(10),
         }),
-        documents: toggle.extend({
-          types: z.object({
-            code: z.boolean(),
-            sheet: z.boolean(),
-            text: z.boolean(),
-          }),
-        }),
         followupSuggestions: toggle.extend({ default: model }),
         image: media,
         sheet: z.object({ analyze: model, format: model }),
         text: z.object({ polish: model }),
-        urlRetrieval: toggle,
         video: media,
-        webSearch: toggle,
       }),
       workflows: z.object({
         chat: model,
@@ -65,8 +52,7 @@ export const gatewayDefinitionSchema = z
   .superRefine((definition, ctx) => {
     for (const kind of ["image", "video"] as const) {
       if (
-        (definition.defaults.tools[kind].enabled ||
-          definition.defaults.tools[kind].default !== undefined) &&
+        definition.defaults.tools[kind].default !== undefined &&
         !definition.capabilities[kind]
       ) {
         ctx.addIssue({

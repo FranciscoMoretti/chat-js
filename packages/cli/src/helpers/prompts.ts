@@ -267,7 +267,7 @@ export const promptCoreFeatures = async (
   const defaultTools = gateway.defaults.tools;
   const CORE_FEATURE_DEFAULTS: Record<CoreFeatureKey, boolean> = {
     attachments: FEATURES_DEFAULTS.attachments,
-    documents: defaultTools.documents.enabled,
+    documents: true,
     followupSuggestions: defaultTools.followupSuggestions.enabled,
     mcp: false,
     parallelResponses: FEATURES_DEFAULTS.parallelResponses,
@@ -302,13 +302,12 @@ export const promptCoreFeatures = async (
 export const promptDocumentTypes = async (
   skipPrompt: boolean,
   documentsEnabled: boolean,
-  gateway: GatewayDefinition
+  _gateway: GatewayDefinition
 ): Promise<Record<DocumentTypeKey, boolean>> => {
-  const defaultTools = gateway.defaults.tools;
   const DOCUMENT_TYPE_DEFAULTS: Record<DocumentTypeKey, boolean> = {
-    code: defaultTools.documents.types.code,
-    sheet: defaultTools.documents.types.sheet,
-    text: defaultTools.documents.types.text,
+    code: true,
+    sheet: true,
+    text: true,
   };
 
   if (!documentsEnabled) {
@@ -339,20 +338,18 @@ export const promptDocumentTypes = async (
 export const promptAssistantTools = async (
   registryItems: RegistryIndexItem[],
   skipPrompt: boolean,
-  gateway: GatewayDefinition
+  _gateway: GatewayDefinition
 ): Promise<{
   builtInTools: Record<BuiltInToolKey, boolean>;
   installableTools: string[];
 }> => {
-  const defaultTools = gateway.defaults.tools;
   const BUILT_IN_TOOL_DEFAULTS: Record<BuiltInToolKey, boolean> = {
-    codeExecution: defaultTools.codeExecution.enabled,
-    deepResearch: defaultTools.deepResearch.enabled,
-    imageGeneration: defaultTools.image.enabled,
-    urlRetrieval: defaultTools.urlRetrieval.enabled,
-    videoGeneration: defaultTools.video.enabled,
-    webSearch:
-      defaultTools.webSearch.enabled || defaultTools.deepResearch.enabled,
+    codeExecution: false,
+    deepResearch: false,
+    imageGeneration: false,
+    urlRetrieval: false,
+    videoGeneration: false,
+    webSearch: false,
   };
 
   const installableItems = registryItems.filter(

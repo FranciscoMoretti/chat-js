@@ -74,23 +74,9 @@ const createAiSchema = <G extends GatewayType>(g: G) =>
         code: z.object({
           edits: gatewayModelId<G>(),
         }),
-        codeExecution: z.object({
-          enabled: z
-            .boolean()
-            .describe("Requires Vercel sandbox credentials outside Vercel"),
-        }),
         deepResearch: deepResearchToolConfigSchema.extend({
           defaultModel: gatewayModelId<G>(),
-          enabled: z.boolean().describe("Requires web search access"),
           finalReportModel: gatewayModelId<G>(),
-        }),
-        documents: z.object({
-          enabled: z.boolean().describe("Document create/edit/review support"),
-          types: z.object({
-            code: z.boolean(),
-            sheet: z.boolean(),
-            text: z.boolean(),
-          }),
         }),
         followupSuggestions: z.object({
           default: gatewayModelId<G>(),
@@ -98,7 +84,6 @@ const createAiSchema = <G extends GatewayType>(g: G) =>
         }),
         image: z.object({
           default: gatewayImageModelId<G>().optional(),
-          enabled: z.boolean().describe("Enable the installed image tool"),
         }),
         sheet: z.object({
           analyze: gatewayModelId<G>(),
@@ -107,19 +92,8 @@ const createAiSchema = <G extends GatewayType>(g: G) =>
         text: z.object({
           polish: gatewayModelId<G>(),
         }),
-        urlRetrieval: z.object({
-          enabled: z
-            .boolean()
-            .describe("Requires the selected URL retrieval tool’s credentials"),
-        }),
         video: z.object({
           default: gatewayVideoModelId<G>().optional(),
-          enabled: z.boolean().describe("Enable the installed video tool"),
-        }),
-        webSearch: z.object({
-          enabled: z
-            .boolean()
-            .describe("Requires TAVILY_API_KEY or FIRECRAWL_API_KEY"),
         }),
       })
       .describe("Default model and runtime configuration grouped by tool"),
@@ -400,11 +374,9 @@ type DeepResearchToolInputFor<G extends GatewayType> = Partial<
   }
 >;
 type ImageToolInputFor<G extends GatewayType> = {
-  enabled?: boolean;
   default?: GatewayImageModelIdMap[G];
 };
 type VideoToolInputFor<G extends GatewayType> = {
-  enabled?: boolean;
   default?: GatewayVideoModelIdMap[G];
 };
 type FollowupSuggestionsToolInputFor<G extends GatewayType> = Partial<{
@@ -413,18 +385,12 @@ type FollowupSuggestionsToolInputFor<G extends GatewayType> = Partial<{
 }>;
 interface AiToolsInputFor<G extends GatewayType> {
   code?: Partial<{ [P in keyof AiToolsShape["code"]]: GatewayModelIdMap[G] }>;
-  codeExecution?: Partial<AiToolsShape["codeExecution"]>;
   deepResearch?: DeepResearchToolInputFor<G>;
-  documents?: Partial<Omit<AiToolsShape["documents"], "types">> & {
-    types?: AiToolsShape["documents"]["types"];
-  };
   followupSuggestions?: FollowupSuggestionsToolInputFor<G>;
   image?: ImageToolInputFor<G>;
   sheet?: Partial<{ [P in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[G] }>;
   text?: Partial<{ [P in keyof AiToolsShape["text"]]: GatewayModelIdMap[G] }>;
-  urlRetrieval?: Partial<AiToolsShape["urlRetrieval"]>;
   video?: VideoToolInputFor<G>;
-  webSearch?: Partial<AiToolsShape["webSearch"]>;
 }
 
 // Only gateway is required; everything else is an override on top of GATEWAY_MODEL_DEFAULTS

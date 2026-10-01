@@ -89,12 +89,8 @@ describe("buildConfigTs", () => {
       /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*false,/mu
     );
     expect(output).toContain("parallelResponses: true");
-    expect(output).toContain("documents: {");
-    expect(output).toContain("text: true");
-    expect(output).toContain("code: true");
-    expect(output).toContain("sheet: true");
-    expect(output).toContain("codeExecution: {");
-    expect(output).toContain("enabled: false");
+    expect(output).not.toContain("documents: {");
+    expect(output).not.toContain("codeExecution: {");
     expect(output).toContain(
       "// File attachments (requires configured file storage)\n    attachments: false,"
     );
@@ -137,12 +133,8 @@ describe("buildConfigTs", () => {
       /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
     );
     expect(output).toContain("parallelResponses: true");
-    expect(output).toContain("documents: {");
-    expect(output).toContain("text: true");
-    expect(output).toContain("code: true");
-    expect(output).toContain("sheet: true");
+    expect(output).not.toContain("documents: {");
     expect(output).toContain("video: {");
-    expect(output).toContain("enabled: false");
   });
   it("preserves selected media tools for openai-compatible scaffolds", () => {
     const output = buildConfigTs({
@@ -181,9 +173,7 @@ describe("buildConfigTs", () => {
     expect(output).toContain('gateway: "openai-compatible"');
     expect(output).toContain("image: {");
     expect(output).toContain('default: "gpt-image-1"');
-    expect(output).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
+    expect(output).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });
 

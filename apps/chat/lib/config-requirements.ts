@@ -1,10 +1,4 @@
-import { codeExecutionEnvRequirement } from "@/tools/chatjs/code-execution-config";
-import { imageGenerationEnvRequirement } from "@/tools/chatjs/image-generation-config";
-import { searchEnvRequirement } from "@/tools/chatjs/search-config";
-import { urlRetrievalEnvRequirement } from "@/tools/chatjs/url-retrieval-config";
-import { videoGenerationEnvRequirement } from "@/tools/chatjs/video-generation-config";
-
-import type { AiConfig, AuthenticationConfig } from "./config-schema";
+import type { AuthenticationConfig } from "./config-schema";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
 
@@ -30,17 +24,6 @@ export const formatRequirementDescription = (
     return `${requirement.description} (${keys})`;
   }
   return requirement.description ?? keys;
-};
-
-export const aiToolEnvRequirements: Partial<
-  Record<keyof AiConfig["tools"], EnvRequirement>
-> = {
-  codeExecution: codeExecutionEnvRequirement,
-  deepResearch: searchEnvRequirement,
-  image: imageGenerationEnvRequirement,
-  urlRetrieval: urlRetrievalEnvRequirement,
-  video: videoGenerationEnvRequirement,
-  webSearch: searchEnvRequirement,
 };
 
 export const authEnvRequirements: Record<

@@ -7,13 +7,13 @@ import {
 } from "../../tools/chatjs/delete-document/execute";
 
 const mocks = vi.hoisted(() => ({
-  documents: { enabled: true, types: { code: true, text: true } },
+  kinds: new Set(["code", "text"]),
   read: vi.fn(),
   remove: vi.fn(),
   resolve: vi.fn(),
 }));
-vi.mock("../config", () => ({
-  config: { ai: { tools: { documents: mocks.documents } } },
+vi.mock("@/tools/chatjs/installed-features", () => ({
+  installedDocumentKinds: mocks.kinds,
 }));
 vi.mock("../db/eve-documents", () => ({
   getEveDocumentRevision: mocks.read,
@@ -43,8 +43,9 @@ const context = testToolContext({
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.documents.enabled = true;
-  mocks.documents.types.text = true;
+  mocks.kinds.clear();
+  mocks.kinds.add("code");
+  mocks.kinds.add("text");
   mocks.resolve.mockResolvedValue({
     conversationId: "conversation",
     ownerId: "owner",
@@ -105,8 +106,8 @@ it("requires an owner receipt before performing the conditional deletion", async
   );
 });
 
-it("rejects disabled documents before requesting approval or executing", async () => {
-  mocks.documents.enabled = false;
+it("rejects absent document implementations before requesting approval or executing", async () => {
+  mocks.kinds.clear();
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
     "unavailable"
   );
@@ -117,7 +118,7 @@ it("rejects disabled documents before requesting approval or executing", async (
 });
 
 it("rechecks kind availability after approval", async () => {
-  mocks.documents.types.text = false;
+  mocks.kinds.delete("text");
   await expect(
     executeDocumentDeletion(input, {
       ...context,

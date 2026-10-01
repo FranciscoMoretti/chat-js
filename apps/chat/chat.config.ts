@@ -33,15 +33,9 @@ const config = defineConfig({
       code: {
         edits: "openai/gpt-5-mini",
       },
-      codeExecution: {
-        // Vercel-native, no key needed
-        enabled: true,
-      },
       deepResearch: {
         allowClarification: true,
         defaultModel: "openai/gpt-5-nano",
-        // Requires webSearch
-        enabled: true,
         finalReportModel: "openai/gpt-5-mini",
         maxConcurrentResearchUnits: 2,
         maxResearcherIterations: 1,
@@ -52,8 +46,6 @@ const config = defineConfig({
       },
       image: {
         default: "google/gemini-3-pro-image",
-        // Requires BLOB_READ_WRITE_TOKEN
-        enabled: true,
       },
       sheet: {
         analyze: "openai/gpt-5-mini",
@@ -61,14 +53,6 @@ const config = defineConfig({
       },
       text: {
         polish: "openai/gpt-5-mini",
-      },
-      urlRetrieval: {
-        // Requires the selected URL retrieval tool’s credentials
-        enabled: true,
-      },
-      webSearch: {
-        // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
-        enabled: true,
       },
     },
     workflows: {

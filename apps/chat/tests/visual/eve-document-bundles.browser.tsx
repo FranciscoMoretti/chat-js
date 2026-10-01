@@ -2,9 +2,12 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
+import { page } from "vitest/browser";
 
 import { DocumentBody } from "@/components/eve/eve-document-body";
 import { documentUi } from "@/tools/chatjs/document-ui";
+import { installedToolNames } from "@/tools/chatjs/installed-features";
+import { EveDocumentRun } from "@/tools/chatjs/saved-code-execution/document";
 
 import "./sandbox.css";
 
@@ -115,6 +118,79 @@ test("a removed editor has an explicit notice in panel and inline views", async 
     await takeSnapshot("uninstalled-document-editor");
   } finally {
     documentUi.text = original;
+    await act(() => root.unmount());
+    container.remove();
+  }
+});
+
+test("saved code run controls follow installed execution and retain disabled states", async () => {
+  const container = document.createElement("main");
+  container.style.cssText = "padding:24px;width:980px;background:#171717";
+  document.body.append(container);
+  const root = createRoot(container);
+  const installed = new Set(installedToolNames);
+  vi.spyOn(installedToolNames, "has").mockImplementation((name) =>
+    installed.has(name)
+  );
+  const onAction = vi.fn();
+  const props = {
+    disabled: false,
+    documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
+    kind: "code" as const,
+    messages: [],
+    onAction,
+    revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
+    title: "saved.js",
+  };
+  try {
+    await act(() =>
+      root.render(
+        <div className="grid gap-6">
+          <section>
+            <h2>Installed execution</h2>
+            <EveDocumentRun {...props} />
+          </section>
+          <section>
+            <h2>Unsaved changes</h2>
+            <EveDocumentRun {...props} disabled />
+          </section>
+          <section>
+            <h2>Read only</h2>
+            <EveDocumentRun {...props} onAction={undefined} />
+          </section>
+        </div>
+      )
+    );
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Run" }).nth(0))
+      .toBeEnabled();
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Run" }).nth(1))
+      .toBeDisabled();
+    await takeSnapshot("saved-code-installed-run-controls");
+    await act(() =>
+      page.getByRole("button", { exact: true, name: "Run" }).nth(0).click()
+    );
+    expect(onAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining(props.revisionId),
+      })
+    );
+    installed.delete("runCodeDocument");
+    await act(() =>
+      root.render(
+        <section>
+          <h2>Execution absent</h2>
+          <EveDocumentRun {...props} />
+        </section>
+      )
+    );
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Run" }))
+      .not.toBeInTheDocument();
+    await takeSnapshot("saved-code-absent-run-controls");
+  } finally {
+    vi.restoreAllMocks();
     await act(() => root.unmount());
     container.remove();
   }

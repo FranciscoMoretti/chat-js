@@ -20,23 +20,23 @@ import { eveTurnGuest, eveTurnTool } from "./turn-tools";
 const mocks = vi.hoisted(() => {
   const tools: { webSearch?: object } = { webSearch: {} };
   return {
-    features: {
-      deepResearch: { enabled: true },
-      documents: { enabled: true, types: { text: true } },
-    },
+    research: true,
+    text: true,
     tools,
   };
 });
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
-vi.mock("../config", () => ({ config: { ai: { tools: mocks.features } } }));
+vi.mock("@/tools/chatjs/installed-features", () => ({
+  installedDocumentKinds: { has: () => mocks.text },
+  installedToolNames: { has: () => mocks.research },
+}));
 vi.mock("../../tools/chatjs/providers", () => ({ providers: mocks.tools }));
 beforeEach(() => {
   mocks.tools.webSearch = {};
-  mocks.features.deepResearch.enabled = true;
-  mocks.features.documents.enabled = true;
-  mocks.features.documents.types.text = true;
+  mocks.research = true;
+  mocks.text = true;
 });
 it.each([
   "automatic",
@@ -53,9 +53,8 @@ it.each([
     if (scenario === "uninstalled") {
       delete mocks.tools.webSearch;
     }
-    mocks.features.deepResearch.enabled = scenario !== "disabled";
-    mocks.features.documents.enabled = scenario !== "no-documents";
-    mocks.features.documents.types.text = scenario !== "no-text";
+    mocks.research = scenario !== "disabled";
+    mocks.text = scenario !== "no-text" && scenario !== "no-documents";
     eveTurnTool.update(() => null);
     if (scenario === "other-tool") {
       eveTurnTool.update(() => "webSearch");

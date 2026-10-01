@@ -45,24 +45,40 @@ describe("scaffold contracts", () => {
       webSearch: true,
     } satisfies Record<BuiltInToolKey, boolean>;
 
+    const noBuiltIns = {
+      codeExecution: false,
+      deepResearch: false,
+      imageGeneration: false,
+      urlRetrieval: false,
+      videoGeneration: false,
+      webSearch: false,
+    } satisfies Record<BuiltInToolKey, boolean>;
+
     for (const gateway of GATEWAYS) {
       const output = buildConfigFor(gateway, allBuiltIns);
       expect(output).toContain(`gateway: ${JSON.stringify(gateway)}`);
+      // Installation choices must not produce runtime presence switches.
+      expect(output).toBe(buildConfigFor(gateway, noBuiltIns));
+      for (const removed of [
+        "documents",
+        "codeExecution",
+        "urlRetrieval",
+        "webSearch",
+      ]) {
+        expect(output).not.toContain(`${removed}: {`);
+      }
+      expect(output).toContain("maxSearchQueries: 2");
+      expect(output).toContain("followupSuggestions: {");
+      expect(output).toContain("parallelResponses: true");
     }
 
     const openaiCompatible = buildConfigFor("openai-compatible", allBuiltIns);
     expect(openaiCompatible).toContain('default: "gpt-image-1"');
-    expect(openaiCompatible).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
+    expect(openaiCompatible).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
 
     const litellm = buildConfigFor("litellm", allBuiltIns);
     expect(litellm).toContain('chat: "openai/gpt-4o-mini"');
-    expect(litellm).toMatch(
-      /image:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
-    expect(litellm).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
+    expect(litellm).not.toMatch(/image:\s*\{[^}]*enabled:/mu);
+    expect(litellm).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });

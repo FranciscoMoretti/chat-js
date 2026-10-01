@@ -8,9 +8,10 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
-import { config } from "../config";
 import { eveCreationContentHash } from "./creation-content-hash";
 import {
   moveRejectedProjectCreation,
@@ -212,19 +213,23 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
   });
 });
 
-it("withholds readDocument when every document kind is disabled", () => {
-  const original = structuredClone(config.ai.tools.documents);
+it("withholds document operations when their implementations are not installed", () => {
+  const installed = new Set(installedDocumentKinds);
+  vi.spyOn(installedDocumentKinds, "has").mockImplementation((kind) =>
+    installed.has(kind)
+  );
+  vi.spyOn(installedDocumentKinds, "size", "get").mockImplementation(
+    () => installed.size
+  );
   try {
-    config.ai.tools.documents.enabled = true;
-    config.ai.tools.documents.types = {
-      code: false,
-      sheet: false,
-      text: false,
-    };
+    installed.clear();
     expect(eveInstalledToolEnabled("readDocument")).toBe(false);
-    config.ai.tools.documents.types.text = true;
+    expect(eveInstalledToolEnabled("createTextDocument")).toBe(false);
+    installed.add("text");
     expect(eveInstalledToolEnabled("readDocument")).toBe(true);
+    expect(eveInstalledToolEnabled("createTextDocument")).toBe(true);
+    expect(eveInstalledToolEnabled("createCodeDocument")).toBe(false);
   } finally {
-    config.ai.tools.documents = original;
+    vi.restoreAllMocks();
   }
 });
