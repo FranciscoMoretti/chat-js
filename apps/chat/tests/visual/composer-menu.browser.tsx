@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   authenticated: true,
   connectors: [{ enabled: true, id: "docs", name: "Documentation" }],
   error: false,
+  featuresEnabled: true,
   globalConnector: false,
   mobile: false,
   pending: false,
@@ -42,15 +43,44 @@ vi.mock("@/lib/config", () => ({
   config: {
     ai: {
       tools: {
-        deepResearch: { enabled: true },
-        documents: { enabled: true, types: { text: true } },
-        image: { enabled: true },
-        mcp: { enabled: true },
-        video: { enabled: true },
-        webSearch: { enabled: true },
+        deepResearch: {
+          get enabled() {
+            return state.featuresEnabled;
+          },
+        },
+        documents: {
+          get enabled() {
+            return state.featuresEnabled;
+          },
+          types: { text: true },
+        },
+        image: {
+          get enabled() {
+            return state.featuresEnabled;
+          },
+        },
+        mcp: {
+          get enabled() {
+            return state.featuresEnabled;
+          },
+        },
+        video: {
+          get enabled() {
+            return state.featuresEnabled;
+          },
+        },
+        webSearch: {
+          get enabled() {
+            return state.featuresEnabled;
+          },
+        },
       },
     },
-    features: { attachments: true },
+    features: {
+      get attachments() {
+        return state.featuresEnabled;
+      },
+    },
   },
 }));
 vi.mock("@/tools/chatjs/installed-features", () => ({
@@ -142,6 +172,7 @@ afterEach(() => {
   state.mobile = false;
   state.pending = false;
   state.error = false;
+  state.featuresEnabled = true;
   state.globalConnector = false;
   state.connectors = [{ enabled: true, id: "docs", name: "Documentation" }];
   vi.clearAllMocks();
@@ -244,6 +275,16 @@ test("mobile camera and guest controls respect the same order; disabled composer
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .toBeDisabled();
+    await act(() => {
+      const trigger = page
+        .getByRole("button", { name: "Composer options" })
+        .element();
+      if (!(trigger instanceof HTMLButtonElement)) {
+        throw new Error("Expected the composer button");
+      }
+      trigger.click();
+    });
+    await expect.element(page.getByRole("menu")).not.toBeInTheDocument();
   } finally {
     await disabledCleanup();
   }
@@ -380,5 +421,35 @@ test("global connectors remain visible but cannot invoke the own-only toggle", a
     expect(state.toggle).not.toHaveBeenCalled();
   } finally {
     await cleanup();
+  }
+});
+
+test("no available controls hides the menu but still allows clearing a restored selection", async () => {
+  state.featuresEnabled = false;
+  const cleanup = await mount();
+  try {
+    await expect
+      .element(page.getByRole("button", { name: "Composer options" }))
+      .not.toBeInTheDocument();
+    await takeSnapshot("composer-no-controls");
+  } finally {
+    await cleanup();
+  }
+  const selectedCleanup = await mount(false, "webSearch");
+  try {
+    await act(() =>
+      page.getByRole("button", { name: "Composer options" }).click()
+    );
+    await expect
+      .element(page.getByRole("menuitem", { name: "Clear Search" }))
+      .toBeVisible();
+    await act(() =>
+      page.getByRole("menuitem", { name: "Clear Search" }).click()
+    );
+    await expect
+      .element(page.getByRole("button", { name: "Composer options" }))
+      .not.toBeInTheDocument();
+  } finally {
+    await selectedCleanup();
   }
 });

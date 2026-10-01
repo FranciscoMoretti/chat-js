@@ -99,6 +99,8 @@ it("includes document revision reads without leaking unrelated tools", () => {
     "createCodeDocument",
     "createSheetDocument",
     "editTextDocument",
+    "editCodeDocument",
+    "editSheetDocument",
   ] as const) {
     expect(selectedEveTools(tool)).toEqual(
       selectedEveTools("createTextDocument")

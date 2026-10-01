@@ -147,15 +147,18 @@ test("composer connector controls persist and fence native tool execution", asyn
     await expect(
       page.getByRole("button", { name: "Composer options" })
     ).toBeVisible();
+    await page.getByRole("button", { name: "Composer options" }).click();
+    await control.click();
+    await expect(toggle).toBeChecked();
     await page
-      .getByRole("group", { exact: true, name: "Message composer" })
+      .getByRole("menu")
+      .filter({
+        has: page.getByRole("menuitem", { name: "Manage connectors" }),
+      })
       .screenshot({
         animations: "disabled",
         path: testInfo.outputPath("connectors-enabled.png"),
       });
-    await page.getByRole("button", { name: "Composer options" }).click();
-    await control.click();
-    await expect(toggle).toBeChecked();
     await toggle.click();
     await expect(toggle).not.toBeChecked();
     await expect

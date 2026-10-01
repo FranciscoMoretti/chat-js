@@ -111,3 +111,5 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
     </DropdownMenuSub>
   );
 };
+
+ConnectorsControl.isAvailable = () => config.ai.tools.mcp.enabled;
