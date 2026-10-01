@@ -32,7 +32,7 @@
   "scripts": {
     "build": "bun scripts/generate-composer-icons.ts && bun build.ts",
     "prepublishOnly": "bun run build",
-    "test:types": "tsc --noEmit",
+    "test:types": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json",
     "test:unit": "bun test src",
     "test:visual": "vitest run --config visual/vitest.config.ts",
     "lint": "oxlint . && oxfmt --check .",

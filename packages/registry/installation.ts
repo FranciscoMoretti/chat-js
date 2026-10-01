@@ -14,8 +14,8 @@ export const installationSelectionSchema = z.strictObject({
 });
 export type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
-// Only implementations available today. C adds uploads/observability after D/E
-// publish their registry items; the demo's existing runtime behavior stays intact.
+// Checked-in demo preset. H consolidates uploads/observability after D/E publish
+// their registry items; the demo's existing runtime behavior stays intact.
 export const demoInstallation = installationSelectionSchema.parse({
   features: ["mcp"],
   gateway: "vercel",

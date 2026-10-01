@@ -1,19 +1,20 @@
 {
   "availabilityExport": "researchAvailable",
-  "contractVersion": 1,
+  "envRequirements": [],
   "id": "deep-research",
   "kind": "tool",
   "requiresTools": ["createTextDocument", "readDocument", "webSearch"],
   "tools": [
     {
-      "rendererExport": "DeepResearchRenderer",
-      "toolExport": "deepResearch",
-      "workflow": true,
       "composer": {
         "icon": "Telescope",
         "name": "Deep Research",
         "shortName": "Research"
-      }
+      },
+      "rendererExport": "DeepResearchRenderer",
+      "toolExport": "deepResearch",
+      "workflow": true
     }
-  ]
+  ],
+  "contractVersion": 1
 }

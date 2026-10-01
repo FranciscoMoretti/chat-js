@@ -6,20 +6,12 @@
   "requiresTools": ["readDocument"],
   "tools": [
     {
-      "toolExport": "createTextDocument",
-      "composer": {
-        "icon": "Edit3",
-        "name": "Canvas",
-        "shortName": "Canvas"
-      }
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "createTextDocument"
     },
     {
-      "toolExport": "editTextDocument",
-      "composer": {
-        "icon": "Edit3",
-        "name": "Canvas",
-        "shortName": "Canvas"
-      }
+      "composer": { "icon": "Edit3", "name": "Canvas", "shortName": "Canvas" },
+      "toolExport": "editTextDocument"
     }
   ],
   "contractVersion": 1
