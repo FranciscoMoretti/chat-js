@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
 
-import { getMissingRequirement } from "./config-requirements";
+import {
+  authEnvRequirements,
+  getMissingRequirement,
+} from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
 
 const sandbox: EnvRequirement = {
@@ -109,4 +112,20 @@ test("code execution credential descriptions retain actionable environment key n
       { NODE_ENV: "test", VERCEL: "1" }
     )
   ).toBeNull();
+});
+
+test("credential descriptions avoid duplicate exact key names across separators", () => {
+  const requirement = authEnvRequirements.github;
+  expect(getMissingRequirement(requirement, { NODE_ENV: "test" })).toBe(
+    requirement.description
+  );
+  expect(
+    getMissingRequirement(
+      {
+        ...requirement,
+        description: "AUTH_GITHUB_ID_EXTRA, AUTH_GITHUB_SECRET",
+      },
+      { NODE_ENV: "test" }
+    )
+  ).toContain("(AUTH_GITHUB_ID + AUTH_GITHUB_SECRET)");
 });
