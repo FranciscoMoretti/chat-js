@@ -5,6 +5,7 @@ import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
+import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
 import { ContextBar } from "@/components/context-bar";
 import { ControlledChatComposer } from "@/components/controlled-chat-composer";
@@ -14,6 +15,7 @@ import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
+import { composerTools } from "@/tools/chatjs/composer-tools";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
@@ -55,6 +57,7 @@ export const EveComposer = ({
           : !model?.input.image
       )
     );
+  const unavailableTool = Boolean(selectedTool && !composerTools[selectedTool]);
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
   const upload = (incoming: File[]) => {
@@ -104,7 +107,7 @@ export const EveComposer = ({
             uploadQueue={files.uploadQueue}
           />
         }
-        disabled={locked || unsupported}
+        disabled={locked || unsupported || unavailableTool}
         hasAttachments={files.attachments.length > 0}
         onPaste={(event) => {
           if (config.features.attachments && event.clipboardData.files.length) {
@@ -132,6 +135,11 @@ export const EveComposer = ({
                 input.current.click();
               }}
             />
+            <ActiveTool
+              selectedTool={selectedTool}
+              disabled={uploadLocked}
+              onClear={() => onToolChange(null)}
+            />
             <EveModelPicker
               disabled={locked || props.readOnly || !!retainedModelId}
               modelSelection={modelSelection}
@@ -141,6 +149,12 @@ export const EveComposer = ({
           </>
         }
       />
+      {unavailableTool && (
+        <p className="text-destructive text-sm" role="alert">
+          The selected tool is unavailable. Clear it or choose another tool
+          before sending.
+        </p>
+      )}
       {unsupported && (
         <p className="text-destructive text-sm" role="alert">
           Choose models that support all attached files.

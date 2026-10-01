@@ -84,8 +84,14 @@ export const documentItems: RegistryItem[] = [
         kind: "tool",
         requiresTools: ["readDocument"],
         tools: [
-          { toolExport: `create${title}Document` },
-          { toolExport: `edit${title}Document` },
+          {
+            composer: { icon: "Edit3", name: "Canvas", shortName: "Canvas" },
+            toolExport: `create${title}Document`,
+          },
+          {
+            composer: { icon: "Edit3", name: "Canvas", shortName: "Canvas" },
+            toolExport: `edit${title}Document`,
+          },
         ],
       }),
     },

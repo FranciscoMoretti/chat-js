@@ -379,6 +379,7 @@ export const readInstalledTools = async (
     "ui.ts",
     "document-ui.ts",
     "installed-features.ts",
+    "composer-tools.ts",
     "document-run.ts",
     "providers.ts",
     "code-executor.ts",
@@ -407,6 +408,7 @@ export const readInstalledTools = async (
     [
       "document-ui.ts",
       "installed-features.ts",
+      "composer-tools.ts",
       "document-run.ts",
       "providers.ts",
       "code-executor.ts",
@@ -504,6 +506,15 @@ export const syncTools = async (
     join(dir, "installed-features.ts"),
     generatedSource(
       `export const installedToolNames: ReadonlySet<string> = new Set(${JSON.stringify(keys)});\nexport const installedDocumentKinds: ReadonlySet<string> = new Set([\n${documents.map((item) => `  ${JSON.stringify(item.documentKind)},`).join("\n")}\n]);\n`
+    )
+  );
+  const composerTools = registrations
+    .filter((item) => item.composer)
+    .toSorted((a, b) => a.key.localeCompare(b.key));
+  await writeFile(
+    join(dir, "composer-tools.ts"),
+    generatedSource(
+      `import type { LucideIcon } from "lucide-react";\n${composerTools.length ? `import { ${composerTools.map((item, index) => `${item.composer?.icon} as Icon${index}`).join(", ")} } from "lucide-react";` : ""}\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length ? `{\n${composerTools.map((item, index) => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
     )
   );
   const runner = definitions.find((item) => item.documentRunExport);

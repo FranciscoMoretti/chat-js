@@ -21,6 +21,7 @@ export const toolItems = [
     slot: "generateVideo",
     tools: [
       {
+        composer: { icon: "Video", name: "Create a video", shortName: "Video" },
         rendererExport: "GenerateVideoRenderer",
         toolExport: "generateVideoTool",
       },
@@ -34,6 +35,11 @@ export const toolItems = [
     slot: "generateImage",
     tools: [
       {
+        composer: {
+          icon: "Images",
+          name: "Create an image",
+          shortName: "Image",
+        },
         rendererExport: "GenerateImageRenderer",
         toolExport: "generateImageTool",
       },
@@ -121,7 +127,17 @@ export const searchToolItems = [
       id,
       kind: "tool",
       slot: "webSearch",
-      tools: [{ rendererExport: "WebSearchRenderer", toolExport: "webSearch" }],
+      tools: [
+        {
+          composer: {
+            icon: "GlobeIcon",
+            name: "Web Search",
+            shortName: "Search",
+          },
+          rendererExport: "WebSearchRenderer",
+          toolExport: "webSearch",
+        },
+      ],
     }),
   },
   name: id,

@@ -6,10 +6,20 @@
   "requiresTools": ["readDocument"],
   "tools": [
     {
-      "toolExport": "createCodeDocument"
+      "toolExport": "createCodeDocument",
+      "composer": {
+        "icon": "Edit3",
+        "name": "Canvas",
+        "shortName": "Canvas"
+      }
     },
     {
-      "toolExport": "editCodeDocument"
+      "toolExport": "editCodeDocument",
+      "composer": {
+        "icon": "Edit3",
+        "name": "Canvas",
+        "shortName": "Canvas"
+      }
     }
   ],
   "contractVersion": 1
