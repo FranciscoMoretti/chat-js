@@ -29,6 +29,7 @@ export interface ModelData {
   };
   reasoning: boolean;
   tags?: string[];
-  toolCall: boolean;
+  /** Undefined means the catalog does not declare tool support. */
+  toolCall: boolean | undefined;
   type: "language" | "embedding" | "image" | "video";
 }

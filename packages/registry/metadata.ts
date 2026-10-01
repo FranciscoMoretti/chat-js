@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { composerIconNames } from "./composer-icons.generated";
+
 const identifier = z
   .string()
   .regex(/^[A-Za-z_$][\w$]*$/u)
@@ -32,6 +34,16 @@ const toolDefinitionBase = z.object({
   tools: z
     .array(
       z.object({
+        composer: z
+          .object({
+            icon: identifier.refine(
+              (name) => composerIconNames.has(name),
+              "Unknown Lucide icon export"
+            ),
+            name: z.string().min(1),
+            shortName: z.string().min(1),
+          })
+          .optional(),
         rendererExport: identifier.optional(),
         toolExport: identifier,
         workflow: z.literal(true).optional(),

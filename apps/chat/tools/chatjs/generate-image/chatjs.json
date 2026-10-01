@@ -7,7 +7,12 @@
   "tools": [
     {
       "toolExport": "generateImageTool",
-      "rendererExport": "GenerateImageRenderer"
+      "rendererExport": "GenerateImageRenderer",
+      "composer": {
+        "icon": "Images",
+        "name": "Create an image",
+        "shortName": "Image"
+      }
     }
   ]
 }

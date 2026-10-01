@@ -132,27 +132,33 @@ test("composer connector controls persist and fence native tool execution", asyn
       userId: owner.id,
     });
     await page.goto("/");
-    const control = page.getByRole("button", {
+    const control = page.getByRole("menuitem", {
       exact: true,
       name: "Connectors",
     });
-    const toggle = page.getByRole("switch", {
-      name: "Enable Local connector fixture",
+    const toggle = page.getByRole("menuitemcheckbox", {
+      name: "Local connector fixture",
     });
     const discover = () =>
       discoverEveMcpTools(owner.id, AbortSignal.timeout(10_000));
     expect((await discover()).map((tool) => tool.name)).toContain(
       `${nameId}__read_token`
     );
-    await expect(control).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Composer options" })
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Composer options" }).click();
+    await control.click();
+    await expect(toggle).toBeChecked();
     await page
-      .getByRole("group", { exact: true, name: "Message composer" })
+      .getByRole("menu")
+      .filter({
+        has: page.getByRole("menuitem", { name: "Manage connectors" }),
+      })
       .screenshot({
         animations: "disabled",
         path: testInfo.outputPath("connectors-enabled.png"),
       });
-    await control.click();
-    await expect(toggle).toBeChecked();
     await toggle.click();
     await expect(toggle).not.toBeChecked();
     await expect
@@ -195,19 +201,25 @@ test("composer connector controls persist and fence native tool execution", asyn
     expect(calls).toBe(0);
     await page.setViewportSize({ height: 844, width: 390 });
     await page.reload();
+    await page.getByRole("button", { name: "Composer options" }).click();
     await control.click();
     await expect(toggle).not.toBeChecked();
-    await page.getByRole("menu").screenshot({
-      animations: "disabled",
-      path: testInfo.outputPath("connectors-disabled-mobile.png"),
-    });
+    await page
+      .getByRole("menu")
+      .filter({
+        has: page.getByRole("menuitem", { name: "Manage connectors" }),
+      })
+      .screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("connectors-disabled-mobile.png"),
+      });
     await toggle.click();
     await expect
       .poll(async () =>
         (await discover()).some((tool) => tool.name === `${nameId}__read_token`)
       )
       .toBe(true);
-    await page.getByRole("menuitem", { name: "Manage Connectors" }).click();
+    await page.getByRole("menuitem", { name: "Manage connectors" }).click();
     await expect(page).toHaveURL(
       `${new URL(page.url()).origin}/settings/connectors`
     );

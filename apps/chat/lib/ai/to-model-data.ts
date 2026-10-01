@@ -4,6 +4,8 @@ import type { ModelData } from "./model-data";
 
 export const toModelData = (model: AiGatewayModel): ModelData => {
   const tags = model.tags ?? [];
+  // A missing positive tag does not establish that a language model rejects tools.
+  const toolCall = tags.includes("tool-use") ? true : undefined;
 
   return {
     context_window: model.context_window,
@@ -29,7 +31,7 @@ export const toModelData = (model: AiGatewayModel): ModelData => {
     pricing: model.pricing,
     reasoning: tags.includes("reasoning"),
     tags: model.tags,
-    toolCall: tags.includes("tool-use"),
+    toolCall: model.type === "language" ? toolCall : false,
     type: model.type,
   };
 };

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
+import { ComposerMenu } from "../components/composer/composer-menu";
 import { useEveComposerDraft } from "../components/eve/use-eve-composer-draft";
-import { ResponsiveTools } from "../components/responsive-tools";
 import { models } from "../lib/ai/models.generated";
 import { useDefaultModel } from "../providers/default-model-provider";
 import { firstModel, secondModel } from "./eve-comparison-data.fixture";
@@ -26,7 +26,7 @@ export const useSession = () => ({
   isPending: false,
 });
 // Comparisons use no connected MCP servers; the real control is covered by eve-mcp.e2e.ts.
-export const ConnectorsDropdown = () => null;
+export const ConnectorsControl = () => null;
 export const EveArtifactLayout = ({ children }: { children: ReactNode }) =>
   children;
 export const ChatWelcomeView = ({ children }: { children: ReactNode }) => (
@@ -76,11 +76,12 @@ export const EveConversation = ({
         {comparisonPresentation?.cards}
         <p>Selected native session: {sessionId}</p>
         <p>Follow-up model: {model}</p>
-        <ResponsiveTools
+        <ComposerMenu
           disabled={pending}
           selectedModelId={model}
-          setTools={draft.setSelectedTool}
-          tools={draft.selectedTool}
+          onToolChange={(value) => draft.setSelectedTool(value)}
+          onAttach={() => null}
+          selectedTool={draft.selectedTool}
         />
         <label>
           Follow-up draft

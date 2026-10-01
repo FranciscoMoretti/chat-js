@@ -95,6 +95,17 @@ it("includes document revision reads without leaking unrelated tools", () => {
     "editSheetDocument",
     "readDocument",
   ]);
+  for (const tool of [
+    "createCodeDocument",
+    "createSheetDocument",
+    "editTextDocument",
+    "editCodeDocument",
+    "editSheetDocument",
+  ] as const) {
+    expect(selectedEveTools(tool)).toEqual(
+      selectedEveTools("createTextDocument")
+    );
+  }
   expect(selectedEveTools("generateVideo")).toEqual(["generateVideo"]);
 });
 

@@ -469,3 +469,71 @@ test.each([false, true])(
     await expect(syncTools(root)).rejects.toThrow("Missing descriptor");
   }
 );
+
+test("composer metadata follows installation and removal without editing UI order", async () => {
+  const root = await project();
+  await install(root);
+  const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  definition.tools[0].composer = {
+    icon: "Hash",
+    name: "Count words",
+    shortName: "Words",
+  };
+  await writeFile(descriptor, JSON.stringify(definition));
+  const order = join(root, "composer-controls.ts");
+  await writeFile(order, "// Application-owned ordering\n");
+  await syncTools(root);
+  const generated = join(root, "tools/chatjs/composer-tools.ts");
+  const before = await readFile(generated, "utf-8");
+  expect(before).toContain('import { Hash as Icon0 } from "lucide-react"');
+  expect(before).toContain(
+    '"wordCount": { icon: Icon0, name: "Count words", shortName: "Words" }'
+  );
+  await syncTools(root);
+  expect(await readFile(generated, "utf-8")).toBe(before);
+  await rm(join(root, "tools/chatjs/word-count"), { recursive: true });
+  await syncTools(root);
+  expect(await readFile(generated, "utf-8")).not.toContain("wordCount");
+  expect(await readFile(order, "utf-8")).toBe(
+    "// Application-owned ordering\n"
+  );
+});
+
+test("invalid composer icon is rejected before generated files change", async () => {
+  const root = await project();
+  await install(root);
+  await syncTools(root);
+  const generated = join(root, "tools/chatjs/composer-tools.ts");
+  const before = await readFile(generated, "utf-8");
+  const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+  const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  definition.tools[0].composer = {
+    icon: "NotALucideIcon",
+    name: "Count words",
+    shortName: "Words",
+  };
+  await writeFile(descriptor, JSON.stringify(definition));
+  await expect(syncTools(root)).rejects.toThrow("icon");
+  expect(await readFile(generated, "utf-8")).toBe(before);
+});
+
+test.each(["GlobeIcon", "BookOpen", "Edit3"])(
+  "composer icon validation accepts %s",
+  async (icon) => {
+    const root = await project();
+    await install(root);
+    const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+    const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+    definition.tools[0].composer = {
+      icon,
+      name: "Count words",
+      shortName: "Words",
+    };
+    await writeFile(descriptor, JSON.stringify(definition));
+    await syncTools(root);
+    expect(
+      await readFile(join(root, "tools/chatjs/composer-tools.ts"), "utf-8")
+    ).toContain(`${icon} as Icon0`);
+  }
+);

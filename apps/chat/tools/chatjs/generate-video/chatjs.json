@@ -7,7 +7,12 @@
   "tools": [
     {
       "toolExport": "generateVideoTool",
-      "rendererExport": "GenerateVideoRenderer"
+      "rendererExport": "GenerateVideoRenderer",
+      "composer": {
+        "icon": "Video",
+        "name": "Create a video",
+        "shortName": "Video"
+      }
     }
   ]
 }

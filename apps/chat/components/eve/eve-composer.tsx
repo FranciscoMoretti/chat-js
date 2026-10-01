@@ -5,17 +5,17 @@ import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
-import { AttachmentsButton } from "@/components/attachments-button";
-import { ConnectorsDropdown } from "@/components/connectors-dropdown";
+import { ActiveTool } from "@/components/composer/active-tool";
+import { ComposerMenu } from "@/components/composer/composer-menu";
 import { ContextBar } from "@/components/context-bar";
 import { ControlledChatComposer } from "@/components/controlled-chat-composer";
-import { ResponsiveTools } from "@/components/responsive-tools";
 import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
+import { installedToolNames } from "@/tools/chatjs/installed-features";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
@@ -57,6 +57,9 @@ export const EveComposer = ({
           : !model?.input.image
       )
     );
+  const unavailableTool = Boolean(
+    selectedTool && !installedToolNames.has(selectedTool)
+  );
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
   const upload = (incoming: File[]) => {
@@ -64,13 +67,13 @@ export const EveComposer = ({
       toast.error("Sign in to attach files.");
       return;
     }
-    if (!uploadLocked) {
+    if (!uploadLocked && config.features.attachments) {
       // oxlint-disable-next-line promise/prefer-await-to-then -- Dropzone callbacks intentionally fire-and-forget uploads.
       files.upload(incoming).catch(() => null);
     }
   };
   const { getRootProps } = useDropzone({
-    disabled: uploadLocked,
+    disabled: uploadLocked || !config.features.attachments,
     noClick: true,
     noKeyboard: true,
     onDrop: upload,
@@ -106,41 +109,54 @@ export const EveComposer = ({
             uploadQueue={files.uploadQueue}
           />
         }
-        disabled={locked || unsupported}
+        disabled={locked || unsupported || unavailableTool}
         hasAttachments={files.attachments.length > 0}
         onPaste={(event) => {
-          if (event.clipboardData.files.length) {
+          if (config.features.attachments && event.clipboardData.files.length) {
             event.preventDefault();
             upload([...event.clipboardData.files]);
           }
         }}
         tools={
           <>
-            {config.features.attachments && (
-              <AttachmentsButton
-                acceptAll="image/jpeg,image/png,application/pdf"
-                acceptFiles="application/pdf"
-                acceptImages="image/jpeg,image/png"
-                fileInputRef={input}
-                status={uploadLocked ? "submitted" : "ready"}
-              />
-            )}
+            <ComposerMenu
+              disabled={uploadLocked}
+              selectedModelId={models[0]?.id ?? ""}
+              selectedTool={selectedTool}
+              onToolChange={onToolChange}
+              onAttach={(accept, capture) => {
+                if (!input.current) {
+                  return;
+                }
+                input.current.accept = accept;
+                if (capture) {
+                  input.current.capture = capture;
+                } else {
+                  input.current.removeAttribute("capture");
+                }
+                input.current.click();
+              }}
+            />
+            <ActiveTool
+              selectedTool={selectedTool}
+              disabled={uploadLocked}
+              onClear={() => onToolChange(null)}
+            />
             <EveModelPicker
               disabled={locked || props.readOnly || !!retainedModelId}
               modelSelection={modelSelection}
               retainedModelId={retainedModelId}
               retainedModelIds={retainedModelIds}
             />
-            <ConnectorsDropdown />
-            <ResponsiveTools
-              disabled={locked || props.readOnly}
-              selectedModelId={models[0]?.id ?? ""}
-              setTools={onToolChange}
-              tools={selectedTool}
-            />
           </>
         }
       />
+      {unavailableTool && (
+        <p className="text-destructive text-sm" role="alert">
+          The selected tool is unavailable. Clear it or choose another tool
+          before sending.
+        </p>
+      )}
       {unsupported && (
         <p className="text-destructive text-sm" role="alert">
           Choose models that support all attached files.
