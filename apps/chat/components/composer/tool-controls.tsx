@@ -1,9 +1,10 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 
 import { toolDefinitions } from "@/components/chat-features-definitions";
-import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
@@ -40,8 +41,8 @@ const ToolControl = ({
     Boolean(tool.endsWith("Document") && selectedTool?.endsWith("Document"));
   const unsupported = !model || model.toolCall === false;
   return (
-    <DropdownMenuCheckboxItem
-      checked={checked}
+    <DropdownMenuItem
+      data-selected={checked}
       disabled={disabled || (!checked && unsupported)}
       onSelect={() => {
         if (checked) {
@@ -64,7 +65,8 @@ const ToolControl = ({
           </span>
         )}
       </span>
-    </DropdownMenuCheckboxItem>
+      {checked && <Check aria-label="Selected" className="ml-auto" />}
+    </DropdownMenuItem>
   );
 };
 

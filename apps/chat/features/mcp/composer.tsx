@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import type { ComposerControlProps } from "@/components/composer/control";
 import { InternalLink } from "@/components/internal-link";
 import {
+  DropdownMenuPortal,
+  DropdownMenuGroup,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
@@ -69,7 +71,9 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
     return null;
   }
   let status: string | undefined;
-  if (isPending) {
+  if (!isAuthenticated) {
+    status = "Sign in to use connectors";
+  } else if (isPending) {
     status = "Loading connectors…";
   } else if (isError) {
     status = "Could not load connectors";
@@ -78,36 +82,42 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
   }
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger disabled={disabled || !isAuthenticated}>
-        <Plug className="size-4" />
+      <DropdownMenuSubTrigger disabled={disabled}>
+        <Plug />
         Connectors
       </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent className="w-56">
-        {status ? (
-          <DropdownMenuLabel>{status}</DropdownMenuLabel>
-        ) : (
-          connectors?.map((connector) => (
-            <DropdownMenuCheckboxItem
-              key={connector.id}
-              checked={connector.enabled}
-              disabled={disabled || connector.userId === null}
-              onSelect={(event) => event.preventDefault()}
-              onCheckedChange={(enabled) =>
-                toggleEnabled({ enabled, id: connector.id })
-              }
-            >
-              <span className="truncate">{connector.name}</span>
-            </DropdownMenuCheckboxItem>
-          ))
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <InternalLink href="/settings/connectors">
-            <Settings />
-            Manage connectors
-          </InternalLink>
-        </DropdownMenuItem>
-      </DropdownMenuSubContent>
+      <DropdownMenuPortal>
+        <DropdownMenuSubContent className="w-56">
+          <DropdownMenuGroup>
+            {status ? (
+              <DropdownMenuLabel>{status}</DropdownMenuLabel>
+            ) : (
+              connectors?.map((connector) => (
+                <DropdownMenuCheckboxItem
+                  key={connector.id}
+                  checked={connector.enabled}
+                  disabled={disabled || connector.userId === null}
+                  onSelect={(event) => event.preventDefault()}
+                  onCheckedChange={(enabled) =>
+                    toggleEnabled({ enabled, id: connector.id })
+                  }
+                >
+                  <span className="truncate">{connector.name}</span>
+                </DropdownMenuCheckboxItem>
+              ))
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <InternalLink
+                href={isAuthenticated ? "/settings/connectors" : "/login"}
+              >
+                <Settings />
+                {isAuthenticated ? "Manage connectors" : "Sign in"}
+              </InternalLink>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuSubContent>
+      </DropdownMenuPortal>
     </DropdownMenuSub>
   );
 };
