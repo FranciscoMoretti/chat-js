@@ -113,6 +113,7 @@ const createOptionsSchema = z.object({
   fromGit: z.string().optional(),
   gateway: z.string().optional(),
   imageGenerationTool: z.string().optional(),
+  mcp: z.boolean().optional(),
   searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
@@ -265,6 +266,9 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     options.yes,
     gatewaySelection.definition
   );
+  if (options.mcp !== undefined) {
+    coreFeatures.mcp = options.mcp;
+  }
   const documentTypes = await promptDocumentTypes(
     options.yes,
     coreFeatures.documents,
@@ -562,6 +566,8 @@ export const create = new Command()
     "gateway name, registry item URL, or local JSON path"
   )
   .option("-y, --yes", "skip prompts and use defaults", false)
+  .option("--mcp", "install MCP connectors, pages and OAuth callback")
+  .option("--no-mcp", "omit MCP from the new app")
   .option("--electron", "include the Electron desktop app")
   .option("--no-electron", "do not include the Electron desktop app")
   .option(

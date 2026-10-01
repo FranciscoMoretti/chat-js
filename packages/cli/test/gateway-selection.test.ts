@@ -861,3 +861,60 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
   await run(cwd, ["bun", "run", "test:types"]);
   await verifyNativeToolRuntime(cwd);
 }, 240_000);
+
+for (const installAtCreation of [false, true]) {
+  it(`MCP: create ${installAtCreation ? "with" : "without"} MCP and add preserve core, UI order and setup errors`, async () => {
+    const name = `mcp-${installAtCreation ? "installed" : "omitted"}`;
+    const cwd = join(root, name);
+    await run(root, [
+      "node",
+      cliEntry,
+      "create",
+      name,
+      "--gateway",
+      "openai",
+      "--yes",
+      "--no-electron",
+      installAtCreation ? "--mcp" : "--no-mcp",
+    ]);
+    const source = "app/api/mcp/oauth/callback/route.ts";
+    expect(await Bun.file(join(cwd, source)).exists()).toBe(installAtCreation);
+    expect(await readFile(join(cwd, "lib/db/schema.ts"), "utf-8")).toContain(
+      '"McpConnector"'
+    );
+    expect(
+      await Bun.file(join(cwd, "components/eve/eve-mcp-result.tsx")).exists()
+    ).toBe(true);
+    expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).not.toMatch(
+      /\bmcp:/u
+    );
+    if (!installAtCreation) {
+      await run(cwd, ["bun", "run", "test:types"]);
+      await run(cwd, ["node", cliEntry, "add", "mcp", "--yes"]);
+    }
+    expect(await Bun.file(join(cwd, source)).exists()).toBe(true);
+    expect(
+      await readFile(join(cwd, "features/installed-routers.ts"), "utf-8")
+    ).toContain("mcp: mcpRouter");
+    const composer = await readFile(join(cwd, "composer-controls.ts"), "utf-8");
+    const settings = await readFile(join(cwd, "settings-items.ts"), "utf-8");
+    await run(cwd, ["node", cliEntry, "sync"]);
+    expect(await readFile(join(cwd, "composer-controls.ts"), "utf-8")).toBe(
+      composer
+    );
+    expect(await readFile(join(cwd, "settings-items.ts"), "utf-8")).toBe(
+      settings
+    );
+    await run(cwd, ["bun", "run", "test:types"]);
+    await writeFile(
+      join(cwd, "mcp-setup-probe.ts"),
+      `import assert from "node:assert/strict";
+import descriptor from "./features/mcp/chatjs.json";
+import { requireCredentials } from "./lib/required-credentials";
+assert.throws(() => requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test"}), /Missing credentials for mcp: MCP_ENCRYPTION_KEY/);
+requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENCRYPTION_KEY: "test"});
+`
+    );
+    await run(cwd, ["bun", "mcp-setup-probe.ts"]);
+  }, 180_000);
+}

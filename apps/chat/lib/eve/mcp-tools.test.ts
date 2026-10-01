@@ -427,3 +427,13 @@ it("isolates a remote billing-shaped payload inside the MCP result namespace", a
   expect(result.kind).toBe("chatjs.mcp-result");
   expect(hasEveToolReceipt(result)).toBe(false);
 });
+
+it("does not discover or execute when the MCP registration is absent", async () => {
+  mocks.enabled.enabled = false;
+  expect(await discoverEveMcpTools("owner", context.abortSignal)).toEqual([]);
+  expect(mocks.list).not.toHaveBeenCalled();
+  await expect(
+    executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
+  ).rejects.toThrow("unavailable");
+  expect(mocks.connect).not.toHaveBeenCalled();
+});

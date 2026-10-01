@@ -31,7 +31,19 @@ const install = async (root: string) => {
   await Promise.all(
     [...mcpFiles, "features/mcp/chatjs.json"].map(async (file) => {
       await mkdir(path.dirname(path.join(root, file)), { recursive: true });
-      await cp(path.join(demo, file), path.join(root, file));
+      await writeFile(
+        path.join(root, file),
+        file === "features/mcp/chatjs.json"
+          ? JSON.stringify(mcpItem.meta?.chatjs)
+          : await readFile(
+              path.resolve(
+                import.meta.dir,
+                "../../../registry/src/features/mcp",
+                file
+              ),
+              "utf-8"
+            )
+      );
     })
   );
 };
