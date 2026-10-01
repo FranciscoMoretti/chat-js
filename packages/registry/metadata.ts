@@ -32,6 +32,13 @@ const toolDefinitionBase = z.object({
   tools: z
     .array(
       z.object({
+        composer: z
+          .object({
+            icon: identifier,
+            name: z.string().min(1),
+            shortName: z.string().min(1),
+          })
+          .optional(),
         rendererExport: identifier.optional(),
         toolExport: identifier,
         workflow: z.literal(true).optional(),

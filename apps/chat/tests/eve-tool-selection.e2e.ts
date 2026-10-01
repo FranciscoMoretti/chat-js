@@ -63,7 +63,9 @@ test("Canvas selection survives native history and edits while later turns reset
   await page
     .getByRole("button", { exact: true, name: "Composer options" })
     .click();
-  await page.getByRole("menuitem", { exact: true, name: "Canvas" }).click();
+  await page
+    .getByRole("menuitemcheckbox", { exact: true, name: "Canvas" })
+    .click();
   await page
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill(intended.message);
@@ -148,8 +150,8 @@ test("Canvas selection survives native history and edits while later turns reset
     .click();
   const editor = page.getByRole("dialog");
   await expect(
-    editor.getByRole("button", { exact: true, name: "Composer options" })
-  ).toContainText("Canvas");
+    editor.getByRole("button", { exact: true, name: "Clear Canvas tool" })
+  ).toBeVisible();
   await editor.screenshot({
     animations: "disabled",
     path: testInfo.outputPath("tool-selection-edit.png"),
@@ -157,7 +159,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await page.setViewportSize({ height: 844, width: 390 });
   const clearTool = editor.getByRole("button", {
     exact: true,
-    name: "Composer options",
+    name: "Clear Canvas tool",
   });
   await clearTool.click({ trial: true });
   await editor.screenshot({

@@ -1,15 +1,14 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { toast } from "sonner";
 
-import { toolDefinitions } from "@/components/chat-features-definitions";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+import { composerTools } from "@/tools/chatjs/composer-tools";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
 
 import type { ComposerControlProps } from "./control";
@@ -30,19 +29,20 @@ const ToolControl = ({
 }: ComposerControlProps & { tool: UiToolName }) => {
   const { data: session } = useSession();
   const { getModelById } = useChatModels();
-  if (!installedToolNames.has(tool)) {
+  const definition = composerTools[tool];
+  if (!installedToolNames.has(tool) || !definition) {
     return null;
   }
   const model = getModelById(selectedModelId);
-  const definition = toolDefinitions[tool];
   const Icon = definition.icon;
   const checked =
     selectedTool === tool ||
     Boolean(tool.endsWith("Document") && selectedTool?.endsWith("Document"));
   const unsupported = !model || model.toolCall === false;
   return (
-    <DropdownMenuItem
-      data-selected={checked}
+    <DropdownMenuCheckboxItem
+      checked={checked}
+      className="pr-8 pl-2 [&>span:first-child]:right-2 [&>span:first-child]:left-auto"
       disabled={disabled || (!checked && unsupported)}
       onSelect={() => {
         if (checked) {
@@ -65,8 +65,7 @@ const ToolControl = ({
           </span>
         )}
       </span>
-      {checked && <Check aria-label="Selected" className="ml-auto" />}
-    </DropdownMenuItem>
+    </DropdownMenuCheckboxItem>
   );
 };
 

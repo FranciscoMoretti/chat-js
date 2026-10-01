@@ -11,7 +11,12 @@
   "tools": [
     {
       "toolExport": "webSearch",
-      "rendererExport": "WebSearchRenderer"
+      "rendererExport": "WebSearchRenderer",
+      "composer": {
+        "icon": "GlobeIcon",
+        "name": "Web Search",
+        "shortName": "Search"
+      }
     }
   ]
 }

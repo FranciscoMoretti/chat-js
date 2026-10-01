@@ -8,7 +8,12 @@
     {
       "rendererExport": "DeepResearchRenderer",
       "toolExport": "deepResearch",
-      "workflow": true
+      "workflow": true,
+      "composer": {
+        "icon": "Telescope",
+        "name": "Deep Research",
+        "shortName": "Research"
+      }
     }
   ]
 }

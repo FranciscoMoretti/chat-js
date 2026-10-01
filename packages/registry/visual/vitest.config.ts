@@ -17,6 +17,16 @@ export default defineConfig({
   define: { IS_REACT_ACT_ENVIRONMENT: "true", "process.env": "{}" },
   optimizeDeps: {
     include: [
+      "@lexical/react/LexicalPlainTextPlugin",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-hover-card",
+      "@radix-ui/react-label",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-select",
+      "@radix-ui/react-switch",
+      "cmdk",
+      "nanoid",
+      "react-dropzone",
       "@radix-ui/react-dialog",
       "sonner",
       "echarts",

@@ -63,6 +63,11 @@ export const researchItem: RegistryItem = {
       requiresTools: ["createTextDocument", "readDocument", "webSearch"],
       tools: [
         {
+          composer: {
+            icon: "Telescope",
+            name: "Deep Research",
+            shortName: "Research",
+          },
           rendererExport: "DeepResearchRenderer",
           toolExport: "deepResearch",
           workflow: true,

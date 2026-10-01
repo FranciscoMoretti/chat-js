@@ -2,7 +2,6 @@
 
 import { Plus } from "lucide-react";
 
-import { toolDefinitions } from "@/components/chat-features-definitions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { composerControls } from "@/composer-controls";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { composerTools } from "@/tools/chatjs/composer-tools";
 
 import type { ComposerControlProps } from "./control";
 
@@ -36,9 +36,7 @@ export const ComposerMenu = (props: ComposerControlProps) => {
           variant="ghost"
         >
           <Plus className="size-4" />
-          {props.selectedTool
-            ? toolDefinitions[props.selectedTool].shortName
-            : "Add"}
+          Add
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
@@ -53,7 +51,9 @@ export const ComposerMenu = (props: ComposerControlProps) => {
                 disabled={props.disabled}
                 onSelect={() => props.onToolChange(null)}
               >
-                Clear {toolDefinitions[props.selectedTool].shortName}
+                Clear{" "}
+                {composerTools[props.selectedTool]?.shortName ??
+                  "unavailable tool"}
               </DropdownMenuItem>
             </>
           )}
