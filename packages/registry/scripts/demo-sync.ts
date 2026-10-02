@@ -35,14 +35,6 @@ export const demoSource = (file: string, source: string) => {
       'chat: "google/gemini-2.5-flash-lite"'
     );
   }
-  if (file === "tools/chatjs/vercel-code-execution/renderer.tsx") {
-    // shadcn resolves same-basename aliases to the item-local sandbox.ts. This
-    // renderer uses the core UI component, not the server-side execution module.
-    return source.replace(
-      'from "@/tools/chatjs/vercel-code-execution/sandbox"',
-      'from "@/components/sandbox"'
-    );
-  }
   return source;
 };
 
@@ -169,7 +161,9 @@ export const generateDemo = async (): Promise<Map<string, string>> => {
     if (!gateway || !storage) {
       throw new Error("Demo preset requires gateway and storage selections");
     }
-    const plan = await planInstallation(temporary, demoInstallation);
+    const plan = await planInstallation(temporary, demoInstallation, {
+      fresh: true,
+    });
     await installItems(plan.sources, temporary, true);
     await configureGatewayProvider(
       temporary,

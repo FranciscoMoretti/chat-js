@@ -1,3 +1,5 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
@@ -6,7 +8,8 @@ import {
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
+import { makeQueryClient } from "@/trpc/query-client";
+import { trpc } from "@/trpc/server";
 
 const ConnectorsSettingsHeader = () => (
   <SettingsPageHeader>
@@ -19,16 +22,18 @@ const ConnectorsSettingsHeader = () => (
 );
 
 const ConnectorsSettingsContent = async () => {
-  const queryClient = getQueryClient();
+  await connection();
+  // Keep this result out of the layout's earlier hydration boundary.
+  const queryClient = makeQueryClient();
   await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
 
   return (
-    <HydrateClient>
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <SettingsPage>
         <ConnectorsSettingsHeader />
         <ConnectorsSettings />
       </SettingsPage>
-    </HydrateClient>
+    </HydrationBoundary>
   );
 };
 

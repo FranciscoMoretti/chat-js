@@ -167,6 +167,7 @@ describe("scaffoldFromTemplate", () => {
       "tests/ui-primitives.visual.e2e.ts",
       "tests/layout-primitives.visual.e2e.ts",
       "tests/model-toolbar.visual.e2e.ts",
+      "tests/mcp-connectors.visual.e2e.ts",
       "tests/ui-primitives.visual.e2e.ts-snapshots",
       "tests/layout-primitives.visual.e2e.ts-snapshots",
       "tests/model-toolbar.visual.e2e.ts-snapshots",

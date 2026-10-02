@@ -832,6 +832,12 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} }
           join(cwd, "app/(chat)/api/files/upload/route.ts")
         ).exists()
       ).toBe(true);
+      expect(
+        await readFile(
+          join(cwd, "tools/chatjs/vercel-code-execution/execution-sandbox.ts"),
+          "utf-8"
+        )
+      ).toContain('from "@/lib/env"');
       await run(cwd, ["bun", "run", "test:types"]);
       await run(cwd, ["bun", "run", "lint"]);
       expect(

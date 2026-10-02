@@ -10,7 +10,7 @@ Start with a working implementation of a supported category contract:
 
 ## Keep source in code
 
-In this repository, gateway source lives under `packages/registry/src/gateways/<id>/` and tool source under `packages/registry/src/tools/<id>/`. Declare files, dependencies, installation targets, and metadata in `packages/registry/registry.ts`.
+In this repository, gateway source lives under `packages/registry/src/gateways/<id>/` and tool source under `packages/registry/src/tools/<id>/`. Optional implementation source lives under `packages/registry/src/features/<id>/`. Declare files, dependencies, installation targets, and metadata in `packages/registry/registry.ts`.
 
 Use standard shadcn `dependencies` for npm packages and `registryDependencies` for shared registry items. ChatJS metadata describes the category contract. The public item name does not have to contain the category name.
 
@@ -21,3 +21,22 @@ Run `bun run --cwd packages/registry build`. The build serializes the typed regi
 Publish the generated item files at your registry endpoint. Configure an alias using a URL template ending in `{name}.json`, as described in [Namespaces](./namespaces). Consumers install those files through shadcn or the ChatJS CLI, and own the resulting source in their app.
 
 Before publishing, follow [Building and Testing](./testing) to check both the source and its installation into an independent app.
+
+## Synchronize the maintained demo
+
+Edit canonical registry source first. Keep core source in `apps/chat`. The checked-in selection in `packages/registry/installation.ts` installs the demo's tools, gateway, storage and all five optional features: MCP, attachment uploads, Vercel Analytics, Vercel Speed Insights and Langfuse.
+
+From the repository root, regenerate in this order:
+
+```bash
+bun demo:sync
+bun template:sync
+bun demo:check
+bun template:check
+```
+
+Demo sync stages a fresh installation through the shared CLI planner and shadcn transforms, then copies the formatted source and generated registrations. It preserves the demo's chat model default. It leaves dependency manifests, credentials, the fetched model catalog, `composer-controls.ts`, `settings-items.ts` and custom tool extensions under application ownership.
+
+`packages/registry/demo-baseline.json` records the last synchronized source hashes. Sync validates every owned file before writing anything. If you edited an installed demo copy, move the edit into canonical registry source and rerun sync. Review any remaining differences before using `bun demo:sync --discard` to replace those copies. Commit the updated source and baseline together. Removing installed files is outside this workflow.
+
+Fresh core scaffolds exclude optional implementation source and start with empty feature registrations. [Create](../cli/create) and [add](../cli/add) assemble the selected implementations. Application settings, permissions and runtime tool selections remain editable.
