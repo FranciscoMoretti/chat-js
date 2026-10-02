@@ -100,9 +100,6 @@ const createAiSchema = <G extends GatewayType>(g: G) =>
           default: gatewayImageModelId<G>().optional(),
           enabled: z.boolean().describe("Enable the installed image tool"),
         }),
-        mcp: z.object({
-          enabled: z.boolean().describe("Requires MCP_ENCRYPTION_KEY"),
-        }),
         sheet: z.object({
           analyze: gatewayModelId<G>(),
           format: gatewayModelId<G>(),
@@ -423,7 +420,6 @@ interface AiToolsInputFor<G extends GatewayType> {
   };
   followupSuggestions?: FollowupSuggestionsToolInputFor<G>;
   image?: ImageToolInputFor<G>;
-  mcp?: Partial<AiToolsShape["mcp"]>;
   sheet?: Partial<{ [P in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[G] }>;
   text?: Partial<{ [P in keyof AiToolsShape["text"]]: GatewayModelIdMap[G] }>;
   urlRetrieval?: Partial<AiToolsShape["urlRetrieval"]>;

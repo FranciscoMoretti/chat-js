@@ -55,10 +55,6 @@ const config = defineConfig({
         // Requires BLOB_READ_WRITE_TOKEN
         enabled: true,
       },
-      mcp: {
-        // Requires MCP_ENCRYPTION_KEY
-        enabled: true,
-      },
       sheet: {
         analyze: "openai/gpt-5-mini",
         format: "openai/gpt-5-mini",

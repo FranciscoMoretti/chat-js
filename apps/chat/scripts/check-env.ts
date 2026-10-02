@@ -142,10 +142,11 @@ const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
   return errors;
 };
 
-const validateInstalledTools = async (
-  env: NodeJS.ProcessEnv
+const validateInstalledItems = async (
+  env: NodeJS.ProcessEnv,
+  directory: "tools/chatjs" | "features"
 ): Promise<ValidationError[]> => {
-  const toolsDir = path.join(projectRoot, "tools/chatjs");
+  const toolsDir = path.join(projectRoot, directory);
   const entries = await fs
     .readdir(toolsDir, { withFileTypes: true })
     .catch((error: NodeJS.ErrnoException) => {
@@ -172,7 +173,12 @@ const validateInstalledTools = async (
       return mod.envRequirements.flatMap((toolEnvVar) => {
         const missing = getMissingRequirement(toolEnvVar, env);
         return missing
-          ? [{ feature: `tools.${entry.name}`, missing: [missing] }]
+          ? [
+              {
+                feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+                missing: [missing],
+              },
+            ]
           : [];
       });
     })
@@ -247,7 +253,7 @@ const checkEnv = async (): Promise<void> => {
   const baseUrlError = validateBaseUrl(env);
   const gatewayError = validateGatewayKey(env);
   const storageError = validateStorage(env);
-  const installedToolErrors = await validateInstalledTools(env);
+  const installedToolErrors = await validateInstalledItems(env, "tools/chatjs");
   const errors = [
     ...eveErrors,
     ...databaseErrors,
@@ -257,6 +263,7 @@ const checkEnv = async (): Promise<void> => {
     ...validateAiTools(env),
     ...validateAuthentication(env),
     ...installedToolErrors,
+    ...(await validateInstalledItems(env, "features")),
   ];
 
   if (errors.length > 0) {

@@ -8,7 +8,7 @@ This page lists every environment variable recognized by ChatJS, grouped by cate
 <Callout type="note">
   Missing required variables will cause the build to fail immediately. Variables
   that are required only when a feature or gateway is enabled are validated
-  based on your `chat.config.ts` settings.
+  based on your `chat.config.ts` settings and installed feature descriptors.
 </Callout>
 
 ## Required
@@ -165,15 +165,15 @@ ai: {
 
 ### MCP Connectors
 
-Enable [Model Context Protocol](https://modelcontextprotocol.io) server connections to expose custom tools and data sources to the AI.
+Install [Model Context Protocol](https://modelcontextprotocol.io) connectors to expose custom tools and data sources to the AI:
 
-```typescript title="chat.config.ts"
-ai: {
-  tools: {
-    mcp: { enabled: true }, // Requires MCP_ENCRYPTION_KEY
-  },
-}
+```bash
+chat-js create my-chat --mcp
+# Or, inside an existing app:
+chat-js add mcp
 ```
+
+Installed registrations determine availability. You must configure `MCP_ENCRYPTION_KEY` whenever MCP is installed, including before any connectors are added.
 
 | Variable | Required | Description |
 | --- | --- | --- |
@@ -340,7 +340,7 @@ All variables in one place:
 | `TAVILY_API_KEY` | Feature | If `ai.tools.webSearch.enabled` (one search key required) |
 | `FIRECRAWL_API_KEY` | Feature | If `ai.tools.webSearch.enabled` or `ai.tools.urlRetrieval.enabled` |
 | `EXA_API_KEY` | Optional | Recognized by env schema but not required by current validation |
-| `MCP_ENCRYPTION_KEY` | Feature | If `ai.tools.mcp.enabled` |
+| `MCP_ENCRYPTION_KEY` | Feature | When MCP is installed |
 | `VERCEL_TEAM_ID` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
 | `VERCEL_PROJECT_ID` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |
 | `VERCEL_TOKEN` | Feature | If `ai.tools.codeExecution.enabled` on non-Vercel hosting |

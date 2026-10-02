@@ -4,7 +4,9 @@
     "types": ["node", "next"],
     "allowImportingTsExtensions": true,
     "paths": {
-      "@/*": ["../../apps/chat/*"]
+      "@/*": ["../../apps/chat/*"],
+      "drizzle-orm": ["../../apps/chat/node_modules/drizzle-orm"],
+      "drizzle-orm/*": ["../../apps/chat/node_modules/drizzle-orm/*"]
     }
   },
   "include": [

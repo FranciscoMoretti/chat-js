@@ -74,10 +74,17 @@ const requirementToEntries = (
 const addRequirementEntries = (
   entries: EnvVarEntry[],
   requirement: EnvRequirementLike | undefined,
-  seen: Set<string>,
-  dedupeKey: string | undefined = requirement?.description
+  seen: Set<string>
 ): void => {
-  if (!requirement || dedupeKey === undefined || seen.has(dedupeKey)) {
+  if (!requirement) {
+    return;
+  }
+  const dedupeKey = JSON.stringify(
+    requirement.options
+      .map((group) => group.toSorted())
+      .toSorted((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
+  );
+  if (seen.has(dedupeKey)) {
     return;
   }
 
@@ -94,13 +101,9 @@ const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
       continue;
     }
 
-    addRequirementEntries(
-      featureItems,
-      coreFeatureEnvRequirements[
-        feature as keyof typeof coreFeatureEnvRequirements
-      ],
-      seen
-    );
+    for (const requirement of coreFeatureEnvRequirements[feature] ?? []) {
+      addRequirementEntries(featureItems, requirement, seen);
+    }
   }
 
   for (const tool of BUILT_IN_TOOL_KEYS) {
@@ -124,10 +127,7 @@ const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   }
 
   for (const requirement of input.installableToolEnvRequirements ?? []) {
-    const dedupeKey =
-      requirement.description ??
-      requirement.options.map((option) => option.join("+")).join("|");
-    addRequirementEntries(featureItems, requirement, seen, dedupeKey);
+    addRequirementEntries(featureItems, requirement, seen);
   }
 
   return featureItems;

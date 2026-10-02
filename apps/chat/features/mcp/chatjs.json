@@ -1,1 +1,6 @@
-{ "kind": "feature", "contractVersion": 1, "id": "mcp" }
+{
+  "contractVersion": 1,
+  "envRequirements": [{ "options": [["MCP_ENCRYPTION_KEY"]] }],
+  "id": "mcp",
+  "kind": "feature"
+}
