@@ -1,18 +1,19 @@
 {
-  "contractVersion": 1,
-  "kind": "tool",
-  "id": "generate-video",
-  "slot": "generateVideo",
   "envRequirements": [],
+  "id": "generate-video",
+  "kind": "tool",
+  "requiresTools": [],
+  "slot": "generateVideo",
   "tools": [
     {
-      "toolExport": "generateVideoTool",
-      "rendererExport": "GenerateVideoRenderer",
       "composer": {
         "icon": "Video",
         "name": "Create a video",
         "shortName": "Video"
-      }
+      },
+      "rendererExport": "GenerateVideoRenderer",
+      "toolExport": "generateVideoTool"
     }
-  ]
+  ],
+  "contractVersion": 1
 }

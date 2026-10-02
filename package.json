@@ -28,6 +28,8 @@
     "test:visual:docs": "bun --filter=@chatjs/docs run test:visual",
     "uiverify:upload:docs": "uiverify upload --static-dir apps/docs/uiverify-archive",
     "uiverify:docs": "bun run test:visual:docs && bun run uiverify:upload:docs",
+    "demo:sync": "bun packages/registry/scripts/demo-sync.ts",
+    "demo:check": "bun packages/registry/scripts/demo-sync.ts --check",
     "template:sync": "bun scripts/sync-template.ts",
     "template:check": "bun scripts/sync-template.ts --check && bun packages/registry/scripts/sync-mcp.ts --check",
     "chat-js": "bun --filter @chat-js/cli start",

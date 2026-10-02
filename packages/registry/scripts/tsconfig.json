@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "types": ["node", "bun"] },
+  "include": ["demo-sync.ts"]
+}

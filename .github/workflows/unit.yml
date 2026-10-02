@@ -54,6 +54,9 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-
       - if: steps.affected.outputs.run == 'true'
         run: bun install --frozen-lockfile
+      - name: Check full demo source drift
+        if: steps.affected.outputs.run == 'true'
+        run: bun demo:check
       - if: steps.affected.outputs.run == 'true'
         env:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
