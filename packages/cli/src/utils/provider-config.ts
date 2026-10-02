@@ -77,6 +77,9 @@ export const gatewayConfigEdit = async (
   const exported = parsed.statements.find(ts.isExportAssignment);
   const declarations = parsed.statements
     .filter(ts.isVariableStatement)
+    // Mutable bindings may no longer refer to their initializer at runtime.
+    // oxlint-disable-next-line eslint/no-bitwise -- TypeScript represents declaration modifiers as a bitmask.
+    .filter((statement) => statement.declarationList.flags & ts.NodeFlags.Const)
     .flatMap((statement) => [...statement.declarationList.declarations]);
   const seen = new Set<string>();
   const resolve = (input: ts.Expression): ts.Expression | undefined => {
@@ -88,6 +91,19 @@ export const gatewayConfigEdit = async (
       return;
     }
     seen.add(value.text);
+    // A binding used elsewhere may have its object mutated before configuration.
+    // Follow only a declaration and its single use in the active config chain.
+    let references = 0;
+    const visit = (node: ts.Node) => {
+      if (ts.isIdentifier(node) && node.text === value.text) {
+        references += 1;
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(parsed);
+    if (references !== 2) {
+      return;
+    }
     const initializer = declarations.find(
       (declaration) => declaration.name.getText(parsed) === value.text
     )?.initializer;
@@ -96,7 +112,10 @@ export const gatewayConfigEdit = async (
   const expression = exported && resolve(exported.expression);
   const config =
     expression && ts.isCallExpression(expression)
-      ? expression.arguments[0] && resolve(expression.arguments[0])
+      ? ts.isIdentifier(expression.expression) &&
+        expression.expression.text === "defineConfig" &&
+        expression.arguments[0] &&
+        resolve(expression.arguments[0])
       : expression;
   const aiProperty =
     config && ts.isObjectLiteralExpression(config)
