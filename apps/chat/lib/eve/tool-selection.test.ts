@@ -8,7 +8,7 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import type * as InstalledFeatures from "@/tools/chatjs/installed-features";
 
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
@@ -24,6 +24,15 @@ import {
   eveTurnTool,
   filterEveTools,
 } from "./turn-tools";
+
+const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
+vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
+  const actual = await importOriginal<typeof InstalledFeatures>();
+  for (const kind of actual.installedDocumentKinds) {
+    mocks.kinds.add(kind);
+  }
+  return { ...actual, installedDocumentKinds: mocks.kinds };
+});
 
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
@@ -214,13 +223,8 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
 });
 
 it("withholds document operations when their implementations are not installed", () => {
-  const installed = new Set(installedDocumentKinds);
-  vi.spyOn(installedDocumentKinds, "has").mockImplementation((kind) =>
-    installed.has(kind)
-  );
-  vi.spyOn(installedDocumentKinds, "size", "get").mockImplementation(
-    () => installed.size
-  );
+  const original = new Set(mocks.kinds);
+  const installed = mocks.kinds;
   try {
     installed.clear();
     expect(eveInstalledToolEnabled("readDocument")).toBe(false);
@@ -230,6 +234,9 @@ it("withholds document operations when their implementations are not installed",
     expect(eveInstalledToolEnabled("createTextDocument")).toBe(true);
     expect(eveInstalledToolEnabled("createCodeDocument")).toBe(false);
   } finally {
-    vi.restoreAllMocks();
+    installed.clear();
+    for (const kind of original) {
+      installed.add(kind);
+    }
   }
 });

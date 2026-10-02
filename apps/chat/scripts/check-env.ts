@@ -245,7 +245,7 @@ const checkEnv = async (): Promise<void> => {
       .join("\n");
 
     console.error(
-      `❌ Environment validation failed:\n${message}\n\nSet the required environment variables for installed integrations.`
+      `❌ Environment validation failed:\n${message}\n\nSet the required environment variables and check your app configuration.`
     );
     process.exit(1);
   }
