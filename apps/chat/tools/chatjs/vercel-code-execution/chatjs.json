@@ -1,4 +1,5 @@
 {
+  "codeExecutorExport": "executeCode",
   "envRequirements": [
     {
       "description": "Vercel OIDC or team/project/token credentials",
@@ -12,13 +13,9 @@
   "id": "vercel-code-execution",
   "kind": "tool",
   "requiresTools": [],
-  "codeExecutorExport": "executeCode",
   "slot": "codeExecution",
   "tools": [
-    {
-      "rendererExport": "CodeExecution",
-      "toolExport": "codeExecution"
-    }
+    { "rendererExport": "CodeExecution", "toolExport": "codeExecution" }
   ],
   "contractVersion": 1
 }

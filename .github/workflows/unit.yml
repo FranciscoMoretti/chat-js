@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           TURBO_VERSION="$(node -p "require('./package.json').devDependencies.turbo")"
-          if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:unit --exit-code >/tmp/unit-query.json 2>/tmp/unit-query.log; then
+          if npx -y "turbo@${TURBO_VERSION}" query affected --tasks test:unit demo:check --exit-code >/tmp/unit-query.json 2>/tmp/unit-query.log; then
             echo "run=false" >>"$GITHUB_OUTPUT"
           else
             status=$?
@@ -52,10 +52,17 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
+      - uses: actions/cache@v4
+        if: steps.affected.outputs.run == 'true'
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-
       - if: steps.affected.outputs.run == 'true'
         run: bun install --frozen-lockfile
       - if: steps.affected.outputs.run == 'true'
         env:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: bunx turbo run test:unit --affected
+        run: bunx turbo run test:unit demo:check --affected
