@@ -171,7 +171,6 @@ const toConfigInput = (input: {
     enabled: input.withElectron,
   },
   features: {
-    attachments: input.coreFeatures.attachments,
     parallelResponses: input.coreFeatures.parallelResponses,
   },
 });

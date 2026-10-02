@@ -8,7 +8,9 @@ vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: () => ({ user: { id: "owner" } }) } },
 }));
 vi.mock("@/lib/config", () => ({
-  config: { features: { attachments: true } },
+  config: {
+    attachments: { acceptedTypes: { "image/png": [".png"] }, maxBytes: 10 },
+  },
 }));
 vi.mock("@/lib/env", () => ({
   env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost/fixture" },
@@ -93,4 +95,24 @@ test("retains the reserved identity after an uncertain storage failure", async (
     expect.any(ArrayBuffer),
     "image/png"
   );
+});
+
+test("enforces retained upload type and byte limits before reserving storage", async () => {
+  for (const file of [
+    new File(["fixture"], "unsupported.txt", { type: "text/plain" }),
+    new File(["oversized fixture"], "large.png", { type: "image/png" }),
+  ]) {
+    const form = new FormData();
+    form.append("file", file);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Check each independent rejection before storage admission.
+    const response = await POST(
+      new Request("http://localhost/api/files/upload", {
+        body: form,
+        method: "POST",
+      })
+    );
+    expect(response.status).toBe(400);
+  }
+  expect(mocks.register).not.toHaveBeenCalled();
+  expect(mocks.upload).not.toHaveBeenCalled();
 });

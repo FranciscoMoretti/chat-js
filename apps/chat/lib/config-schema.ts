@@ -182,9 +182,6 @@ export const attachmentsConfigSchema =
   attachmentsConfigObjectSchema.default(ATTACHMENTS_DEFAULTS);
 
 export const featuresConfigObjectSchema = z.object({
-  attachments: z
-    .boolean()
-    .describe("File attachments (requires configured file storage)"),
   parallelResponses: z
     .boolean()
     .default(true)
@@ -192,7 +189,6 @@ export const featuresConfigObjectSchema = z.object({
 });
 
 export const FEATURES_DEFAULTS = {
-  attachments: false,
   parallelResponses: true,
 };
 

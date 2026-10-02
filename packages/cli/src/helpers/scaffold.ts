@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
 import pathModule from "node:path";
 
+import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
 import { mcpFiles } from "../../../registry/src/features/mcp";
 import { registryUrl } from "../registry/shadcn";
 import type { PackageManager } from "../types";
@@ -365,12 +366,20 @@ export const scaffoldFromTemplate = async (
   };
   await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
   await Promise.all(
-    [...mcpFiles, "features/mcp/chatjs.json"].map((file) =>
-      rm(join(destination, file), { force: true })
-    )
+    [
+      ...mcpFiles,
+      "features/mcp/chatjs.json",
+      ...attachmentUploadFiles,
+      "features/attachment-uploads/chatjs.json",
+    ].map((file) => rm(join(destination, file), { force: true }))
   );
   const directories = new Set<string>();
-  for (const file of [...mcpFiles, "features/mcp/chatjs.json"]) {
+  for (const file of [
+    ...mcpFiles,
+    "features/mcp/chatjs.json",
+    ...attachmentUploadFiles,
+    "features/attachment-uploads/chatjs.json",
+  ]) {
     let directory = pathModule.dirname(file);
     while (directory !== ".") {
       directories.add(directory);

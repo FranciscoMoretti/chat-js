@@ -4,16 +4,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
+import type { AttachmentUploadState } from "@/lib/installation-contracts";
 
 import { useEveFork } from "./use-eve-fork";
 
 const mocks = vi.hoisted(() => ({
   openRuntime: vi.fn(),
   resolveCreationRequest: vi.fn(),
-  restoreEveAttachment: vi.fn(),
+  restoreAttachments: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-query", () => ({
+  useMutation: () => ({ mutateAsync: mocks.restoreAttachments }),
   useQuery: () => ({
     data: {
       branches: [
@@ -36,8 +38,15 @@ vi.mock("@/lib/eve/resolve-creation-request", () => ({
   resolveCreationRequest: mocks.resolveCreationRequest,
 }));
 
-vi.mock("@/lib/eve/restore-attachment", () => ({
-  restoreEveAttachment: mocks.restoreEveAttachment,
+vi.mock("@/features/installed-uploads", () => ({
+  attachmentUploads: {
+    controls: [],
+    useUploads: (state: AttachmentUploadState) => ({
+      ...state,
+      upload: () => Promise.resolve(),
+      uploadQueue: [],
+    }),
+  },
 }));
 
 vi.mock("@/providers/default-model-provider", () => ({
@@ -54,6 +63,7 @@ vi.mock("@/trpc/react", () => ({
       list: {
         pathKey: () => ["eve", "list"],
       },
+      restoreAttachments: { mutationOptions: () => ({}) },
     },
   }),
 }));
@@ -123,7 +133,7 @@ const flushEffects = async () => {
 
 afterEach(() => {
   mocks.resolveCreationRequest.mockReset();
-  mocks.restoreEveAttachment.mockReset();
+  mocks.restoreAttachments.mockReset();
   mocks.openRuntime.mockReset();
   vi.unstubAllGlobals();
 });
@@ -147,6 +157,7 @@ describe("useEveFork", () => {
         });
       });
 
+      expect(mocks.restoreAttachments).not.toHaveBeenCalled();
       expect(required(fork).draft).toBe("Find the answer");
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).modelSelection.value).toBe(
@@ -470,10 +481,50 @@ describe("useEveFork", () => {
     }
   });
 
+  it("restores historical attachments by message identity without uploads installed", async () => {
+    vi.stubGlobal("sessionStorage", storage());
+    const attachment = {
+      contentType: "application/pdf",
+      digest: "restored-digest",
+      name: "notes.pdf",
+      url: "/api/files/restored-notes.pdf",
+    };
+    mocks.restoreAttachments.mockResolvedValueOnce([attachment]);
+    let fork: ReturnType<typeof useEveFork> | undefined;
+    let renderer: ReturnType<typeof create> | undefined;
+    act(() => {
+      renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
+    });
+    await flushEffects();
+    try {
+      await act(async () => {
+        await required(fork).begin(
+          userMessage([
+            {
+              filename: "notes.pdf",
+              mediaType: "application/pdf",
+              type: "file",
+              url: "/api/files/original-notes.pdf",
+            },
+          ])
+        );
+      });
+      expect(mocks.restoreAttachments).toHaveBeenCalledExactlyOnceWith({
+        conversationId,
+        messageId: "seed_message_0",
+      });
+      expect(required(fork).files.attachments).toEqual([attachment]);
+      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).locked).toBe(false);
+    } finally {
+      act(() => renderer?.unmount());
+    }
+  });
+
   it("locks an inline edit when an original attachment cannot be restored", async () => {
     vi.stubGlobal("sessionStorage", storage());
     vi.stubGlobal("window", { location: { origin: "https://chatjs.example" } });
-    mocks.restoreEveAttachment.mockRejectedValue(
+    mocks.restoreAttachments.mockRejectedValue(
       new Error("Unable to restore attachment.")
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
@@ -501,6 +552,10 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).locked).toBe(true);
       expect(required(fork).error).toBe("Unable to restore attachment.");
+      expect(mocks.restoreAttachments).toHaveBeenCalledWith({
+        conversationId,
+        messageId: "seed_message_0",
+      });
     } finally {
       act(() => renderer?.unmount());
     }
