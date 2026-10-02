@@ -68,6 +68,9 @@ test("new core UI has no MCP imports; installing MCP registers its router and pr
   const composer =
     '"use client";\nimport { SearchControl } from "@/components/composer/tool-controls";\nexport const composerControls = [{ Component: SearchControl, id: "search" } // my first control\n];\n';
   await writeFile(path.join(root, "composer-controls.ts"), composer);
+  const customizedSettings =
+    'import { Settings } from "lucide-react";\nexport const settingsItems = [{ id: "custom-first", label: "Custom", href: "/settings/custom", icon: Settings }, { id: "custom-second", label: "Other", href: "/settings/other", icon: Settings }];\n';
+  await writeFile(path.join(root, "settings-items.ts"), customizedSettings);
   await install(root);
   await syncFeatures(root, { addUi: true, expectedMcp: true });
   const result = await readFile(
@@ -92,6 +95,14 @@ test("new core UI has no MCP imports; installing MCP registers its router and pr
   const settings = await readFile(
     path.join(root, "settings-items.ts"),
     "utf-8"
+  );
+  expect(settings).toContain('id: "custom-first"');
+  expect(settings).toContain('id: "custom-second"');
+  expect(settings.indexOf('id: "custom-first"')).toBeLessThan(
+    settings.indexOf('id: "custom-second"')
+  );
+  expect(settings.indexOf('id: "custom-second"')).toBeLessThan(
+    settings.indexOf("mcpSettingsItem,")
   );
   expect(settings.match(/mcpSettingsItem,/gu)).toHaveLength(1);
 });

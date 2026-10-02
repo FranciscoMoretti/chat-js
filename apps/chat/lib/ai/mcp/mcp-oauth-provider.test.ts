@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   read: vi.fn(),
   save: vi.fn(),
+  setClientInfo: vi.fn(),
 }));
 vi.mock("./mcp-fetch", () => ({ mcpFetch: mocks.fetch }));
 
@@ -14,6 +15,7 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   getAuthenticatedSession: mocks.read,
   getSessionByState: mocks.read,
   saveTokensAndCleanup: mocks.save,
+  setOAuthClientInfoOnceByState: mocks.setClientInfo,
 }));
 vi.mock("@/lib/db/mcp-oauth-lock", () => ({
   withMcpOAuthRefreshLock: async (_id: string, run: () => Promise<unknown>) =>
@@ -141,4 +143,48 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   await client.saveTokens({ access_token: "new", token_type: "Bearer" });
   expect(stored.tokens).toMatchObject(pins);
   expect(mocks.save).toHaveBeenCalledTimes(1);
+});
+
+test("callback states cannot be adopted after a connector changes server URL", async () => {
+  stored = { ...stored, serverUrl: "https://other.example.test/mcp" };
+  await expect(provider().adoptState("state")).rejects.toThrow(
+    "different MCP server"
+  );
+});
+
+test("configured OAuth client credentials skip dynamic registration", async () => {
+  const client = new McpOAuthClientProvider({
+    clientMetadata: {
+      redirect_uris: ["https://chat.example.test/callback"],
+      token_endpoint_auth_method: "client_secret_basic",
+    },
+    mcpConnectorId: "connector",
+    oauthClientId: "configured-id",
+    oauthClientSecret: "configured-secret",
+    onRedirectToAuthorization: () => Promise.resolve(),
+    serverUrl: stored.serverUrl,
+  });
+  await expect(client.clientInformation()).resolves.toEqual({
+    client_id: "configured-id",
+    client_secret: "configured-secret",
+    redirect_uris: ["https://chat.example.test/callback"],
+    token_endpoint_auth_method: "client_secret_basic",
+  });
+  expect(mocks.fetch).not.toHaveBeenCalled();
+});
+
+test("failed client registration persistence can be retried without an optimistic cache", async () => {
+  const client = provider();
+  await client.tokens();
+  const clientInfo = {
+    client_id: "registered",
+    redirect_uris: ["http://localhost:3790/callback"],
+  };
+  mocks.setClientInfo.mockRejectedValueOnce(new Error("database unavailable"));
+  await expect(client.saveClientInformation(clientInfo)).rejects.toThrow(
+    "database unavailable"
+  );
+  mocks.setClientInfo.mockResolvedValueOnce({ ...stored, clientInfo });
+  await client.saveClientInformation(clientInfo);
+  expect(mocks.setClientInfo).toHaveBeenCalledTimes(2);
 });

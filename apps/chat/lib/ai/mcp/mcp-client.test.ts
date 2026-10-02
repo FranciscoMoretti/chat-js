@@ -5,6 +5,7 @@ import { MCPClient } from "./mcp-client";
 const mocks = vi.hoisted(() => ({
   close: vi.fn(),
   create: vi.fn(),
+  provider: vi.fn(),
   tools: vi.fn(),
 }));
 vi.mock("@ai-sdk/mcp", () => ({
@@ -14,7 +15,7 @@ vi.mock("@ai-sdk/mcp", () => ({
 vi.mock("@/lib/config", () => ({ config: { appPrefix: "chatjs" } }));
 vi.mock("@/lib/url", () => ({ getBaseUrl: () => "http://localhost:3790" }));
 vi.mock("./mcp-oauth-provider", () => ({
-  McpOAuthClientProvider: vi.fn(),
+  McpOAuthClientProvider: mocks.provider,
 }));
 vi.mock("./cache", () => {
   throw new Error("Runtime client must not load Next.js cache APIs");
@@ -95,4 +96,76 @@ it("a failed connection can be retried without retaining a failed promise", asyn
   expect(client.status).toBe("connected");
   expect(mocks.create).toHaveBeenCalledTimes(2);
   await client.close();
+});
+
+it("domain errors mentioning tokens do not invalidate authentication", async () => {
+  const invalidate = vi.fn();
+  const client = new MCPClient(
+    "id",
+    "Test",
+    { type: "http", url: "https://mcp.test" },
+    invalidate
+  );
+  await client.connect();
+  mocks.tools.mockRejectedValueOnce(new Error("Document exceeds token budget"));
+  await expect(client.tools()).rejects.toThrow("token budget");
+  expect(invalidate).not.toHaveBeenCalled();
+  await client.close();
+});
+
+it("OAuth secrets go to the provider and never the resource transport", async () => {
+  const client = new MCPClient("id", "Configured", {
+    oauthClientId: "configured-id",
+    oauthClientSecret: "configured-secret",
+    type: "http",
+    url: "https://resource.example.test/mcp",
+  });
+  await client.connect();
+  expect(mocks.provider).toHaveBeenCalledWith(
+    expect.objectContaining({
+      clientMetadata: expect.objectContaining({
+        token_endpoint_auth_method: "client_secret_basic",
+      }),
+      oauthClientId: "configured-id",
+      oauthClientSecret: "configured-secret",
+    })
+  );
+  expect(mocks.create).toHaveBeenCalledWith(
+    expect.objectContaining({
+      transport: expect.objectContaining({ headers: undefined }),
+    })
+  );
+  await client.close();
+});
+
+it("closing an in-flight connection prevents the late transport from becoming active", async () => {
+  const gate = Promise.withResolvers<undefined>();
+  mocks.create.mockImplementationOnce(async () => {
+    await gate.promise;
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const connecting = client.connect();
+  const rejected = expect(connecting).rejects.toThrow("closed");
+  await client.close();
+  gate.resolve(undefined);
+  await rejected;
+  expect(client.status).toBe("disconnected");
+  expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it("connection initialization always receives a cancellation signal", async () => {
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  await client.connect();
+  const signal = mocks.create.mock.calls[0]?.[0].initializationOptions.signal;
+  expect(signal).toBeInstanceOf(AbortSignal);
+  expect(signal.aborted).toBe(false);
+  await client.close();
+  expect(signal.aborted).toBe(true);
 });

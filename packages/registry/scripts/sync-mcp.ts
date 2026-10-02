@@ -32,7 +32,7 @@ await Promise.all(
   copies.map(async ({ content, file }) => {
     const target = path.join(demoRoot, file);
     if (check) {
-      if ((await readFile(target, "utf-8")) !== content) {
+      if ((await readFile(target, "utf-8").catch(() => null)) !== content) {
         throw new Error(
           `MCP demo copy drift: ${file}. Run bun packages/registry/scripts/sync-mcp.ts.`
         );

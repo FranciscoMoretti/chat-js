@@ -31,6 +31,8 @@ type McpClientStatus =
  */
 export class MCPClient {
   private client?: McpClientInstance;
+  private generation = 0;
+  private connectionAbort?: AbortController;
   private connectPromise?: Promise<McpClientInstance | undefined>;
   private readonly invalidateCache?: () => void;
   private readonly oauthProvider: McpOAuthClientProvider;
@@ -43,6 +45,8 @@ export class MCPClient {
     url: string;
     type: "http" | "sse";
     headers?: Record<string, string>;
+    oauthClientId?: string | null;
+    oauthClientSecret?: string | null;
   };
 
   constructor(
@@ -52,6 +56,8 @@ export class MCPClient {
       url: string;
       type: "http" | "sse";
       headers?: Record<string, string>;
+      oauthClientId?: string | null;
+      oauthClientSecret?: string | null;
     },
     invalidateCache?: () => void
   ) {
@@ -70,9 +76,14 @@ export class MCPClient {
         scope: "mcp:tools",
         software_id: config.appPrefix,
         software_version: "1.0.0",
-        token_endpoint_auth_method: "none",
+        token_endpoint_auth_method:
+          serverConfig.oauthClientId && serverConfig.oauthClientSecret
+            ? "client_secret_basic"
+            : "none",
       },
       mcpConnectorId: this.id,
+      oauthClientId: serverConfig.oauthClientId,
+      oauthClientSecret: serverConfig.oauthClientSecret,
       onRedirectToAuthorization: (authorizationUrl: URL) => {
         this.authorizationUrl = authorizationUrl;
         throw new OAuthAuthorizationRequiredError(authorizationUrl);
@@ -104,14 +115,18 @@ export class MCPClient {
     abortSignal?: AbortSignal
   ): Promise<McpClientInstance | undefined> {
     abortSignal?.throwIfAborted();
-    this.connectPromise ??= (async () => {
-      try {
-        return await this.connectOnce(oauthState, abortSignal);
-      } finally {
+    if (this.connectPromise) {
+      return await this.connectPromise;
+    }
+    const promise = this.connectOnce(oauthState, abortSignal);
+    this.connectPromise = promise;
+    try {
+      return await promise;
+    } finally {
+      if (this.connectPromise === promise) {
         this.connectPromise = undefined;
       }
-    })();
-    return await this.connectPromise;
+    }
   }
 
   private async connectOnce(
@@ -123,17 +138,23 @@ export class MCPClient {
       return this.client;
     }
 
+    const { generation } = this;
+    this.connectionAbort = new AbortController();
+    const signal = AbortSignal.any([
+      this.connectionAbort.signal,
+      abortSignal ?? AbortSignal.timeout(30_000),
+    ]);
     this._status = "connecting";
 
-    // Adopt state if provided (for callback reconciliation)
-    if (oauthState) {
-      await this.oauthProvider.adoptState(oauthState);
-    }
-
     try {
+      // Adopt state if provided (for callback reconciliation).
+      if (oauthState) {
+        await this.oauthProvider.adoptState(oauthState);
+      }
+      signal.throwIfAborted();
       // AI SDK handles 401 internally and calls auth() with the provider
-      this.client = await createMCPClient({
-        initializationOptions: { signal: abortSignal },
+      const client = await createMCPClient({
+        initializationOptions: { signal },
         transport: {
           authProvider: this.oauthProvider,
           fetch: this.oauthProvider.fetch,
@@ -143,9 +164,23 @@ export class MCPClient {
         },
       });
 
+      if (generation !== this.generation || signal.aborted) {
+        await client.close();
+        signal.throwIfAborted();
+        throw new Error("MCP connection was closed");
+      }
+      this.client = client;
+      this.authorizationUrl = undefined;
       this._status = "connected";
       return this.client;
     } catch (error) {
+      if (generation !== this.generation || signal.aborted) {
+        this.authorizationUrl = undefined;
+        if (generation === this.generation) {
+          this._status = "disconnected";
+        }
+        throw error;
+      }
       // If OAuth required error, status becomes "authorizing"
       if (error instanceof OAuthAuthorizationRequiredError) {
         this._status = "authorizing";
@@ -165,7 +200,7 @@ export class MCPClient {
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Returns connection status without fetching tools/resources/prompts.
    */
-  async attemptConnection(): Promise<{
+  async attemptConnection(abortSignal?: AbortSignal): Promise<{
     status: McpClientStatus;
     needsAuth: boolean;
     error?: string;
@@ -181,7 +216,7 @@ export class MCPClient {
     }
 
     try {
-      await this.connect();
+      await this.connect(undefined, abortSignal);
       // Check if OAuth is required (authorizationUrl gets set during connect)
       if (this.authorizationUrl) {
         return { needsAuth: true, status: "authorizing" };
@@ -252,7 +287,7 @@ export class MCPClient {
         Tool
       >;
     } catch (error) {
-      this.handlePotentialAuthError(error);
+      await this.handlePotentialAuthError(error);
       throw error;
     }
   }
@@ -267,7 +302,7 @@ export class MCPClient {
     try {
       return await this.client.listResources();
     } catch (error) {
-      this.handlePotentialAuthError(error);
+      await this.handlePotentialAuthError(error);
       throw error;
     }
   }
@@ -282,7 +317,7 @@ export class MCPClient {
     try {
       return await this.client.experimental_listPrompts();
     } catch (error) {
-      this.handlePotentialAuthError(error);
+      await this.handlePotentialAuthError(error);
       throw error;
     }
   }
@@ -291,35 +326,37 @@ export class MCPClient {
    * Close the connection to the MCP server.
    */
   async close(): Promise<void> {
+    this.generation += 1;
+    this.connectionAbort?.abort(new Error("MCP connection was closed"));
+    const { client } = this;
+    this.client = undefined;
+    this.authorizationUrl = undefined;
+    this._status = "disconnected";
     try {
-      await this.client?.close();
+      await client?.close();
     } catch (error) {
       log.error({ connectorId: this.id, error }, "Error closing MCP client");
     }
-    this.client = undefined;
-    this._status = "disconnected";
-    // Invalidate caches since connection state changed
     this.invalidateCache?.();
   }
 
   /**
    * Check if an error is an auth error (401/403) and invalidate caches if so.
    */
-  private handlePotentialAuthError(error: unknown): void {
+  private async handlePotentialAuthError(error: unknown): Promise<void> {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isAuthError =
       errorMessage.includes("401") ||
       errorMessage.includes("403") ||
       errorMessage.includes("Unauthorized") ||
-      errorMessage.includes("Forbidden") ||
-      errorMessage.includes("token");
+      errorMessage.includes("Forbidden");
 
     if (isAuthError) {
       log.warn(
         { connectorId: this.id, errorMessage },
         "Auth error detected, invalidating caches"
       );
-      this.invalidateCache?.();
+      await this.close();
     }
   }
 }

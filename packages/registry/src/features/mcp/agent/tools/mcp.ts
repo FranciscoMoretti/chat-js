@@ -19,11 +19,13 @@ export default defineDynamic({
         return {};
       }
       const ownerId = context.session.auth.initiator?.principalId;
-      // Dynamic resolvers do not expose EVE's execution cancellation signal.
-      const discoverySignal = AbortSignal.timeout(30_000);
+      const timeoutSignal = AbortSignal.timeout(30_000);
+      const discoverySignal = context.abortSignal
+        ? AbortSignal.any([context.abortSignal, timeoutSignal])
+        : timeoutSignal;
       const tools = await discoverEveMcpTools(ownerId, discoverySignal).catch(
         (error: unknown) => {
-          if (discoverySignal.aborted) {
+          if (timeoutSignal.aborted) {
             log.warn("MCP discovery timed out; continuing without MCP tools");
             return [];
           }

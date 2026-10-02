@@ -44,23 +44,47 @@ export interface DiscoveryResult {
 
 /**
  * Create a cached connection status fetcher for a specific connector.
- * Cache duration: 5 minutes
+ * Successful connection status is cached for 60 seconds. Failures are not cached.
  */
+class UncachedConnectionStatusError extends Error {
+  readonly result: ConnectionStatusResult;
+
+  constructor(result: ConnectionStatusResult) {
+    super("MCP connection status is unavailable");
+    this.name = "UncachedConnectionStatusError";
+    this.result = result;
+  }
+}
+
 export const createCachedConnectionStatus = (
   connectorId: string,
   fetcher: () => Promise<ConnectionStatusResult>
-) =>
-  unstable_cache(
-    () => {
-      log.debug({ connectorId }, "Fetching connection status (cache miss)");
-      return fetcher();
+) => {
+  const cached = unstable_cache(
+    async () => {
+      const result = await fetcher();
+      if (result.error || result.status === "disconnected") {
+        throw new UncachedConnectionStatusError(result);
+      }
+      return result;
     },
     ["mcp-connection-status", connectorId],
     {
-      revalidate: 300,
+      revalidate: 60,
       tags: [mcpCacheTags.connectionStatus(connectorId)],
     }
   );
+  return async () => {
+    try {
+      return await cached();
+    } catch (error) {
+      if (error instanceof UncachedConnectionStatusError) {
+        return error.result;
+      }
+      throw error;
+    }
+  };
+};
 
 /**
  * Create a cached discovery fetcher for a specific connector.
@@ -88,7 +112,7 @@ export const createCachedDiscovery = (
  */
 const invalidateConnectionStatus = (connectorId: string) => {
   log.debug({ connectorId }, "Invalidating connection status cache");
-  revalidateTag(mcpCacheTags.connectionStatus(connectorId), "max");
+  revalidateTag(mcpCacheTags.connectionStatus(connectorId), { expire: 0 });
 };
 
 /**
@@ -97,7 +121,7 @@ const invalidateConnectionStatus = (connectorId: string) => {
  */
 const invalidateDiscovery = (connectorId: string) => {
   log.debug({ connectorId }, "Invalidating discovery cache");
-  revalidateTag(mcpCacheTags.discovery(connectorId), "max");
+  revalidateTag(mcpCacheTags.discovery(connectorId), { expire: 0 });
 };
 
 /**
