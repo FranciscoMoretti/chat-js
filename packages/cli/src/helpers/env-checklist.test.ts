@@ -100,6 +100,9 @@ describe("collectEnvChecklist", () => {
       gateway: "litellm",
     });
 
+    expect(
+      entries.filter((entry) => entry.vars === "MCP_ENCRYPTION_KEY")
+    ).toHaveLength(1);
     expect(entries.map((entry) => entry.vars)).toEqual([
       "AUTH_SECRET",
       "DATABASE_URL",
@@ -163,7 +166,17 @@ it("includes every installed MCP requirement and preserves combined and alternat
       },
       gateway: "openai",
       gatewayRequirements: [],
+      installableToolEnvRequirements: [
+        { description: "Registry label", options: [["MCP_ENCRYPTION_KEY"]] },
+        {
+          description: "Reordered alternatives",
+          options: [["OIDC_TOKEN"], ["TOKEN", "TEAM"]],
+        },
+      ],
     });
+    expect(
+      entries.filter((entry) => entry.vars === "MCP_ENCRYPTION_KEY")
+    ).toHaveLength(1);
     expect(entries.map((entry) => entry.vars)).toEqual(
       expect.arrayContaining([
         "MCP_ENCRYPTION_KEY",

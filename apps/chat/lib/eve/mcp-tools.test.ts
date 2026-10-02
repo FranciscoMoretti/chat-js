@@ -552,3 +552,34 @@ it("discovery sends configured OAuth credentials to the provider rather than tra
     url: connector.url,
   });
 });
+
+it("a timed-out connector does not discard completed discovery or suppress the next connector", async () => {
+  const deadlines: AbortController[] = [];
+  const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => {
+    const controller = new AbortController();
+    deadlines.push(controller);
+    return controller.signal;
+  });
+  try {
+    mocks.list.mockResolvedValue([
+      connector,
+      { ...connector, id: "slow", nameId: "slow" },
+      { ...connector, id: "later", nameId: "later" },
+    ]);
+    mocks.tools
+      .mockResolvedValueOnce({ echo: definition })
+      .mockReturnValueOnce(Promise.withResolvers().promise)
+      .mockResolvedValueOnce({ echo: definition });
+    const discovery = discoverEveMcpTools("owner", context.abortSignal);
+    await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalledTimes(2));
+    deadlines[1].abort(new DOMException("Discovery timed out", "TimeoutError"));
+    const descriptions = await discovery;
+    expect(descriptions.map((item) => item.connectorId)).toEqual([
+      "connector",
+      "later",
+    ]);
+    expect(mocks.close).toHaveBeenCalledTimes(3);
+  } finally {
+    timeout.mockRestore();
+  }
+});

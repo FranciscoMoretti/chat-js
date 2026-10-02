@@ -110,6 +110,9 @@ export const McpCreateDialog = ({
       onError: (err) => {
         toast.error(err.message || "Failed to add connector");
       },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey });
+      },
     })
   );
 
@@ -117,8 +120,8 @@ export const McpCreateDialog = ({
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
-      oauthClientId: values.oauthClientId?.trim() || undefined,
-      oauthClientSecret: values.oauthClientSecret?.trim() || undefined,
+      oauthClientId: values.oauthClientId || undefined,
+      oauthClientSecret: values.oauthClientSecret || undefined,
       url: values.url.trim(),
     };
 
@@ -133,7 +136,6 @@ export const McpCreateDialog = ({
       {
         onSuccess: () => {
           toast.success("Connector added");
-          queryClient.invalidateQueries({ queryKey });
           onClose();
         },
       }
@@ -169,6 +171,7 @@ export const McpCreateDialog = ({
               name="name"
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -186,6 +189,7 @@ export const McpCreateDialog = ({
               name="url"
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>URL</FormLabel>
                   <FormControl>
                     <Input
                       {...field}

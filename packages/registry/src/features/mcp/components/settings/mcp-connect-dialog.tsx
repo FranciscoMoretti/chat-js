@@ -80,7 +80,10 @@ export const McpConnectDialog = ({
   }, [authorize, connector]);
 
   return (
-    <Dialog onOpenChange={(o) => !o && onClose()} open={open}>
+    <Dialog
+      onOpenChange={(o) => !o && !isPending && !isRedirecting && onClose()}
+      open={open}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="overflow-hidden">
           <div className="flex items-center gap-3 overflow-hidden">
