@@ -3,13 +3,13 @@
 import { Camera, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 
+import type { ComposerControlProps } from "@/components/composer/control";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
+import { installedFeatures } from "@/features/installed";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { config } from "@/lib/config";
 import { useSession } from "@/providers/session-provider";
-
-import type { ComposerControlProps } from "./control";
 
 const loginPrompt = (
   <LoginPrompt
@@ -23,7 +23,7 @@ export const AttachFilesControl = ({
   onAttach,
 }: ComposerControlProps) => {
   const { data: session } = useSession();
-  if (!config.features.attachments) {
+  if (!installedFeatures.has("attachment-uploads")) {
     return null;
   }
   return (
@@ -34,7 +34,7 @@ export const AttachFilesControl = ({
           toast(loginPrompt);
           return;
         }
-        onAttach("image/jpeg,image/png,application/pdf");
+        onAttach(Object.keys(config.attachments.acceptedTypes).join(","));
       }}
     >
       <Paperclip />
@@ -49,7 +49,7 @@ export const TakePhotoControl = ({
 }: ComposerControlProps) => {
   const mobile = useIsMobile();
   const { data: session } = useSession();
-  if (!config.features.attachments || !mobile) {
+  if (!installedFeatures.has("attachment-uploads") || !mobile) {
     return null;
   }
   return (
@@ -69,6 +69,7 @@ export const TakePhotoControl = ({
   );
 };
 
-AttachFilesControl.isAvailable = () => config.features.attachments;
+AttachFilesControl.isAvailable = () =>
+  installedFeatures.has("attachment-uploads");
 TakePhotoControl.isAvailable = (mobile: boolean) =>
-  config.features.attachments && mobile;
+  installedFeatures.has("attachment-uploads") && mobile;

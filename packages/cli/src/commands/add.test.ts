@@ -11,7 +11,6 @@ afterEach(async () => {
 });
 
 test.each([
-  "attachment-uploads",
   "vercel-analytics",
   "vercel-speed-insights",
   "langfuse",

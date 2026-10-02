@@ -417,7 +417,10 @@ const installRegistryItems = async (
   ).start();
   try {
     const plan = await planInstallation(project.targetDir, {
-      features: setup.coreFeatures.mcp ? ["mcp"] : [],
+      features: [
+        ...(setup.coreFeatures.mcp ? ["mcp"] : []),
+        ...(setup.coreFeatures.attachments ? ["attachment-uploads"] : []),
+      ],
       gateway: setup.gatewaySelection.source,
       storage: { options: setup.storage.options, source: setup.storage.source },
       tools: setup.toolSources,
@@ -432,6 +435,9 @@ const installRegistryItems = async (
     await syncFeatures(project.targetDir, {
       addUi: true,
       expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
+      expectedUploads: plan.features.some(
+        (feature) => feature.id === "attachment-uploads"
+      ),
     });
     await runCommand(packageManager, ["install"], project.targetDir);
     await runCommand(

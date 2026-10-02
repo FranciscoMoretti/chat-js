@@ -1,7 +1,10 @@
 import type { AnyTRPCRouter } from "@trpc/server";
-import type { ComponentType, Dispatch, SetStateAction } from "react";
+import type { ComponentType, HTMLAttributes, ReactNode } from "react";
 
-import type { ComposerControl } from "@/components/composer/control";
+import type {
+  ComposerControl,
+  ComposerControlProps,
+} from "@/components/composer/control";
 import type { SettingsItem } from "@/components/settings/settings-item";
 import type { DraftAttachment } from "@/lib/eve/draft";
 
@@ -20,16 +23,20 @@ export interface FeatureUiContribution {
 }
 
 /** D owns picker/camera/paste/drop behavior; core owns persisted attachments. */
-export interface AttachmentUploadState {
-  attachments: DraftAttachment[];
-  setAttachments: Dispatch<SetStateAction<DraftAttachment[]>>;
+export interface AttachmentUploadInput {
+  attachmentCount: number;
+  onUploaded: (attachment: DraftAttachment) => void;
 }
-export interface AttachmentUploadBehavior extends AttachmentUploadState {
-  upload: (files: File[]) => Promise<void>;
+export interface AttachmentUploadBehavior {
   uploadQueue: string[];
+  composer?: (disabled: boolean) => {
+    rootProps: HTMLAttributes<HTMLDivElement>;
+    input: ReactNode;
+    onAttach: ComposerControlProps["onAttach"];
+  };
 }
 export interface AttachmentUploadIntegration {
-  useUploads: (state: AttachmentUploadState) => AttachmentUploadBehavior;
+  useUploads: (input: AttachmentUploadInput) => AttachmentUploadBehavior;
   controls: readonly ComposerControl[];
 }
 

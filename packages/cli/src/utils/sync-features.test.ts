@@ -239,7 +239,7 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
       paths.map((entry) => readFile(path.join(root, entry), "utf-8"))
     );
     await expect(syncFeatures(root, { addUi: true })).rejects.toThrow(
-      "chat-js add mcp"
+      "retry chat-js add"
     );
     expect(
       await Promise.all(
@@ -288,3 +288,106 @@ test("adds the requested binding when the module already has another named impor
     await readFile(path.join(root, "settings-items.ts"), "utf-8")
   ).toContain("  connectors,");
 });
+
+test("core scaffold omits uploads; shadcn add registers uploads alongside MCP and sync preserves user order", async () => {
+  const { attachmentUploadsItem, attachmentUploadFiles } =
+    await import("../../../registry/src/features/attachment-uploads");
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-upload-install-"));
+  roots.push(root);
+  await scaffoldFromTemplate(root);
+  const uploadPresence = await Promise.all(
+    attachmentUploadFiles.map((file) =>
+      Bun.file(path.join(root, file)).exists()
+    )
+  );
+  expect(uploadPresence.some(Boolean)).toBe(false);
+  expect(
+    await readFile(path.join(root, "features/installed-uploads.ts"), "utf-8")
+  ).not.toContain("@/features/attachment-uploads");
+  for (const file of [
+    "components/context-bar.tsx",
+    "lib/file-storage.ts",
+    "lib/db/eve-files.ts",
+    "lib/eve/restore-message-attachments.ts",
+  ]) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Assert a small fixed set of historical-file core seams.
+    expect(await Bun.file(path.join(root, file)).exists()).toBe(true);
+  }
+  const files = await Promise.all(
+    (attachmentUploadsItem.files ?? []).map(async (file) => ({
+      ...file,
+      content: await readFile(
+        path.resolve(import.meta.dir, "../../../registry", file.path),
+        "utf-8"
+      ),
+    }))
+  );
+  files.push({
+    content: JSON.stringify(attachmentUploadsItem.meta?.chatjs),
+    path: "uploads.json",
+    target: "~/features/attachment-uploads/chatjs.json",
+    type: "registry:file",
+  });
+  const server = Bun.serve({
+    fetch: () => Response.json({ ...attachmentUploadsItem, files }),
+    hostname: "127.0.0.1",
+    port: 0,
+  });
+  try {
+    await installItems(
+      [`http://127.0.0.1:${server.port}/attachment-uploads.json`],
+      root
+    );
+    await install(root);
+    await syncFeatures(root, {
+      addUi: true,
+      expectedMcp: true,
+      expectedUploads: true,
+    });
+    const composer = await readFile(
+      path.join(root, "composer-controls.ts"),
+      "utf-8"
+    );
+    expect(composer).toContain("...attachmentUploads.controls");
+    expect(composer).toContain("ConnectorsControl");
+    expect(
+      await readFile(path.join(root, "features/installed.ts"), "utf-8")
+    ).toContain('"attachment-uploads"');
+    expect(
+      await readFile(path.join(root, "features/installed-uploads.ts"), "utf-8")
+    ).toContain("@/features/attachment-uploads/integration");
+    const reordered = composer.replace(
+      "...attachmentUploads.controls",
+      "...attachmentUploads.controls /* user placement */"
+    );
+    await writeFile(path.join(root, "composer-controls.ts"), reordered);
+    await syncFeatures(root);
+    expect(
+      await readFile(path.join(root, "composer-controls.ts"), "utf-8")
+    ).toBe(reordered);
+    for (const controls of [
+      '{ Component: AttachFilesControl, id: "attach-files" }, { Component: TakePhotoControl, id: "take-photo" }',
+      '{ Component: AttachFilesControl, id: "attach-files" }',
+      '{ Component: TakePhotoControl, id: "take-photo" }',
+    ]) {
+      const customControls = composer.replace(
+        "...attachmentUploads.controls",
+        controls
+      );
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Verify each app-owned placement independently.
+      await writeFile(path.join(root, "composer-controls.ts"), customControls);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Sync must preserve the selected control subset.
+      await syncFeatures(root, { addUi: true, expectedMcp: true });
+      expect(
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Compare the exact app-owned source after sync.
+        await readFile(path.join(root, "composer-controls.ts"), "utf-8")
+      ).toBe(customControls);
+    }
+    await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
+    await expect(syncFeatures(root, { expectedUploads: true })).rejects.toThrow(
+      "app/(chat)/api/files/upload/route.ts"
+    );
+  } finally {
+    server.stop(true);
+  }
+}, 30_000);

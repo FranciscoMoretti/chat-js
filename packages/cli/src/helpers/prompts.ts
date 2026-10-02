@@ -267,7 +267,7 @@ export const promptCoreFeatures = async (
 ): Promise<Record<CoreFeatureKey, boolean>> => {
   const defaultTools = gateway.defaults.tools;
   const CORE_FEATURE_DEFAULTS: Record<CoreFeatureKey, boolean> = {
-    attachments: FEATURES_DEFAULTS.attachments,
+    attachments: false,
     documents: defaultTools.documents.enabled,
     followupSuggestions: defaultTools.followupSuggestions.enabled,
     mcp: mcp ?? false,
