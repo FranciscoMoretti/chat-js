@@ -9,22 +9,23 @@ import {
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
-  features: {
-    deepResearch: { enabled: true },
-    documents: { enabled: true, types: { text: true } },
-    webSearch: { enabled: true },
-  },
+  research: true,
   save: vi.fn(),
   selected: vi.fn(),
   snapshot: vi.fn(),
+  text: true,
+  tools: { webSearch: {} },
 }));
 vi.mock("./turn-tools", () => ({
   eveToolAllowed: () => true,
   eveTurnTool: { get: mocks.selected },
 }));
-vi.mock("../config", () => ({ config: { ai: { tools: mocks.features } } }));
+vi.mock("@/tools/chatjs/installed-features", () => ({
+  installedDocumentKinds: { has: () => mocks.text },
+  installedToolNames: { has: () => mocks.research },
+}));
 vi.mock("../../tools/chatjs/providers", () => ({
-  providers: { webSearch: {} },
+  providers: mocks.tools,
 }));
 vi.mock("@/tools/chatjs/deep-research/configuration", () => ({
   getDeepResearchConfig: () => ({}),
@@ -75,9 +76,9 @@ const context = (): WorkflowToolContext => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.selected.mockReturnValue(null);
-  mocks.features.deepResearch.enabled = true;
-  mocks.features.documents.types.text = true;
-  mocks.features.webSearch.enabled = true;
+  mocks.research = true;
+  mocks.text = true;
+  mocks.tools.webSearch = {};
   mocks.snapshot.mockResolvedValue({ events: [] });
 });
 
@@ -88,25 +89,26 @@ it("uses the owned native transcript without feeding the live research invocatio
   expect(prepared.timestamp).toBeGreaterThan(0);
 });
 
-it("rejects disabled research and text documents before reading the transcript", async () => {
-  mocks.features.deepResearch.enabled = false;
+it("rejects absent research and text documents before reading the transcript", async () => {
+  mocks.research = false;
   await expect(prepareResearch(context())).rejects.toThrow(
-    "enabled text documents"
+    "installed text documents"
   );
-  mocks.features.deepResearch.enabled = true;
-  mocks.features.documents.types.text = false;
+  mocks.research = true;
+  mocks.text = false;
   await expect(prepareResearch(context())).rejects.toThrow(
-    "enabled text documents"
+    "installed text documents"
   );
 
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
 
-it("allows installed research search when standalone search is disabled", async () => {
-  mocks.features.webSearch.enabled = false;
-  await expect(prepareResearch(context())).resolves.toMatchObject({
-    messages: expect.stringContaining("Research this"),
-  });
+it("rejects research without an installed search provider", async () => {
+  Reflect.deleteProperty(mocks.tools, "webSearch");
+  await expect(prepareResearch(context())).rejects.toThrow(
+    "installed webSearch"
+  );
+  expect(mocks.snapshot).not.toHaveBeenCalled();
 });
 
 it("rejects guest and incompatible selected-tool invocations", async () => {

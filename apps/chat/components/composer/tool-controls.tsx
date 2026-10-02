@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
-import { config } from "@/lib/config";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
@@ -75,44 +74,30 @@ const canvasTools = {
   text: "createTextDocument",
 } as const;
 const getCanvasTool = () => {
-  const kind = (["text", "code", "sheet"] as const).find(
-    (entry) =>
-      config.ai.tools.documents.types[entry] &&
-      installedToolNames.has(canvasTools[entry])
+  const kind = (["text", "code", "sheet"] as const).find((entry) =>
+    installedToolNames.has(canvasTools[entry])
   );
   return kind ? canvasTools[kind] : undefined;
 };
 export const CanvasControl = (props: ComposerControlProps) => {
   const tool = getCanvasTool();
-  return config.ai.tools.documents.enabled && tool ? (
-    <ToolControl {...props} tool={tool} />
-  ) : null;
+  return tool ? <ToolControl {...props} tool={tool} /> : null;
 };
-export const SearchControl = (props: ComposerControlProps) =>
-  config.ai.tools.webSearch.enabled ? (
-    <ToolControl {...props} tool="webSearch" />
-  ) : null;
-export const ResearchControl = (props: ComposerControlProps) =>
-  config.ai.tools.deepResearch.enabled ? (
-    <ToolControl {...props} tool="deepResearch" />
-  ) : null;
-export const ImageControl = (props: ComposerControlProps) =>
-  config.ai.tools.image.enabled ? (
-    <ToolControl {...props} tool="generateImage" />
-  ) : null;
-export const VideoControl = (props: ComposerControlProps) =>
-  config.ai.tools.video.enabled ? (
-    <ToolControl {...props} tool="generateVideo" />
-  ) : null;
+export const SearchControl = (props: ComposerControlProps) => (
+  <ToolControl {...props} tool="webSearch" />
+);
+export const ResearchControl = (props: ComposerControlProps) => (
+  <ToolControl {...props} tool="deepResearch" />
+);
+export const ImageControl = (props: ComposerControlProps) => (
+  <ToolControl {...props} tool="generateImage" />
+);
+export const VideoControl = (props: ComposerControlProps) => (
+  <ToolControl {...props} tool="generateVideo" />
+);
 
-CanvasControl.isAvailable = () =>
-  config.ai.tools.documents.enabled && Boolean(getCanvasTool());
-SearchControl.isAvailable = () =>
-  config.ai.tools.webSearch.enabled && installedToolNames.has("webSearch");
-ResearchControl.isAvailable = () =>
-  config.ai.tools.deepResearch.enabled &&
-  installedToolNames.has("deepResearch");
-ImageControl.isAvailable = () =>
-  config.ai.tools.image.enabled && installedToolNames.has("generateImage");
-VideoControl.isAvailable = () =>
-  config.ai.tools.video.enabled && installedToolNames.has("generateVideo");
+CanvasControl.isAvailable = () => Boolean(getCanvasTool());
+SearchControl.isAvailable = () => installedToolNames.has("webSearch");
+ResearchControl.isAvailable = () => installedToolNames.has("deepResearch");
+ImageControl.isAvailable = () => installedToolNames.has("generateImage");
+VideoControl.isAvailable = () => installedToolNames.has("generateVideo");

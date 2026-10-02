@@ -23,25 +23,13 @@ export const gatewayModelDefaults = {
     code: {
       edits: "openai/gpt-5-mini",
     },
-    codeExecution: {
-      enabled: false,
-    },
     deepResearch: {
       allowClarification: true,
       defaultModel: "google/gemini-2.5-flash-lite",
-      enabled: false,
       finalReportModel: "google/gemini-3-flash",
       maxConcurrentResearchUnits: 2,
       maxResearcherIterations: 1,
       maxSearchQueries: 2,
-    },
-    documents: {
-      enabled: true,
-      types: {
-        code: true,
-        sheet: true,
-        text: true,
-      },
     },
     followupSuggestions: {
       default: "google/gemini-2.5-flash-lite",
@@ -49,7 +37,6 @@ export const gatewayModelDefaults = {
     },
     image: {
       default: "google/gemini-3-pro-image",
-      enabled: false,
     },
     sheet: {
       analyze: "openai/gpt-5-mini",
@@ -58,15 +45,8 @@ export const gatewayModelDefaults = {
     text: {
       polish: "openai/gpt-5-mini",
     },
-    urlRetrieval: {
-      enabled: false,
-    },
     video: {
       default: "xai/grok-imagine-video",
-      enabled: false,
-    },
-    webSearch: {
-      enabled: false,
     },
   },
   workflows: {

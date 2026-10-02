@@ -1,7 +1,11 @@
 import { defineState } from "eve/context";
 
+import {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/tools/chatjs/installed-features";
+
 import type { UiToolName } from "../ai/types";
-import { config } from "../config";
 import { ANONYMOUS_LIMITS } from "../types/anonymous";
 import { eveDocumentOperations } from "./document-contracts";
 import { selectedEveTools } from "./selected-tools";
@@ -26,31 +30,18 @@ export const eveInstalledToolEnabled = (name: string) => {
     ([key]) => key === name
   )?.[1];
   if (operation) {
-    return (
-      config.ai.tools.documents.enabled &&
-      config.ai.tools.documents.types[operation.kind]
-    );
+    return installedDocumentKinds.has(operation.kind);
   }
   if (name === "readDocument") {
-    return (
-      config.ai.tools.documents.enabled &&
-      Object.values(config.ai.tools.documents.types).some(Boolean)
-    );
+    return installedDocumentKinds.size > 0;
   }
   if (name === "runCodeDocument") {
     return (
-      config.ai.tools.documents.enabled &&
-      config.ai.tools.documents.types.code &&
-      config.ai.tools.codeExecution.enabled
+      installedDocumentKinds.has("code") &&
+      installedToolNames.has("runCodeDocument")
     );
   }
-  return (
-    (name !== "generateVideo" || config.ai.tools.video.enabled) &&
-    (name !== "generateImage" || config.ai.tools.image.enabled) &&
-    (name !== "webSearch" || config.ai.tools.webSearch.enabled) &&
-    (name !== "retrieveUrl" || config.ai.tools.urlRetrieval.enabled) &&
-    (name !== "codeExecution" || config.ai.tools.codeExecution.enabled)
-  );
+  return true;
 };
 
 export const filterEveTools = <T extends object>(tools: T): Partial<T> => {

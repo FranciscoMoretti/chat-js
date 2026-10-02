@@ -61,25 +61,12 @@ describe("buildConfigTs", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
         documents: true,
         followupSuggestions: true,
         mcp: false,
         parallelResponses: true,
-      },
-      documentTypes: {
-        code: true,
-        sheet: true,
-        text: true,
       },
       gateway: "vercel",
       withElectron: false,
@@ -89,12 +76,8 @@ describe("buildConfigTs", () => {
       /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*false,/mu
     );
     expect(output).toContain("parallelResponses: true");
-    expect(output).toContain("documents: {");
-    expect(output).toContain("text: true");
-    expect(output).toContain("code: true");
-    expect(output).toContain("sheet: true");
-    expect(output).toContain("codeExecution: {");
-    expect(output).toContain("enabled: false");
+    expect(output).not.toContain("documents: {");
+    expect(output).not.toContain("codeExecution: {");
     expect(output).not.toContain("attachments: false");
   });
   it("writes desktopApp.enabled=true for Electron scaffolds", () => {
@@ -107,25 +90,12 @@ describe("buildConfigTs", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
         documents: true,
         followupSuggestions: true,
         mcp: false,
         parallelResponses: true,
-      },
-      documentTypes: {
-        code: true,
-        sheet: true,
-        text: true,
       },
       gateway: "vercel",
       withElectron: true,
@@ -135,14 +105,10 @@ describe("buildConfigTs", () => {
       /desktopApp:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
     );
     expect(output).toContain("parallelResponses: true");
-    expect(output).toContain("documents: {");
-    expect(output).toContain("text: true");
-    expect(output).toContain("code: true");
-    expect(output).toContain("sheet: true");
+    expect(output).not.toContain("documents: {");
     expect(output).toContain("video: {");
-    expect(output).toContain("enabled: false");
   });
-  it("preserves selected media tools for openai-compatible scaffolds", () => {
+  it("preserves gateway media defaults for openai-compatible scaffolds", () => {
     const output = buildConfigTs({
       appName: "My Chat",
       appPrefix: "my-chat",
@@ -152,25 +118,12 @@ describe("buildConfigTs", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: true,
-        deepResearch: true,
-        imageGeneration: true,
-        urlRetrieval: true,
-        videoGeneration: true,
-        webSearch: true,
-      },
       coreFeatures: {
         attachments: false,
         documents: true,
         followupSuggestions: true,
         mcp: false,
         parallelResponses: true,
-      },
-      documentTypes: {
-        code: true,
-        sheet: true,
-        text: true,
       },
       gateway: "openai-compatible",
       withElectron: false,
@@ -179,9 +132,7 @@ describe("buildConfigTs", () => {
     expect(output).toContain('gateway: "openai-compatible"');
     expect(output).toContain("image: {");
     expect(output).toContain('default: "gpt-image-1"');
-    expect(output).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
+    expect(output).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });
 

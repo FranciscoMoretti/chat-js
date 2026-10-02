@@ -1,13 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
 import { GATEWAYS } from "../types";
-import type { BuiltInToolKey, Gateway } from "../types";
+import type { Gateway } from "../types";
 import { buildConfigTs } from "./config-builder";
 
-const buildConfigFor = (
-  gateway: Gateway,
-  builtInTools: Record<BuiltInToolKey, boolean>
-): string =>
+const buildConfigFor = (gateway: Gateway): string =>
   buildConfigTs({
     appName: "Contract Test",
     appPrefix: "contract-test",
@@ -17,7 +14,6 @@ const buildConfigFor = (
       google: true,
       vercel: true,
     },
-    builtInTools,
     coreFeatures: {
       attachments: true,
       documents: true,
@@ -25,44 +21,35 @@ const buildConfigFor = (
       mcp: true,
       parallelResponses: true,
     },
-    documentTypes: {
-      code: true,
-      sheet: true,
-      text: true,
-    },
     gateway,
     withElectron: false,
   });
 
 describe("scaffold contracts", () => {
-  it("builds valid configs for the high-risk built-in tool matrix", () => {
-    const allBuiltIns = {
-      codeExecution: true,
-      deepResearch: true,
-      imageGeneration: true,
-      urlRetrieval: true,
-      videoGeneration: true,
-      webSearch: true,
-    } satisfies Record<BuiltInToolKey, boolean>;
-
+  it("builds valid configs without tool presence switches for every gateway", () => {
     for (const gateway of GATEWAYS) {
-      const output = buildConfigFor(gateway, allBuiltIns);
+      const output = buildConfigFor(gateway);
       expect(output).toContain(`gateway: ${JSON.stringify(gateway)}`);
+      for (const removed of [
+        "documents",
+        "codeExecution",
+        "urlRetrieval",
+        "webSearch",
+      ]) {
+        expect(output).not.toContain(`${removed}: {`);
+      }
+      expect(output).toContain("maxSearchQueries: 2");
+      expect(output).toContain("followupSuggestions: {");
+      expect(output).toContain("parallelResponses: true");
     }
 
-    const openaiCompatible = buildConfigFor("openai-compatible", allBuiltIns);
+    const openaiCompatible = buildConfigFor("openai-compatible");
     expect(openaiCompatible).toContain('default: "gpt-image-1"');
-    expect(openaiCompatible).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
+    expect(openaiCompatible).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
 
-    const litellm = buildConfigFor("litellm", allBuiltIns);
+    const litellm = buildConfigFor("litellm");
     expect(litellm).toContain('chat: "openai/gpt-4o-mini"');
-    expect(litellm).toMatch(
-      /image:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
-    expect(litellm).toMatch(
-      /video:\s*\{(?:\s*\/\/[^\n]*\n)*\s*enabled:\s*true,/mu
-    );
+    expect(litellm).not.toMatch(/image:\s*\{[^}]*enabled:/mu);
+    expect(litellm).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });

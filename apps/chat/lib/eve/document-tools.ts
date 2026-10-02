@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 
 import type { ToolContext } from "eve/tools";
 
-import { config } from "../config";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
@@ -34,9 +35,6 @@ export const executeEveDocumentTool = async (
   value: unknown,
   context: DocumentContext
 ) => {
-  if (!config.ai.tools.documents.enabled) {
-    throw new Error("Document tools are disabled.");
-  }
   if (name === "readDocument") {
     const input = eveDocumentReadInput.parse(value);
     const scope = await resolveEveConversationScope(
@@ -49,7 +47,7 @@ export const executeEveDocumentTool = async (
       scope.conversationId,
       input.documentId
     );
-    if (!(revision && config.ai.tools.documents.types[revision.kind])) {
+    if (!(revision && installedDocumentKinds.has(revision.kind))) {
       throw new Error("Document not found.");
     }
     return {
@@ -66,7 +64,7 @@ export const executeEveDocumentTool = async (
   const operation = Object.entries(eveDocumentOperations).find(
     ([key]) => key === name
   )?.[1];
-  if (!(operation && config.ai.tools.documents.types[operation.kind])) {
+  if (!(operation && installedDocumentKinds.has(operation.kind))) {
     throw new Error("Document tool is unavailable.");
   }
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;

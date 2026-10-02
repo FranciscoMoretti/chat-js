@@ -61,9 +61,6 @@ const resolveImageModel = async (
   }
 
   // Fall back to the configured default image model
-  if (!config.ai.tools.image.enabled) {
-    throw new Error("Image generation is not enabled");
-  }
   const defaultId = config.ai.tools.image.default;
   if (!defaultId) {
     throw new Error(
@@ -193,9 +190,6 @@ const runGenerateImageTraditional = async ({
   modelId: string;
   modelProvider: ToolModelProvider;
 }): Promise<{ fileId: string; imageUrl: string; prompt: string }> => {
-  if (!config.ai.tools.image.enabled) {
-    throw new Error("Image generation is not enabled");
-  }
   let promptInput:
     | string
     | {
