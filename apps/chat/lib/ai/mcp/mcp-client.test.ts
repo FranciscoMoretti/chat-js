@@ -195,3 +195,25 @@ it("callers cancel their shared connection waits independently", async () => {
   expect(mocks.create).toHaveBeenCalledOnce();
   await client.close();
 });
+
+it("a fresh connection starts immediately after closing a pending attempt", async () => {
+  const gate = Promise.withResolvers<undefined>();
+  mocks.create.mockImplementationOnce(async () => {
+    await gate.promise;
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const first = client.connect();
+  const rejected = expect(first).rejects.toThrow("closed");
+  await client.close();
+  await client.connect();
+  expect(client.status).toBe("connected");
+  expect(mocks.create).toHaveBeenCalledTimes(2);
+  gate.resolve(undefined);
+  await rejected;
+  expect(client.status).toBe("connected");
+  await client.close();
+});
