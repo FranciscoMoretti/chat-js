@@ -54,3 +54,12 @@ it("the matching authorizing client is removed and closed", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
   expect(getOrCreateMcpClient(config)).not.toBe(client);
 });
+
+it("unconditional removal closes and evicts an established client", async () => {
+  mocks.state.status = "connected";
+  const config = connector("unconditional");
+  const client = getOrCreateMcpClient(config);
+  await removeMcpClient(config.id);
+  expect(mocks.close).toHaveBeenCalledOnce();
+  expect(getOrCreateMcpClient(config)).not.toBe(client);
+});
