@@ -1,18 +1,19 @@
 {
-  "contractVersion": 1,
-  "kind": "tool",
-  "id": "generate-image",
-  "slot": "generateImage",
   "envRequirements": [],
+  "id": "generate-image",
+  "kind": "tool",
+  "requiresTools": [],
+  "slot": "generateImage",
   "tools": [
     {
-      "toolExport": "generateImageTool",
-      "rendererExport": "GenerateImageRenderer",
       "composer": {
         "icon": "Images",
         "name": "Create an image",
         "shortName": "Image"
-      }
+      },
+      "rendererExport": "GenerateImageRenderer",
+      "toolExport": "generateImageTool"
     }
-  ]
+  ],
+  "contractVersion": 1
 }

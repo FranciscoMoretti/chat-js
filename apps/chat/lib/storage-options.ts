@@ -1,10 +1,11 @@
+import type { EnvRequirement } from "./config-requirements";
 import type { createStorageAdapter } from "./storage-provider";
 
 export const storageOptions = {} satisfies Parameters<
   typeof createStorageAdapter
 >[0];
 export const storageId = "vercel-blob";
-export const storageEnvRequirements = [
+export const storageEnvRequirements: EnvRequirement[] = [
   {
     description: "Vercel Blob credentials",
     options: [

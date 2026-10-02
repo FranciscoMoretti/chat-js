@@ -1,12 +1,10 @@
 {
-  "contractVersion": 1,
-  "kind": "tool",
-  "id": "get-weather",
   "envRequirements": [],
+  "id": "get-weather",
+  "kind": "tool",
+  "requiresTools": [],
   "tools": [
-    {
-      "toolExport": "getWeather",
-      "rendererExport": "GetWeatherRenderer"
-    }
-  ]
+    { "rendererExport": "GetWeatherRenderer", "toolExport": "getWeather" }
+  ],
+  "contractVersion": 1
 }
