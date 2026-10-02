@@ -803,6 +803,8 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
         ).exists()
       ).toBe(false);
       await run(cwd, ["node", cliEntry, "add", "attachment-uploads", "--yes"]);
+      await run(cwd, ["bun", "run", "format"]);
+      await run(cwd, ["node", cliEntry, "sync"]);
       expect(
         await Bun.file(
           join(cwd, "app/(chat)/api/files/upload/route.ts")
