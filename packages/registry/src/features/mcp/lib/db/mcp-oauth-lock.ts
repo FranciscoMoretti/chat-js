@@ -20,10 +20,13 @@ export const withMcpOAuthRefreshLock = async <T>(
 ): Promise<T> => {
   signal?.throwIfAborted();
   const aborted = Promise.withResolvers<never>();
+  let refreshStarted = false;
   let cancelQuery: (() => void) | undefined;
   const cancel = () => {
     cancelQuery?.();
-    aborted.reject(signal?.reason);
+    if (!refreshStarted) {
+      aborted.reject(signal?.reason);
+    }
   };
   signal?.addEventListener("abort", cancel, { once: true });
   try {
@@ -39,9 +42,11 @@ export const withMcpOAuthRefreshLock = async <T>(
         cancelQuery = undefined;
       }
       signal?.throwIfAborted();
+      refreshStarted = true;
       return { value: await run() };
     });
     const result = await Promise.race([operation, aborted.promise]);
+    signal?.throwIfAborted();
     return result.value;
   } finally {
     signal?.removeEventListener("abort", cancel);

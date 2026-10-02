@@ -7,12 +7,14 @@ import { MissingCredentialsError } from "@/lib/required-credentials";
 const mocks = vi.hoisted(() => ({
   deleteSession: vi.fn(),
   getSession: vi.fn(),
+  invalidate: vi.fn(),
   params: {
     code: "code" as string | null,
     error: null as string | null,
     error_description: null as string | null,
     state: "state",
   },
+  removeClient: vi.fn(),
   requireCredentials: vi.fn(),
 }));
 vi.mock("@/features/mcp/setup", () => ({
@@ -20,7 +22,10 @@ vi.mock("@/features/mcp/setup", () => ({
 }));
 vi.mock("@/lib/ai/mcp/mcp-client-manager", () => ({
   createMcpClientForCallback: vi.fn(),
-  removeMcpClient: vi.fn(),
+  removeMcpClient: mocks.removeClient,
+}));
+vi.mock("@/lib/ai/mcp/cache", () => ({
+  invalidateAllMcpCaches: mocks.invalidate,
 }));
 vi.mock("@/lib/db/mcp-queries", () => ({
   deleteSessionByState: mocks.deleteSession,
@@ -88,4 +93,38 @@ it("provider cancellation deletes only pending state and returns a safe connecto
   );
   expect(location.toString()).not.toContain("secret");
   expect(mocks.deleteSession).toHaveBeenCalledWith({ state: "state" });
+  expect(mocks.removeClient).toHaveBeenCalledWith("connector", "state");
+  expect(mocks.invalidate).toHaveBeenCalledWith("connector");
 });
+
+it.each([
+  undefined,
+  {
+    mcpConnectorId: "connector",
+    state: "state",
+    tokens: { access_token: "active" },
+  },
+])(
+  "provider errors do not delete an authenticated or unmatched session: %j",
+  async (session) => {
+    mocks.params = {
+      code: null,
+      error: "access_denied",
+      error_description: null,
+      state: "state",
+    };
+    mocks.getSession.mockResolvedValue(session);
+    const response = await GET(
+      new NextRequest(
+        "https://chat.example.test/api/mcp/oauth/callback?error=access_denied&state=state"
+      )
+    );
+    const location = new URL(response.headers.get("location") ?? "");
+    expect(location.pathname).toBe(
+      session ? "/settings/connectors/connector" : "/settings/connectors"
+    );
+    expect(mocks.deleteSession).not.toHaveBeenCalled();
+    expect(mocks.removeClient).not.toHaveBeenCalled();
+    expect(mocks.invalidate).not.toHaveBeenCalled();
+  }
+);
