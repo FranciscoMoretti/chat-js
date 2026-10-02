@@ -11,6 +11,7 @@ import { hasEveToolReceipt, createToolResult } from "./tool-result";
 
 const mocks = vi.hoisted(() => ({
   close: vi.fn(),
+  configure: vi.fn(),
   connect: vi.fn(),
   enabled: { enabled: true },
   get: vi.fn(),
@@ -30,6 +31,9 @@ vi.mock("@/lib/db/mcp-queries", () => ({
 }));
 vi.mock("@/lib/ai/mcp/mcp-client", () => ({
   MCPClient: class {
+    constructor(_id: string, _name: string, options: unknown) {
+      mocks.configure(options);
+    }
     status = "connected";
     connect = mocks.connect;
     tools = mocks.tools;
@@ -472,15 +476,25 @@ it("cancels a hung tools listing and closes its transport", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-it("rejects unsupported remote tool names without hiding subsequent valid tools", async () => {
+it("normalizes dotted and long model IDs without losing original tool names or colliding with underscores", async () => {
+  const longName = "remote".repeat(20);
   mocks.tools.mockResolvedValueOnce(
     Object.fromEntries([
       ["foo.bar", definition],
-      ["echo", definition],
+      ["foo_bar", definition],
+      [longName, definition],
     ])
   );
   const tools = await discoverEveMcpTools("owner", context.abortSignal);
-  expect(tools.map((item) => item.remoteName)).toEqual(["echo"]);
+  expect(tools.map((item) => item.remoteName)).toEqual([
+    "foo.bar",
+    "foo_bar",
+    longName,
+  ]);
+  expect(new Set(tools.map((item) => item.name)).size).toBe(3);
+  for (const item of tools) {
+    expect(item.name).toMatch(/^[a-zA-Z0-9_-]{1,64}$/u);
+  }
 });
 
 it("approval requests inherit cancellation", async () => {
@@ -512,4 +526,29 @@ it("unsupported descriptions do not suppress later valid tools", async () => {
   );
   const descriptions = await discoverEveMcpTools("owner", context.abortSignal);
   expect(descriptions.map((item) => item.remoteName)).toEqual(["echo"]);
+});
+
+it("approval cancellation bounds connector lookup before any transport opens", async () => {
+  mocks.get.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = requestEveMcpApproval(
+    "connector",
+    "echo",
+    {},
+    { ...context, abortSignal: controller.signal },
+    []
+  );
+  controller.abort(new Error("cancelled lookup"));
+  await expect(result).rejects.toThrow("cancelled lookup");
+  expect(mocks.connect).not.toHaveBeenCalled();
+});
+
+it("discovery sends configured OAuth credentials to the provider rather than transport headers", async () => {
+  await discoverEveMcpTools("owner", context.abortSignal);
+  expect(mocks.configure).toHaveBeenCalledWith({
+    oauthClientId: "secret-id",
+    oauthClientSecret: "secret-password",
+    type: "http",
+    url: connector.url,
+  });
 });

@@ -47,6 +47,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   private cachedAuthorizationUrl: URL | null = null;
   private readonly config: {
     mcpConnectorId: string;
+    oauthClientId?: string | null;
+    oauthClientSecret?: string | null;
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
     onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
@@ -57,6 +59,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   constructor(config: {
     mcpConnectorId: string;
+    oauthClientId?: string | null;
+    oauthClientSecret?: string | null;
     serverUrl: string;
     clientMetadata: OAuthClientMetadata;
     onRedirectToAuthorization: (authUrl: URL) => Promise<void>;
@@ -92,7 +96,11 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   private async doInitializeOAuth() {
     if (this.config.state) {
       const session = await getSessionByState({ state: this.config.state });
-      if (session && session.mcpConnectorId === this.config.mcpConnectorId) {
+      if (
+        session &&
+        session.mcpConnectorId === this.config.mcpConnectorId &&
+        session.serverUrl === this.config.serverUrl
+      ) {
         this.currentOAuthState = session.state ?? "";
         this.cachedAuthData = session;
         this.initialized = true;
@@ -103,7 +111,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authenticated = await getAuthenticatedSession({
       mcpConnectorId: this.config.mcpConnectorId,
     });
-    if (authenticated) {
+    if (authenticated?.serverUrl === this.config.serverUrl) {
       this.currentOAuthState = authenticated.state ?? "";
       this.cachedAuthData = authenticated;
       this.initialized = true;
@@ -155,6 +163,13 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   async clientInformation(): Promise<OAuthClientInformationFull | undefined> {
     const authData = await this.getAuthData();
+    if (this.config.oauthClientId) {
+      return {
+        ...this.clientMetadata,
+        client_id: this.config.oauthClientId,
+        client_secret: this.config.oauthClientSecret ?? undefined,
+      };
+    }
     if (authData?.clientInfo) {
       // Security: if redirect URI changed and no tokens yet, invalidate
       const clientInfo = authData.clientInfo as OAuthClientInformationFull;

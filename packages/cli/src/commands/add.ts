@@ -196,6 +196,11 @@ export const add = new Command("add")
           });
         }
       );
+      if (plan.features.some((feature) => feature.id === "mcp")) {
+        log.info(
+          "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
+        );
+      }
       const requirements = [
         ...plan.expected.flatMap((item) => item.envRequirements),
         ...plan.features.flatMap((feature) => feature.envRequirements ?? []),
