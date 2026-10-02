@@ -14,10 +14,15 @@ export const installationSelectionSchema = z.strictObject({
 });
 export type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
-// Checked-in demo preset. H consolidates observability after E publishes its
-// registry item; the demo's existing runtime behavior stays intact.
+// Checked-in demo preset. Keep every implemented optional feature installed.
 export const demoInstallation = installationSelectionSchema.parse({
-  features: ["mcp", "attachment-uploads"],
+  features: [
+    "mcp",
+    "attachment-uploads",
+    "vercel-analytics",
+    "vercel-speed-insights",
+    "langfuse",
+  ],
   gateway: "vercel",
   storage: { source: "vercel-blob" },
   tools: [

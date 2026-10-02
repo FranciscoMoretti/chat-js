@@ -26,6 +26,17 @@ test("demo stays aligned with full canonical installation source", async () => {
   expect(expected.has("settings-items.ts")).toBe(false);
   expect(expected.has("tools/chatjs/custom-tools.ts")).toBe(false);
   expect(expected.has("tools/chatjs/custom-ui.ts")).toBe(false);
+  // Same-basename shadcn rewriting must not replace core env imports with
+  // optional feature modules when the full demo installs Langfuse.
+  for (const file of [
+    "features/mcp/setup.ts",
+    "lib/db/mcp-oauth-lock.ts",
+    "tools/chatjs/retrieve-url/tool.ts",
+    "tools/chatjs/tavily-search/tool.ts",
+    "tools/chatjs/vercel-code-execution/sandbox.ts",
+  ]) {
+    expect(required(file)).toContain('from "@/lib/env"');
+  }
   await syncDemo({
     baseline: baselinePath,
     check: true,

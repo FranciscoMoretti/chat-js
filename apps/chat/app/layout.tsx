@@ -1,5 +1,3 @@
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
@@ -10,6 +8,7 @@ import { Toaster } from "sonner";
 
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
 import { ThemeProvider } from "@/components/theme-provider";
+import { installedLayoutComponents } from "@/features/installed-layout";
 import { config } from "@/lib/config";
 import { env } from "@/lib/env";
 
@@ -107,8 +106,9 @@ const RootLayout = ({
           {children}
         </ThemeProvider>
       </NuqsAdapter>
-      <Analytics />
-      <SpeedInsights />
+      {installedLayoutComponents.map(({ id, Component }) => (
+        <Component key={id} />
+      ))}
     </body>
   </html>
 );

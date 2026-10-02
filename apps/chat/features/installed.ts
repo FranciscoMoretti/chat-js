@@ -2,4 +2,7 @@
 export const installedFeatures: ReadonlySet<string> = new Set([
   "mcp",
   "attachment-uploads",
+  "vercel-analytics",
+  "vercel-speed-insights",
+  "langfuse",
 ]);
