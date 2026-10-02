@@ -13,6 +13,7 @@ import { SettingsNav } from "@/components/settings/settings-nav";
 import { composerControls } from "@/composer-controls";
 import type { UiToolName } from "@/lib/ai/types";
 import type { DraftAttachment } from "@/lib/eve/draft";
+import type { AttachmentUploadInput } from "@/lib/installation-contracts";
 import type { composerTools } from "@/tools/chatjs/composer-tools";
 
 import "./sandbox.css";
@@ -39,14 +40,14 @@ const state = vi.hoisted(() => ({
 vi.mock("@/features/installed-uploads", async () => {
   const { attachmentUploads } =
     await import("@/features/attachment-uploads/integration");
+  const useFixtureUploads = (files: AttachmentUploadInput) => {
+    const behavior = attachmentUploads.useUploads(files);
+    return state.uploadsInstalled ? behavior : { uploadQueue: [] };
+  };
   return {
     attachmentUploads: {
       controls: attachmentUploads.controls,
-      get useUploads() {
-        return state.uploadsInstalled
-          ? attachmentUploads.useUploads
-          : () => ({ uploadQueue: [] });
-      },
+      useUploads: useFixtureUploads,
     },
   };
 });
