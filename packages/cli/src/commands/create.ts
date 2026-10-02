@@ -271,15 +271,10 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   }
   const documentTypes = await promptDocumentTypes(
     options.yes,
-    coreFeatures.documents,
-    gatewaySelection.definition
+    coreFeatures.documents
   );
   const registryItems = await loadInstallableTools(options, targetDir);
-  const assistantTools = await promptAssistantTools(
-    registryItems,
-    options.yes,
-    gatewaySelection.definition
-  );
+  const assistantTools = await promptAssistantTools(registryItems, options.yes);
   if (assistantTools.builtInTools.deepResearch) {
     coreFeatures.documents = true;
     documentTypes.text = true;
@@ -384,9 +379,7 @@ const writeConfiguration = async (
         appPrefix: project.appPrefix,
         appUrl: project.appUrl,
         auth: setup.auth,
-        builtInTools: setup.assistantTools.builtInTools,
         coreFeatures: setup.coreFeatures,
-        documentTypes: setup.documentTypes,
         gateway: setup.gateway,
         gatewayDefaults: setup.gatewaySelection.definition.defaults,
         withElectron: setup.withElectron,

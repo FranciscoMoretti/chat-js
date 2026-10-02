@@ -8,7 +8,12 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn<CodeExecutor>(),
   read: vi.fn(),
   scope: vi.fn(),
-  settings: { allowed: true, documentInstalled: true, installed: true },
+  settings: {
+    allowed: true,
+    documentInstalled: true,
+    installed: true,
+    toolInstalled: true,
+  },
 }));
 vi.mock("../../tools/chatjs/code-executor", () => ({
   get codeExecutor() {
@@ -17,7 +22,10 @@ vi.mock("../../tools/chatjs/code-executor", () => ({
 }));
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: { has: () => mocks.settings.documentInstalled },
-  installedToolNames: { has: () => true },
+  installedToolNames: {
+    has: (name: string) =>
+      name === "runCodeDocument" && mocks.settings.toolInstalled,
+  },
 }));
 vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
@@ -36,6 +44,7 @@ beforeEach(() => {
     allowed: true,
     documentInstalled: true,
     installed: true,
+    toolInstalled: true,
   });
   mocks.scope.mockResolvedValue({ conversationId: "chat", ownerId: "owner" });
   mocks.read.mockResolvedValue({
@@ -80,16 +89,18 @@ test("executes owned saved source once, exposing only execution context and pres
   });
 });
 
-test.each(["allowed", "documentInstalled", "installed"] as const)(
-  "enforces the %s gate",
-  async (gate) => {
-    mocks.settings[gate] = false;
-    await expect(
-      Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
-    ).rejects.toThrow();
-    expect(mocks.execute).not.toHaveBeenCalled();
-  }
-);
+test.each([
+  "allowed",
+  "documentInstalled",
+  "installed",
+  "toolInstalled",
+] as const)("enforces the %s gate", async (gate) => {
+  mocks.settings[gate] = false;
+  await expect(
+    Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
+  ).rejects.toThrow();
+  expect(mocks.execute).not.toHaveBeenCalled();
+});
 
 test("never executes a revision outside the resolved conversation", async () => {
   mocks.read.mockResolvedValue(undefined);

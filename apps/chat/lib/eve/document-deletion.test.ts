@@ -119,6 +119,9 @@ it("rejects absent document implementations before requesting approval or execut
 
 it("rechecks kind availability after approval", async () => {
   mocks.kinds.delete("text");
+  await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
+    "Document not found."
+  );
   await expect(
     executeDocumentDeletion(input, {
       ...context,

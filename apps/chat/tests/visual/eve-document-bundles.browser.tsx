@@ -167,6 +167,9 @@ test("saved code run controls follow installed execution and retain disabled sta
     await expect
       .element(page.getByRole("button", { exact: true, name: "Run" }).nth(1))
       .toBeDisabled();
+    expect(
+      container.querySelectorAll("section")[2]?.querySelector("button")
+    ).toBeNull();
     await takeSnapshot("saved-code-installed-run-controls");
     await act(() =>
       page.getByRole("button", { exact: true, name: "Run" }).nth(0).click()

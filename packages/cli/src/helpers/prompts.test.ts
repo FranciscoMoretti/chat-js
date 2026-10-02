@@ -17,8 +17,8 @@ it("uses external defaults and every environment group with --yes", async () => 
     { options: [["SECOND"], ["ALTERNATE"]] },
   ];
   const coreFeatures = await promptCoreFeatures(true, definition);
-  const documentTypes = await promptDocumentTypes(true, true, definition);
-  const { builtInTools } = await promptAssistantTools([], true, definition);
+  const documentTypes = await promptDocumentTypes(true, true);
+  const { builtInTools } = await promptAssistantTools([], true);
   expect(coreFeatures.mcp).toBe(false);
   expect(documentTypes).toEqual({ code: true, sheet: true, text: true });
   expect(builtInTools.webSearch).toBe(false);
@@ -48,13 +48,8 @@ it("rejects a default for media the gateway cannot support", () => {
   expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
 });
 
-it("keeps unconfigured media tools disabled with --yes", async () => {
-  const definition = externalGatewayFixture().root.meta.chatjs;
-  definition.capabilities.image = false;
-  definition.capabilities.video = false;
-  definition.defaults.tools.image = {};
-  definition.defaults.tools.video = {};
-  const { builtInTools } = await promptAssistantTools([], true, definition);
+it("defaults media tool installation selections to false with --yes", async () => {
+  const { builtInTools } = await promptAssistantTools([], true);
   expect(builtInTools.imageGeneration).toBe(false);
   expect(builtInTools.videoGeneration).toBe(false);
 });

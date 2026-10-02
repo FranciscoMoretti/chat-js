@@ -61,25 +61,12 @@ describe("buildConfigTs", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
         documents: true,
         followupSuggestions: true,
         mcp: false,
         parallelResponses: true,
-      },
-      documentTypes: {
-        code: true,
-        sheet: true,
-        text: true,
       },
       gateway: "vercel",
       withElectron: false,
@@ -105,25 +92,12 @@ describe("buildConfigTs", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: false,
-        deepResearch: false,
-        imageGeneration: false,
-        urlRetrieval: false,
-        videoGeneration: false,
-        webSearch: false,
-      },
       coreFeatures: {
         attachments: false,
         documents: true,
         followupSuggestions: true,
         mcp: false,
         parallelResponses: true,
-      },
-      documentTypes: {
-        code: true,
-        sheet: true,
-        text: true,
       },
       gateway: "vercel",
       withElectron: true,
@@ -136,7 +110,7 @@ describe("buildConfigTs", () => {
     expect(output).not.toContain("documents: {");
     expect(output).toContain("video: {");
   });
-  it("preserves selected media tools for openai-compatible scaffolds", () => {
+  it("preserves gateway media defaults for openai-compatible scaffolds", () => {
     const output = buildConfigTs({
       appName: "My Chat",
       appPrefix: "my-chat",
@@ -146,25 +120,12 @@ describe("buildConfigTs", () => {
         google: false,
         vercel: false,
       },
-      builtInTools: {
-        codeExecution: true,
-        deepResearch: true,
-        imageGeneration: true,
-        urlRetrieval: true,
-        videoGeneration: true,
-        webSearch: true,
-      },
       coreFeatures: {
         attachments: false,
         documents: true,
         followupSuggestions: true,
         mcp: false,
         parallelResponses: true,
-      },
-      documentTypes: {
-        code: true,
-        sheet: true,
-        text: true,
       },
       gateway: "openai-compatible",
       withElectron: false,

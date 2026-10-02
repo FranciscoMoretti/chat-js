@@ -12,7 +12,9 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: { has: () => mocks.code },
-  installedToolNames: { has: () => mocks.execution },
+  installedToolNames: {
+    has: (name: string) => name === "runCodeDocument" && mocks.execution,
+  },
 }));
 vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({

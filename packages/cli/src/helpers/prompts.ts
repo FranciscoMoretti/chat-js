@@ -303,8 +303,7 @@ export const promptCoreFeatures = async (
 
 export const promptDocumentTypes = async (
   skipPrompt: boolean,
-  documentsEnabled: boolean,
-  _gateway: GatewayDefinition
+  documentsEnabled: boolean
 ): Promise<Record<DocumentTypeKey, boolean>> => {
   const DOCUMENT_TYPE_DEFAULTS: Record<DocumentTypeKey, boolean> = {
     code: true,
@@ -339,8 +338,7 @@ export const promptDocumentTypes = async (
 
 export const promptAssistantTools = async (
   registryItems: RegistryIndexItem[],
-  skipPrompt: boolean,
-  _gateway: GatewayDefinition
+  skipPrompt: boolean
 ): Promise<{
   builtInTools: Record<BuiltInToolKey, boolean>;
   installableTools: string[];

@@ -6,13 +6,7 @@ import {
   configDescriptionSchema,
 } from "../../../../apps/chat/lib/config-schema";
 import { builtInGateways } from "../registry/gateways";
-import type {
-  AuthProvider,
-  BuiltInToolKey,
-  CoreFeatureKey,
-  DocumentTypeKey,
-  Gateway,
-} from "../types";
+import type { AuthProvider, CoreFeatureKey, Gateway } from "../types";
 
 const defaultsFor = (input: {
   gateway: string;
@@ -151,8 +145,6 @@ const toConfigInput = (input: {
   gateway: Gateway;
   gatewayDefaults?: GatewayDefinition["defaults"];
   coreFeatures: Record<CoreFeatureKey, boolean>;
-  documentTypes: Record<DocumentTypeKey, boolean>;
-  builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
 }) => ({
   ai: {
@@ -184,8 +176,6 @@ export const buildConfigTs = (input: {
   gateway: Gateway;
   gatewayDefaults?: GatewayDefinition["defaults"];
   coreFeatures: Record<CoreFeatureKey, boolean>;
-  documentTypes: Record<DocumentTypeKey, boolean>;
-  builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
 }): string => {
   const partial = toConfigInput(input);
