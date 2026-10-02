@@ -29,7 +29,12 @@ vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
 vi.mock("@/tools/chatjs/installed-features", () => ({
-  installedDocumentKinds: { has: () => mocks.text },
+  installedDocumentKinds: {
+    has: (kind: string) => kind === "text" && mocks.text,
+    get size() {
+      return mocks.text ? 1 : 0;
+    },
+  },
   installedToolNames: { has: () => mocks.research },
 }));
 vi.mock("../../tools/chatjs/providers", () => ({ providers: mocks.tools }));

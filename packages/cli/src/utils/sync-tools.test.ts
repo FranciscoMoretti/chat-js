@@ -154,13 +154,16 @@ const installSearch = async (
 test("search selections register standard tools without requiring a renderer", async () => {
   const root = await project();
   await installSearch(root, "external-search", "EXTERNAL_SEARCH_KEY");
-  await syncTools(root);
+  const definitions = await syncTools(root);
+  expect(definitions[0]?.envRequirements).toEqual([
+    { options: [["EXTERNAL_SEARCH_KEY"]] },
+  ]);
   expect(
     await readFile(join(root, "tools/chatjs/providers.ts"), "utf-8")
   ).toContain("./external-search/tool");
-  expect(
-    await readFile(join(root, "tools/chatjs/search-config.ts"), "utf-8")
-  ).toContain("EXTERNAL_SEARCH_KEY");
+  await expect(
+    readFile(join(root, "tools/chatjs/search-config.ts"), "utf-8")
+  ).rejects.toMatchObject({ code: "ENOENT" });
   expect(
     await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8")
   ).toContain("providers.webSearch");
@@ -172,15 +175,9 @@ test("search selections register standard tools without requiring a renderer", a
   await rm(join(root, "tools/chatjs/external-search"), { recursive: true });
   await syncTools(root);
   expect(
-    await readFile(join(root, "tools/chatjs/search-config.ts"), "utf-8")
-  ).not.toContain("EXTERNAL_SEARCH_KEY");
+    await readFile(join(root, "tools/chatjs/providers.ts"), "utf-8")
+  ).not.toContain("external-search/tool");
 });
-test("sync protects an edited search selection", async () => {
-  const root = await project();
-  await writeFile(join(root, "tools/chatjs/search.ts"), "// user code");
-  await expect(syncTools(root)).rejects.toThrow("custom or legacy");
-});
-
 const installExecution = async (root: string, id: string): Promise<void> => {
   const dir = join(root, "tools/chatjs", id);
   await mkdir(dir, { recursive: true });
@@ -200,21 +197,15 @@ const installExecution = async (root: string, id: string): Promise<void> => {
     })
   );
 };
-test("external execution tools compose with search and preserve credential alternatives", async () => {
+test("external execution tools compose with search and reject duplicate providers", async () => {
   const root = await project();
   await installSearch(root, "external-search", "SEARCH_KEY");
   await installExecution(root, "external-runner");
   await syncTools(root);
   const selection = join(root, "tools/chatjs/providers.ts");
-  const config = join(root, "tools/chatjs/code-execution-config.ts");
   const before = await readFile(selection, "utf-8");
   expect(before).toContain("runCode as tool");
   expect(before).toContain("codeExecution: tool");
-  const requirements = await import(config);
-  expect(requirements.codeExecutionEnvRequirement.options).toEqual([
-    ["RUNNER_TOKEN", "RUNNER_REGION"],
-    ["RUNNER_ID", "RUNNER_SECRET", "RUNNER_REGION"],
-  ]);
   expect(
     await readFile(join(root, "tools/chatjs/providers.ts"), "utf-8")
   ).toContain("external-runner");
@@ -228,12 +219,11 @@ test("external execution tools compose with search and preserve credential alter
   await rm(join(root, "tools/chatjs/second-runner"), { recursive: true });
   await syncTools(root);
   expect(await readFile(selection, "utf-8")).not.toContain("codeExecution:");
-  expect(await readFile(config, "utf-8")).not.toContain("RUNNER_TOKEN");
   await writeFile(selection, "// user code");
   await expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
 
-test("URL retrieval uses the selected export and credentials and rejects duplicate providers", async () => {
+test("URL retrieval uses the selected export and rejects duplicate providers", async () => {
   const root = await project();
   const installRetrieval = async (id: string): Promise<void> => {
     const dir = join(root, "tools/chatjs", id);
@@ -259,12 +249,6 @@ test("URL retrieval uses the selected export and credentials and rejects duplica
   );
   expect(server).toContain("readPage as tool");
   expect(server).toContain("retrieveUrl: tool");
-  const requirements = await readFile(
-    join(root, "tools/chatjs/url-retrieval-config.ts"),
-    "utf-8"
-  );
-  expect(requirements).toContain("PAGE_TOKEN");
-  expect(requirements).not.toContain("FIRECRAWL");
   await installRetrieval("second-retrieval");
   await expect(syncTools(root)).rejects.toThrow("Only one retrieveUrl");
   expect(await readFile(join(root, "tools/chatjs/providers.ts"), "utf-8")).toBe(
@@ -298,20 +282,13 @@ test("sync preserves request-context auth and environment credential fallbacks",
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
   definition.envRequirements[0].runtimeAuth = "vercel-oidc";
   await writeFile(descriptor, JSON.stringify(definition));
-  await syncTools(root);
-  const { codeExecutionEnvRequirement } = await import(
-    join(root, "tools/chatjs/code-execution-config.ts")
-  );
-  expect(codeExecutionEnvRequirement.allOf).toEqual([
+  const definitions = await syncTools(root);
+  expect(definitions[0]?.envRequirements).toEqual([
     {
       options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]],
       runtimeAuth: "vercel-oidc",
     },
     { options: [["RUNNER_REGION"]] },
-  ]);
-  expect(codeExecutionEnvRequirement.options).toEqual([
-    ["RUNNER_TOKEN", "RUNNER_REGION"],
-    ["RUNNER_ID", "RUNNER_SECRET", "RUNNER_REGION"],
   ]);
 });
 
@@ -419,9 +396,6 @@ export const runCode = {};`
     join(root, "tools/chatjs/code-executor.ts")
   );
   expect(typeof codeExecutor).toBe("function");
-  expect(
-    await readFile(join(root, "tools/chatjs/code-execution-config.ts"), "utf-8")
-  ).toContain("supportsSavedDocuments = true");
 });
 
 test.each([false, true])(
