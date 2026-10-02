@@ -3,6 +3,11 @@
   "compilerOptions": {
     "types": ["node", "bun"]
   },
-  "include": ["demo-sync.ts", "../test/demo-check.test.ts"],
+  "include": [
+    "demo-sync.ts",
+    "../test/demo-check.test.ts",
+    "../src/demo-sync.test.ts",
+    "../src/demo-turbo.test.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

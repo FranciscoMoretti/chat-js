@@ -95,46 +95,51 @@ const filesBelow = async (
 /** Install canonical sources through the CLI's planner and shadcn transforms. */
 export const generateDemo = async (): Promise<Map<string, string>> => {
   const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-demo-"));
-  // This source-only registry retains registry dependencies, but omits package
-  // installation: the demo already owns its workspace dependency manifest.
-  const items = await Promise.all(
-    registry.items.map(async (item) => {
-      const files = await Promise.all(
-        (item.files ?? []).map(async (file) => ({
-          ...file,
-          content: await readFile(path.join(registryRoot, file.path), "utf-8"),
-        }))
-      );
-      const metadata = item.meta?.chatjs;
-      if (metadata?.kind === "tool" || metadata?.kind === "feature") {
-        const target =
-          metadata.kind === "tool"
-            ? `~/tools/chatjs/${item.name}/chatjs.json`
-            : `~/features/${item.name}/chatjs.json`;
-        files.push({
-          content: await formatted(target, JSON.stringify(metadata)),
-          path: `${item.name}.json`,
-          target,
-          type: "registry:file",
-        });
-      }
-      return { ...item, dependencies: [], devDependencies: [], files };
-    })
-  );
-  const server = Bun.serve({
-    fetch(request) {
-      const name = new URL(request.url).pathname
-        .slice(1)
-        .replace(/\.json$/u, "");
-      const item = items.find((candidate) => candidate.name === name);
-      return item
-        ? Response.json(item)
-        : new Response("Not found", { status: 404 });
-    },
-    hostname: "127.0.0.1",
-    port: 0,
-  });
+  let stopServer: (() => void) | undefined;
   try {
+    // This source-only registry retains registry dependencies, but omits package
+    // installation: the demo already owns its workspace dependency manifest.
+    const items = await Promise.all(
+      registry.items.map(async (item) => {
+        const files = await Promise.all(
+          (item.files ?? []).map(async (file) => ({
+            ...file,
+            content: await readFile(
+              path.join(registryRoot, file.path),
+              "utf-8"
+            ),
+          }))
+        );
+        const metadata = item.meta?.chatjs;
+        if (metadata?.kind === "tool" || metadata?.kind === "feature") {
+          const target =
+            metadata.kind === "tool"
+              ? `~/tools/chatjs/${item.name}/chatjs.json`
+              : `~/features/${item.name}/chatjs.json`;
+          files.push({
+            content: await formatted(target, JSON.stringify(metadata)),
+            path: `${item.name}.json`,
+            target,
+            type: "registry:file",
+          });
+        }
+        return { ...item, dependencies: [], devDependencies: [], files };
+      })
+    );
+    const server = Bun.serve({
+      fetch(request) {
+        const name = new URL(request.url).pathname
+          .slice(1)
+          .replace(/\.json$/u, "");
+        const item = items.find((candidate) => candidate.name === name);
+        return item
+          ? Response.json(item)
+          : new Response("Not found", { status: 404 });
+      },
+      hostname: "127.0.0.1",
+      port: 0,
+    });
+    stopServer = () => server.stop(true);
     const components = JSON.parse(
       await readFile(path.join(demoRoot, "components.json"), "utf-8")
     );
@@ -210,8 +215,8 @@ export const generateDemo = async (): Promise<Map<string, string>> => {
     const output = new Map(copies);
     return output;
   } finally {
-    server.stop(true);
-    await rm(temporary, { force: true, recursive: true });
+    stopServer?.();
+    await fs.rm(temporary, { force: true, recursive: true });
   }
 };
 
