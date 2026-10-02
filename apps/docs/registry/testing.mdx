@@ -6,6 +6,8 @@ description: Verify source behavior and the generated registry installation cont
 Run these checks from the repository root with dependencies installed:
 
 ```bash
+bun demo:check
+bun template:check
 bun run --cwd packages/registry test:types
 bun run --cwd packages/registry test:unit
 bun run --cwd packages/registry build
@@ -32,3 +34,9 @@ Replace the example URL with the built item's endpoint. Run the receiving app's 
 | Runtime request | Credential, provider, and runtime integration failures |
 
 Type checks cannot verify remote credentials or guarantee every combination of third-party source works. Test the composition you distribute and exercise its external integrations. See [Authoring and Publishing](./authoring) for the build's source ownership boundaries.
+
+## Verify demo and scaffold composition
+
+`bun demo:check` checks full formatted source, including types, comments, descriptors and generated registrations, against the canonical demo installation. Turbo caches successful checks using registry, CLI planner, gateway and demo source inputs. CI runs this check with affected unit tests.
+
+`bun run --cwd packages/cli test:gateways` installs packaged CLI output into independent apps. It covers omitted and installed optional features, adding all five integrations together, repeated sync, exclusive provider replacement, and preservation of modified source and UI ordering. Run these generated-app checks after changing installation targets or composition. They complement the registry's component captures and the demo's runtime tests.

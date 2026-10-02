@@ -34,6 +34,13 @@ test("demo stays aligned with full canonical installation source", async () => {
   expect(expected.get("features/installed-instrumentation.ts")).toContain(
     "@/features/langfuse/instrumentation"
   );
+  for (const file of [
+    "lib/db/mcp-oauth-lock.ts",
+    "tools/chatjs/vercel-code-execution/execution-sandbox.ts",
+  ]) {
+    expect(expected.get(file)).toContain('from "@/lib/env"');
+    expect(expected.get(file)).not.toContain("@/features/langfuse/");
+  }
   expect(expected.has("composer-controls.ts")).toBe(false);
   expect(expected.has("settings-items.ts")).toBe(false);
   expect(expected.has("tools/chatjs/custom-tools.ts")).toBe(false);
