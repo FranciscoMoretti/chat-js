@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import pathModule from "node:path";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
@@ -65,29 +65,13 @@ const checkGenerated = (content: string | null, path: string): void => {
   }
 };
 
-const selections = {
-  codeExecution: {
-    file: "code-execution",
-    requirement: "codeExecutionEnvRequirement",
-  },
-  generateImage: {
-    file: "image-generation",
-    requirement: "imageGenerationEnvRequirement",
-  },
-  generateVideo: {
-    file: "video-generation",
-    requirement: "videoGenerationEnvRequirement",
-  },
-  retrieveUrl: {
-    file: "url-retrieval",
-    requirement: "urlRetrievalEnvRequirement",
-  },
-  webSearch: { file: "search", requirement: "searchEnvRequirement" },
-} as const;
-const selectionFiles = Object.values(selections).flatMap(({ file }) => [
-  `${file}.ts`,
-  `${file}-config.ts`,
-]);
+const selectionSlots = [
+  "codeExecution",
+  "generateImage",
+  "generateVideo",
+  "retrieveUrl",
+  "webSearch",
+] as const;
 const registrationsFor = (definitions: ToolDefinition[]) =>
   definitions.flatMap((item) =>
     item.tools.map((tool) => ({
@@ -179,18 +163,6 @@ const collectDefinitions = async (
   await collectDefinitions(cwd, directory, entries, definitions, index + 1);
 };
 
-const validateGeneratedSelections = async (dir: string): Promise<void> => {
-  const contents = await Promise.all(
-    selectionFiles.map(async (filename) => ({
-      content: await readOptional(join(dir, filename)),
-      filename,
-    }))
-  );
-  for (const { content, filename } of contents) {
-    checkGenerated(content, filename);
-  }
-};
-
 const missingPreviousRegistration = (
   previousTools: string | null,
   ids: Set<string>,
@@ -222,55 +194,13 @@ const validateExpected = (
 };
 
 const validateSelections = (definitions: ToolDefinition[]): void => {
-  for (const slot of Object.keys(selections)) {
+  for (const slot of selectionSlots) {
     if (definitions.filter((item) => item.slot === slot).length > 1) {
       throw new Error(
         `Only one ${slot} tool can be selected. Remove the previous tool directory before syncing.`
       );
     }
   }
-};
-
-const buildEnvironmentOptions = (
-  selected: ToolDefinition | undefined
-): string[][] => {
-  if (!selected) {
-    return [];
-  }
-  let combinations: string[][] = [[]];
-  for (const requirement of selected.envRequirements) {
-    const next: string[][] = [];
-    for (const credentialSet of combinations) {
-      for (const option of requirement.options) {
-        next.push([...credentialSet, ...option]);
-      }
-    }
-    combinations = next;
-  }
-  return combinations;
-};
-
-const writeSelectionConfigs = async (
-  dir: string,
-  definitions: ToolDefinition[],
-  entries = Object.entries(selections),
-  index = 0
-): Promise<void> => {
-  const entry = entries[index];
-  if (!entry) {
-    return;
-  }
-  const [slot, spec] = entry;
-  const selected = definitions.find((item) => item.slot === slot);
-  const envOptions = buildEnvironmentOptions(selected);
-  await rm(join(dir, `${spec.file}.ts`), { force: true });
-  await writeFile(
-    join(dir, `${spec.file}-config.ts`),
-    generatedSource(
-      `export const ${spec.requirement} = ${JSON.stringify({ ...(selected?.envRequirements.some((requirement) => requirement.runtimeAuth) ? { allOf: selected.envRequirements } : {}), description: selected ? envOptions.map((credentialSet) => credentialSet.join(" + ")).join(" or ") : `Install a ${slot} tool`, options: envOptions })};\n${slot === "codeExecution" ? `export const supportsSavedDocuments = ${Boolean(selected?.codeExecutorExport)};\n` : ""}`
-    )
-  );
-  await writeSelectionConfigs(dir, definitions, entries, index + 1);
 };
 
 const orderedProperties = (properties: { key: string; value: string }[]) =>
@@ -387,7 +317,6 @@ export const readInstalledTools = async (
     "tool-availability.ts",
     "custom-tools.ts",
     "custom-ui.ts",
-    ...selectionFiles,
   ].map((file) => `${directory}/${file}`);
   await preflight(cwd, targets);
   const dir = join(cwd, directory);
@@ -401,7 +330,6 @@ export const readInstalledTools = async (
   const uiPath = join(dir, "ui.ts");
   const previousTools = await readOptional(toolsPath);
   const previousUi = await readOptional(uiPath);
-  await validateGeneratedSelections(dir);
   checkGenerated(previousTools, toolsPath);
   checkGenerated(previousUi, uiPath);
   await Promise.all(
@@ -524,7 +452,6 @@ export const syncTools = async (
       `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/lib/eve/document-ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "./${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
     )
   );
-  await writeSelectionConfigs(dir, definitions);
   await writeFile(join(dir, "providers.ts"), generatedSource(providerBody));
   const executor = definitions.find((item) => item.codeExecutorExport);
   await writeFile(

@@ -1,12 +1,12 @@
 import type { ToolContext } from "eve/tools";
 import type { z } from "zod";
 
-import { config } from "@/lib/config";
 import {
   getEveDocumentRevision,
   removeEveDocumentFromConversation,
 } from "@/lib/db/eve-documents";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
 import { deleteDocumentAvailable } from "./availability";
 import { deleteDocumentInput } from "./schemas";
@@ -38,7 +38,7 @@ export const requestDocumentDeletion = async (
     scope.conversationId,
     input.documentId
   );
-  if (!revision || !config.ai.tools.documents.types[revision.kind]) {
+  if (!revision || !installedDocumentKinds.has(revision.kind)) {
     throw new Error("Document not found.");
   }
   if (
@@ -66,7 +66,7 @@ export const executeDocumentDeletion = async (
     scope.conversationId,
     input.documentId
   );
-  if (revision && !config.ai.tools.documents.types[revision.kind]) {
+  if (revision && !installedDocumentKinds.has(revision.kind)) {
     throw new Error("Document tools are disabled for this kind.");
   }
   return await removeEveDocumentFromConversation(

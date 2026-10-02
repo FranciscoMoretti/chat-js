@@ -6,13 +6,7 @@ import {
   configDescriptionSchema,
 } from "../../../../apps/chat/lib/config-schema";
 import { builtInGateways } from "../registry/gateways";
-import type {
-  AuthProvider,
-  BuiltInToolKey,
-  CoreFeatureKey,
-  DocumentTypeKey,
-  Gateway,
-} from "../types";
+import type { AuthProvider, CoreFeatureKey, Gateway } from "../types";
 
 const defaultsFor = (input: {
   gateway: string;
@@ -151,30 +145,14 @@ const toConfigInput = (input: {
   gateway: Gateway;
   gatewayDefaults?: GatewayDefinition["defaults"];
   coreFeatures: Record<CoreFeatureKey, boolean>;
-  documentTypes: Record<DocumentTypeKey, boolean>;
-  builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
 }) => ({
   ai: {
     gateway: input.gateway,
     tools: {
-      codeExecution: { enabled: input.builtInTools.codeExecution },
-      deepResearch: { enabled: input.builtInTools.deepResearch },
-      documents: {
-        enabled: input.coreFeatures.documents,
-        types: input.documentTypes,
-      },
       followupSuggestions: {
         enabled: input.coreFeatures.followupSuggestions,
       },
-      image: {
-        enabled: input.builtInTools.imageGeneration,
-      },
-      urlRetrieval: { enabled: input.builtInTools.urlRetrieval },
-      video: {
-        enabled: input.builtInTools.videoGeneration,
-      },
-      webSearch: { enabled: input.builtInTools.webSearch },
     },
   },
   appName: input.appName,
@@ -197,8 +175,6 @@ export const buildConfigTs = (input: {
   gateway: Gateway;
   gatewayDefaults?: GatewayDefinition["defaults"];
   coreFeatures: Record<CoreFeatureKey, boolean>;
-  documentTypes: Record<DocumentTypeKey, boolean>;
-  builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
 }): string => {
   const partial = toConfigInput(input);

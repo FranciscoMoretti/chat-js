@@ -2,16 +2,15 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { documentAssistantActions } from "./document-assistant-actions";
 
-const documents = vi.hoisted(() => ({
-  enabled: true,
-  types: { code: true, sheet: true, text: true },
+const kinds = vi.hoisted(() => new Set(["code", "sheet", "text"]));
+vi.mock("@/tools/chatjs/installed-features", () => ({
+  installedDocumentKinds: kinds,
 }));
 vi.mock("../config", () => ({
   config: {
     ai: {
       tools: {
         code: { edits: "code-model" },
-        documents,
         sheet: { analyze: "analysis-model", format: "format-model" },
         text: { polish: "polish-model" },
       },
@@ -20,23 +19,24 @@ vi.mock("../config", () => ({
 }));
 
 beforeEach(() => {
-  documents.enabled = true;
-  documents.types.code = true;
-  documents.types.sheet = true;
+  kinds.clear();
+  for (const kind of ["code", "sheet", "text"]) {
+    kinds.add(kind);
+  }
 });
 
 it("does not offer spreadsheet analysis without its code-document destination", () => {
   expect(documentAssistantActions("sheet")).toHaveLength(2);
-  documents.types.code = false;
+  kinds.delete("code");
   expect(
     documentAssistantActions("sheet").map((action) => action.label)
   ).toEqual(["Format and clean data"]);
   expect(documentAssistantActions("code")).toEqual([]);
 });
 
-it("hides actions when their source type or documents are disabled", () => {
-  documents.types.sheet = false;
+it("hides actions when their source implementation is absent", () => {
+  kinds.delete("sheet");
   expect(documentAssistantActions("sheet")).toEqual([]);
-  documents.enabled = false;
+  kinds.clear();
   expect(documentAssistantActions("text")).toEqual([]);
 });

@@ -519,7 +519,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     ).toBe(false);
     if (gateway === "vercel" || gateway === "acme") {
       expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
-        /image:\s*\{[^}]*\benabled:\s*true/u
+        /image:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u
       );
     }
     expect(
@@ -531,11 +531,14 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     expect(
       await Bun.file(join(cwd, "tools/chatjs/generate-video/tool.ts")).exists()
     ).toBe(gateway === "vercel");
-    if (gateway === "vercel" || gateway === "acme") {
+    if (gateway === "vercel") {
       expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
-        /video:\s*\{[^}]*\benabled:\s*true/u
+        /video:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u
       );
     }
+    expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).not.toMatch(
+      /(?:image|video):\s*\{[^}]*\benabled:/u
+    );
     const manifestPath = join(cwd, "package.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
     if (gateway === "vercel") {
@@ -550,7 +553,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toContain("generate-image/renderer");
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/url-retrieval-config.ts"),
+          join(cwd, "tools/chatjs/retrieve-url/chatjs.json"),
           "utf-8"
         )
       ).toContain("FIRECRAWL_API_KEY");
@@ -568,7 +571,10 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         await readFile(join(cwd, "tools/chatjs/providers.ts"), "utf-8")
       ).toContain("firecrawl-search/tool");
       expect(
-        await readFile(join(cwd, "tools/chatjs/search-config.ts"), "utf-8")
+        await readFile(
+          join(cwd, "tools/chatjs/firecrawl-search/chatjs.json"),
+          "utf-8"
+        )
       ).toContain("FIRECRAWL_API_KEY");
     }
 
@@ -601,7 +607,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/video-generation-config.ts"),
+          join(cwd, "tools/chatjs/acme-video/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_VIDEO_KEY");
@@ -610,7 +616,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).not.toContain("tool-generateVideo");
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/image-generation-config.ts"),
+          join(cwd, "tools/chatjs/acme-image/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_IMAGE_KEY");
@@ -633,7 +639,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toBe(false);
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/code-execution-config.ts"),
+          join(cwd, "tools/chatjs/acme-execution/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_EXECUTION_TOKEN");
@@ -667,7 +673,7 @@ assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
       ).toBe(false);
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/url-retrieval-config.ts"),
+          join(cwd, "tools/chatjs/acme-retrieval/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_RETRIEVAL_KEY");
@@ -713,8 +719,8 @@ defineConfig({ ai: { gateway: "${gateway}", workflows: { chat: "not-a-model" } }
 ${
   gateway === "vercel"
     ? ""
-    : `// @ts-expect-error This gateway cannot enable video generation.
-defineConfig({ ai: { gateway: "${gateway}", tools: { video: { enabled: true, default: "video" } } } });`
+    : `// @ts-expect-error This gateway has no video model IDs.
+defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" } } } });`
 }
 `
     );
@@ -777,13 +783,13 @@ import { applyDefaults, aiConfigSchema } from "./lib/config-schema";
 import assert from "node:assert/strict";
 assert.ok(getProvider("vercel-blob"));
 assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
-assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: { enabled: true } } }).success, true);
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
 ${
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
-assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { enabled: true } } }).success, true);`
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, true);`
 }
 
 `

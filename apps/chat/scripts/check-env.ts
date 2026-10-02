@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Build-time config validation script.
- * Validates that enabled features in config have their required env vars.
+ * Validates environment requirements for installed integrations.
  * Run via `bun run check-env` or automatically in prebuild.
  */
 import fs from "node:fs/promises";
@@ -15,7 +15,6 @@ import { gatewayEnvRequirements } from "../lib/ai/gateway-model-defaults";
 import { generatedForGateway } from "../lib/ai/models.generated";
 import { config } from "../lib/config";
 import {
-  aiToolEnvRequirements,
   authEnvRequirements,
   getMissingRequirement,
   isRequirementSatisfied,
@@ -25,6 +24,7 @@ import { getEveRuntimeEnvOptions } from "../lib/env-schema";
 import { resolveEveEnvironment } from "../lib/eve/environment";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
+import { installedToolNames } from "../tools/chatjs/installed-features";
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
@@ -65,8 +65,8 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
   if (
     !(
       installedFeatures.has("attachment-uploads") ||
-      config.ai.tools.image.enabled ||
-      config.ai.tools.video.enabled
+      installedToolNames.has("generateImage") ||
+      installedToolNames.has("generateVideo")
     )
   ) {
     return null;
@@ -77,33 +77,6 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
   return missing.length
     ? { feature: `fileStorage (${storageId})`, missing }
     : null;
-};
-
-const validateAiTools = (env: NodeJS.ProcessEnv): ValidationError[] => {
-  const errors: ValidationError[] = [];
-
-  const toolEntries = Object.entries(aiToolEnvRequirements) as [
-    keyof typeof aiToolEnvRequirements,
-    NonNullable<
-      (typeof aiToolEnvRequirements)[keyof typeof aiToolEnvRequirements]
-    >,
-  ][];
-
-  for (const [tool, requirement] of toolEntries) {
-    const toolConfig = config.ai.tools[tool];
-    if (!(requirement && "enabled" in toolConfig && toolConfig.enabled)) {
-      continue;
-    }
-    const missing = getMissingRequirement(requirement, env);
-    if (missing) {
-      errors.push({
-        feature: `ai.tools.${tool}`,
-        missing: [missing],
-      });
-    }
-  }
-
-  return errors;
 };
 
 const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
@@ -261,7 +234,6 @@ const checkEnv = async (): Promise<void> => {
     ...(baseUrlError ? [baseUrlError] : []),
     ...(gatewayError ? [gatewayError] : []),
     ...(storageError ? [storageError] : []),
-    ...validateAiTools(env),
     ...validateAuthentication(env),
     ...installedToolErrors,
     ...(await validateInstalledItems(env, "features")),
@@ -273,7 +245,7 @@ const checkEnv = async (): Promise<void> => {
       .join("\n");
 
     console.error(
-      `❌ Environment validation failed:\n${message}\n\nSet the required environment variables or update chat.config.ts for optional features.`
+      `❌ Environment validation failed:\n${message}\n\nSet the required environment variables and check your app configuration.`
     );
     process.exit(1);
   }

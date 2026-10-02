@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/tooltip";
 import { config } from "@/lib/config";
 import type { DocumentRunProps } from "@/lib/eve/document-ui";
+import {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/tools/chatjs/installed-features";
 
 import { latestDocumentRun } from "./document-runs";
 import { EveDocumentRunResult } from "./result";
@@ -29,9 +33,8 @@ export const EveDocumentRun = ({
   const run = latestDocumentRun(messages, documentId, revisionId);
   const canRun =
     onAction &&
-    config.ai.tools.documents.enabled &&
-    config.ai.tools.documents.types.code &&
-    config.ai.tools.codeExecution.enabled &&
+    installedDocumentKinds.has("code") &&
+    installedToolNames.has("runCodeDocument") &&
     documentExecutionLanguage(title);
   if (
     kind !== "code" ||

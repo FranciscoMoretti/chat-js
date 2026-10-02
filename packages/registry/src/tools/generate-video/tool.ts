@@ -54,9 +54,6 @@ const resolveVideoModel = async (
       // Not in app models registry, fall through
     }
   }
-  if (!config.ai.tools.video.enabled) {
-    throw new Error("Video generation is not enabled");
-  }
   const modelId = config.ai.tools.video.default;
   if (!modelId) {
     throw new Error(

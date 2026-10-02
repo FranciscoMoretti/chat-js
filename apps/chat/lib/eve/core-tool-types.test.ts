@@ -9,16 +9,7 @@ import type { editTextDocument } from "../../tools/chatjs/text-documents/tool";
 import type { NativeToolUI } from "./tool-types";
 
 const mocks = vi.hoisted(() => ({
-  documents: { enabled: true, types: { code: true, sheet: true, text: true } },
   execute: vi.fn(),
-  execution: { enabled: true },
-}));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      tools: { codeExecution: mocks.execution, documents: mocks.documents },
-    },
-  },
 }));
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.execute }));
 vi.mock("./turn-tools", () => ({
@@ -27,9 +18,6 @@ vi.mock("./turn-tools", () => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.documents.enabled = true;
-  mocks.documents.types = { code: true, sheet: true, text: true };
-  mocks.execution.enabled = true;
 });
 
 test("document definitions retain distinct create, edit, and read contracts", () => {

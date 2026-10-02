@@ -12,22 +12,16 @@ import {
 
 it("uses external defaults and every environment group with --yes", async () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
-  definition.defaults.tools.documents.types = {
-    code: true,
-    sheet: false,
-    text: false,
-  };
-  definition.defaults.tools.webSearch.enabled = true;
   definition.envRequirements = [
     { options: [["FIRST"]] },
     { options: [["SECOND"], ["ALTERNATE"]] },
   ];
   const coreFeatures = await promptCoreFeatures(true, definition);
-  const documentTypes = await promptDocumentTypes(true, true, definition);
-  const { builtInTools } = await promptAssistantTools([], true, definition);
+  const documentTypes = await promptDocumentTypes(true, true);
+  const { builtInTools } = await promptAssistantTools([], true);
   expect(coreFeatures.mcp).toBe(false);
-  expect(documentTypes).toEqual({ code: true, sheet: false, text: false });
-  expect(builtInTools.webSearch).toBe(true);
+  expect(documentTypes).toEqual({ code: true, sheet: true, text: true });
+  expect(builtInTools.webSearch).toBe(false);
   const input = {
     auth: { github: false, google: false, vercel: false },
     builtInTools,
@@ -50,26 +44,12 @@ it("uses external defaults and every environment group with --yes", async () => 
 it("rejects a default for media the gateway cannot support", () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
   definition.capabilities.image = false;
-  definition.defaults.tools.image = { default: "unsupported", enabled: false };
+  definition.defaults.tools.image = { default: "unsupported" };
   expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
 });
 
-it("enables web search when external defaults enable deep research", async () => {
-  const definition = externalGatewayFixture().root.meta.chatjs;
-  definition.defaults.tools.webSearch.enabled = false;
-  definition.defaults.tools.deepResearch.enabled = true;
-  const { builtInTools } = await promptAssistantTools([], true, definition);
-  expect(builtInTools.deepResearch).toBe(true);
-  expect(builtInTools.webSearch).toBe(true);
-});
-
-it("keeps unconfigured media tools disabled with --yes", async () => {
-  const definition = externalGatewayFixture().root.meta.chatjs;
-  definition.capabilities.image = false;
-  definition.capabilities.video = false;
-  definition.defaults.tools.image = { enabled: false };
-  definition.defaults.tools.video = { enabled: false };
-  const { builtInTools } = await promptAssistantTools([], true, definition);
+it("defaults media tool installation selections to false with --yes", async () => {
+  const { builtInTools } = await promptAssistantTools([], true);
   expect(builtInTools.imageGeneration).toBe(false);
   expect(builtInTools.videoGeneration).toBe(false);
 });

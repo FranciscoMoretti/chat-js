@@ -31,7 +31,7 @@ vi.mock("@/lib/eve/generated-files", () => ({
 }));
 vi.mock("@/lib/config", () => ({
   config: {
-    ai: { tools: { video: { default: "default-video", enabled: true } } },
+    ai: { tools: { video: { default: "default-video" } } },
   },
 }));
 const input = { prompt: "Ocean" };

@@ -1,7 +1,8 @@
 import { Client } from "eve/client";
 import type { z } from "zod";
 
-import { config } from "../config";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
@@ -27,13 +28,7 @@ export const saveManualEveDocument = async (
     input.documentId,
     input.expectedRevisionId
   );
-  if (
-    !(
-      previous &&
-      config.ai.tools.documents.enabled &&
-      config.ai.tools.documents.types[previous.kind]
-    )
-  ) {
+  if (!(previous && installedDocumentKinds.has(previous.kind))) {
     throw new Error("Document not found.");
   }
   assertEveConfigured();

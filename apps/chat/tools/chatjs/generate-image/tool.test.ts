@@ -47,7 +47,7 @@ vi.mock("@/lib/ai/to-model-data", () => ({
 }));
 vi.mock("@/lib/config", () => ({
   config: {
-    ai: { tools: { image: { default: "test-image", enabled: true } } },
+    ai: { tools: { image: { default: "test-image" } } },
   },
 }));
 vi.mock("@/lib/file-storage", () => ({ downloadFile: mocks.download }));

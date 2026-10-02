@@ -1,10 +1,13 @@
 import type { ToolContext } from "eve/tools";
 
-import { config } from "@/lib/config";
 import { getEveDocumentRevision } from "@/lib/db/eve-documents";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
 import { eveToolAllowed } from "@/lib/eve/turn-tools";
 import { codeExecutor } from "@/tools/chatjs/code-executor";
+import {
+  installedDocumentKinds,
+  installedToolNames,
+} from "@/tools/chatjs/installed-features";
 
 import {
   documentExecutionInput,
@@ -22,9 +25,8 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
 ) {
   if (
     !(
-      config.ai.tools.documents.enabled &&
-      config.ai.tools.documents.types.code &&
-      config.ai.tools.codeExecution.enabled
+      installedDocumentKinds.has("code") &&
+      installedToolNames.has("runCodeDocument")
     )
   ) {
     throw new Error("Document execution is disabled.");

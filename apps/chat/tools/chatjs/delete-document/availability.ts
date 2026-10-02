@@ -1,6 +1,6 @@
 import type { ToolContext } from "eve/tools";
 
-import { config } from "@/lib/config";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
 export const deleteDocumentAvailable = (
   session: Pick<ToolContext["session"], "auth" | "parent">
@@ -9,6 +9,5 @@ export const deleteDocumentAvailable = (
     session.auth.initiator &&
     session.auth.initiator.attributes.chatjsGuest !== "true" &&
     !session.parent &&
-    config.ai.tools.documents.enabled &&
-    Object.values(config.ai.tools.documents.types).some(Boolean)
+    installedDocumentKinds.size > 0
   );
