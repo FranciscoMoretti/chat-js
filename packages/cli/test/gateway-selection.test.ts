@@ -809,18 +809,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { en
         ).exists()
       ).toBe(true);
       await run(cwd, ["bun", "run", "test:types"]);
-      try {
-        await run(cwd, ["bun", "run", "lint"]);
-      } catch (error) {
-        const registration = await readFile(
-          join(cwd, "features/installed-uploads.ts"),
-          "utf-8"
-        );
-        throw new Error(
-          `Upload registration failed lint: ${JSON.stringify(registration)}. ${error instanceof Error ? error.message : error}`,
-          { cause: error }
-        );
-      }
+      await run(cwd, ["bun", "run", "lint"]);
       const longDirectory = join(cwd, "tools/chatjs/long-renderer");
       await mkdir(longDirectory);
       const toolExport =
