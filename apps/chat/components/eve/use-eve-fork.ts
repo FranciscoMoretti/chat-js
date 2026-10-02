@@ -1,14 +1,14 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
-import { config } from "@/lib/config";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
+import type { DraftAttachment } from "@/lib/eve/draft";
 import { draftMessage } from "@/lib/eve/draft";
 import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
 import type { EveMessageInput } from "@/lib/eve/message-input";
@@ -21,12 +21,11 @@ import {
 } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 import { responseModel } from "@/lib/eve/response-model";
-import { restoreEveAttachment } from "@/lib/eve/restore-attachment";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 
 import { useEveRuntime } from "./eve-logical-context";
-import { uploadAttachment, useEveAttachments } from "./use-eve-attachments";
+import { useEveAttachments } from "./use-eve-attachments";
 
 type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
 
@@ -72,6 +71,9 @@ export const useEveFork = (
 ) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const restoreAttachments = useMutation(
+    trpc.eve.restoreAttachments.mutationOptions()
+  );
   const family = useQuery(
     trpc.eve.branches.queryOptions({ id: conversationId })
   );
@@ -246,20 +248,14 @@ export const useEveFork = (
         files.setAttachments([]);
       }
       // Re-upload the exact native bytes; never silently drop a file on an edit.
-      let attachments: Awaited<ReturnType<typeof uploadAttachment>>[];
+      let attachments: DraftAttachment[];
       try {
-        attachments = await Promise.all(
-          message.parts
-            .filter((part) => part.type === "file")
-            .map(async (part) => {
-              const file = await restoreEveAttachment(
-                part,
-                window.location.origin,
-                config.attachments.maxBytes
-              );
-              return uploadAttachment(file);
+        attachments = message.parts.some((part) => part.type === "file")
+          ? await restoreAttachments.mutateAsync({
+              conversationId,
+              messageId: message.id,
             })
-        );
+          : [];
       } catch (error) {
         if (!regeneration) {
           setEditRestoreFailed(true);

@@ -21,9 +21,6 @@ export const prepareEveMessage = async (
       content.push(part);
       continue;
     }
-    if (!config.features.attachments) {
-      throw new Error("Attachments are disabled.");
-    }
     const supported =
       part.mediaType === "application/pdf"
         ? model.input.pdf

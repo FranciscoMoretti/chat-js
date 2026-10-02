@@ -10,6 +10,7 @@ import path from "node:path";
 import { config as loadEnvConfig } from "dotenv";
 import { z } from "zod";
 
+import { installedFeatures } from "../features/installed";
 import { gatewayEnvRequirements } from "../lib/ai/gateway-model-defaults";
 import { generatedForGateway } from "../lib/ai/models.generated";
 import { config } from "../lib/config";
@@ -63,7 +64,7 @@ const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
 const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
   if (
     !(
-      config.features.attachments ||
+      installedFeatures.has("attachment-uploads") ||
       config.ai.tools.image.enabled ||
       config.ai.tools.video.enabled
     )

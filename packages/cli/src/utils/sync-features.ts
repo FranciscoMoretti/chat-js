@@ -5,6 +5,7 @@ import ts from "typescript";
 
 import { featureDefinitionSchema } from "../../../registry/metadata";
 import type { FeatureDefinition } from "../../../registry/metadata";
+import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
 import { mcpFiles } from "../../../registry/src/features/mcp";
 import { observabilityItems } from "../../../registry/src/features/observability";
 import {
@@ -18,12 +19,12 @@ export const assertSupportedFeatureInstallation = (
 ): void => {
   const unsupported = features.filter(
     (feature) =>
-      feature.id !== "mcp" &&
+      !["mcp", "attachment-uploads"].includes(feature.id) &&
       !observabilityItems.some((item) => item.name === feature.id)
   );
   if (unsupported.length) {
     throw new Error(
-      `Feature installation is not supported yet: ${unsupported.map((feature) => feature.id).join(", ")}. Supported features: MCP, Vercel Analytics, Vercel Speed Insights and Langfuse.`
+      `Feature installation is not supported yet: ${unsupported.map((feature) => feature.id).join(", ")}. Supported features: MCP, attachment uploads, Vercel Analytics, Vercel Speed Insights and Langfuse.`
     );
   }
 };
@@ -73,9 +74,11 @@ const planContribution = async (
   name: string,
   symbol: string,
   marker: string,
-  entry: (binding: string) => string
+  id: string | readonly string[],
+  entry: (binding: string) => string,
+  sourceOverride?: string
 ) => {
-  const source = await readFile(file, "utf-8");
+  const source = sourceOverride ?? (await readFile(file, "utf-8"));
   const parsed = ts.createSourceFile(
     file,
     source,
@@ -91,10 +94,11 @@ const planContribution = async (
     !ts.isArrayLiteralExpression(declaration.initializer)
   ) {
     throw new Error(
-      `Add the MCP contribution to ${file} manually: ${name} is no longer a literal array. Then run chat-js sync. To retry automatic UI integration, restore a literal array and run chat-js add mcp.`
+      `Add the feature contribution to ${file} manually: ${name} is no longer a literal array. Then run chat-js sync. To retry automatic UI integration, restore a literal array and retry chat-js add.`
     );
   }
   const array = declaration.initializer;
+  const contributionIds = typeof id === "string" ? [id] : id;
   const { binding, bindings, specifier } = contributionBinding(
     parsed,
     marker,
@@ -105,6 +109,7 @@ const planContribution = async (
     array.elements.some(
       (item) =>
         item.getText(parsed) === binding ||
+        item.getText(parsed) === `...${binding}.controls` ||
         (ts.isObjectLiteralExpression(item) &&
           item.properties.some(
             (prop) =>
@@ -114,7 +119,7 @@ const planContribution = async (
                 .replaceAll('"', "")
                 .replaceAll("'", "") === "id" &&
                 ts.isStringLiteral(prop.initializer) &&
-                prop.initializer.text === "mcp") ||
+                contributionIds.includes(prop.initializer.text)) ||
                 (prop.name.getText(parsed) === "Component" &&
                   prop.initializer.getText(parsed) === binding))
           ))
@@ -135,7 +140,7 @@ const planContribution = async (
     collect(parsed);
     if (identifiers.has(symbol)) {
       throw new Error(
-        `Cannot import ${symbol} in ${file}: that name is already used. Add the MCP contribution manually and run chat-js sync.`
+        `Cannot import ${symbol} in ${file}: that name is already used. Add the feature contribution manually and run chat-js sync.`
       );
     }
     if (bindings && ts.isNamedImports(bindings)) {
@@ -171,17 +176,48 @@ const planContribution = async (
   return { content, file };
 };
 
-export const syncFeatures = async (
-  cwd: string,
-  options: { addUi?: boolean; expectedMcp?: boolean } = {}
-) => {
-  const observability = await planObservability(cwd);
+const validateAttachmentUploads = async (cwd: string, expected?: boolean) => {
+  const uploadDescriptor = path.join(
+    cwd,
+    "features/attachment-uploads/chatjs.json"
+  );
+  const uploads = await exists(uploadDescriptor);
+  const uploadPresence = await Promise.all(
+    attachmentUploadFiles.map((file) => exists(path.join(cwd, file)))
+  );
+  if (!uploads && (expected || uploadPresence.some(Boolean))) {
+    throw new Error(
+      "Attachment uploads installation is missing features/attachment-uploads/chatjs.json. Run chat-js add attachment-uploads to complete the installation."
+    );
+  }
+  if (uploads) {
+    const definition = featureDefinitionSchema.parse(
+      JSON.parse(await readFile(uploadDescriptor, "utf-8"))
+    );
+    if (definition.id !== "attachment-uploads") {
+      throw new Error(
+        "Feature descriptor id must match its directory: attachment-uploads"
+      );
+    }
+    const missing = attachmentUploadFiles.filter(
+      (_, index) => !uploadPresence[index]
+    );
+    if (missing.length) {
+      throw new Error(
+        `Attachment uploads installation is incomplete. Missing: ${missing.join(", ")}. Run chat-js add attachment-uploads to restore missing files.`
+      );
+    }
+  }
+  return uploads;
+};
+
+const validateMcp = async (cwd: string, expected?: boolean) => {
   const descriptor = path.join(cwd, "features/mcp/chatjs.json");
   const mcp = await exists(descriptor);
   const presence = await Promise.all(
     mcpFiles.map((file) => exists(path.join(cwd, file)))
   );
-  if (!mcp && (options.expectedMcp || presence.some(Boolean))) {
+  if (!mcp && (expected || presence.some(Boolean))) {
     throw new Error(
       "MCP installation is missing features/mcp/chatjs.json. Run chat-js add mcp to complete the installation."
     );
@@ -200,7 +236,21 @@ export const syncFeatures = async (
       );
     }
   }
-  const ui =
+  return mcp;
+};
+
+export const syncFeatures = async (
+  cwd: string,
+  options: {
+    addUi?: boolean;
+    expectedMcp?: boolean;
+    expectedUploads?: boolean;
+  } = {}
+) => {
+  const observability = await planObservability(cwd);
+  const mcp = await validateMcp(cwd, options.expectedMcp);
+  const uploads = await validateAttachmentUploads(cwd, options.expectedUploads);
+  const ui: { content: string; file: string }[] =
     mcp && options.addUi
       ? await Promise.all([
           planContribution(
@@ -208,6 +258,7 @@ export const syncFeatures = async (
             "composerControls",
             "ConnectorsControl",
             "@/features/mcp/composer",
+            "mcp",
             (binding) => `{ Component: ${binding}, id: "mcp" }`
           ),
           planContribution(
@@ -215,11 +266,34 @@ export const syncFeatures = async (
             "settingsItems",
             "mcpSettingsItem",
             "@/features/mcp/settings",
+            "mcp",
             (binding) => binding
           ),
         ])
       : [];
-  const installed = [...(mcp ? ["mcp"] : []), ...observability.ids];
+  if (uploads && options.addUi) {
+    const file = path.join(cwd, "composer-controls.ts");
+    const previous = ui.find((edit) => edit.file === file);
+    const edit = await planContribution(
+      file,
+      "composerControls",
+      "attachmentUploads",
+      "@/features/attachment-uploads/integration",
+      ["attach-files", "take-photo"],
+      (binding) => `...${binding}.controls`,
+      previous?.content
+    );
+    if (previous) {
+      previous.content = edit.content;
+    } else {
+      ui.push(edit);
+    }
+  }
+  const installed = [
+    ...(mcp ? ["mcp"] : []),
+    ...(uploads ? ["attachment-uploads"] : []),
+    ...observability.ids,
+  ];
   const installedSet = installed.length ? JSON.stringify(installed) : "";
   const installedSource = `export const installedFeatures: ReadonlySet<string> = new Set(${installedSet});`;
   const formattedInstalledSource =
@@ -236,6 +310,12 @@ export const syncFeatures = async (
       path.join(cwd, "features/installed.ts"),
       `// Generated by chat-js sync.\n${formattedInstalledSource}\n`
     ),
+    writeFile(
+      path.join(cwd, "features/installed-uploads.ts"),
+      uploads
+        ? '// Generated by chat-js sync.\nexport { attachmentUploads } from "@/features/attachment-uploads/integration";\n'
+        : '// Generated by chat-js sync.\nimport type { AttachmentUploadIntegration } from "@/lib/installation-contracts";\n\nexport const attachmentUploads: AttachmentUploadIntegration = {\n  controls: [],\n  useUploads: () => ({ uploadQueue: [] }),\n};\n'
+    ),
     ...observability.files.map(({ file, content }) => writeFile(file, content)),
     ...ui.map(({ file, content }) => writeFile(file, content)),
   ]);
@@ -250,6 +330,24 @@ export const initializeFeatureUi = async (cwd: string) => {
       "composerControls",
       "@/features/mcp/composer",
       "ConnectorsControl",
+    ],
+    [
+      "composer-controls.ts",
+      "composerControls",
+      "@/features/attachment-uploads/controls",
+      "AttachFilesControl",
+    ],
+    [
+      "composer-controls.ts",
+      "composerControls",
+      "@/features/attachment-uploads/controls",
+      "TakePhotoControl",
+    ],
+    [
+      "composer-controls.ts",
+      "composerControls",
+      "@/features/attachment-uploads/integration",
+      "attachmentUploads",
     ],
     [
       "settings-items.ts",
@@ -289,6 +387,12 @@ export const initializeFeatureUi = async (cwd: string) => {
         }
         const array = declaration.initializer;
         const entries = array.elements.filter((entry) => {
+          if (
+            ts.isSpreadElement(entry) &&
+            entry.expression.getText(parsed) === `${symbol}.controls`
+          ) {
+            return false;
+          }
           if (ts.isIdentifier(entry)) {
             return entry.text !== symbol;
           }
