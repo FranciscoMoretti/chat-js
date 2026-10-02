@@ -24,14 +24,14 @@ test("upload preparation respects configured accepted types and size limits", as
     [pdf, oversized, svg, jpg],
     options
   );
-  expect(prepared.pdfFiles).toEqual([pdf]);
+  expect(prepared.files).toEqual([pdf]);
   expect(prepared.stillOversized).toEqual([oversized]);
   expect(prepared.unsupportedFiles).toEqual([svg, jpg]);
 });
 test("small accepted images preserve exact bytes without browser compression", async () => {
   const image = new File(["png"], "photo.png", { type: "image/png" });
   const prepared = await processFilesForUpload([image], options);
-  expect(prepared.processedImages).toEqual([image]);
+  expect(prepared.files).toEqual([image]);
 });
 
 test("compresses large accepted images and retains failed oversized originals", async () => {
@@ -39,8 +39,8 @@ test("compresses large accepted images and retains failed oversized originals", 
     type: "image/png",
   });
   const prepared = await processFilesForUpload([image], options);
-  expect(prepared.processedImages[0]?.name).toBe("photo.png");
-  expect(prepared.processedImages[0]?.size).toBe(3);
+  expect(prepared.files[0]?.name).toBe("photo.png");
+  expect(prepared.files[0]?.size).toBe(3);
   expect(compression.mock.calls[0]?.[1]).toEqual(
     expect.objectContaining({
       maxSizeMB: options.maxBytes / (1024 * 1024),
@@ -50,5 +50,17 @@ test("compresses large accepted images and retains failed oversized originals", 
   compression.mockRejectedValueOnce(new Error("Compression failed"));
   const failed = await processFilesForUpload([image], options);
   expect(failed.stillOversized).toEqual([image]);
-  expect(failed.processedImages).toEqual([]);
+  expect(failed.files).toEqual([]);
+});
+
+test("preparation preserves mixed PDF and compressed-image input order", async () => {
+  const pdf = new File(["pdf"], "first.pdf", { type: "application/pdf" });
+  const image = new File(["oversized image data"], "second.original", {
+    type: "image/png",
+  });
+  const prepared = await processFilesForUpload([pdf, image], options);
+  expect(prepared.files.map((file) => file.name)).toEqual([
+    "first.pdf",
+    "second.png",
+  ]);
 });

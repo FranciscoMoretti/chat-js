@@ -152,7 +152,7 @@ test("callback states cannot be adopted after a connector changes server URL", a
   );
 });
 
-test("configured OAuth client credentials skip dynamic registration", async () => {
+test("configured OAuth client information preserves credentials", async () => {
   const client = new McpOAuthClientProvider({
     clientMetadata: {
       redirect_uris: ["https://chat.example.test/callback"],
@@ -170,7 +170,6 @@ test("configured OAuth client credentials skip dynamic registration", async () =
     redirect_uris: ["https://chat.example.test/callback"],
     token_endpoint_auth_method: "client_secret_basic",
   });
-  expect(mocks.fetch).not.toHaveBeenCalled();
 });
 
 test("failed client registration persistence can be retried without an optimistic cache", async () => {

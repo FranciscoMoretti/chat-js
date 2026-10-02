@@ -146,7 +146,7 @@ export const planInstallation = async (
     if (!next) {
       return [];
     }
-    if (!options.replace) {
+    if (!options.fresh && !options.replace) {
       throw new Error(
         `Only one ${previous.slot ?? previous.documentKind} provider can be installed. Replace ${previous.id} with ${next.id} explicitly using --replace.`
       );

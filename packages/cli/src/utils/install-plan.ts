@@ -91,7 +91,12 @@ export const plannedSourceTargets = sourceTargets;
 export const installPlan = async (
   cwd: string,
   plan: Plan,
-  options: { overwrite?: boolean; fresh?: boolean; managedTargets?: string[] },
+  options: {
+    overwrite?: boolean;
+    fresh?: boolean;
+    managedTargets?: string[];
+    rollbackTargets?: string[];
+  },
   register: () => Promise<void>
 ) => {
   const targets = [...sourceTargets(plan), ...(options.managedTargets ?? [])];
@@ -100,12 +105,15 @@ export const installPlan = async (
       directoryFiles(cwd, `tools/chatjs/${previous.id}`)
     )
   );
-  const protectedTargets = [...targets, ...retired.flat()];
+  const snapshotTargets = [
+    ...new Set([...targets, ...(options.rollbackTargets ?? [])]),
+  ];
+  const protectedTargets = [...snapshotTargets, ...retired.flat()];
   await preflight(cwd, protectedTargets);
   const receipt = await readReceipt(cwd);
   const existing = new Map(
     await Promise.all(
-      targets.map(
+      snapshotTargets.map(
         async (target) =>
           [target, await optionalFile(path.join(cwd, target))] as const
       )
@@ -118,7 +126,9 @@ export const installPlan = async (
       item.meta?.chatjs?.kind === "storage"
   );
   const protectedFiles =
-    plan.replacements.length || replacingShared ? protectedTargets : [];
+    plan.replacements.length || replacingShared
+      ? [...targets, ...retired.flat()]
+      : [];
   if (!options.fresh && !options.overwrite) {
     for (const target of protectedFiles) {
       // oxlint-disable-next-line no-await-in-loop -- Fail before any installer writes.
@@ -152,16 +162,21 @@ export const installPlan = async (
     await register();
   } catch (error) {
     // Restore old source even when shadcn or registration failed; new source may need repair.
-    await Promise.all(staged.map(({ from, to }) => rename(to, from)));
-    await Promise.all(
-      [...existing].map(async ([target, content]) => {
+    const restored = await Promise.allSettled([
+      ...staged.map(({ from, to }) => rename(to, from)),
+      ...[...existing].map(async ([target, content]) => {
         if (content) {
           await writeFile(path.join(cwd, target), content);
+        } else if (options.rollbackTargets?.includes(target)) {
+          await rm(path.join(cwd, target), { force: true });
         }
-      })
+      }),
+    ]);
+    const restorationErrors = restored.flatMap((result) =>
+      result.status === "rejected" ? [String(result.reason)] : []
     );
     throw new Error(
-      `Installation did not complete. Previous provider source is preserved; newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : error}`,
+      `Installation did not complete. ${restorationErrors.length ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : error}`,
       { cause: error }
     );
   }

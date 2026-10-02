@@ -1033,6 +1033,14 @@ for (const installAtCreation of [false, true]) {
           ]
         : []),
     ]);
+    for (const file of [
+      "app/(chat)/api/files/upload/route.ts",
+      "features/vercel-speed-insights/chatjs.json",
+      "features/langfuse/chatjs.json",
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- Verify each optional creation flag installs source.
+      expect(await Bun.file(join(cwd, file)).exists()).toBe(installAtCreation);
+    }
     const source = "app/api/mcp/oauth/callback/route.ts";
     expect(await Bun.file(join(cwd, source)).exists()).toBe(installAtCreation);
     expect(await readFile(join(cwd, "lib/db/schema.ts"), "utf-8")).toContain(
@@ -1073,9 +1081,12 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
     );
     await run(cwd, ["bun", "mcp-setup-probe.ts"]);
     if (!installAtCreation) {
-      const previousConfig = await readFile(
-        join(cwd, "chat.config.ts"),
-        "utf-8"
+      const previousConfig = `${await readFile(join(cwd, "chat.config.ts"), "utf-8")}\n// User model configuration remains editable.\n`;
+      await writeFile(join(cwd, "chat.config.ts"), previousConfig);
+      const catalog = join(cwd, "lib/ai/models.generated.ts");
+      await writeFile(
+        catalog,
+        `${await readFile(catalog, "utf-8")}\n// Refreshed model catalog.\n`
       );
       await expect(
         run(cwd, [
@@ -1106,5 +1117,20 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
       await run(cwd, ["bun", "run", "format"]);
       await run(cwd, ["bun", "run", "test:types"]);
     }
+    const computedComposer = composer
+      .replace(/[=]\s*\[/u, "= Array.from([")
+      .replace(/\];\s*$/u, "]);\n");
+    const computedSettings = settings
+      .replace(/[=]\s*\[/u, "= Array.from([")
+      .replace(/\];\s*$/u, "]);\n");
+    await writeFile(join(cwd, "composer-controls.ts"), computedComposer);
+    await writeFile(join(cwd, "settings-items.ts"), computedSettings);
+    await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
+    expect(await readFile(join(cwd, "composer-controls.ts"), "utf-8")).toBe(
+      computedComposer
+    );
+    expect(await readFile(join(cwd, "settings-items.ts"), "utf-8")).toBe(
+      computedSettings
+    );
   }, 180_000);
 }

@@ -19,10 +19,12 @@ for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
     test(`core lifecycle survives optional instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async () => {
       const events: string[] = [];
+      const received: unknown[] = [];
       const failure = new Error("Missing credentials for langfuse");
       const registrations = fail
         ? [
-            () => {
+            (context: unknown) => {
+              received.push(context);
               events.push("optional");
               throw failure;
             },
@@ -51,6 +53,7 @@ for (const runtime of ["nodejs", "edge"]) {
       await (fail
         ? expect(exports.register()).rejects.toBe(failure)
         : exports.register());
+      expect(received).toEqual(fail ? [{ appPrefix: "test", runtime }] : []);
       expect(events).toEqual([
         ...(runtime === "nodejs" ? ["core"] : []),
         ...(fail ? ["optional"] : []),

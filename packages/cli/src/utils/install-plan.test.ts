@@ -123,11 +123,24 @@ test("unmodified replacement works without overwrite and failed registration res
       { features: [], tools: [source("second")] },
       { replace: true }
     );
+    const env = path.join(root, ".env.example");
+    const config = path.join(root, "chat.config.ts");
+    const oldEnv = await readFile(env, "utf-8");
+    const oldConfig = await readFile(config, "utf-8");
     await expect(
-      installPlan(root, plan, {}, () => {
-        throw new Error("fixture registration failed");
-      })
-    ).rejects.toThrow("Previous provider source is preserved");
+      installPlan(
+        root,
+        plan,
+        { rollbackTargets: [".env.example", "chat.config.ts"] },
+        async () => {
+          await writeFile(env, "MODIFIED=1\n");
+          await writeFile(config, "// partial config\n");
+          throw new Error("fixture registration failed");
+        }
+      )
+    ).rejects.toThrow("fixture registration failed");
+    expect(await readFile(env, "utf-8")).toBe(oldEnv);
+    expect(await readFile(config, "utf-8")).toBe(oldConfig);
     expect(
       await Bun.file(path.join(root, "tools/chatjs/first/chatjs.json")).exists()
     ).toBe(true);

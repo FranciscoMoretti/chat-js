@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 
@@ -20,6 +20,10 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
   const { data: session } = useSession();
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
   const lock = useRef(false);
+  const currentCount = useRef(attachmentCount);
+  useEffect(() => {
+    currentCount.current = attachmentCount;
+  }, [attachmentCount]);
   const upload = async (files: File[]) => {
     if (lock.current || !files.length) {
       return;
@@ -28,7 +32,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
       toast.error("Sign in to attach files.");
       return;
     }
-    if (files.length + attachmentCount > 16) {
+    if (files.length + currentCount.current > 16) {
       toast.error("Attach at most 16 files per message.");
       return;
     }
@@ -42,10 +46,11 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
           "Some files could not be attached. Use images or PDFs within the upload size limit."
         );
       }
-      for (const file of [...result.processedImages, ...result.pdfFiles]) {
+      for (const file of result.files) {
         try {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize uploads to preserve order and bound memory.
           const attachment = await uploadAttachment(file);
+          currentCount.current += 1;
           onUploaded(attachment);
         } catch (error) {
           toast.error(
