@@ -184,8 +184,8 @@ export class MCPClient {
       return this.client;
     } catch (error) {
       if (generation !== this.generation || signal.aborted) {
-        this.authorizationUrl = undefined;
         if (generation === this.generation) {
+          this.authorizationUrl = undefined;
           this._status = "disconnected";
         }
         throw error;
@@ -337,6 +337,7 @@ export class MCPClient {
   async close(): Promise<void> {
     this.generation += 1;
     this.connectionAbort?.abort(new Error("MCP connection was closed"));
+    this.connectPromise = undefined;
     const { client } = this;
     this.client = undefined;
     this.authorizationUrl = undefined;

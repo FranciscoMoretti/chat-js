@@ -367,6 +367,21 @@ export const saveTokensAndCleanup = async ({
   return session;
 };
 
+/** Remove only an unfinished OAuth attempt, atomically preserving any token winner. */
+export const deletePendingSessionByState = async ({
+  state,
+}: {
+  state: string;
+}) => {
+  const [session] = await db
+    .delete(mcpOAuthSession)
+    .where(
+      and(eq(mcpOAuthSession.state, state), isNull(mcpOAuthSession.tokens))
+    )
+    .returning();
+  return session;
+};
+
 export const deleteSessionByState = async ({
   state,
 }: {
