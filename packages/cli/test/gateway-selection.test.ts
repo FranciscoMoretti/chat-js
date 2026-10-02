@@ -519,7 +519,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     ).toBe(false);
     if (gateway === "vercel" || gateway === "acme") {
       expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
-        /image:\s*\{[^}]*\benabled:\s*true/u
+        /image:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u
       );
     }
     expect(
@@ -533,7 +533,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     ).toBe(gateway === "vercel");
     if (gateway === "vercel" || gateway === "acme") {
       expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
-        /video:\s*\{[^}]*\benabled:\s*true/u
+        /video:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u
       );
     }
     const manifestPath = join(cwd, "package.json");
@@ -713,8 +713,8 @@ defineConfig({ ai: { gateway: "${gateway}", workflows: { chat: "not-a-model" } }
 ${
   gateway === "vercel"
     ? ""
-    : `// @ts-expect-error This gateway cannot enable video generation.
-defineConfig({ ai: { gateway: "${gateway}", tools: { video: { enabled: true, default: "video" } } } });`
+    : `// @ts-expect-error This gateway has no video model IDs.
+defineConfig({ ai: { gateway: "${gateway}", tools: { video: { default: "video" } } } });`
 }
 `
     );
@@ -777,13 +777,13 @@ import { applyDefaults, aiConfigSchema } from "./lib/config-schema";
 import assert from "node:assert/strict";
 assert.ok(getProvider("vercel-blob"));
 assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
-assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: { enabled: true } } }).success, true);
+assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
 ${
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
-assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: { enabled: true } } }).success, true);`
+assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} } }).success, true);`
 }
 
 `

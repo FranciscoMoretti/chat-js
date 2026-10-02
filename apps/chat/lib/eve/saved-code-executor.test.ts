@@ -8,27 +8,16 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn<CodeExecutor>(),
   read: vi.fn(),
   scope: vi.fn(),
-  settings: { allowed: true, enabled: true, installed: true },
+  settings: { allowed: true, documentInstalled: true, installed: true },
 }));
 vi.mock("../../tools/chatjs/code-executor", () => ({
   get codeExecutor() {
     return mocks.settings.installed ? mocks.execute : undefined;
   },
 }));
-vi.mock("../config", () => ({
-  config: {
-    ai: {
-      tools: {
-        codeExecution: { enabled: true },
-        documents: {
-          get enabled() {
-            return mocks.settings.enabled;
-          },
-          types: { code: true },
-        },
-      },
-    },
-  },
+vi.mock("@/tools/chatjs/installed-features", () => ({
+  installedDocumentKinds: { has: () => mocks.settings.documentInstalled },
+  installedToolNames: { has: () => true },
 }));
 vi.mock("../db/eve-documents", () => ({ getEveDocumentRevision: mocks.read }));
 vi.mock("./conversation-scope", () => ({
@@ -45,7 +34,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   Object.assign(mocks.settings, {
     allowed: true,
-    enabled: true,
+    documentInstalled: true,
     installed: true,
   });
   mocks.scope.mockResolvedValue({ conversationId: "chat", ownerId: "owner" });
@@ -91,7 +80,7 @@ test("executes owned saved source once, exposing only execution context and pres
   });
 });
 
-test.each(["allowed", "enabled", "installed"] as const)(
+test.each(["allowed", "documentInstalled", "installed"] as const)(
   "enforces the %s gate",
   async (gate) => {
     mocks.settings[gate] = false;
