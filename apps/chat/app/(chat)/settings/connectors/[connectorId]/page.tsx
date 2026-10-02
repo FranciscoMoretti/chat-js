@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
@@ -6,7 +7,7 @@ import {
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getQueryClient, HydrateClient, trpc } from "@/trpc/server";
+import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
 const ConnectorDetailsHeader = () => (
   <SettingsPageHeader>
@@ -32,8 +33,8 @@ const ConnectorDetailsContent = async ({
   params: Promise<{ connectorId: string }>;
 }) => {
   const { connectorId } = await params;
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.mcp.list.queryOptions());
+  await connection();
+  prefetch(trpc.mcp.list.queryOptions());
   return (
     <HydrateClient>
       <SettingsPage>
