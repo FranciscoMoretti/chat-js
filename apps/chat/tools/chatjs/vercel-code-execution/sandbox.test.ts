@@ -39,34 +39,34 @@ afterEach(() => {
 
 describe("getSandboxRuntime", () => {
   it("uses Python defaults when no override is set", async () => {
-    const { getSandboxRuntime } = await import("./sandbox");
+    const { getSandboxRuntime } = await import("./execution-sandbox");
 
     expect(getSandboxRuntime("python")).toBe("python3.13");
   });
 
   it("uses JavaScript defaults when no override is set", async () => {
-    const { getSandboxRuntime } = await import("./sandbox");
+    const { getSandboxRuntime } = await import("./execution-sandbox");
 
     expect(getSandboxRuntime("javascript")).toBe("node22");
   });
 
   it("honors VERCEL_SANDBOX_RUNTIME_PYTHON override for python", async () => {
     envMock.VERCEL_SANDBOX_RUNTIME_PYTHON = "python3.12";
-    const { getSandboxRuntime } = await import("./sandbox");
+    const { getSandboxRuntime } = await import("./execution-sandbox");
 
     expect(getSandboxRuntime("python")).toBe("python3.12");
   });
 
   it("honors VERCEL_SANDBOX_RUNTIME_JAVASCRIPT override for javascript", async () => {
     envMock.VERCEL_SANDBOX_RUNTIME_JAVASCRIPT = "node20";
-    const { getSandboxRuntime } = await import("./sandbox");
+    const { getSandboxRuntime } = await import("./execution-sandbox");
 
     expect(getSandboxRuntime("javascript")).toBe("node20");
   });
 
   it("falls back to legacy VERCEL_SANDBOX_RUNTIME for python", async () => {
     envMock.VERCEL_SANDBOX_RUNTIME = "python3.11";
-    const { getSandboxRuntime } = await import("./sandbox");
+    const { getSandboxRuntime } = await import("./execution-sandbox");
 
     expect(getSandboxRuntime("python")).toBe("python3.11");
   });
@@ -74,14 +74,14 @@ describe("getSandboxRuntime", () => {
   it("prefers VERCEL_SANDBOX_RUNTIME_PYTHON over legacy VERCEL_SANDBOX_RUNTIME", async () => {
     envMock.VERCEL_SANDBOX_RUNTIME_PYTHON = "python3.12";
     envMock.VERCEL_SANDBOX_RUNTIME = "python3.11";
-    const { getSandboxRuntime } = await import("./sandbox");
+    const { getSandboxRuntime } = await import("./execution-sandbox");
 
     expect(getSandboxRuntime("python")).toBe("python3.12");
   });
 
   it("does not use legacy VERCEL_SANDBOX_RUNTIME for javascript", async () => {
     envMock.VERCEL_SANDBOX_RUNTIME = "python3.11";
-    const { getSandboxRuntime } = await import("./sandbox");
+    const { getSandboxRuntime } = await import("./execution-sandbox");
 
     expect(getSandboxRuntime("javascript")).toBe("node22");
   });
@@ -95,7 +95,7 @@ describe("resolveSandboxAuth", () => {
       get: () => ({ headers: { "x-vercel-oidc-token": token } }),
     });
     expect(getVercelOidcTokenSync()).toBe(token);
-    const { resolveSandboxAuth } = await import("./sandbox");
+    const { resolveSandboxAuth } = await import("./execution-sandbox");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -107,7 +107,7 @@ describe("resolveSandboxAuth", () => {
   it("resolves the provider scope from an OIDC token", async () => {
     const token = jwt({ owner_id: "team", project_id: "project" });
     vi.stubEnv("VERCEL_OIDC_TOKEN", token);
-    const { resolveSandboxAuth } = await import("./sandbox");
+    const { resolveSandboxAuth } = await import("./execution-sandbox");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -122,7 +122,7 @@ describe("resolveSandboxAuth", () => {
       VERCEL_TEAM_ID: "team",
       VERCEL_TOKEN: "opaque",
     });
-    const { resolveSandboxAuth } = await import("./sandbox");
+    const { resolveSandboxAuth } = await import("./execution-sandbox");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "project",
@@ -137,7 +137,7 @@ describe("resolveSandboxAuth", () => {
       VERCEL_TEAM_ID: "team",
       VERCEL_TOKEN: jwt({ owner_id: "other", project_id: "project" }),
     });
-    const { resolveSandboxAuth } = await import("./sandbox");
+    const { resolveSandboxAuth } = await import("./execution-sandbox");
 
     expect(() => resolveSandboxAuth()).toThrow("scope do not match");
   });
@@ -148,7 +148,7 @@ describe("resolveSandboxAuth", () => {
       VERCEL_TEAM_ID: "team",
       VERCEL_TOKEN: jwt({ owner_id: "other" }),
     });
-    const { resolveSandboxAuth } = await import("./sandbox");
+    const { resolveSandboxAuth } = await import("./execution-sandbox");
 
     expect(() => resolveSandboxAuth()).toThrow(
       "Sandbox provider identity is unavailable."
@@ -157,7 +157,7 @@ describe("resolveSandboxAuth", () => {
 
   it("does not expose malformed token contents in errors", async () => {
     vi.stubEnv("VERCEL_OIDC_TOKEN", jwt({ private: "secret-payload" }));
-    const { resolveSandboxAuth } = await import("./sandbox");
+    const { resolveSandboxAuth } = await import("./execution-sandbox");
 
     expect(() => resolveSandboxAuth()).toThrow(
       "Sandbox provider identity is unavailable."
@@ -165,7 +165,7 @@ describe("resolveSandboxAuth", () => {
   });
 
   it("rejects missing credentials without leaking provider errors", async () => {
-    const { resolveSandboxAuth } = await import("./sandbox");
+    const { resolveSandboxAuth } = await import("./execution-sandbox");
 
     expect(() => resolveSandboxAuth()).toThrow(
       "Sandbox provider identity is unavailable."
@@ -182,7 +182,7 @@ describe("resolveSandboxAuth", () => {
       get: () => ({ headers: { "x-vercel-oidc-token": token } }),
     });
     const { resolveSandboxAuth, codeSandboxCleanupCapability } =
-      await import("./sandbox");
+      await import("./execution-sandbox");
 
     expect(resolveSandboxAuth()).toEqual({
       projectId: "first",
@@ -201,7 +201,7 @@ describe("resolveSandboxAuth", () => {
 });
 
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
-  const { cleanupSandbox } = await import("./sandbox");
+  const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<never>();
   const stop = vi.fn<Sandbox["stop"]>(() => gate.promise);
   const log = { info: vi.fn(), warn: vi.fn() };
@@ -228,7 +228,7 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
 });
 
 it("creates disposable sandboxes rather than enabling the SDK persistence default", async () => {
-  const { createSandbox } = await import("./sandbox");
+  const { createSandbox } = await import("./execution-sandbox");
   const create = vi
     .spyOn(Sandbox, "create")
     .mockRejectedValueOnce(new Error("fixture"));
@@ -243,7 +243,7 @@ it("creates disposable sandboxes rather than enabling the SDK persistence defaul
 });
 
 it("does not report successful cleanup until deletion has completed", async () => {
-  const { cleanupSandbox } = await import("./sandbox");
+  const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<undefined>();
   const stop = vi.fn<Sandbox["stop"]>();
   const remove = vi.fn<Sandbox["delete"]>(() => gate.promise);
@@ -276,7 +276,8 @@ describe("codeSandboxCleanupCapability", () => {
       .mockResolvedValueOnce(sandbox)
       .mockRejectedValueOnce(new APIError(new Response(null, { status: 404 })));
     try {
-      const { codeSandboxCleanupCapability } = await import("./sandbox");
+      const { codeSandboxCleanupCapability } =
+        await import("./execution-sandbox");
       const cleanup = codeSandboxCleanupCapability.createCleanupSession();
       expect(cleanup.provider).toMatchObject({
         projectId: "project",
@@ -313,7 +314,8 @@ describe("codeSandboxCleanupCapability", () => {
     }) as Sandbox;
     const get = vi.spyOn(Sandbox, "get").mockResolvedValue(sandbox);
     try {
-      const { codeSandboxCleanupCapability } = await import("./sandbox");
+      const { codeSandboxCleanupCapability } =
+        await import("./execution-sandbox");
       const cleanup = codeSandboxCleanupCapability.createCleanupSession();
       await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
         "identity or persistence"

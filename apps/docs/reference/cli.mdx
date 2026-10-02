@@ -45,6 +45,9 @@ npx @chat-js/cli@latest [directory] [options]
 | --- | --- | --- |
 | `-y, --yes` | `false` | Skip prompts and use the scaffold defaults. |
 | `--electron` / `--no-electron` | Prompted | Include or exclude the Electron desktop app. |
+| `--mcp` / `--no-mcp` | Off | Install or omit MCP. |
+| `--attachments` / `--no-attachments` | Off | Install or omit user uploads. |
+| `--observability <items>` | None | Comma-separated Analytics, Speed Insights and Langfuse registry IDs. |
 | `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
 | `--from-git <url>` | Built-in scaffold | Clone from a Git repository instead of the built-in scaffold. |
 | `--storage-provider <provider>` | Prompted when needed | Select a Files SDK provider such as `vercel-blob`, `s3`, `r2`, or `gcs`. |
@@ -61,15 +64,19 @@ Use `npx @chat-js/cli@latest --version` or `chat-js --version` after a global in
 ### `add`
 
 ```bash
-npx @chat-js/cli@latest add <tools...> [options]
+npx @chat-js/cli@latest add [items...] [options]
 ```
 
-Install one or more registry tools into an existing ChatJS project. Items specify explicit targets under `tools/chatjs`. Namespace configuration lives in `components.json`.
+Install registry tools, optional features or providers into an existing ChatJS project. Namespace configuration lives in `components.json`.
 
 | Flag | Default | Description |
 | --- | --- | --- |
 | `-y, --yes` | `false` | Skip the installation confirmation. |
-| `-o, --overwrite` | `false` | Overwrite existing tool files without prompting. |
+| `--replace` | `false` | Explicitly replace an exclusive provider. |
+| `-o, --overwrite` | `false` | Authorize overwriting modified or untracked source. |
+| `--gateway <item>` | Not applicable | Install an AI gateway. |
+| `--storage-provider <item>` | Not applicable | Install file storage. |
+| `--storage-config <json>` | Not applicable | Non-secret storage options. |
 | `-c, --cwd <cwd>` | Current directory | Run against another ChatJS project. |
 
 ```bash

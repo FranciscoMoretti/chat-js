@@ -4,30 +4,12 @@ import path from "node:path";
 import ts from "typescript";
 
 import { featureDefinitionSchema } from "../../../registry/metadata";
-import type { FeatureDefinition } from "../../../registry/metadata";
 import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
 import { mcpFiles } from "../../../registry/src/features/mcp";
-import { observabilityItems } from "../../../registry/src/features/observability";
 import {
   initializeObservability,
   planObservability,
 } from "./sync-observability";
-
-/** Extend only when an implementation has complete installer/sync integration. */
-export const assertSupportedFeatureInstallation = (
-  features: readonly FeatureDefinition[]
-): void => {
-  const unsupported = features.filter(
-    (feature) =>
-      !["mcp", "attachment-uploads"].includes(feature.id) &&
-      !observabilityItems.some((item) => item.name === feature.id)
-  );
-  if (unsupported.length) {
-    throw new Error(
-      `Feature installation is not supported yet: ${unsupported.map((feature) => feature.id).join(", ")}. Supported features: MCP, Vercel Analytics, Vercel Speed Insights and Langfuse.`
-    );
-  }
-};
 
 const exists = async (file: string) => {
   try {
@@ -288,7 +270,11 @@ export const syncFeatures = async (
       ui.push(edit);
     }
   }
-  const installed = [...(mcp ? ["mcp"] : []), ...(uploads ? ["attachment-uploads"] : []), ...observability.ids];
+  const installed = [
+    ...(mcp ? ["mcp"] : []),
+    ...(uploads ? ["attachment-uploads"] : []),
+    ...observability.ids,
+  ];
   const installedSet = installed.length ? JSON.stringify(installed) : "";
   const installedSource = `export const installedFeatures: ReadonlySet<string> = new Set(${installedSet});`;
   const formattedInstalledSource =

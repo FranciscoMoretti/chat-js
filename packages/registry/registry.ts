@@ -156,7 +156,7 @@ export const codeExecutionItem = {
   description: "Execute Python and JavaScript with Vercel Sandbox",
   files: [
     "tool.ts",
-    "sandbox.ts",
+    "execution-sandbox.ts",
     "python.ts",
     "javascript.ts",
     "types.ts",

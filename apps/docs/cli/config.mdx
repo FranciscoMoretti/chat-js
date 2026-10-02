@@ -27,6 +27,8 @@ This means the output always reflects the effective configuration your app will 
 
 ## Example
 
+The following excerpt shows runtime configuration. Installed tools and features are listed by their generated registrations, rather than duplicated as presence flags.
+
 ```bash
 npx @chat-js/cli@latest config
 ```
@@ -34,16 +36,17 @@ npx @chat-js/cli@latest config
 ```json
 {
   "appName": "My Chat App",
-  "gateway": {
-    "provider": "vercel",
-    "model": "gpt-4o"
+  "ai": {
+    "gateway": "vercel",
+    "tools": {
+      "followupSuggestions": { "enabled": true }
+    }
   },
   "features": {
-    "webSearch": false,
-    "imageGeneration": false
+    "parallelResponses": true
   },
-  "auth": {
-    "providers": ["github"]
+  "authentication": {
+    "github": true
   }
 }
 ```

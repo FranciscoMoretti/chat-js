@@ -1,66 +1,215 @@
-import { access } from "node:fs/promises";
+import { access, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
 
-import { installItems } from "../registry/shadcn";
-import { handleError } from "../utils/handle-error";
-import { planInstallation } from "../utils/installation-plan";
+import { configureGatewayProvider } from "../helpers/gateway-provider";
 import {
-  assertSupportedFeatureInstallation,
-  syncFeatures,
-} from "../utils/sync-features";
+  parseStorageOptions,
+  configureStorageProvider,
+} from "../helpers/storage-provider";
+import { resolveGateway } from "../registry/gateways";
+import { resolveStorage } from "../registry/storage";
+import { handleError } from "../utils/handle-error";
+import { installPlan } from "../utils/install-plan";
+import { planInstallation } from "../utils/installation-plan";
+import { gatewayConfigEdit } from "../utils/provider-config";
+import { syncFeatures } from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
+
+const prepareAdd = async (
+  cwd: string,
+  items: string[],
+  options: {
+    gateway?: string;
+    storageProvider?: string;
+    storageConfig?: string;
+    replace?: boolean;
+  }
+) => {
+  if (!items.length && !options.gateway && !options.storageProvider) {
+    throw new Error(
+      "Select at least one tool, feature, gateway or storage provider."
+    );
+  }
+  if (options.storageConfig && !options.storageProvider) {
+    throw new Error("--storage-config requires --storage-provider.");
+  }
+  const gateway = options.gateway
+    ? await resolveGateway(options.gateway, cwd)
+    : undefined;
+  const storage = options.storageProvider
+    ? await resolveStorage(options.storageProvider, cwd)
+    : undefined;
+  if (storage && options.storageConfig) {
+    storage.options = parseStorageOptions(options.storageConfig);
+  }
+  const plan = await planInstallation(
+    cwd,
+    {
+      features: [],
+      gateway: gateway?.source,
+      storage: storage
+        ? { options: storage.options, source: storage.source }
+        : undefined,
+      tools: items,
+    },
+    { replace: options.replace }
+  );
+  // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
+  const gatewayItem = plan.items.find(
+    (item) => item.meta?.chatjs?.kind === "gateway"
+  );
+  const storageItem = plan.items.find(
+    (item) => item.meta?.chatjs?.kind === "storage"
+  );
+  const selectedGateway =
+    gateway ??
+    (gatewayItem
+      ? await resolveGateway(plan.sources[plan.items.indexOf(gatewayItem)], cwd)
+      : undefined);
+  const selectedStorage =
+    storage ??
+    (storageItem
+      ? await resolveStorage(plan.sources[plan.items.indexOf(storageItem)], cwd)
+      : undefined);
+  const gatewayChange = plan.providerChanges.some(
+    ({ kind, previous, next }) =>
+      kind === "gateway" && previous && previous !== next
+  );
+  const keepStorageOptions =
+    !options.storageConfig &&
+    plan.providerChanges.some(
+      ({ kind, previous, next }) => kind === "storage" && previous === next
+    );
+  const configEdit =
+    gatewayChange && selectedGateway
+      ? await gatewayConfigEdit(cwd, selectedGateway)
+      : undefined;
+
+  return {
+    configEdit,
+    gatewayChange,
+    keepStorageOptions,
+    plan,
+    selectedGateway,
+    selectedStorage,
+  };
+};
 
 export const add = new Command("add")
   .description(
-    "install registry tools, MCP, or attachment uploads and update their ChatJS registrations"
+    "install registry tools/features/providers and compose their ChatJS registrations"
   )
   .argument(
-    "<tools...>",
-    "tool names, mcp, attachment-uploads, or standard shadcn registry addresses"
+    "[items...]",
+    "tool/feature names or native shadcn registry addresses"
   )
-  .option("-y, --yes", "skip confirmation", false)
-  .option("-o, --overwrite", "overwrite existing installed source files", false)
+  .option(
+    "-y, --yes",
+    "skip installation confirmation; does not authorize replacement/overwrite",
+    false
+  )
+  .option("--replace", "explicitly replace an exclusive provider", false)
+  .option(
+    "-o, --overwrite",
+    "authorize overwriting modified or untracked installed source",
+    false
+  )
+  .option("--gateway <item>", "install or replace the AI gateway")
+  .option("--storage-provider <item>", "install or replace file storage")
+  .option("--storage-config <json>", "non-secret storage adapter options")
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
-  .action(async (tools: string[], options) => {
+  .action(async (items: string[], options) => {
     try {
       const cwd = path.resolve(options.cwd);
       await access(path.join(cwd, "chat.config.ts"));
-      const plan = await planInstallation(cwd, { features: [], tools });
-      assertSupportedFeatureInstallation(plan.features);
+      const {
+        plan,
+        selectedGateway,
+        selectedStorage,
+        gatewayChange,
+        configEdit,
+        keepStorageOptions,
+      } = await prepareAdd(cwd, items, options);
+      for (const { previous, next } of plan.replacements) {
+        log.info(
+          `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
+        );
+      }
+      for (const { kind, previous, next } of plan.providerChanges) {
+        if (previous && previous !== next) {
+          log.info(
+            `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
+          );
+        }
+      }
+      if (gatewayChange) {
+        log.info(
+          "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
+        );
+      }
       if (!options.yes) {
         const answer = await confirm({
-          message: `Install ${tools.join(", ")}?`,
+          message: `Install ${plan.sources.join(", ")}?`,
         });
         if (isCancel(answer) || !answer) {
           return;
         }
       }
-      const mcp = plan.features.some((feature) => feature.id === "mcp");
-      const uploads = plan.features.some(
-        (feature) => feature.id === "attachment-uploads"
-      );
-      await installItems(plan.sources, cwd, options.overwrite);
-      try {
-        await syncTools(cwd, { expected: plan.expected });
-        await syncFeatures(cwd, {
-          addUi: mcp || uploads,
-          expectedMcp: mcp,
-          expectedUploads: uploads,
-        });
-        if (mcp) {
-          log.info(
-            "MCP installed. Set MCP_ENCRYPTION_KEY before connecting servers."
-          );
+      await installPlan(
+        cwd,
+        plan,
+        {
+          managedTargets: [
+            ...(selectedGateway
+              ? [
+                  "lib/ai/gateway-model-defaults.ts",
+                  "lib/ai/models.generated.ts",
+                ]
+              : []),
+            ...(configEdit ? ["chat.config.ts"] : []),
+            ...(selectedStorage && !keepStorageOptions
+              ? ["lib/storage-options.ts"]
+              : []),
+          ],
+          overwrite: options.overwrite,
+        },
+        async () => {
+          if (selectedGateway) {
+            await configureGatewayProvider(cwd, selectedGateway);
+          }
+          if (selectedStorage && !keepStorageOptions) {
+            await configureStorageProvider(cwd, selectedStorage);
+          }
+          if (configEdit) {
+            await writeFile(path.join(cwd, "chat.config.ts"), configEdit);
+          }
+          await syncTools(cwd, { expected: plan.expected });
+          await syncFeatures(cwd, {
+            addUi: true,
+            expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
+            expectedUploads: plan.features.some(
+              (feature) => feature.id === "attachment-uploads"
+            ),
+          });
         }
-      } catch (error) {
-        throw new Error(
-          `Source installation completed, but registration failed. Fix the problem and run ${mcp || uploads ? `chat-js add ${mcp ? "mcp" : "attachment-uploads"} to retry UI integration (or integrate the UI manually and run chat-js sync)` : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
-          { cause: error }
+      );
+      const requirements = [
+        ...plan.expected.flatMap((item) => item.envRequirements),
+        ...plan.features.flatMap((feature) => feature.envRequirements ?? []),
+        ...(selectedGateway?.definition.envRequirements ?? []),
+        ...(selectedStorage?.definition.envRequirements ?? []),
+      ];
+      for (const requirement of requirements) {
+        log.info(
+          `Required: ${requirement.options.map((option) => option.join(" + ")).join(" or ")}`
         );
       }
+      log.success(
+        "Installed and registered. Review .env.local, then run setup."
+      );
     } catch (error) {
       handleError(error);
     }

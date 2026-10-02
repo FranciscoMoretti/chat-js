@@ -8,8 +8,6 @@ import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { createModuleLogger } from "@/lib/logger";
 
-import { executeJavaScriptInSandbox } from "./javascript";
-import { executePythonInSandbox } from "./python";
 import {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -17,7 +15,9 @@ import {
   getErrorMessage,
   getSandboxRuntime,
   resolveSandboxAuth,
-} from "./sandbox";
+} from "./execution-sandbox";
+import { executeJavaScriptInSandbox } from "./javascript";
+import { executePythonInSandbox } from "./python";
 import { codeExecutionResult, codeExecutionInput } from "./schemas";
 
 // Vercel Sandbox execution.

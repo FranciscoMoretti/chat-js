@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   python: vi.fn(),
   resolveAuth: vi.fn(),
 }));
-vi.mock("./sandbox", () => ({
+vi.mock("./execution-sandbox", () => ({
   cleanupSandbox: mocks.cleanup,
   codeSandboxCleanupCapability: { createCleanupSession: vi.fn() },
   createSandbox: mocks.create,
