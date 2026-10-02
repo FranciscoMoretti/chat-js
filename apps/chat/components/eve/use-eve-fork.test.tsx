@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
-import type { AttachmentUploadState } from "@/lib/installation-contracts";
 
 import { useEveFork } from "./use-eve-fork";
 
@@ -41,9 +40,7 @@ vi.mock("@/lib/eve/resolve-creation-request", () => ({
 vi.mock("@/features/installed-uploads", () => ({
   attachmentUploads: {
     controls: [],
-    useUploads: (state: AttachmentUploadState) => ({
-      ...state,
-      upload: () => Promise.resolve(),
+    useUploads: () => ({
       uploadQueue: [],
     }),
   },

@@ -13,8 +13,8 @@ ChatJS supports file attachments in conversations. Files are uploaded through th
 </Frame>
 
 <Callout type="note">
-  File attachments require a durable Files SDK provider. If you don't need
-  attachments, set `features.attachments: false` in `chat.config.ts`.
+  Install `attachment-uploads` to enable new user uploads. A durable Files SDK
+  provider is required. Omit this feature when creating an app without uploads.
 </Callout>
 
 ## Supported File Types
@@ -33,21 +33,15 @@ ChatJS supports file attachments in conversations. Files are uploaded through th
 
 ## Configuration
 
-### Enable/Disable
+### Install Uploads
 
-Toggle attachments in `chat.config.ts`:
+Run this command inside a ChatJS app:
 
-```ts
-features: {
-  attachments: true, // Requires durable file storage
-}
+```bash
+chat-js add attachment-uploads
 ```
 
-When disabled:
-
-- Attachment button is hidden from the chat input
-- Drag-and-drop and paste file handling are disabled
-- File upload API returns 503
+Installed source determines upload availability. There is no `features.attachments` flag. When uploads are omitted, picker/camera controls, file paste/drop handlers and the upload endpoint are absent. Historical attachments and tool-produced files remain available in core. Automatic feature removal and legacy app migration are not supported.
 
 ### File Storage
 
@@ -71,13 +65,7 @@ attachments: {
 
 ## Mobile Behavior
 
-On mobile devices, the attachment button shows a dropdown menu with separate options:
-
-- **Add photos** - Opens the device photo gallery
-- **Take photo** - Opens the camera directly
-- **Add files** - Opens the file browser for PDFs and documents
-
-This granular selection is intentional: some mobile platforms default to the image picker when the file input accepts both images and other file types, making it difficult for users to select non-image files like PDFs.
+The composer menu offers **Attach files** for the file picker and, on mobile, **Take photo** for the camera. Both require sign-in.
 
 ## Model Support
 
@@ -92,4 +80,4 @@ if (model.input?.pdf) {
 }
 ```
 
-When a user attaches a file that the current model doesn't support, ChatJS automatically switches to the compatible model configured in `config.ai.workflows.pdf` or `config.ai.workflows.chatImageCompatible`.
+Select a model that supports the attached file types. The composer blocks sending when the selected model does not support an attached image or PDF.
