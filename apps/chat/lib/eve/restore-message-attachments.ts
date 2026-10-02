@@ -7,7 +7,12 @@ import {
   writeEveUpload,
 } from "../db/eve-files";
 import { getEveConversation } from "../db/eve-queries";
-import { createFileId, downloadFile, uploadFileAtKey } from "../file-storage";
+import {
+  createFileId,
+  downloadFile,
+  getFileMetadata,
+  uploadFileAtKey,
+} from "../file-storage";
 import { keyFromFileUrl } from "../file-url";
 import { getEveConnectionOptions } from "./connection-options";
 import { attachmentDigest, draftAttachment } from "./draft";
@@ -50,10 +55,14 @@ export const restoreMessageAttachments = async (
     }
     let blob: Pick<Blob, "type" | "size" | "arrayBuffer">;
     if (part.url.startsWith(`data:${contentType};base64,`)) {
-      const bytes = Buffer.from(
-        part.url.slice(part.url.indexOf(",") + 1),
-        "base64"
-      );
+      const encoded = part.url.slice(part.url.indexOf(",") + 1);
+      if (encoded.length > 4 * Math.ceil(config.attachments.maxBytes / 3)) {
+        throw new Error("This attachment has an unsupported type or size.");
+      }
+      const bytes = Buffer.from(encoded, "base64");
+      if (!encoded || bytes.toString("base64") !== encoded) {
+        throw new Error("Invalid attachment reference.");
+      }
       blob = new Blob([bytes], { type: contentType });
     } else {
       const key = keyFromFileUrl(part.url);
@@ -64,6 +73,11 @@ export const restoreMessageAttachments = async (
       const access = await canReadEveFile(key, ownerId);
       if (!access.allowed) {
         throw new Error("This attachment is unavailable for editing.");
+      }
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Reject oversized stored files before reading their bytes.
+      const metadata = await getFileMetadata(key);
+      if (!metadata.size || metadata.size > config.attachments.maxBytes) {
+        throw new Error("This attachment has an unsupported type or size.");
       }
       // oxlint-disable-next-line eslint/no-await-in-loop -- Bound restored file memory.
       blob = await downloadFile(key);

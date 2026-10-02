@@ -38,6 +38,7 @@ export const add = new Command("add")
           return;
         }
       }
+      const featureRetry = plan.features.map((feature) => feature.id).join(" ");
       const mcp = plan.features.some((feature) => feature.id === "mcp");
       const uploads = plan.features.some(
         (feature) => feature.id === "attachment-uploads"
@@ -57,7 +58,7 @@ export const add = new Command("add")
         }
       } catch (error) {
         throw new Error(
-          `Source installation completed, but registration failed. Fix the problem and run ${mcp || uploads ? `chat-js add ${mcp ? "mcp" : "attachment-uploads"} to retry UI integration (or integrate the UI manually and run chat-js sync)` : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
+          `Source installation completed, but registration failed. Fix the problem and run ${mcp || uploads ? `chat-js add ${featureRetry} to retry UI integration (or integrate the UI manually and run chat-js sync)` : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
           { cause: error }
         );
       }

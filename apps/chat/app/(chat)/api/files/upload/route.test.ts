@@ -116,3 +116,14 @@ test("enforces retained upload type and byte limits before reserving storage", a
   expect(mocks.register).not.toHaveBeenCalled();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+
+test.each([undefined, "not multipart"])(
+  "rejects malformed upload body %s before storage admission",
+  async (body) => {
+    const response = await POST(
+      new Request("http://localhost/api/files/upload", { body, method: "POST" })
+    );
+    expect(response.status).toBe(400);
+    expect(mocks.register).not.toHaveBeenCalled();
+  }
+);

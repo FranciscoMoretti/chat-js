@@ -137,7 +137,7 @@ Routes requests through a LiteLLM proxy for centralized model access, key manage
 
 ## Features
 
-Tool flags live under `ai.tools` in `chat.config.ts`. File attachments remain under `features.attachments`. Each enabled capability has an associated environment variable requirement validated at build time.
+Tool flags live under `ai.tools` in `chat.config.ts`. Attachment uploads are installed with `chat-js add attachment-uploads`. Each enabled capability has an associated environment variable requirement validated at build time.
 
 ### Web Search
 
@@ -200,9 +200,6 @@ openssl rand -base64 32
 Attachments, image generation, and video generation require a durable storage adapter compatible with Files SDK. Storage requirements are generated from the selected provider and validated by `scripts/check-env.ts`.
 
 ```typescript title="chat.config.ts"
-features: {
-  attachments: true,
-},
 ai: {
   tools: {
     image: { enabled: true },

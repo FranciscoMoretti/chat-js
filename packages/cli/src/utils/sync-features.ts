@@ -67,7 +67,7 @@ const planContribution = async (
   name: string,
   symbol: string,
   marker: string,
-  id: string,
+  id: string | readonly string[],
   entry: (binding: string) => string,
   sourceOverride?: string
 ) => {
@@ -91,6 +91,7 @@ const planContribution = async (
     );
   }
   const array = declaration.initializer;
+  const contributionIds = typeof id === "string" ? [id] : id;
   const { binding, bindings, specifier } = contributionBinding(
     parsed,
     marker,
@@ -111,7 +112,7 @@ const planContribution = async (
                 .replaceAll('"', "")
                 .replaceAll("'", "") === "id" &&
                 ts.isStringLiteral(prop.initializer) &&
-                prop.initializer.text === id) ||
+                contributionIds.includes(prop.initializer.text)) ||
                 (prop.name.getText(parsed) === "Component" &&
                   prop.initializer.getText(parsed) === binding))
           ))
@@ -270,7 +271,7 @@ export const syncFeatures = async (
       "composerControls",
       "attachmentUploads",
       "@/features/attachment-uploads/integration",
-      "attachment-uploads",
+      ["attach-files", "take-photo"],
       (binding) => `...${binding}.controls`,
       previous?.content
     );

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
       filename?: string;
     }[];
   }[],
+  metadata: vi.fn(),
   reserve: vi.fn(),
   snapshot: vi.fn(),
   upload: vi.fn(),
@@ -36,6 +37,7 @@ vi.mock("../db/eve-files", () => ({
 vi.mock("../file-storage", () => ({
   createFileId: () => "abcdefghijklmnopqrstuvwx.png",
   downloadFile: mocks.download,
+  getFileMetadata: mocks.metadata,
   uploadFileAtKey: mocks.upload,
 }));
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
@@ -60,6 +62,7 @@ beforeEach(() => {
   });
   mocks.snapshot.mockResolvedValue({ events: [] });
   mocks.access.mockResolvedValue({ allowed: true });
+  mocks.metadata.mockResolvedValue({ size: 3 });
   mocks.download.mockResolvedValue(
     new Blob([new Uint8Array([1, 2, 3])], { type: "image/png" })
   );
@@ -133,4 +136,31 @@ it("rechecks file access and size and never fetches a remote history URL", async
     "unsupported type or size"
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
+});
+
+it("rejects oversized metadata before downloading or reserving", async () => {
+  mocks.messages[0].parts[0].url = "/api/files/abcdefghijklmnopqrstuvwx.png";
+  mocks.metadata.mockResolvedValue({ size: 11 });
+  await expect(restoreMessageAttachments("owner", input)).rejects.toThrow(
+    "unsupported type or size"
+  );
+  expect(mocks.download).not.toHaveBeenCalled();
+  expect(mocks.reserve).not.toHaveBeenCalled();
+});
+it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])(
+  "rejects malformed or oversized inline payload %s before copying",
+  async (encoded) => {
+    mocks.messages[0].parts[0].url = `data:image/png;base64,${encoded}`;
+    await expect(restoreMessageAttachments("owner", input)).rejects.toThrow();
+    expect(mocks.reserve).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
+  }
+);
+it("rejects a remote reference before storage access", async () => {
+  mocks.messages[0].parts[0].url = "https://example.com/photo.png";
+  await expect(restoreMessageAttachments("owner", input)).rejects.toThrow(
+    "Invalid attachment reference"
+  );
+  expect(mocks.access).not.toHaveBeenCalled();
+  expect(mocks.download).not.toHaveBeenCalled();
 });

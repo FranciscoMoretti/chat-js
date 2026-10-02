@@ -59,7 +59,6 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     }
   };
   const { getRootProps } = useDropzone({
-    accept: config.attachments.acceptedTypes,
     disabled: uploadQueue.length > 0,
     noClick: true,
     noKeyboard: true,

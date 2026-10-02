@@ -207,7 +207,7 @@ export const ATTACHMENTS_DEFAULTS = {
 export const attachmentsConfigSchema =
   attachmentsConfigObjectSchema.default(ATTACHMENTS_DEFAULTS);
 
-export const featuresConfigObjectSchema = z.object({
+export const featuresConfigObjectSchema = z.strictObject({
   parallelResponses: z
     .boolean()
     .default(true)

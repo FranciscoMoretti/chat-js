@@ -141,7 +141,12 @@ export const eveRouter = createTRPCRouter({
       return updated;
     }),
   restoreAttachments: eveOwnedProcedure
-    .input(z.object({ conversationId: z.uuid(), messageId: z.string().min(1) }))
+    .input(
+      z.object({
+        conversationId: z.uuid(),
+        messageId: z.string().min(1).max(512),
+      })
+    )
     .mutation(({ ctx, input }) =>
       restoreMessageAttachments(ctx.eveOwnerId, input)
     ),

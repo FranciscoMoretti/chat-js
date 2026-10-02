@@ -1,7 +1,7 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Toaster } from "sonner";
+import { toast, Toaster } from "sonner";
 import { afterEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
@@ -214,15 +214,18 @@ const mount = async (
     );
     if (fullComposer) {
       return (
-        <EveComposer
-          files={files}
-          selectedTool={selectedTool}
-          onToolChange={setSelectedTool}
-          disabled={disabled}
-          draft="Hello"
-          onDraftChange={vi.fn()}
-          onSubmit={state.handleSubmit}
-        />
+        <>
+          <Toaster />
+          <EveComposer
+            files={files}
+            selectedTool={selectedTool}
+            onToolChange={setSelectedTool}
+            disabled={disabled}
+            draft="Hello"
+            onDraftChange={vi.fn()}
+            onSubmit={state.handleSubmit}
+          />
+        </>
       );
     }
     return (
@@ -259,6 +262,7 @@ const mount = async (
   };
 };
 afterEach(() => {
+  toast.dismiss();
   composerControls.splice(0, composerControls.length, ...originalControls);
   state.history = [];
   state.uploadsInstalled = true;
@@ -716,6 +720,31 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
       );
     });
     await vi.waitFor(() => expect(state.upload).toHaveBeenCalledTimes(3));
+    await expect
+      .element(page.getByRole("button", { name: "Composer options" }))
+      .toBeEnabled();
+    const unsupported = new DataTransfer();
+    unsupported.items.add(
+      new File(["plain text"], "notes.txt", { type: "text/plain" })
+    );
+    await act(() => {
+      composer.dispatchEvent(
+        new DragEvent("drop", {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: unsupported,
+        })
+      );
+    });
+    await expect
+      .element(
+        page.getByText(
+          "Some files could not be attached. Use images or PDFs within the upload size limit."
+        )
+      )
+      .toBeVisible();
+    expect(state.upload).toHaveBeenCalledTimes(3);
+    await takeSnapshot("composer-rejected-upload");
   } finally {
     await cleanup();
   }
