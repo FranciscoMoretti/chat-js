@@ -33,6 +33,7 @@ import {
 } from "@/providers/default-model-provider";
 
 import { EveArtifactLayout } from "./eve-artifact-layout";
+import { EveChatError } from "./eve-chat-error";
 import { EveComposer } from "./eve-composer";
 import { EveForkRecovery } from "./eve-fork-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
@@ -482,11 +483,9 @@ export const EveConversation = ({
               {statusLabel}
             </p>
             {[snapshot.error, displayedError, composerDraft.error]
-              .filter(Boolean)
+              .filter((message): message is string => Boolean(message))
               .map((message) => (
-                <p key={message} role="alert">
-                  {message}
-                </p>
+                <EveChatError key={message} message={message} />
               ))}
             {pendingMessage && !commandPending && (
               <output className="space-y-2 text-sm">
