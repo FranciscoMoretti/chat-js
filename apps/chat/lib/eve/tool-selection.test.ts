@@ -8,9 +8,10 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
+import type * as InstalledFeatures from "@/tools/chatjs/installed-features";
+
 import selectionHook from "../../agent/hooks/tool-selection";
 import { frontendToolsSchema } from "../ai/types";
-import { config } from "../config";
 import { eveCreationContentHash } from "./creation-content-hash";
 import {
   moveRejectedProjectCreation,
@@ -23,6 +24,15 @@ import {
   eveTurnTool,
   filterEveTools,
 } from "./turn-tools";
+
+const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
+vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
+  const actual = await importOriginal<typeof InstalledFeatures>();
+  for (const kind of actual.installedDocumentKinds) {
+    mocks.kinds.add(kind);
+  }
+  return { ...actual, installedDocumentKinds: mocks.kinds };
+});
 
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
@@ -212,19 +222,21 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
   });
 });
 
-it("withholds readDocument when every document kind is disabled", () => {
-  const original = structuredClone(config.ai.tools.documents);
+it("withholds document operations when their implementations are not installed", () => {
+  const original = new Set(mocks.kinds);
+  const installed = mocks.kinds;
   try {
-    config.ai.tools.documents.enabled = true;
-    config.ai.tools.documents.types = {
-      code: false,
-      sheet: false,
-      text: false,
-    };
+    installed.clear();
     expect(eveInstalledToolEnabled("readDocument")).toBe(false);
-    config.ai.tools.documents.types.text = true;
+    expect(eveInstalledToolEnabled("createTextDocument")).toBe(false);
+    installed.add("text");
     expect(eveInstalledToolEnabled("readDocument")).toBe(true);
+    expect(eveInstalledToolEnabled("createTextDocument")).toBe(true);
+    expect(eveInstalledToolEnabled("createCodeDocument")).toBe(false);
   } finally {
-    config.ai.tools.documents = original;
+    installed.clear();
+    for (const kind of original) {
+      installed.add(kind);
+    }
   }
 });

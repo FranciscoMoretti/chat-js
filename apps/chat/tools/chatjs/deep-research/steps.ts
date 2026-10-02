@@ -16,7 +16,7 @@ export async function prepareResearch(context: WorkflowToolContext) {
   const owner = context.session.auth.initiator;
   if (!owner || !researchAvailable(context.session)) {
     throw new Error(
-      "Deep research requires an authenticated owner, enabled text documents, and installed webSearch."
+      "Deep research requires an authenticated owner, installed text documents, and installed webSearch."
     );
   }
   context.abortSignal.throwIfAborted();
