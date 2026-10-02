@@ -96,3 +96,18 @@ it("a failed connection can be retried without retaining a failed promise", asyn
   expect(mocks.create).toHaveBeenCalledTimes(2);
   await client.close();
 });
+
+it("domain errors mentioning tokens do not invalidate authentication", async () => {
+  const invalidate = vi.fn();
+  const client = new MCPClient(
+    "id",
+    "Test",
+    { type: "http", url: "https://mcp.test" },
+    invalidate
+  );
+  await client.connect();
+  mocks.tools.mockRejectedValueOnce(new Error("Document exceeds token budget"));
+  await expect(client.tools()).rejects.toThrow("token budget");
+  expect(invalidate).not.toHaveBeenCalled();
+  await client.close();
+});

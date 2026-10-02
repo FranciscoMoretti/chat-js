@@ -47,6 +47,7 @@ import { useTRPC } from "@/trpc/react";
 const mcpConnectorFormSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, { message: "Name is required" })
     .max(MCP_NAME_MAX_LENGTH, {
       message: `Name must be at most ${MCP_NAME_MAX_LENGTH} characters`,
@@ -62,7 +63,6 @@ const mcpConnectorFormSchema = z.object({
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
-const HIDE_ADVANCED_SETTINGS = true;
 export const McpCreateDialog = ({
   open,
   onClose,
@@ -105,7 +105,7 @@ export const McpCreateDialog = ({
     setAdvancedOpen(false);
   }, [open, form]);
 
-  const { mutateAsync: createConnector, isPending } = useMutation(
+  const { mutate: createConnector, isPending } = useMutation(
     trpc.mcp.create.mutationOptions({
       onError: (err) => {
         toast.error(err.message || "Failed to add connector");
@@ -113,7 +113,7 @@ export const McpCreateDialog = ({
     })
   );
 
-  const handleSubmit = async (values: McpConnectorFormValues) => {
+  const handleSubmit = (values: McpConnectorFormValues) => {
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
@@ -122,16 +122,22 @@ export const McpCreateDialog = ({
       url: values.url.trim(),
     };
 
-    await createConnector({
-      name: trimmed.name,
-      oauthClientId: trimmed.oauthClientId,
-      oauthClientSecret: trimmed.oauthClientSecret,
-      type: trimmed.type,
-      url: trimmed.url,
-    });
-    toast.success("Connector added");
-    queryClient.invalidateQueries({ queryKey });
-    onClose();
+    createConnector(
+      {
+        name: trimmed.name,
+        oauthClientId: trimmed.oauthClientId,
+        oauthClientSecret: trimmed.oauthClientSecret,
+        type: trimmed.type,
+        url: trimmed.url,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Connector added");
+          queryClient.invalidateQueries({ queryKey });
+          onClose();
+        },
+      }
+    );
   };
 
   return (
@@ -192,84 +198,82 @@ export const McpCreateDialog = ({
               )}
             />
 
-            {!HIDE_ADVANCED_SETTINGS && (
-              <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
-                <CollapsibleTrigger asChild>
-                  <Button
-                    className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <ChevronDown
-                      className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
-                    />
-                    Advanced settings
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-2">
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Transport Type</FormLabel>
-                        <FormControl>
-                          <Select
-                            defaultValue={field.value}
-                            onValueChange={(value) => field.onChange(value)}
-                            value={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="http">
-                                HTTP (Streamable)
-                              </SelectItem>
-                              <SelectItem value="sse">
-                                SSE (Server-Sent Events)
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+            <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <ChevronDown
+                    className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
                   />
-                  <FormField
-                    control={form.control}
-                    name="oauthClientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>OAuth Client ID (optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter client ID" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="oauthClientSecret"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>OAuth Client Secret (optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter client secret"
-                            type="password"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
-            )}
+                  Advanced settings
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transport Type</FormLabel>
+                      <FormControl>
+                        <Select
+                          defaultValue={field.value}
+                          onValueChange={(value) => field.onChange(value)}
+                          value={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="http">
+                              HTTP (Streamable)
+                            </SelectItem>
+                            <SelectItem value="sse">
+                              SSE (Server-Sent Events)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="oauthClientId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>OAuth Client ID (optional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Enter client ID" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="oauthClientSecret"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>OAuth Client Secret (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Enter client secret"
+                          type="password"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
             <p className="text-muted-foreground text-xs leading-relaxed">
               Only use connectors from developers you trust. {appName} does not

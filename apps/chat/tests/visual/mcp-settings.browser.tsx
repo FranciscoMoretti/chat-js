@@ -5,6 +5,7 @@ import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
+import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
 import {
   SettingsPage,
@@ -21,6 +22,8 @@ const mocks = vi.hoisted(() => {
   });
   const mutation = { mutationOptions: () => ({}) };
   return {
+    cachedData: false,
+    handleClose: vi.fn(),
     listError: false,
     mcp: {
       authorize: mutation,
@@ -34,6 +37,7 @@ const mocks = vi.hoisted(() => {
       toggleEnabled: mutation,
     },
     mutate: vi.fn(),
+    needsOAuth: false,
     queryClient: { invalidateQueries: vi.fn() },
     refetch: vi.fn(),
     router: { push: vi.fn(), replace: vi.fn() },
@@ -71,10 +75,10 @@ vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ isPending: false, mutate: mocks.mutate }),
   useQuery: ({ queryKey }: { queryKey: string[] }) => {
     const responses: Record<string, unknown> = {
-      checkAuth: { isAuthenticated: false },
+      checkAuth: { isAuthenticated: true },
       discover: {
         prompts: [{ name: "summarize" }],
-        resources: [{ name: "Documentation" }],
+        resources: [{ name: "Documentation", uri: "docs://reference" }],
         tools: [{ name: "search_docs" }, { name: "read_page" }],
       },
       list: [
@@ -88,12 +92,22 @@ vi.mock("@tanstack/react-query", () => ({
       ],
       testConnection: { needsAuth: false, status: "connected" },
     };
+    let error = null;
+    if (queryKey[0] === "list" && mocks.listError) {
+      error = { message: "Missing credentials for mcp: MCP_ENCRYPTION_KEY" };
+    }
+    if (queryKey[0] === "discover" && mocks.needsOAuth) {
+      error = {
+        data: { code: "UNAUTHORIZED" },
+        message: "Connector requires OAuth authorization",
+      };
+    }
     return {
-      data: responses[queryKey[0]],
-      error:
-        queryKey[0] === "list" && mocks.listError
-          ? { message: "Missing credentials for mcp: MCP_ENCRYPTION_KEY" }
-          : null,
+      data:
+        queryKey[0] === "list" && mocks.listError && !mocks.cachedData
+          ? undefined
+          : responses[queryKey[0]],
+      error,
       isLoading: false,
       refetch: mocks.refetch,
     };
@@ -101,12 +115,19 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => mocks.queryClient,
 }));
 
-const renderPage = async (details: boolean) => {
+const renderPage = async (details: boolean, create = false) => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("div");
   container.className = "flex h-[850px] w-[900px] flex-col p-8";
   document.body.append(container);
   const root = createRoot(container);
+  let content = <ConnectorsSettings />;
+  if (details) {
+    content = <McpDetailsPage connectorId="documentation" />;
+  }
+  if (create) {
+    content = <McpCreateDialog onClose={mocks.handleClose} open />;
+  }
   // Render each route's client subtree with the same header/layout, without the server prefetch wrapper.
   await act(() =>
     root.render(
@@ -121,11 +142,7 @@ const renderPage = async (details: boolean) => {
               : "Connect to Model Context Protocol servers to extend AI capabilities with external tools."}
           </p>
         </SettingsPageHeader>
-        {details ? (
-          <McpDetailsPage connectorId="documentation" />
-        ) : (
-          <ConnectorsSettings />
-        )}
+        {content}
       </SettingsPage>
     )
   );
@@ -213,3 +230,66 @@ for (const details of [false, true]) {
     }
   });
 }
+
+for (const details of [false, true]) {
+  test(`cached ${details ? "details" : "list"} remains usable after a background refresh error`, async () => {
+    mocks.listError = true;
+    mocks.cachedData = true;
+    const cleanup = await renderPage(details);
+    try {
+      await expect
+        .element(page.getByText("Documentation server", { exact: true }))
+        .toBeVisible();
+      await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
+      await takeSnapshot(`mcp-${details ? "details" : "list"}-refresh-error`);
+    } finally {
+      mocks.listError = false;
+      mocks.cachedData = false;
+      await cleanup();
+    }
+  });
+}
+
+test("expired OAuth discovery offers reconnect instead of a permanent spinner", async () => {
+  mocks.needsOAuth = true;
+  const cleanup = await renderPage(true);
+  try {
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Connect" }))
+      .toBeEnabled();
+    await takeSnapshot("mcp-details-reconnect");
+  } finally {
+    mocks.needsOAuth = false;
+    await cleanup();
+  }
+});
+
+test("custom connector advanced settings expose transport and credentials and reject a blank name", async () => {
+  const cleanup = await renderPage(false, true);
+  try {
+    await act(() =>
+      page.getByRole("button", { name: "Advanced settings" }).click()
+    );
+    await expect
+      .element(page.getByText("Transport Type", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(page.getByLabelText("OAuth Client Secret (optional)"))
+      .toBeVisible();
+    await act(() => page.getByPlaceholder("Name", { exact: true }).fill("   "));
+    await act(() =>
+      page
+        .getByPlaceholder("Remote MCP server URL")
+        .fill("https://docs.example.test/mcp")
+    );
+    await act(() =>
+      page.getByRole("button", { exact: true, name: "Add" }).click()
+    );
+    await expect
+      .element(page.getByText("Name is required", { exact: true }))
+      .toBeVisible();
+    await takeSnapshot("mcp-create-advanced-validation");
+  } finally {
+    await cleanup();
+  }
+});

@@ -10,8 +10,9 @@ import {
   Radio,
   Trash2,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import { Fragment, useCallback, useMemo } from "react";
+import { Fragment, useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 import { InternalLink } from "@/components/internal-link";
@@ -155,7 +156,11 @@ const CustomConnectorRow = ({
         ) : null}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost">
+            <Button
+              aria-label="More connector actions"
+              size="icon"
+              variant="ghost"
+            >
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -218,6 +223,15 @@ const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
 export const ConnectorsSettings = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const callbackError = searchParams.get("error");
+    if (callbackError) {
+      toast.error(callbackError);
+      router.replace("/settings/connectors");
+    }
+  }, [router, searchParams]);
 
   const [qs, setQs] = useQueryStates(mcpConnectorsSettingsSearchParams, {
     history: "replace",
@@ -228,6 +242,7 @@ export const ConnectorsSettings = () => {
     data: connectors,
     isLoading,
     error,
+    refetch: refetchConnectors,
   } = useQuery(trpc.mcp.list.queryOptions());
 
   const createOpen = qs.dialog === "config";
@@ -287,7 +302,10 @@ export const ConnectorsSettings = () => {
             queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
           });
         },
-        onSuccess: () => {
+        onSuccess: (_data, vars) => {
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.testConnection.queryKey({ id: vars.id }),
+          });
           toast.success("Disconnected");
         },
       })
@@ -352,7 +370,7 @@ export const ConnectorsSettings = () => {
     );
   }
 
-  if (error) {
+  if (error && !connectors) {
     return (
       <SettingsPageContent className="gap-4">
         <div
@@ -361,6 +379,9 @@ export const ConnectorsSettings = () => {
         >
           <p className="text-sm font-medium">Could not load connectors</p>
           <p className="text-muted-foreground mt-1 text-xs">{error.message}</p>
+          <Button onClick={() => refetchConnectors()} variant="outline">
+            Retry
+          </Button>
         </div>
       </SettingsPageContent>
     );

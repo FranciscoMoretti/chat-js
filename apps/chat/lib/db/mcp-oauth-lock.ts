@@ -3,7 +3,7 @@ import postgres from "postgres";
 import { databaseConnection } from "@/lib/db/connection";
 import { env } from "@/lib/env";
 
-const OAUTH_REFRESH_LOCK_TIMEOUT = "15s";
+const OAUTH_REFRESH_LOCK_TIMEOUT = "40s";
 
 /** Serialize one connector's rotating-token refresh without occupying the app pool. */
 export const withMcpOAuthRefreshLock = async <T>(

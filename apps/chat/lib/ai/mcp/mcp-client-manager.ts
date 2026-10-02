@@ -36,8 +36,8 @@ export const getOrCreateMcpClient = ({
 export const removeMcpClient = async (id: string): Promise<void> => {
   const client = clientsMap.get(id);
   if (client) {
-    await client.close();
     clientsMap.delete(id);
+    await client.close();
   }
 };
 

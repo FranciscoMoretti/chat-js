@@ -143,6 +143,11 @@ export class MCPClient {
         },
       });
 
+      if (abortSignal?.aborted) {
+        await this.close();
+        abortSignal.throwIfAborted();
+      }
+      this.authorizationUrl = undefined;
       this._status = "connected";
       return this.client;
     } catch (error) {
@@ -297,6 +302,7 @@ export class MCPClient {
       log.error({ connectorId: this.id, error }, "Error closing MCP client");
     }
     this.client = undefined;
+    this.authorizationUrl = undefined;
     this._status = "disconnected";
     // Invalidate caches since connection state changed
     this.invalidateCache?.();
@@ -311,8 +317,7 @@ export class MCPClient {
       errorMessage.includes("401") ||
       errorMessage.includes("403") ||
       errorMessage.includes("Unauthorized") ||
-      errorMessage.includes("Forbidden") ||
-      errorMessage.includes("token");
+      errorMessage.includes("Forbidden");
 
     if (isAuthError) {
       log.warn(

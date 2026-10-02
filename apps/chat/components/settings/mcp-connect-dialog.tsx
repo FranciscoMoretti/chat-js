@@ -47,7 +47,7 @@ export const McpConnectDialog = ({
     return connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
   }, [connector]);
 
-  const { mutateAsync: authorize, isPending } = useMutation(
+  const { mutate: authorize, isPending } = useMutation(
     trpc.mcp.authorize.mutationOptions({
       onError: (err) => {
         toast.error(err.message || "Failed to start connection");
@@ -55,14 +55,28 @@ export const McpConnectDialog = ({
     })
   );
 
-  const handleContinue = useCallback(async () => {
+  const handleContinue = useCallback(() => {
     if (!connector) {
       return;
     }
-    const { authorizationUrl } = await authorize({ id: connector.id });
-    // Keep spinner visible until browser navigates away
-    setIsRedirecting(true);
-    window.location.href = authorizationUrl;
+    authorize(
+      { id: connector.id },
+      {
+        onSuccess: ({ authorizationUrl }) => {
+          if (!URL.canParse(authorizationUrl)) {
+            toast.error("Invalid authorization URL");
+            return;
+          }
+          const url = new URL(authorizationUrl);
+          if (url.protocol !== "https:" && url.protocol !== "http:") {
+            toast.error("Invalid authorization URL");
+            return;
+          }
+          setIsRedirecting(true);
+          window.location.href = url.href;
+        },
+      }
+    );
   }, [authorize, connector]);
 
   return (
