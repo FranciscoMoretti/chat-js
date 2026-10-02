@@ -132,6 +132,15 @@ const getConnectorWithPermission = async ({
   return connector;
 };
 
+const displayConnectorUrl = (value: string) => {
+  const url = new URL(value);
+  url.username = "";
+  url.password = "";
+  url.search = "";
+  url.hash = "";
+  return url.href;
+};
+
 const publicConnector = (
   connector: NonNullable<Awaited<ReturnType<typeof getMcpConnectorById>>>
 ) => ({
@@ -144,7 +153,7 @@ const publicConnector = (
   oauthClientSecret: null,
   type: connector.type,
   updatedAt: connector.updatedAt,
-  url: connector.url,
+  url: displayConnectorUrl(connector.url),
   userId: connector.userId,
 });
 
@@ -206,6 +215,7 @@ export const mcpRouter = createTRPCRouter({
         "OAuth authorization URL generated"
       );
 
+      await assertUrlIsSafeToFetch(authUrl.toString(), { opaqueErrors: true });
       return { authorizationUrl: authUrl.toString() };
     }),
 
@@ -640,6 +650,7 @@ export const mcpRouter = createTRPCRouter({
       await updateMcpConnector({ id: input.id, updates });
       if (
         (updates.url !== undefined && updates.url !== connector.url) ||
+        (updates.type !== undefined && updates.type !== connector.type) ||
         (updates.oauthClientId !== undefined &&
           updates.oauthClientId !== connector.oauthClientId) ||
         (updates.oauthClientSecret !== undefined &&

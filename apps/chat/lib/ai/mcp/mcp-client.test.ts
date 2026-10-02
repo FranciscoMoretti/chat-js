@@ -137,3 +137,61 @@ it("OAuth secrets go to the provider and never the resource transport", async ()
   );
   await client.close();
 });
+
+it("closing an in-flight connection prevents the late transport from becoming active", async () => {
+  const gate = Promise.withResolvers<undefined>();
+  mocks.create.mockImplementationOnce(async () => {
+    await gate.promise;
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const connecting = client.connect();
+  const rejected = expect(connecting).rejects.toThrow("closed");
+  await client.close();
+  gate.resolve(undefined);
+  await rejected;
+  expect(client.status).toBe("disconnected");
+  expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it("connection initialization always receives a cancellation signal", async () => {
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  await client.connect();
+  const signal = mocks.create.mock.calls[0]?.[0].initializationOptions.signal;
+  expect(signal).toBeInstanceOf(AbortSignal);
+  expect(signal.aborted).toBe(false);
+  await client.close();
+  expect(signal.aborted).toBe(true);
+});
+
+it("callers cancel their shared connection waits independently", async () => {
+  const gate = Promise.withResolvers<undefined>();
+  mocks.create.mockImplementationOnce(async () => {
+    await gate.promise;
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const firstAbort = new AbortController();
+  const secondAbort = new AbortController();
+  const first = client.connect(undefined, firstAbort.signal);
+  const second = client.connect(undefined, secondAbort.signal);
+  firstAbort.abort(new Error("first cancelled"));
+  await expect(first).rejects.toThrow("first cancelled");
+  expect(
+    mocks.create.mock.calls[0][0].initializationOptions.signal.aborted
+  ).toBe(false);
+  gate.resolve(undefined);
+  await second;
+  expect(client.status).toBe("connected");
+  expect(mocks.create).toHaveBeenCalledOnce();
+  await client.close();
+});

@@ -185,11 +185,13 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
           },
           "clientInformation: redirect URI mismatch, invalidating session"
         );
-        if (authData.state) {
-          await deleteSessionByState({ state: authData.state });
-        }
+        // Keep another in-flight authorization's session intact and start a new local state.
         this.cachedAuthData = undefined;
+        this.cachedAuthorizationUrl = null;
         this.initialized = false;
+        this.currentOAuthState = "";
+        this.config.state = undefined;
+        await this.initializeOAuth();
         return;
       }
       return clientInfo;
@@ -208,15 +210,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     if (this.cachedAuthData?.clientInfo) {
       return;
-      // Optimistic set so subsequent calls in this instance skip.
     }
-    if (this.cachedAuthData) {
-      this.cachedAuthData = {
-        ...this.cachedAuthData,
-        clientInfo: clientCredentials,
-      };
-    }
-
     this.saveClientInformationPromise = (async () => {
       try {
         this.cachedAuthData = await setOAuthClientInfoOnceByState({
@@ -291,6 +285,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         const refreshed = refreshTokensSchema.parse(
           await response.clone().json()
         );
+        request.signal.throwIfAborted();
         // Preserve pinned metadata and the refresh token when it is not rotated.
         this.cachedAuthData = await saveTokensAndCleanup({
           mcpConnectorId: this.config.mcpConnectorId,
@@ -299,7 +294,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         });
         this.committedRefreshes += 1;
         return Response.json(refreshed);
-      }
+      },
+      request.signal
     );
   };
 

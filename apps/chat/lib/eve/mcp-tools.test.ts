@@ -552,3 +552,62 @@ it("discovery sends configured OAuth credentials to the provider rather than tra
     url: connector.url,
   });
 });
+
+it("a timed-out connector does not discard completed discovery or suppress the next connector", async () => {
+  const deadlines: AbortController[] = [];
+  const timeout = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => {
+    const controller = new AbortController();
+    deadlines.push(controller);
+    return controller.signal;
+  });
+  try {
+    mocks.list.mockResolvedValue([
+      connector,
+      { ...connector, id: "slow", nameId: "slow" },
+      { ...connector, id: "later", nameId: "later" },
+    ]);
+    mocks.tools
+      .mockResolvedValueOnce({ echo: definition })
+      .mockReturnValueOnce(Promise.withResolvers().promise)
+      .mockResolvedValueOnce({ echo: definition });
+    const discovery = discoverEveMcpTools("owner", context.abortSignal);
+    await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalledTimes(2));
+    deadlines[1].abort(new DOMException("Discovery timed out", "TimeoutError"));
+    const descriptions = await discovery;
+    expect(descriptions.map((item) => item.connectorId)).toEqual([
+      "connector",
+      "later",
+    ]);
+    expect(mocks.close).toHaveBeenCalledTimes(3);
+  } finally {
+    timeout.mockRestore();
+  }
+});
+
+it("schema conversion cancellation stops later tool conversions after the pending schema settles", async () => {
+  const controller = new AbortController();
+  const timeout = vi
+    .spyOn(AbortSignal, "timeout")
+    .mockReturnValue(controller.signal);
+  const gate = Promise.withResolvers<{ type: "object" }>();
+  const firstSchema = vi.fn(() => gate.promise);
+  const laterSchema = vi.fn(() => ({ type: "object" as const }));
+  try {
+    mocks.tools.mockResolvedValueOnce({
+      first: { ...definition, inputSchema: jsonSchema(firstSchema) },
+      later: { ...definition, inputSchema: jsonSchema(laterSchema) },
+    });
+    const discovery = discoverEveMcpTools("owner", context.abortSignal);
+    await vi.waitFor(() => expect(firstSchema).toHaveBeenCalledOnce());
+    controller.abort(new DOMException("Timed out", "TimeoutError"));
+    expect(await discovery).toEqual([]);
+    gate.resolve({ type: "object" });
+    // oxlint-disable-next-line promise/avoid-new -- Let the cancelled background conversion drain before checking no subsequent work starts.
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    expect(laterSchema).not.toHaveBeenCalled();
+  } finally {
+    timeout.mockRestore();
+  }
+});

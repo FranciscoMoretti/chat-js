@@ -9,7 +9,7 @@ import {
   Lock,
   Shield,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Favicon } from "@/components/favicon";
@@ -39,6 +39,20 @@ export const McpConnectDialog = ({
 }) => {
   const trpc = useTRPC();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const attempt = useRef(0);
+  useEffect(() => {
+    if (!open || !connector?.id) {
+      attempt.current += 1;
+    }
+    return () => {
+      attempt.current += 1;
+    };
+  }, [open, connector?.id]);
+  const handleClose = useCallback(() => {
+    attempt.current += 1;
+    setIsRedirecting(false);
+    onClose();
+  }, [onClose]);
 
   const faviconUrl = useMemo(() => {
     if (!connector) {
@@ -48,21 +62,27 @@ export const McpConnectDialog = ({
   }, [connector]);
 
   const { mutate: authorize, isPending } = useMutation(
-    trpc.mcp.authorize.mutationOptions({
-      onError: (err) => {
-        toast.error(err.message || "Failed to start connection");
-      },
-    })
+    trpc.mcp.authorize.mutationOptions()
   );
 
   const handleContinue = useCallback(() => {
     if (!connector) {
       return;
     }
+    attempt.current += 1;
+    const currentAttempt = attempt.current;
     authorize(
       { id: connector.id },
       {
+        onError: (err) => {
+          if (attempt.current === currentAttempt) {
+            toast.error(err.message || "Failed to start connection");
+          }
+        },
         onSuccess: ({ authorizationUrl }) => {
+          if (attempt.current !== currentAttempt) {
+            return;
+          }
           if (!URL.canParse(authorizationUrl)) {
             toast.error("Invalid authorization URL");
             return;
@@ -80,7 +100,7 @@ export const McpConnectDialog = ({
   }, [authorize, connector]);
 
   return (
-    <Dialog onOpenChange={(o) => !o && onClose()} open={open}>
+    <Dialog onOpenChange={(o) => !o && handleClose()} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="overflow-hidden">
           <div className="flex items-center gap-3 overflow-hidden">
@@ -165,12 +185,7 @@ export const McpConnectDialog = ({
               </>
             )}
           </Button>
-          <Button
-            className="w-full"
-            disabled={isPending || isRedirecting}
-            onClick={onClose}
-            variant="ghost"
-          >
+          <Button className="w-full" onClick={handleClose} variant="ghost">
             Cancel
           </Button>
         </DialogFooter>

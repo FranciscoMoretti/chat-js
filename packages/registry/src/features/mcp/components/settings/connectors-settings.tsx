@@ -243,10 +243,13 @@ export const ConnectorsSettings = () => {
     isLoading,
     error,
     refetch: refetchConnectors,
-  } = useQuery(trpc.mcp.list.queryOptions());
+  } = useQuery({
+    ...trpc.mcp.list.queryOptions(),
+    enabled: installedFeatures.has("mcp"),
+  });
 
   const createOpen = qs.dialog === "config";
-  const connectOpen = qs.dialog === "connect";
+  const connectOpen = qs.dialog === "connect" && Boolean(qs.connectorId);
 
   const connectConnector = useMemo(() => {
     if (!(connectOpen && qs.connectorId && connectors)) {
@@ -280,6 +283,9 @@ export const ConnectorsSettings = () => {
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });
+        queryClient.invalidateQueries({
+          queryKey: trpc.mcp.listConnected.queryKey(),
+        });
       },
       onSuccess: () => {
         toast.success("Connector uninstalled");
@@ -295,6 +301,9 @@ export const ConnectorsSettings = () => {
         },
         onSettled: (_data, _err, vars) => {
           queryClient.invalidateQueries({ queryKey });
+          queryClient.invalidateQueries({
+            queryKey: trpc.mcp.listConnected.queryKey(),
+          });
           queryClient.invalidateQueries({
             queryKey: trpc.mcp.checkAuth.queryKey({ id: vars.id }),
           });

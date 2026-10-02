@@ -1,10 +1,11 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
+import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
 import {
@@ -33,16 +34,26 @@ const mocks = vi.hoisted(() => {
       disconnect: mutation,
       discover: query("discover"),
       list: query("list"),
+      listConnected: query("listConnected"),
       testConnection: query("testConnection"),
       toggleEnabled: mutation,
     },
     mutate: vi.fn(),
     needsOAuth: false,
+    pendingAuthorization: false,
     queryClient: { invalidateQueries: vi.fn() },
     refetch: vi.fn(),
     router: { push: vi.fn(), replace: vi.fn() },
     search: new URLSearchParams(),
   };
+});
+afterEach(() => {
+  mocks.listError = false;
+  mocks.cachedData = false;
+  mocks.needsOAuth = false;
+  mocks.pendingAuthorization = false;
+  vi.clearAllMocks();
+  mocks.search = new URLSearchParams();
 });
 const connector = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -52,7 +63,7 @@ const connector = {
   nameId: "documentation",
   oauthClientId: null,
   oauthClientSecret: null,
-  type: "sse",
+  type: "sse" as const,
   updatedAt: new Date("2026-01-01T00:00:00Z"),
   url: "https://docs.example.test/mcp",
   userId: "fixture-owner",
@@ -72,7 +83,10 @@ vi.mock("nuqs", () => ({
   useQueryStates: () => [{ connectorId: null, dialog: null }, vi.fn()],
 }));
 vi.mock("@tanstack/react-query", () => ({
-  useMutation: () => ({ isPending: false, mutate: mocks.mutate }),
+  useMutation: () => ({
+    isPending: mocks.pendingAuthorization,
+    mutate: mocks.mutate,
+  }),
   useQuery: ({ queryKey }: { queryKey: string[] }) => {
     const responses: Record<string, unknown> = {
       checkAuth: { isAuthenticated: true },
@@ -115,7 +129,11 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => mocks.queryClient,
 }));
 
-const renderPage = async (details: boolean, create = false) => {
+const renderPage = async (
+  details: boolean,
+  create = false,
+  connect = false
+) => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("div");
   container.className = "flex h-[850px] w-[900px] flex-col p-8";
@@ -127,6 +145,15 @@ const renderPage = async (details: boolean, create = false) => {
   }
   if (create) {
     content = <McpCreateDialog onClose={mocks.handleClose} open />;
+  }
+  if (connect) {
+    content = (
+      <McpConnectDialog
+        connector={connector}
+        onClose={mocks.handleClose}
+        open
+      />
+    );
   }
   // Render each route's client subtree with the same header/layout, without the server prefetch wrapper.
   await act(() =>
@@ -289,6 +316,49 @@ test("custom connector advanced settings expose transport and credentials and re
       .element(page.getByText("Name is required", { exact: true }))
       .toBeVisible();
     await takeSnapshot("mcp-create-advanced-validation");
+  } finally {
+    await cleanup();
+  }
+});
+
+test("pending OAuth can be dismissed", async () => {
+  mocks.pendingAuthorization = true;
+  const cleanup = await renderPage(false, false, true);
+  try {
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Cancel" }))
+      .toBeEnabled();
+    await expect
+      .element(page.getByRole("dialog"))
+      .toHaveStyle({ opacity: "1" });
+    await takeSnapshot("mcp-connect-pending-cancellable");
+    await act(() =>
+      page.getByRole("button", { exact: true, name: "Cancel" }).click()
+    );
+    expect(mocks.handleClose).toHaveBeenCalledOnce();
+  } finally {
+    await cleanup();
+  }
+});
+
+test("dismissed OAuth ignores a late authorization result", async () => {
+  const cleanup = await renderPage(false, false, true);
+  try {
+    await act(() =>
+      page
+        .getByRole("button", { name: "Continue to Documentation server" })
+        .click()
+    );
+    const [[, callbacks]] = mocks.mutate.mock.calls;
+    await act(() =>
+      page.getByRole("button", { exact: true, name: "Cancel" }).click()
+    );
+    await act(() =>
+      callbacks.onSuccess({
+        authorizationUrl: "https://authorization.example.test",
+      })
+    );
+    expect(window.location.hostname).not.toBe("authorization.example.test");
   } finally {
     await cleanup();
   }

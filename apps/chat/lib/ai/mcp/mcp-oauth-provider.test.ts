@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   read: vi.fn(),
   save: vi.fn(),
+  setClientInfo: vi.fn(),
 }));
 vi.mock("./mcp-fetch", () => ({ mcpFetch: mocks.fetch }));
 
@@ -14,6 +15,7 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   getAuthenticatedSession: mocks.read,
   getSessionByState: mocks.read,
   saveTokensAndCleanup: mocks.save,
+  setOAuthClientInfoOnceByState: mocks.setClientInfo,
 }));
 vi.mock("@/lib/db/mcp-oauth-lock", () => ({
   withMcpOAuthRefreshLock: async (_id: string, run: () => Promise<unknown>) =>
@@ -169,4 +171,36 @@ test("configured OAuth client credentials skip dynamic registration", async () =
     token_endpoint_auth_method: "client_secret_basic",
   });
   expect(mocks.fetch).not.toHaveBeenCalled();
+});
+
+test("failed client registration persistence can be retried without an optimistic cache", async () => {
+  const client = provider();
+  await client.tokens();
+  const clientInfo = {
+    client_id: "registered",
+    redirect_uris: ["http://localhost:3790/callback"],
+  };
+  mocks.setClientInfo.mockRejectedValueOnce(new Error("database unavailable"));
+  await expect(client.saveClientInformation(clientInfo)).rejects.toThrow(
+    "database unavailable"
+  );
+  mocks.setClientInfo.mockResolvedValueOnce({ ...stored, clientInfo });
+  await client.saveClientInformation(clientInfo);
+  expect(mocks.setClientInfo).toHaveBeenCalledTimes(2);
+});
+
+test("a cancelled refresh cannot begin token persistence after its response arrives", async () => {
+  const client = provider();
+  await client.tokens();
+  const controller = new AbortController();
+  mocks.fetch.mockImplementationOnce(() => {
+    controller.abort(new Error("refresh cancelled"));
+    return Response.json({ access_token: "new", token_type: "Bearer" });
+  });
+  await expect(
+    client.fetch(
+      new Request(refreshRequest("refresh-old"), { signal: controller.signal })
+    )
+  ).rejects.toThrow("refresh cancelled");
+  expect(mocks.save).not.toHaveBeenCalled();
 });

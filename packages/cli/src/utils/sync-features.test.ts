@@ -96,6 +96,8 @@ test("new core UI has no MCP imports; installing MCP registers its router and pr
     path.join(root, "settings-items.ts"),
     "utf-8"
   );
+  expect(settings).toContain('id: "custom-first"');
+  expect(settings).toContain('id: "custom-second"');
   expect(settings.indexOf('id: "custom-first"')).toBeLessThan(
     settings.indexOf('id: "custom-second"')
   );
