@@ -36,7 +36,9 @@
     "test:unit": "bun test src",
     "test:visual": "vitest run --config visual/vitest.config.ts",
     "lint": "oxlint . && oxfmt --check .",
-    "format": "oxfmt --write ."
+    "format": "oxfmt --write .",
+    "demo:check": "bun test test/demo-check.test.ts",
+    "demo:sync": "bun scripts/demo-sync.ts"
   },
   "dependencies": {},
   "devDependencies": {

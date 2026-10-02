@@ -151,7 +151,7 @@
       ]
     },
     "@chat-js/registry#test:unit": {
-      "dependsOn": ["^test:unit"],
+      "dependsOn": ["^test:unit", "demo:check"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/chat/**",
@@ -189,6 +189,29 @@
     "@chat-js/thread#test:types": {
       "dependsOn": ["^test:types"],
       "outputs": ["dist/**"]
+    },
+    "@chat-js/registry#demo:check": {
+      "cache": true,
+      "dependsOn": [],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/cli/src/**",
+        "$TURBO_ROOT$/packages/cli/package.json",
+        "$TURBO_ROOT$/packages/gateways/src/**",
+        "$TURBO_ROOT$/packages/gateways/package.json",
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/bun.lock",
+        "$TURBO_ROOT$/patches/**",
+        "$TURBO_ROOT$/oxfmt.config.ts",
+        "$TURBO_ROOT$/apps/chat/**",
+        "!$TURBO_ROOT$/apps/chat/**/{node_modules,.next,.eve,.output,.turbo,build,dist,playwright,playwright-report,test-results,eve-results,blob-report}/**",
+        "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo,.DS_Store,bun.lock,bun.lockb}"
+      ],
+      "outputs": []
+    },
+    "@chat-js/registry#demo:sync": {
+      "cache": false,
+      "outputs": []
     }
   }
 }
