@@ -38,17 +38,17 @@ const state = vi.hoisted(() => ({
   uploadsInstalled: true,
 }));
 vi.mock("@/features/installed-uploads", async () => {
-  const { attachmentUploadIntegration } =
+  const { attachmentUploads } =
     await import("@/features/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadState) => {
-    const behavior = attachmentUploadIntegration.useUploads(files);
+    const behavior = attachmentUploads.useUploads(files);
     return state.uploadsInstalled
       ? behavior
       : { ...files, upload: () => Promise.resolve(), uploadQueue: [] };
   };
   return {
     attachmentUploads: {
-      controls: attachmentUploadIntegration.controls,
+      controls: attachmentUploads.controls,
       useUploads: useFixtureUploads,
     },
   };

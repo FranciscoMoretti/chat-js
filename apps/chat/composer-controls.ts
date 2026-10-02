@@ -7,11 +7,11 @@ import {
   VideoControl,
 } from "@/components/composer/tool-controls";
 // Initial menu order. Reorder or extend this array; chat-js sync preserves it.
-import { attachmentUploadIntegration } from "@/features/attachment-uploads/integration";
+import { attachmentUploads } from "@/features/attachment-uploads/integration";
 import { ConnectorsControl } from "@/features/mcp/composer";
 
 export const composerControls: ComposerControl[] = [
-  ...attachmentUploadIntegration.controls,
+  ...attachmentUploads.controls,
   { Component: CanvasControl, id: "canvas" },
   { Component: SearchControl, id: "web-search" },
   { Component: ResearchControl, id: "deep-research" },

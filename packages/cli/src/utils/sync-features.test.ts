@@ -337,7 +337,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       path.join(root, "composer-controls.ts"),
       "utf-8"
     );
-    expect(composer).toContain("...attachmentUploadIntegration.controls");
+    expect(composer).toContain("...attachmentUploads.controls");
     expect(composer).toContain("ConnectorsControl");
     expect(
       await readFile(path.join(root, "features/installed.ts"), "utf-8")
@@ -346,8 +346,8 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       await readFile(path.join(root, "features/installed-uploads.ts"), "utf-8")
     ).toContain("@/features/attachment-uploads/integration");
     const reordered = composer.replace(
-      "...attachmentUploadIntegration.controls",
-      "...attachmentUploadIntegration.controls /* user placement */"
+      "...attachmentUploads.controls",
+      "...attachmentUploads.controls /* user placement */"
     );
     await writeFile(path.join(root, "composer-controls.ts"), reordered);
     await syncFeatures(root);

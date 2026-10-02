@@ -115,7 +115,7 @@ const useUploads = ({ attachments, setAttachments }: AttachmentUploadState) => {
   };
 };
 
-export const attachmentUploadIntegration = {
+export const attachmentUploads = {
   controls: [
     { Component: AttachFilesControl, id: "attach-files" },
     { Component: TakePhotoControl, id: "take-photo" },
