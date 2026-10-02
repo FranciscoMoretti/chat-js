@@ -62,7 +62,7 @@ beforeEach(() => {
   });
   mocks.snapshot.mockResolvedValue({ events: [] });
   mocks.access.mockResolvedValue({ allowed: true });
-  mocks.metadata.mockResolvedValue({ size: 3 });
+  mocks.metadata.mockResolvedValue({ size: 3, type: "image/png" });
   mocks.download.mockResolvedValue(
     new Blob([new Uint8Array([1, 2, 3])], { type: "image/png" })
   );
@@ -140,7 +140,7 @@ it("rechecks file access and size and never fetches a remote history URL", async
 
 it("rejects oversized metadata before downloading or reserving", async () => {
   mocks.messages[0].parts[0].url = "/api/files/abcdefghijklmnopqrstuvwx.png";
-  mocks.metadata.mockResolvedValue({ size: 11 });
+  mocks.metadata.mockResolvedValue({ size: 11, type: "image/png" });
   await expect(restoreMessageAttachments("owner", input)).rejects.toThrow(
     "unsupported type or size"
   );
@@ -163,4 +163,50 @@ it("rejects a remote reference before storage access", async () => {
   );
   expect(mocks.access).not.toHaveBeenCalled();
   expect(mocks.download).not.toHaveBeenCalled();
+});
+
+it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])(
+  "rejects a later %s attachment before reserving or copying any file",
+  async (failure) => {
+    const part = {
+      filename: "second.png",
+      mediaType: "image/png",
+      type: "file",
+      url: "/api/files/abcdefghijklmnopqrstuvwx.png",
+    };
+    mocks.messages[0].parts.push(part);
+    if (failure === "missing") {
+      mocks.metadata.mockRejectedValue(new Error("File missing"));
+    } else if (failure === "inaccessible") {
+      mocks.access.mockResolvedValue({ allowed: false });
+    } else if (failure === "oversized") {
+      mocks.metadata.mockResolvedValue({ size: 11, type: "image/png" });
+    } else if (failure === "unsupported") {
+      mocks.metadata.mockResolvedValue({ size: 3, type: "text/plain" });
+    } else {
+      part.url = "data:image/png;base64,AQID!!!";
+    }
+    await expect(restoreMessageAttachments("owner", input)).rejects.toThrow();
+    expect(mocks.reserve).not.toHaveBeenCalled();
+    expect(mocks.download).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
+  }
+);
+
+it("preflights all files then copies valid mixed history in order", async () => {
+  mocks.messages[0].parts.push({
+    filename: "second.png",
+    mediaType: "image/png",
+    type: "file",
+    url: "/api/files/abcdefghijklmnopqrstuvwx.png",
+  });
+  const attachments = await restoreMessageAttachments("owner", input);
+  expect(attachments.map((attachment) => attachment.name)).toEqual([
+    "photo.png",
+    "second.png",
+  ]);
+  expect(mocks.metadata.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.reserve.mock.invocationCallOrder[0]
+  );
+  expect(mocks.upload).toHaveBeenCalledTimes(2);
 });

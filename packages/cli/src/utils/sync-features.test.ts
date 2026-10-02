@@ -365,15 +365,24 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     expect(
       await readFile(path.join(root, "composer-controls.ts"), "utf-8")
     ).toBe(reordered);
-    const customControls = composer.replace(
-      "...attachmentUploads.controls",
-      '{ Component: AttachFilesControl, id: "attach-files" }, { Component: TakePhotoControl, id: "take-photo" }'
-    );
-    await writeFile(path.join(root, "composer-controls.ts"), customControls);
-    await syncFeatures(root, { addUi: true, expectedMcp: true });
-    expect(
-      await readFile(path.join(root, "composer-controls.ts"), "utf-8")
-    ).toBe(customControls);
+    for (const controls of [
+      '{ Component: AttachFilesControl, id: "attach-files" }, { Component: TakePhotoControl, id: "take-photo" }',
+      '{ Component: AttachFilesControl, id: "attach-files" }',
+      '{ Component: TakePhotoControl, id: "take-photo" }',
+    ]) {
+      const customControls = composer.replace(
+        "...attachmentUploads.controls",
+        controls
+      );
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Verify each app-owned placement independently.
+      await writeFile(path.join(root, "composer-controls.ts"), customControls);
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Sync must preserve the selected control subset.
+      await syncFeatures(root, { addUi: true, expectedMcp: true });
+      expect(
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Compare the exact app-owned source after sync.
+        await readFile(path.join(root, "composer-controls.ts"), "utf-8")
+      ).toBe(customControls);
+    }
     await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
     await expect(syncFeatures(root, { expectedUploads: true })).rejects.toThrow(
       "app/(chat)/api/files/upload/route.ts"
