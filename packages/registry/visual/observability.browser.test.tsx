@@ -19,6 +19,11 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
     "padding:24px;background:white;color:black;width:500px";
   document.body.append(container);
   const root = createRoot(container);
+  const telemetrySelector =
+    'script[data-sdkn^="@vercel/analytics"], script[data-sdkn^="@vercel/speed-insights"]';
+  const existingScripts = new Set(
+    document.head.querySelectorAll(telemetrySelector)
+  );
   try {
     await act(() => {
       root.render(
@@ -43,6 +48,11 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
     });
   } finally {
     await act(() => root.unmount());
+    for (const script of document.head.querySelectorAll(telemetrySelector)) {
+      if (!existingScripts.has(script)) {
+        script.remove();
+      }
+    }
     container.remove();
   }
 });

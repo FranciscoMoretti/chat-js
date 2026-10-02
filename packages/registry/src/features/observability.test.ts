@@ -76,3 +76,49 @@ catch (error) { console.log(error.code + ":" + error.integration); process.exitC
     );
   });
 }
+
+test("successful Node registration configures one exporter with application identity and explicit options", () => {
+  const child = Bun.spawnSync(
+    [
+      process.execPath,
+      "-e",
+      `import assert from "node:assert/strict";
+import { mock } from "bun:test";
+const exporters = [];
+const registrations = [];
+class Exporter {
+  constructor(options) { this.options = options; exporters.push(this); }
+}
+mock.module("@vercel/otel", () => ({ registerOTel: (options) => registrations.push(options) }));
+mock.module("langfuse-vercel", () => ({ LangfuseExporter: Exporter }));
+const { register } = await import("${new URL("langfuse/instrumentation.ts", import.meta.url).pathname}");
+await register({ appPrefix: "custom-app", runtime: "nodejs" });
+assert.equal(exporters.length, 1);
+assert.equal(registrations.length, 1);
+assert.equal(registrations[0].serviceName, "custom-app");
+assert.equal(registrations[0].traceExporter, exporters[0]);
+assert.deepEqual(exporters[0].options, {
+  baseUrl: "https://langfuse.example",
+  debug: true,
+  publicKey: "test-public",
+  secretKey: "test-secret",
+});
+console.log("registered once");`,
+    ],
+    {
+      env: {
+        ...process.env,
+        CI_PLAYWRIGHT: "false",
+        LANGFUSE_BASE_URL: "https://langfuse.example",
+        LANGFUSE_DEBUG: "true",
+        LANGFUSE_PUBLIC_KEY: "test-public",
+        LANGFUSE_SECRET_KEY: "test-secret",
+        PLAYWRIGHT: "false",
+        PLAYWRIGHT_TEST_BASE_URL: "",
+      },
+    }
+  );
+  expect(child.exitCode).toBe(0);
+  expect(child.stdout.toString().trim()).toBe("registered once");
+  expect(child.stderr.toString()).toBe("");
+});
