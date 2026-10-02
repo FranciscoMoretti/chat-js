@@ -35,7 +35,7 @@ export class MCPClient {
   private connectionAbort?: AbortController;
   private connectPromise?: Promise<McpClientInstance | undefined>;
   private readonly invalidateCache?: () => void;
-  private readonly oauthProvider: McpOAuthClientProvider;
+  private oauthProvider: McpOAuthClientProvider;
   private authorizationUrl?: URL;
   private _status: McpClientStatus = "disconnected";
 
@@ -65,9 +65,14 @@ export class MCPClient {
     this.id = id;
     this.name = name;
     this.serverConfig = serverConfig;
+    this.oauthProvider = this.createOAuthProvider();
+  }
+
+  private createOAuthProvider() {
+    const { generation } = this;
     const baseUrl = getBaseUrl();
 
-    this.oauthProvider = new McpOAuthClientProvider({
+    return new McpOAuthClientProvider({
       clientMetadata: {
         client_name: `${config.appPrefix}-${this.name}`,
         grant_types: ["authorization_code", "refresh_token"],
@@ -77,14 +82,17 @@ export class MCPClient {
         software_id: config.appPrefix,
         software_version: "1.0.0",
         token_endpoint_auth_method:
-          serverConfig.oauthClientId && serverConfig.oauthClientSecret
+          this.serverConfig.oauthClientId && this.serverConfig.oauthClientSecret
             ? "client_secret_basic"
             : "none",
       },
       mcpConnectorId: this.id,
-      oauthClientId: serverConfig.oauthClientId,
-      oauthClientSecret: serverConfig.oauthClientSecret,
+      oauthClientId: this.serverConfig.oauthClientId,
+      oauthClientSecret: this.serverConfig.oauthClientSecret,
       onRedirectToAuthorization: (authorizationUrl: URL) => {
+        if (generation !== this.generation) {
+          throw new Error("MCP connection was closed");
+        }
         this.authorizationUrl = authorizationUrl;
         throw new OAuthAuthorizationRequiredError(authorizationUrl);
       },
@@ -147,7 +155,7 @@ export class MCPClient {
       return this.client;
     }
 
-    const { generation } = this;
+    const { generation, oauthProvider } = this;
     this.connectionAbort = new AbortController();
     const signal = AbortSignal.any([
       this.connectionAbort.signal,
@@ -158,15 +166,15 @@ export class MCPClient {
     try {
       // Adopt state if provided (for callback reconciliation).
       if (oauthState) {
-        await this.oauthProvider.adoptState(oauthState);
+        await oauthProvider.adoptState(oauthState);
       }
       signal.throwIfAborted();
       // AI SDK handles 401 internally and calls auth() with the provider
       const client = await createMCPClient({
         initializationOptions: { signal },
         transport: {
-          authProvider: this.oauthProvider,
-          fetch: this.oauthProvider.fetch,
+          authProvider: oauthProvider,
+          fetch: oauthProvider.fetch,
           headers: this.serverConfig.headers,
           type: this.serverConfig.type,
           url: this.serverConfig.url,
@@ -267,16 +275,20 @@ export class MCPClient {
    * Called after callback receives code to complete the OAuth flow.
    */
   async finishAuth(code: string, state: string): Promise<void> {
+    const { generation, oauthProvider } = this;
     // Always adopt the state from the callback to load the session with code verifier
-    await this.oauthProvider.adoptState(state);
+    await oauthProvider.adoptState(state);
 
     // Use the auth function from @ai-sdk/mcp to complete the OAuth flow
-    await auth(this.oauthProvider, {
+    await auth(oauthProvider, {
       authorizationCode: code,
-      fetchFn: this.oauthProvider.fetch,
+      fetchFn: oauthProvider.fetch,
       serverUrl: this.serverConfig.url,
     });
 
+    if (generation !== this.generation) {
+      throw new Error("MCP connection was closed");
+    }
     this.authorizationUrl = undefined;
     // Don't set to connected - tokens are saved, next connect() will use them
   }
@@ -338,6 +350,7 @@ export class MCPClient {
     this.generation += 1;
     this.connectionAbort?.abort(new Error("MCP connection was closed"));
     this.connectPromise = undefined;
+    this.oauthProvider = this.createOAuthProvider();
     const { client } = this;
     this.client = undefined;
     this.authorizationUrl = undefined;
