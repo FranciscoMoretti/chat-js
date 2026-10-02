@@ -139,6 +139,7 @@ export const discoverEveMcpTools = async (
         connectorSignal,
         async (tools) => {
           for (const [remoteName, tool] of Object.entries(tools)) {
+            connectorSignal.throwIfAborted();
             try {
               // MCP output and approval policies are adapted explicitly below.
               const {
@@ -162,6 +163,7 @@ export const discoverEveMcpTools = async (
                 remoteName,
               });
             } catch {
+              connectorSignal.throwIfAborted();
               log.warn(
                 { connectorId: connector.id, remoteName },
                 "Unsupported MCP tool schema"

@@ -583,3 +583,31 @@ it("a timed-out connector does not discard completed discovery or suppress the n
     timeout.mockRestore();
   }
 });
+
+it("schema conversion cancellation stops later tool conversions after the pending schema settles", async () => {
+  const controller = new AbortController();
+  const timeout = vi
+    .spyOn(AbortSignal, "timeout")
+    .mockReturnValue(controller.signal);
+  const gate = Promise.withResolvers<{ type: "object" }>();
+  const firstSchema = vi.fn(() => gate.promise);
+  const laterSchema = vi.fn(() => ({ type: "object" as const }));
+  try {
+    mocks.tools.mockResolvedValueOnce({
+      first: { ...definition, inputSchema: jsonSchema(firstSchema) },
+      later: { ...definition, inputSchema: jsonSchema(laterSchema) },
+    });
+    const discovery = discoverEveMcpTools("owner", context.abortSignal);
+    await vi.waitFor(() => expect(firstSchema).toHaveBeenCalledOnce());
+    controller.abort(new DOMException("Timed out", "TimeoutError"));
+    expect(await discovery).toEqual([]);
+    gate.resolve({ type: "object" });
+    // oxlint-disable-next-line promise/avoid-new -- Let the cancelled background conversion drain before checking no subsequent work starts.
+    await new Promise((resolve) => {
+      setTimeout(resolve, 10);
+    });
+    expect(laterSchema).not.toHaveBeenCalled();
+  } finally {
+    timeout.mockRestore();
+  }
+});

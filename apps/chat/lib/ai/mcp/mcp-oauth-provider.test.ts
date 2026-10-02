@@ -188,3 +188,19 @@ test("failed client registration persistence can be retried without an optimisti
   await client.saveClientInformation(clientInfo);
   expect(mocks.setClientInfo).toHaveBeenCalledTimes(2);
 });
+
+test("a cancelled refresh cannot begin token persistence after its response arrives", async () => {
+  const client = provider();
+  await client.tokens();
+  const controller = new AbortController();
+  mocks.fetch.mockImplementationOnce(() => {
+    controller.abort(new Error("refresh cancelled"));
+    return Response.json({ access_token: "new", token_type: "Bearer" });
+  });
+  await expect(
+    client.fetch(
+      new Request(refreshRequest("refresh-old"), { signal: controller.signal })
+    )
+  ).rejects.toThrow("refresh cancelled");
+  expect(mocks.save).not.toHaveBeenCalled();
+});
