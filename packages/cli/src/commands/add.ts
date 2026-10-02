@@ -186,18 +186,17 @@ export const add = new Command("add")
         plan,
         {
           managedTargets: [
-            ...(selectedGateway
-              ? [
-                  "lib/ai/gateway-model-defaults.ts",
-                  "lib/ai/models.generated.ts",
-                ]
-              : []),
-            ...(configEdit ? ["chat.config.ts"] : []),
+            ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
             ...(selectedStorage && !keepStorageOptions
-              ? ["lib/storage-options.ts"]
+              ? ["lib/storage-options.ts", ".env.example"]
               : []),
           ],
           overwrite: options.overwrite,
+          rollbackTargets: [
+            ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
+            ...(configEdit ? ["chat.config.ts"] : []),
+            ...(selectedGateway || selectedStorage ? [".env.example"] : []),
+          ],
         },
         async () => {
           if (selectedGateway) {
@@ -211,7 +210,7 @@ export const add = new Command("add")
           }
           await syncTools(cwd, { expected: plan.expected });
           await syncFeatures(cwd, {
-            addUi: true,
+            addUi: plan.features.map((feature) => feature.id),
             expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
             expectedUploads: plan.features.some(
               (feature) => feature.id === "attachment-uploads"

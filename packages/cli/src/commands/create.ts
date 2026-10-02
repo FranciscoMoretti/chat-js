@@ -120,6 +120,7 @@ const createOptionsSchema = z.object({
       (value) =>
         value
           .split(",")
+          .map((id) => id.trim())
           .filter(Boolean)
           .every((id) => observabilityItems.some((item) => item.name === id)),
       "Observability must select vercel-analytics, vercel-speed-insights or langfuse."
@@ -284,7 +285,10 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   const observability =
     options.observability === undefined
       ? await promptObservability(options.yes)
-      : options.observability.split(",").filter(Boolean);
+      : options.observability
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
   const documentTypes = await promptDocumentTypes(
     options.yes,
     coreFeatures.documents
@@ -472,6 +476,7 @@ const installRegistryItems = async (
       "lib/ai/gateway-model-defaults.ts",
       "lib/ai/models.generated.ts",
       "lib/storage-options.ts",
+      ".env.example",
     ]);
     installSpinner.succeed("Registry items installed and configured.");
     return installedTools;
@@ -608,7 +613,7 @@ export const create = new Command()
   .option("--no-attachments", "omit user attachment uploads")
   .option(
     "--observability <items>",
-    "comma-separated vercel-analytics, vercel-speed-insights,langfuse (default: none)"
+    "comma-separated vercel-analytics, vercel-speed-insights, langfuse (default: none)"
   )
   .option("--mcp", "install MCP connectors, pages and OAuth callback")
   .option("--no-mcp", "omit MCP from the new app")

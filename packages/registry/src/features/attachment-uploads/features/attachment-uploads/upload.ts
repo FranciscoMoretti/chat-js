@@ -8,7 +8,12 @@ export const uploadAttachment = async (file: File) => {
     method: "POST",
   });
   if (!response.ok) {
-    throw new Error(`Unable to upload ${file.name}.`);
+    const failure = await response.json().catch(() => null);
+    throw new Error(
+      typeof failure?.error === "string"
+        ? failure.error
+        : `Unable to upload ${file.name}.`
+    );
   }
   const uploaded = await response.json();
   return draftAttachment.parse({

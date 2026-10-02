@@ -291,7 +291,7 @@ export const AttachmentList = ({
         />
       ))}
 
-      {uploadQueue.map((filename) => (
+      {uploadQueue.map((filename, index) => (
         <AttachmentItem
           attachment={{
             contentType: "",
@@ -299,7 +299,8 @@ export const AttachmentList = ({
             url: "",
           }}
           isUploading={true}
-          key={filename}
+          // oxlint-disable-next-line react/no-array-index-key -- The queue is an immutable batch until it is cleared; positions disambiguate same-named files.
+          key={`${filename}:${index}`}
           variant={variant}
         />
       ))}

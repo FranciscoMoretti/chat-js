@@ -125,6 +125,17 @@ test("rejects conflicting provider selections and permits reinstalling the selec
         tools: [`http://127.0.0.1:${server.port}/second.json`],
       })
     ).rejects.toThrow("Only one codeExecution");
+    const fresh = await planInstallation(
+      root,
+      {
+        features: [],
+        tools: [`http://127.0.0.1:${server.port}/second.json`],
+      },
+      { fresh: true }
+    );
+    expect(fresh.replacements.map(({ previous }) => previous.id)).toEqual([
+      "first",
+    ]);
     const reinstall = await planInstallation(root, {
       features: [],
       tools: [`http://127.0.0.1:${server.port}/first.json`],

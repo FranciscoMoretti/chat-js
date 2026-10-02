@@ -83,11 +83,13 @@ export const McpConnectDialog = ({
           if (attempt.current !== currentAttempt) {
             return;
           }
-          if (!URL.canParse(authorizationUrl)) {
+          let url: URL;
+          try {
+            url = new URL(authorizationUrl);
+          } catch {
             toast.error("Invalid authorization URL");
             return;
           }
-          const url = new URL(authorizationUrl);
           if (url.protocol !== "https:" && url.protocol !== "http:") {
             toast.error("Invalid authorization URL");
             return;

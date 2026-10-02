@@ -215,6 +215,16 @@ export const createOAuthSession = async ({
   codeVerifier?: string;
   clientInfo?: OAuthClientInformationFull;
 }): Promise<McpOAuthSession> => {
+  // Preserve active authorization attempts while pruning abandoned expired attempts.
+  await db
+    .delete(mcpOAuthSession)
+    .where(
+      and(
+        eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
+        isNull(mcpOAuthSession.tokens),
+        sql`${mcpOAuthSession.createdAt} < now() - interval '1 hour'`
+      )
+    );
   const [session] = await db
     .insert(mcpOAuthSession)
     .values({

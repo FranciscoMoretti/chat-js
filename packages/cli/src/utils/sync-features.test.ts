@@ -295,6 +295,10 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-upload-install-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
+  await writeFile(
+    path.join(root, "package.json"),
+    JSON.stringify({ dependencies: {}, name: "upload-fixture" })
+  );
   const uploadPresence = await Promise.all(
     attachmentUploadFiles.map((file) =>
       Bun.file(path.join(root, file)).exists()
@@ -361,7 +365,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       "...attachmentUploads.controls /* user placement */"
     );
     await writeFile(path.join(root, "composer-controls.ts"), reordered);
-    await syncFeatures(root);
+    await syncFeatures(root, { addUi: true });
     expect(
       await readFile(path.join(root, "composer-controls.ts"), "utf-8")
     ).toBe(reordered);
@@ -382,3 +386,23 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     server.stop(true);
   }
 }, 30_000);
+
+test("unrelated additions preserve computed feature UI; requesting MCP still requires manual composition", async () => {
+  const root = await fixture();
+  await initializeFeatureUi(root);
+  await install(root);
+  const composer = "export const composerControls = getUserControls();\n";
+  const settings = "export const settingsItems = getUserSettings();\n";
+  await writeFile(path.join(root, "composer-controls.ts"), composer);
+  await writeFile(path.join(root, "settings-items.ts"), settings);
+  await syncFeatures(root, { addUi: [] });
+  expect(await readFile(path.join(root, "composer-controls.ts"), "utf-8")).toBe(
+    composer
+  );
+  expect(await readFile(path.join(root, "settings-items.ts"), "utf-8")).toBe(
+    settings
+  );
+  await expect(syncFeatures(root, { addUi: ["mcp"] })).rejects.toThrow(
+    "manually"
+  );
+});

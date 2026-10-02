@@ -91,7 +91,8 @@ const planContribution = async (
     array.elements.some(
       (item) =>
         item.getText(parsed) === binding ||
-        item.getText(parsed) === `...${binding}.controls` ||
+        (ts.isSpreadElement(item) &&
+          item.expression.getText(parsed) === `${binding}.controls`) ||
         (ts.isObjectLiteralExpression(item) &&
           item.properties.some(
             (prop) =>
@@ -224,16 +225,20 @@ const validateMcp = async (cwd: string, expected?: boolean) => {
 export const syncFeatures = async (
   cwd: string,
   options: {
-    addUi?: boolean;
+    addUi?: boolean | readonly string[];
     expectedMcp?: boolean;
     expectedUploads?: boolean;
   } = {}
 ) => {
+  const uiFeatures =
+    options.addUi === true
+      ? ["mcp", "attachment-uploads"]
+      : options.addUi || [];
   const observability = await planObservability(cwd);
   const mcp = await validateMcp(cwd, options.expectedMcp);
   const uploads = await validateAttachmentUploads(cwd, options.expectedUploads);
   const ui: { content: string; file: string }[] =
-    mcp && options.addUi
+    mcp && uiFeatures.includes("mcp")
       ? await Promise.all([
           planContribution(
             path.join(cwd, "composer-controls.ts"),
@@ -253,7 +258,7 @@ export const syncFeatures = async (
           ),
         ])
       : [];
-  if (uploads && options.addUi) {
+  if (uploads && uiFeatures.includes("attachment-uploads")) {
     const file = path.join(cwd, "composer-controls.ts");
     const previous = ui.find((edit) => edit.file === file);
     const edit = await planContribution(

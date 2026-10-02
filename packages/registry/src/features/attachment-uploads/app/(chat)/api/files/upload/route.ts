@@ -7,7 +7,7 @@ import { config } from "@/lib/config";
 import { reserveEveUpload, writeEveUpload } from "@/lib/db/eve-files";
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 
-// Use Blob instead of File since File is not available in Node.js environment
+// Validate uploaded bytes through the Blob interface; File extends Blob.
 const FileSchema = z.object({
   file: z
     .instanceof(Blob)

@@ -18,6 +18,14 @@ import { getEveConnectionOptions } from "./connection-options";
 import { attachmentDigest, draftAttachment } from "./draft";
 import { assertEveConfigured } from "./server";
 
+const parseContentType = (value: string) => {
+  const parsed = draftAttachment.shape.contentType.safeParse(value);
+  if (!parsed.success) {
+    throw new Error("This attachment has an unsupported type or size.");
+  }
+  return parsed.data;
+};
+
 /** Copy trusted native history for editing; callers cannot supply file bytes or URLs. */
 export const restoreMessageAttachments = async (
   ownerId: string,
@@ -49,7 +57,7 @@ export const restoreMessageAttachments = async (
     if (part.type !== "file") {
       continue;
     }
-    const contentType = draftAttachment.shape.contentType.parse(part.mediaType);
+    const contentType = parseContentType(part.mediaType);
     if (!part.url) {
       throw new Error("This attachment is unavailable for editing.");
     }
