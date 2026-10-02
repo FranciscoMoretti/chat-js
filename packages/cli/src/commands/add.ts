@@ -98,6 +98,28 @@ const prepareAdd = async (
   };
 };
 
+const printSetupRequirements = (
+  setup: Awaited<ReturnType<typeof prepareAdd>>
+) => {
+  const { plan, selectedGateway, selectedStorage } = setup;
+  if (plan.features.some((feature) => feature.id === "mcp")) {
+    log.info(
+      "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
+    );
+  }
+  const requirements = [
+    ...plan.expected.flatMap((item) => item.envRequirements),
+    ...plan.features.flatMap((feature) => feature.envRequirements ?? []),
+    ...(selectedGateway?.definition.envRequirements ?? []),
+    ...(selectedStorage?.definition.envRequirements ?? []),
+  ];
+  for (const requirement of requirements) {
+    log.info(
+      `Required: ${requirement.options.map((option) => option.join(" + ")).join(" or ")}`
+    );
+  }
+};
+
 export const add = new Command("add")
   .description(
     "install registry tools/features/providers and compose their ChatJS registrations"
@@ -125,6 +147,7 @@ export const add = new Command("add")
     try {
       const cwd = path.resolve(options.cwd);
       await access(path.join(cwd, "chat.config.ts"));
+      const setup = await prepareAdd(cwd, items, options);
       const {
         plan,
         selectedGateway,
@@ -132,7 +155,7 @@ export const add = new Command("add")
         gatewayChange,
         configEdit,
         keepStorageOptions,
-      } = await prepareAdd(cwd, items, options);
+      } = setup;
       for (const { previous, next } of plan.replacements) {
         log.info(
           `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
@@ -196,22 +219,7 @@ export const add = new Command("add")
           });
         }
       );
-      if (plan.features.some((feature) => feature.id === "mcp")) {
-        log.info(
-          "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
-        );
-      }
-      const requirements = [
-        ...plan.expected.flatMap((item) => item.envRequirements),
-        ...plan.features.flatMap((feature) => feature.envRequirements ?? []),
-        ...(selectedGateway?.definition.envRequirements ?? []),
-        ...(selectedStorage?.definition.envRequirements ?? []),
-      ];
-      for (const requirement of requirements) {
-        log.info(
-          `Required: ${requirement.options.map((option) => option.join(" + ")).join(" or ")}`
-        );
-      }
+      printSetupRequirements(setup);
       log.success(
         "Installed and registered. Review .env.local, then run setup."
       );
