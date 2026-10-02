@@ -163,6 +163,10 @@
       "dependsOn": ["^test:types"],
       "inputs": [
         "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/cli/src/**",
+        "$TURBO_ROOT$/packages/cli/package.json",
+        "$TURBO_ROOT$/packages/gateways/src/**",
+        "$TURBO_ROOT$/packages/gateways/package.json",
         "$TURBO_ROOT$/apps/chat/**",
         "!$TURBO_ROOT$/apps/chat/**/{node_modules,.next,.eve,.output,.turbo,playwright-report,test-results,eve-results}/**",
         "!$TURBO_ROOT$/apps/chat/**/{.env*,*.tsbuildinfo}"

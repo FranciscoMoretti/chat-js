@@ -1,5 +1,12 @@
-import { afterEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { afterEach, expect, spyOn, test } from "bun:test";
+import fs, {
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -117,9 +124,16 @@ test("symlink destinations are rejected before writes", async () => {
     path.join(options.root, "linked.ts")
   );
   options.expected.set("linked.ts", "// canonical\n");
+  const before = await readFile(
+    path.join(options.root, "implementation.ts"),
+    "utf-8"
+  );
   await expect(syncDemo({ ...options, discard: true })).rejects.toThrow(
     "symlink"
   );
+  expect(
+    await readFile(path.join(options.root, "implementation.ts"), "utf-8")
+  ).toBe(before);
 });
 
 test("edits moved upstream can advance the baseline without discarding", async () => {
@@ -128,9 +142,106 @@ test("edits moved upstream can advance the baseline without discarding", async (
     "// edit now canonical upstream\nexport type Result = number;\n";
   await writeFile(path.join(options.root, "implementation.ts"), source);
   options.expected.set("implementation.ts", source);
+  await expect(syncDemo({ ...options, check: true })).rejects.toThrow(
+    `Baseline drift: ${options.baseline}`
+  );
   await syncDemo(options);
   await syncDemo({ ...options, check: true });
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe(source);
+});
+
+test("baseline key ordering uses locale-independent code-unit order", async () => {
+  const options = await fixture();
+  const names = ["z.ts", "é.ts", "a.ts", "Z.ts", "_a.ts"];
+  for (const file of names) {
+    options.expected.set(file, "// canonical\n");
+  }
+  const collation = spyOn(String.prototype, "localeCompare").mockImplementation(
+    () => {
+      throw new Error("Locale-dependent ordering");
+    }
+  );
+  try {
+    await syncDemo(options);
+  } finally {
+    collation.mockRestore();
+  }
+  const baseline = JSON.parse(await readFile(options.baseline, "utf-8"));
+  expect(Object.keys(baseline.files)).toEqual(
+    [...options.expected.keys()].toSorted()
+  );
+});
+
+test.each(["source", "baseline"])(
+  "a failed %s replacement restores prior source and baseline, permitting retry",
+  async (failure) => {
+    const options = await fixture();
+    const originalSource = await readFile(
+      path.join(options.root, "implementation.ts"),
+      "utf-8"
+    );
+    const originalBaseline = await readFile(options.baseline, "utf-8");
+    options.expected.set("implementation.ts", "// updated canonical\n");
+    options.expected.set("new.ts", "// new canonical\n");
+    const target =
+      failure === "baseline"
+        ? options.baseline
+        : path.join(options.root, "new.ts");
+    const originalRename = fs.rename;
+    let replacedSource = false;
+    let failed = false;
+    const rename = spyOn(fs, "rename").mockImplementation(
+      async (source, destination) => {
+        if (
+          destination === target &&
+          String(source).endsWith("/next") &&
+          !failed
+        ) {
+          failed = true;
+          throw new Error("Injected replacement failure");
+        }
+        await originalRename(source, destination);
+        if (destination === path.join(options.root, "implementation.ts")) {
+          replacedSource = true;
+        }
+      }
+    );
+    try {
+      await expect(syncDemo(options)).rejects.toThrow(
+        "Injected replacement failure"
+      );
+    } finally {
+      rename.mockRestore();
+    }
+    expect(failed).toBe(true);
+    expect(replacedSource).toBe(true);
+    expect(
+      await readFile(path.join(options.root, "implementation.ts"), "utf-8")
+    ).toBe(originalSource);
+    expect(await readFile(options.baseline, "utf-8")).toBe(originalBaseline);
+    expect(await Bun.file(path.join(options.root, "new.ts")).exists()).toBe(
+      false
+    );
+    const entries = await readdir(options.root);
+    expect(entries.some((file) => file.startsWith(".demo-sync-"))).toBe(false);
+    await syncDemo(options);
+    await syncDemo({ ...options, check: true });
+  }
+);
+
+test("a symlinked baseline is rejected before source or external target writes", async () => {
+  const options = await fixture();
+  const external = path.join(options.root, "external.json");
+  const before = await readFile(options.baseline, "utf-8");
+  await writeFile(external, before);
+  await rm(options.baseline);
+  await fs.symlink(external, options.baseline);
+  options.expected.set("implementation.ts", "// changed canonical\n");
+  await expect(syncDemo(options)).rejects.toThrow("symlink");
+  expect(await readFile(external, "utf-8")).toBe(before);
+  expect(
+    await readFile(path.join(options.root, "implementation.ts"), "utf-8")
+  ).toBe("// canonical\nexport type Result = string;\n");
 });

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import {
+import fs, {
   mkdir,
   mkdtemp,
   readFile,
@@ -75,7 +75,7 @@ const filesBelow = async (
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(
     entries.map((entry) => {
-      const file = path.join(prefix, entry.name);
+      const file = path.posix.join(prefix, entry.name);
       return entry.isDirectory()
         ? filesBelow(path.join(directory, entry.name), file)
         : [file];
@@ -217,6 +217,79 @@ const baselineSchema = z.strictObject({
   version: z.literal(1),
 });
 
+/** Stage every write before replacing files; retain originals until the baseline commits. */
+const replaceDemoFiles = async (
+  updates: { target: string; content: string; exists: boolean }[]
+) => {
+  const staged: {
+    target: string;
+    directory: string;
+    exists: boolean;
+    backedUp: boolean;
+    installed: boolean;
+  }[] = [];
+  let retainBackups = false;
+  try {
+    for (const update of updates) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Stage all outputs before replacing any destination.
+      await mkdir(path.dirname(update.target), { recursive: true });
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Temporary files must share the destination filesystem.
+      const directory = await mkdtemp(
+        path.join(path.dirname(update.target), ".demo-sync-")
+      );
+      staged.push({ ...update, backedUp: false, directory, installed: false });
+      // oxlint-disable-next-line eslint/no-await-in-loop -- See above.
+      await writeFile(path.join(directory, "next"), update.content);
+    }
+    for (const update of staged) {
+      if (update.exists) {
+        // oxlint-disable-next-line eslint/no-await-in-loop -- Keep originals for rollback until all replacements succeed.
+        await fs.rename(update.target, path.join(update.directory, "previous"));
+        update.backedUp = true;
+      }
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Commit in order, with the baseline last.
+      await fs.rename(path.join(update.directory, "next"), update.target);
+      update.installed = true;
+    }
+  } catch (error) {
+    const failures: unknown[] = [];
+    for (const update of staged.toReversed()) {
+      try {
+        if (update.installed) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- Restore replacements in reverse commit order.
+          await rm(update.target);
+        }
+        if (update.backedUp) {
+          // oxlint-disable-next-line eslint/no-await-in-loop -- See above.
+          await fs.rename(
+            path.join(update.directory, "previous"),
+            update.target
+          );
+        }
+      } catch (rollbackError) {
+        failures.push(rollbackError);
+      }
+    }
+    if (failures.length) {
+      retainBackups = true;
+      throw new AggregateError(
+        [error, ...failures],
+        `Demo sync rollback failed; recovery files retained in:\n${staged.map((update) => update.directory).join("\n")}`,
+        { cause: error }
+      );
+    }
+    throw error;
+  } finally {
+    if (!retainBackups) {
+      await Promise.all(
+        staged.map((update) =>
+          rm(update.directory, { force: true, recursive: true })
+        )
+      );
+    }
+  }
+};
+
 /** Check all files before writing any: a failed protection check never partially syncs. */
 export const syncDemo = async (options: {
   root: string;
@@ -226,6 +299,7 @@ export const syncDemo = async (options: {
   discard?: boolean;
 }) => {
   const { root, baseline, expected, check = false, discard = false } = options;
+  await preflight(path.dirname(baseline), [path.basename(baseline)]);
   const previous = await optionalRead(baseline);
   const record = previous ? baselineSchema.parse(JSON.parse(previous)) : null;
   const files = [
@@ -267,9 +341,7 @@ export const syncDemo = async (options: {
   );
   const next = {
     files: Object.fromEntries(
-      [...expected]
-        .toSorted(([left], [right]) => left.localeCompare(right))
-        .map(([file, content]) => [file, digest(content)])
+      files.map((file) => [file, digest(expected.get(file) ?? "")])
     ),
     version: 1,
   };
@@ -277,26 +349,23 @@ export const syncDemo = async (options: {
     "demo-baseline.json",
     JSON.stringify(next)
   );
+  const baselineDrift = previous !== baselineContent;
   if (check) {
-    if (drift.length || previous !== baselineContent) {
+    if (drift.length || baselineDrift) {
       throw new Error(
-        `Demo source drift:\n${drift.join("\n")}\nRun bun demo:sync to update source and its baseline.`
+        `Demo source drift:\n${drift.join("\n")}${baselineDrift ? `\nBaseline drift: ${baseline}` : ""}\nRun bun demo:sync to update source and its baseline.`
       );
     }
     return;
   }
-  await Promise.all(
-    drift.map(async (file) => {
-      const target = path.join(root, file);
-      await mkdir(path.dirname(target), { recursive: true });
-      const content = expected.get(file);
-      if (content === undefined) {
-        throw new Error(`Missing expected output: ${file}`);
-      }
-      await writeFile(target, content);
-    })
-  );
-  await writeFile(baseline, baselineContent);
+  await replaceDemoFiles([
+    ...drift.map((file) => ({
+      content: expected.get(file) ?? "",
+      exists: current.get(file) !== null,
+      target: path.join(root, file),
+    })),
+    { content: baselineContent, exists: previous !== null, target: baseline },
+  ]);
 };
 
 if (import.meta.main) {
