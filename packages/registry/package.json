@@ -32,11 +32,13 @@
   "scripts": {
     "build": "bun scripts/generate-composer-icons.ts && bun build.ts",
     "prepublishOnly": "bun run build",
-    "test:types": "tsc --noEmit",
+    "test:types": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json",
     "test:unit": "bun test src",
     "test:visual": "vitest run --config visual/vitest.config.ts",
     "lint": "oxlint . && oxfmt --check .",
-    "format": "oxfmt --write ."
+    "format": "oxfmt --write .",
+    "demo:check": "bun test test/demo-check.test.ts",
+    "demo:sync": "bun scripts/demo-sync.ts"
   },
   "dependencies": {},
   "devDependencies": {
@@ -110,6 +112,7 @@
     "sonner": "^2.0.7",
     "superjson": "^2.2.2",
     "typescript": "6.0.2",
+    "ultracite": "7.11.1",
     "zod": "^4.3.6"
   }
 }

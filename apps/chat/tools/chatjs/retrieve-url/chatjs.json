@@ -1,17 +1,11 @@
 {
-  "contractVersion": 1,
-  "kind": "tool",
+  "envRequirements": [{ "options": [["FIRECRAWL_API_KEY"]] }],
   "id": "retrieve-url",
-  "envRequirements": [
-    {
-      "options": [["FIRECRAWL_API_KEY"]]
-    }
-  ],
+  "kind": "tool",
+  "requiresTools": [],
   "slot": "retrieveUrl",
   "tools": [
-    {
-      "toolExport": "retrieveUrl",
-      "rendererExport": "RetrieveUrlRenderer"
-    }
-  ]
+    { "rendererExport": "RetrieveUrlRenderer", "toolExport": "retrieveUrl" }
+  ],
+  "contractVersion": 1
 }
