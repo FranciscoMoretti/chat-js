@@ -93,6 +93,8 @@ export const GET = async (request: NextRequest) => {
     const mcpClient = createMcpClientForCallback({
       id: connector.id,
       name: connector.name,
+      oauthClientId: connector.oauthClientId,
+      oauthClientSecret: connector.oauthClientSecret,
       type: connector.type,
       url: connector.url,
     });

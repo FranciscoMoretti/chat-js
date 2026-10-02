@@ -13,17 +13,24 @@ export const getOrCreateMcpClient = ({
   url,
   type,
   headers,
+  oauthClientId,
+  oauthClientSecret,
 }: {
   id: string;
   name: string;
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
+  oauthClientId?: string | null;
+  oauthClientSecret?: string | null;
 }): MCPClient => {
   let client = clientsMap.get(id);
   if (!client) {
-    client = new MCPClient(id, name, { headers, type, url }, () =>
-      invalidateAllMcpCaches(id)
+    client = new MCPClient(
+      id,
+      name,
+      { headers, oauthClientId, oauthClientSecret, type, url },
+      () => invalidateAllMcpCaches(id)
     );
     clientsMap.set(id, client);
   }
@@ -51,13 +58,20 @@ export const createMcpClientForCallback = ({
   url,
   type,
   headers,
+  oauthClientId,
+  oauthClientSecret,
 }: {
   id: string;
   name: string;
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
+  oauthClientId?: string | null;
+  oauthClientSecret?: string | null;
 }): MCPClient =>
-  new MCPClient(id, name, { headers, type, url }, () =>
-    invalidateAllMcpCaches(id)
+  new MCPClient(
+    id,
+    name,
+    { headers, oauthClientId, oauthClientSecret, type, url },
+    () => invalidateAllMcpCaches(id)
   );

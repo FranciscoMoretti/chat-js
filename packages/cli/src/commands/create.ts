@@ -264,11 +264,9 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
   const coreFeatures = await promptCoreFeatures(
     options.yes,
-    gatewaySelection.definition
+    gatewaySelection.definition,
+    options.mcp
   );
-  if (options.mcp !== undefined) {
-    coreFeatures.mcp = options.mcp;
-  }
   const documentTypes = await promptDocumentTypes(
     options.yes,
     coreFeatures.documents,

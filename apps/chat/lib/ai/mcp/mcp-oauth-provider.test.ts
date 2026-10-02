@@ -149,3 +149,24 @@ test("callback states cannot be adopted after a connector changes server URL", a
     "different MCP server"
   );
 });
+
+test("configured OAuth client credentials skip dynamic registration", async () => {
+  const client = new McpOAuthClientProvider({
+    clientMetadata: {
+      redirect_uris: ["https://chat.example.test/callback"],
+      token_endpoint_auth_method: "client_secret_basic",
+    },
+    mcpConnectorId: "connector",
+    oauthClientId: "configured-id",
+    oauthClientSecret: "configured-secret",
+    onRedirectToAuthorization: () => Promise.resolve(),
+    serverUrl: stored.serverUrl,
+  });
+  await expect(client.clientInformation()).resolves.toEqual({
+    client_id: "configured-id",
+    client_secret: "configured-secret",
+    redirect_uris: ["https://chat.example.test/callback"],
+    token_endpoint_auth_method: "client_secret_basic",
+  });
+  expect(mocks.fetch).not.toHaveBeenCalled();
+});

@@ -148,15 +148,6 @@ const publicConnector = (
   userId: connector.userId,
 });
 
-const connectorHeaders = (
-  connector: NonNullable<Awaited<ReturnType<typeof getMcpConnectorById>>>
-) =>
-  connector.oauthClientId && connector.oauthClientSecret
-    ? {
-        Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
-      }
-    : undefined;
-
 export const mcpRouter = createTRPCRouter({
   /**
    * Initiate OAuth authorization for an MCP connector.
@@ -179,9 +170,10 @@ export const mcpRouter = createTRPCRouter({
 
       // Create a new client and attempt to connect
       const mcpClient = getOrCreateMcpClient({
-        headers: connectorHeaders(connector),
         id: connector.id,
         name: connector.name,
+        oauthClientId: connector.oauthClientId,
+        oauthClientSecret: connector.oauthClientSecret,
         type: connector.type,
         url: connector.url,
       });
@@ -325,9 +317,10 @@ export const mcpRouter = createTRPCRouter({
 
         // Use OAuth-aware client
         const mcpClient = getOrCreateMcpClient({
-          headers: connectorHeaders(connector),
           id: connector.id,
           name: connector.name,
+          oauthClientId: connector.oauthClientId,
+          oauthClientSecret: connector.oauthClientSecret,
           type: connector.type,
           url: connector.url,
         });
@@ -461,9 +454,10 @@ export const mcpRouter = createTRPCRouter({
         const fetchConnectionStatus =
           async (): Promise<ConnectionStatusResult> => {
             const mcpClient = getOrCreateMcpClient({
-              headers: connectorHeaders(connector),
               id: connector.id,
               name: connector.name,
+              oauthClientId: connector.oauthClientId,
+              oauthClientSecret: connector.oauthClientSecret,
               type: connector.type,
               url: connector.url,
             });
@@ -511,9 +505,10 @@ export const mcpRouter = createTRPCRouter({
       invalidateAllMcpCaches(connector.id);
 
       const mcpClient = getOrCreateMcpClient({
-        headers: connectorHeaders(connector),
         id: connector.id,
         name: connector.name,
+        oauthClientId: connector.oauthClientId,
+        oauthClientSecret: connector.oauthClientSecret,
         type: connector.type,
         url: connector.url,
       });
@@ -549,9 +544,10 @@ export const mcpRouter = createTRPCRouter({
           );
 
           const mcpClient = getOrCreateMcpClient({
-            headers: connectorHeaders(connector),
             id: connector.id,
             name: connector.name,
+            oauthClientId: connector.oauthClientId,
+            oauthClientSecret: connector.oauthClientSecret,
             type: connector.type,
             url: connector.url,
           });
@@ -642,6 +638,15 @@ export const mcpRouter = createTRPCRouter({
       }
 
       await updateMcpConnector({ id: input.id, updates });
+      if (
+        (updates.url !== undefined && updates.url !== connector.url) ||
+        (updates.oauthClientId !== undefined &&
+          updates.oauthClientId !== connector.oauthClientId) ||
+        (updates.oauthClientSecret !== undefined &&
+          updates.oauthClientSecret !== connector.oauthClientSecret)
+      ) {
+        await deleteSessionsByConnectorId({ mcpConnectorId: input.id });
+      }
       await removeMcpClient(input.id);
       invalidateAllMcpCaches(input.id);
       return { success: true };

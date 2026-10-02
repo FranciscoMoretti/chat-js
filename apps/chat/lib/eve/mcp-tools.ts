@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { asSchema, jsonSchema } from "ai";
 import type { ModelMessage, Tool } from "ai";
 import Ajv from "ajv";
@@ -19,10 +21,15 @@ import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("eve.mcp");
 
-const VALID_TOOL_NAME = /^[a-zA-Z0-9_-]+$/u;
+const VALID_TOOL_NAME = /^[a-zA-Z0-9_-]{1,64}$/u;
+const UNSAFE_TOOL_NAME = /[^a-zA-Z0-9_-]/gu;
+const modelToolName = (name: string) =>
+  VALID_TOOL_NAME.test(name)
+    ? name
+    : `${name.replace(UNSAFE_TOOL_NAME, "_").slice(0, 51)}_${createHash("sha256").update(name).digest("hex").slice(0, 12)}`;
 
 const withAbort = async <T>(
-  operation: Promise<T>,
+  operation: () => Promise<T>,
   signal: AbortSignal
 ): Promise<T> => {
   signal.throwIfAborted();
@@ -30,7 +37,7 @@ const withAbort = async <T>(
   const cancel = () => aborted.reject(signal.reason);
   signal.addEventListener("abort", cancel, { once: true });
   try {
-    return await Promise.race([operation, aborted.promise]);
+    return await Promise.race([operation(), aborted.promise]);
   } finally {
     signal.removeEventListener("abort", cancel);
   }
@@ -60,12 +67,8 @@ const withConnector = async <T>(
 ) => {
   signal.throwIfAborted();
   const client = new MCPClient(connector.id, connector.name, {
-    headers:
-      connector.oauthClientId && connector.oauthClientSecret
-        ? {
-            Authorization: `Basic ${Buffer.from(`${connector.oauthClientId}:${connector.oauthClientSecret}`).toString("base64")}`,
-          }
-        : undefined,
+    oauthClientId: connector.oauthClientId,
+    oauthClientSecret: connector.oauthClientSecret,
     type: connector.type,
     url: connector.url,
   });
@@ -79,16 +82,16 @@ const withConnector = async <T>(
   };
   signal.addEventListener("abort", cancel, { once: true });
   try {
-    await withAbort(client.connect(undefined, signal), signal);
+    await withAbort(() => client.connect(undefined, signal), signal);
     signal.throwIfAborted();
     if (client.status !== "connected") {
       throw new Error(
         "Connect this MCP server in settings before using its tools."
       );
     }
-    const tools = await withAbort(client.tools(), signal);
+    const tools = await withAbort(() => client.tools(), signal);
     signal.throwIfAborted();
-    return await withAbort(run(tools), signal);
+    return await withAbort(() => run(tools), signal);
   } finally {
     signal.removeEventListener("abort", cancel);
     await close();
@@ -105,7 +108,7 @@ export const discoverEveMcpTools = async (
   }
   requireMcpCredentials();
   const connectors = await withAbort(
-    getMcpConnectorsByUserId({ userId: ownerId }),
+    () => getMcpConnectorsByUserId({ userId: ownerId }),
     signal
   );
   const descriptions: (Awaited<ReturnType<typeof describeMcpTool>> & {
@@ -125,20 +128,6 @@ export const discoverEveMcpTools = async (
         signal,
         async (tools) => {
           for (const [remoteName, tool] of Object.entries(tools)) {
-            if (
-              !VALID_TOOL_NAME.test(remoteName) ||
-              createToolId(
-                connector.nameId,
-                remoteName,
-                connector.userId === null
-              ).length > 64
-            ) {
-              log.warn(
-                { connectorId: connector.id, remoteName },
-                "Unsupported MCP tool name"
-              );
-              continue;
-            }
             try {
               // MCP output and approval policies are adapted explicitly below.
               const {
@@ -150,10 +139,12 @@ export const discoverEveMcpTools = async (
                 // oxlint-disable-next-line eslint/no-await-in-loop -- Finish the scoped connector operation before releasing its client.
                 ...(await describeMcpTool(definition)),
                 connectorId: connector.id,
-                name: createToolId(
-                  connector.nameId,
-                  remoteName,
-                  connector.userId === null
+                name: modelToolName(
+                  createToolId(
+                    connector.nameId,
+                    remoteName,
+                    connector.userId === null
+                  )
                 ),
                 remoteName,
               });
@@ -242,7 +233,10 @@ export const executeEveMcpTool = async (
   }
   context.abortSignal.throwIfAborted();
   const connector = assertConnector(
-    await getMcpConnectorById({ id: connectorId }),
+    await withAbort(
+      () => getMcpConnectorById({ id: connectorId }),
+      context.abortSignal
+    ),
     ownerId
   );
   return await withConnector(connector, context.abortSignal, async (tools) => {
@@ -298,25 +292,25 @@ export const requestEveMcpApproval = async (
   if (!ownerId) {
     throw new Error("MCP tools require an authenticated owner.");
   }
+  const signal = AbortSignal.any([
+    context.abortSignal,
+    AbortSignal.timeout(30_000),
+  ]);
   const connector = assertConnector(
-    await getMcpConnectorById({ id: connectorId }),
+    await withAbort(() => getMcpConnectorById({ id: connectorId }), signal),
     ownerId
   );
-  return await withConnector(
-    connector,
-    AbortSignal.any([context.abortSignal, AbortSignal.timeout(30_000)]),
-    async (tools) => {
-      if (!Object.hasOwn(tools, remoteName)) {
-        throw new Error("MCP tool is no longer available.");
-      }
-      return (await requiresMcpApproval(
-        await validateMcpTool(tools[remoteName]),
-        input,
-        context.callId,
-        messages
-      ))
-        ? "user-approval"
-        : "not-applicable";
+  return await withConnector(connector, signal, async (tools) => {
+    if (!Object.hasOwn(tools, remoteName)) {
+      throw new Error("MCP tool is no longer available.");
     }
-  );
+    return (await requiresMcpApproval(
+      await validateMcpTool(tools[remoteName]),
+      input,
+      context.callId,
+      messages
+    ))
+      ? "user-approval"
+      : "not-applicable";
+  });
 };
