@@ -17,6 +17,8 @@ export const researchTestFiles = [
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
 const REPOSITORY_ONLY_FILES = new Set([
+  "app/(chat)/api/files/upload/route.test.ts",
+  "app/api/mcp/oauth/callback/route.test.ts",
   ...researchAgentFiles,
   ...researchTestFiles,
   "scripts/db-branch-create.sh",

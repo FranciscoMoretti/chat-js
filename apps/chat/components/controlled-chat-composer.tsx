@@ -72,7 +72,7 @@ export const ControlledChatComposer = ({
     <PromptInput
       className="@container relative transition-colors"
       inputGroupClassName="bg-muted dark:bg-muted"
-      onSubmit={(_message, event) => {
+      onSubmit={(event) => {
         event.preventDefault();
         submit();
       }}

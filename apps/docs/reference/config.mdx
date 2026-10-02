@@ -131,8 +131,6 @@ export type Config = {
    * Validated at build time via scripts/check-env.ts.
    */
   features: {
-    /** File attachments (requires durable file storage) */
-    attachments: boolean;
     /** Generate multiple independent responses for one message. Defaults to true. */
     parallelResponses: boolean;
   };
@@ -208,7 +206,7 @@ Create an app with `chat-js create my-chat --mcp`, or run `chat-js add mcp` in a
 
 ### Features
 
-- **`features.attachments`**: requires a configured file storage provider - file uploads (images and PDFs)
+- **Attachment uploads**: installed with `chat-js add attachment-uploads` and requires a configured file storage provider. `attachments.acceptedTypes`, `maxBytes`, and `maxDimension` configure upload limits. There is no upload presence flag.
 - **`features.parallelResponses`**: defaults to `true`. No extra environment variables. Generate multiple independent responses for one message.
 
 ### Authentication
