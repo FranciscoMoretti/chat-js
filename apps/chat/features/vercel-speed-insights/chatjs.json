@@ -1,1 +1,1 @@
-{ "contractVersion": 1, "kind": "feature", "id": "vercel-speed-insights" }
+{ "contractVersion": 1, "id": "vercel-speed-insights", "kind": "feature" }
