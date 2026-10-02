@@ -217,3 +217,21 @@ test("CI affected query and execution select demo checking for canonical and dem
     ).toHaveLength(1);
   }
 });
+
+test.each([
+  "packages/cli/src/utils/installation-plan.ts",
+  "packages/gateways/src/definition.ts",
+])("registry typecheck invalidates for imported source %s", async (file) => {
+  const hash = () =>
+    run("test:types", "--filter=@chat-js/registry").tasks.find(
+      (item: { taskId: string }) =>
+        item.taskId === "@chat-js/registry#test:types"
+    ).hash;
+  const before = hash();
+  const target = path.join(fixture, file);
+  await writeFile(
+    target,
+    `${await readFile(target, "utf-8")}\n// changed type boundary\n`
+  );
+  expect(hash()).not.toBe(before);
+});

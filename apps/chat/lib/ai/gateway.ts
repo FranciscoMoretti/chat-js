@@ -57,8 +57,6 @@ export class VercelGateway
     return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
   }
 
-  // The models endpoint is fixed by the provider contract.
-  // eslint-disable-next-line class-methods-use-this
   async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 

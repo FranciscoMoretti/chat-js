@@ -1,5 +1,8 @@
 {
   "extends": "../tsconfig.json",
-  "compilerOptions": { "types": ["node", "bun"] },
-  "include": ["demo-sync.ts"]
+  "compilerOptions": {
+    "types": ["node", "bun"]
+  },
+  "include": ["demo-sync.ts", "../test/demo-check.test.ts"],
+  "exclude": ["node_modules", "dist"]
 }

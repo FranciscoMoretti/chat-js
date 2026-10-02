@@ -83,7 +83,7 @@ const filesBelow = async (
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(
     entries.map((entry) => {
-      const file = path.join(prefix, entry.name);
+      const file = path.posix.join(prefix, entry.name);
       return entry.isDirectory()
         ? filesBelow(path.join(directory, entry.name), file)
         : [file];
@@ -302,6 +302,7 @@ export const syncDemo = async (options: {
   discard?: boolean;
 }) => {
   const { root, baseline, expected, check = false, discard = false } = options;
+  await preflight(path.dirname(baseline), [path.basename(baseline)]);
   const previous = await optionalRead(baseline);
   const record = previous ? baselineSchema.parse(JSON.parse(previous)) : null;
   const files = [
@@ -351,10 +352,11 @@ export const syncDemo = async (options: {
     "demo-baseline.json",
     JSON.stringify(next)
   );
+  const baselineDrift = previous !== baselineContent;
   if (check) {
-    if (drift.length || previous !== baselineContent) {
+    if (drift.length || baselineDrift) {
       throw new Error(
-        `Demo source drift:\n${drift.join("\n")}\nRun bun demo:sync to update source and its baseline.`
+        `Demo source drift:\n${drift.join("\n")}${baselineDrift ? `\nBaseline drift: ${baseline}` : ""}\nRun bun demo:sync to update source and its baseline.`
       );
     }
     return;

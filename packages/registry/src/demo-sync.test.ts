@@ -124,9 +124,16 @@ test("symlink destinations are rejected before writes", async () => {
     path.join(options.root, "linked.ts")
   );
   options.expected.set("linked.ts", "// canonical\n");
+  const before = await readFile(
+    path.join(options.root, "implementation.ts"),
+    "utf-8"
+  );
   await expect(syncDemo({ ...options, discard: true })).rejects.toThrow(
     "symlink"
   );
+  expect(
+    await readFile(path.join(options.root, "implementation.ts"), "utf-8")
+  ).toBe(before);
 });
 
 test("edits moved upstream can advance the baseline without discarding", async () => {
@@ -135,6 +142,9 @@ test("edits moved upstream can advance the baseline without discarding", async (
     "// edit now canonical upstream\nexport type Result = number;\n";
   await writeFile(path.join(options.root, "implementation.ts"), source);
   options.expected.set("implementation.ts", source);
+  await expect(syncDemo({ ...options, check: true })).rejects.toThrow(
+    `Baseline drift: ${options.baseline}`
+  );
   await syncDemo(options);
   await syncDemo({ ...options, check: true });
   expect(
@@ -220,3 +230,18 @@ test.each(["source", "baseline"])(
     await syncDemo({ ...options, check: true });
   }
 );
+
+test("a symlinked baseline is rejected before source or external target writes", async () => {
+  const options = await fixture();
+  const external = path.join(options.root, "external.json");
+  const before = await readFile(options.baseline, "utf-8");
+  await writeFile(external, before);
+  await rm(options.baseline);
+  await fs.symlink(external, options.baseline);
+  options.expected.set("implementation.ts", "// changed canonical\n");
+  await expect(syncDemo(options)).rejects.toThrow("symlink");
+  expect(await readFile(external, "utf-8")).toBe(before);
+  expect(
+    await readFile(path.join(options.root, "implementation.ts"), "utf-8")
+  ).toBe("// canonical\nexport type Result = string;\n");
+});
