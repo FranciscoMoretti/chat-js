@@ -17,7 +17,7 @@ const FileSchema = z.object({
     .refine(
       (file) => Object.hasOwn(config.attachments.acceptedTypes, file.type),
       {
-        message: "File type should be JPEG, PNG, or PDF",
+        message: "Unsupported file type",
       }
     ),
 });
@@ -29,12 +29,12 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (request.body === null) {
-    return new Response("Request body is empty", { status: 400 });
+  const formData = await request.formData().catch(() => null);
+  if (!formData) {
+    return NextResponse.json({ error: "Invalid upload form" }, { status: 400 });
   }
 
   try {
-    const formData = await request.formData();
     const file = formData.get("file");
 
     if (!(file instanceof File)) {

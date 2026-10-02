@@ -365,21 +365,17 @@ export const scaffoldFromTemplate = async (
     "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
   };
   await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
-  await Promise.all(
-    [
-      ...mcpFiles,
-      "features/mcp/chatjs.json",
-      ...attachmentUploadFiles,
-      "features/attachment-uploads/chatjs.json",
-    ].map((file) => rm(join(destination, file), { force: true }))
-  );
-  const directories = new Set<string>();
-  for (const file of [
+  const optionalFiles = [
     ...mcpFiles,
     "features/mcp/chatjs.json",
     ...attachmentUploadFiles,
     "features/attachment-uploads/chatjs.json",
-  ]) {
+  ];
+  await Promise.all(
+    optionalFiles.map((file) => rm(join(destination, file), { force: true }))
+  );
+  const directories = new Set<string>();
+  for (const file of optionalFiles) {
     let directory = pathModule.dirname(file);
     while (directory !== ".") {
       directories.add(directory);

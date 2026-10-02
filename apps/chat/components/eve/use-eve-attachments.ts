@@ -14,5 +14,10 @@ export const useEveAttachments = (state?: {
   );
   const attachments = state?.attachments ?? localAttachments;
   const setAttachments = state?.setAttachments ?? setLocalAttachments;
-  return attachmentUploads.useUploads({ attachments, setAttachments });
+  const behavior = attachmentUploads.useUploads({
+    attachmentCount: attachments.length,
+    onUploaded: (attachment) =>
+      setAttachments((current) => [...current, attachment]),
+  });
+  return { ...behavior, attachments, setAttachments };
 };

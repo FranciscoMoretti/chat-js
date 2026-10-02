@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { config } from "@/lib/config";
 import type {
   AttachmentUploadIntegration,
-  AttachmentUploadState,
+  AttachmentUploadInput,
 } from "@/lib/installation-contracts";
 import { useSession } from "@/providers/session-provider";
 
@@ -15,7 +15,7 @@ import { AttachFilesControl, TakePhotoControl } from "./controls";
 import { uploadAttachment } from "./upload";
 import { processFilesForUpload } from "./upload-prep";
 
-const useUploads = ({ attachments, setAttachments }: AttachmentUploadState) => {
+const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
   const input = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
@@ -28,7 +28,7 @@ const useUploads = ({ attachments, setAttachments }: AttachmentUploadState) => {
       toast.error("Sign in to attach files.");
       return;
     }
-    if (files.length + attachments.length > 16) {
+    if (files.length + attachmentCount > 16) {
       toast.error("Attach at most 16 files per message.");
       return;
     }
@@ -46,7 +46,7 @@ const useUploads = ({ attachments, setAttachments }: AttachmentUploadState) => {
         try {
           // oxlint-disable-next-line eslint/no-await-in-loop -- Serialize uploads to preserve order and bound memory.
           const attachment = await uploadAttachment(file);
-          setAttachments((current) => [...current, attachment]);
+          onUploaded(attachment);
         } catch (error) {
           toast.error(
             error instanceof Error ? error.message : "Upload failed."
@@ -59,14 +59,12 @@ const useUploads = ({ attachments, setAttachments }: AttachmentUploadState) => {
     }
   };
   const { getRootProps } = useDropzone({
-    accept: config.attachments.acceptedTypes,
     disabled: uploadQueue.length > 0,
     noClick: true,
     noKeyboard: true,
     onDrop: upload,
   });
   return {
-    attachments,
     composer: (disabled: boolean) => ({
       input: (
         <input
@@ -109,8 +107,6 @@ const useUploads = ({ attachments, setAttachments }: AttachmentUploadState) => {
             },
           },
     }),
-    setAttachments,
-    upload,
     uploadQueue,
   };
 };

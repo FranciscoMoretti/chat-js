@@ -365,6 +365,15 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     expect(
       await readFile(path.join(root, "composer-controls.ts"), "utf-8")
     ).toBe(reordered);
+    const customControls = composer.replace(
+      "...attachmentUploads.controls",
+      '{ Component: AttachFilesControl, id: "attach-files" }, { Component: TakePhotoControl, id: "take-photo" }'
+    );
+    await writeFile(path.join(root, "composer-controls.ts"), customControls);
+    await syncFeatures(root, { addUi: true, expectedMcp: true });
+    expect(
+      await readFile(path.join(root, "composer-controls.ts"), "utf-8")
+    ).toBe(customControls);
     await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
     await expect(syncFeatures(root, { expectedUploads: true })).rejects.toThrow(
       "app/(chat)/api/files/upload/route.ts"

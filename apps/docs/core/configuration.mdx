@@ -3,7 +3,7 @@ title: "Configuration"
 description: "Customize ChatJS via chat.config.ts"
 ---
 
-App settings and runtime feature toggles live in `chat.config.ts`. That file is parsed and exported as `config` from `@/lib/config`. MCP availability comes from its installed registrations.
+App settings and runtime feature toggles live in `chat.config.ts`. That file is parsed and exported as `config` from `@/lib/config`. MCP and attachment-upload availability come from installed registrations.
 
 ## Config Structure
 
@@ -44,7 +44,7 @@ const config: ConfigInput = {
   },
 
   features: {
-    attachments: true, // File uploads (images and PDFs)
+    parallelResponses: true,
   },
 
   authentication: {
@@ -94,7 +94,7 @@ Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. Applica
 | Video Generation | `ai.tools.video.enabled` | Configured file storage provider |
 | Deep Research | `ai.tools.deepResearch.enabled` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
 | Follow-up Suggestions | `ai.tools.followupSuggestions.enabled` | Uses your configured language model provider |
-| Attachments | `features.attachments` | Configured file storage provider |
+| Attachments | Installed with `chat-js add attachment-uploads` | Configured file storage provider |
 | Parallel Responses | `features.parallelResponses` | None |
 
 ```typescript
@@ -110,7 +110,6 @@ ai: {
   },
 },
 features: {
-  attachments: true, // Requires durable file storage
   parallelResponses: true,
 },
 ```
