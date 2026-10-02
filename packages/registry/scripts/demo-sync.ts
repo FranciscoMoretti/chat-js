@@ -183,6 +183,9 @@ export const generateDemo = async (): Promise<Map<string, string>> => {
     // Composer/settings ordering is application-owned; never initialize or add UI here.
     await syncFeatures(temporary, {
       expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
+      expectedUploads: plan.features.some(
+        (feature) => feature.id === "attachment-uploads"
+      ),
     });
     // Narrow application-owned exceptions: model catalog is fetched separately;
     // credentials, dependency manifests, UI order and extension files stay local.
