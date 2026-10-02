@@ -802,13 +802,29 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} }
         )
       );
       await run(cwd, ["bun", "run", "lint"]);
-      // Core-only generation has already passed types and lint; add uploads independently.
+      // Core omission, then all optional implementations through one shared add plan.
+      const omittedObservability = await Promise.all(
+        ["vercel-analytics", "vercel-speed-insights", "langfuse"].map((id) =>
+          Bun.file(join(cwd, `features/${id}/chatjs.json`)).exists()
+        )
+      );
+      expect(omittedObservability).toEqual([false, false, false]);
       expect(
         await Bun.file(
           join(cwd, "app/(chat)/api/files/upload/route.ts")
         ).exists()
       ).toBe(false);
-      await run(cwd, ["node", cliEntry, "add", "attachment-uploads", "--yes"]);
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "attachment-uploads",
+        "mcp",
+        "vercel-analytics",
+        "vercel-speed-insights",
+        "langfuse",
+        "--yes",
+      ]);
       await run(cwd, ["bun", "run", "format"]);
       await run(cwd, ["node", cliEntry, "sync"]);
       expect(
@@ -816,6 +832,111 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} }
           join(cwd, "app/(chat)/api/files/upload/route.ts")
         ).exists()
       ).toBe(true);
+      await run(cwd, ["bun", "run", "test:types"]);
+      await run(cwd, ["bun", "run", "lint"]);
+      expect(
+        await readFile(join(cwd, "features/installed.ts"), "utf-8")
+      ).toContain("langfuse");
+      expect(
+        await readFile(join(cwd, "features/installed-layout.ts"), "utf-8")
+      ).toContain("vercel-speed-insights");
+      expect(
+        await readFile(join(cwd, "features/installed-uploads.ts"), "utf-8")
+      ).toContain("attachmentUploads");
+      await expect(
+        run(cwd, ["node", cliEntry, "add", "tavily-search", "--yes"])
+      ).rejects.toThrow("--replace");
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "tavily-search",
+        "--replace",
+        "--yes",
+      ]);
+      expect(
+        await Bun.file(
+          join(cwd, "tools/chatjs/firecrawl-search/chatjs.json")
+        ).exists()
+      ).toBe(false);
+      const searchSource = join(cwd, "tools/chatjs/tavily-search/tool.ts");
+      const originalSearch = await readFile(searchSource, "utf-8");
+      await writeFile(
+        searchSource,
+        `// customized provider
+${originalSearch}`
+      );
+      await expect(
+        run(cwd, [
+          "node",
+          cliEntry,
+          "add",
+          "firecrawl-search",
+          "--replace",
+          "--yes",
+        ])
+      ).rejects.toThrow("--overwrite");
+      expect(await readFile(searchSource, "utf-8")).toContain(
+        "customized provider"
+      );
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "firecrawl-search",
+        "--replace",
+        "--overwrite",
+        "--yes",
+      ]);
+      expect(
+        await Bun.file(
+          join(cwd, "tools/chatjs/vercel-code-execution/tool.ts")
+        ).exists()
+      ).toBe(true);
+      await run(cwd, ["bun", "run", "format"]);
+      await run(cwd, ["node", cliEntry, "sync"]);
+      await run(cwd, ["bun", "run", "test:types"]);
+      await run(cwd, ["bun", "run", "lint"]);
+      await expect(
+        run(cwd, [
+          "node",
+          cliEntry,
+          "add",
+          "--storage-provider",
+          "s3",
+          "--storage-config",
+          '{"bucket":"replacement","region":"us-east-1"}',
+          "--yes",
+        ])
+      ).rejects.toThrow("--replace");
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--storage-provider",
+        "s3",
+        "--storage-config",
+        '{"bucket":"replacement","region":"us-east-1"}',
+        "--replace",
+        "--yes",
+      ]);
+      const storageOptions = await readFile(
+        join(cwd, "lib/storage-options.ts"),
+        "utf-8"
+      );
+      expect(storageOptions).toContain("replacement");
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--storage-provider",
+        "s3",
+        "--yes",
+      ]);
+      expect(await readFile(join(cwd, "lib/storage-options.ts"), "utf-8")).toBe(
+        storageOptions
+      );
+      await run(cwd, ["bun", "run", "format"]);
       await run(cwd, ["bun", "run", "test:types"]);
       await run(cwd, ["bun", "run", "lint"]);
       const longDirectory = join(cwd, "tools/chatjs/long-renderer");
@@ -898,7 +1019,22 @@ for (const installAtCreation of [false, true]) {
       "--yes",
       "--no-electron",
       installAtCreation ? "--mcp" : "--no-mcp",
+      ...(installAtCreation
+        ? [
+            "--attachments",
+            "--observability",
+            "vercel-analytics,vercel-speed-insights,langfuse",
+          ]
+        : []),
     ]);
+    for (const file of [
+      "app/(chat)/api/files/upload/route.ts",
+      "features/vercel-speed-insights/chatjs.json",
+      "features/langfuse/chatjs.json",
+    ]) {
+      // oxlint-disable-next-line no-await-in-loop -- Verify each optional creation flag installs source.
+      expect(await Bun.file(join(cwd, file)).exists()).toBe(installAtCreation);
+    }
     const source = "app/api/mcp/oauth/callback/route.ts";
     expect(await Bun.file(join(cwd, source)).exists()).toBe(installAtCreation);
     expect(await readFile(join(cwd, "lib/db/schema.ts"), "utf-8")).toContain(
@@ -938,5 +1074,73 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
 `
     );
     await run(cwd, ["bun", "mcp-setup-probe.ts"]);
+    if (!installAtCreation) {
+      const previousConfig = `${await readFile(join(cwd, "chat.config.ts"), "utf-8")}\n// User model configuration remains editable.\n`;
+      await writeFile(join(cwd, "chat.config.ts"), previousConfig);
+      const catalog = join(cwd, "lib/ai/models.generated.ts");
+      await writeFile(
+        catalog,
+        `${await readFile(catalog, "utf-8")}\n// Refreshed model catalog.\n`
+      );
+      await expect(
+        run(cwd, [
+          "node",
+          cliEntry,
+          "add",
+          "--gateway",
+          "openai-compatible",
+          "--yes",
+        ])
+      ).rejects.toThrow("--replace");
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--gateway",
+        "openai-compatible",
+        "--replace",
+        "--yes",
+      ]);
+      // A gateway-generated env update must not look like a user edit during
+      // a subsequent storage replacement.
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--storage-provider",
+        "s3",
+        "--storage-config",
+        '{"bucket":"after-gateway","region":"us-east-1"}',
+        "--replace",
+        "--yes",
+      ]);
+      expect(
+        await readFile(join(cwd, "lib/storage-options.ts"), "utf-8")
+      ).toContain("after-gateway");
+      const nextConfig = await readFile(join(cwd, "chat.config.ts"), "utf-8");
+      expect(nextConfig).toBe(
+        previousConfig.replace(
+          'gateway: "openai"',
+          'gateway: "openai-compatible"'
+        )
+      );
+      await run(cwd, ["bun", "run", "format"]);
+      await run(cwd, ["bun", "run", "test:types"]);
+    }
+    const computedComposer = composer
+      .replace(/[=]\s*\[/u, "= Array.from([")
+      .replace(/\];\s*$/u, "]);\n");
+    const computedSettings = settings
+      .replace(/[=]\s*\[/u, "= Array.from([")
+      .replace(/\];\s*$/u, "]);\n");
+    await writeFile(join(cwd, "composer-controls.ts"), computedComposer);
+    await writeFile(join(cwd, "settings-items.ts"), computedSettings);
+    await run(cwd, ["node", cliEntry, "add", "word-count", "--yes"]);
+    expect(await readFile(join(cwd, "composer-controls.ts"), "utf-8")).toBe(
+      computedComposer
+    );
+    expect(await readFile(join(cwd, "settings-items.ts"), "utf-8")).toBe(
+      computedSettings
+    );
   }, 180_000);
 }

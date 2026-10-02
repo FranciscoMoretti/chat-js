@@ -122,6 +122,11 @@ it("rechecks file access and size and never fetches a remote history URL", async
   if (!part) {
     throw new Error("Missing native fixture");
   }
+  part.url = "https://foreign.example.test/file.png";
+  await expect(restoreMessageAttachments("owner", input)).rejects.toThrow(
+    "Invalid attachment reference"
+  );
+  expect(mocks.download).not.toHaveBeenCalled();
   part.url = "/api/files/abcdefghijklmnopqrstuvwx.png";
   mocks.access.mockResolvedValue({ allowed: false });
   await expect(restoreMessageAttachments("owner", input)).rejects.toThrow(

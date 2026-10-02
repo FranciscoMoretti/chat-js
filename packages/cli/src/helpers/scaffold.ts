@@ -351,6 +351,8 @@ export const scaffoldFromTemplate = async (
     recursive: true,
   });
   delete manifest.dependencies["@vercel/sandbox"];
+  delete manifest.dependencies["browser-image-compression"];
+  delete manifest.dependencies["react-dropzone"];
   await rm(join(destination, "tools/chatjs/tavily-search"), {
     force: true,
     recursive: true,

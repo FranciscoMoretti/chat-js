@@ -77,13 +77,11 @@ export const processFilesForUpload = async (
     acceptedTypes: Record<string, string[]>;
   }
 ): Promise<{
-  processedImages: File[];
-  pdfFiles: File[];
+  files: File[];
   stillOversized: File[];
   unsupportedFiles: File[];
 }> => {
-  const processedImages: File[] = [];
-  const pdfFiles: File[] = [];
+  const prepared: File[] = [];
   const stillOversized: File[] = [];
   const unsupportedFiles: File[] = [];
   const { maxBytes } = options;
@@ -98,17 +96,17 @@ export const processFilesForUpload = async (
         stillOversized.push(file);
         continue;
       }
-      processedImages.push(maybeCompressed);
+      prepared.push(maybeCompressed);
     } else if (file.type === "application/pdf") {
       if (file.size > maxBytes) {
         stillOversized.push(file);
         continue;
       }
-      pdfFiles.push(file);
+      prepared.push(file);
     } else {
       unsupportedFiles.push(file);
     }
   }
 
-  return { pdfFiles, processedImages, stillOversized, unsupportedFiles };
+  return { files: prepared, stillOversized, unsupportedFiles };
 };

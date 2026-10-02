@@ -14,7 +14,7 @@ export const installationSelectionSchema = z.strictObject({
 });
 export type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
-// Checked-in demo preset. Keep every implemented optional feature installed.
+// Checked-in demo preset matches the reference app’s installed implementations.
 export const demoInstallation = installationSelectionSchema.parse({
   features: [
     "mcp",

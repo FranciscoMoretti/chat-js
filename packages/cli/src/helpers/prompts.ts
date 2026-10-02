@@ -624,3 +624,25 @@ export const promptVideoGenerationTool = async (
   handleCancel(address);
   return String(address).trim();
 };
+
+// One optional group; new applications never enable telemetry by default.
+export const promptObservability = async (yes: boolean): Promise<string[]> => {
+  if (yes) {
+    return [];
+  }
+  const result = await multiselect({
+    initialValues: [],
+    message: "Optional observability integrations",
+    options: [
+      { label: "Vercel Analytics", value: "vercel-analytics" },
+      { label: "Vercel Speed Insights", value: "vercel-speed-insights" },
+      { label: "Langfuse", value: "langfuse" },
+    ],
+    required: false,
+  });
+  if (isCancel(result)) {
+    cancel("Operation cancelled.");
+    process.exit(0);
+  }
+  return result;
+};

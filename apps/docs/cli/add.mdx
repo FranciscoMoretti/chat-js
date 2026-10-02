@@ -1,19 +1,23 @@
 ---
 title: add
-description: Install registry tools and generate their ChatJS registrations
+description: Install registry tools, features and providers
 ---
 
 ```bash
-npx @chat-js/cli@latest add <tools...> [options]
+npx @chat-js/cli@latest add [items...] [options]
 ```
 
 Accepts built-in names, standard `@namespace/item` addresses, complete item URLs, and local registry JSON paths. Run inside a ChatJS app with `chat.config.ts`.
 
-| Flag              | Default           | Description                   |
-| ----------------- | ----------------- | ----------------------------- |
-| `-y, --yes`       | `false`           | Skip ChatJS confirmation      |
-| `-o, --overwrite` | `false`           | Replace existing source files |
-| `-c, --cwd <cwd>` | Current directory | Destination app               |
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-y, --yes` | `false` | Skip ChatJS confirmation |
+| `-o, --overwrite` | `false` | Authorize overwriting modified or untracked source |
+| `--replace` | `false` | Explicitly authorize exclusive provider replacement |
+| `--gateway <item>` | Not applicable | Select an AI gateway |
+| `--storage-provider <item>` | Not applicable | Select file storage |
+| `--storage-config <json>` | Not applicable | Non-secret storage adapter options |
+| `-c, --cwd <cwd>` | Current directory | Destination app |
 
 ```bash
 npx @chat-js/cli@latest add word-count get-weather --yes
@@ -23,13 +27,34 @@ npx @chat-js/cli@latest add ./my-tool.json --cwd apps/chat
 
 Configure namespaces in `components.json`. The former `--registry` flag is removed. shadcn installs source and packages using the project's detected package manager, then ChatJS syncs local tool descriptors into typed registrations.
 
-After direct shadcn installation, regenerate registrations explicitly:
+Install optional implementations together or independently:
+
+```bash
+npx @chat-js/cli@latest add attachment-uploads mcp vercel-analytics vercel-speed-insights langfuse --yes
+```
+
+New contributions append to `composer-controls.ts` and `settings-items.ts`. Your existing entries and their order remain intact. Ordinary `sync` preserves those arrays. If you use a computed array, add the contribution manually and run `sync`.
+
+After direct shadcn source installation, use `add` for automatic composition, or register the editable UI contributions yourself and run `sync`:
 
 ```bash
 npx @chat-js/cli@latest sync --cwd apps/chat
 ```
 
-If wiring fails after source installation, the command exits unsuccessfully with recovery instructions. Repair the reported descriptor or index and rerun `sync`.
+The command prints the selected integrations' credential requirements. Copy them into `.env.local` and run `bun run setup`. Langfuse needs both `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`, while MCP needs `MCP_ENCRYPTION_KEY`.
 
-- [Tool Registry](../tools/overview) explains customizations and migration.
+Exclusive alternatives require explicit replacement:
+
+```bash
+npx @chat-js/cli@latest add firecrawl-search --replace --yes
+npx @chat-js/cli@latest add --storage-provider s3 --storage-config '{"bucket":"uploads","region":"eu-west-1"}' --replace --yes
+```
+
+`--yes` skips confirmation. It does not authorize replacement or overwriting edited files. ChatJS records installed-source hashes in `.chatjs/installed-source.json`. Changed or untracked source is protected until you review it and explicitly pass `--overwrite`. This includes source installed with native shadcn, which has no ChatJS baseline. Keep the baseline in version control. Unrelated tools and features remain installed, and previous tool-provider source is retired only after registration succeeds.
+
+Gateway replacement updates the gateway discriminator and provider configuration while preserving your model IDs and runtime settings. Review those model IDs for the new gateway and run `bun run setup` and `bun run fetch:models`.
+
+If source installation or registration fails, the command exits unsuccessfully. Previous tool-provider source is restored, but newly installed source or packages may remain. Review the partial installation and retry the same `add` command with `--overwrite`, or integrate the source manually and run `sync`. This CLI supports creation and add, including explicit exclusive replacement. It does not manage removal or upgrades.
+
+- [Tool Registry](../tools/overview) explains customizations.
 - [Tools](../tools/authoring) explains authoring.

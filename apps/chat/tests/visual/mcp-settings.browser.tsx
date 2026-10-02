@@ -1,6 +1,7 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
+import { toast, Toaster } from "sonner";
 import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
@@ -47,7 +48,8 @@ const mocks = vi.hoisted(() => {
     search: new URLSearchParams(),
   };
 });
-afterEach(() => {
+afterEach(async () => {
+  await act(() => toast.dismiss());
   mocks.listError = false;
   mocks.cachedData = false;
   mocks.needsOAuth = false;
@@ -169,6 +171,7 @@ const renderPage = async (
               : "Connect to Model Context Protocol servers to extend AI capabilities with external tools."}
           </p>
         </SettingsPageHeader>
+        <Toaster position="top-center" theme="dark" />
         {content}
       </SettingsPage>
     )
@@ -406,3 +409,54 @@ test.each([
     }
   }
 );
+
+test("OAuth callback errors display the safe actionable message", async () => {
+  const message =
+    "Could not complete connector authorization. Please try again.";
+  mocks.search = new URLSearchParams({ error: message });
+  const cleanup = await renderPage(false);
+  try {
+    await expect
+      .element(page.getByText(message, { exact: true }))
+      .toBeVisible();
+    expect(mocks.router.replace).toHaveBeenCalledWith("/settings/connectors");
+    await expect
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>("[data-sonner-toast]")?.dataset
+            .mounted
+      )
+      .toBe("true");
+    await takeSnapshot("mcp-callback-error");
+  } finally {
+    await cleanup();
+  }
+});
+test("invalid authorization links keep the dialog open and display an error", async () => {
+  const cleanup = await renderPage(false, false, true);
+  try {
+    await act(() =>
+      page
+        .getByRole("button", { name: "Continue to Documentation server" })
+        .click()
+    );
+    const [[, callbacks]] = mocks.mutate.mock.calls;
+    await act(() => callbacks.onSuccess({ authorizationUrl: "not a URL" }));
+    await expect
+      .element(page.getByText("Invalid authorization URL", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Cancel" }))
+      .toBeEnabled();
+    await expect
+      .poll(
+        () =>
+          document.querySelector<HTMLElement>("[data-sonner-toast]")?.dataset
+            .mounted
+      )
+      .toBe("true");
+    await takeSnapshot("mcp-invalid-authorization-url");
+  } finally {
+    await cleanup();
+  }
+});

@@ -73,7 +73,7 @@ The mock has stronger replay semantics than the installed Vercel SDK: snapshot/r
 
 Snapshot expiration, retention eviction, external mounts, credentials, process state and provider identity all need explicit policy. A filesystem snapshot must not be assumed to clone live processes or external services. Historical snapshots need retention independent of the parent VM's ordinary cleanup.
 
-ChatJS's code-execution VMs are a separate lifecycle: `createSandbox` uses `persistent: false`; cleanup stops and deletes them, including orphan snapshots. Keep them disposable and retain only intentionally exported files. Do not snapshot every code-execution VM to implement conversation history. See [code sandbox implementation](../../apps/chat/tools/chatjs/vercel-code-execution/sandbox.ts).
+ChatJS's code-execution VMs are a separate lifecycle: `createSandbox` uses `persistent: false`; cleanup stops and deletes them, including orphan snapshots. Keep them disposable and retain only intentionally exported files. Do not snapshot every code-execution VM to implement conversation history. See [code sandbox implementation](../../apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts).
 
 ## Smallest native contracts still needed
 

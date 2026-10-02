@@ -22,21 +22,39 @@ test("demo stays aligned with full canonical installation source", async () => {
   expect(required("tools/chatjs/vercel-code-execution/renderer.tsx")).toContain(
     'from "@/components/sandbox"'
   );
+  for (const id of [
+    "mcp",
+    "attachment-uploads",
+    "vercel-analytics",
+    "vercel-speed-insights",
+    "langfuse",
+  ]) {
+    expect(expected.has(`features/${id}/chatjs.json`)).toBe(true);
+    expect(required("features/installed.ts")).toContain(`"${id}"`);
+  }
+  expect(required("features/installed-uploads.ts")).toContain(
+    "@/features/attachment-uploads/integration"
+  );
+  expect(required("features/installed-layout.ts")).toContain(
+    "@/features/vercel-speed-insights/component"
+  );
+  expect(required("features/installed-instrumentation.ts")).toContain(
+    "@/features/langfuse/instrumentation"
+  );
+  for (const file of [
+    "features/mcp/setup.ts",
+    "tools/chatjs/retrieve-url/tool.ts",
+    "tools/chatjs/tavily-search/tool.ts",
+    "lib/db/mcp-oauth-lock.ts",
+    "tools/chatjs/vercel-code-execution/execution-sandbox.ts",
+  ]) {
+    expect(required(file)).toContain('from "@/lib/env"');
+    expect(required(file)).not.toContain("@/features/langfuse/");
+  }
   expect(expected.has("composer-controls.ts")).toBe(false);
   expect(expected.has("settings-items.ts")).toBe(false);
   expect(expected.has("tools/chatjs/custom-tools.ts")).toBe(false);
   expect(expected.has("tools/chatjs/custom-ui.ts")).toBe(false);
-  // Same-basename shadcn rewriting must not replace core env imports with
-  // optional feature modules when the full demo installs Langfuse.
-  for (const file of [
-    "features/mcp/setup.ts",
-    "lib/db/mcp-oauth-lock.ts",
-    "tools/chatjs/retrieve-url/tool.ts",
-    "tools/chatjs/tavily-search/tool.ts",
-    "tools/chatjs/vercel-code-execution/sandbox.ts",
-  ]) {
-    expect(required(file)).toContain('from "@/lib/env"');
-  }
   await syncDemo({
     baseline: baselinePath,
     check: true,

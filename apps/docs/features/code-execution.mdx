@@ -160,7 +160,7 @@ The sandbox automatically uses these credentials when running outside Vercel inf
 
 The installed Vercel implementation lives in `tools/chatjs/vercel-code-execution/`:
 
-The item includes `tool.ts`, `renderer.tsx`, `sandbox.ts`, `python.ts`, `javascript.ts`, `types.ts`, and its `chatjs.json` descriptor. `tools/chatjs/tools.ts` and `tools/chatjs/ui.ts` register the tool and its renderer automatically. `code-execution-config.ts` contains generated credential requirements.
+You get `tool.ts`, `renderer.tsx`, `execution-sandbox.ts`, `python.ts`, `javascript.ts`, `types.ts`, and its `chatjs.json` descriptor. `tools/chatjs/tools.ts` and `tools/chatjs/ui.ts` register the tool and its renderer automatically. The provider descriptor records its credential requirements.
 
 Edit the installed provider source to change its description, runtime, or packages. The app imports the registered tool. Its renderer understands the Vercel item’s `title`, `language`, `code`, `message`, and `chart` fields. External items own their input/output shapes and may provide a different renderer.
 

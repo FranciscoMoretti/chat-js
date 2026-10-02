@@ -20,12 +20,15 @@ npx @chat-js/cli@latest [directory] [options]
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `-y, --yes` | `false` | Skip all prompts and use defaults (Vercel gateway, GitHub auth, no extra features). |
+| `-y, --yes` | `false` | Skip all prompts and use defaults (Vercel gateway, GitHub auth, no MCP, uploads or observability). |
 | `--code-execution-tool <item>` | Not applicable | Enable code execution with a built-in or external registry item. |
 | `--video-generation-tool <item>` | Not applicable | Enable the built-in `generate-video` tool or an external registry item. |
 | `--image-generation-tool <item>` | Not applicable | Enable the built-in `generate-image` tool or an external registry item. |
 | `--url-retrieval-tool <item>` | Not applicable | Enable URL retrieval with Firecrawl (`retrieve-url`) or an external registry item. |
 | `--search-tool <item>` | Not applicable | Enable web search with a built-in or external registry tool. |
+| `--mcp` / `--no-mcp` | Off | Install or omit MCP connectors. |
+| `--attachments` / `--no-attachments` | Off | Install or omit picker, camera, paste/drop and the upload endpoint. |
+| `--observability <items>` | None | Comma-separated `vercel-analytics`, `vercel-speed-insights`, `langfuse`. |
 | `--gateway <name-or-address>` | Vercel | Select a built-in or external registry gateway. |
 | `--from-git <url>` | Not applicable | Clone from a git repository instead of the built-in template. |
 | `--storage-provider <provider>` | Not applicable | Select a built-in storage provider or an external registry item address. |
@@ -37,10 +40,11 @@ When run without `--yes`, the CLI walks you through:
 
 1. **Project name:** the target directory name
 2. **Gateway:** the AI gateway to use (e.g. Vercel AI Gateway, OpenRouter)
-3. **Features:** optional features to enable, followed by provider selection for enabled search, code execution, URL retrieval, image generation, and video generation tools
-4. **File storage:** provider and non-secret adapter options when selected features store files
-5. **Auth providers:** authentication method (e.g. GitHub OAuth)
-6. **Electron desktop app:** optionally adds an `electron/` subfolder to package the app as a native desktop app (see [Desktop](/platforms/desktop))
+3. **Features:** optional features to enable
+4. **Observability and tool providers:** one optional multiselect for Vercel Analytics, Speed Insights and Langfuse, all initially off, followed by provider selection for enabled tools
+5. **File storage:** provider and non-secret adapter options when selected features store files
+6. **Auth providers:** authentication method (e.g. GitHub OAuth)
+7. **Electron desktop app:** optionally adds an `electron/` subfolder to package the app as a native desktop app (see [Desktop](/platforms/desktop))
 
 New apps use the invoking package manager, with Bun as the fallback. The CLI records its version in `package.json`, and shadcn installs dependencies immediately. The former `--no-install`, `--package-manager`, and `--registry` flags are removed.
 
@@ -112,8 +116,17 @@ npx @chat-js/cli@latest create my-chat-app
 cd my-chat-app
 cp .env.example .env.local
 # Fill in the env vars printed by the CLI
-bun run db:push
+bun run setup
 bun run dev
 ```
 
 `create --from-git` preserves the cloned repository's configuration, dependencies, and installed source. It does not contact the registry or apply feature-selection flags. Follow the cloned repository's setup instructions; use `chat-js add` for subsequent tool installations. Fresh scaffolds assemble the selected features. Direct shadcn installations require `chat-js sync` afterward.
+
+Installations determine which tools, document bundles and optional implementations exist. `chat.config.ts` keeps models, attachment size/type parameters, permissions, follow-up suggestions and parallel responses. It does not duplicate installed presence with feature flags. The maintained demo includes uploads, MCP and all three observability integrations.
+
+```bash
+npx @chat-js/cli@latest create my-chat-app --yes --attachments --mcp \
+  --observability vercel-analytics,vercel-speed-insights,langfuse
+```
+
+Langfuse requires `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`. `LANGFUSE_BASE_URL` and `LANGFUSE_DEBUG` are optional. Configure file storage for durable uploads. Historical attachment display and tool-produced files remain available when user uploads are omitted.

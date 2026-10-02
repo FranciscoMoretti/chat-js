@@ -6,6 +6,7 @@ import { Command } from "commander";
 import { z } from "zod";
 
 import { toolDefinitionSchema } from "../../../registry/metadata";
+import { observabilityItems } from "../../../registry/src/features/observability";
 import { buildConfigTs } from "../helpers/config-builder";
 import { ensureTargetEmpty } from "../helpers/ensure-target";
 import { collectEnvChecklist } from "../helpers/env-checklist";
@@ -15,6 +16,7 @@ import {
   promptAssistantTools,
   promptAuth,
   promptCoreFeatures,
+  promptObservability,
   promptDocumentTypes,
   promptElectron,
   promptGateway,
@@ -33,25 +35,22 @@ import {
 } from "../helpers/scaffold";
 import { configureStorageProvider } from "../helpers/storage-provider";
 import { resolveGateway } from "../registry/gateways";
-import {
-  installItems,
-  itemAddress,
-  listTools,
-  readItem,
-} from "../registry/shadcn";
+import { itemAddress, listTools, readItem } from "../registry/shadcn";
 import { resolveStorage } from "../registry/storage";
 import type { PackageManager } from "../types";
 import { launcherPackageManager } from "../utils/get-package-manager";
 import { handleError } from "../utils/handle-error";
 import { highlighter } from "../utils/highlighter";
+import {
+  installPlan,
+  recordInstalledSource,
+  plannedSourceTargets,
+} from "../utils/install-plan";
 import { planInstallation } from "../utils/installation-plan";
 import { logger } from "../utils/logger";
 import { runCommand } from "../utils/run-command";
 import { spinner } from "../utils/spinner";
-import {
-  assertSupportedFeatureInstallation,
-  syncFeatures,
-} from "../utils/sync-features";
+import { syncFeatures } from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 const resolveCreateTarget = (
@@ -108,12 +107,25 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
 };
 
 const createOptionsSchema = z.object({
+  attachments: z.boolean().optional(),
   codeExecutionTool: z.string().optional(),
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
   gateway: z.string().optional(),
   imageGenerationTool: z.string().optional(),
   mcp: z.boolean().optional(),
+  observability: z
+    .string()
+    .refine(
+      (value) =>
+        value
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
+          .every((id) => observabilityItems.some((item) => item.name === id)),
+      "Observability must select vercel-analytics, vercel-speed-insights or langfuse."
+    )
+    .optional(),
   searchTool: z.string().optional(),
   storageConfig: z.string().optional(),
   storageProvider: z.string().optional(),
@@ -267,6 +279,16 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     gatewaySelection.definition,
     options.mcp
   );
+  if (options.attachments !== undefined) {
+    coreFeatures.attachments = options.attachments;
+  }
+  const observability =
+    options.observability === undefined
+      ? await promptObservability(options.yes)
+      : options.observability
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
   const documentTypes = await promptDocumentTypes(
     options.yes,
     coreFeatures.documents
@@ -332,6 +354,7 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     documentTypes,
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
+    observability,
     storage,
     toolSources,
     usesStorage,
@@ -409,28 +432,37 @@ const installRegistryItems = async (
     "Installing selected registry items..."
   ).start();
   try {
-    const plan = await planInstallation(project.targetDir, {
-      features: [
-        ...(setup.coreFeatures.mcp ? ["mcp"] : []),
-        ...(setup.coreFeatures.attachments ? ["attachment-uploads"] : []),
-      ],
-      gateway: setup.gatewaySelection.source,
-      storage: { options: setup.storage.options, source: setup.storage.source },
-      tools: setup.toolSources,
-    });
-    assertSupportedFeatureInstallation(plan.features);
-    await installItems(plan.sources, project.targetDir);
-    await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
-    await configureStorageProvider(project.targetDir, setup.storage);
-    const installedTools = await syncTools(project.targetDir, {
-      expected: plan.expected,
-    });
-    await syncFeatures(project.targetDir, {
-      addUi: true,
-      expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
-      expectedUploads: plan.features.some(
-        (feature) => feature.id === "attachment-uploads"
-      ),
+    const plan = await planInstallation(
+      project.targetDir,
+      {
+        features: [
+          ...setup.observability,
+          ...(setup.coreFeatures.mcp ? ["mcp"] : []),
+          ...(setup.coreFeatures.attachments ? ["attachment-uploads"] : []),
+        ],
+        gateway: setup.gatewaySelection.source,
+        storage: {
+          options: setup.storage.options,
+          source: setup.storage.source,
+        },
+        tools: setup.toolSources,
+      },
+      { fresh: true }
+    );
+    let installedTools: Awaited<ReturnType<typeof syncTools>> = [];
+    await installPlan(project.targetDir, plan, { fresh: true }, async () => {
+      await configureGatewayProvider(project.targetDir, setup.gatewaySelection);
+      await configureStorageProvider(project.targetDir, setup.storage);
+      installedTools = await syncTools(project.targetDir, {
+        expected: plan.expected,
+      });
+      await syncFeatures(project.targetDir, {
+        addUi: true,
+        expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
+        expectedUploads: plan.features.some(
+          (feature) => feature.id === "attachment-uploads"
+        ),
+      });
     });
     await runCommand(packageManager, ["install"], project.targetDir);
     await runCommand(
@@ -438,6 +470,14 @@ const installRegistryItems = async (
       [...oxfmtCommandFor(packageManager), "oxfmt", "--write", "."],
       project.targetDir
     );
+    await recordInstalledSource(project.targetDir, [
+      ...plannedSourceTargets(plan),
+      "chat.config.ts",
+      "lib/ai/gateway-model-defaults.ts",
+      "lib/ai/models.generated.ts",
+      "lib/storage-options.ts",
+      ".env.example",
+    ]);
     installSpinner.succeed("Registry items installed and configured.");
     return installedTools;
   } catch (error) {
@@ -462,6 +502,9 @@ const printNextSteps = (
     gatewayRequirements: setup.gatewaySelection.definition.envRequirements,
     installableToolEnvRequirements: [
       ...installedTools.flatMap((tool) => tool.envRequirements),
+      ...observabilityItems
+        .filter((item) => setup.observability.includes(item.name))
+        .flatMap((item) => item.meta.chatjs.envRequirements ?? []),
       ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
     ],
   });
@@ -563,6 +606,15 @@ export const create = new Command()
     "gateway name, registry item URL, or local JSON path"
   )
   .option("-y, --yes", "skip prompts and use defaults", false)
+  .option(
+    "--attachments",
+    "install attachment picker, camera, paste/drop and upload endpoint"
+  )
+  .option("--no-attachments", "omit user attachment uploads")
+  .option(
+    "--observability <items>",
+    "comma-separated vercel-analytics, vercel-speed-insights, langfuse (default: none)"
+  )
   .option("--mcp", "install MCP connectors, pages and OAuth callback")
   .option("--no-mcp", "omit MCP from the new app")
   .option("--electron", "include the Electron desktop app")

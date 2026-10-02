@@ -7,6 +7,7 @@ import { collectEnvChecklist } from "./env-checklist";
 import {
   promptAssistantTools,
   promptCoreFeatures,
+  promptObservability,
   promptDocumentTypes,
 } from "./prompts";
 
@@ -20,6 +21,8 @@ it("uses external defaults and every environment group with --yes", async () => 
   const documentTypes = await promptDocumentTypes(true, true);
   const { builtInTools } = await promptAssistantTools([], true);
   expect(coreFeatures.mcp).toBe(false);
+  expect(coreFeatures.attachments).toBe(false);
+  expect(await promptObservability(true)).toEqual([]);
   expect(documentTypes).toEqual({ code: true, sheet: true, text: true });
   expect(builtInTools.webSearch).toBe(false);
   const input = {

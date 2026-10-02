@@ -15,7 +15,7 @@ const requestTooLarge = () =>
     { status: 413 }
   );
 
-// Use Blob instead of File since File is not available in Node.js environment
+// Validate uploaded bytes through the Blob interface; File extends Blob.
 const FileSchema = z.object({
   file: z
     .instanceof(Blob)

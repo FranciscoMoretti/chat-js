@@ -18,6 +18,14 @@ import { getEveConnectionOptions } from "./connection-options";
 import { attachmentDigest, draftAttachment } from "./draft";
 import { assertEveConfigured } from "./server";
 
+const parseContentType = (value: string) => {
+  const parsed = draftAttachment.shape.contentType.safeParse(value);
+  if (!parsed.success) {
+    throw new Error("This attachment has an unsupported type or size.");
+  }
+  return parsed.data;
+};
+
 const validateAttachment = (
   file: Pick<Blob, "type" | "size">,
   contentType: string
@@ -76,7 +84,7 @@ export const restoreMessageAttachments = async (
     if (part.type !== "file") {
       continue;
     }
-    const contentType = draftAttachment.shape.contentType.parse(part.mediaType);
+    const contentType = parseContentType(part.mediaType);
     const { url } = part;
     if (!url) {
       throw new Error("This attachment is unavailable for editing.");

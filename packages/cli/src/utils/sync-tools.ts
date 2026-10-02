@@ -300,25 +300,26 @@ const validateToolDependencies = (definitions: ToolDefinition[]): void => {
   }
 };
 
+export const toolRegistrationTargets = [
+  "tools.ts",
+  "ui.ts",
+  "document-ui.ts",
+  "installed-features.ts",
+  "composer-tools.ts",
+  "document-run.ts",
+  "providers.ts",
+  "code-executor.ts",
+  "workflow-types.ts",
+  "tool-availability.ts",
+  "custom-tools.ts",
+  "custom-ui.ts",
+].map((file) => `tools/chatjs/${file}`);
+
 export const readInstalledTools = async (
   cwd: string
 ): Promise<ToolDefinition[]> => {
   const directory = "tools/chatjs";
-  const targets = [
-    "tools.ts",
-    "ui.ts",
-    "document-ui.ts",
-    "installed-features.ts",
-    "composer-tools.ts",
-    "document-run.ts",
-    "providers.ts",
-    "code-executor.ts",
-    "workflow-types.ts",
-    "tool-availability.ts",
-    "custom-tools.ts",
-    "custom-ui.ts",
-  ].map((file) => `${directory}/${file}`);
-  await preflight(cwd, targets);
+  await preflight(cwd, toolRegistrationTargets);
   const dir = join(cwd, directory);
   const entries = await readdir(dir, { withFileTypes: true }).catch((error) => {
     if (error.code === "ENOENT") {

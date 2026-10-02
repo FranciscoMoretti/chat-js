@@ -19,6 +19,7 @@ for (const environment of [
         integration: "langfuse",
       });
       expect(String(error)).not.toContain("test-secret");
+      expect(String(error)).not.toContain("test-public");
     }
   });
 }

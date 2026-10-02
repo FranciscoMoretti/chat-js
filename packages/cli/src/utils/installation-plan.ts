@@ -17,6 +17,7 @@ import type {
 } from "../../../registry/metadata";
 import { itemAddress, readItem } from "../registry/shadcn";
 import { preflight } from "./preflight";
+import { readProviderId } from "./provider-config";
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
 
 const validateRequestedKind = (
@@ -34,7 +35,8 @@ const validateRequestedKind = (
 /** Resolve the complete target installation before any source files are written. */
 export const planInstallation = async (
   cwd: string,
-  input: InstallationSelection
+  input: InstallationSelection,
+  options: { fresh?: boolean; replace?: boolean } = {}
 ) => {
   const selection = installationSelectionSchema.parse(input);
   const installed = await readInstalledTools(cwd);
@@ -118,9 +120,47 @@ export const planInstallation = async (
       ? [visit(itemAddress(selection.storage.source, "storage"), "storage")]
       : []),
   ]);
+  const providerChanges = await Promise.all(
+    [...providers].map(async ([kind, next]) => {
+      if (kind !== "gateway" && kind !== "storage") {
+        throw new Error("Invalid exclusive provider kind.");
+      }
+      const previous = options.fresh
+        ? undefined
+        : await readProviderId(cwd, kind);
+      if (previous && previous !== next && !options.replace) {
+        throw new Error(
+          `Replace ${kind} provider ${previous} with ${next} explicitly using --replace.`
+        );
+      }
+      return { kind, next, previous };
+    })
+  );
+  const replacements = installed.flatMap((previous) => {
+    const next = [...expected.values()].find(
+      (item) =>
+        item.id !== previous.id &&
+        ((item.slot && item.slot === previous.slot) ||
+          (item.documentKind && item.documentKind === previous.documentKind))
+    );
+    if (!next) {
+      return [];
+    }
+    if (!options.fresh && !options.replace) {
+      throw new Error(
+        `Only one ${previous.slot ?? previous.documentKind} provider can be installed. Replace ${previous.id} with ${next.id} explicitly using --replace.`
+      );
+    }
+    return [{ next, previous }];
+  });
   const target = () => [
     ...new Map([
-      ...installed.map((item) => [item.id, item] as const),
+      ...installed
+        .filter(
+          (item) =>
+            !replacements.some(({ previous }) => previous.id === item.id)
+        )
+        .map((item) => [item.id, item] as const),
       ...expected.entries(),
     ]).values(),
   ];
@@ -186,7 +226,10 @@ export const planInstallation = async (
   return {
     expected: [...expected.values()],
     features: [...features.values()],
+    items: await Promise.all(items.values()),
+    providerChanges,
+    replacements,
     selection,
-    sources: [...sources],
+    sources: [...items.keys()],
   };
 };
