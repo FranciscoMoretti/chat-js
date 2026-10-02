@@ -67,7 +67,7 @@ export const GET = async (request: NextRequest) => {
     const pending = state ? await getSessionByState({ state }) : undefined;
     if (pending && !pending.tokens && state) {
       await deleteSessionByState({ state });
-      await removeMcpClient(pending.mcpConnectorId);
+      await removeMcpClient(pending.mcpConnectorId, state);
       invalidateAllMcpCaches(pending.mcpConnectorId);
     }
     return redirectToConnector({
