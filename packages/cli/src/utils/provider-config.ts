@@ -18,6 +18,30 @@ const unwrap = (expression: ts.Expression): ts.Expression => {
   return value;
 };
 
+// Object properties apply in order. A later spread or computed key can override
+// a named property; only a subsequent explicit assignment makes it safe again.
+const activeProperty = (object: ts.ObjectLiteralExpression, name: string) => {
+  let selected: ts.PropertyAssignment | undefined;
+  for (const property of object.properties) {
+    if (
+      ts.isSpreadAssignment(property) ||
+      (property.name && ts.isComputedPropertyName(property.name))
+    ) {
+      selected = undefined;
+      continue;
+    }
+    if (
+      property.name &&
+      (ts.isIdentifier(property.name) ||
+        ts.isStringLiteralLike(property.name)) &&
+      property.name.text === name
+    ) {
+      selected = ts.isPropertyAssignment(property) ? property : undefined;
+    }
+  }
+  return selected;
+};
+
 export const readProviderId = async (
   cwd: string,
   kind: "gateway" | "storage"
@@ -119,30 +143,16 @@ export const gatewayConfigEdit = async (
       : expression;
   const aiProperty =
     config && ts.isObjectLiteralExpression(config)
-      ? config.properties.find(
-          (property): property is ts.PropertyAssignment =>
-            ts.isPropertyAssignment(property) &&
-            property.name
-              .getText(parsed)
-              .replaceAll('"', "")
-              .replaceAll("'", "") === "ai"
-        )
+      ? activeProperty(config, "ai")
       : undefined;
   const ai = aiProperty && unwrap(aiProperty.initializer);
   const gateway =
     ai && ts.isObjectLiteralExpression(ai)
-      ? ai.properties.find(
-          (property): property is ts.PropertyAssignment =>
-            ts.isPropertyAssignment(property) &&
-            property.name
-              .getText(parsed)
-              .replaceAll('"', "")
-              .replaceAll("'", "") === "gateway"
-        )
+      ? activeProperty(ai, "gateway")
       : undefined;
   if (!gateway) {
     throw new Error(
-      "chat.config.ts must have a literal ai.gateway to replace the gateway automatically. Integrate the new gateway configuration manually."
+      "chat.config.ts must have a literal ai.gateway without later spreads or computed keys that could override it to replace the gateway automatically. Integrate the new gateway configuration manually."
     );
   }
   return (

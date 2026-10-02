@@ -87,3 +87,40 @@ test("gateway replacement edits only the active root config discriminator", asyn
     "literal ai.gateway"
   );
 });
+
+test.each([
+  ['{ ai: { gateway: "openai", ...loadAiSettings() } }', false],
+  ['{ ai: { gateway: "openai" }, ...loadConfig() }', false],
+  ['{ ai: { gateway: "openai", [settingKey]: "other" } }', false],
+  ['{ ai: { gateway: "openai" }, [sectionKey]: {} }', false],
+  ['{ ai: { gateway: "openai", get gateway() { return "other"; } } }', false],
+  ['{ ...loadConfig(), ai: { ...loadAiSettings(), gateway: "openai" } }', true],
+  ['{ ai: { gateway: "inactive" }, ai: { gateway: "openai" } }', true],
+  ['{ ai: { gateway: "inactive", gateway: "openai" } }', true],
+])(
+  "gateway replacement respects property order in %s",
+  async (config, safe) => {
+    const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-spreads-"));
+    roots.push(root);
+    const file = path.join(root, "chat.config.ts");
+    const item = builtInGateways.find(
+      (gateway) => gateway.meta.chatjs.id === "vercel"
+    );
+    if (!item) {
+      throw new Error("Missing Vercel fixture");
+    }
+    const selection = { definition: item.meta.chatjs, source: "vercel" };
+    const original = `export default defineConfig(${config});\n`;
+    await writeFile(file, original);
+    if (safe) {
+      expect(await gatewayConfigEdit(root, selection)).toBe(
+        original.replace('gateway: "openai"', 'gateway: "vercel"')
+      );
+    } else {
+      await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+        "literal ai.gateway"
+      );
+    }
+    expect(await readFile(file, "utf-8")).toBe(original);
+  }
+);
