@@ -78,9 +78,7 @@ describe("buildConfigTs", () => {
     expect(output).toContain("parallelResponses: true");
     expect(output).not.toContain("documents: {");
     expect(output).not.toContain("codeExecution: {");
-    expect(output).toContain(
-      "// File attachments (requires configured file storage)\n    attachments: false,"
-    );
+    expect(output).not.toContain("attachments: false");
   });
   it("writes desktopApp.enabled=true for Electron scaffolds", () => {
     const output = buildConfigTs({

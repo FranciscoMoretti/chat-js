@@ -1,9 +1,6 @@
 "use client";
 
-import { useRef } from "react";
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
-import { useDropzone } from "react-dropzone";
-import { toast } from "sonner";
 
 import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
@@ -11,14 +8,37 @@ import { ContextBar } from "@/components/context-bar";
 import { ControlledChatComposer } from "@/components/controlled-chat-composer";
 import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";
-import { config } from "@/lib/config";
+import type { DraftAttachment } from "@/lib/eve/draft";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
-import { useSession } from "@/providers/session-provider";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
 
 import { EveModelPicker } from "./eve-model-picker";
 import type { useEveAttachments } from "./use-eve-attachments";
+
+const uploadsOmitted = () => {
+  // Uploads are omitted from this installation.
+};
+const modelSelectionIds = (
+  retained: string | undefined,
+  selection: Parameters<typeof expandSelectedModelValue>[0] | undefined,
+  selected: Parameters<typeof expandSelectedModelValue>[0]
+) => (retained ? [retained] : expandSelectedModelValue(selection ?? selected));
+
+const unsupportedAttachments = (
+  models: ReturnType<ReturnType<typeof useChatModels>["getModelById"]>[],
+  files: DraftAttachment[]
+) =>
+  models.some((model) =>
+    files.some((file) =>
+      file.contentType === "application/pdf"
+        ? !model?.input.pdf
+        : !model?.input.image
+    )
+  );
+
+const isUnavailableTool = (tool: UiToolName | null) =>
+  Boolean(tool && !installedToolNames.has(tool));
 
 export const EveComposer = ({
   files,
@@ -39,84 +59,44 @@ export const EveComposer = ({
   retainedModelIds?: string[];
   modelSelection?: ComponentProps<typeof EveModelPicker>["modelSelection"];
 }) => {
-  const input = useRef<HTMLInputElement>(null);
-  const { data: session } = useSession();
   const selected = useDefaultModel();
   const { getModelById } = useChatModels();
-  const models = (
-    retainedModelId
-      ? [retainedModelId]
-      : expandSelectedModelValue(modelSelection?.value ?? selected)
+  const models = modelSelectionIds(
+    retainedModelId,
+    modelSelection?.value,
+    selected
   ).map(getModelById);
   const unsupported =
-    !props.readOnly &&
-    models.some((model) =>
-      files.attachments.some((file) =>
-        file.contentType === "application/pdf"
-          ? !model?.input.pdf
-          : !model?.input.image
-      )
-    );
-  const unavailableTool = Boolean(
-    selectedTool && !installedToolNames.has(selectedTool)
-  );
+    !props.readOnly && unsupportedAttachments(models, files.attachments);
+  const unavailableTool = isUnavailableTool(selectedTool);
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
-  const upload = (incoming: File[]) => {
-    if (!session?.user) {
-      toast.error("Sign in to attach files.");
-      return;
-    }
-    if (!uploadLocked && config.features.attachments) {
-      // oxlint-disable-next-line promise/prefer-await-to-then -- Dropzone callbacks intentionally fire-and-forget uploads.
-      files.upload(incoming).catch(() => null);
-    }
+  const removeAttachment = (attachment: { url: string }) => {
+    files.setAttachments((current) =>
+      current.filter((file) => file.url !== attachment.url)
+    );
   };
-  const { getRootProps } = useDropzone({
-    disabled: uploadLocked || !config.features.attachments,
-    noClick: true,
-    noKeyboard: true,
-    onDrop: upload,
-  });
+  const uploads = files.composer?.(!!uploadLocked);
   return (
-    <div {...getRootProps({ "aria-label": "Message composer", role: "group" })}>
-      <input
-        aria-label="Attach files"
-        className="hidden"
-        disabled={uploadLocked}
-        multiple
-        onChange={(event) => {
-          upload([...(event.target.files ?? [])]);
-          event.target.value = "";
-        }}
-        ref={input}
-        type="file"
-      />
+    <div
+      {...{
+        "aria-label": "Message composer",
+        role: "group",
+        ...uploads?.rootProps,
+      }}
+    >
+      {uploads?.input}
       <ControlledChatComposer
         {...props}
         attachments={
           <ContextBar
             attachments={files.attachments}
-            onRemoveAction={
-              uploadLocked
-                ? undefined
-                : (attachment) => {
-                    files.setAttachments((current) =>
-                      current.filter((file) => file.url !== attachment.url)
-                    );
-                  }
-            }
+            onRemoveAction={uploadLocked ? undefined : removeAttachment}
             uploadQueue={files.uploadQueue}
           />
         }
         disabled={locked || unsupported || unavailableTool}
         hasAttachments={files.attachments.length > 0}
-        onPaste={(event) => {
-          if (config.features.attachments && event.clipboardData.files.length) {
-            event.preventDefault();
-            upload([...event.clipboardData.files]);
-          }
-        }}
         tools={
           <>
             <ComposerMenu
@@ -124,18 +104,7 @@ export const EveComposer = ({
               selectedModelId={models[0]?.id ?? ""}
               selectedTool={selectedTool}
               onToolChange={onToolChange}
-              onAttach={(accept, capture) => {
-                if (!input.current) {
-                  return;
-                }
-                input.current.accept = accept;
-                if (capture) {
-                  input.current.capture = capture;
-                } else {
-                  input.current.removeAttribute("capture");
-                }
-                input.current.click();
-              }}
+              onAttach={uploads?.onAttach ?? uploadsOmitted}
             />
             <ActiveTool
               selectedTool={selectedTool}

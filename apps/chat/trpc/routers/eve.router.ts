@@ -17,6 +17,7 @@ import {
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
 import { eveHistoryInput } from "@/lib/eve/history-input";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+import { restoreMessageAttachments } from "@/lib/eve/restore-message-attachments";
 import { saveManualEveDocument } from "@/lib/eve/save-document";
 import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import { voteEveMessage } from "@/lib/eve/vote-message";
@@ -139,6 +140,16 @@ export const eveRouter = createTRPCRouter({
       }
       return updated;
     }),
+  restoreAttachments: eveOwnedProcedure
+    .input(
+      z.object({
+        conversationId: z.uuid(),
+        messageId: z.string().min(1).max(512),
+      })
+    )
+    .mutation(({ ctx, input }) =>
+      restoreMessageAttachments(ctx.eveOwnerId, input)
+    ),
   saveDocument: eveOwnedProcedure
     .input(eveManualDocumentInput)
     .mutation(async ({ ctx, input }) => {
