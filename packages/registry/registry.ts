@@ -5,6 +5,7 @@ import { toolDefinitionSchema } from "./metadata";
 import registryPackage from "./package.json";
 import { attachmentUploadsItem } from "./src/features/attachment-uploads";
 import { mcpItem } from "./src/features/mcp";
+import { observabilityItems } from "./src/features/observability";
 import { builtInGateways } from "./src/gateways/catalog";
 import { builtInStorage } from "./src/storage/catalog";
 import {
@@ -196,6 +197,7 @@ export const registry = registrySchema.parse({
   items: [
     mcpItem,
     attachmentUploadsItem,
+    ...observabilityItems,
     ...builtInGateways,
     ...builtInStorage,
     ...toolItems,
