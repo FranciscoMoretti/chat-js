@@ -96,7 +96,7 @@ export const gatewayConfigEdit = async (
   const expression = exported && resolve(exported.expression);
   const config =
     expression && ts.isCallExpression(expression)
-      ? expression.arguments[0] && unwrap(expression.arguments[0])
+      ? expression.arguments[0] && resolve(expression.arguments[0])
       : expression;
   const aiProperty =
     config && ts.isObjectLiteralExpression(config)

@@ -1101,6 +1101,22 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
         "--replace",
         "--yes",
       ]);
+      // A gateway-generated env update must not look like a user edit during
+      // a subsequent storage replacement.
+      await run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--storage-provider",
+        "s3",
+        "--storage-config",
+        '{"bucket":"after-gateway","region":"us-east-1"}',
+        "--replace",
+        "--yes",
+      ]);
+      expect(
+        await readFile(join(cwd, "lib/storage-options.ts"), "utf-8")
+      ).toContain("after-gateway");
       const nextConfig = await readFile(join(cwd, "chat.config.ts"), "utf-8");
       expect(nextConfig).toBe(
         previousConfig.replace(
