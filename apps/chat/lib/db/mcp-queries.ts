@@ -1,5 +1,3 @@
-"use server";
-
 import type {
   OAuthClientInformation,
   OAuthClientMetadata,
@@ -10,6 +8,9 @@ import { and, desc, eq, isNotNull, isNull, ne, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { mcpConnector, mcpOAuthSession } from "@/lib/db/schema";
 import type { McpConnector, McpOAuthSession } from "@/lib/db/schema";
+import { createModuleLogger } from "@/lib/logger";
+
+const log = createModuleLogger("mcp-queries");
 
 // Full client information includes both metadata and registration response
 export type OAuthClientInformationFull = OAuthClientMetadata &
@@ -29,7 +30,7 @@ export const getMcpConnectorsByUserId = async ({
       .where(or(eq(mcpConnector.userId, userId), isNull(mcpConnector.userId)))
       .orderBy(desc(mcpConnector.createdAt));
   } catch (error) {
-    console.error("Failed to get MCP connectors from database", error);
+    log.error({ err: error }, "Failed to get MCP connectors from database");
     throw error;
   }
 };
@@ -46,7 +47,10 @@ export const getMcpConnectorById = async ({
       .where(eq(mcpConnector.id, id));
     return connector;
   } catch (error) {
-    console.error("Failed to get MCP connector by id from database", error);
+    log.error(
+      { err: error },
+      "Failed to get MCP connector by id from database"
+    );
     throw error;
   }
 };
@@ -75,7 +79,10 @@ export const getMcpConnectorByNameId = async ({
     const [connector] = await db.select().from(mcpConnector).where(whereClause);
     return connector;
   } catch (error) {
-    console.error("Failed to get MCP connector by nameId from database", error);
+    log.error(
+      { err: error },
+      "Failed to get MCP connector by nameId from database"
+    );
     throw error;
   }
 };
@@ -112,7 +119,7 @@ export const createMcpConnector = async ({
       .returning();
     return connector;
   } catch (error) {
-    console.error("Failed to create MCP connector in database", error);
+    log.error({ err: error }, "Failed to create MCP connector in database");
     throw error;
   }
 };
@@ -141,7 +148,7 @@ export const updateMcpConnector = async ({
       })
       .where(eq(mcpConnector.id, id));
   } catch (error) {
-    console.error("Failed to update MCP connector in database", error);
+    log.error({ err: error }, "Failed to update MCP connector in database");
     throw error;
   }
 };
@@ -154,7 +161,7 @@ export const deleteMcpConnector = async ({
   try {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
   } catch (error) {
-    console.error("Failed to delete MCP connector from database", error);
+    log.error({ err: error }, "Failed to delete MCP connector from database");
     throw error;
   }
 };
@@ -339,16 +346,39 @@ export const saveTokensAndCleanup = async ({
     throw new Error(`Session with state ${state} not found`);
   }
 
-  await db
+  try {
+    await db
+      .delete(mcpOAuthSession)
+      .where(
+        and(
+          eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
+          isNull(mcpOAuthSession.tokens),
+          sql`${mcpOAuthSession.createdAt} < now() - interval '1 hour'`,
+          ne(mcpOAuthSession.state, state)
+        )
+      );
+  } catch (error) {
+    log.warn(
+      { err: error, mcpConnectorId },
+      "Could not clean up expired OAuth sessions"
+    );
+  }
+
+  return session;
+};
+
+/** Remove only an unfinished OAuth attempt, atomically preserving any token winner. */
+export const deletePendingSessionByState = async ({
+  state,
+}: {
+  state: string;
+}) => {
+  const [session] = await db
     .delete(mcpOAuthSession)
     .where(
-      and(
-        eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
-        isNull(mcpOAuthSession.tokens),
-        ne(mcpOAuthSession.state, state)
-      )
-    );
-
+      and(eq(mcpOAuthSession.state, state), isNull(mcpOAuthSession.tokens))
+    )
+    .returning();
   return session;
 };
 

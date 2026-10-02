@@ -15,6 +15,8 @@ test.each([
       "tests/visual/eve-tool-results.browser.tsx",
       "tests/visual/sandbox.css",
       "lib/db/eve-subagents.test.ts",
+      "lib/db/mcp-oauth-lock.test.ts",
+      "app/api/mcp/oauth/callback/route.test.ts",
       "lib/eve/research-availability.test.ts",
       "tests/native-research-runtime.ts",
       "scripts/db-branch-create.sh",
