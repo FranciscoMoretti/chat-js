@@ -38,7 +38,7 @@ const itemFiles = async (item: (typeof observabilityItems)[number]) => [
 ];
 
 // Every subset protects omission as well as independent installation.
-for (let mask = 0; mask < 8; mask += 1) {
+for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
   const selected = observabilityItems.filter(
     (_, index) => Math.floor(mask / 2 ** index) % 2
   );
@@ -106,7 +106,7 @@ for (const item of observabilityItems) {
         ).exists()
       )
     );
-    expect(descriptors).toEqual([false, false, false]);
+    expect(descriptors).toEqual(observabilityItems.map(() => false));
     // Exercise shadcn's dependency installation without the scaffold's unrelated
     // unpublished workspace packages (the packed generated-app suite covers those).
     await writeFile(
@@ -129,7 +129,11 @@ for (const item of observabilityItems) {
         await readFile(path.join(root, "package.json"), "utf-8")
       );
       for (const dependency of item.dependencies) {
-        const name = dependency.slice(0, dependency.lastIndexOf("@"));
+        const versionSeparator = dependency.lastIndexOf("@");
+        const name =
+          versionSeparator > 0
+            ? dependency.slice(0, versionSeparator)
+            : dependency;
         expect(installedManifest.dependencies[name]).toBeDefined();
       }
       const registration = await readFile(
