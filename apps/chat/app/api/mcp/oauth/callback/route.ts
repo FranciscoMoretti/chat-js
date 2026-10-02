@@ -53,13 +53,6 @@ export const GET = async (request: NextRequest) => {
     "OAuth callback received"
   );
 
-  if (!(code && state) && !error) {
-    log.error({ code: !!code, state: !!state }, "Missing code or state");
-    return redirectToConnector({
-      errorMessage: "Missing authorization code or state parameter",
-    });
-  }
-
   try {
     requireMcpCredentials();
   } catch (setupError) {
@@ -74,6 +67,8 @@ export const GET = async (request: NextRequest) => {
     const pending = state ? await getSessionByState({ state }) : undefined;
     if (pending && !pending.tokens && state) {
       await deleteSessionByState({ state });
+      await removeMcpClient(pending.mcpConnectorId);
+      invalidateAllMcpCaches(pending.mcpConnectorId);
     }
     return redirectToConnector({
       connectorId: pending?.mcpConnectorId,
@@ -82,6 +77,7 @@ export const GET = async (request: NextRequest) => {
     });
   }
   if (!(code && state)) {
+    log.error({ code: !!code, state: !!state }, "Missing code or state");
     return redirectToConnector({
       errorMessage: "Missing authorization code or state parameter",
     });
