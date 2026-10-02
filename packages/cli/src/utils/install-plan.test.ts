@@ -187,47 +187,94 @@ test("native shadcn source can be composed without overwriting or blessing user 
 test("registration refreshes untouched rollback baselines without blessing user edits", async () => {
   const root = await fixture();
   const file = path.join(root, ".env.example");
-  await recordInstalledSource(root, [".env.example"]);
-  const plan = await planInstallation(root, { features: [], tools: [] });
-  const storagePlan = {
-    ...plan,
-    providerChanges: [{ kind: "storage", next: "s3", previous: "local" }],
-  };
-  await installPlan(
-    root,
-    plan,
-    { rollbackTargets: [".env.example"] },
-    async () => {
-      await writeFile(file, "GATEWAY=changed\n");
-    }
-  );
-  await installPlan(
-    root,
-    storagePlan,
-    { managedTargets: [".env.example"] },
-    async () => {
-      await writeFile(file, "STORAGE=changed\n");
-    }
-  );
-  const receiptFile = path.join(root, ".chatjs/installed-source.json");
-  const baseline = await readFile(receiptFile, "utf-8");
-  await writeFile(file, "# user storage notes\nSTORAGE=changed\n");
-  await installPlan(
-    root,
-    plan,
-    { rollbackTargets: [".env.example"] },
-    async () => {
-      await writeFile(
-        file,
-        "# user storage notes\nSTORAGE=changed\nGATEWAY=next\n"
-      );
-    }
-  );
-  expect(await readFile(receiptFile, "utf-8")).toBe(baseline);
-  await expect(
-    installPlan(root, storagePlan, { managedTargets: [".env.example"] }, () =>
-      Promise.reject(new Error("must reject before registration"))
-    )
-  ).rejects.toThrow("--overwrite");
-  expect(await readFile(file, "utf-8")).toContain("user storage notes");
-});
+  await recordInstalledSource(root, [
+    ".env.example",
+    "lib/storage-provider.ts",
+  ]);
+  const registry = Bun.serve({
+    fetch: () =>
+      Response.json({
+        files: [
+          {
+            content: "export const createStorageAdapter = () => ({});\n",
+            path: "storage-provider.ts",
+            target: "~/lib/storage-provider.ts",
+            type: "registry:file",
+          },
+        ],
+        meta: {
+          chatjs: {
+            contractVersion: 1,
+            id: "fixture-storage",
+            kind: "storage",
+          },
+        },
+        name: "fixture-storage",
+        type: "registry:item",
+      }),
+    hostname: "127.0.0.1",
+    port: 0,
+  });
+  try {
+    const plan = await planInstallation(root, { features: [], tools: [] });
+    const storagePlan = await planInstallation(
+      root,
+      {
+        features: [],
+        storage: {
+          options: {},
+          source: `http://127.0.0.1:${registry.port}/storage.json`,
+        },
+        tools: [],
+      },
+      { replace: true }
+    );
+    await installPlan(
+      root,
+      plan,
+      { rollbackTargets: [".env.example"] },
+      async () => {
+        await writeFile(file, "GATEWAY=changed\n");
+      }
+    );
+    await installPlan(
+      root,
+      storagePlan,
+      { managedTargets: [".env.example"] },
+      async () => {
+        await writeFile(file, "STORAGE=changed\n");
+      }
+    );
+    const receiptFile = path.join(root, ".chatjs/installed-source.json");
+    const baseline = await readFile(receiptFile, "utf-8");
+    await writeFile(file, "# user storage notes\nSTORAGE=changed\n");
+    await installPlan(
+      root,
+      plan,
+      { rollbackTargets: [".env.example"] },
+      async () => {
+        await writeFile(
+          file,
+          "# user storage notes\nSTORAGE=changed\nGATEWAY=next\n"
+        );
+      }
+    );
+    expect(await readFile(receiptFile, "utf-8")).toBe(baseline);
+    let registered = false;
+    await expect(
+      installPlan(
+        root,
+        storagePlan,
+        { managedTargets: [".env.example"] },
+        async () => {
+          registered = true;
+          await writeFile(file, "must not reach registration");
+        }
+      )
+    ).rejects.toThrow("No source was installed");
+    expect(registered).toBe(false);
+    expect(await readFile(file, "utf-8")).toContain("user storage notes");
+  } finally {
+    registry.stop(true);
+  }
+}, 30_000);
