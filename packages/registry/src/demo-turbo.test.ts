@@ -229,9 +229,22 @@ test.each([
     ).hash;
   const before = hash();
   const target = path.join(fixture, file);
-  await writeFile(
-    target,
-    `${await readFile(target, "utf-8")}\n// changed type boundary\n`
-  );
+  await mkdir(path.dirname(target), { recursive: true });
+  const previous = (await Bun.file(target).exists())
+    ? await readFile(target, "utf-8")
+    : "";
+  await writeFile(target, `${previous}\n// changed type boundary\n`);
   expect(hash()).not.toBe(before);
+});
+
+test("registry typecheck restores gateway declaration outputs on cache hits", () => {
+  const { tasks } = run("test:types", "--filter=@chat-js/registry");
+  const registry = tasks.find(
+    (item: { taskId: string }) => item.taskId === "@chat-js/registry#test:types"
+  );
+  const gateways = tasks.find(
+    (item: { taskId: string }) => item.taskId === "@chat-js/gateways#test:types"
+  );
+  expect(registry.dependencies).toContain("@chat-js/gateways#test:types");
+  expect(gateways.resolvedTaskDefinition.outputs).toEqual(["dist/**"]);
 });
