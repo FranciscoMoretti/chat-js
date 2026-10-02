@@ -9,7 +9,7 @@ import {
   SquareIcon,
   XIcon,
 } from "lucide-react";
-import { Children, useEffect, useRef, useState } from "react";
+import { Children, useCallback, useEffect, useRef, useState } from "react";
 import type { ComponentProps, HTMLAttributes, RefObject } from "react";
 
 import {

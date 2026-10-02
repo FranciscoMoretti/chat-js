@@ -15,11 +15,11 @@ import { syncTools } from "../utils/sync-tools";
 
 export const add = new Command("add")
   .description(
-    "install registry tools or MCP and update their ChatJS registrations"
+    "install registry tools, MCP, or attachment uploads and update their ChatJS registrations"
   )
   .argument(
     "<tools...>",
-    "tool names, mcp, or standard shadcn registry addresses"
+    "tool names, mcp, attachment-uploads, or standard shadcn registry addresses"
   )
   .option("-y, --yes", "skip confirmation", false)
   .option("-o, --overwrite", "overwrite existing installed source files", false)
@@ -57,7 +57,7 @@ export const add = new Command("add")
         }
       } catch (error) {
         throw new Error(
-          `Source installation completed, but registration failed. Fix the problem and run ${mcp ? "chat-js add mcp to retry UI integration (or integrate the UI manually and run chat-js sync)" : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
+          `Source installation completed, but registration failed. Fix the problem and run ${mcp || uploads ? `chat-js add ${mcp ? "mcp" : "attachment-uploads"} to retry UI integration (or integrate the UI manually and run chat-js sync)` : "chat-js sync"}. ${error instanceof Error ? error.message : error}`,
           { cause: error }
         );
       }
