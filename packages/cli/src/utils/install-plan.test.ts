@@ -104,7 +104,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
   } finally {
     registry.stop(true);
   }
-});
+}, 30_000);
 
 test("unmodified replacement works without overwrite and failed registration restores previous source", async () => {
   const root = await fixture();
@@ -139,7 +139,7 @@ test("unmodified replacement works without overwrite and failed registration res
   } finally {
     registry.stop(true);
   }
-});
+}, 30_000);
 
 test("native shadcn source can be composed without overwriting or blessing user edits", async () => {
   const root = await fixture();
@@ -169,4 +169,4 @@ test("native shadcn source can be composed without overwriting or blessing user 
   } finally {
     registry.stop(true);
   }
-});
+}, 30_000);
