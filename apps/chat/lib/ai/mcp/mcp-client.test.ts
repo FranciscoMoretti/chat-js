@@ -253,3 +253,32 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
     await client.close();
   }
 );
+
+it("a retired provider's late OAuth redirect cannot authorise or close its replacement", async () => {
+  const gate = Promise.withResolvers<undefined>();
+  mocks.create.mockImplementationOnce(async () => {
+    const [[providerConfig]] = mocks.provider.mock.calls;
+    await gate.promise;
+    await providerConfig.onRedirectToAuthorization(
+      new URL("https://auth.test?state=retired")
+    );
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const first = client.connect();
+  const rejected = expect(first).rejects.toThrow("closed");
+  await client.close();
+  await client.connect();
+  expect(mocks.create.mock.calls[0][0].transport.authProvider).not.toBe(
+    mocks.create.mock.calls[1][0].transport.authProvider
+  );
+  gate.resolve(undefined);
+  await rejected;
+  expect(client.getAuthorizationUrl()).toBeUndefined();
+  expect(client.status).toBe("connected");
+  expect(mocks.close).not.toHaveBeenCalled();
+  await client.close();
+});
