@@ -10,7 +10,7 @@ import fs, {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { syncDemo } from "../scripts/demo-sync";
+import { generateDemo, syncDemo } from "../scripts/demo-sync";
 
 const directories: string[] = [];
 afterEach(async () => {
@@ -69,9 +69,11 @@ test("local edits stop all writes; explicit discard restores canonical source", 
   );
   expect(await readFile(options.baseline, "utf-8")).toBe(before);
   await syncDemo({ ...options, discard: true });
-  expect(
-    await readFile(path.join(options.root, "implementation.ts"), "utf-8")
-  ).toBe(options.expected.get("implementation.ts"));
+  const actual = await readFile(
+    path.join(options.root, "implementation.ts"),
+    "utf-8"
+  );
+  expect(options.expected.get("implementation.ts")).toBe(actual);
 });
 
 test("missing tracked files are edits and an untracked existing file is protected", async () => {
@@ -244,4 +246,29 @@ test("a symlinked baseline is rejected before source or external target writes",
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe("// canonical\nexport type Result = string;\n");
+});
+
+test("generator setup failure removes its temporary installation directory", async () => {
+  const originalRm = fs.rm;
+  let temporary: string | undefined;
+  const remove = spyOn(fs, "rm").mockImplementation(async (target, options) => {
+    temporary = String(target);
+    await originalRm(target, options);
+  });
+  const serve = spyOn(Bun, "serve").mockImplementation(() => {
+    throw new Error("Injected server setup failure");
+  });
+  try {
+    await expect(generateDemo()).rejects.toThrow(
+      "Injected server setup failure"
+    );
+  } finally {
+    remove.mockRestore();
+    serve.mockRestore();
+  }
+  if (temporary === undefined) {
+    throw new Error("Generator did not clean up its temporary directory");
+  }
+  expect(path.basename(temporary).startsWith("chatjs-demo-")).toBe(true);
+  await expect(fs.stat(temporary)).rejects.toThrow("ENOENT");
 });
