@@ -93,7 +93,7 @@ it("provider cancellation deletes only pending state and returns a safe connecto
   );
   expect(location.toString()).not.toContain("secret");
   expect(mocks.deleteSession).toHaveBeenCalledWith({ state: "state" });
-  expect(mocks.removeClient).toHaveBeenCalledWith("connector");
+  expect(mocks.removeClient).toHaveBeenCalledWith("connector", "state");
   expect(mocks.invalidate).toHaveBeenCalledWith("connector");
 });
 
