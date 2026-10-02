@@ -169,3 +169,29 @@ it("connection initialization always receives a cancellation signal", async () =
   await client.close();
   expect(signal.aborted).toBe(true);
 });
+
+it("callers cancel their shared connection waits independently", async () => {
+  const gate = Promise.withResolvers<undefined>();
+  mocks.create.mockImplementationOnce(async () => {
+    await gate.promise;
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const firstAbort = new AbortController();
+  const secondAbort = new AbortController();
+  const first = client.connect(undefined, firstAbort.signal);
+  const second = client.connect(undefined, secondAbort.signal);
+  firstAbort.abort(new Error("first cancelled"));
+  await expect(first).rejects.toThrow("first cancelled");
+  expect(
+    mocks.create.mock.calls[0][0].initializationOptions.signal.aborted
+  ).toBe(false);
+  gate.resolve(undefined);
+  await second;
+  expect(client.status).toBe("connected");
+  expect(mocks.create).toHaveBeenCalledOnce();
+  await client.close();
+});
