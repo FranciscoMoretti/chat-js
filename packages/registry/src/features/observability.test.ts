@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { getLangfuseEnvironment } from "./langfuse/langfuse-env";
+import { getLangfuseEnvironment } from "./langfuse/credentials";
 
 for (const environment of [
   {},
