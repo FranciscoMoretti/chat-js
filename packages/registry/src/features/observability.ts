@@ -21,7 +21,7 @@ export const observabilityItems = [
     envRequirements: [
       { options: [["LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY"]] },
     ],
-    files: ["instrumentation.ts", "langfuse-env.ts"],
+    files: ["instrumentation.ts", "credentials.ts"],
     id: "langfuse",
   },
 ].map(({ id, description, dependencies, files, ...definition }) => ({

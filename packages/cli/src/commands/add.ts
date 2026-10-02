@@ -15,7 +15,10 @@ import { handleError } from "../utils/handle-error";
 import { installPlan } from "../utils/install-plan";
 import { planInstallation } from "../utils/installation-plan";
 import { gatewayConfigEdit } from "../utils/provider-config";
-import { syncFeatures } from "../utils/sync-features";
+import {
+  assertSupportedFeatureInstallation,
+  syncFeatures,
+} from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 
 const prepareAdd = async (
@@ -57,6 +60,7 @@ const prepareAdd = async (
     },
     { replace: options.replace }
   );
+  assertSupportedFeatureInstallation(plan.features);
   // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
   const gatewayItem = plan.items.find(
     (item) => item.meta?.chatjs?.kind === "gateway"

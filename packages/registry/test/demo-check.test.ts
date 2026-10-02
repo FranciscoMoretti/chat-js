@@ -42,6 +42,9 @@ test("demo stays aligned with full canonical installation source", async () => {
     "@/features/langfuse/instrumentation"
   );
   for (const file of [
+    "features/mcp/setup.ts",
+    "tools/chatjs/retrieve-url/tool.ts",
+    "tools/chatjs/tavily-search/tool.ts",
     "lib/db/mcp-oauth-lock.ts",
     "tools/chatjs/vercel-code-execution/execution-sandbox.ts",
   ]) {
