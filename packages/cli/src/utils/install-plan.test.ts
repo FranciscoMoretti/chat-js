@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { scaffoldFromTemplate } from "../helpers/scaffold";
 import { installItems } from "../registry/shadcn";
-import { installPlan } from "./install-plan";
+import { installPlan, recordInstalledSource } from "./install-plan";
 import { planInstallation } from "./installation-plan";
 import { syncTools } from "./sync-tools";
 
@@ -183,3 +183,51 @@ test("native shadcn source can be composed without overwriting or blessing user 
     registry.stop(true);
   }
 }, 30_000);
+
+test("registration refreshes untouched rollback baselines without blessing user edits", async () => {
+  const root = await fixture();
+  const file = path.join(root, ".env.example");
+  await recordInstalledSource(root, [".env.example"]);
+  const plan = await planInstallation(root, { features: [], tools: [] });
+  const storagePlan = {
+    ...plan,
+    providerChanges: [{ kind: "storage", next: "s3", previous: "local" }],
+  };
+  await installPlan(
+    root,
+    plan,
+    { rollbackTargets: [".env.example"] },
+    async () => {
+      await writeFile(file, "GATEWAY=changed\n");
+    }
+  );
+  await installPlan(
+    root,
+    storagePlan,
+    { managedTargets: [".env.example"] },
+    async () => {
+      await writeFile(file, "STORAGE=changed\n");
+    }
+  );
+  const receiptFile = path.join(root, ".chatjs/installed-source.json");
+  const baseline = await readFile(receiptFile, "utf-8");
+  await writeFile(file, "# user storage notes\nSTORAGE=changed\n");
+  await installPlan(
+    root,
+    plan,
+    { rollbackTargets: [".env.example"] },
+    async () => {
+      await writeFile(
+        file,
+        "# user storage notes\nSTORAGE=changed\nGATEWAY=next\n"
+      );
+    }
+  );
+  expect(await readFile(receiptFile, "utf-8")).toBe(baseline);
+  await expect(
+    installPlan(root, storagePlan, { managedTargets: [".env.example"] }, () =>
+      Promise.reject(new Error("must reject before registration"))
+    )
+  ).rejects.toThrow("--overwrite");
+  expect(await readFile(file, "utf-8")).toContain("user storage notes");
+});

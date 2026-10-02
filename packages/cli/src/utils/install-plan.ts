@@ -185,12 +185,14 @@ export const installPlan = async (
   );
   await recordInstalledSource(
     cwd,
-    targets.filter(
-      (target) =>
-        !existing.get(target) ||
-        options.overwrite ||
-        options.fresh ||
-        replacingShared
-    )
+    snapshotTargets.filter((target) => {
+      const previous = existing.get(target);
+      // Registration can update rollback-only files. Refresh an existing baseline
+      // only when the file was untouched beforehand; never bless user edits.
+      if (!targets.includes(target)) {
+        return previous && receipt[target] === hash(previous);
+      }
+      return !previous || options.overwrite || options.fresh || replacingShared;
+    })
   );
 };

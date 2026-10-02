@@ -216,15 +216,22 @@ export const createOAuthSession = async ({
   clientInfo?: OAuthClientInformationFull;
 }): Promise<McpOAuthSession> => {
   // Preserve active authorization attempts while pruning abandoned expired attempts.
-  await db
-    .delete(mcpOAuthSession)
-    .where(
-      and(
-        eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
-        isNull(mcpOAuthSession.tokens),
-        sql`${mcpOAuthSession.createdAt} < now() - interval '1 hour'`
-      )
+  try {
+    await db
+      .delete(mcpOAuthSession)
+      .where(
+        and(
+          eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
+          isNull(mcpOAuthSession.tokens),
+          sql`${mcpOAuthSession.createdAt} < now() - interval '1 hour'`
+        )
+      );
+  } catch (error) {
+    log.warn(
+      { err: error, mcpConnectorId },
+      "Could not clean up expired OAuth sessions"
     );
+  }
   const [session] = await db
     .insert(mcpOAuthSession)
     .values({

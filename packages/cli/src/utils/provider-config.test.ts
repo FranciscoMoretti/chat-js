@@ -48,4 +48,14 @@ test("gateway replacement edits only the active root config discriminator", asyn
   expect(await readFile(path.join(root, "chat.config.ts"), "utf-8")).toBe(
     original
   );
+  const bound = original
+    .replace("const config = defineConfig({", "const configInput = {")
+    .replace(
+      "} });\nexport default config;",
+      "} };\nexport default defineConfig(configInput);"
+    );
+  await writeFile(path.join(root, "chat.config.ts"), bound);
+  expect(await gatewayConfigEdit(root, selection)).toBe(
+    bound.replace('gateway: "openai"', 'gateway: "vercel"')
+  );
 });
