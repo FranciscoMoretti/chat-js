@@ -285,7 +285,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         const refreshed = refreshTokensSchema.parse(
           await response.clone().json()
         );
-        request.signal.throwIfAborted();
+        // A successful rotation must be committed even if the caller cancelled:
+        // the previous refresh token may already be invalid at the server.
         // Preserve pinned metadata and the refresh token when it is not rotated.
         this.cachedAuthData = await saveTokensAndCleanup({
           mcpConnectorId: this.config.mcpConnectorId,
