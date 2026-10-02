@@ -367,42 +367,48 @@ test("dismissed OAuth ignores a late authorization result", async () => {
   }
 });
 
-test("blank optional credentials are omitted without changing opaque secret bytes", async () => {
-  const cleanup = await renderPage(false, true);
-  try {
-    await act(() =>
-      page.getByRole("button", { name: "Advanced settings" }).click()
-    );
-    await act(() =>
-      page.getByLabelText("Name", { exact: true }).fill("Server")
-    );
-    await act(() =>
-      page
-        .getByLabelText("URL", { exact: true })
-        .fill("https://mcp.example.test")
-    );
-    await act(() =>
-      page.getByLabelText("OAuth Client ID (optional)").fill("   ")
-    );
-    await act(() =>
-      page
-        .getByLabelText("OAuth Client Secret (optional)")
-        .fill(" secret bytes ")
-    );
-    await act(() =>
-      page.getByRole("button", { exact: true, name: "Add" }).click()
-    );
-    expect(mocks.mutate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        oauthClientId: undefined,
-        oauthClientSecret: " secret bytes ",
-      }),
-      expect.any(Object)
-    );
-  } finally {
-    await cleanup();
+test.each([
+  { clientId: "   ", expectedClientId: undefined },
+  { clientId: " client id ", expectedClientId: " client id " },
+])(
+  "optional credentials preserve opaque bytes ($clientId)",
+  async ({ clientId, expectedClientId }) => {
+    const cleanup = await renderPage(false, true);
+    try {
+      await act(() =>
+        page.getByRole("button", { name: "Advanced settings" }).click()
+      );
+      await act(() =>
+        page.getByLabelText("Name", { exact: true }).fill("Server")
+      );
+      await act(() =>
+        page
+          .getByLabelText("URL", { exact: true })
+          .fill("https://mcp.example.test")
+      );
+      await act(() =>
+        page.getByLabelText("OAuth Client ID (optional)").fill(clientId)
+      );
+      await act(() =>
+        page
+          .getByLabelText("OAuth Client Secret (optional)")
+          .fill(" secret bytes ")
+      );
+      await act(() =>
+        page.getByRole("button", { exact: true, name: "Add" }).click()
+      );
+      expect(mocks.mutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          oauthClientId: expectedClientId,
+          oauthClientSecret: " secret bytes ",
+        }),
+        expect.any(Object)
+      );
+    } finally {
+      await cleanup();
+    }
   }
-});
+);
 
 test("OAuth callback errors display the safe actionable message", async () => {
   const message =

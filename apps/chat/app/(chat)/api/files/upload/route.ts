@@ -7,6 +7,14 @@ import { config } from "@/lib/config";
 import { reserveEveUpload, writeEveUpload } from "@/lib/db/eve-files";
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 
+// Allow multipart headers and fields without buffering an unbounded request.
+const MAX_MULTIPART_OVERHEAD_BYTES = 64 * 1024;
+const requestTooLarge = () =>
+  NextResponse.json(
+    { error: "Upload request exceeds the size limit" },
+    { status: 413 }
+  );
+
 // Validate uploaded bytes through the Blob interface; File extends Blob.
 const FileSchema = z.object({
   file: z
@@ -29,7 +37,33 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const formData = await request.formData().catch(() => null);
+  const maxRequestBytes =
+    config.attachments.maxBytes + MAX_MULTIPART_OVERHEAD_BYTES;
+  if (Number(request.headers.get("content-length")) > maxRequestBytes) {
+    return requestTooLarge();
+  }
+
+  let receivedBytes = 0;
+  let exceedsLimit = false;
+  const body = request.body?.pipeThrough(
+    new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        receivedBytes += chunk.byteLength;
+        if (receivedBytes > maxRequestBytes) {
+          exceedsLimit = true;
+          controller.error(new Error("Upload request exceeds the size limit"));
+          return;
+        }
+        controller.enqueue(chunk);
+      },
+    })
+  );
+  const formData = await new Response(body, { headers: request.headers })
+    .formData()
+    .catch(() => null);
+  if (exceedsLimit) {
+    return requestTooLarge();
+  }
   if (!formData) {
     return NextResponse.json({ error: "Invalid upload form" }, { status: 400 });
   }

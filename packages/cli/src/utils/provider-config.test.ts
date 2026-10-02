@@ -58,4 +58,32 @@ test("gateway replacement edits only the active root config discriminator", asyn
   expect(await gatewayConfigEdit(root, selection)).toBe(
     bound.replace('gateway: "openai"', 'gateway: "vercel"')
   );
+  await writeFile(
+    path.join(root, "chat.config.ts"),
+    bound.replace("defineConfig(", "transformConfig(")
+  );
+  await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+    "literal ai.gateway"
+  );
+  const mutable = bound
+    .replace("const configInput", "let configInput")
+    .replace(
+      "export default",
+      'configInput = { ai: { gateway: "vercel" } };\nexport default'
+    );
+  await writeFile(path.join(root, "chat.config.ts"), mutable);
+  await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+    "literal ai.gateway"
+  );
+  expect(await readFile(path.join(root, "chat.config.ts"), "utf-8")).toBe(
+    mutable
+  );
+  const modified = bound.replace(
+    "export default",
+    'configInput.ai = { gateway: "openai", models: { chat: "other" } };\nexport default'
+  );
+  await writeFile(path.join(root, "chat.config.ts"), modified);
+  await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+    "literal ai.gateway"
+  );
 });
