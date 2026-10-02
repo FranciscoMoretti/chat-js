@@ -531,11 +531,14 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     expect(
       await Bun.file(join(cwd, "tools/chatjs/generate-video/tool.ts")).exists()
     ).toBe(gateway === "vercel");
-    if (gateway === "vercel" || gateway === "acme") {
+    if (gateway === "vercel") {
       expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).toMatch(
         /video:\s*\{[^}]*\bdefault:\s*"[^"\n]+"/u
       );
     }
+    expect(await readFile(join(cwd, "chat.config.ts"), "utf-8")).not.toMatch(
+      /(?:image|video):\s*\{[^}]*\benabled:/u
+    );
     const manifestPath = join(cwd, "package.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
     if (gateway === "vercel") {
