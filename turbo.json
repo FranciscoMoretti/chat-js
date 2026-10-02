@@ -216,6 +216,10 @@
     "@chat-js/registry#demo:sync": {
       "cache": false,
       "outputs": []
+    },
+    "@chat-js/gateways#test:types": {
+      "dependsOn": ["^test:types"],
+      "outputs": ["dist/**"]
     }
   }
 }
