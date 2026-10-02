@@ -127,3 +127,71 @@ test.each([undefined, "not multipart"])(
     expect(mocks.register).not.toHaveBeenCalled();
   }
 );
+
+test("rejects a declared oversized request without reading its body", async () => {
+  const uploadRequest = request();
+  uploadRequest.headers.set("content-length", String(64 * 1024 + 11));
+  const response = await POST(uploadRequest);
+  expect(response.status).toBe(413);
+  expect(uploadRequest.bodyUsed).toBe(false);
+  expect(mocks.register).not.toHaveBeenCalled();
+});
+
+test.each([undefined, "1"])(
+  "bounds multipart consumption with content-length %s and cancels the source",
+  async (contentLength) => {
+    let chunksRead = 0;
+    const cancel = vi.fn();
+    const body = new ReadableStream<Uint8Array>(
+      {
+        cancel,
+        pull(controller) {
+          chunksRead += 1;
+          controller.enqueue(
+            chunksRead === 1
+              ? new TextEncoder().encode(
+                  '--upload\r\nContent-Disposition: form-data; name="file"; filename="large.png"\r\nContent-Type: image/png\r\n\r\n'
+                )
+              : new Uint8Array(64 * 1024 + 11)
+          );
+        },
+      },
+      { highWaterMark: 0 }
+    );
+    const uploadHeaders = new Headers({
+      "content-type": "multipart/form-data; boundary=upload",
+    });
+    if (contentLength) {
+      uploadHeaders.set("content-length", contentLength);
+    }
+    const init = {
+      body,
+      duplex: "half",
+      headers: uploadHeaders,
+      method: "POST",
+    };
+    const response = await POST(
+      new Request("http://localhost/api/files/upload", init)
+    );
+    expect(response.status).toBe(413);
+    expect(chunksRead).toBe(2);
+    await vi.waitFor(() => expect(cancel).toHaveBeenCalledOnce());
+    expect(mocks.register).not.toHaveBeenCalled();
+    expect(mocks.upload).not.toHaveBeenCalled();
+  }
+);
+
+test("accepts a file at the configured byte limit with multipart overhead", async () => {
+  const form = new FormData();
+  form.append(
+    "file",
+    new File(["0123456789"], "limit.png", { type: "image/png" })
+  );
+  const response = await POST(
+    new Request("http://localhost/api/files/upload", {
+      body: form,
+      method: "POST",
+    })
+  );
+  expect(response.status).toBe(200);
+});

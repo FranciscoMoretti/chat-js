@@ -195,3 +195,61 @@ it("callers cancel their shared connection waits independently", async () => {
   expect(mocks.create).toHaveBeenCalledOnce();
   await client.close();
 });
+
+it("a fresh connection starts immediately after closing a pending attempt", async () => {
+  const gate = Promise.withResolvers<undefined>();
+  mocks.create.mockImplementationOnce(async () => {
+    await gate.promise;
+    return { close: mocks.close, tools: mocks.tools };
+  });
+  const client = new MCPClient("id", "Test", {
+    type: "http",
+    url: "https://mcp.test",
+  });
+  const first = client.connect();
+  const rejected = expect(first).rejects.toThrow("closed");
+  await client.close();
+  await client.connect();
+  expect(client.status).toBe("connected");
+  expect(mocks.create).toHaveBeenCalledTimes(2);
+  gate.resolve(undefined);
+  await rejected;
+  expect(client.status).toBe("connected");
+  await client.close();
+});
+
+it.each(["tools", "listResources", "listPrompts"] as const)(
+  "a retired client's late %s auth error cannot close its replacement",
+  async (method) => {
+    const gate = Promise.withResolvers<never>();
+    const oldMethod = vi.fn(() => gate.promise);
+    const oldClose = vi.fn();
+    const replacementClose = vi.fn();
+    const invalidate = vi.fn();
+    mocks.create
+      .mockResolvedValueOnce({
+        close: oldClose,
+        experimental_listPrompts: oldMethod,
+        listResources: oldMethod,
+        tools: oldMethod,
+      })
+      .mockResolvedValueOnce({ close: replacementClose, tools: mocks.tools });
+    const client = new MCPClient(
+      "id",
+      "Test",
+      { type: "http", url: "https://mcp.test" },
+      invalidate
+    );
+    await client.connect();
+    const pending = client[method]();
+    const rejected = expect(pending).rejects.toThrow("401 Unauthorized");
+    await client.close();
+    await client.connect();
+    gate.reject(new Error("401 Unauthorized"));
+    await rejected;
+    expect(client.status).toBe("connected");
+    expect(replacementClose).not.toHaveBeenCalled();
+    expect(invalidate).toHaveBeenCalledOnce();
+    await client.close();
+  }
+);

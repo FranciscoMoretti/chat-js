@@ -28,7 +28,7 @@ vi.mock("@/lib/ai/mcp/cache", () => ({
   invalidateAllMcpCaches: mocks.invalidate,
 }));
 vi.mock("@/lib/db/mcp-queries", () => ({
-  deleteSessionByState: mocks.deleteSession,
+  deletePendingSessionByState: mocks.deleteSession,
   getMcpConnectorById: vi.fn(),
   getSessionByState: mocks.getSession,
 }));
@@ -76,11 +76,9 @@ it("provider cancellation deletes only pending state and returns a safe connecto
     error_description: "secret provider detail",
     state: "state",
   };
-  mocks.getSession.mockResolvedValue({
-    mcpConnectorId: "connector",
-    state: "state",
-    tokens: null,
-  });
+  const pending = { mcpConnectorId: "connector", state: "state", tokens: null };
+  mocks.getSession.mockResolvedValue(pending);
+  mocks.deleteSession.mockResolvedValue(pending);
   const response = await GET(
     new NextRequest(
       "https://chat.example.test/api/mcp/oauth/callback?error=access_denied&state=state"
@@ -93,7 +91,7 @@ it("provider cancellation deletes only pending state and returns a safe connecto
   );
   expect(location.toString()).not.toContain("secret");
   expect(mocks.deleteSession).toHaveBeenCalledWith({ state: "state" });
-  expect(mocks.removeClient).toHaveBeenCalledWith("connector");
+  expect(mocks.removeClient).toHaveBeenCalledWith("connector", "state");
   expect(mocks.invalidate).toHaveBeenCalledWith("connector");
 });
 
@@ -128,3 +126,25 @@ it.each([
     expect(mocks.invalidate).not.toHaveBeenCalled();
   }
 );
+
+it("an attempt completed between lookup and deletion retains its client", async () => {
+  mocks.params = {
+    code: null,
+    error: "access_denied",
+    error_description: null,
+    state: "state",
+  };
+  mocks.getSession.mockResolvedValue({
+    mcpConnectorId: "connector",
+    state: "state",
+    tokens: null,
+  });
+  mocks.deleteSession.mockResolvedValue(undefined);
+  await GET(
+    new NextRequest(
+      "https://chat.example.test/api/mcp/oauth/callback?error=access_denied&state=state"
+    )
+  );
+  expect(mocks.removeClient).not.toHaveBeenCalled();
+  expect(mocks.invalidate).not.toHaveBeenCalled();
+});

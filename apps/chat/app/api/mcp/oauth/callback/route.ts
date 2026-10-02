@@ -8,7 +8,7 @@ import {
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
 import {
-  deleteSessionByState,
+  deletePendingSessionByState,
   getMcpConnectorById,
   getSessionByState,
 } from "@/lib/db/mcp-queries";
@@ -66,9 +66,11 @@ export const GET = async (request: NextRequest) => {
     log.error({ error, errorDesc }, "OAuth error from provider");
     const pending = state ? await getSessionByState({ state }) : undefined;
     if (pending && !pending.tokens && state) {
-      await deleteSessionByState({ state });
-      await removeMcpClient(pending.mcpConnectorId);
-      invalidateAllMcpCaches(pending.mcpConnectorId);
+      const deleted = await deletePendingSessionByState({ state });
+      if (deleted) {
+        await removeMcpClient(deleted.mcpConnectorId, state);
+        invalidateAllMcpCaches(deleted.mcpConnectorId);
+      }
     }
     return redirectToConnector({
       connectorId: pending?.mcpConnectorId,

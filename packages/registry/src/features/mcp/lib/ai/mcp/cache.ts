@@ -63,7 +63,7 @@ export const createCachedConnectionStatus = (
   const cached = unstable_cache(
     async () => {
       const result = await fetcher();
-      if (result.error || result.status === "disconnected") {
+      if (result.error || result.status !== "connected") {
         throw new UncachedConnectionStatusError(result);
       }
       return result;
