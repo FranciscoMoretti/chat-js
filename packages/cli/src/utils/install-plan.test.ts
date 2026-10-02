@@ -7,7 +7,7 @@ import { scaffoldFromTemplate } from "../helpers/scaffold";
 import { installItems } from "../registry/shadcn";
 import { installPlan, recordInstalledSource } from "./install-plan";
 import { planInstallation } from "./installation-plan";
-import { syncTools } from "./sync-tools";
+import { syncTools, toolRegistrationTargets } from "./sync-tools";
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -127,6 +127,14 @@ test("unmodified replacement works without overwrite and failed registration res
     const config = path.join(root, "chat.config.ts");
     const oldEnv = await readFile(env, "utf-8");
     const oldConfig = await readFile(config, "utf-8");
+    await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
+    const registrationContents = (target: string) => {
+      const file = Bun.file(path.join(root, target));
+      return file.exists().then((exists) => (exists ? file.text() : null));
+    };
+    const oldRegistrations = await Promise.all(
+      toolRegistrationTargets.map(registrationContents)
+    );
     await expect(
       installPlan(
         root,
@@ -135,12 +143,22 @@ test("unmodified replacement works without overwrite and failed registration res
         async () => {
           await writeFile(env, "MODIFIED=1\n");
           await writeFile(config, "// partial config\n");
+          await syncTools(root, { expected: plan.expected });
+          expect(
+            await readFile(
+              path.join(root, "tools/chatjs/providers.ts"),
+              "utf-8"
+            )
+          ).toContain("./second/tool");
           throw new Error("fixture registration failed");
         }
       )
     ).rejects.toThrow("fixture registration failed");
     expect(await readFile(env, "utf-8")).toBe(oldEnv);
     expect(await readFile(config, "utf-8")).toBe(oldConfig);
+    expect(
+      await Promise.all(toolRegistrationTargets.map(registrationContents))
+    ).toEqual(oldRegistrations);
     expect(
       await Bun.file(path.join(root, "tools/chatjs/first/chatjs.json")).exists()
     ).toBe(true);

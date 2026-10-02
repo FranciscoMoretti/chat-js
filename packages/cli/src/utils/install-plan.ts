@@ -14,6 +14,7 @@ import { z } from "zod";
 import { installItems } from "../registry/shadcn";
 import type { planInstallation } from "./installation-plan";
 import { preflight } from "./preflight";
+import { toolRegistrationTargets } from "./sync-tools";
 
 type Plan = Awaited<ReturnType<typeof planInstallation>>;
 const receiptFile = ".chatjs/installed-source.json";
@@ -105,9 +106,11 @@ export const installPlan = async (
       directoryFiles(cwd, `tools/chatjs/${previous.id}`)
     )
   );
-  const snapshotTargets = [
-    ...new Set([...targets, ...(options.rollbackTargets ?? [])]),
+  const rollbackTargets = [
+    ...toolRegistrationTargets,
+    ...(options.rollbackTargets ?? []),
   ];
+  const snapshotTargets = [...new Set([...targets, ...rollbackTargets])];
   const protectedTargets = [...snapshotTargets, ...retired.flat()];
   await preflight(cwd, protectedTargets);
   const receipt = await readReceipt(cwd);
@@ -180,7 +183,7 @@ export const installPlan = async (
       ...[...existing].map(async ([target, content]) => {
         if (content) {
           await writeFile(path.join(cwd, target), content);
-        } else if (options.rollbackTargets?.includes(target)) {
+        } else if (rollbackTargets.includes(target)) {
           await rm(path.join(cwd, target), { force: true });
         }
       }),
