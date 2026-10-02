@@ -120,8 +120,12 @@ export const McpCreateDialog = ({
     const trimmed: McpConnectorFormValues = {
       ...values,
       name: values.name.trim(),
-      oauthClientId: values.oauthClientId || undefined,
-      oauthClientSecret: values.oauthClientSecret || undefined,
+      oauthClientId: values.oauthClientId?.trim()
+        ? values.oauthClientId
+        : undefined,
+      oauthClientSecret: values.oauthClientSecret?.trim()
+        ? values.oauthClientSecret
+        : undefined,
       url: values.url.trim(),
     };
 
