@@ -196,7 +196,7 @@ test.each(["source", "baseline"])(
       async (source, destination) => {
         if (
           destination === target &&
-          String(source).endsWith("/next") &&
+          path.basename(String(source)) === "next" &&
           !failed
         ) {
           failed = true;
