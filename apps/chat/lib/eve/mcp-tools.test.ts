@@ -453,3 +453,63 @@ it("reports missing credentials even before an installed MCP feature has connect
   expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.connect).not.toHaveBeenCalled();
 });
+
+it("bounds database discovery by cancellation", async () => {
+  mocks.list.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = discoverEveMcpTools("owner", controller.signal);
+  controller.abort(new Error("cancelled"));
+  await expect(result).rejects.toThrow("cancelled");
+});
+
+it("cancels a hung tools listing and closes its transport", async () => {
+  mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = discoverEveMcpTools("owner", controller.signal);
+  await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalled());
+  controller.abort(new Error("cancelled"));
+  await expect(result).rejects.toThrow("cancelled");
+  expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it("rejects unsupported remote tool names without hiding subsequent valid tools", async () => {
+  mocks.tools.mockResolvedValueOnce(
+    Object.fromEntries([
+      ["foo.bar", definition],
+      ["echo", definition],
+    ])
+  );
+  const tools = await discoverEveMcpTools("owner", context.abortSignal);
+  expect(tools.map((item) => item.remoteName)).toEqual(["echo"]);
+});
+
+it("approval requests inherit cancellation", async () => {
+  mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
+  const controller = new AbortController();
+  const result = requestEveMcpApproval(
+    "connector",
+    "echo",
+    { text: "test" },
+    { ...context, abortSignal: controller.signal },
+    []
+  );
+  await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalled());
+  controller.abort(new Error("approval cancelled"));
+  await expect(result).rejects.toThrow("approval cancelled");
+  expect(mocks.close).toHaveBeenCalledOnce();
+});
+
+it("unsupported descriptions do not suppress later valid tools", async () => {
+  const unsupported = tool({
+    description: () => "Dynamic description",
+    inputSchema: jsonSchema({ type: "object" }),
+  });
+  mocks.tools.mockResolvedValueOnce(
+    Object.fromEntries([
+      ["unsupported", unsupported],
+      ["echo", definition],
+    ])
+  );
+  const descriptions = await discoverEveMcpTools("owner", context.abortSignal);
+  expect(descriptions.map((item) => item.remoteName)).toEqual(["echo"]);
+});

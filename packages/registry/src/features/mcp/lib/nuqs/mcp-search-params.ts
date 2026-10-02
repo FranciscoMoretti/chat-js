@@ -1,4 +1,4 @@
-import { parseAsString } from "nuqs";
+import { parseAsString, parseAsStringEnum } from "nuqs";
 
 const mcpConnectorsDialogValues = ["config", "connect"] as const;
 
@@ -12,5 +12,5 @@ export type McpConnectorsDialog = (typeof mcpConnectorsDialogValues)[number];
  */
 export const mcpConnectorsSettingsSearchParams = {
   connectorId: parseAsString,
-  dialog: parseAsString,
+  dialog: parseAsStringEnum([...mcpConnectorsDialogValues]),
 };

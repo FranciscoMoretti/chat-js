@@ -414,6 +414,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       );
       return;
     }
+    if (session.serverUrl !== this.config.serverUrl) {
+      throw new Error("OAuth session belongs to a different MCP server");
+    }
     log.info(
       {
         hasClientInfo: !!session.clientInfo,
@@ -433,6 +436,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   async invalidateCredentials(
     scope: "all" | "client" | "tokens" | "verifier"
   ): Promise<void> {
+    if (scope === "all" || scope === "client") {
+      this.cachedAuthorizationUrl = null;
+    }
     if (scope === "all") {
       await deleteSessionByState({ state: this.currentOAuthState });
       this.cachedAuthData = undefined;

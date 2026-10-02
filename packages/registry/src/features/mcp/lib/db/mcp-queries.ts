@@ -345,6 +345,7 @@ export const saveTokensAndCleanup = async ({
       and(
         eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId),
         isNull(mcpOAuthSession.tokens),
+        sql`${mcpOAuthSession.createdAt} < now() - interval '1 hour'`,
         ne(mcpOAuthSession.state, state)
       )
     );

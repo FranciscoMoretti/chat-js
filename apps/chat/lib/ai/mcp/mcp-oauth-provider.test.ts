@@ -142,3 +142,10 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   expect(stored.tokens).toMatchObject(pins);
   expect(mocks.save).toHaveBeenCalledTimes(1);
 });
+
+test("callback states cannot be adopted after a connector changes server URL", async () => {
+  stored = { ...stored, serverUrl: "https://other.example.test/mcp" };
+  await expect(provider().adoptState("state")).rejects.toThrow(
+    "different MCP server"
+  );
+});
