@@ -14,10 +14,15 @@ export const installationSelectionSchema = z.strictObject({
 });
 export type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
-// Checked-in demo preset. H consolidates uploads/observability after D/E publish
-// their registry items; the demo's existing runtime behavior stays intact.
+// Checked-in demo preset preserves the application's installed features.
 export const demoInstallation = installationSelectionSchema.parse({
-  features: ["mcp"],
+  features: [
+    "mcp",
+    "attachment-uploads",
+    "vercel-analytics",
+    "vercel-speed-insights",
+    "langfuse",
+  ],
   gateway: "vercel",
   storage: { source: "vercel-blob" },
   tools: [
