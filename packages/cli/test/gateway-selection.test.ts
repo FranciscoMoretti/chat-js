@@ -553,7 +553,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toContain("generate-image/renderer");
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/url-retrieval-config.ts"),
+          join(cwd, "tools/chatjs/retrieve-url/chatjs.json"),
           "utf-8"
         )
       ).toContain("FIRECRAWL_API_KEY");
@@ -571,7 +571,10 @@ for (const gateway of [...GATEWAYS, "acme"]) {
         await readFile(join(cwd, "tools/chatjs/providers.ts"), "utf-8")
       ).toContain("firecrawl-search/tool");
       expect(
-        await readFile(join(cwd, "tools/chatjs/search-config.ts"), "utf-8")
+        await readFile(
+          join(cwd, "tools/chatjs/firecrawl-search/chatjs.json"),
+          "utf-8"
+        )
       ).toContain("FIRECRAWL_API_KEY");
     }
 
@@ -604,7 +607,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/video-generation-config.ts"),
+          join(cwd, "tools/chatjs/acme-video/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_VIDEO_KEY");
@@ -613,7 +616,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).not.toContain("tool-generateVideo");
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/image-generation-config.ts"),
+          join(cwd, "tools/chatjs/acme-image/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_IMAGE_KEY");
@@ -636,7 +639,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       ).toBe(false);
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/code-execution-config.ts"),
+          join(cwd, "tools/chatjs/acme-execution/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_EXECUTION_TOKEN");
@@ -670,7 +673,7 @@ assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
       ).toBe(false);
       expect(
         await readFile(
-          join(cwd, "tools/chatjs/url-retrieval-config.ts"),
+          join(cwd, "tools/chatjs/acme-retrieval/chatjs.json"),
           "utf-8"
         )
       ).toContain("ACME_RETRIEVAL_KEY");
