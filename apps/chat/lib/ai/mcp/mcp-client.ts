@@ -115,25 +115,34 @@ export class MCPClient {
     abortSignal?: AbortSignal
   ): Promise<McpClientInstance | undefined> {
     abortSignal?.throwIfAborted();
-    if (this.connectPromise) {
+    if (!this.connectPromise) {
+      // oxlint-disable-next-line promise/prefer-await-to-then -- Shared initialization clears independently of any cancelled caller's wait.
+      const promise = this.connectOnce(oauthState).finally(() => {
+        if (this.connectPromise === promise) {
+          this.connectPromise = undefined;
+        }
+      });
+      this.connectPromise = promise;
+    }
+    if (!abortSignal) {
       return await this.connectPromise;
     }
-    const promise = this.connectOnce(oauthState, abortSignal);
-    this.connectPromise = promise;
+    const aborted = Promise.withResolvers<never>();
+    const cancel = () => aborted.reject(abortSignal.reason);
+    abortSignal.addEventListener("abort", cancel, { once: true });
+    if (abortSignal.aborted) {
+      cancel();
+    }
     try {
-      return await promise;
+      return await Promise.race([this.connectPromise, aborted.promise]);
     } finally {
-      if (this.connectPromise === promise) {
-        this.connectPromise = undefined;
-      }
+      abortSignal.removeEventListener("abort", cancel);
     }
   }
 
   private async connectOnce(
-    oauthState?: string,
-    abortSignal?: AbortSignal
+    oauthState?: string
   ): Promise<McpClientInstance | undefined> {
-    abortSignal?.throwIfAborted();
     if (this.status === "connected" && this.client) {
       return this.client;
     }
@@ -142,7 +151,7 @@ export class MCPClient {
     this.connectionAbort = new AbortController();
     const signal = AbortSignal.any([
       this.connectionAbort.signal,
-      abortSignal ?? AbortSignal.timeout(30_000),
+      AbortSignal.timeout(30_000),
     ]);
     this._status = "connecting";
 
