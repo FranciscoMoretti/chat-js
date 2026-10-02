@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -274,6 +274,100 @@ test("registration refreshes untouched rollback baselines without blessing user 
     ).rejects.toThrow("No source was installed");
     expect(registered).toBe(false);
     expect(await readFile(file, "utf-8")).toContain("user storage notes");
+  } finally {
+    registry.stop(true);
+  }
+}, 30_000);
+
+test("provider installation refuses inferred native dependency destinations before any overwrite", async () => {
+  const root = await fixture();
+  const ui = path.join(root, "components/ui/fixture.tsx");
+  await mkdir(path.dirname(ui), { recursive: true });
+  await writeFile(ui, "// user UI customization\n");
+  const registry = Bun.serve({
+    fetch(request): Response {
+      const inferred = new URL(request.url).pathname.endsWith("ui.json");
+      return Response.json(
+        inferred
+          ? {
+              files: [
+                {
+                  content: "// replacement UI\n",
+                  path: "fixture.tsx",
+                  type: "registry:ui",
+                },
+              ],
+              name: "fixture-ui",
+              type: "registry:ui",
+            }
+          : {
+              files: [
+                {
+                  content: "export const createStorageAdapter = () => ({});\n",
+                  path: "storage-provider.ts",
+                  target: "~/lib/storage-provider.ts",
+                  type: "registry:file",
+                },
+              ],
+              meta: {
+                chatjs: {
+                  contractVersion: 1,
+                  id: "fixture-storage",
+                  kind: "storage",
+                },
+              },
+              name: "fixture-storage",
+              registryDependencies: [
+                `http://127.0.0.1:${registry.port}/ui.json`,
+              ],
+              type: "registry:item",
+            }
+      );
+    },
+    hostname: "127.0.0.1",
+    port: 0,
+  });
+  try {
+    const provider = path.join(root, "lib/storage-provider.ts");
+    await writeFile(provider, "// original provider\n");
+    await recordInstalledSource(root, ["lib/storage-provider.ts"]);
+    const originalProvider = await readFile(provider, "utf-8");
+    const plan = await planInstallation(
+      root,
+      {
+        features: [],
+        storage: {
+          options: {},
+          source: `http://127.0.0.1:${registry.port}/storage.json`,
+        },
+        tools: [],
+      },
+      { replace: true }
+    );
+    let registered = false;
+    await expect(
+      installPlan(root, plan, {}, () => {
+        registered = true;
+        return Promise.reject(new Error("registration must not run"));
+      })
+    ).rejects.toThrow(
+      "Cannot safely overwrite inferred installer destinations"
+    );
+    expect(registered).toBe(false);
+    expect(await readFile(ui, "utf-8")).toBe("// user UI customization\n");
+    expect(await readFile(provider, "utf-8")).toBe(originalProvider);
+    const native = await planInstallation(root, {
+      features: [],
+      tools: [`http://127.0.0.1:${registry.port}/ui.json`],
+    });
+    const receipt = await readFile(
+      path.join(root, ".chatjs/installed-source.json"),
+      "utf-8"
+    );
+    expect(receipt).not.toContain("components/ui/fixture.tsx");
+    await expect(
+      installPlan(root, native, { overwrite: true }, () => Promise.resolve())
+    ).rejects.toThrow("No source was installed");
   } finally {
     registry.stop(true);
   }

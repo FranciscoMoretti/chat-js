@@ -125,6 +125,23 @@ export const installPlan = async (
       item.meta?.chatjs?.kind === "gateway" ||
       item.meta?.chatjs?.kind === "storage"
   );
+  const overwrite = Boolean(
+    options.overwrite || options.fresh || replacingShared
+  );
+  // shadcn infers destinations for native UI files. Until those paths are
+  // explicit, they cannot participate in protection or registration rollback.
+  if (overwrite) {
+    const unprotected = plan.items.flatMap((item) =>
+      (item.files ?? [])
+        .filter((file) => !file.target?.startsWith("~/"))
+        .map((file) => `${item.name}: ${file.path}`)
+    );
+    if (unprotected.length) {
+      throw new Error(
+        `Cannot safely overwrite inferred installer destinations: ${unprotected.join(", ")}. Give these registry files explicit ~/ targets before combining them with provider installation or --overwrite. No source was installed.`
+      );
+    }
+  }
   const protectedFiles =
     plan.replacements.length || replacingShared
       ? [...targets, ...retired.flat()]
@@ -143,11 +160,7 @@ export const installPlan = async (
   const staged: { from: string; to: string }[] = [];
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
   try {
-    await installItems(
-      plan.sources,
-      cwd,
-      Boolean(options.overwrite || options.fresh || replacingShared)
-    );
+    await installItems(plan.sources, cwd, overwrite);
     for (const { previous } of plan.replacements) {
       const from = path.join(cwd, "tools/chatjs", previous.id);
       const to = path.join(
