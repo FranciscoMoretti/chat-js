@@ -19,9 +19,9 @@ test("demo stays aligned with full canonical installation source", async () => {
   expect(required("lib/ai/gateway-model-defaults.ts")).toContain(
     'chat: "google/gemini-2.5-flash-lite"'
   );
-  expect(
-    required("tools/chatjs/vercel-code-execution/renderer.tsx")
-  ).toContain('from "@/components/sandbox"');
+  expect(required("tools/chatjs/vercel-code-execution/renderer.tsx")).toContain(
+    'from "@/components/sandbox"'
+  );
   for (const id of [
     "mcp",
     "attachment-uploads",
