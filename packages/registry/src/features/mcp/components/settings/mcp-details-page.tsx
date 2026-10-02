@@ -61,7 +61,7 @@ const DetailsSection = ({
 }: {
   title: string;
   icon: React.ReactNode;
-  items: string[];
+  items: { name: string; key: string }[];
 }) => {
   const count = items.length;
 
@@ -77,10 +77,10 @@ const DetailsSection = ({
         <p className="text-muted-foreground text-xs italic">None available</p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
-          {items.map((name) => (
+          {items.map(({ name, key }) => (
             <span
               className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
-              key={name}
+              key={key}
               title={name}
             >
               {name}
@@ -113,7 +113,7 @@ const DiscoveryContent = ({
   showDiscovery: boolean;
   discovery: {
     tools: { name: string }[];
-    resources: { name: string }[];
+    resources: { name: string; uri: string }[];
     prompts: { name: string }[];
   } | null;
 }) => {
@@ -170,17 +170,23 @@ const DiscoveryContent = ({
         <div className="space-y-4">
           <DetailsSection
             icon={<Wrench className="size-4" />}
-            items={discovery.tools.map((t) => t.name)}
+            items={discovery.tools.map((t) => ({ key: t.name, name: t.name }))}
             title="Tools"
           />
           <DetailsSection
             icon={<FileText className="size-4" />}
-            items={discovery.resources.map((r) => r.name)}
+            items={discovery.resources.map((r) => ({
+              key: r.uri,
+              name: r.name,
+            }))}
             title="Resources"
           />
           <DetailsSection
             icon={<BookText className="size-4" />}
-            items={discovery.prompts.map((p) => p.name)}
+            items={discovery.prompts.map((p) => ({
+              key: p.name,
+              name: p.name,
+            }))}
             title="Prompts"
           />
         </div>
@@ -205,6 +211,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     data: connectors,
     isLoading: isLoadingConnectors,
     error: connectorsError,
+    refetch: refetchConnectors,
   } = useQuery(trpc.mcp.list.queryOptions());
 
   const connector = useMemo(
@@ -285,12 +292,6 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     retry: false,
   });
 
-  const { data: authStatus } = useQuery({
-    ...trpc.mcp.checkAuth.queryOptions({ id: connectorId }),
-    enabled: connector !== null,
-    staleTime: 30_000,
-  });
-
   const { data: connectionStatus } = useQuery({
     ...trpc.mcp.testConnection.queryOptions({ id: connectorId }),
     enabled: connector !== null,
@@ -298,7 +299,6 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     staleTime: 30_000,
   });
 
-  const isAuthenticated = authStatus?.isAuthenticated ?? false;
   const isIncompatible = connectionStatus?.status === "incompatible";
 
   const needsOAuth =
@@ -336,22 +336,6 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     trpc.mcp.discover,
   ]);
 
-  useEffect(() => {
-    if (!(connector && isAuthenticated)) {
-      return;
-    }
-    queryClient.invalidateQueries({
-      queryKey: trpc.mcp.discover.queryKey({ id: connector.id }),
-    });
-    refetchDiscovery();
-  }, [
-    connector,
-    isAuthenticated,
-    queryClient,
-    refetchDiscovery,
-    trpc.mcp.discover,
-  ]);
-
   const handleToggleEnabled = useCallback(
     (enabled: boolean) => {
       if (!connector) {
@@ -384,7 +368,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     );
   }
 
-  if (connectorsError) {
+  if (connectorsError && !connectors) {
     return (
       <SettingsPageContent className="gap-4">
         <div
@@ -395,6 +379,9 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
           <p className="text-muted-foreground mt-1 text-xs">
             {connectorsError.message}
           </p>
+          <Button onClick={() => refetchConnectors()} variant="outline">
+            Retry
+          </Button>
         </div>
       </SettingsPageContent>
     );
@@ -420,7 +407,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     );
   }
 
-  const showConnectButton = needsOAuth && !isAuthenticated && !isIncompatible;
+  const showConnectButton = needsOAuth && !isIncompatible;
   const showDiscovery = Boolean(discovery) && !needsOAuth && !isIncompatible;
 
   return (
@@ -472,7 +459,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         discovery={discovery ?? null}
         discoveryError={discoveryError}
         isIncompatible={isIncompatible}
-        isLoading={(needsOAuth && isAuthenticated) || isLoadingDiscovery}
+        isLoading={isLoadingDiscovery}
         needsOAuth={needsOAuth}
         onConnect={() => setConnectOpen(true)}
         showConnectButton={showConnectButton}

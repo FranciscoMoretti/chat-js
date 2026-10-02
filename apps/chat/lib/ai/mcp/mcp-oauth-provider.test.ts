@@ -142,3 +142,31 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   expect(stored.tokens).toMatchObject(pins);
   expect(mocks.save).toHaveBeenCalledTimes(1);
 });
+
+test("callback states cannot be adopted after a connector changes server URL", async () => {
+  stored = { ...stored, serverUrl: "https://other.example.test/mcp" };
+  await expect(provider().adoptState("state")).rejects.toThrow(
+    "different MCP server"
+  );
+});
+
+test("configured OAuth client credentials skip dynamic registration", async () => {
+  const client = new McpOAuthClientProvider({
+    clientMetadata: {
+      redirect_uris: ["https://chat.example.test/callback"],
+      token_endpoint_auth_method: "client_secret_basic",
+    },
+    mcpConnectorId: "connector",
+    oauthClientId: "configured-id",
+    oauthClientSecret: "configured-secret",
+    onRedirectToAuthorization: () => Promise.resolve(),
+    serverUrl: stored.serverUrl,
+  });
+  await expect(client.clientInformation()).resolves.toEqual({
+    client_id: "configured-id",
+    client_secret: "configured-secret",
+    redirect_uris: ["https://chat.example.test/callback"],
+    token_endpoint_auth_method: "client_secret_basic",
+  });
+  expect(mocks.fetch).not.toHaveBeenCalled();
+});

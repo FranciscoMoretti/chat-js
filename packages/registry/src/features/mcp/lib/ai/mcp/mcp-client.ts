@@ -43,6 +43,8 @@ export class MCPClient {
     url: string;
     type: "http" | "sse";
     headers?: Record<string, string>;
+    oauthClientId?: string | null;
+    oauthClientSecret?: string | null;
   };
 
   constructor(
@@ -52,6 +54,8 @@ export class MCPClient {
       url: string;
       type: "http" | "sse";
       headers?: Record<string, string>;
+      oauthClientId?: string | null;
+      oauthClientSecret?: string | null;
     },
     invalidateCache?: () => void
   ) {
@@ -70,9 +74,13 @@ export class MCPClient {
         scope: "mcp:tools",
         software_id: config.appPrefix,
         software_version: "1.0.0",
-        token_endpoint_auth_method: "none",
+        token_endpoint_auth_method: serverConfig.oauthClientSecret
+          ? "client_secret_basic"
+          : "none",
       },
       mcpConnectorId: this.id,
+      oauthClientId: serverConfig.oauthClientId,
+      oauthClientSecret: serverConfig.oauthClientSecret,
       onRedirectToAuthorization: (authorizationUrl: URL) => {
         this.authorizationUrl = authorizationUrl;
         throw new OAuthAuthorizationRequiredError(authorizationUrl);
@@ -143,6 +151,11 @@ export class MCPClient {
         },
       });
 
+      if (abortSignal?.aborted) {
+        await this.close();
+        abortSignal.throwIfAborted();
+      }
+      this.authorizationUrl = undefined;
       this._status = "connected";
       return this.client;
     } catch (error) {
@@ -297,6 +310,7 @@ export class MCPClient {
       log.error({ connectorId: this.id, error }, "Error closing MCP client");
     }
     this.client = undefined;
+    this.authorizationUrl = undefined;
     this._status = "disconnected";
     // Invalidate caches since connection state changed
     this.invalidateCache?.();
@@ -311,8 +325,7 @@ export class MCPClient {
       errorMessage.includes("401") ||
       errorMessage.includes("403") ||
       errorMessage.includes("Unauthorized") ||
-      errorMessage.includes("Forbidden") ||
-      errorMessage.includes("token");
+      errorMessage.includes("Forbidden");
 
     if (isAuthError) {
       log.warn(

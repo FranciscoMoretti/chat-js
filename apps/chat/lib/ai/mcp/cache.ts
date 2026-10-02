@@ -88,7 +88,7 @@ export const createCachedDiscovery = (
  */
 const invalidateConnectionStatus = (connectorId: string) => {
   log.debug({ connectorId }, "Invalidating connection status cache");
-  revalidateTag(mcpCacheTags.connectionStatus(connectorId), "max");
+  revalidateTag(mcpCacheTags.connectionStatus(connectorId), { expire: 0 });
 };
 
 /**
@@ -97,7 +97,7 @@ const invalidateConnectionStatus = (connectorId: string) => {
  */
 const invalidateDiscovery = (connectorId: string) => {
   log.debug({ connectorId }, "Invalidating discovery cache");
-  revalidateTag(mcpCacheTags.discovery(connectorId), "max");
+  revalidateTag(mcpCacheTags.discovery(connectorId), { expire: 0 });
 };
 
 /**

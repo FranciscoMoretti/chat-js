@@ -45,7 +45,7 @@ export const add = new Command("add")
         await syncFeatures(cwd, { addUi: mcp, expectedMcp: mcp });
         if (mcp) {
           log.info(
-            "MCP installed. Set MCP_ENCRYPTION_KEY before connecting servers."
+            "MCP installed. Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
           );
         }
       } catch (error) {
