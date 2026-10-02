@@ -88,7 +88,7 @@ Once you're running locally, deploy your app:
 
 <Accordion>
 <AccordionItem title="Optional Features">
-  Install the relevant integration with the CLI before configuring its credentials. New apps omit uploads, MCP and observability by default. These variables configure installed capabilities:
+  New apps omit uploads, MCP and observability by default. Install an optional integration with the CLI before configuring its credentials. Installed Langfuse requires both `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` before Node startup. The cleanup cron route ships with every app and only needs `CRON_SECRET`; it requires no integration install.
 
 | Variable | Feature | Setup Guide |
 | --- | --- | --- |

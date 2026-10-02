@@ -299,15 +299,18 @@ Better Auth uses `APP_URL` when set. On production Vercel deployments, its fallb
 
 ### Observability (Langfuse)
 
-ChatJS uses [OpenTelemetry](https://opentelemetry.io) via `@vercel/otel` and exports traces to [Langfuse](https://langfuse.com) for LLM observability. These variables are read by the `langfuse-vercel` exporter and are not part of the Zod env schema. The Langfuse SDK picks them up automatically from the environment.
+Install `langfuse` to export LLM traces through [OpenTelemetry](https://opentelemetry.io) and [Langfuse](https://langfuse.com). The integration is omitted from new apps by default and installed in the demo. When installed, set both keys below before starting Node or building the app. The installed feature descriptor supplies build-time validation, and instrumentation reports missing keys explicitly at Node startup.
 
 | Variable | Description | Get it |
 | --- | --- | --- |
-| `LANGFUSE_PUBLIC_KEY` | Langfuse project public key | [Langfuse Cloud](https://cloud.langfuse.com) → Project Settings → API Keys |
-| `LANGFUSE_SECRET_KEY` | Langfuse project secret key | Same as above |
-| `LANGFUSE_BASE_URL` | Langfuse API base URL (default: `https://cloud.langfuse.com`) | Set to your self-hosted Langfuse URL if applicable |
+| `LANGFUSE_PUBLIC_KEY` | Required when Langfuse is installed. Langfuse project public key | [Langfuse Cloud](https://cloud.langfuse.com) → Project Settings → API Keys |
+| `LANGFUSE_SECRET_KEY` | Required when Langfuse is installed. Langfuse project secret key | Same as above |
+| `LANGFUSE_BASE_URL` | Optional Langfuse API base URL (default: `https://cloud.langfuse.com`) | Set to your self-hosted Langfuse URL if applicable |
+| `LANGFUSE_DEBUG` | Optional exporter debug logging (default: `false`) | Set to `true` for troubleshooting |
 
-Omitting these variables disables trace export. The app runs normally without them.
+After running `chat-js add langfuse`, configure `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` in `.env.local` before starting the server. The SDK defaults `LANGFUSE_BASE_URL` to `https://cloud.langfuse.com`. Set `LANGFUSE_DEBUG=true` only when you want exporter debug logging.
+
+Apps that omit the integration do not import its exporter or require its credentials. Playwright browser fixtures skip external trace export. Missing keys in normal Node startup raise `CHATJS_MISSING_CREDENTIALS` rather than silently disabling tracing.
 
 ---
 
@@ -354,9 +357,10 @@ All variables in one place:
 | `VERCEL_BRANCH_URL` | Optional | Stable preview branch hostname |
 | `VERCEL_ENV` | Optional | Vercel environment classification |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | EVE | Internal access to protected deployments |
-| `LANGFUSE_PUBLIC_KEY` | Optional | LLM observability |
-| `LANGFUSE_SECRET_KEY` | Optional | LLM observability |
+| `LANGFUSE_PUBLIC_KEY` | Feature | When Langfuse is installed |
+| `LANGFUSE_SECRET_KEY` | Feature | When Langfuse is installed |
 | `LANGFUSE_BASE_URL` | Optional | Self-hosted Langfuse endpoint |
+| `LANGFUSE_DEBUG` | Optional | Exporter debug logging |
 
 ## Related
 
