@@ -275,6 +275,9 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         queryClient.invalidateQueries({ queryKey });
       },
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.mcp.listConnected.queryKey(),
+        });
         toast.success("Connector uninstalled");
         router.push("/settings/connectors");
       },

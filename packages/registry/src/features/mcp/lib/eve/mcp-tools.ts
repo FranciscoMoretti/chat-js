@@ -117,15 +117,26 @@ export const discoverEveMcpTools = async (
     remoteName: string;
   })[] = [];
   for (const connector of connectors) {
+    if (
+      signal.aborted &&
+      signal.reason instanceof DOMException &&
+      signal.reason.name === "TimeoutError"
+    ) {
+      break;
+    }
     signal.throwIfAborted();
     if (!connector.enabled) {
       continue;
     }
+    const connectorSignal = AbortSignal.any([
+      signal,
+      AbortSignal.timeout(10_000),
+    ]);
     try {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Finish the scoped connector operation before releasing its client.
       await withConnector(
         assertConnector(connector, ownerId),
-        signal,
+        connectorSignal,
         async (tools) => {
           for (const [remoteName, tool] of Object.entries(tools)) {
             try {
@@ -135,9 +146,11 @@ export const discoverEveMcpTools = async (
                 needsApproval: _approval,
                 ...definition
               } = tool;
+              // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
+              const description = await describeMcpTool(definition);
+              connectorSignal.throwIfAborted();
               descriptions.push({
-                // oxlint-disable-next-line eslint/no-await-in-loop -- Finish the scoped connector operation before releasing its client.
-                ...(await describeMcpTool(definition)),
+                ...description,
                 connectorId: connector.id,
                 name: modelToolName(
                   createToolId(
@@ -158,6 +171,13 @@ export const discoverEveMcpTools = async (
         }
       );
     } catch {
+      if (
+        signal.aborted &&
+        signal.reason instanceof DOMException &&
+        signal.reason.name === "TimeoutError"
+      ) {
+        break;
+      }
       signal.throwIfAborted();
       log.warn({ connectorId: connector.id }, "MCP discovery unavailable");
     }

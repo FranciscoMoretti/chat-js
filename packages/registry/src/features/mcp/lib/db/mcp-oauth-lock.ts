@@ -4,26 +4,46 @@ import { databaseConnection } from "@/lib/db/connection";
 import { env } from "@/lib/env";
 
 const OAUTH_REFRESH_LOCK_TIMEOUT = "40s";
+const connectionConfig = databaseConnection(env);
+const lockPool = postgres(connectionConfig.url, {
+  ...connectionConfig.options,
+  idle_timeout: 20,
+  max: Math.min(connectionConfig.options.max ?? 2, 2),
+  prepare: false,
+});
 
-/** Serialize one connector's rotating-token refresh without occupying the app pool. */
+/** Bound refresh lock waiters separately from the app pool used by the refresh callback. */
 export const withMcpOAuthRefreshLock = async <T>(
   connectorId: string,
-  run: () => Promise<T>
+  run: () => Promise<T>,
+  signal?: AbortSignal
 ): Promise<T> => {
-  const connectionConfig = databaseConnection(env);
-  const connection = postgres(connectionConfig.url, {
-    ...connectionConfig.options,
-    max: 1,
-    prepare: false,
-  });
+  signal?.throwIfAborted();
+  const aborted = Promise.withResolvers<never>();
+  let cancelQuery: (() => void) | undefined;
+  const cancel = () => {
+    cancelQuery?.();
+    aborted.reject(signal?.reason);
+  };
+  signal?.addEventListener("abort", cancel, { once: true });
   try {
-    const result = await connection.begin(async (transaction) => {
+    const operation = lockPool.begin(async (transaction) => {
+      signal?.throwIfAborted();
       await transaction`select set_config('lock_timeout', ${OAUTH_REFRESH_LOCK_TIMEOUT}, true)`;
-      await transaction`select pg_advisory_xact_lock(hashtextextended(${`mcp-oauth-refresh:${connectorId}`}, 0))`;
+      signal?.throwIfAborted();
+      const lock = transaction`select pg_advisory_xact_lock(hashtextextended(${`mcp-oauth-refresh:${connectorId}`}, 0))`;
+      cancelQuery = () => lock.cancel();
+      try {
+        await lock;
+      } finally {
+        cancelQuery = undefined;
+      }
+      signal?.throwIfAborted();
       return { value: await run() };
     });
+    const result = await Promise.race([operation, aborted.promise]);
     return result.value;
   } finally {
-    await connection.end();
+    signal?.removeEventListener("abort", cancel);
   }
 };

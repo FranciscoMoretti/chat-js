@@ -1,7 +1,7 @@
 import { takeSnapshot } from "@uiverify/vitest";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
@@ -33,6 +33,7 @@ const mocks = vi.hoisted(() => {
       disconnect: mutation,
       discover: query("discover"),
       list: query("list"),
+      listConnected: query("listConnected"),
       testConnection: query("testConnection"),
       toggleEnabled: mutation,
     },
@@ -43,6 +44,13 @@ const mocks = vi.hoisted(() => {
     router: { push: vi.fn(), replace: vi.fn() },
     search: new URLSearchParams(),
   };
+});
+afterEach(() => {
+  mocks.listError = false;
+  mocks.cachedData = false;
+  mocks.needsOAuth = false;
+  vi.clearAllMocks();
+  mocks.search = new URLSearchParams();
 });
 const connector = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
