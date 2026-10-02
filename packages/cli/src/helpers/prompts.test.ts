@@ -53,3 +53,12 @@ it("defaults media tool installation selections to false with --yes", async () =
   expect(builtInTools.imageGeneration).toBe(false);
   expect(builtInTools.videoGeneration).toBe(false);
 });
+
+it.each([true, false])(
+  "honors an explicit MCP installation choice with --yes: %s",
+  async (mcp) => {
+    const definition = externalGatewayFixture().root.meta.chatjs;
+    const features = await promptCoreFeatures(true, definition, mcp);
+    expect(features.mcp).toBe(mcp);
+  }
+);

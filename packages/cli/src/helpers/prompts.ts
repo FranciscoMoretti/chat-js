@@ -262,14 +262,15 @@ export const promptStorage = async (
 
 export const promptCoreFeatures = async (
   skipPrompt: boolean,
-  gateway: GatewayDefinition
+  gateway: GatewayDefinition,
+  mcp?: boolean
 ): Promise<Record<CoreFeatureKey, boolean>> => {
   const defaultTools = gateway.defaults.tools;
   const CORE_FEATURE_DEFAULTS: Record<CoreFeatureKey, boolean> = {
     attachments: FEATURES_DEFAULTS.attachments,
     documents: true,
     followupSuggestions: defaultTools.followupSuggestions.enabled,
-    mcp: false,
+    mcp: mcp ?? false,
     parallelResponses: FEATURES_DEFAULTS.parallelResponses,
   };
 
@@ -277,12 +278,15 @@ export const promptCoreFeatures = async (
     return { ...CORE_FEATURE_DEFAULTS };
   }
 
+  const availableFeatures = CORE_FEATURE_KEYS.filter(
+    (key) => key !== "mcp" || mcp === undefined
+  );
   const selected = await multiselect({
-    initialValues: CORE_FEATURE_KEYS.filter(
+    initialValues: availableFeatures.filter(
       (key) => CORE_FEATURE_DEFAULTS[key]
     ),
     message: `Which ${highlighter.info("core features")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
-    options: CORE_FEATURE_KEYS.map((key) => ({
+    options: availableFeatures.map((key) => ({
       hint:
         key === "documents"
           ? "Create, edit, and review documents in chat"
@@ -298,7 +302,12 @@ export const promptCoreFeatures = async (
   });
   handleCancel(selected);
 
-  return toSelectionRecord(CORE_FEATURE_KEYS, selected as CoreFeatureKey[]);
+  const result = toSelectionRecord(
+    CORE_FEATURE_KEYS,
+    selected as CoreFeatureKey[]
+  );
+  result.mcp = mcp ?? result.mcp;
+  return result;
 };
 
 export const promptDocumentTypes = async (

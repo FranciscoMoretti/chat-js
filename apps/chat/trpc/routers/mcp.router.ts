@@ -132,6 +132,31 @@ const getConnectorWithPermission = async ({
   return connector;
 };
 
+const displayConnectorUrl = (value: string) => {
+  const url = new URL(value);
+  url.username = "";
+  url.password = "";
+  url.search = "";
+  url.hash = "";
+  return url.href;
+};
+
+const publicConnector = (
+  connector: NonNullable<Awaited<ReturnType<typeof getMcpConnectorById>>>
+) => ({
+  createdAt: connector.createdAt,
+  enabled: connector.enabled,
+  id: connector.id,
+  name: connector.name,
+  nameId: connector.nameId,
+  oauthClientId: null,
+  oauthClientSecret: null,
+  type: connector.type,
+  updatedAt: connector.updatedAt,
+  url: displayConnectorUrl(connector.url),
+  userId: connector.userId,
+});
+
 export const mcpRouter = createTRPCRouter({
   /**
    * Initiate OAuth authorization for an MCP connector.
@@ -156,6 +181,8 @@ export const mcpRouter = createTRPCRouter({
       const mcpClient = getOrCreateMcpClient({
         id: connector.id,
         name: connector.name,
+        oauthClientId: connector.oauthClientId,
+        oauthClientSecret: connector.oauthClientSecret,
         type: connector.type,
         url: connector.url,
       });
@@ -177,11 +204,18 @@ export const mcpRouter = createTRPCRouter({
         });
       }
 
+      if (authUrl.protocol !== "http:" && authUrl.protocol !== "https:") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid authorization URL",
+        });
+      }
       log.info(
         { authUrl: authUrl.toString(), connectorId: connector.id },
         "OAuth authorization URL generated"
       );
 
+      await assertUrlIsSafeToFetch(authUrl.toString(), { opaqueErrors: true });
       return { authorizationUrl: authUrl.toString() };
     }),
 
@@ -226,15 +260,17 @@ export const mcpRouter = createTRPCRouter({
         userId: ctx.user.id,
       });
 
-      return await createMcpConnector({
-        name: input.name,
-        nameId,
-        oauthClientId: input.oauthClientId,
-        oauthClientSecret: input.oauthClientSecret,
-        type: input.type,
-        url: input.url,
-        userId: ctx.user.id,
-      });
+      return publicConnector(
+        await createMcpConnector({
+          name: input.name,
+          nameId,
+          oauthClientId: input.oauthClientId,
+          oauthClientSecret: input.oauthClientSecret,
+          type: input.type,
+          url: input.url,
+          userId: ctx.user.id,
+        })
+      );
     }),
 
   delete: protectedProcedure
@@ -293,6 +329,8 @@ export const mcpRouter = createTRPCRouter({
         const mcpClient = getOrCreateMcpClient({
           id: connector.id,
           name: connector.name,
+          oauthClientId: connector.oauthClientId,
+          oauthClientSecret: connector.oauthClientSecret,
           type: connector.type,
           url: connector.url,
         });
@@ -408,7 +446,8 @@ export const mcpRouter = createTRPCRouter({
 
   list: protectedProcedure.query(async ({ ctx }) => {
     assertMcpReady();
-    return await getMcpConnectorsByUserId({ userId: ctx.user.id });
+    const connectors = await getMcpConnectorsByUserId({ userId: ctx.user.id });
+    return connectors.map(publicConnector);
   }),
 
   /**
@@ -427,6 +466,8 @@ export const mcpRouter = createTRPCRouter({
             const mcpClient = getOrCreateMcpClient({
               id: connector.id,
               name: connector.name,
+              oauthClientId: connector.oauthClientId,
+              oauthClientSecret: connector.oauthClientSecret,
               type: connector.type,
               url: connector.url,
             });
@@ -454,7 +495,7 @@ export const mcpRouter = createTRPCRouter({
 
     return results
       .filter((r) => r.status?.status === "connected")
-      .map((r) => r.connector);
+      .map((r) => publicConnector(r.connector));
   }),
 
   /**
@@ -476,6 +517,8 @@ export const mcpRouter = createTRPCRouter({
       const mcpClient = getOrCreateMcpClient({
         id: connector.id,
         name: connector.name,
+        oauthClientId: connector.oauthClientId,
+        oauthClientSecret: connector.oauthClientSecret,
         type: connector.type,
         url: connector.url,
       });
@@ -513,6 +556,8 @@ export const mcpRouter = createTRPCRouter({
           const mcpClient = getOrCreateMcpClient({
             id: connector.id,
             name: connector.name,
+            oauthClientId: connector.oauthClientId,
+            oauthClientSecret: connector.oauthClientSecret,
             type: connector.type,
             url: connector.url,
           });
@@ -587,7 +632,9 @@ export const mcpRouter = createTRPCRouter({
         userId: ctx.user.id,
       });
 
-      const updates = { ...input.updates };
+      const updates: typeof input.updates & { nameId?: string } = {
+        ...input.updates,
+      };
       if (updates.url) {
         await assertUrlIsSafeToFetch(updates.url, { opaqueErrors: true });
       }
@@ -597,10 +644,22 @@ export const mcpRouter = createTRPCRouter({
           name: updates.name,
           userId: connector.userId,
         });
-        (updates as typeof updates & { nameId: string }).nameId = nameId;
+        updates.nameId = nameId;
       }
 
       await updateMcpConnector({ id: input.id, updates });
+      if (
+        (updates.url !== undefined && updates.url !== connector.url) ||
+        (updates.type !== undefined && updates.type !== connector.type) ||
+        (updates.oauthClientId !== undefined &&
+          updates.oauthClientId !== connector.oauthClientId) ||
+        (updates.oauthClientSecret !== undefined &&
+          updates.oauthClientSecret !== connector.oauthClientSecret)
+      ) {
+        await deleteSessionsByConnectorId({ mcpConnectorId: input.id });
+      }
+      await removeMcpClient(input.id);
+      invalidateAllMcpCaches(input.id);
       return { success: true };
     }),
 });

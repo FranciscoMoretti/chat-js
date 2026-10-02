@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { requireMcpCredentials } from "@/features/mcp/setup";
+import { invalidateAllMcpCaches } from "@/lib/ai/mcp/cache";
 import {
   createMcpClientForCallback,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
-import { getMcpConnectorById, getSessionByState } from "@/lib/db/mcp-queries";
+import {
+  deletePendingSessionByState,
+  getMcpConnectorById,
+  getSessionByState,
+} from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";
 import { MissingCredentialsError } from "@/lib/required-credentials";
@@ -48,19 +53,6 @@ export const GET = async (request: NextRequest) => {
     "OAuth callback received"
   );
 
-  if (error) {
-    log.error({ error, errorDesc }, "OAuth error from provider");
-    const message = `${error}: ${errorDesc ?? "Unknown error"}`;
-    return redirectToConnector({ errorMessage: message });
-  }
-
-  if (!(code && state)) {
-    log.error({ code: !!code, state: !!state }, "Missing code or state");
-    return redirectToConnector({
-      errorMessage: "Missing authorization code or state parameter",
-    });
-  }
-
   try {
     requireMcpCredentials();
   } catch (setupError) {
@@ -68,6 +60,29 @@ export const GET = async (request: NextRequest) => {
       return redirectToConnector({ errorMessage: setupError.message });
     }
     throw setupError;
+  }
+
+  if (error) {
+    log.error({ error, errorDesc }, "OAuth error from provider");
+    const pending = state ? await getSessionByState({ state }) : undefined;
+    if (pending && !pending.tokens && state) {
+      const deleted = await deletePendingSessionByState({ state });
+      if (deleted) {
+        await removeMcpClient(deleted.mcpConnectorId, state);
+        invalidateAllMcpCaches(deleted.mcpConnectorId);
+      }
+    }
+    return redirectToConnector({
+      connectorId: pending?.mcpConnectorId,
+      errorMessage:
+        "Authorization was not completed. Please try connecting again.",
+    });
+  }
+  if (!(code && state)) {
+    log.error({ code: !!code, state: !!state }, "Missing code or state");
+    return redirectToConnector({
+      errorMessage: "Missing authorization code or state parameter",
+    });
   }
 
   // Look up the session by state
@@ -93,12 +108,15 @@ export const GET = async (request: NextRequest) => {
     const mcpClient = createMcpClientForCallback({
       id: connector.id,
       name: connector.name,
+      oauthClientId: connector.oauthClientId,
+      oauthClientSecret: connector.oauthClientSecret,
       type: connector.type,
       url: connector.url,
     });
 
     // Complete the OAuth flow (don't connect first - just exchange the code)
     await mcpClient.finishAuth(code, state);
+    invalidateAllMcpCaches(connector.id);
 
     log.info(
       { connectorId: connector.id },
@@ -131,7 +149,8 @@ export const GET = async (request: NextRequest) => {
 
     return redirectToConnector({
       connectorId: connector.id,
-      errorMessage,
+      errorMessage:
+        "Could not complete connector authorization. Please try again.",
     });
   }
 };

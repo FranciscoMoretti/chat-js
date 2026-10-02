@@ -13,17 +13,24 @@ export const getOrCreateMcpClient = ({
   url,
   type,
   headers,
+  oauthClientId,
+  oauthClientSecret,
 }: {
   id: string;
   name: string;
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
+  oauthClientId?: string | null;
+  oauthClientSecret?: string | null;
 }): MCPClient => {
   let client = clientsMap.get(id);
   if (!client) {
-    client = new MCPClient(id, name, { headers, type, url }, () =>
-      invalidateAllMcpCaches(id)
+    client = new MCPClient(
+      id,
+      name,
+      { headers, oauthClientId, oauthClientSecret, type, url },
+      () => invalidateAllMcpCaches(id)
     );
     clientsMap.set(id, client);
   }
@@ -33,11 +40,22 @@ export const getOrCreateMcpClient = ({
 /**
  * Remove an MCP client from the cache and close it.
  */
-export const removeMcpClient = async (id: string): Promise<void> => {
+export const removeMcpClient = async (
+  id: string,
+  expectedOAuthState?: string
+): Promise<void> => {
   const client = clientsMap.get(id);
   if (client) {
-    await client.close();
+    if (
+      expectedOAuthState !== undefined &&
+      (client.status !== "authorizing" ||
+        client.getAuthorizationUrl()?.searchParams.get("state") !==
+          expectedOAuthState)
+    ) {
+      return;
+    }
     clientsMap.delete(id);
+    await client.close();
   }
 };
 
@@ -51,13 +69,20 @@ export const createMcpClientForCallback = ({
   url,
   type,
   headers,
+  oauthClientId,
+  oauthClientSecret,
 }: {
   id: string;
   name: string;
   url: string;
   type: "http" | "sse";
   headers?: Record<string, string>;
+  oauthClientId?: string | null;
+  oauthClientSecret?: string | null;
 }): MCPClient =>
-  new MCPClient(id, name, { headers, type, url }, () =>
-    invalidateAllMcpCaches(id)
+  new MCPClient(
+    id,
+    name,
+    { headers, oauthClientId, oauthClientSecret, type, url },
+    () => invalidateAllMcpCaches(id)
   );
