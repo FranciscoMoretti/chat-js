@@ -287,16 +287,14 @@ export class MCPClient {
   async tools(
     ...args: Parameters<NonNullable<McpClientInstance>["tools"]>
   ): Promise<Record<string, Tool>> {
-    if (!this.client) {
+    const { client } = this;
+    if (!client) {
       throw new Error("Client not connected");
     }
     try {
-      return (await this.client.tools(...args)) as ToolSet as Record<
-        string,
-        Tool
-      >;
+      return (await client.tools(...args)) as ToolSet as Record<string, Tool>;
     } catch (error) {
-      await this.handlePotentialAuthError(error);
+      await this.handlePotentialAuthError(error, client);
       throw error;
     }
   }
@@ -305,13 +303,14 @@ export class MCPClient {
    * List resources from the MCP server.
    */
   async listResources(): Promise<ListResourcesResult> {
-    if (!this.client) {
+    const { client } = this;
+    if (!client) {
       throw new Error("Client not connected");
     }
     try {
-      return await this.client.listResources();
+      return await client.listResources();
     } catch (error) {
-      await this.handlePotentialAuthError(error);
+      await this.handlePotentialAuthError(error, client);
       throw error;
     }
   }
@@ -320,13 +319,14 @@ export class MCPClient {
    * List prompts from the MCP server.
    */
   async listPrompts(): Promise<ListPromptsResult> {
-    if (!this.client) {
+    const { client } = this;
+    if (!client) {
       throw new Error("Client not connected");
     }
     try {
-      return await this.client.experimental_listPrompts();
+      return await client.experimental_listPrompts();
     } catch (error) {
-      await this.handlePotentialAuthError(error);
+      await this.handlePotentialAuthError(error, client);
       throw error;
     }
   }
@@ -353,7 +353,13 @@ export class MCPClient {
   /**
    * Check if an error is an auth error (401/403) and invalidate caches if so.
    */
-  private async handlePotentialAuthError(error: unknown): Promise<void> {
+  private async handlePotentialAuthError(
+    error: unknown,
+    origin: McpClientInstance
+  ): Promise<void> {
+    if (this.client !== origin) {
+      return;
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isAuthError =
       errorMessage.includes("401") ||
