@@ -40,9 +40,20 @@ export const getOrCreateMcpClient = ({
 /**
  * Remove an MCP client from the cache and close it.
  */
-export const removeMcpClient = async (id: string): Promise<void> => {
+export const removeMcpClient = async (
+  id: string,
+  expectedOAuthState?: string
+): Promise<void> => {
   const client = clientsMap.get(id);
   if (client) {
+    if (
+      expectedOAuthState !== undefined &&
+      (client.status !== "authorizing" ||
+        client.getAuthorizationUrl()?.searchParams.get("state") !==
+          expectedOAuthState)
+    ) {
+      return;
+    }
     clientsMap.delete(id);
     await client.close();
   }
