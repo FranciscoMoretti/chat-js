@@ -170,7 +170,8 @@ test("composer connector controls persist and fence native tool execution", asyn
     });
     const discover = () =>
       discoverEveMcpTools(owner.id, AbortSignal.timeout(10_000));
-    expect((await discover()).map((tool) => tool.name)).toContain(
+    const awaitedMemberValue1 = await discover();
+    expect(awaitedMemberValue1.map((tool) => tool.name)).toContain(
       `${nameId}__read_token`
     );
     await expect(
@@ -199,7 +200,8 @@ test("composer connector controls persist and fence native tool execution", asyn
         return connector?.enabled;
       })
       .toBe(false);
-    expect((await discover()).map((tool) => tool.name)).not.toContain(
+    const awaitedMemberValue2 = await discover();
+    expect(awaitedMemberValue2.map((tool) => tool.name)).not.toContain(
       `${nameId}__read_token`
     );
     await expect(

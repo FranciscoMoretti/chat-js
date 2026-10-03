@@ -3,7 +3,6 @@
  */
 /* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -127,11 +126,10 @@ for (const width of [1280, 390]) {
         .click();
       await expect(dialog).toContainText("cleanup is not complete");
       expect(await getEveConversation(owner.id, id)).toBeUndefined();
-      expect(
-        (await listEveConversations(owner.id, { search: title })).items.map(
-          (item) => item.id
-        )
-      ).toContain(id);
+      const awaitedMemberValue1 = await listEveConversations(owner.id, {
+        search: title,
+      });
+      expect(awaitedMemberValue1.items.map((item) => item.id)).toContain(id);
       await dialog
         .getByRole("button", { exact: true, name: "Close" })
         .first()
@@ -178,9 +176,10 @@ for (const width of [1280, 390]) {
         .click();
       await expect(dialog).toHaveCount(0);
       expect(deletes).toBe(2);
-      expect(
-        (await listEveConversations(owner.id, { search: title })).items
-      ).toHaveLength(0);
+      const awaitedMemberValue2 = await listEveConversations(owner.id, {
+        search: title,
+      });
+      expect(awaitedMemberValue2.items).toHaveLength(0);
     } finally {
       await db.delete(eveConversation).where(eq(eveConversation.id, id));
     }

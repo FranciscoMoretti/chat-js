@@ -6,15 +6,13 @@ import type { OpenAIGateway } from "./openai/gateway.ts";
 import type { OpenRouterGateway } from "./openrouter/gateway.ts";
 import type { VercelGateway } from "./vercel/gateway.ts";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type Gateways = {
+interface Gateways {
   vercel: VercelGateway;
   openai: OpenAIGateway;
   "openai-compatible": OpenAICompatibleGateway;
   openrouter: OpenRouterGateway;
   litellm: LiteLLMGateway;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 type GatewayType = keyof Gateways;
 const vercelDefaults = {
   anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],

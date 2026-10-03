@@ -8,7 +8,6 @@
 /* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -107,7 +106,8 @@ test("native transcript survives reload; streaming preserves the next draft; can
     response.url().endsWith("/cancel")
   );
   await page.getByRole("button", { exact: true, name: "Stop" }).click();
-  expect(await (await cancellation).json()).toMatchObject({
+  const awaitedMemberValue1 = await cancellation;
+  expect(await awaitedMemberValue1.json()).toMatchObject({
     ok: true,
     status: "accepted",
   });
@@ -335,7 +335,8 @@ test("exhausted credits block new messages but permit rejecting an approval", as
         response.request().method() === "POST"
     );
     await page.getByRole("button", { exact: true, name: "Send" }).click();
-    expect((await rejected).status()).toBe(402);
+    const awaitedMemberValue2 = await rejected;
+    expect(awaitedMemberValue2.status()).toBe(402);
   } finally {
     await db
       .update(userCredit)
@@ -589,7 +590,8 @@ test("reload during an accepted turn restores the user message and follows the r
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("slow reload recovery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
-  expect((await accepted).ok()).toBe(true);
+  const awaitedMemberValue3 = await accepted;
+  expect(awaitedMemberValue3.ok()).toBe(true);
   await page.reload();
   await expect(page.getByRole("log")).toContainText("slow reload recovery");
   await expect(

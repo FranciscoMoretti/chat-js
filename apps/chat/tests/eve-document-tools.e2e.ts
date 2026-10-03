@@ -433,7 +433,8 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await panel
     .getByRole("button", { exact: true, name: "Add comments" })
     .click();
-  expect((await actionRequest).headers()["x-chatjs-selected-model"]).toBe(
+  const awaitedMemberValue1 = await actionRequest;
+  expect(awaitedMemberValue1.headers()["x-chatjs-selected-model"]).toBe(
     config.ai.tools.code.edits
   );
   await expect(

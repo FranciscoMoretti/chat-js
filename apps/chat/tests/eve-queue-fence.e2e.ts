@@ -3,7 +3,6 @@
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
@@ -182,8 +181,7 @@ test("queue purge refuses even an old worker lock and succeeds after explicit re
     await query`select id from graphile_worker._private_jobs where id::text = ${id}`
   ).toHaveLength(1);
   await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null where id::text = ${id}`;
-  expect((await purgeEvePostgresQueue(query, input)).removedJobIds).toEqual([
-    id,
-  ]);
+  const awaitedMemberValue1 = await purgeEvePostgresQueue(query, input);
+  expect(awaitedMemberValue1.removedJobIds).toEqual([id]);
 });
 /* oxlint-enable no-magic-numbers */

@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/response-group-contracts" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable unicorn/no-await-expression-member -- Each response assertion is tied to its awaited browser action. */
 import { expect, test } from "@playwright/test";
 
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
@@ -103,7 +102,8 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
       value.request().method() === "POST"
   );
   await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
-  expect((await retry).ok()).toBe(true);
+  const awaitedMemberValue1 = await retry;
+  expect(awaitedMemberValue1.ok()).toBe(true);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });

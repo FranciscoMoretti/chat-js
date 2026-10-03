@@ -619,7 +619,8 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
     throw new Error("Missing uploaded key");
   }
   try {
-    expect((await page.request.get(url)).ok()).toBe(true);
+    const awaitedMemberValue1 = await page.request.get(url);
+    expect(awaitedMemberValue1.ok()).toBe(true);
     // Advance eligibility for this single test-owned key, never run a global sweep.
     const fenced = await prepareEveOrphanedFilePurge(
       [key],
@@ -631,9 +632,10 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
     expect(denied.headers().location).toBeUndefined();
     expect(denied.headers()["cache-control"]).toBe("private, no-store");
     await completeEveFilePurge(fenced[0].ownerId, [key]);
-    expect((await page.request.get(url, { maxRedirects: 0 })).status()).toBe(
-      404
-    );
+    const awaitedMemberValue2 = await page.request.get(url, {
+      maxRedirects: 0,
+    });
+    expect(awaitedMemberValue2.status()).toBe(404);
   } finally {
     execFileSync("bun", [
       "--no-env-file",

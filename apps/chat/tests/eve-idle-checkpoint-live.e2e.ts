@@ -6,7 +6,6 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { createHash } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
@@ -197,15 +196,12 @@ test("compiled idle capture preserves native history and exact document revision
     if (candidate.state !== "bound") {
       throw new Error("Follow-up did not bind");
     }
-    expect(
-      (
-        await getEveDocumentRevision(
-          binding.ownerId,
-          candidate.conversationId,
-          document.documentId
-        )
-      )?.id
-    ).toBe(original.id);
+    const awaitedMemberValue1 = await getEveDocumentRevision(
+      binding.ownerId,
+      candidate.conversationId,
+      document.documentId
+    );
+    expect(awaitedMemberValue1?.id).toBe(original.id);
     await page.goto(`/chat/${candidate.conversationId}`);
     await expect(
       page.getByRole("log").locator(".is-assistant").filter({ hasText: token })

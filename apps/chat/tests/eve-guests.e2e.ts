@@ -5,7 +5,6 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -113,7 +112,8 @@ afterAll(async () => {
  */
 test("guest identity is server-owned, expires and grants no BetterAuth session or signup credits", async () => {
   const row = await guest();
-  expect((await findEveGuest(row.tokenHash))?.ownerId).toBe(row.ownerId);
+  const awaitedMemberValue1 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue1?.ownerId).toBe(row.ownerId);
   expect(
     await findEveGuest(createEveGuestCredential().tokenHash)
   ).toBeUndefined();
@@ -151,7 +151,8 @@ test("concurrent replay reserves once and rejects changed request content", asyn
   expect(attempts.filter((result) => result.status === "replay")).toHaveLength(
     7
   );
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(9);
+  const awaitedMemberValue2 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue2?.remainingMessages).toBe(9);
   const rates = await db
     .select()
     .from(eveGuestRate)
@@ -184,7 +185,8 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
   expect(
     results.filter((result) => result.status === "exhausted")
   ).toHaveLength(5);
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
+  const awaitedMemberValue3 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue3?.remainingMessages).toBe(0);
 });
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
@@ -196,7 +198,8 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
   const first = await guest();
   const second = await guest();
   const input = { ...request(first.ownerId), requestsPerMonth: 1 };
-  expect((await reserveEveGuestMessage(input)).status).toBe("reserved");
+  const awaitedMemberValue4 = await reserveEveGuestMessage(input);
+  expect(awaitedMemberValue4.status).toBe("reserved");
   expect(
     await reserveEveGuestMessage({
       ...input,
@@ -204,15 +207,13 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
       ownerId: second.ownerId,
     })
   ).toEqual({ status: "rate-limited" });
-  expect((await findEveGuest(second.tokenHash))?.remainingMessages).toBe(10);
-  expect(
-    (
-      await db
-        .select()
-        .from(eveGuestRate)
-        .where(eq(eveGuestRate.ipHash, input.ipHash))
-    ).map((rate) => rate.requests)
-  ).toEqual([1, 1]);
+  const awaitedMemberValue5 = await findEveGuest(second.tokenHash);
+  expect(awaitedMemberValue5?.remainingMessages).toBe(10);
+  const awaitedMemberValue6 = await db
+    .select()
+    .from(eveGuestRate)
+    .where(eq(eveGuestRate.ipHash, input.ipHash));
+  expect(awaitedMemberValue6.map((rate) => rate.requests)).toEqual([1, 1]);
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
@@ -265,7 +266,8 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
     )
   );
   expect(releases.filter(Boolean)).toHaveLength(1);
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(10);
+  const awaitedMemberValue7 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue7?.remainingMessages).toBe(10);
   const retry = await reserveEveGuestMessage(input);
   if (retry.status !== "reserved") {
     throw new Error("Expected a retry reservation");
@@ -292,7 +294,8 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
       retry.reservationId
     )
   ).toBe(false);
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(9);
+  const awaitedMemberValue8 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue8?.remainingMessages).toBe(9);
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
@@ -311,9 +314,8 @@ test("committing and releasing the same attempt are mutually exclusive", async (
     releaseEveGuestMessage(row.ownerId, input.operationId, held.reservationId),
   ]);
   expect(results.filter(Boolean)).toHaveLength(1);
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(
-    results[0] ? 0 : 1
-  );
+  const awaitedMemberValue9 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue9?.remainingMessages).toBe(results[0] ? 0 : 1);
 });
 /* oxlint-enable no-magic-numbers */
 
@@ -382,7 +384,8 @@ test("first admission creates one guest and reserves once across different IPs",
   expect(attempts.filter((result) => result.status === "replay")).toHaveLength(
     5
   );
-  expect((await findEveGuest(credential.tokenHash))?.remainingMessages).toBe(1);
+  const awaitedMemberValue10 = await findEveGuest(credential.tokenHash);
+  expect(awaitedMemberValue10?.remainingMessages).toBe(1);
   expect(await db.select().from(user).where(eq(user.id, ownerId))).toHaveLength(
     1
   );
@@ -442,16 +445,20 @@ test("bootstrap cannot replace an expired identity or reset its balance", async 
     messageLimit: 50,
     tokenHash: row.tokenHash,
   };
-  expect(
-    (await reserveEveGuestMessage(request(row.ownerId), bootstrap)).status
-  ).toBe("exhausted");
+  const awaitedMemberValue11 = await reserveEveGuestMessage(
+    request(row.ownerId),
+    bootstrap
+  );
+  expect(awaitedMemberValue11.status).toBe("exhausted");
   await db
     .update(eveGuest)
     .set({ expiresAt: new Date(0) })
     .where(eq(eveGuest.ownerId, row.ownerId));
-  expect(
-    (await reserveEveGuestMessage(request(row.ownerId), bootstrap)).status
-  ).toBe("unavailable");
+  const awaitedMemberValue12 = await reserveEveGuestMessage(
+    request(row.ownerId),
+    bootstrap
+  );
+  expect(awaitedMemberValue12.status).toBe("unavailable");
   await expect(
     reserveEveGuestMessage(request(crypto.randomUUID()), bootstrap)
   ).rejects.toThrow("Invalid guest admission");
@@ -511,20 +518,18 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
     ...accepted,
     status: "replay",
   });
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(1);
+  const awaitedMemberValue13 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue13?.remainingMessages).toBe(1);
   const entries = await db
     .select()
     .from(eveGuestMessage)
     .where(eq(eveGuestMessage.ownerId, row.ownerId));
   expect(entries).toHaveLength(1);
-  expect(
-    (
-      await db
-        .select()
-        .from(eveGuestRate)
-        .where(eq(eveGuestRate.ipHash, first.ipHash))
-    ).map((bucket) => bucket.requests)
-  ).toEqual([1, 1]);
+  const awaitedMemberValue14 = await db
+    .select()
+    .from(eveGuestRate)
+    .where(eq(eveGuestRate.ipHash, first.ipHash));
+  expect(awaitedMemberValue14.map((bucket) => bucket.requests)).toEqual([1, 1]);
 });
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
@@ -557,15 +562,13 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
         result.reservations.every((entry) => entry.status === "reserved")
     )
   ).toHaveLength(1);
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
-  expect(
-    (
-      await db
-        .select()
-        .from(eveGuestRate)
-        .where(eq(eveGuestRate.ipHash, first.ipHash))
-    ).map((bucket) => bucket.requests)
-  ).toEqual([2, 2]);
+  const awaitedMemberValue15 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue15?.remainingMessages).toBe(0);
+  const awaitedMemberValue16 = await db
+    .select()
+    .from(eveGuestRate)
+    .where(eq(eveGuestRate.ipHash, first.ipHash));
+  expect(awaitedMemberValue16.map((bucket) => bucket.requests)).toEqual([2, 2]);
 });
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
@@ -581,7 +584,8 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
       { ...first, operationId: crypto.randomUUID() },
     ])
   ).toEqual({ status: "rate-limited" });
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(10);
+  const awaitedMemberValue17 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue17?.remainingMessages).toBe(10);
   expect(
     await db
       .select()
@@ -699,7 +703,8 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
       retry.reservationId
     )
   ).toBe(false);
-  expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
+  const awaitedMemberValue18 = await findEveGuest(row.tokenHash);
+  expect(awaitedMemberValue18?.remainingMessages).toBe(0);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
 /* oxlint-enable max-statements, no-magic-numbers */
@@ -734,11 +739,13 @@ test("creation claims and refunds serialize without a free native dispatch", asy
     if (refund.value) {
       expect(creation.status).toBe("rejected");
       expect(dispatch).not.toHaveBeenCalled();
-      expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(1);
+      const awaitedMemberValue19 = await findEveGuest(row.tokenHash);
+      expect(awaitedMemberValue19?.remainingMessages).toBe(1);
     } else {
       expect(creation.status).toBe("fulfilled");
       expect(dispatch).toHaveBeenCalledTimes(1);
-      expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
+      const awaitedMemberValue20 = await findEveGuest(row.tokenHash);
+      expect(awaitedMemberValue20?.remainingMessages).toBe(0);
     }
   }
 });

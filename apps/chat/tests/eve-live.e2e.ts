@@ -124,7 +124,8 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   const client = new Client(getEveConnectionOptions(ownerId));
   const session = client.sessions.attach(sessionId);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
-  expect((await session.compact()).status).toBe("accepted");
+  const awaitedMemberValue1 = await session.compact();
+  expect(awaitedMemberValue1.status).toBe("accepted");
   await expect
     .poll(
       async () => {

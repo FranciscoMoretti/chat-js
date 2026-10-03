@@ -95,11 +95,13 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     await page.goto("/");
     const discover = () =>
       discoverEveMcpTools(owner.id, AbortSignal.timeout(15_000));
-    expect((await discover()).map((tool) => tool.name)).toContain(
+    const awaitedMemberValue1 = await discover();
+    expect(awaitedMemberValue1.map((tool) => tool.name)).toContain(
       `${nameId}__read_token`
     );
     fixture.invalidateAccessTokens();
-    expect((await discover()).map((tool) => tool.name)).toContain(
+    const awaitedMemberValue2 = await discover();
+    expect(awaitedMemberValue2.map((tool) => tool.name)).toContain(
       `${nameId}__read_token`
     );
     expect(fixture.counters.refreshes).toBe(1);
@@ -133,7 +135,8 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     } finally {
       await Promise.all(clients.map((client) => client.close()));
     }
-    expect((await discover()).map((tool) => tool.name)).toContain(
+    const awaitedMemberValue3 = await discover();
+    expect(awaitedMemberValue3.map((tool) => tool.name)).toContain(
       `${nameId}__read_token`
     );
 

@@ -4,7 +4,6 @@
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq } from "drizzle-orm";
 import { expect, test } from "vitest";
 
@@ -67,7 +66,8 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
         "test-owned removal fixture",
         "text/plain"
       );
-      expect((await getFileMetadata(key)).size).toBe(26);
+      const awaitedMemberValue1 = await getFileMetadata(key);
+      expect(awaitedMemberValue1.size).toBe(26);
     }
     await beginEveConversationDeletion(owner, conversation.id);
     expect(await prepareEveFamilyFilePurge(owner, conversation.id)).toEqual(
