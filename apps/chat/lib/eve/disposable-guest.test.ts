@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { randomUUID } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Sequential adversarial requests keep each authorization assertion explicit. */
 import { randomUUID } from "node:crypto";
@@ -22,8 +21,7 @@ vi.mock("../env", () => ({
 }));
 afterEach(() => vi.useRealTimers());
 
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-rest-spread-properties (#543): claims copies or separates ...newGuestClaims("test-model") while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep claims's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const claims = () => ({
@@ -31,8 +29,7 @@ const claims = () => ({
   sessionId: "session-owned",
 });
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type  --
- * no-ternary (#518): request derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
  * no-undefined (#519): request uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -47,9 +44,8 @@ const request = (token: string, path: string, body?: unknown) =>
   });
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("credentials are signed, expire, and cannot be edited to name another session") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-rest-spread-properties (#543): test("credentials are signed, expire, and cannot be edited to name another session") copies or separates ...original while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("credentials are signed, expire, and cannot be edited to name another session", () => {
   vi.useFakeTimers();

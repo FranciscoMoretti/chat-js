@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -71,9 +70,8 @@ await db.insert(user).values({
   id: owner,
   name: "Deletion fixture",
 });
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterAll(async () => {
   await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
@@ -90,11 +88,8 @@ afterAll(async () => {
   await native.end();
 });
 /* oxlint-enable max-statements */
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions  --
- * no-ternary (#518): fixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): fixture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): fixture copies or separates ...conversation while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): fixture preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): fixture intentionally keeps the existing falsy-value behavior of parentId; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -119,11 +114,10 @@ async function fixture(parentId?: string) {
 }
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): test("full deletion keeps uncertain resources pending, then erases only its family an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("full deletion keeps uncertain resources pending, then erases only its family an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("full deletion keeps uncertain resources pending, then erases only its family an uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("full deletion keeps uncertain resources pending, then erases only its family an sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("full deletion keeps uncertain resources pending, then erases only its family an preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("full deletion keeps uncertain resources pending, then erases only its family and retries after payload removal", async () => {

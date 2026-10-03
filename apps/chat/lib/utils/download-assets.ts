@@ -14,9 +14,8 @@ interface DownloadResult {
 
 type AssetDownloadResult = DownloadResult | null;
 
-/* oxlint-disable import/exports-last, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/exports-last, typescript/prefer-readonly-parameter-types --
  * import/exports-last (#522): DownloadImplementation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/no-named-export (#527): Preserve the named DownloadImplementation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): DownloadImplementation accepts args: { url: URL; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export type DownloadImplementation = (args: {
@@ -24,12 +23,10 @@ export type DownloadImplementation = (args: {
 }) => Promise<AssetDownloadResult>;
 /* oxlint-enable import/exports-last, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): defaultDownload keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): defaultDownload uses 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): defaultDownload derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): defaultDownload uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): defaultDownload sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): defaultDownload accepts { url, }: { url: URL; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): defaultDownload intentionally keeps the existing falsy-value behavior of key; response.headers.get("content-type"); distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): defaultDownload preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -72,8 +69,7 @@ const defaultDownload = async ({
 };
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null  --
- * no-ternary (#518): toHttpUrl derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): toHttpUrl intentionally keeps the existing falsy-value behavior of keyFromFileUrl(value); distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): toHttpUrl preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -107,13 +103,11 @@ const toHttpUrl = (value: unknown): URL | null => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): downloadAssetsFromModelMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): downloadAssetsFromModelMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): downloadAssetsFromModelMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): downloadAssetsFromModelMessages skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-ternary (#518): downloadAssetsFromModelMessages derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): downloadAssetsFromModelMessages sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): downloadAssetsFromModelMessages accepts messages: ModelMessage[]; url; { url, data }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
@@ -155,8 +149,7 @@ const downloadAssetsFromModelMessages = async (
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
- * oxc/no-rest-spread-properties (#543): mapFilePart copies or separates ...part while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): mapFilePart accepts part: FilePart; downloaded: Record<string, AssetDownloadResult>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): mapFilePart intentionally keeps the existing falsy-value behavior of found; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): mapFilePart preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -183,8 +176,7 @@ const mapFilePart = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
- * oxc/no-rest-spread-properties (#543): mapImagePart copies or separates ...part while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): mapImagePart accepts part: ImagePart; downloaded: Record<string, AssetDownloadResult>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): mapImagePart intentionally keeps the existing falsy-value behavior of found; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): mapImagePart preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -213,14 +205,11 @@ const mapImagePart = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
- * import/no-named-export (#527): Preserve the named replaceFilePartUrlByBinaryDataInMessages API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): replaceFilePartUrlByBinaryDataInMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): replaceFilePartUrlByBinaryDataInMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): replaceFilePartUrlByBinaryDataInMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): replaceFilePartUrlByBinaryDataInMessages uses 0, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): replaceFilePartUrlByBinaryDataInMessages sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): replaceFilePartUrlByBinaryDataInMessages copies or separates ...message while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): replaceFilePartUrlByBinaryDataInMessages accepts messages: ModelMessage[]; part: TextPart | ImagePart | FilePart; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**

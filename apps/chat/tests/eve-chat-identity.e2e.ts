@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
@@ -17,12 +16,10 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): test("generated chat identity stays selected across edited branch paths") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("generated chat identity stays selected across edited branch paths") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("generated chat identity stays selected across edited branch paths") uses 150_000, 1000, 2000, 1, 60_000, 200, 202 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("generated chat identity stays selected across edited branch paths") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("generated chat identity stays selected across edited branch paths") handles optional chat?.status without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep test("generated chat identity stays selected across edited branch paths")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): test("generated chat identity stays selected across edited branch paths") accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("generated chat identity stays selected across edited branch paths") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.

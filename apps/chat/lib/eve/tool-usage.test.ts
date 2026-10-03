@@ -14,9 +14,8 @@ import {
 const context = () => ({ abortSignal: new AbortController().signal });
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * no-magic-numbers (#517): test("distinguishes explicitly free work from unreported usage") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("distinguishes explicitly free work from unreported usage") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("distinguishes explicitly free work from unreported usage") accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): test("distinguishes explicitly free work from unreported usage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -34,9 +33,8 @@ test("distinguishes explicitly free work from unreported usage", async () => {
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): test("retains reported costs only for explicitly reported domain failures") uses 0.02, 0.03 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("retains reported costs only for explicitly reported domain failures") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("retains reported costs only for explicitly reported domain failures") accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("retains reported costs only for explicitly reported domain failures") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -55,8 +53,7 @@ test("retains reported costs only for explicitly reported domain failures", asyn
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls  --
- * oxc/no-async-await (#540): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
  * typescript/prefer-readonly-parameter-types (#565): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  accepts failure; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/max-nested-calls (#568): test.each([ new Error("Unexpected provider failure"), { authorization: "required" },  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -80,9 +77,8 @@ test.each([
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): test("cancellation propagates before and during execution") uses 0.04 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("cancellation propagates before and during execution") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("cancellation propagates before and during execution") accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("cancellation propagates before and during execution", async () => {
@@ -104,9 +100,8 @@ test("cancellation propagates before and during execution", async () => {
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("invalid cost %s is a native fa uses -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("invalid cost %s is a native fa sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("invalid cost %s is a native fa accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("invalid cost %s is a native fa preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -123,9 +118,8 @@ test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
 );
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("an unresolved provider cost prevents a known subtotal from becoming a final cha uses 0.05 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("an unresolved provider cost prevents a known subtotal from becoming a final cha sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("an unresolved provider cost prevents a known subtotal from becoming a final charge", async () => {
   const usage = createToolUsage();
@@ -140,8 +134,7 @@ test("invalid durable output is rejected by both types and runtime validation", 
   await expect(result).rejects.toThrow();
 });
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): test("streaming cancellation remains native even when the provider returns a result") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): test("streaming cancellation remains native even when the provider returns a result") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("streaming cancellation remains native even when the provider returns a result", async () => {

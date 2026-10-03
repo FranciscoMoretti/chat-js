@@ -3,9 +3,8 @@ import { generateUUID } from "@/lib/utils";
 
 import { deduplicateByDomainAndUrl } from "./search-utils";
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions  --
+/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
  * import/group-exports (#523): SearchQuery stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named SearchQuery API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
 export type SearchQuery = {
@@ -14,9 +13,8 @@ export type SearchQuery = {
 };
 /* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions  --
+/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
  * import/group-exports (#523): MultiQuerySearchResult stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named MultiQuerySearchResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): MultiQuerySearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
 export type MultiQuerySearchResult = {
@@ -29,9 +27,8 @@ export type MultiQuerySearchResult = {
 };
 /* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions  --
+/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
  * import/group-exports (#523): MultiQuerySearchResponse stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named MultiQuerySearchResponse API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): MultiQuerySearchResponse preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
 export type MultiQuerySearchResponse = {
@@ -40,15 +37,10 @@ export type MultiQuerySearchResponse = {
 };
 /* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
  * id-length (#506): multiQueryWebSearchStep uses q as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/no-named-export (#527): Preserve the named multiQueryWebSearchStep API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): multiQueryWebSearchStep derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): multiQueryWebSearchStep sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): multiQueryWebSearchStep handles optional dataStream?.write({ data: { queries: queries.map((q) => q.query), status: "run; dataStream?.write({ data: { queries: queries.map((q) => q.query), // oxlint-di; dataStream?.write({ data: { queries: queries.map((q) => q.query), status: "com without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): multiQueryWebSearchStep copies or separates ...result while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): multiQueryWebSearchStep accepts { queries, search, dataStream, toolCallId, }: { queries: SearchQuery[]; search: ( qu; query: SearchQuery; q; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const multiQueryWebSearchStep = async ({

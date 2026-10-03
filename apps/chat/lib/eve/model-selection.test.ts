@@ -7,9 +7,8 @@ import {
   resolveEveModel,
 } from "./model-selection";
 
-/* oxlint-disable import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/promise-function-async  --
+/* oxlint-disable import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/promise-function-async --
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/gateways/fallback-models" dependency within this package instead of introducing an alias or barrel API.
- * oxc/no-async-await (#540): vi.mock("../ai/active-gateway") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("../ai/active-gateway")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): vi.mock("../ai/active-gateway") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */

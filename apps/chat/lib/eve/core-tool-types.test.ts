@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/deepResearch"; "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/read-document/tool"; "../../tools/chatjs/saved-code-execution/tool"; "../../tools/chatjs/text-documents/tool" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { beforeEach, expect, expectTypeOf, test, vi } from "vitest";
 
@@ -17,9 +16,8 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn(),
 }));
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.execute }));
-/* oxlint-disable id-length  --
+/* oxlint-disable id-length --
  * id-length (#506): vi.mock("./turn-tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * oxc/no-rest-spread-properties (#543): vi.mock("./turn-tools") copies or separates ...tools while preserving existing object ownership; mutating source objects is not equivalent.
  */
 vi.mock("./turn-tools", () => ({
   filterEveTools: <T>(tools: T): Partial<T> => ({ ...tools }),

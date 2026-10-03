@@ -1,9 +1,6 @@
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
- * import/no-named-export (#527): Preserve the named resolveWorkflowWorld API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): resolveWorkflowWorld remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): resolveWorkflowWorld's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): resolveWorkflowWorld's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-ternary (#518): resolveWorkflowWorld derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * node/no-process-env (#537): resolveWorkflowWorld reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/explicit-function-return-type (#560): Keep resolveWorkflowWorld's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep resolveWorkflowWorld's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

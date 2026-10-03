@@ -14,13 +14,9 @@ export type EvePrincipal =
       remainingMessages?: number;
     };
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
- * import/no-named-export (#527): Preserve the named resolveEvePrincipal API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * jsdoc/require-param (#534): resolveEvePrincipal's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): resolveEvePrincipal's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-ternary (#518): resolveEvePrincipal derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): resolveEvePrincipal sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): resolveEvePrincipal handles optional session?.user without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): resolveEvePrincipal accepts headers: Headers; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): resolveEvePrincipal preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */

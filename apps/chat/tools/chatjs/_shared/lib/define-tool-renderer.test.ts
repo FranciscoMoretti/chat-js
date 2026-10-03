@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-namespace  --
+/* oxlint-disable import/no-namespace --
  * import/no-namespace (#528): The ChatjsUI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -20,11 +19,8 @@ vi.mock("@/components/eve/eve-document-tool", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
  * id-length (#506): vi.mock("@/tools/chatjs/ui") uses z as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-ternary (#518): vi.mock("@/tools/chatjs/ui") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): vi.mock("@/tools/chatjs/ui") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): vi.mock("@/tools/chatjs/ui") copies or separates ...original.ui while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/tools/chatjs/ui") accepts { tool, messageId, isReadonly }; { updates }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {

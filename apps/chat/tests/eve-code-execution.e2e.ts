@@ -1,7 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/reconcile-usage" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
@@ -20,12 +19,10 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native code execution renders real output and reconciles its fixed charge once" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native code execution renders real output and reconciles its fixed charge once" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native code execution renders real output and reconciles its fixed charge once" uses 15_000, 0.05, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("native code execution renders real output and reconciles its fixed charge once" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("native code execution renders real output and reconciles its fixed charge once" handles optional result?.type without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): test("native code execution renders real output and reconciles its fixed charge once" accepts { page, }; route; data; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native code execution renders real output and reconciles its fixed charge once" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -108,11 +105,9 @@ test("native code execution renders real output and reconciles its fixed charge 
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-statements (#512): test("Python results render an interactive chart and survive reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("Python results render an interactive chart and survive reload") uses 180_000, 390, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("Python results render an interactive chart and survive reload") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("Python results render an interactive chart and survive reload") handles optional (await page.locator("canvas").boundingBox())?.width; (await page.locator("canvas").boundingBox())?.x without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): test("Python results render an interactive chart and survive reload") accepts { page, }; route; data; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("Python results render an interactive chart and survive reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */

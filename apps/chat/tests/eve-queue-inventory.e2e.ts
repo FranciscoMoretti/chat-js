@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queue-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
@@ -17,9 +16,8 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const query = postgres(env.DATABASE_URL, { max: 1 });
 const taskIdentifier = `eve-queue-fixture-${crypto.randomUUID()}`;
 const jobIds: string[] = [];
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterAll(async () => {
   if (jobIds.length > 0) {
@@ -50,9 +48,8 @@ async function job(body: unknown): Promise<string> {
   return row.id;
 }
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
  * id-length (#506): test("finds retries and queued child creation without returning input payloads") uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * oxc/no-async-await (#540): test("finds retries and queued child creation without returning input payloads") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts a; b; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("finds retries and queued child creation without returning input payloads", async () => {

@@ -51,9 +51,8 @@ beforeEach(() => {
   mocks.refund.mockResolvedValue(true);
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("refunds undispatched siblings after a proven primary rejection") uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("refunds undispatched siblings after a proven primary rejection") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("refunds undispatched siblings after a proven primary rejection", async () => {
   const result = await createEveResponseGroup("guest", input, admission);
@@ -91,10 +90,8 @@ it("does not declare terminal rejection when the primary refund cannot prove non
   expect(mocks.refund).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("marks every multi-model edited candidate with the shared user intent") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("marks every multi-model edited candidate with the shared user intent") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("marks every multi-model edited candidate with the shared user intent") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): it("marks every multi-model edited candidate with the shared user intent") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("marks every multi-model edited candidate with the shared user intent", async () => {

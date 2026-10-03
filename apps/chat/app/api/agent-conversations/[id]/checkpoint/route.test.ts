@@ -47,11 +47,10 @@ beforeEach(() => {
     Response.json({ status: "accepted" }, { status: 202 })
   );
 });
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, unicorn/no-null  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
  * max-statements (#512): it("requires authentication, same origin and bound ownership before native access") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("requires authentication, same origin and bound ownership before native access") uses 401, 403, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("requires authentication, same origin and bound ownership before native access") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("requires authentication, same origin and bound ownership before native access") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("requires authentication, same origin and bound ownership before native access") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("requires authentication, same origin and bound ownership before native access", async () => {
@@ -71,11 +70,9 @@ it("requires authentication, same origin and bound ownership before native acces
   expect(mocks.capture).not.toHaveBeenCalled();
 });
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("rejects malformed coordinates before looking up the source") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("rejects malformed coordinates before looking up the source") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("rejects malformed coordinates before looking up the source") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("rejects malformed coordinates before looking up the source") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("rejects malformed coordinates before looking up the source", async () => {
   const resolvedResult4 = await POST(
@@ -87,10 +84,8 @@ it("rejects malformed coordinates before looking up the source", async () => {
   expect(mocks.capture).not.toHaveBeenCalled();
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("returns readiness only after the matching immutable checkpoint is available") uses 200, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("returns readiness only after the matching immutable checkpoint is available") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("returns readiness only after the matching immutable checkpoint is available") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("returns readiness only after the matching immutable checkpoint is available", async () => {
   const response = await POST(request(), context);
@@ -115,9 +110,8 @@ it("returns readiness only after the matching immutable checkpoint is available"
   );
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("keeps uncertain capture retryable using the exact same coordinates") uses 409, 200, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("keeps uncertain capture retryable using the exact same coordinates") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("keeps uncertain capture retryable using the exact same coordinates") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("keeps uncertain capture retryable using the exact same coordinates", async () => {
@@ -133,9 +127,8 @@ it("keeps uncertain capture retryable using the exact same coordinates", async (
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("recovers an existing receipt without sending another native command") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("recovers an existing receipt without sending another native command") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("recovers an existing receipt without sending another native command", async () => {
   mocks.read.mockResolvedValue(true);
@@ -146,10 +139,8 @@ it("recovers an existing receipt without sending another native command", async 
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () = uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () = sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () = copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () ='s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ { stage: "read", target: () => mocks.read }, { stage: "ready", target: () = accepts { stage, target }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */

@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
@@ -24,8 +23,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): openSidebar sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): openSidebar accepts page: Page; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 async function openSidebar(page: Page): Promise<void> {
@@ -50,12 +48,10 @@ async function openSidebar(page: Page): Promise<void> {
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): for (const width of [1280, 390]) { test(`sidebar deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): for (const width of [1280, 390]) { test(`sidebar deleti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): for (const width of [1280, 390]) { test(`sidebar deleti uses 1280, 390, 1, 202, 200, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): for (const width of [1280, 390]) { test(`sidebar deleti derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): for (const width of [1280, 390]) { test(`sidebar deleti sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): for (const width of [1280, 390]) { test(`sidebar deleti accepts { page, }; testInfo; route; item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): for (const width of [1280, 390]) { test(`sidebar deleti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): for (const width of [1280, 390]) { test(`sidebar deleti intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.

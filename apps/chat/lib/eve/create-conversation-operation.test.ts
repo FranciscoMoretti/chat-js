@@ -63,10 +63,8 @@ const input = {
   modelId: "openai/gpt-4o",
   operationId: "ba1d7f02-597b-47a7-a8de-20f700500f0d",
 };
-/* oxlint-disable max-params, typescript/promise-function-async, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-params, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-params (#511): beforeEach keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): beforeEach derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): beforeEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): beforeEach intentionally keeps the existing falsy-value behavior of path.startsWith("/eve/chat/v1/operation/"); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -89,11 +87,9 @@ beforeEach(() => {
   );
 });
 /* oxlint-enable max-params, typescript/promise-function-async, typescript/strict-boolean-expressions */
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("does not allocate a native child before the initial checkpoint is ready") uses 409, 1, -1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("does not allocate a native child before the initial checkpoint is ready") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("does not allocate a native child before the initial checkpoint is ready") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("does not allocate a native child before the initial checkpoint is ready") handles optional mocks.request.mock.calls.at(-1)?.[2].body without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): it("does not allocate a native child before the initial checkpoint is ready") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("does not allocate a native child before the initial checkpoint is ready", async () => {
@@ -128,10 +124,9 @@ it("recovers an already allocated native operation without needing its checkpoin
   expect(mocks.readiness).not.toHaveBeenCalled();
   expect(mocks.request).toHaveBeenCalledOnce();
 });
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("refuses a foreign or deleted source before reservation or checkpoint access") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("refuses a foreign or deleted source before reservation or checkpoint access") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("refuses a foreign or deleted source before reservation or checkpoint access") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("refuses a foreign or deleted source before reservation or checkpoint access", async () => {
   mocks.source.mockResolvedValue(undefined);
@@ -146,11 +141,8 @@ it("refuses a foreign or deleted source before reservation or checkpoint access"
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("passes the same named checkpoint to readiness and native fork allocation") uses 200, -1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("passes the same named checkpoint to readiness and native fork allocation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("passes the same named checkpoint to readiness and native fork allocation") handles optional mocks.request.mock.calls.at(-1)?.[2].body without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("passes the same named checkpoint to readiness and native fork allocation") copies or separates ...input; ...input.fork while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("passes the same named checkpoint to readiness and native fork allocation", async () => {
   const checkpointId = crypto.randomUUID();
@@ -174,11 +166,8 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("persists fork intent without forwarding ChatJS metadata to Eve") uses 1, 200, -1, 4, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("persists fork intent without forwarding ChatJS metadata to Eve") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("persists fork intent without forwarding ChatJS metadata to Eve") handles optional mocks.reserve.mock.calls.at(-1)?.[4].forkKind; mocks.request.mock.calls.at(-1)?.[2].body without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("persists fork intent without forwarding ChatJS metadata to Eve") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("persists fork intent without forwarding ChatJS metadata to Eve", async () => {
   const regeneration = {
@@ -196,9 +185,8 @@ it("persists fork intent without forwarding ChatJS metadata to Eve", async () =>
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects saved-copy operations before ordinary native lookup or dispatch") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rejects saved-copy operations before ordinary native lookup or dispatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("rejects saved-copy operations before ordinary native lookup or dispatch", async () => {
   mocks.creation.mockResolvedValue({
@@ -213,12 +201,9 @@ it("rejects saved-copy operations before ordinary native lookup or dispatch", as
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("dispatches imported forks by message identity without requiring an execution chec keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("dispatches imported forks by message identity without requiring an execution chec uses 200, -1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("dispatches imported forks by message identity without requiring an execution chec sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("dispatches imported forks by message identity without requiring an execution chec handles optional mocks.request.mock.calls.at(-1)?.[2].body without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("dispatches imported forks by message identity without requiring an execution chec copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("dispatches imported forks by message identity without requiring an execution checkpoint", async () => {
   const imported = {
@@ -250,11 +235,8 @@ it("dispatches imported forks by message identity without requiring an execution
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("forwards selected tools on creation and includes them in the reservation identity uses -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("forwards selected tools on creation and includes them in the reservation identity sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("forwards selected tools on creation and includes them in the reservation identity handles optional mocks.request.mock.calls.at(-1)?.[4]; mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("forwards selected tools on creation and includes them in the reservation identity copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("forwards selected tools on creation and includes them in the reservation identity", async () => {
   await createEveConversationOperation("owner", {
@@ -276,10 +258,8 @@ it("forwards selected tools on creation and includes them in the reservation ide
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("persists a compact fallback title before native creation") uses -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("persists a compact fallback title before native creation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("persists a compact fallback title before native creation") handles optional mocks.reserve.mock.calls.at(-1)?.[4].initialTitle without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("persists a compact fallback title before native creation", async () => {
   await createEveConversationOperation("owner", input);
@@ -291,11 +271,8 @@ it("persists a compact fallback title before native creation", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("journals the complete creation command before dispatch so another tab can recover uses 1, -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("journals the complete creation command before dispatch so another tab can recover sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("journals the complete creation command before dispatch so another tab can recover handles optional mocks.reserve.mock.calls.at(-1)?.[4].initialRequest without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("journals the complete creation command before dispatch so another tab can recover copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("journals the complete creation command before dispatch so another tab can recover it", async () => {
   const command = { ...input, selectedTool: "webSearch" } satisfies Parameters<
@@ -307,10 +284,9 @@ it("journals the complete creation command before dispatch so another tab can re
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("recovers an accepted fork after the source was deleted") uses 200, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("recovers an accepted fork after the source was deleted") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("recovers an accepted fork after the source was deleted") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("recovers an accepted fork after the source was deleted", async () => {
   mocks.creation.mockResolvedValue({
@@ -329,9 +305,8 @@ it("recovers an accepted fork after the source was deleted", async () => {
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("preserves creation identity when billing recovery is busy") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("preserves creation identity when billing recovery is busy") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("preserves creation identity when billing recovery is busy", async () => {
   mocks.reconcile.mockRejectedValue(new EveUsageReconciliationBusyError());

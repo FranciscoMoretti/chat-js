@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
@@ -59,9 +58,8 @@ const identity = () => ({
   version: 1,
 });
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/no-nodejs-modules, typescript/promise-function-async  --
+/* oxlint-disable import/no-nodejs-modules, typescript/promise-function-async --
  * import/no-nodejs-modules (#529): This test harness requires import("node:fs/promises"); its Node runtime boundary deliberately permits these built-ins.
- * oxc/no-async-await (#540): beforeEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 beforeEach(async () => {
@@ -111,9 +109,7 @@ it("matches native evidence to a local identity and carries owner/root authoriza
   expect(init.redirect).toBe("error");
   expect(mocks.end).toHaveBeenCalledOnce();
 });
-/* oxlint-disable typescript/promise-function-async  --
- * oxc/no-async-await (#540): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") copies or separates ...identity() while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it.each(["appRoot", "sessionId", "backendName"])(
@@ -136,9 +132,7 @@ it.each(["appRoot", "sessionId", "backendName"])(
   }
 );
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("rejects missing native evidence and mismatched local evidence") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("rejects missing native evidence and mismatched local evidence") copies or separates ...identity() while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("rejects missing native evidence and mismatched local evidence") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("rejects missing native evidence and mismatched local evidence", async () => {

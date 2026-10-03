@@ -15,10 +15,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): it("aborts a stalled creation without resending or changing its operation") uses 30_000, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("aborts a stalled creation without resending or changing its operation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("aborts a stalled creation without resending or changing its operation") handles optional init.signal?.addEventListener( "abort", // oxlint-disable-next-line typescript/p; init.signal?.reason; fetchMock.mock.calls[0]?.[1].body without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): it("aborts a stalled creation without resending or changing its operation") accepts init: RequestInit; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("aborts a stalled creation without resending or changing its operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -47,9 +45,8 @@ it("aborts a stalled creation without resending or changing its operation", asyn
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("returns the existing binding on retry and clears its deadline") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("returns the existing binding on retry and clears its deadline") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("returns the existing binding on retry and clears its deadline", async () => {
   vi.useFakeTimers();
@@ -60,9 +57,8 @@ it("returns the existing binding on retry and clears its deadline", async () => 
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each([400, 404])("distinguishes definitive rejection (%i) from uncertain creation" uses 400, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each([400, 404])("distinguishes definitive rejection (%i) from uncertain creation" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it.each([400, 404])(
   "distinguishes definitive rejection (%i) from uncertain creation",
@@ -129,9 +125,8 @@ it("identifies a missing project only on a definitive rejection", async () => {
   });
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("automatically retries busy creation with the same operation identity") uses 2000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("automatically retries busy creation with the same operation identity") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("automatically retries busy creation with the same operation identity") accepts [, init]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("automatically retries busy creation with the same operation identity", async () => {

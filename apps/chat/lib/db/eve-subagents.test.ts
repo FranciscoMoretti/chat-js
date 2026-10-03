@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { readFile } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Apply real migrations and verify ordered durable billing operations. */
 import { readFile } from "node:fs/promises";
@@ -19,17 +18,15 @@ const {
   advanceEveSubagentUsageCursor,
   listEveSubagents,
 } = await import("./eve-subagents");
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/usage" dependency within this package instead of introducing an alias or barrel API.
- * node/no-top-level-await (#539): { ingestEveUsage } runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
  */
 const { ingestEveUsage } = await import("../eve/usage");
 /* oxlint-enable import/no-relative-parent-imports */
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): beforeAll uses 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): beforeAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 beforeAll(async () => {
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
@@ -99,10 +96,9 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
   ).rejects.toThrow("fresh child");
 });
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("advances child cursors monotonically and revokes stream access when the root is d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("advances child cursors monotonically and revokes stream access when the root is d uses 20, 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("advances child cursors monotonically and revokes stream access when the root is d sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("advances child cursors monotonically and revokes stream access when the root is deleted", async () => {
   await registerEveSubagent("owner", "root", "cursor-child", "turn_1");
@@ -127,9 +123,8 @@ it("advances child cursors monotonically and revokes stream access when the root
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("charges native child receipts once and rounds their combined cost on the root tur uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("charges native child receipts once and rounds their combined cost on the root tur sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("charges native child receipts once and rounds their combined cost on the root turn", async () => {
   const attribution = { sessionId: "root", turnId: "turn_3" };

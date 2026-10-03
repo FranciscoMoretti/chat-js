@@ -14,9 +14,8 @@ type ToolUI<I, O> = {
 };
 /* oxlint-enable id-length, typescript/consistent-type-definitions */
 
-/* oxlint-disable id-length  --
+/* oxlint-disable id-length --
  * id-length (#506): NativeToolUI uses T; I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/no-named-export (#527): Preserve the named NativeToolUI API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type NativeToolUI<T> =
   T extends ToolDefinition<infer I, infer O>
@@ -26,9 +25,8 @@ export type NativeToolUI<T> =
       : never;
 /* oxlint-enable id-length */
 
-/* oxlint-disable id-length, jsdoc/require-param, jsdoc/require-returns  --
+/* oxlint-disable id-length, jsdoc/require-param, jsdoc/require-returns --
  * id-length (#506): defineToolSet uses T; K; I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/no-named-export (#527): Preserve the named defineToolSet API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): defineToolSet's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): defineToolSet's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  */

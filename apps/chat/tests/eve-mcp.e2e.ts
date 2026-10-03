@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This test harness requires import { createServer } from "node:http";; import type { ServerResponse } from "node:http";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/ai/mcp/mcp-client"; "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/mcp-tools" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
@@ -32,14 +31,12 @@ const requestSchema = z.object({
   params: z.object({ name: z.string().optional() }).loose().optional(),
 });
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return  --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * init-declarations (#507): localMcpServer assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): localMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): localMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): localMcpServer uses 405, 202, 200, 400, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): localMcpServer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): localMcpServer sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): localMcpServer handles optional rpc.params?.name without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep localMcpServer's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): localMcpServer accepts response: ServerResponse; request; response; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): localMcpServer intentionally keeps the existing falsy-value behavior of address; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -126,13 +123,10 @@ async function localMcpServer(invoke: (response: ServerResponse) => unknown) {
 }
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null --
  * max-lines-per-function (#510): test("composer connector controls persist and fence native tool execution") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("composer connector controls persist and fence native tool execution") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("composer connector controls persist and fence native tool execution") uses 1, 0, 8, 10_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("composer connector controls persist and fence native tool execution") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test("composer connector controls persist and fence native tool execution") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("composer connector controls persist and fence native tool execution") handles optional connector?.enabled without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep test("composer connector controls persist and fence native tool execution")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): test("composer connector controls persist and fence native tool execution") accepts { page, }; testInfo; route; tool; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("composer connector controls persist and fence native tool execution") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -269,13 +263,10 @@ test("composer connector controls persist and fence native tool execution", asyn
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
  * max-lines-per-function (#510): test("native MCP executes and its saved result survives connector removal and reload" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native MCP executes and its saved result survives connector removal and reload" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native MCP executes and its saved result survives connector removal and reload" uses 1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("native MCP executes and its saved result survives connector removal and reload" derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test("native MCP executes and its saved result survives connector removal and reload" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("native MCP executes and its saved result survives connector removal and reload" handles optional decodeURIComponent(new URL(request.url()).pathname) .split("/api/trpc/")[1]  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): test("native MCP executes and its saved result survives connector removal and reload" accepts { page, browser, }; route; request; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native MCP executes and its saved result survives connector removal and reload" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("native MCP executes and its saved result survives connector removal and reload"'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
@@ -408,12 +399,10 @@ test("native MCP executes and its saved result survives connector removal and re
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
  * max-lines-per-function (#510): test("stopping a pending MCP call closes its transport and permits another message") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("stopping a pending MCP call closes its transport and permits another message") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("stopping a pending MCP call closes its transport and permits another message") uses 1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("stopping a pending MCP call closes its transport and permits another message") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test("stopping a pending MCP call closes its transport and permits another message") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("stopping a pending MCP call closes its transport and permits another message") accepts { page, }; response; route; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("stopping a pending MCP call closes its transport and permits another message") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("stopping a pending MCP call closes its transport and permits another message")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
@@ -512,13 +501,11 @@ test("stopping a pending MCP call closes its transport and permits another messa
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null --
  * max-lines-per-function (#510): test("the real MCP client aborts an in-flight HTTP tool request") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("the real MCP client aborts an in-flight HTTP tool request") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("the real MCP client aborts an in-flight HTTP tool request") uses 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("the real MCP client aborts an in-flight HTTP tool request") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): test("the real MCP client aborts an in-flight HTTP tool request") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("the real MCP client aborts an in-flight HTTP tool request") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("the real MCP client aborts an in-flight HTTP tool request") accepts response; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("the real MCP client aborts an in-flight HTTP tool request") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("the real MCP client aborts an in-flight HTTP tool request")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.

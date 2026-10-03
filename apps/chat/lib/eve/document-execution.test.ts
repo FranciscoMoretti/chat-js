@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/saved-code-execution/execute" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { beforeEach, expect, it, vi } from "vitest";
 
@@ -115,10 +114,8 @@ it("executes only the owned saved revision and preserves its billing receipt", a
   });
 });
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte copies or separates ...revision while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([

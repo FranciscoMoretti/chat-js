@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -72,11 +71,8 @@ beforeEach(() => {
   mocks.searches.mockResolvedValue([]);
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("lets the supervisor request follow-up after receiving findings and synthesizes al uses 4, 1, 7, 8, -1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("lets the supervisor request follow-up after receiving findings and synthesizes al sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("lets the supervisor request follow-up after receiving findings and synthesizes al handles optional outputs.at(-1)?.updates without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("lets the supervisor request follow-up after receiving findings and synthesizes al copies or separates ...document while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): it("lets the supervisor request follow-up after receiving findings and synthesizes al accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("lets the supervisor request follow-up after receiving findings and synthesizes all rounds", async () => {
@@ -131,10 +127,8 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): it("bounds adaptive decisions even when the supervisor never finishes") uses 1, 4, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): it("bounds adaptive decisions even when the supervisor never finishes") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): it("bounds adaptive decisions even when the supervisor never finishes") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("bounds adaptive decisions even when the supervisor never finishes") accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("bounds adaptive decisions even when the supervisor never finishes") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -164,10 +158,8 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("returns clarification without starting research or saving a document") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("returns clarification without starting research or saving a document") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("returns clarification without starting research or saving a document") copies or separates ...prepared; ...prepared.config while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("returns clarification without starting research or saving a document", async () => {
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
@@ -193,9 +185,8 @@ it("returns clarification without starting research or saving a document", async
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("runs topics sequentially and stops before new work or saving after cancellation") uses 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("runs topics sequentially and stops before new work or saving after cancellation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it("runs topics sequentially and stops before new work or saving after cancellation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("runs topics sequentially and stops before new work or saving after cancellation", async () => {
@@ -232,9 +223,8 @@ it("validates native outputs and propagates failures without a successful report
   ).rejects.toThrow("Storage unavailable");
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects oversized topic batches before starting researchers") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rejects oversized topic batches before starting researchers") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("rejects oversized topic batches before starting researchers", async () => {
   agent
@@ -255,10 +245,8 @@ it("rejects oversized topic batches before starting researchers", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("publishes completed searches when a researcher fails without masking the failure" uses -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("publishes completed searches when a researcher fails without masking the failure" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("publishes completed searches when a researcher fails without masking the failure" handles optional outputs.at(-1)?.updates without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("publishes completed searches when a researcher fails without masking the failure", async () => {
   const error = new Error("Research provider failed");

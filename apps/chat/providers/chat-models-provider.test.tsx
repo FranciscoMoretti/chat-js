@@ -97,12 +97,11 @@ const ContextProbe = ({
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return  --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return --
  * init-declarations (#507): describe("ChatModelsProvider") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("ChatModelsProvider") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("ChatModelsProvider") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("ChatModelsProvider") uses 2, 1, 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-optional-chaining (#542): describe("ChatModelsProvider") handles optional updatedValue?.models; updatedValue?.getModelById(config.ai.workflows.chat) without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * react-perf/jsx-no-new-function-as-prop (#557): describe("ChatModelsProvider") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * typescript/prefer-readonly-parameter-types (#565): describe("ChatModelsProvider") accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-void-return (#611): describe("ChatModelsProvider")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.

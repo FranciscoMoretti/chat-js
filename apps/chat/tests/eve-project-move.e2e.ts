@@ -14,11 +14,10 @@ test.use({ actionTimeout: 20_000 });
 const screenshotStyle =
   'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }';
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
  * max-lines-per-function (#510): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("moves native conversations from sidebar and project rows with recoverable failu uses 180_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("moves native conversations from sidebar and project rows with recoverable failu sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("moves native conversations from sidebar and project rows with recoverable failu accepts { page, }; testInfo; route; url: URL; url; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("moves native conversations from sidebar and project rows with recoverable failu preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/max-nested-calls (#568): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

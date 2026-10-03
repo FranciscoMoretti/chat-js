@@ -5,9 +5,8 @@ import { z } from "zod";
 
 import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls  --
+/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * max-lines-per-function (#510): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): describe("Eve tool contract") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): describe("Eve tool contract") accepts _input; options: ToolExecutionOptions<typeof services>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */

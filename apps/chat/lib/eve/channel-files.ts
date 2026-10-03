@@ -14,13 +14,9 @@ import { keyFromFileUrl } from "../file-url";
 type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null  --
- * import/no-named-export (#527): Preserve the named fetchEveChannelFile API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): fetchEveChannelFile remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * jsdoc/require-param (#534): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): fetchEveChannelFile sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): fetchEveChannelFile handles optional context?.session?.auth.current without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): fetchEveChannelFile intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.

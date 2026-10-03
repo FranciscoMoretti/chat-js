@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
@@ -36,9 +35,8 @@ const filePart = z
   })
   .strict();
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): eveMessageInput stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named eveMessageInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): eveMessageInput uses 1, 16_000, 17, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): eveMessageInput accepts parts; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -56,9 +54,8 @@ export const eveMessageInput = z.union([
 ]);
 /* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export type EveMessageInput = z.infer<typeof eveMessageInput>;
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): eveMessageTitle stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named eveMessageTitle API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): eveMessageTitle accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const eveMessageTitle = (message: EveMessageInput): string => {

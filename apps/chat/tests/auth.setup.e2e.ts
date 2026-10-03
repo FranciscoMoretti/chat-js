@@ -8,8 +8,7 @@ import { test as setup } from "@playwright/test";
 
 const authFile = path.resolve("playwright/.auth/session.json");
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): setup("authenticate") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): setup("authenticate") accepts { page }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 setup("authenticate", async ({ page }) => {

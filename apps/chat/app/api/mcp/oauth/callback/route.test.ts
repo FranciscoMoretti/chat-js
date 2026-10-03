@@ -66,9 +66,8 @@ beforeEach(() => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("redirects an OAuth callback with an explicit setup error before accessing connect uses 307 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("redirects an OAuth callback with an explicit setup error before accessing connect sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("redirects an OAuth callback with an explicit setup error before accessing connector secrets", async () => {
   mocks.requireCredentials.mockImplementation(() => {
@@ -91,9 +90,8 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, unicorn/no-null  --
+/* oxlint-disable max-statements, unicorn/no-null --
  * max-statements (#512): it("provider cancellation deletes only pending state and returns a safe connector-sco keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("provider cancellation deletes only pending state and returns a safe connector-sco sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("provider cancellation deletes only pending state and returns a safe connector-sco preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("provider cancellation deletes only pending state and returns a safe connector-scoped message", async () => {
@@ -123,10 +121,8 @@ it("provider cancellation deletes only pending state and returns a safe connecto
 });
 /* oxlint-enable max-statements, unicorn/no-null */
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
- * no-ternary (#518): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-undefined (#519): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ accepts session; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -163,9 +159,8 @@ it.each([
 );
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-undefined, unicorn/no-null  --
+/* oxlint-disable no-undefined, unicorn/no-null --
  * no-undefined (#519): it("an attempt completed between lookup and deletion retains its client") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("an attempt completed between lookup and deletion retains its client") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("an attempt completed between lookup and deletion retains its client") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("an attempt completed between lookup and deletion retains its client", async () => {

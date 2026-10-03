@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-search-results-view" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import React from "react";
 import { createRoot } from "react-dom/client";
@@ -62,8 +61,7 @@ const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types  --
- * oxc/no-rest-spread-properties (#543): createRoot(root).render copies or separates ...state while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types --
  * react-perf/jsx-no-new-function-as-prop (#557): createRoot(root).render creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): createRoot(root).render keeps related fixture render states together; extraction changes component, state, and layout boundaries.
  * react/jsx-props-no-spreading (#550): createRoot(root).render forwards its typed component props; enumerating them would narrow the wrapper's supported interface.

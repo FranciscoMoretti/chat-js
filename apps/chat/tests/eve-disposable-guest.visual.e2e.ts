@@ -1,9 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("disposable guest presentation uses stable desktop and mobile baselines") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("disposable guest presentation uses stable desktop and mobile baselines") accepts { page, }; route; image: HTMLImageElement; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("disposable guest presentation uses stable desktop and mobile baselines") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */

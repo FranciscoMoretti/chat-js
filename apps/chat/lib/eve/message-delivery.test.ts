@@ -134,9 +134,8 @@ describe("Eve message delivery recovery", () => {
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-undefined */
 
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): it("retries a busy saved delivery with its original identity and clears rejection bef keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-optional-chaining (#542): it("retries a busy saved delivery with its original identity and clears rejection bef handles optional reloaded?.retryable; retry?.operationId; retry?.rejection; retry?.retryable without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("retries a busy saved delivery with its original identity and clears rejection before dispatch", () => {
   const storage = memoryStorage();

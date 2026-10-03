@@ -19,8 +19,7 @@ const message = (
   role,
 });
 /* oxlint-enable max-params */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null  --
- * oxc/no-rest-spread-properties (#543): branch copies or separates ...extra while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): branch accepts extra: Partial<LogicalBranch> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): branch preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -71,11 +70,10 @@ const original = [
   message("u2", "user", "turn_1"),
   message("turn_1:assistant", "assistant", "turn_1"),
 ];
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): describe("logical chat over native sessions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("logical chat over native sessions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("logical chat over native sessions") uses 2, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-optional-chaining (#542): describe("logical chat over native sessions") handles optional chat.getSnapshot().nodes.get(chat.logicalId("root", "u1") ?? "missing") ?.message.par without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 describe("logical chat over native sessions", () => {
   it("reconstructs retry aliases and edit siblings independently of replay order", () => {

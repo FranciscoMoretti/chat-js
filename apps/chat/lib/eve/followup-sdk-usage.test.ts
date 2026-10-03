@@ -44,10 +44,8 @@ vi.mock("../config", () => ({
   },
 }));
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") handles optional result?.responseMetadata; result?.modelCalls; result?.modelCalls?.[0]; result?.modelCalls?.[0].failed without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("the real AI SDK delivers usage before rejecting invalid structured suggestions", async () => {
   const result = await generateEveFollowupSuggestions({

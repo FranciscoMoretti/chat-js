@@ -10,9 +10,8 @@ import type {
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
 
-/* oxlint-disable import/exports-last  --
+/* oxlint-disable import/exports-last --
  * import/exports-last (#522): export from "@/lib/ai/gateways/registry" is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/no-named-export (#527): Preserve the named export from "@/lib/ai/gateways/registry" API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type { GatewayType } from "@/lib/ai/gateways/registry";
 /* oxlint-enable import/exports-last */
@@ -144,11 +143,9 @@ const createAiSchema = <G extends GatewayType>(g: G) =>
 
 const installedGatewaySchema = createAiSchema(gatewayType);
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): aiConfigSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): aiConfigSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named aiConfigSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-rest-spread-properties (#543): aiConfigSchema copies or separates ...gatewayModelDefaults while preserving existing object ownership; mutating source objects is not equivalent.
  */
 export const aiConfigSchema = installedGatewaySchema.default({
   gateway: gatewayType,
@@ -156,10 +153,9 @@ export const aiConfigSchema = installedGatewaySchema.default({
 });
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): pricingConfigSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): pricingConfigSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named pricingConfigSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const pricingConfigSchema = z.object({
   currency: z.string().optional(),
@@ -179,10 +175,9 @@ export const pricingConfigSchema = z.object({
 });
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): anonymousConfigObjectSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): anonymousConfigObjectSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named anonymousConfigObjectSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const anonymousConfigObjectSchema = z.object({
   availableTools: z
@@ -198,10 +193,9 @@ export const anonymousConfigObjectSchema = z.object({
 });
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): ANONYMOUS_DEFAULTS is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ANONYMOUS_DEFAULTS stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ANONYMOUS_DEFAULTS API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const ANONYMOUS_DEFAULTS: z.input<typeof anonymousConfigObjectSchema> = {
   availableTools: [],
@@ -213,19 +207,17 @@ export const ANONYMOUS_DEFAULTS: z.input<typeof anonymousConfigObjectSchema> = {
 };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): anonymousConfigSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): anonymousConfigSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named anonymousConfigSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const anonymousConfigSchema =
   anonymousConfigObjectSchema.default(ANONYMOUS_DEFAULTS);
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, unicorn/max-nested-calls  --
+/* oxlint-disable import/exports-last, import/group-exports, unicorn/max-nested-calls --
  * import/exports-last (#522): attachmentsConfigObjectSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): attachmentsConfigObjectSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named attachmentsConfigObjectSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * unicorn/max-nested-calls (#568): attachmentsConfigObjectSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 export const attachmentsConfigObjectSchema = z.object({
@@ -241,10 +233,9 @@ export const attachmentsConfigObjectSchema = z.object({
 });
 /* oxlint-enable import/exports-last, import/group-exports, unicorn/max-nested-calls */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers  --
+/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers --
  * import/exports-last (#522): ATTACHMENTS_DEFAULTS is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ATTACHMENTS_DEFAULTS stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ATTACHMENTS_DEFAULTS API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): ATTACHMENTS_DEFAULTS uses 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 export const ATTACHMENTS_DEFAULTS = {
@@ -258,19 +249,17 @@ export const ATTACHMENTS_DEFAULTS = {
 };
 /* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): attachmentsConfigSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): attachmentsConfigSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named attachmentsConfigSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const attachmentsConfigSchema =
   attachmentsConfigObjectSchema.default(ATTACHMENTS_DEFAULTS);
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): featuresConfigObjectSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): featuresConfigObjectSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named featuresConfigObjectSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const featuresConfigObjectSchema = z.strictObject({
   parallelResponses: z
@@ -280,29 +269,26 @@ export const featuresConfigObjectSchema = z.strictObject({
 });
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): FEATURES_DEFAULTS is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): FEATURES_DEFAULTS stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named FEATURES_DEFAULTS API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const FEATURES_DEFAULTS = {
   parallelResponses: true,
 };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): featuresConfigSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): featuresConfigSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named featuresConfigSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const featuresConfigSchema =
   featuresConfigObjectSchema.default(FEATURES_DEFAULTS);
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): authenticationConfigObjectSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): authenticationConfigObjectSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named authenticationConfigObjectSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const authenticationConfigObjectSchema = z.object({
   github: z
@@ -319,10 +305,9 @@ export const authenticationConfigObjectSchema = z.object({
 });
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): AUTHENTICATION_DEFAULTS is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): AUTHENTICATION_DEFAULTS stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named AUTHENTICATION_DEFAULTS API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const AUTHENTICATION_DEFAULTS = {
   github: true,
@@ -331,18 +316,16 @@ export const AUTHENTICATION_DEFAULTS = {
 };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): authenticationConfigSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): authenticationConfigSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named authenticationConfigSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const authenticationConfigSchema =
   authenticationConfigObjectSchema.default(AUTHENTICATION_DEFAULTS);
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): desktopAppConfigObjectSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): desktopAppConfigObjectSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named desktopAppConfigObjectSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const desktopAppConfigObjectSchema = z.object({
   enabled: z
@@ -351,29 +334,26 @@ export const desktopAppConfigObjectSchema = z.object({
 });
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): DESKTOP_APP_DEFAULTS is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): DESKTOP_APP_DEFAULTS stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named DESKTOP_APP_DEFAULTS API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const DESKTOP_APP_DEFAULTS = {
   enabled: false,
 };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): desktopAppConfigSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): desktopAppConfigSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named desktopAppConfigSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const desktopAppConfigSchema =
   desktopAppConfigObjectSchema.default(DESKTOP_APP_DEFAULTS);
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, unicorn/max-nested-calls  --
+/* oxlint-disable import/exports-last, import/group-exports, unicorn/max-nested-calls --
  * import/exports-last (#522): configDescriptionSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): configDescriptionSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named configDescriptionSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * unicorn/max-nested-calls (#568): configDescriptionSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 export const configDescriptionSchema = z.object({
@@ -422,10 +402,9 @@ export const configDescriptionSchema = z.object({
 });
 /* oxlint-enable import/exports-last, import/group-exports, unicorn/max-nested-calls */
 
-/* oxlint-disable import/exports-last, import/group-exports, unicorn/max-nested-calls  --
+/* oxlint-disable import/exports-last, import/group-exports, unicorn/max-nested-calls --
  * import/exports-last (#522): configSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): configSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named configSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * unicorn/max-nested-calls (#568): configSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 export const configSchema = z.object({
@@ -499,60 +478,52 @@ export const configSchema = z.object({
 });
 /* oxlint-enable import/exports-last, import/group-exports, unicorn/max-nested-calls */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): Config is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): Config stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named Config API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 // Output types (after defaults applied)
 export type Config = z.infer<typeof configSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): PricingConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): PricingConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named PricingConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type PricingConfig = z.infer<typeof pricingConfigSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): AiConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): AiConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named AiConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type AiConfig = z.infer<typeof aiConfigSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): AnonymousConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): AnonymousConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named AnonymousConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type AnonymousConfig = z.infer<typeof anonymousConfigSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): AttachmentsConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): AttachmentsConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named AttachmentsConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type AttachmentsConfig = z.infer<typeof attachmentsConfigSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): FeaturesConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): FeaturesConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named FeaturesConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type FeaturesConfig = z.infer<typeof featuresConfigSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): AuthenticationConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): AuthenticationConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named AuthenticationConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type AuthenticationConfig = z.infer<typeof authenticationConfigSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): DesktopAppConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): DesktopAppConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named DesktopAppConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type DesktopAppConfig = z.infer<typeof desktopAppConfigSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
@@ -642,20 +613,18 @@ type ConfigInputForGateway<G extends GatewayType> = Omit<
 };
 /* oxlint-enable id-length */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): ConfigInput is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ConfigInput stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ConfigInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 // Each installation selects one gateway and its corresponding model IDs.
 export type ConfigInput = ConfigInputForGateway<GatewayType>;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns  --
+/* oxlint-disable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns --
  * id-length (#506): defineConfig uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/exports-last (#522): defineConfig is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): defineConfig stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named defineConfig API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): defineConfig's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): defineConfig's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  */
@@ -669,10 +638,8 @@ export const defineConfig = <const T extends ConfigInput>(config: T): T =>
   config;
 /* oxlint-enable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
  * id-length (#506): mergeToolsConfig uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-ternary (#518): mergeToolsConfig derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-rest-spread-properties (#543): mergeToolsConfig copies or separates ...defaults; ...defVal; ...val while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): mergeToolsConfig accepts user: Record<string, unknown> | undefined; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const mergeToolsConfig = <T extends Record<string, unknown>>(
@@ -700,11 +667,8 @@ const mergeToolsConfig = <T extends Record<string, unknown>>(
 };
 /* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): applyDefaults stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named applyDefaults API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-optional-chaining (#542): applyDefaults handles optional input.ai?.gateway; aiInput?.tools; aiInput?.workflows without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): applyDefaults copies or separates ...gatewayDefaults; ...aiInput; ...gatewayDefaults.workflows; ...(aiInput?.workflows as Record<string, unknown> | undefined); ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): applyDefaults accepts input: ConfigInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 // Apply defaults to partial config

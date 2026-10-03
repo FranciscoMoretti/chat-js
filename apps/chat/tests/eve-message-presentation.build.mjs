@@ -1,7 +1,6 @@
 import { build } from "bun";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * node/no-top-level-await (#539): result runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): result accepts builder; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 const result = await build({
@@ -36,9 +35,8 @@ if (!result.success) {
   throw new Error(result.logs.map((entry) => entry.message).join("\n"));
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): process.stdout.write uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-top-level-await (#539): process.stdout.write runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
  */
 process.stdout.write(await result.outputs[0].text());
 /* oxlint-enable no-magic-numbers */

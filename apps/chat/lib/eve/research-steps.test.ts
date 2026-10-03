@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -110,9 +109,8 @@ beforeEach(() => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses the owned native transcript without feeding the live research invocation bac uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("uses the owned native transcript without feeding the live research invocation bac sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("uses the owned native transcript without feeding the live research invocation back into the brief", async () => {
   const prepared = await prepareResearch(context());

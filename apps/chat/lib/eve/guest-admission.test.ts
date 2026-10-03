@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { createHash } from "node:crypto";
 
@@ -213,10 +212,8 @@ it("recovers an active durable reservation without repeating volatile validation
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects changed replay content before volatile validation") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rejects changed replay content before volatile validation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("rejects changed replay content before volatile validation") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("rejects changed replay content before volatile validation", async () => {
   mocks.existing.mockResolvedValue({
@@ -254,8 +251,7 @@ it("runs full validation before reusing a released operation", async () => {
   expect(mocks.reserve).toHaveBeenCalled();
 });
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("refunds only explicit rejection, keeps ambiguous reservations, and commits succes sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("refunds only explicit rejection, keeps ambiguous reservations, and commits succes preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("refunds only explicit rejection, keeps ambiguous reservations, and commits success", async () => {

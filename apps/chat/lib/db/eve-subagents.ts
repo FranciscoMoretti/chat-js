@@ -3,10 +3,8 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveSubagentSession } from "./schema";
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): getEveSubagent stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getEveSubagent API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): getEveSubagent sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -39,17 +37,13 @@ export const getEveSubagent = async (ownerId: string, sessionId: string) => {
 };
 /* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): registerEveSubagent stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named registerEveSubagent API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-params (#511): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): registerEveSubagent derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): registerEveSubagent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): registerEveSubagent sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): registerEveSubagent handles optional root?.id; parent?.conversationId; parent?.rootTurnId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): registerEveSubagent intentionally keeps the existing falsy-value behavior of root; rootTurnId; bound; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -98,12 +92,9 @@ export const registerEveSubagent = async (
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): listEveSubagents stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named listEveSubagents API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * no-ternary (#518): listEveSubagents derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): listEveSubagents sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): listEveSubagents intentionally keeps the existing falsy-value behavior of rootSessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -135,11 +126,9 @@ export const listEveSubagents = async (
     );
 /* oxlint-enable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, no-magic-numbers  --
+/* oxlint-disable import/group-exports, no-magic-numbers --
  * import/group-exports (#523): advanceEveSubagentUsageCursor stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named advanceEveSubagentUsageCursor API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): advanceEveSubagentUsageCursor sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 export const advanceEveSubagentUsageCursor = async (
   ownerId: string,

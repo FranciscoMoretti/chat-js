@@ -37,9 +37,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: { AUTH_SECRET: state.secret } }));
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
- * no-ternary (#518): vi.mock("@/lib/db/client") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): vi.mock("@/lib/db/client") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/lib/db/client") accepts row: Record<string, unknown>; existing; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -83,11 +81,9 @@ afterEach(() => {
   state.data.session.length = 0;
 });
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-statements (#512): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali uses 302, 0, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali copies or separates ...authSessionOptions({ baseUrl, databaseUrl: "postgres://dev:secret@localhost:5432/ while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -130,9 +126,8 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
 );
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("does not create a session outside development") uses 404, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("does not create a session outside development") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("does not create a session outside development", async () => {
   vi.stubEnv("NODE_ENV", "production");

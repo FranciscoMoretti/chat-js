@@ -13,10 +13,9 @@ import { createModuleLogger } from "@/lib/logger";
 import { eveMessageTitle } from "./message-input";
 import type { EveMessageInput } from "./message-input";
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): EVE_TITLE_MAX_LENGTH is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): EVE_TITLE_MAX_LENGTH stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named EVE_TITLE_MAX_LENGTH API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const EVE_TITLE_MAX_LENGTH = 40;
 /* oxlint-enable import/exports-last, import/group-exports */
@@ -27,9 +26,8 @@ const surroundingQuotes = /^[\s"'“”‘’]+|[\s"'“”‘’]+$/gu;
 
 const log = createModuleLogger("eve.conversation-title");
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): compactTitle uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): compactTitle derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  */
 const compactTitle = (value: string): string => {
   const normalized = value.replace(whitespace, " ").trim();
@@ -45,10 +43,9 @@ const compactTitle = (value: string): string => {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
  * import/exports-last (#522): eveConversationTitleFallback is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): eveConversationTitleFallback stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named eveConversationTitleFallback API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): eveConversationTitleFallback's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): eveConversationTitleFallback's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/prefer-readonly-parameter-types (#565): eveConversationTitleFallback accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -62,14 +59,11 @@ export const eveConversationTitleFallback = (
 const normalizeGeneratedTitle = (title: string): string =>
   compactTitle(title.replace(surroundingQuotes, ""));
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): generateEveConversationTitleResult stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named generateEveConversationTitleResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): generateEveConversationTitleResult's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): generateEveConversationTitleResult's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): generateEveConversationTitleResult uses 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): generateEveConversationTitleResult derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): generateEveConversationTitleResult sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep generateEveConversationTitleResult's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep generateEveConversationTitleResult's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): generateEveConversationTitleResult accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -106,14 +100,11 @@ Rules (strictly follow all):
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): persistGeneratedEveConversationTitle stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named persistGeneratedEveConversationTitle API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): persistGeneratedEveConversationTitle's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): persistGeneratedEveConversationTitle's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): persistGeneratedEveConversationTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): persistGeneratedEveConversationTitle derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): persistGeneratedEveConversationTitle sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep persistGeneratedEveConversationTitle's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep persistGeneratedEveConversationTitle's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): persistGeneratedEveConversationTitle accepts { conversationId, message, ownerId, }: { conversationId: string; message: EveMessageI; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

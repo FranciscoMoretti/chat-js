@@ -1,7 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "../db/eve-copy-dispatch" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-dispatch"; "../db/eve-copy-documents"; "../db/eve-copy-journal"; "../db/eve-copy-resources"; "../db/eve-copy-source-file" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { dispatchEveCopy } from "../db/eve-copy-dispatch";
 import { snapshotPublicEveCopyDocuments } from "../db/eve-copy-documents";
@@ -31,10 +30,8 @@ import { readPublicEveCopySource } from "./public-copy-source";
 import { assertEveConfigured } from "./server";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
-/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async  --
+/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async --
  * max-statements (#512): prepareCopyReservation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): prepareCopyReservation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): prepareCopyReservation copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep prepareCopyReservation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): prepareCopyReservation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -84,14 +81,11 @@ const prepareCopyReservation = async (
 };
 /* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
- * import/no-named-export (#527): Preserve the named saveEveCopyOperation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): saveEveCopyOperation remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * jsdoc/require-param (#534): saveEveCopyOperation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): saveEveCopyOperation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): saveEveCopyOperation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep saveEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep saveEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): saveEveCopyOperation accepts blob; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

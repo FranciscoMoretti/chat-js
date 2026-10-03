@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/composer/composer-menu"; "../components/eve/use-eve-composer-draft"; "../lib/ai/models.generated"; "../providers/default-model-provider" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import React, { useEffect, useState } from "react";
 import type { ReactNode } from "react";
@@ -12,9 +11,7 @@ import { useDefaultModel } from "../providers/default-model-provider";
 import { firstModel, secondModel } from "./eve-comparison-data.fixture";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * no-ternary (#518): fixtureModels derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-rest-spread-properties (#543): fixtureModels copies or separates ...model while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): fixtureModels accepts model; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 const fixtureModels = models
@@ -37,18 +34,16 @@ const modelContext = {
   models: fixtureModels,
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): useChatModels stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named useChatModels API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): useChatModels is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  * typescript/explicit-function-return-type (#560): Keep useChatModels's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep useChatModels's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 export const useChatModels = () => modelContext;
 /* oxlint-enable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-/* oxlint-disable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): useSession stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named useSession API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): useSession is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  * typescript/explicit-function-return-type (#560): Keep useSession's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep useSession's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -58,9 +53,8 @@ export const useSession = () => ({
   isPending: false,
 });
 /* oxlint-enable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null --
  * import/group-exports (#523): ConnectorsControl stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ConnectorsControl API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep ConnectorsControl's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep ConnectorsControl's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/no-null (#570): ConnectorsControl preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -68,9 +62,8 @@ export const useSession = () => ({
 // Comparisons use no connected MCP servers; the real control is covered by eve-mcp.e2e.ts.
 export const ConnectorsControl = () => null;
 /* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * import/group-exports (#523): EveArtifactLayout stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named EveArtifactLayout API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep EveArtifactLayout's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep EveArtifactLayout's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): EveArtifactLayout accepts { children }: { children: ReactNode }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -79,9 +72,8 @@ export const ConnectorsControl = () => null;
 export const EveArtifactLayout = ({ children }: { children: ReactNode }) =>
   children;
 /* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): ChatWelcomeView stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ChatWelcomeView API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/no-multi-comp (#552): ChatWelcomeView keeps related fixture render states together; extraction changes component, state, and layout boundaries.
  * typescript/prefer-readonly-parameter-types (#565): ChatWelcomeView accepts { children }: { children: ReactNode }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -93,9 +85,8 @@ export const ChatWelcomeView = ({
   <main className="mx-auto max-w-3xl p-4">{children}</main>
 );
 /* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): InternalLink stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named InternalLink API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/no-multi-comp (#552): InternalLink keeps related fixture render states together; extraction changes component, state, and layout boundaries.
  * typescript/prefer-readonly-parameter-types (#565): InternalLink accepts { children, href, }: { children: ReactNode; href: string; }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -107,9 +98,8 @@ export const InternalLink = ({
   href: string;
 }): React.JSX.Element => <a href={href}>{children}</a>;
 /* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): useRouter stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named useRouter API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): useRouter is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  * typescript/explicit-function-return-type (#560): Keep useRouter's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep useRouter's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -118,19 +108,15 @@ export const useRouter = () => ({
   push: (href: string): void => globalThis.location.assign(href),
 });
 /* oxlint-enable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-/* oxlint-disable import/group-exports, react/only-export-components  --
+/* oxlint-disable import/group-exports, react/only-export-components --
  * import/group-exports (#523): usePathname stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named usePathname API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): usePathname is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  */
 export const usePathname = (): string => globalThis.location.pathname;
 /* oxlint-enable import/group-exports, react/only-export-components */
-/* oxlint-disable import/group-exports, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null  --
+/* oxlint-disable import/group-exports, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null --
  * import/group-exports (#523): EveConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named EveConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): EveConversation keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): EveConversation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-optional-chaining (#542): EveConversation handles optional onStatusChange?.("ready"); onNavigationBlockedChange?.( !draft.loaded || Boolean(draft.error) || pending ); comparisonPresentation?.cards without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * react-perf/jsx-no-new-function-as-prop (#557): EveConversation creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): EveConversation keeps related fixture render states together; extraction changes component, state, and layout boundaries.
  * react/jsx-no-literals (#549): EveConversation owns this fixture copy; replacing literal text requires a localization/content-management contract.

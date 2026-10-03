@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-copy-dispatch"; "../../lib/db/eve-queries"; "../../lib/eve/channel-files"; "../../lib/eve/gateway-auth" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { eveChannel } from "eve/channels/eve";
 

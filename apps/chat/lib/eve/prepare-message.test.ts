@@ -35,10 +35,9 @@ test("only accepts supported ChatJS attachment references", () => {
   ).toBe(false);
 });
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("reads verified bytes from storage and rejects mismatched types and unsupported  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("reads verified bytes from storage and rejects mismatched types and unsupported  uses 1025 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("reads verified bytes from storage and rejects mismatched types and unsupported  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("reads verified bytes from storage and rejects mismatched types and unsupported models", async () => {
   mocks.model.mockResolvedValue({ input: { image: true, pdf: false } });

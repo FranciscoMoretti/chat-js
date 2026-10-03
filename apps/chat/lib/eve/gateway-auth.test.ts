@@ -55,9 +55,7 @@ beforeEach(() => {
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable typescript/explicit-function-return-type  --
- * no-ternary (#518): request derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-rest-spread-properties (#543): request copies or separates ...(path === "/eve/v1/session" && method === "POST" ? { body: JSON.stringify({ operat while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const request = (path: string, method: string, secret = "fixture-secret") =>
@@ -74,9 +72,8 @@ const request = (path: string, method: string, secret = "fixture-secret") =>
   });
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it.each([ ["/eve/v1/session/session/reset", "POST"], ["/eve/v1/session/session/stream uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each([ ["/eve/v1/session/session/reset", "POST"], ["/eve/v1/session/session/stream sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it.each([
   ["/eve/v1/session/session/reset", "POST"],
@@ -132,9 +129,8 @@ it("ordinary requests still require a bound session and cannot reset it", async 
   });
 });
 
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): it("checkpoint readiness and capture require the source owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("checkpoint readiness and capture require the source owner") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("checkpoint readiness and capture require the source owner", async () => {
   const read = request(
@@ -168,9 +164,8 @@ it("checkpoint readiness and capture require the source owner", async () => {
 });
 /* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): it("internal compaction requires a gateway credential and the bound owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("internal compaction requires a gateway credential and the bound owner") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("internal compaction requires a gateway credential and the bound owner", async () => {
   const compact = request("/eve/v1/session/source/compact", "POST");
@@ -202,9 +197,8 @@ it("ordinary owner access cannot read internal sandbox birth evidence", async ()
   expect(mocks.deleting).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("only allows fenced descendants of an owner-matched deleting root") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("only allows fenced descendants of an owner-matched deleting root") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("only allows fenced descendants of an owner-matched deleting root", async () => {
   const read = request("/eve/v1/session/child/sandbox-identity", "GET");
@@ -249,10 +243,9 @@ it("accepts only a known tool selection as a gateway attribute", async () => {
   expect(await authenticateEveGateway(command)).toBeNull();
 });
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("derives guest identity from storage and enforces anonymous model/tool policy") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("derives guest identity from storage and enforces anonymous model/tool policy") uses 60_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("derives guest identity from storage and enforces anonymous model/tool policy") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("derives guest identity from storage and enforces anonymous model/tool policy", async () => {
   const send = request("/eve/v1/session", "POST");
@@ -293,9 +286,8 @@ it("stamps the reservation from the body, ignoring forged identity headers and m
   expect(await command.json()).toEqual({ operationId: reservationId });
   expect(mocks.mapping).toHaveBeenCalledWith({ reservationId });
 });
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): it.each([ undefined, { id: reservationId, ownerId: "foreign", state: "creating" }, {  uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each([ undefined, { id: reservationId, ownerId: "foreign", state: "creating" }, {  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { id: reservationId, ownerId: "foreign", state: "creating" }, {  accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
@@ -331,10 +323,8 @@ it("does not let a seed reservation use the message operation namespace", async 
   });
 });
 
-/* oxlint-disable no-undefined, typescript/promise-function-async  --
- * no-ternary (#518): it("authorizes owned child streams without granting child mutation or cross-owner acc derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined, typescript/promise-function-async --
  * no-undefined (#519): it("authorizes owned child streams without granting child mutation or cross-owner acc uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("authorizes owned child streams without granting child mutation or cross-owner acc sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it("authorizes owned child streams without granting child mutation or cross-owner acc preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {

@@ -14,7 +14,7 @@ This policy replaces enable-all adoption as the completion criterion for the [Ox
 | `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
 | `node/no-top-level-await` | The [rule bans top-level await](https://oxc.rs/docs/guide/usage/linter/rules/node/no-top-level-await), while both lint configs enforce `unicorn/prefer-top-level-await`. Modern ESM tooling supports the retained convention. |
 | `react/react-in-jsx-scope` | The [rule addresses React-in-scope JSX transforms](https://oxc.rs/docs/guide/usage/linter/rules/react/react-in-jsx-scope). `apps/chat/tsconfig.json` uses the automatic `react-jsx` runtime. |
-| `sort-imports` | [Oxlint sorts declarations by binding syntax/name](https://oxc.rs/docs/guide/usage/linter/rules/eslint/sort-imports.html). `oxfmt.config.ts` imports the Ultracite formatter preset, which owns ordering; existing comments in `button.tsx` document the conflicting module-path/type import order. One formatter convention avoids rewrite cycles. |
+| `sort-imports` | [Oxlint sorts declarations by binding syntax/name](https://oxc.rs/docs/guide/usage/linter/rules/eslint/sort-imports.html). `oxfmt.config.ts` imports the Ultracite formatter preset, which owns ordering; `button.tsx` uses its module-path/type import order. One formatter convention avoids rewrite cycles. |
 
 These are policy decisions, not deferred violations. No other rule is disabled by this revision. Broader proposed relaxations require their own evidence and decision.
 
@@ -39,9 +39,9 @@ The baseline must identify each retained rule, file, scope and reason. CI must f
 
 `bun lint:exceptions` checks the baseline and runs as part of `bun lint`. Run `bun test scripts/lint-exceptions.test.ts` when changing the guard.
 
-The guard budgets entries by file, rule and directive kind. Every exception also hashes its covered line or block and reason, so relocating a waiver, expanding a block or editing covered code requires baseline review. The file-level `max-lines` exception hashes the whole file, including when its directive appears at EOF. Keep reasons attached to actual ESLint/Oxlint directives; prose mentioning a directive is not an exception.
+The guard budgets entries by file, rule and directive kind. Every exception also hashes its covered line or block and reason, so relocating a waiver, expanding a block or editing covered code requires baseline review. File-level metrics hash the whole file, including when their directive appears at EOF; function metrics hash the affected declaration. Keep reasons attached to actual ESLint/Oxlint directives; prose mentioning a directive is not an exception.
 
-After reviewing a deliberate exception change, use `bun scripts/lint-exceptions.ts --write-baseline` to record it. Do not regenerate the baseline to hide growth or an unexplained scope change. The baseline inventories debt; it does not endorse every retained waiver. Legacy directives without reasons must reach zero before the initial baseline is accepted. The new guard's own scoped exceptions also require explicit review.
+After reviewing a deliberate exception change, use `bun scripts/lint-exceptions.ts --write-baseline` to record it. Adding an exception or increasing a per-file/rule budget additionally requires `--allow-new`; ordinary fingerprint refreshes must not silently accept new entries. Do not regenerate the baseline to hide growth or an unexplained scope change. The baseline inventories debt; it does not endorse every retained waiver. Legacy directives without reasons must reach zero before the initial baseline is accepted. The new guard's own scoped exceptions also require explicit review.
 
 ## Ownership and deferred work
 

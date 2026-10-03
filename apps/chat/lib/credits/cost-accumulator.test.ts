@@ -24,10 +24,9 @@ beforeEach(() => {
 });
 
 const { CostAccumulator } = await import("./cost-accumulator");
-/* oxlint-disable max-lines-per-function, no-magic-numbers  --
+/* oxlint-disable max-lines-per-function, no-magic-numbers --
  * max-lines-per-function (#510): describe("CostAccumulator") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("CostAccumulator") uses 3, 0, 5, 35, 8, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): describe("CostAccumulator") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 describe("CostAccumulator", () => {
   describe("LLM cost calculation", () => {

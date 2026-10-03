@@ -96,11 +96,10 @@ describe("getSandboxRuntime", () => {
   });
 });
 
-/* oxlint-disable max-lines-per-function, no-undefined, node/no-sync  --
+/* oxlint-disable max-lines-per-function, no-undefined, node/no-sync --
  * max-lines-per-function (#510): describe("resolveSandboxAuth") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): describe("resolveSandboxAuth") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * node/no-sync (#538): describe("resolveSandboxAuth") uses getVercelOidcTokenSync() within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- * oxc/no-async-await (#540): describe("resolveSandboxAuth") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 describe("resolveSandboxAuth", () => {
   it("resolves request-scoped OIDC credentials without an environment token", async () => {
@@ -216,9 +215,8 @@ describe("resolveSandboxAuth", () => {
 });
 /* oxlint-enable max-lines-per-function, no-undefined, node/no-sync */
 
-/* oxlint-disable max-statements, typescript/promise-function-async  --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
@@ -267,9 +265,8 @@ it("creates disposable sandboxes rather than enabling the SDK persistence defaul
   }
 });
 
-/* oxlint-disable max-statements, typescript/promise-function-async  --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): it("does not report successful cleanup until deletion has completed") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("does not report successful cleanup until deletion has completed") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it("does not report successful cleanup until deletion has completed") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("does not report successful cleanup until deletion has completed", async () => {
@@ -287,11 +284,10 @@ it("does not report successful cleanup until deletion has completed", async () =
 });
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * max-lines-per-function (#510): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("codeSandboxCleanupCapability") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): describe("codeSandboxCleanupCapability") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): describe("codeSandboxCleanupCapability") accepts identity; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): describe("codeSandboxCleanupCapability") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): describe("codeSandboxCleanupCapability") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.

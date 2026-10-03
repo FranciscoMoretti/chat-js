@@ -1,7 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries"; "../logger" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { z } from "zod";
 
@@ -30,11 +29,7 @@ import { prepareEveMessage } from "./prepare-message";
 
 const logger = createModuleLogger("eve/creation");
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions  --
- * no-ternary (#518): resolveFork derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): resolveFork sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): resolveFork handles optional source?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): resolveFork copies or separates ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}) while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
  * typescript/explicit-function-return-type (#560): Keep resolveFork's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): resolveFork intentionally keeps the existing falsy-value behavior of source?.sessionId; input.beforeMessageId; input.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -92,9 +87,7 @@ const creationFailure = (cause: unknown): Response => {
   );
 };
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
- * import/no-named-export (#527): Preserve the named executeEveConversationCreation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): executeEveConversationCreation remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * jsdoc/require-param (#534): executeEveConversationCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): executeEveConversationCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -102,10 +95,7 @@ const creationFailure = (cause: unknown): Response => {
  * max-params (#511): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): executeEveConversationCreation uses 15_000, 1, 404, 30_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): executeEveConversationCreation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): executeEveConversationCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): executeEveConversationCreation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): executeEveConversationCreation copies or separates ...(error instanceof EveCreationTransportError ? { stage: error.stage, status: error. while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): executeEveConversationCreation accepts input: z.infer<typeof createConversationInput>; initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): executeEveConversationCreation intentionally keeps the existing falsy-value behavior of await getEveCreation(ownerId, input.operationId); fork.beforeTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): executeEveConversationCreation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.

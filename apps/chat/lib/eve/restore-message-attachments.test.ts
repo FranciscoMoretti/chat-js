@@ -103,10 +103,8 @@ beforeEach(() => {
   ];
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("restores exact trusted inline history without an installed upload feature") uses 0, 2, 1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("restores exact trusted inline history without an installed upload feature") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("restores exact trusted inline history without an installed upload feature") handles optional mocks.upload.mock.calls[0]?.[2] without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("restores exact trusted inline history without an installed upload feature", async () => {
   const attachments = await restoreMessageAttachments("owner", input);
@@ -128,9 +126,7 @@ it("restores exact trusted inline history without an installed upload feature", 
   );
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("requires owned bound history and a native user message before copying") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("requires owned bound history and a native user message before copying") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("requires owned bound history and a native user message before copying") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("requires owned bound history and a native user message before copying", async () => {
@@ -149,11 +145,9 @@ it("requires owned bound history and a native user message before copying", asyn
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/strict-boolean-expressions --
  * max-statements (#512): it("rechecks file access and size and never fetches a remote history URL") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("rechecks file access and size and never fetches a remote history URL") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rechecks file access and size and never fetches a remote history URL") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("rechecks file access and size and never fetches a remote history URL") handles optional mocks.messages[0]?.parts[0] without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/strict-boolean-expressions (#610): it("rechecks file access and size and never fetches a remote history URL") intentionally keeps the existing falsy-value behavior of part; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 it("rechecks file access and size and never fetches a remote history URL", async () => {
@@ -183,9 +177,8 @@ it("rechecks file access and size and never fetches a remote history URL", async
 });
 /* oxlint-enable max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects oversized metadata before downloading or reserving") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rejects oversized metadata before downloading or reserving") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("rejects oversized metadata before downloading or reserving", async () => {
   mocks.messages[0].parts[0].url = "/api/files/abcdefghijklmnopqrstuvwx.png";
@@ -197,9 +190,8 @@ it("rejects oversized metadata before downloading or reserving", async () => {
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])("rejects malformed or oversized inli uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])("rejects malformed or oversized inli sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])(
   "rejects malformed or oversized inline payload %s before copying",
@@ -211,9 +203,8 @@ it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])(
   }
 );
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects a remote reference before storage access") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rejects a remote reference before storage access") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("rejects a remote reference before storage access", async () => {
   mocks.messages[0].parts[0].url = "https://example.com/photo.png";
@@ -225,10 +216,9 @@ it("rejects a remote reference before storage access", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])("reject keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])("reject uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])("reject sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])(
   "rejects a later %s attachment before reserving or copying any file",
@@ -259,9 +249,8 @@ it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])(
 );
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("preflights all files then copies valid mixed history in order") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("preflights all files then copies valid mixed history in order") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("preflights all files then copies valid mixed history in order", async () => {
   mocks.messages[0].parts.push({

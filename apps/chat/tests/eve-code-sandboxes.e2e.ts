@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
@@ -38,8 +37,7 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-async-await (#540): conversation sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 async function conversation() {
@@ -52,10 +50,8 @@ async function conversation() {
 }
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("unresolved allocation blocks final deletion until confirmed cleanup; retries re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("unresolved allocation blocks final deletion until confirmed cleanup; retries re sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("unresolved allocation blocks final deletion until confirmed cleanup; retries re copies or separates ...provider while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("unresolved allocation blocks final deletion until confirmed cleanup; retries retain the tombstone", async () => {
   const row = await conversation();
@@ -123,9 +119,8 @@ test("concurrent allocation and deletion cannot leave an untracked admitted reso
   }
 });
 
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("only a retired owned family can inventory confirmed creation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("only a retired owned family can inventory confirmed creation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("only a retired owned family can inventory confirmed creation", async () => {
   const row = await conversation();

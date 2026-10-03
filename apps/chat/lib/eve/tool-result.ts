@@ -1,9 +1,8 @@
 import { z } from "zod";
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): ToolOutput is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ToolOutput stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ToolOutput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 /** JSON values, permitting optional object properties omitted by persistence. */
 export type ToolOutput =
@@ -33,10 +32,9 @@ const base = z.object({
   version: z.literal(1),
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): toolOutputSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): toolOutputSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named toolOutputSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const toolOutputSchema = z.discriminatedUnion("status", [
   base.extend({ output: jsonOutput, status: z.literal("success") }),
@@ -50,19 +48,17 @@ export const toolOutputSchema = z.discriminatedUnion("status", [
 const usage = z.object({
   costUsd: z.number().nonnegative().optional(),
 });
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): toolResultSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named toolResultSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const toolResultSchema = z.intersection(
   toolOutputSchema,
   z.object({ usage })
 );
 /* oxlint-enable import/group-exports */
-/* oxlint-disable id-length, import/group-exports, no-magic-numbers  --
+/* oxlint-disable id-length, import/group-exports, no-magic-numbers --
  * id-length (#506): ToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): ToolResult stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ToolResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): ToolResult uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 export type ToolResult<T extends ToolOutput> = {
@@ -76,9 +72,8 @@ export type ToolResult<T extends ToolOutput> = {
 );
 /* oxlint-enable id-length, import/group-exports, no-magic-numbers */
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): hasEveToolReceipt stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named hasEveToolReceipt API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const hasEveToolReceipt = (value: unknown): boolean =>
   typeof value === "object" &&
@@ -87,10 +82,9 @@ export const hasEveToolReceipt = (value: unknown): boolean =>
   value.kind === "chatjs.tool-result";
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
  * id-length (#506): createToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): createToolResult stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named createToolResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): createToolResult accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const createToolResult = <T extends ToolOutput>(
@@ -113,10 +107,8 @@ export const createToolResult = <T extends ToolOutput>(
   };
 };
 /* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * import/group-exports (#523): createToolError stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named createToolError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-rest-spread-properties (#543): createToolError copies or separates ...createToolResult(null, costUsd, updates) while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): createToolError accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): createToolError preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */

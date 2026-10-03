@@ -1,7 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-subagents"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 
 import { expect, test } from "@playwright/test";
@@ -23,10 +22,8 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(env.DATABASE_URL);
 const createdReport = /^Created /u;
 const researchSummary = /^Researched for /u;
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): test.afterEach uses -1, 15_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test.afterEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test.afterEach handles optional conversation?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): test.afterEach accepts { page }; testInfo; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): test.afterEach intentionally keeps the existing falsy-value behavior of conversation?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -49,13 +46,11 @@ test.afterEach(async ({ page }, testInfo) => {
   }
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * id-length (#506): test("native deep research saves a reloadable report in ChatJS with a usage receipt") uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-lines-per-function (#510): test("native deep research saves a reloadable report in ChatJS with a usage receipt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native deep research saves a reloadable report in ChatJS with a usage receipt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native deep research saves a reloadable report in ChatJS with a usage receipt") uses 900_000, 15_000, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("native deep research saves a reloadable report in ChatJS with a usage receipt") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("native deep research saves a reloadable report in ChatJS with a usage receipt") handles optional receipt.updates?.some( (update) => ResearchUpdateSchema.parse(update).type === "writi without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): test("native deep research saves a reloadable report in ChatJS with a usage receipt") accepts { page, }; message; route; data; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("native deep research saves a reloadable report in ChatJS with a usage receipt") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */

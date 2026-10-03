@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/delete-document/execute" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { beforeEach, expect, it, vi } from "vitest";
 
@@ -38,8 +37,7 @@ const identity = {
   principalId: "owner",
   principalType: "user",
 };
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-rest-spread-properties (#543): context copies or separates ...identity while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): context preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const context = testToolContext({
@@ -67,10 +65,8 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("requests native approval only for the current owned title and revision") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("requests native approval only for the current owned title and revision") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("requests native approval only for the current owned title and revision") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("requests native approval only for the current owned title and revision", async () => {
   await expect(requestDocumentDeletion(input, context)).resolves.toBe(

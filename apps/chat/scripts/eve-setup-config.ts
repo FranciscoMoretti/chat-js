@@ -4,9 +4,7 @@
 import { getEveRuntimeEnvOptions } from "../lib/env-schema";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
- * import/no-named-export (#527): Preserve the named resolveEveSetup API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): resolveEveSetup remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * init-declarations (#507): resolveEveSetup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): resolveEveSetup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): resolveEveSetup uses 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

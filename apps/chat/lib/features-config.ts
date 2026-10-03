@@ -11,9 +11,8 @@ interface FeatureConfig {
   order: number;
 }
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): AVAILABLE_FEATURES stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named AVAILABLE_FEATURES API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
   audioInput: {
@@ -82,9 +81,8 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
 } as const;
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): getEnabledFeatures stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getEnabledFeatures API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): getEnabledFeatures accepts feature; left; right; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

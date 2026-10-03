@@ -26,8 +26,7 @@ const base = {
   Parameters<typeof prepareEveCopyDocuments>[0][number]["revisions"][number]
 >;
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-rest-spread-properties (#543): snapshot copies or separates ...base while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): snapshot preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const snapshot = [
@@ -100,9 +99,8 @@ it("retains files from older revisions even when the current head no longer ment
   });
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects incomplete allocations and history instead of flattening document version uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-rest-spread-properties (#543): it("rejects incomplete allocations and history instead of flattening document version copies or separates ...allocations; ...snapshot[0] while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("rejects incomplete allocations and history instead of flattening document versions", () => {
   expect(() =>

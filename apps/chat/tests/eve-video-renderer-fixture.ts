@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-tool-result"; "../lib/eve/tool-result" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
@@ -17,10 +16,8 @@ const common = {
   toolName: imageMode ? "generateImage" : "generateVideo",
   type: "dynamic-tool",
 } as const;
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): parts uses 0.5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): parts derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-rest-spread-properties (#543): parts copies or separates ...common; ...(imageMode ? { fileId: "abcdefghijklmnopqrstuvwx.png", imag while preserving existing object ownership; mutating source objects is not equivalent.
  */
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   { ...common, inputText: "", state: "input-streaming" },

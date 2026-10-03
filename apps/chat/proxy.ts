@@ -43,8 +43,7 @@ const isAuthPage = (pathname: string): boolean =>
   pathname.startsWith("/register") ||
   isDeviceLoginPage(pathname);
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
- * oxc/no-optional-chaining (#542): getSafeReturnTo handles optional returnTo?.startsWith("/") without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): getSafeReturnTo accepts url: URL; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): getSafeReturnTo intentionally keeps the existing falsy-value behavior of returnTo?.startsWith("/"); distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): getSafeReturnTo preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -58,12 +57,9 @@ const getSafeReturnTo = (url: URL): string | null => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): proxy stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named proxy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): proxy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): proxy sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): proxy handles optional session?.user without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): proxy accepts req: NextRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -102,9 +98,8 @@ export const proxy = async (req: NextRequest) => {
 };
 /* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): config stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named config API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const config = {
   matcher: [

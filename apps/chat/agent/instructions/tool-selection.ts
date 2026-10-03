@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/eve/selected-tools"; "../../lib/eve/turn-tools" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { defineDynamic, defineInstructions } from "eve/instructions";
 
@@ -8,9 +7,8 @@ import { selectedEveTools } from "../../lib/eve/selected-tools";
 import { eveTurnTool } from "../../lib/eve/turn-tools";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export  --
+/* oxlint-disable import/no-default-export --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * no-ternary (#518): default export derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  */
 export default defineDynamic({
   events: {

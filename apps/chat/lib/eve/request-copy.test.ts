@@ -2,8 +2,7 @@ import { expect, it } from "vitest";
 
 import { finishPendingEveCopy, preparePendingEveCopy } from "./request-copy";
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null  --
- * oxc/no-rest-spread-properties (#543): it("retains the original operation and model across reload, isolates owners, and clea copies or separates ...first while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep it("retains the original operation and model across reload, isolates owners, and clea's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/no-null (#570): it("retains the original operation and model across reload, isolates owners, and clea preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */

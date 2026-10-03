@@ -1,6 +1,5 @@
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): EveUsageReconciliationBusyError stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named EveUsageReconciliationBusyError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 /** Transient admission backpressure, never a rejected or dispatched command. */
 export class EveUsageReconciliationBusyError extends Error {
@@ -11,9 +10,8 @@ export class EveUsageReconciliationBusyError extends Error {
 }
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): eveUsageBusyResponse stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named eveUsageBusyResponse API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): eveUsageBusyResponse accepts error: EveUsageReconciliationBusyError; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const eveUsageBusyResponse = (

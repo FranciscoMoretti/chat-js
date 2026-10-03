@@ -29,18 +29,16 @@ const WebSearchSchema = TaskUpdateSchema.extend({
 });
 /* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): WebSearchUpdate is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): WebSearchUpdate stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named WebSearchUpdate API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): SearchResultItem is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): SearchResultItem stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named SearchResultItem API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
 /* oxlint-enable import/exports-last, import/group-exports */
@@ -73,9 +71,8 @@ export const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WritingSchema,
 ]);
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): ResearchUpdate stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ResearchUpdate API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
 /* oxlint-enable import/group-exports */

@@ -21,9 +21,8 @@ beforeEach(() => {
   mocks.env.VERCEL_ENV = "";
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses PostgreSQL locally and propagates lookup failures") uses 12 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("uses PostgreSQL locally and propagates lookup failures") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("uses PostgreSQL locally and propagates lookup failures", async () => {
   const positions = new Map([["session", 12]]);

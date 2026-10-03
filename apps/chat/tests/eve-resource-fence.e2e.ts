@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-resource-fence"; "../lib/db/eve-session-fence"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -23,9 +22,8 @@ const rejectedWriteCode = /^(?<code>40001|55000)$/u;
 const runIds: string[] = [];
 const streamIds: string[] = [];
 await installEvePostgresResourceFence(query);
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterAll(async () => {
   if (streamIds.length > 0) {
@@ -61,9 +59,8 @@ async function stream(
   return id;
 }
 
-/* oxlint-disable max-statements, unicorn/no-null  --
+/* oxlint-disable max-statements, unicorn/no-null --
  * max-statements (#512): test("fence survives payload deletion and blocks replay, descendants, and every provi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("fence survives payload deletion and blocks replay, descendants, and every provi sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("fence survives payload deletion and blocks replay, descendants, and every provi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("fence survives payload deletion and blocks replay, descendants, and every provider payload table", async () => {
@@ -134,10 +131,9 @@ test("active runs and ambiguous streams roll back the entire fence", async () =>
   await stream(terminal, shared);
 });
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): test("fencing waits for admitted writers to commit before rejecting later writes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): test("fencing waits for admitted writers to commit before rejecting later writes") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("fencing waits for admitted writers to commit before rejecting later writes") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("fencing waits for admitted writers to commit before rejecting later writes") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("fencing waits for admitted writers to commit before rejecting later writes", async () => {
@@ -180,10 +176,9 @@ test("fencing waits for admitted writers to commit before rejecting later writes
 });
 /* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): test("a repeatable-read snapshot from before the fence cannot restore payloads") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): test("a repeatable-read snapshot from before the fence cannot restore payloads") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("a repeatable-read snapshot from before the fence cannot restore payloads") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("a repeatable-read snapshot from before the fence cannot restore payloads") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("a repeatable-read snapshot from before the fence cannot restore payloads", async () => {
@@ -216,9 +211,8 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
 });
 /* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("session fencing rolls back for an active child and succeeds after retirement") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("session fencing rolls back for an active child and succeeds after retirement") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("session fencing rolls back for an active child and succeeds after retirement", async () => {
   const root = await run();
@@ -237,10 +231,9 @@ test("session fencing rolls back for an active child and succeeds after retireme
 });
 /* oxlint-enable max-statements */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): test("session fencing re-inventories a collector child committed while its fence wait keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): test("session fencing re-inventories a collector child committed while its fence wait uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("session fencing re-inventories a collector child committed while its fence wait sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("session fencing re-inventories a collector child committed while its fence wait accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("session fencing re-inventories a collector child committed while its fence waits", async () => {

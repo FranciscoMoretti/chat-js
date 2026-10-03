@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -64,8 +63,7 @@ afterAll(async () => {
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-async-await (#540): conversation sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 async function conversation() {
@@ -78,9 +76,7 @@ async function conversation() {
 }
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null  --
- * oxc/no-async-await (#540): test("assignment, filtered history and removal retain native identity") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("assignment, filtered history and removal retain native identity") handles optional (await getEveConversation(owner, row.id))?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): test("assignment, filtered history and removal retain native identity") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("assignment, filtered history and removal retain native identity") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -111,9 +107,7 @@ test("assignment, filtered history and removal retain native identity", async ()
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null  --
- * oxc/no-async-await (#540): test("both application checks and database constraints reject cross-owner assignment" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("both application checks and database constraints reject cross-owner assignment" handles optional (await getEveConversationProject(owner, row.id))?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
  * unicorn/max-nested-calls (#568): test("both application checks and database constraints reject cross-owner assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("both application checks and database constraints reject cross-owner assignment" preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -154,9 +148,7 @@ test("both application checks and database constraints reject cross-owner assign
 });
 /* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null  --
- * oxc/no-async-await (#540): test("deleting a project detaches its Eve conversations without erasing their session sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("deleting a project detaches its Eve conversations without erasing their session handles optional (await getEveConversation(owner, row.id))?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): test("deleting a project detaches its Eve conversations without erasing their session accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("deleting a project detaches its Eve conversations without erasing their session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -183,9 +175,8 @@ test("deleting a project detaches its Eve conversations without erasing their se
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null --
  * no-magic-numbers (#517): test("conversation deletion fences assignment and removes metadata without touching t uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("conversation deletion fences assignment and removes metadata without touching t sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/max-nested-calls (#568): test("conversation deletion fences assignment and removes metadata without touching t keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("conversation deletion fences assignment and removes metadata without touching t preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -219,10 +210,8 @@ test("conversation deletion fences assignment and removes metadata without touch
 });
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null  --
+/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
  * max-statements (#512): test("fork paths share their chat project and retry cannot restore an old assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("fork paths share their chat project and retry cannot restore an old assignment" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("fork paths share their chat project and retry cannot restore an old assignment" handles optional (await getEveConversationProject(owner, fork.id))?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep test("fork paths share their chat project and retry cannot restore an old assignment"'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): test("fork paths share their chat project and retry cannot restore an old assignment" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/max-nested-calls (#568): test("fork paths share their chat project and retry cannot restore an old assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -266,9 +255,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
 });
 /* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null  --
- * oxc/no-async-await (#540): test("an unresolved fork retains its project route for creation recovery") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("an unresolved fork retains its project route for creation recovery") handles optional pending?.state; (await getEveConversationProject(owner, pending.id))?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/promise-function-async (#606): test("an unresolved fork retains its project route for creation recovery") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test("an unresolved fork retains its project route for creation recovery") intentionally keeps the existing falsy-value behavior of pending; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): test("an unresolved fork retains its project route for creation recovery") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -300,11 +287,10 @@ test("an unresolved fork retains its project route for creation recovery", async
 });
 /* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async --
  * max-statements (#512): test("project creation binds before dispatch and preserves its initial intent through keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("project creation binds before dispatch and preserves its initial intent through uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("project creation binds before dispatch and preserves its initial intent through uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("project creation binds before dispatch and preserves its initial intent through sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep test("project creation binds before dispatch and preserves its initial intent through's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): test("project creation binds before dispatch and preserves its initial intent through preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */

@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-native-purge"; "../lib/db/eve-payload-purge"; "../lib/db/eve-queue-fence"; "../lib/db/eve-queue-purge"; "../lib/db/eve-resource-fence" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -41,9 +40,8 @@ const tables = [
 ];
 await installEvePostgresResourceFence(query);
 await installEvePostgresQueueFence(query, task);
-/* oxlint-disable max-statements  --
+/* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterAll(async () => {
   for (const table of tables) {
@@ -60,9 +58,7 @@ afterAll(async () => {
   await query.end();
 });
 /* oxlint-enable max-statements */
-/* oxlint-disable typescript/strict-boolean-expressions  --
- * no-ternary (#518): fixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): fixture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): fixture intentionally keeps the existing falsy-value behavior of parent; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 async function fixture(parent?: string): Promise<string> {
@@ -79,11 +75,9 @@ async function fixture(parent?: string): Promise<string> {
 }
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("purge requires fences, removes every native payload table, isolates other sessi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("purge requires fences, removes every native payload table, isolates other sessi uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("purge requires fences, removes every native payload table, isolates other sessi sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("purge requires fences, removes every native payload table, isolates other sessi copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("purge requires fences, removes every native payload table, isolates other sessions and retries after root deletion", async () => {
   const root = await fixture();
@@ -116,10 +110,8 @@ test("purge requires fences, removes every native payload table, isolates other 
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("queued payloads prevent removal until queue cleanup completes") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("queued payloads prevent removal until queue cleanup completes") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("queued payloads prevent removal until queue cleanup completes") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("queued payloads prevent removal until queue cleanup completes", async () => {
   const root = await fixture();
@@ -146,10 +138,8 @@ test("queued payloads prevent removal until queue cleanup completes", async () =
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, typescript/promise-function-async  --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): test("queue-discovered native runs remain in the payload inventory after queue remova keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("queue-discovered native runs remain in the payload inventory after queue remova sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("queue-discovered native runs remain in the payload inventory after queue remova copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/promise-function-async (#606): test("queue-discovered native runs remain in the payload inventory after queue remova preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("queue-discovered native runs remain in the payload inventory after queue removal", async () => {
@@ -185,10 +175,9 @@ test("queue-discovered native runs remain in the payload inventory after queue r
 });
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async --
  * max-statements (#512): test("native coordinator retains retirement across failure and retries after payload  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native coordinator retains retirement across failure and retries after payload  uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("native coordinator retains retirement across failure and retries after payload  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep test("native coordinator retains retirement across failure and retries after payload 's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): test("native coordinator retains retirement across failure and retries after payload  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -233,9 +222,8 @@ test("native coordinator retains retirement across failure and retries after pay
 });
 /* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("concurrent native cleanup attempts retire once and share the completed receipt" uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("concurrent native cleanup attempts retire once and share the completed receipt" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): test("concurrent native cleanup attempts retire once and share the completed receipt" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("concurrent native cleanup attempts retire once and share the completed receipt", async () => {
@@ -256,9 +244,8 @@ test("concurrent native cleanup attempts retire once and share the completed rec
 });
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("family retirement persists partial progress without erasing another member's pa uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("family retirement persists partial progress without erasing another member's pa sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): test("family retirement persists partial progress without erasing another member's pa preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("family retirement persists partial progress without erasing another member's payloads", async () => {
@@ -295,10 +282,9 @@ test("family retirement persists partial progress without erasing another member
 });
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-statements (#512): test("preparation keeps native payloads for inventory and recovers the same identitie keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("preparation keeps native payloads for inventory and recovers the same identitie uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("preparation keeps native payloads for inventory and recovers the same identitie sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): test("preparation keeps native payloads for inventory and recovers the same identitie preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("preparation keeps native payloads for inventory and recovers the same identities after purge", async () => {
@@ -351,9 +337,8 @@ test("preparation keeps native payloads for inventory and recovers the same iden
 });
 /* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("missing queue-discovered runs stop preparation before payload erasure") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("missing queue-discovered runs stop preparation before payload erasure") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): test("missing queue-discovered runs stop preparation before payload erasure") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("missing queue-discovered runs stop preparation before payload erasure", async () => {
@@ -389,12 +374,10 @@ test("missing queue-discovered runs stop preparation before payload erasure", as
 });
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("sandbox coverage requires fences and receipts, then survives native payload era keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("sandbox coverage requires fences and receipts, then survives native payload era keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("sandbox coverage requires fences and receipts, then survives native payload era uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("sandbox coverage requires fences and receipts, then survives native payload era sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("sandbox coverage requires fences and receipts, then survives native payload era copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/promise-function-async (#606): test("sandbox coverage requires fences and receipts, then survives native payload era preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("sandbox coverage requires fences and receipts, then survives native payload erasure", async () => {
@@ -452,8 +435,7 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
   ).rejects.toThrow("scope changed");
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
-/* oxlint-disable typescript/promise-function-async  --
- * oxc/no-async-await (#540): test("unknown workflow coverage never calls the ownership verifier") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("unknown workflow coverage never calls the ownership verifier") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("unknown workflow coverage never calls the ownership verifier", async () => {

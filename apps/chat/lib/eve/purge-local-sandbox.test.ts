@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -39,9 +38,8 @@ beforeEach(() => {
   remove.mockReset();
   mocks.destroySandbox.mockReset();
 });
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): afterEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterEach(async () => {
   for (const directory of directories.splice(0)) {
@@ -50,10 +48,9 @@ afterEach(async () => {
   }
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type --
  * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): fixture uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): fixture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const fixture = async (letter = "a") => {
@@ -118,11 +115,9 @@ test("retains identities through provider failure and treats only explicit missi
   });
 });
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("validates all records before deletion and rejects another session or shared tem keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("validates all records before deletion and rejects another session or shared tem uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("validates all records before deletion and rejects another session or shared tem sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("validates all records before deletion and rejects another session or shared tem copies or separates ...input.record while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("validates all records before deletion and rejects another session or shared template", async () => {
   const input = await fixture();
@@ -149,11 +144,9 @@ test("validates all records before deletion and rejects another session or share
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-statements (#512): test("validates the whole family and removes all VMs before resolving snapshot depend keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("validates the whole family and removes all VMs before resolving snapshot depend uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("validates the whole family and removes all VMs before resolving snapshot depend sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("validates the whole family and removes all VMs before resolving snapshot depend copies or separates ...child.record while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("validates the whole family and removes all VMs before resolving snapshot depend accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("validates the whole family and removes all VMs before resolving snapshot depend preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -191,11 +184,9 @@ test("validates the whole family and removes all VMs before resolving snapshot d
 });
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("retains resources created before metadata and across replacements") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("retains resources created before metadata and across replacements") uses 32, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("retains resources created before metadata and across replacements") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test("retains resources created before metadata and across replacements") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("retains resources created before metadata and across replacements", async () => {
   const input = await fixture();
@@ -242,12 +233,10 @@ test("retains resources created before metadata and across replacements", async 
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): test("an owned attempt that failed before provider creation can finish cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("an owned attempt that failed before provider creation can finish cleanup") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("an owned attempt that failed before provider creation can finish cleanup") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("an owned attempt that failed before provider creation can finish cleanup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("an owned attempt that failed before provider creation can finish cleanup") copies or separates ...owner while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("an owned attempt that failed before provider creation can finish cleanup", async () => {
   const input = await fixture();

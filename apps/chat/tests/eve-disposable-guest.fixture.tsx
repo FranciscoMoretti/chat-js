@@ -47,10 +47,7 @@ const messages: EveMessage[] = [
     role: "assistant",
   },
 ];
-/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null  --
- * import/no-named-export (#527): Preserve the named GuestVisualFixture API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): GuestVisualFixture remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
- * no-ternary (#518): GuestVisualFixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null --
  * react-perf/jsx-no-new-array-as-prop (#556): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react-perf/jsx-no-new-function-as-prop (#557): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): GuestVisualFixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.

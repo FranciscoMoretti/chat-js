@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { randomUUID } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/guest-credential" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { randomUUID } from "node:crypto";
 
@@ -47,12 +46,9 @@ const windows = (now: Date) =>
   }));
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/exports-last (#522): createEveGuest is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): createEveGuest stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named createEveGuest API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): createEveGuest sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): createEveGuest copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): createEveGuest accepts input: { tokenHash: string; messageLimit: number; expiresAt: Date; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -86,11 +82,9 @@ export const createEveGuest = async (input: {
 };
 /* oxlint-enable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/exports-last (#522): readExistingEveGuestMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): readExistingEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named readExistingEveGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): readExistingEveGuestMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -148,11 +142,8 @@ const validateReservation = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): rateAvailable uses 0, 60 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): rateAvailable derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): rateAvailable sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): rateAvailable handles optional bucket?.requests without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): rateAvailable accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; input: { ipHash: string; requestsPerMinute: number; requestsPerMonth: number; }; periods: ReturnType<typeof windows>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const rateAvailable = async (
@@ -186,12 +177,10 @@ const rateAvailable = async (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): admissionGuest uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): admissionGuest sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): admissionGuest copies or separates ...bootstrap while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep admissionGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): admissionGuest accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; bootstrap: | { tokenHash: string; messageLimit: number; expiresAt: Date;; now: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): admissionGuest intentionally keeps the existing falsy-value behavior of guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -244,11 +233,10 @@ const admissionGuest = async (
 };
 /* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): reserveMessage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): reserveMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep reserveMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): reserveMessage accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; bootstrap?: GuestBootstrap; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): reserveMessage intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -340,13 +328,11 @@ const reserveMessage = async (
 };
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * import/exports-last (#522): reserveEveGuestMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): reserveEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named reserveEveGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): reserveEveGuestMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessage accepts bootstrap?: GuestBootstrap; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -376,19 +362,15 @@ class GuestBatchRejectedError extends Error {
   }
 }
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/exports-last (#522): reserveEveGuestMessages is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): reserveEveGuestMessages stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named reserveEveGuestMessages API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): reserveEveGuestMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): reserveEveGuestMessages sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): reserveEveGuestMessages handles optional persistAdmission?.(tx) without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): reserveEveGuestMessages copies or separates ...result while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessages accepts inputs: GuestReservationInput[]; bootstrap?: GuestBootstrap; tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -449,11 +431,9 @@ export const reserveEveGuestMessages = async <T = undefined>(
 };
 /* oxlint-enable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): commitEveGuestMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): commitEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named commitEveGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): commitEveGuestMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 export const commitEveGuestMessage = async (
   ownerId: string,
@@ -476,11 +456,10 @@ export const commitEveGuestMessage = async (
 };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): releaseMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): releaseMessage accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): releaseMessage intentionally keeps the existing falsy-value behavior of observed; creation; released; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -561,12 +540,10 @@ const releaseMessage = async (
   });
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns --
  * import/group-exports (#523): releaseEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named releaseEveGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): releaseEveGuestMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 /** Only a proven unaccepted request can be refunded; never use this on a timeout. */
 export const releaseEveGuestMessage = async (
@@ -577,12 +554,10 @@ export const releaseEveGuestMessage = async (
   await releaseMessage(ownerId, operationId, reservationId, false);
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns --
  * import/group-exports (#523): releaseEveGuestCreation stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named releaseEveGuestCreation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): releaseEveGuestCreation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 /** Serialize proof of no creation with the same family lock used before native dispatch. */
 export const releaseEveGuestCreation = async (
@@ -593,12 +568,10 @@ export const releaseEveGuestCreation = async (
   await releaseMessage(ownerId, operationId, reservationId, true);
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): readEveGuestOwner stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named readEveGuestOwner API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): readEveGuestOwner sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */

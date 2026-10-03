@@ -1,6 +1,5 @@
-/* oxlint-disable import/max-dependencies  --
+/* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "lucide-react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
@@ -22,9 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable import/exports-last, react/only-export-components  --
+/* oxlint-disable import/exports-last, react/only-export-components --
  * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/no-named-export (#527): Preserve the named metadata API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  */
 export const metadata: Metadata = {
@@ -33,10 +31,7 @@ export const metadata: Metadata = {
 };
 /* oxlint-enable import/exports-last, react/only-export-components */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
- * no-ternary (#518): LoginPageContent derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): LoginPageContent sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): LoginPageContent handles optional session?.user without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * react-perf/jsx-no-jsx-as-prop (#555): LoginPageContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/forbid-component-props (#545): LoginPageContent uses className/style as established component styling interfaces; removing them changes the rendered contract.
  * typescript/explicit-function-return-type (#560): Keep LoginPageContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

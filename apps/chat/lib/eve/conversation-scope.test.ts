@@ -49,9 +49,8 @@ it("rejects a subagent inheriting its parent's reservation attribute", async () 
   await expect(resolve()).rejects.toMatchObject({ code: "binding_conflict" });
   expect(mocks.bind).not.toHaveBeenCalled();
 });
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-undefined (#519): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -72,9 +71,8 @@ it.each([
   expect(mocks.bind).not.toHaveBeenCalled();
 });
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses the existing reverse binding for sessions created before the attribute exist uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("uses the existing reverse binding for sessions created before the attribute exist sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("uses the existing reverse binding for sessions created before the attribute existed", async () => {
   mocks.read.mockResolvedValue({
@@ -93,9 +91,8 @@ it("uses the existing reverse binding for sessions created before the attribute 
   expect(mocks.request).not.toHaveBeenCalled();
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r uses 404, 503, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r accepts body; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
@@ -123,10 +120,9 @@ it("leaves pending copies to their resource journal", async () => {
   expect(mocks.request).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("does not call missing pre-attribute identity corruption") uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("does not call missing pre-attribute identity corruption") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("does not call missing pre-attribute identity corruption") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("does not call missing pre-attribute identity corruption", async () => {
   mocks.read.mockResolvedValue(undefined);
@@ -144,10 +140,9 @@ it("classifies a transport outage without treating the mapping as corrupt", asyn
   expect(mocks.bind).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("rejects malformed context and missing authentication before reading storage") uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("rejects malformed context and missing authentication before reading storage") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("rejects malformed context and missing authentication before reading storage") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("rejects malformed context and missing authentication before reading storage", async () => {
   await expect(resolve("not-a-reservation")).rejects.toMatchObject({

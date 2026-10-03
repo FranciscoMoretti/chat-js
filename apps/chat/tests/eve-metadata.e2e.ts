@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This test harness requires import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
@@ -24,13 +23,10 @@ const metadataTitle = /renamed|metadata newer/u;
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): test("rename and pin persist, preserve input, and reject another owner's changes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("rename and pin persist, preserve input, and reject another owner's changes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("rename and pin persist, preserve input, and reject another owner's changes") uses 0, 1, 2, 1000, 404, 400, 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("rename and pin persist, preserve input, and reject another owner's changes") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test("rename and pin persist, preserve input, and reject another owner's changes") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("rename and pin persist, preserve input, and reject another owner's changes") handles optional ( await db .select({ isPinned: eveChat.isPinned }) .from(eve; stored?.title; stored?.firstMessage; foreign?.title; foreign?.isPinned without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep test("rename and pin persist, preserve input, and reject another owner's changes")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): test("rename and pin persist, preserve input, and reject another owner's changes") accepts { page, browser, }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("rename and pin persist, preserve input, and reject another owner's changes") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.

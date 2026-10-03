@@ -31,10 +31,7 @@ const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
   }
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * import/no-named-export (#527): Preserve the named fetchModels API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): fetchModels remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
- * oxc/no-async-await (#540): fetchModels sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): fetchModels accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const fetchModels = unstable_cache(

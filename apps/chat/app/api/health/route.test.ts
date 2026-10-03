@@ -16,10 +16,9 @@ afterEach(() => {
   vi.useRealTimers();
   vi.resetAllMocks();
 });
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("requires a genuine Eve health response, not a login page") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("requires a genuine Eve health response, not a login page") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("requires a genuine Eve health response, not a login page") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("requires a genuine Eve health response, not a login page", async () => {
   database.mockResolvedValue(undefined);
@@ -31,10 +30,9 @@ test("requires a genuine Eve health response, not a login page", async () => {
   expect(resolvedResult1.status).toBe(503);
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("reports ready only with database and Eve available") uses 200, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("reports ready only with database and Eve available") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("reports ready only with database and Eve available") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("reports ready only with database and Eve available", async () => {
   database.mockResolvedValue(undefined);
@@ -53,9 +51,8 @@ test("reports ready only with database and Eve available", async () => {
   expect(resolvedResult3.status).toBe(503);
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("bounds a stalled database check") uses 4500, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("bounds a stalled database check") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("bounds a stalled database check", async () => {
   vi.useFakeTimers();

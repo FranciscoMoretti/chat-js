@@ -59,9 +59,8 @@ it("connects, discovers and closes without web cache dependencies", async () => 
   );
 });
 
-/* oxlint-disable no-magic-numbers, typescript/strict-void-return  --
+/* oxlint-disable no-magic-numbers, typescript/strict-void-return --
  * no-magic-numbers (#517): it("notifies the web owner after disconnect and authentication errors") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("notifies the web owner after disconnect and authentication errors") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/strict-void-return (#611): it("notifies the web owner after disconnect and authentication errors")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 it("notifies the web owner after disconnect and authentication errors", async () => {
@@ -81,9 +80,8 @@ it("notifies the web owner after disconnect and authentication errors", async ()
 });
 /* oxlint-enable no-magic-numbers, typescript/strict-void-return */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("concurrent connection requests share one transport and close it once") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("concurrent connection requests share one transport and close it once") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("concurrent connection requests share one transport and close it once", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -105,9 +103,8 @@ it("concurrent connection requests share one transport and close it once", async
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("a failed connection can be retried without retaining a failed promise") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("a failed connection can be retried without retaining a failed promise") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("a failed connection can be retried without retaining a failed promise", async () => {
   mocks.create.mockRejectedValueOnce(new Error("temporarily unavailable"));
@@ -123,8 +120,7 @@ it("a failed connection can be retried without retaining a failed promise", asyn
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/strict-void-return  --
- * oxc/no-async-await (#540): it("domain errors mentioning tokens do not invalidate authentication") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/strict-void-return --
  * typescript/strict-void-return (#611): it("domain errors mentioning tokens do not invalidate authentication")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 it("domain errors mentioning tokens do not invalidate authentication", async () => {
@@ -143,9 +139,8 @@ it("domain errors mentioning tokens do not invalidate authentication", async () 
 });
 /* oxlint-enable typescript/strict-void-return */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("OAuth secrets go to the provider and never the resource transport") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("OAuth secrets go to the provider and never the resource transport") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("OAuth secrets go to the provider and never the resource transport", async () => {
   const client = new MCPClient("id", "Configured", {
@@ -175,9 +170,8 @@ it("OAuth secrets go to the provider and never the resource transport", async ()
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("closing an in-flight connection prevents the late transport from becoming active" uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("closing an in-flight connection prevents the late transport from becoming active" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("closing an in-flight connection prevents the late transport from becoming active", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -199,10 +193,8 @@ it("closing an in-flight connection prevents the late transport from becoming ac
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("connection initialization always receives a cancellation signal") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("connection initialization always receives a cancellation signal") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("connection initialization always receives a cancellation signal") handles optional mocks.create.mock.calls[0]?.[0].initializationOptions.signal without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("connection initialization always receives a cancellation signal", async () => {
   const client = new MCPClient("id", "Test", {
@@ -221,11 +213,10 @@ it("connection initialization always receives a cancellation signal", async () =
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): it("callers cancel their shared connection waits independently") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("callers cancel their shared connection waits independently") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("callers cancel their shared connection waits independently") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("callers cancel their shared connection waits independently") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("callers cancel their shared connection waits independently", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -255,11 +246,10 @@ it("callers cancel their shared connection waits independently", async () => {
 });
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): it("a fresh connection starts immediately after closing a pending attempt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("a fresh connection starts immediately after closing a pending attempt") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("a fresh connection starts immediately after closing a pending attempt") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("a fresh connection starts immediately after closing a pending attempt") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("a fresh connection starts immediately after closing a pending attempt", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -284,9 +274,8 @@ it("a fresh connection starts immediately after closing a pending attempt", asyn
 });
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-statements, typescript/promise-function-async, typescript/strict-void-return  --
+/* oxlint-disable max-statements, typescript/promise-function-async, typescript/strict-void-return --
  * max-statements (#512): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late 's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
@@ -327,11 +316,10 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
 );
 /* oxlint-enable max-statements, typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): it("a retired provider's late OAuth redirect cannot authorise or close its replacemen keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("a retired provider's late OAuth redirect cannot authorise or close its replacemen uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("a retired provider's late OAuth redirect cannot authorise or close its replacemen uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("a retired provider's late OAuth redirect cannot authorise or close its replacemen sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("a retired provider's late OAuth redirect cannot authorise or close its replacement", async () => {
   const gate = Promise.withResolvers<undefined>();

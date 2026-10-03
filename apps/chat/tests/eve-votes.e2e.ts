@@ -1,8 +1,7 @@
-/* oxlint-disable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports  --
+/* oxlint-disable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-namespace (#528): The EveClient namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -68,8 +67,7 @@ beforeEach(() => {
   native.attach.mockReset().mockReturnValue({ snapshot: native.snapshot });
   native.snapshot.mockReset().mockResolvedValue({ events });
 });
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-async-await (#540): conversation sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 async function conversation() {
@@ -82,11 +80,9 @@ async function conversation() {
 }
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("native assistant feedback persists, replaces a vote and stays private when shar keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native assistant feedback persists, replaces a vote and stays private when shar uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("native assistant feedback persists, replaces a vote and stays private when shar sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("native assistant feedback persists, replaces a vote and stays private when shar copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("native assistant feedback persists, replaces a vote and stays private when shared", async () => {
   const row = await conversation();
@@ -126,9 +122,8 @@ test("unknown messages and native user messages cannot receive feedback", async 
   expect(await getEveMessageVotes(owner, row.id)).toEqual([]);
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("deletion erases existing feedback and rejects a vote whose snapshot finishes af uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("deletion erases existing feedback and rejects a vote whose snapshot finishes af sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("deletion erases existing feedback and rejects a vote whose snapshot finishes after deletion", async () => {
   const row = await conversation();

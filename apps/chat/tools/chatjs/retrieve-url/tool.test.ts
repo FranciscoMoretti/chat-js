@@ -28,10 +28,8 @@ beforeEach(() => {
   mocks.env.FIRECRAWL_API_KEY = "test-key";
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test.each(["missing configuration", "invalid URL"])(
   "%s produces a zero-cost receipt without calling Firecrawl",

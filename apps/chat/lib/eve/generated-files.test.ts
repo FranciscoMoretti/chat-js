@@ -47,9 +47,8 @@ const context = (signal = new AbortController().signal) => ({
   session: { auth: { initiator: { principalId: "owner" } }, id: "session" },
 });
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("reserves a recoverable key and enters the deletion lock before external upload" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("reserves a recoverable key and enters the deletion lock before external upload" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("reserves a recoverable key and enters the deletion lock before external upload", async () => {
   await expect(
@@ -68,8 +67,7 @@ test("reserves a recoverable key and enters the deletion lock before external up
   );
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/max-nested-calls  --
- * oxc/no-async-await (#540): test("reservation failure and cancellation prevent external upload") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/max-nested-calls --
  * unicorn/max-nested-calls (#568): test("reservation failure and cancellation prevent external upload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 test("reservation failure and cancellation prevent external upload", async () => {

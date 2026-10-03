@@ -5,12 +5,9 @@ import type { EveForkInput, EveForkKind } from "./contracts";
 const importedBoundary = /^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u;
 const nativeBoundary = /^turn_(?<turnIndex>0|[1-9][0-9]*)$/u;
 
-/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): eveUserForkBoundary stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named eveUserForkBoundary API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * no-ternary (#518): eveUserForkBoundary derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): eveUserForkBoundary uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-optional-chaining (#542): eveUserForkBoundary handles optional message.metadata?.optimistic; message.metadata?.turnId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep eveUserForkBoundary's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep eveUserForkBoundary's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): eveUserForkBoundary intentionally keeps the existing falsy-value behavior of message.metadata?.turnId; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -43,9 +40,8 @@ export interface EveBranchReference {
   responseGroupIndex?: number | null;
 }
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): resolveForkSource stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named resolveForkSource API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): resolveForkSource's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): resolveForkSource's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): resolveForkSource keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

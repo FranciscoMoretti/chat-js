@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { readFile } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Ordered migrations and fixtures exercise the real schema. */
 import { createHash } from "node:crypto";
@@ -13,8 +12,7 @@ import { afterAll, beforeAll, expect, it, vi } from "vitest";
 /* oxlint-enable import/no-nodejs-modules */
 
 const postgres = new PGlite();
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): vi.mock("./client") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("./client") accepts query: SQL; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -33,9 +31,8 @@ vi.mock("./client", () => {
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 vi.mock("@/lib/env", () => ({ env: {} }));
 
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
- * node/no-top-level-await (#539): { eveEventSearchText } runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
  */
 const { eveEventSearchText } = await import("../eve/search-text");
 /* oxlint-enable import/no-relative-parent-imports */
@@ -49,9 +46,8 @@ const titleBranch = "00000000-0000-4000-8000-000000000004";
 const otherChat = "00000000-0000-4000-8000-000000000005";
 const otherBranch = "00000000-0000-4000-8000-000000000006";
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): beforeAll uses 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): beforeAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 beforeAll(async () => {
   for (const filename of [
@@ -99,9 +95,8 @@ beforeAll(async () => {
 afterAll(() => postgres.close());
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {
@@ -137,9 +132,8 @@ it("rejects cross-owner indexing and handles punctuation-only searches", async (
   expect(punctuation.items).toEqual([]);
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ accepts ids; item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
@@ -169,9 +163,8 @@ it.each([
 );
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("keeps the title boost while selecting the branch and excerpt with matching text") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("keeps the title boost while selecting the branch and excerpt with matching text") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("keeps the title boost while selecting the branch and excerpt with matching text", async () => {
   const matchingBranch = "00000000-0000-4000-8000-000000000007";
@@ -193,8 +186,7 @@ it("keeps the title boost while selecting the branch and excerpt with matching t
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): it.each([ ["SAFF", "⟦Saff⟧ron"], ["saffron OR saff", "⟦Saffron⟧"], ['"saffron cooking sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it.each([ ["SAFF", "⟦Saff⟧ron"], ["saffron OR saff", "⟦Saffron⟧"], ['"saffron cooking accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
@@ -213,9 +205,8 @@ it.each([
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("shows an assistant-only Hello match even when the title also matches") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("shows an assistant-only Hello match even when the title also matches") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("shows an assistant-only Hello match even when the title also matches", async () => {
   await postgres.query(
@@ -251,9 +242,7 @@ it("shows an assistant-only Hello match even when the title also matches", async
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): it.each([ ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"], ["is sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it.each([ ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"], ["is handles optional result.items.find((item) => item.id === chat)?.excerpt without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it.each([ ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"], ["is accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
@@ -273,10 +262,8 @@ it.each([
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("continues past tied ranks and timestamps without skipping when an earlier result  uses 20, 0, 5, 25 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("continues past tied ranks and timestamps without skipping when an earlier result  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("continues past tied ranks and timestamps without skipping when an earlier result  handles optional first.nextCursor?.updatedAt without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): it("continues past tied ranks and timestamps without skipping when an earlier result  accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
@@ -307,9 +294,8 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("finds a maximum-length quoted phrase crossing a chunk boundary") uses 48, 2, 255, 1999, 0, 8200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("finds a maximum-length quoted phrase crossing a chunk boundary") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("finds a maximum-length quoted phrase crossing a chunk boundary") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("finds a maximum-length quoted phrase crossing a chunk boundary", async () => {
@@ -332,9 +318,8 @@ it("finds a maximum-length quoted phrase crossing a chunk boundary", async () =>
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("hides deleting chats and permanently erases text without allowing a late backfill uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("hides deleting chats and permanently erases text without allowing a late backfill sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("hides deleting chats and permanently erases text without allowing a late backfill accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
@@ -354,11 +339,10 @@ it("hides deleting chats and permanently erases text without allowing a late bac
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("repairs only the known unpublished preview history and preserves conversation dat uses 1_789_411_557_764, 1_789_979_176_755, 1_790_327_870_855, 3, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("repairs only the known unpublished preview history and preserves conversation dat sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("repairs only the known unpublished preview history and preserves conversation dat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("repairs only the known unpublished preview history and preserves conversation data", async () => {

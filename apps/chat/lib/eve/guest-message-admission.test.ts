@@ -64,9 +64,8 @@ it("requires an explicit operation and allowed model before charging", async () 
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("permits dispatch only for the first reservation and never marks replays as unsent uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("permits dispatch only for the first reservation and never marks replays as unsent sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("permits dispatch only for the first reservation and never marks replays as unsent", async () => {
   expect(await admitGuestMessage(request, "owner", "native", input)).toEqual(
@@ -92,11 +91,8 @@ it("permits dispatch only for the first reservation and never marks replays as u
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("distinguishes content and destination in quota identity") uses 0, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("distinguishes content and destination in quota identity") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("distinguishes content and destination in quota identity") handles optional mocks.reserve.mock.lastCall?.[0].requestHash without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("distinguishes content and destination in quota identity") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("distinguishes content and destination in quota identity", async () => {
   const hashes: unknown[] = [];
@@ -114,8 +110,7 @@ it("distinguishes content and destination in quota identity", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("retains quota on timeout/server failure and refunds only explicit native non-admi sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("retains quota on timeout/server failure and refunds only explicit native non-admi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("retains quota on timeout/server failure and refunds only explicit native non-admission", async () => {

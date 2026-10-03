@@ -3,11 +3,10 @@ import { expect, test } from "@playwright/test";
 
 const chatRoute = /\/chat\/[a-f\d-]+$/u;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("logical chat keeps its URL and native observers across first send, retry, edit  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("logical chat keeps its URL and native observers across first send, retry, edit  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("logical chat keeps its URL and native observers across first send, retry, edit  uses 240_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("logical chat keeps its URL and native observers across first send, retry, edit  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("logical chat keeps its URL and native observers across first send, retry, edit  accepts { page, }; testInfo; route; error; response; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("logical chat keeps its URL and native observers across first send, retry, edit  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */

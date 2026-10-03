@@ -1,9 +1,8 @@
 import type { AuthenticationConfig } from "./config-schema";
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/consistent-type-definitions  --
+/* oxlint-disable import/exports-last, import/group-exports, typescript/consistent-type-definitions --
  * import/exports-last (#522): SocialAuthSignInOptions is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): SocialAuthSignInOptions stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named SocialAuthSignInOptions API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): SocialAuthSignInOptions preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
 export type SocialAuthSignInOptions = {
@@ -13,10 +12,9 @@ export type SocialAuthSignInOptions = {
 };
 /* oxlint-enable import/exports-last, import/group-exports, typescript/consistent-type-definitions */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): SocialAuthProvider is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): SocialAuthProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named SocialAuthProvider API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type SocialAuthProvider = keyof AuthenticationConfig;
 /* oxlint-enable import/exports-last, import/group-exports */
@@ -28,10 +26,9 @@ const SOCIAL_AUTH_PROVIDER_ORDER: Record<SocialAuthProvider, number> = {
   vercel: 2,
 };
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): isSocialAuthProvider is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): isSocialAuthProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named isSocialAuthProvider API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const isSocialAuthProvider = (
   value: string | null | undefined
@@ -49,9 +46,8 @@ const SOCIAL_AUTH_PROVIDER_IDS = Object.keys(SOCIAL_AUTH_PROVIDER_ORDER)
   );
 /* oxlint-enable id-length */
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): getEnabledSocialAuthProviders stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getEnabledSocialAuthProviders API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const getEnabledSocialAuthProviders = (
   authentication: AuthenticationConfig
@@ -59,9 +55,8 @@ export const getEnabledSocialAuthProviders = (
   SOCIAL_AUTH_PROVIDER_IDS.filter((provider) => authentication[provider]);
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): sortSocialAuthProvidersByLastUsed stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named sortSocialAuthProvidersByLastUsed API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const sortSocialAuthProvidersByLastUsed = <
   TProvider extends { id: SocialAuthProvider },

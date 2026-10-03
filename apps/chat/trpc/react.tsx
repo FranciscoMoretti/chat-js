@@ -1,8 +1,7 @@
 "use client";
 
-/* oxlint-disable import/max-dependencies  --
+/* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "@tanstack/react-query" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { isServer, QueryClientProvider } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
@@ -20,10 +19,9 @@ import { isAbortedRequest } from "./is-aborted-request";
 import { makeQueryClient } from "./query-client";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/only-export-components  --
+/* oxlint-disable import/exports-last, import/group-exports, react/only-export-components --
  * import/exports-last (#522): { TRPCProvider, useTRPC, useTRPCClient } is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): { TRPCProvider, useTRPC, useTRPCClient } stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named { TRPCProvider, useTRPC, useTRPCClient } API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): { TRPCProvider, useTRPC, useTRPCClient } is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  */
 export const { TRPCProvider, useTRPC, useTRPCClient } =
@@ -71,10 +69,8 @@ const getUrl = (): string => {
   return `${base}/api/trpc`;
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/group-exports, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable import/group-exports, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * import/group-exports (#523): TRPCReactProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named TRPCReactProvider API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * no-ternary (#518): TRPCReactProvider derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * node/no-process-env (#537): TRPCReactProvider reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/prefer-readonly-parameter-types (#565): TRPCReactProvider accepts props: { children: React.ReactNode }; op; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): TRPCReactProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.

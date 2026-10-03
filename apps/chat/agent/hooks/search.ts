@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-search"; "../../lib/eve/conversation-scope"; "../../lib/eve/search-backfill"; "../../lib/eve/search-text" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { defineState } from "eve/context";
 import { defineHook } from "eve/hooks";
@@ -18,17 +17,14 @@ const maxPendingCharacters = 256_000;
 const needsRecovery = defineState("chatjs.search-recovery", () => false);
 const pending = defineState<EveSearchText[]>("chatjs.search-prefix", () => []);
 
-/* oxlint-disable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-lines-per-function (#510): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): default export emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-continue (#515): default export skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): default export uses 0, 1, 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): default export derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): default export sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): default export handles optional context.session.auth.initiator?.principalId; context.session.auth.initiator?.attributes.chatjsReservationId; error.stack?.split("\n").slice(1).join("\n") without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): default export accepts event; context; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export default defineHook({

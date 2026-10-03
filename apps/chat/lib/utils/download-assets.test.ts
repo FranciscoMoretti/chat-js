@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import assert from "node:assert/strict";
 
@@ -21,13 +20,11 @@ vi.mock("@/lib/url", () => ({
 
 vi.mock("@/lib/file-storage", () => ({ downloadFile }));
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null  --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * init-declarations (#507): describe("replaceFilePartUrlByBinaryDataInMessages") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("replaceFilePartUrlByBinaryDataInMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("replaceFilePartUrlByBinaryDataInMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("replaceFilePartUrlByBinaryDataInMessages") uses 1, 2, 0, 7, 3, 4, 5, 6 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): describe("replaceFilePartUrlByBinaryDataInMessages") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): describe("replaceFilePartUrlByBinaryDataInMessages") handles optional file?.type; downloadedUrl?.toString(); inlineFile?.type without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): describe("replaceFilePartUrlByBinaryDataInMessages") accepts { url }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): describe("replaceFilePartUrlByBinaryDataInMessages") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): describe("replaceFilePartUrlByBinaryDataInMessages") intentionally keeps the existing falsy-value behavior of message; distinguishing empty, zero, and absent states requires a domain behavior decision.

@@ -1,8 +1,6 @@
 import { env } from "@/lib/env";
 
-/* oxlint-disable jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions  --
- * import/no-named-export (#527): Preserve the named getBaseUrl API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): getBaseUrl remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions --
  * jsdoc/require-returns (#535): getBaseUrl's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * node/no-process-env (#537): getBaseUrl reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/strict-boolean-expressions (#610): getBaseUrl intentionally keeps the existing falsy-value behavior of env.APP_URL; env.VERCEL_BRANCH_URL; env.VERCEL_URL; process.env.PORT; distinguishing empty, zero, and absent states requires a domain behavior decision.

@@ -101,11 +101,10 @@ it.each([
   }
 );
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): it("removes owner approval and execution fields while preserving every tool status") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it("removes owner approval and execution fields while preserving every tool status") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("removes owner approval and execution fields while preserving every tool status") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-rest-spread-properties (#543): it("removes owner approval and execution fields while preserving every tool status") copies or separates ...base; ...base.approval while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("removes owner approval and execution fields while preserving every tool status", () => {
   const base = {
@@ -245,8 +244,7 @@ it("preserves streaming and partial published tool content without runtime field
   }
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-optional-chaining (#542): it("projects the original native model without private turn identities") handles optional messages.find((message) => message.role === "assistant")?.metadata without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it("projects the original native model without private turn identities") accepts message; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("projects the original native model without private turn identities", () => {

@@ -53,9 +53,8 @@ const decrypt = (encrypted: string): string => {
   return decipher.update(dataB64, "base64", "utf-8") + decipher.final("utf-8");
 };
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): encryptedText stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named encryptedText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 /**
  * Custom Drizzle type for encrypted text fields.
@@ -68,10 +67,9 @@ export const encryptedText = customType<{ driverData: string; data: string }>({
 });
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable id-length, import/group-exports, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * id-length (#506): encryptedJson uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): encryptedJson stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named encryptedJson API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-returns (#535): encryptedJson's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/explicit-function-return-type (#560): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-copy-documents"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
@@ -137,9 +136,8 @@ const resources = {
   revisionIds: [rootRevision, visibleRevision],
 };
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): test("captures all accessible ancestors without private branches, unrelated documents uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("captures all accessible ancestors without private branches, unrelated documents sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("captures all accessible ancestors without private branches, unrelated documents accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("captures all accessible ancestors without private branches, unrelated documents, or runtime ownership fields", async () => {
@@ -230,9 +228,8 @@ test("requires publication even for an empty resource manifest", async () => {
   ).toEqual({ checkpoints: [], documents: [] });
 });
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): test("observes revocation committed while preparation is waiting on the source row") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("observes revocation committed while preparation is waiting on the source row") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("observes revocation committed while preparation is waiting on the source row") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("observes revocation committed while preparation is waiting on the source row", async () => {
@@ -264,9 +261,8 @@ test("observes revocation committed while preparation is waiting on the source r
 });
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("snapshots native and imported boundaries independently of later document heads" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("snapshots native and imported boundaries independently of later document heads" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("snapshots native and imported boundaries independently of later document heads", async () => {
   await db.insert(eveDocumentCheckpoint).values([

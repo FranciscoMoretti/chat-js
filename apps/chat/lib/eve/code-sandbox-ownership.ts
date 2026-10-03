@@ -9,16 +9,11 @@ import {
 import { resolveEveConversationScope } from "./conversation-scope";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
- * import/no-named-export (#527): Preserve the named eveCodeSandboxOwnership API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): eveCodeSandboxOwnership remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * init-declarations (#507): eveCodeSandboxOwnership assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * jsdoc/require-param (#534): eveCodeSandboxOwnership's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): eveCodeSandboxOwnership's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): eveCodeSandboxOwnership keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): eveCodeSandboxOwnership sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): eveCodeSandboxOwnership handles optional context.session.auth.initiator?.principalId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): eveCodeSandboxOwnership copies or separates ...scope while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep eveCodeSandboxOwnership's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep eveCodeSandboxOwnership's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): eveCodeSandboxOwnership accepts context: { callId: string; session?: { id: string; auth: { initiator?: { p; provider: { teamId: string; projectId: string; }; signal?: AbortSignal; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

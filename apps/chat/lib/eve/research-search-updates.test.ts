@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { WorkflowToolContext } from "eve/tools";
 import { expect, it, vi } from "vitest";
@@ -34,11 +33,9 @@ const child = (callId: string, turnId = "turn", name = "researcher") => ({
 });
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): it("restores actual search evidence only from researchers owned by this call and turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("restores actual search evidence only from researchers owned by this call and turn uses 0.05 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("restores actual search evidence only from researchers owned by this call and turn sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("restores actual search evidence only from researchers owned by this call and turn copies or separates ...testToolContext({ callId: "research", session: { auth: { current: n while preserving existing object ownership; mutating source objects is not equivalent.
  * unicorn/no-null (#570): it("restores actual search evidence only from researchers owned by this call and turn preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("restores actual search evidence only from researchers owned by this call and turn", async () => {

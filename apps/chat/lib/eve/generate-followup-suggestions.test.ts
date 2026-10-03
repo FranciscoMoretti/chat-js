@@ -45,10 +45,7 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-async-await (#540): it("retains paid usage when structured output cannot be read") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("retains paid usage when structured output cannot be read") handles optional result?.responseMetadata; result?.modelCalls without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("retains paid usage when structured output cannot be read") copies or separates ...evidence while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep it("retains paid usage when structured output cannot be read")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 it("retains paid usage when structured output cannot be read", async () => {

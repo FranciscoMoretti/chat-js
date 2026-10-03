@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/saved-code-execution/execute" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -20,8 +19,7 @@ const mocks = vi.hoisted(() => ({
     toolInstalled: true,
   },
 }));
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type  --
- * no-ternary (#518): vi.mock("../../tools/chatjs/code-executor") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
  * no-undefined (#519): vi.mock("../../tools/chatjs/code-executor") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("../../tools/chatjs/code-executor")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -80,10 +78,8 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("executes owned saved source once, exposing only execution context and preservin uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("executes owned saved source once, exposing only execution context and preservin sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("executes owned saved source once, exposing only execution context and preservin copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("executes owned saved source once, exposing only execution context and preserving the cost receipt", async () => {
   const context = testToolContext();
@@ -112,8 +108,7 @@ test("executes owned saved source once, exposing only execution context and pres
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable unicorn/max-nested-calls  --
- * oxc/no-async-await (#540): test.each([ "allowed", "documentInstalled", "installed", "toolInstalled", ] as const) sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/max-nested-calls --
  * unicorn/max-nested-calls (#568): test.each([ "allowed", "documentInstalled", "installed", "toolInstalled", ] as const) keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 test.each([
@@ -130,9 +125,8 @@ test.each([
 });
 /* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable no-undefined, unicorn/max-nested-calls  --
+/* oxlint-disable no-undefined, unicorn/max-nested-calls --
  * no-undefined (#519): test("never executes a revision outside the resolved conversation") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("never executes a revision outside the resolved conversation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/max-nested-calls (#568): test("never executes a revision outside the resolved conversation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 test("never executes a revision outside the resolved conversation", async () => {
@@ -144,8 +138,7 @@ test("never executes a revision outside the resolved conversation", async () => 
 });
 /* oxlint-enable no-undefined, unicorn/max-nested-calls */
 
-/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null  --
- * oxc/no-async-await (#540): test("cancellation prevents execution and an error receipt is forwarded once") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
  * unicorn/max-nested-calls (#568): test("cancellation prevents execution and an error receipt is forwarded once") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("cancellation prevents execution and an error receipt is forwarded once") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */

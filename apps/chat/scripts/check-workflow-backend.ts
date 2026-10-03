@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/connection"; "../lib/db/workflow-backend"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import postgres from "postgres";
 
@@ -9,9 +8,8 @@ import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env  --
+/* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): check reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * oxc/no-async-await (#540): check sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 const check = async (): Promise<void> => {
   const world = resolveWorkflowWorld();
@@ -30,9 +28,8 @@ const check = async (): Promise<void> => {
   }
 };
 /* oxlint-enable node/no-process-env */
-/* oxlint-disable no-console, typescript/explicit-function-return-type  --
+/* oxlint-disable no-console, typescript/explicit-function-return-type --
  * no-console (#514): void (async () => { try { await check(); } catch (error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * oxc/no-async-await (#540): void (async () => { try { await check(); } catch (error sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await check(); } catch (error's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: build-eve invokes this entrypoint through tsx in a CommonJS package; top-level await cannot compile there.

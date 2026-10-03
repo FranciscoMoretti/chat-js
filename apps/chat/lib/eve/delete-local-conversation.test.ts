@@ -41,11 +41,10 @@ beforeEach(() => {
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): test("all resources and native family payloads finish before the application tombston keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("all resources and native family payloads finish before the application tombston uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("all resources and native family payloads finish before the application tombston uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("all resources and native family payloads finish before the application tombston sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("all resources and native family payloads finish before the application tombston accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("all resources and native family payloads finish before the application tombstone", async () => {
@@ -88,10 +87,9 @@ test("resource uncertainty prevents any native payload erasure", async () => {
   expect(mocks.complete).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): test("partial native purge retains pending state and retry runs the full ordering aga uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("partial native purge retains pending state and retry runs the full ordering aga uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("partial native purge retains pending state and retry runs the full ordering aga sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("partial native purge retains pending state and retry runs the full ordering aga accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("partial native purge retains pending state and retry runs the full ordering again", async () => {
@@ -116,9 +114,8 @@ test("partial native purge retains pending state and retry runs the full orderin
 });
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): test("foreign or missing families cannot erase native or application data") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("foreign or missing families cannot erase native or application data") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("foreign or missing families cannot erase native or application data", async () => {
   mocks.resources.mockResolvedValue(undefined);

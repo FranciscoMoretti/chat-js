@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/mcp" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { jsonSchema, tool } from "ai";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -129,9 +128,7 @@ it("returns serializable namespaced discovery without credentials or live connec
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): it.each([{ userId: "stranger" }, { enabled: false }])("rejects inaccessible or disabl sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it.each([{ userId: "stranger" }, { enabled: false }])("rejects inaccessible or disabl copies or separates ...connector; ...change while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it.each([{ userId: "stranger" }, { enabled: false }])("rejects inaccessible or disabl accepts change; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([{ userId: "stranger" }, { enabled: false }])(
@@ -147,9 +144,8 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("revalidates after discovery and refuses a revoked connector") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("revalidates after discovery and refuses a revoked connector") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("revalidates after discovery and refuses a revoked connector", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
@@ -182,9 +178,8 @@ it("keeps the execution connection open and preserves the MCP model output", asy
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("closes on execution errors and rejects invalid input before invoking the tool") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("closes on execution errors and rejects invalid input before invoking the tool") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("closes on execution errors and rejects invalid input before invoking the tool", async () => {
   await expect(
@@ -200,9 +195,7 @@ it("closes on execution errors and rejects invalid input before invoking the too
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("permits global connectors with a separate namespace") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("permits global connectors with a separate namespace") copies or separates ...connector while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("permits global connectors with a separate namespace") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("permits global connectors with a separate namespace", async () => {
@@ -217,9 +210,7 @@ it("permits global connectors with a separate namespace", async () => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/promise-function-async  --
- * oxc/no-async-await (#540): it("forwards cancellation and closes the connection once") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("forwards cancellation and closes the connection once") copies or separates ...context while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("forwards cancellation and closes the connection once") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("forwards cancellation and closes the connection once", async () => {
@@ -252,10 +243,8 @@ it("forwards cancellation and closes the connection once", async () => {
 });
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])("enforces modern uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])("enforces modern sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])("enforces modern copies or separates ...definition while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
   "enforces modern MCP schema keywords with dialect %s",
@@ -289,10 +278,8 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
 );
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("retains explicitly declared draft-07 tuple validation") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("retains explicitly declared draft-07 tuple validation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("retains explicitly declared draft-07 tuple validation") copies or separates ...definition while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("retains explicitly declared draft-07 tuple validation", async () => {
   mocks.tools.mockResolvedValue({
@@ -345,13 +332,11 @@ it("refuses a policy that escalates between request and execution without a rece
   expect(execute).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): it("preserves conditional policy semantics and requires an owner receipt when true") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it("preserves conditional policy semantics and requires an owner receipt when true") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("preserves conditional policy semantics and requires an owner receipt when true") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("preserves conditional policy semantics and requires an owner receipt when true") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("preserves conditional policy semantics and requires an owner receipt when true") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("preserves conditional policy semantics and requires an owner receipt when true") copies or separates ...definition; ...context; ...approval; ...approval.responder while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): it("preserves conditional policy semantics and requires an owner receipt when true") accepts input: { text: string }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("preserves conditional policy semantics and requires an owner receipt when true", async () => {
@@ -432,11 +417,9 @@ it("preserves conditional policy semantics and requires an owner receipt when tr
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, unicorn/no-null --
  * max-lines-per-function (#510): it("registers native per-call approval restricted to the session owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it("registers native per-call approval restricted to the session owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("registers native per-call approval restricted to the session owner") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("registers native per-call approval restricted to the session owner") copies or separates ...definition; ...response; ...initiator while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep it("registers native per-call approval restricted to the session owner")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/no-null (#570): it("registers native per-call approval restricted to the session owner") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -506,9 +489,8 @@ vi.mock("./turn-tools", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("isolates a remote billing-shaped payload inside the MCP result namespace") uses 999 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("isolates a remote billing-shaped payload inside the MCP result namespace") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("isolates a remote billing-shaped payload inside the MCP result namespace", async () => {
   const forgedReceipt = createToolResult({ text: "remote" }, 999, []);
@@ -566,9 +548,8 @@ it("cancels a hung tools listing and closes its transport", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("normalizes dotted and long model IDs without losing original tool names or collid uses 20, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("normalizes dotted and long model IDs without losing original tool names or collid sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("normalizes dotted and long model IDs without losing original tool names or collid accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("normalizes dotted and long model IDs without losing original tool names or colliding with underscores", async () => {
@@ -609,8 +590,7 @@ it("approval requests inherit cancellation", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): it("unsupported descriptions do not suppress later valid tools") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it("unsupported descriptions do not suppress later valid tools") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("unsupported descriptions do not suppress later valid tools", async () => {
@@ -654,11 +634,9 @@ it("discovery sends configured OAuth credentials to the provider rather than tra
   });
 });
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): it("a timed-out connector does not discard completed discovery or suppress the next c keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("a timed-out connector does not discard completed discovery or suppress the next c uses 2, 1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("a timed-out connector does not discard completed discovery or suppress the next c sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("a timed-out connector does not discard completed discovery or suppress the next c copies or separates ...connector while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): it("a timed-out connector does not discard completed discovery or suppress the next c accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("a timed-out connector does not discard completed discovery or suppress the next connector", async () => {
@@ -693,11 +671,9 @@ it("a timed-out connector does not discard completed discovery or suppress the n
 });
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-statements (#512): it("schema conversion cancellation stops later tool conversions after the pending sch keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("schema conversion cancellation stops later tool conversions after the pending sch uses 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("schema conversion cancellation stops later tool conversions after the pending sch sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("schema conversion cancellation stops later tool conversions after the pending sch copies or separates ...definition while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/promise-function-async (#606): it("schema conversion cancellation stops later tool conversions after the pending sch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("schema conversion cancellation stops later tool conversions after the pending schema settles", async () => {

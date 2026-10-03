@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tools/platform/research-updates-schema"; "../ai/tool-context" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { ToolContext } from "eve/tools";
 
@@ -11,10 +10,8 @@ import { executeWithToolProgress } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * id-length (#506): executeWithResearchProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/no-named-export (#527): Preserve the named executeWithResearchProgress API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): executeWithResearchProgress remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * typescript/explicit-function-return-type (#560): Keep executeWithResearchProgress's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep executeWithResearchProgress's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): executeWithResearchProgress accepts context: Pick<ToolContext, "abortSignal">; options: { abortSignal: AbortSignal; usage: ToolUsage; dataStream: ToolProgressWriter; { abortSignal, usage, publish }; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

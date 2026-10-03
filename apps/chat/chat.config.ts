@@ -5,9 +5,8 @@ import { defineConfig } from "@/lib/config-schema";
  */
 const isProd = process.env.NODE_ENV === "production";
 /* oxlint-enable node/no-process-env */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): config uses 10, 1000, 5, 60, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): config derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  */
 /**
  * ChatJS Configuration

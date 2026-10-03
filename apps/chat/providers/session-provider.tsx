@@ -37,10 +37,8 @@ const SessionSeedContext = createContext<
 >(null);
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable import/group-exports, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * import/group-exports (#523): SessionProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named SessionProvider API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * no-ternary (#518): SessionProvider derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): SessionProvider uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): SessionProvider accepts { children, }: { children: React.ReactNode; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): SessionProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -97,9 +95,8 @@ export const SessionProvider = ({
 };
 /* oxlint-enable import/group-exports, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * import/group-exports (#523): SessionSeed stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named SessionSeed API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/no-multi-comp (#552): SessionSeed keeps related render components together; extraction changes component, state, and layout boundaries.
  * typescript/explicit-function-return-type (#560): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -121,9 +118,8 @@ export const SessionSeed = ({ session }: { session: Session | null }) => {
 };
 /* oxlint-enable import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, react/only-export-components  --
+/* oxlint-disable import/group-exports, react/only-export-components --
  * import/group-exports (#523): useSession stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named useSession API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): useSession is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  */
 export const useSession = (): SessionContextValue => {

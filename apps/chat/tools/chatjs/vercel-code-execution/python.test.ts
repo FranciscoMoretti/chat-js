@@ -13,10 +13,9 @@ vi.mock("@vercel/sandbox", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it.each([0, 1])("does not log package credentials when pip exits with %s") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each([0, 1])("does not log package credentials when pip exits with %s") uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each([0, 1])("does not log package credentials when pip exits with %s") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it.each([0, 1])(
   "does not log package credentials when pip exits with %s",

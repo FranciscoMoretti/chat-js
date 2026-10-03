@@ -8,9 +8,8 @@ afterEach(() => {
   vi.useRealTimers();
   request.mockReset();
 });
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("waits through source initialization and verifies exact checkpoint identity") uses 250, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("waits through source initialization and verifies exact checkpoint identity") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("waits through source initialization and verifies exact checkpoint identity", async () => {
   vi.useFakeTimers();
@@ -35,9 +34,8 @@ it("waits through source initialization and verifies exact checkpoint identity",
   ]);
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("does not accept an unrelated source receipt or a generic not found") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("does not accept an unrelated source receipt or a generic not found") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("does not accept an unrelated source receipt or a generic not found", async () => {
   request.mockResolvedValueOnce(
@@ -55,9 +53,8 @@ it("does not accept an unrelated source receipt or a generic not found", async (
   expect(request).toHaveBeenCalledTimes(2);
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): it("times out without allocating or changing the requested checkpoint") uses 15_000, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("times out without allocating or changing the requested checkpoint") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("times out without allocating or changing the requested checkpoint") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("times out without allocating or changing the requested checkpoint") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -82,11 +79,9 @@ it("times out without allocating or changing the requested checkpoint", async ()
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("requires the exact named checkpoint receipt and never falls back to a turn lookup uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("requires the exact named checkpoint receipt and never falls back to a turn lookup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("requires the exact named checkpoint receipt and never falls back to a turn lookup sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("requires the exact named checkpoint receipt and never falls back to a turn lookup copies or separates ...receipt while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("requires the exact named checkpoint receipt and never falls back to a turn lookup", async () => {
   const checkpointId = crypto.randomUUID();
@@ -116,9 +111,8 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each(["source_not_idle", "source_advanced"])("recognizes durable named checkpoint  uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each(["source_not_idle", "source_advanced"])("recognizes durable named checkpoint  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it.each(["source_not_idle", "source_advanced"])(
   "recognizes durable named checkpoint rejection %s without polling",
@@ -137,8 +131,7 @@ it.each(["source_not_idle", "source_advanced"])(
 );
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): it.each([ { checkpointRejected: true, error: "Identity conflict" }, { checkpointRejec sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it.each([ { checkpointRejected: true, error: "Identity conflict" }, { checkpointRejec accepts body; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([

@@ -1,9 +1,8 @@
 import type { EveForkKind } from "./contracts";
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): EveResponseGroupLineageConversation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): EveResponseGroupLineageConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named EveResponseGroupLineageConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export interface EveResponseGroupLineageConversation {
   createdAt: Date;
@@ -17,10 +16,9 @@ export interface EveResponseGroupLineageConversation {
 }
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): EveResponseGroupLineage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): EveResponseGroupLineage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named EveResponseGroupLineage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export interface EveResponseGroupLineage {
   groupId: string;
@@ -46,9 +44,8 @@ const localTurnBoundary = (
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): laterConversation uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): laterConversation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/prefer-readonly-parameter-types (#565): laterConversation accepts left: EveResponseGroupLineageConversation; right: EveResponseGroupLineageConversation; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const laterConversation = (
@@ -60,15 +57,13 @@ const laterConversation = (
     : left.createdAt > right.createdAt;
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
- * import/no-named-export (#527): Preserve the named resolveEveResponseGroupLineage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * jsdoc/require-param (#534): resolveEveResponseGroupLineage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): resolveEveResponseGroupLineage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): resolveEveResponseGroupLineage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): resolveEveResponseGroupLineage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): resolveEveResponseGroupLineage skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): resolveEveResponseGroupLineage uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): resolveEveResponseGroupLineage derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): resolveEveResponseGroupLineage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): resolveEveResponseGroupLineage accepts conversations: readonly EveResponseGroupLineageConversation[]; groups: readonly { candidateOperationIds: readonly string[]; id: string }[]; conversation; group; entry; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): resolveEveResponseGroupLineage intentionally keeps the existing falsy-value behavior of current.parentConversationId; candidate; boundary; conversation.parentConversationId; originalBoundary; distinguishing empty, zero, and absent states requires a domain behavior decision.

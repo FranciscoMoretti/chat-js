@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types"; "../db/eve-guests"; "../types/anonymous" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
@@ -21,9 +20,8 @@ import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 import type { EveMessageInput } from "./message-input";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): admitGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named admitGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * jsdoc/require-param (#534): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -31,8 +29,6 @@ import type { EveMessageInput } from "./message-input";
  * max-params (#511): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): admitGuestMessage uses 400, 403, 503, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): admitGuestMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): admitGuestMessage copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): admitGuestMessage accepts request: Request; input: { message: EveMessageInput; modelId?: string; selectedTool?: UiToolName; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -104,11 +100,9 @@ export const admitGuestMessage = async (
   );
 };
 /* oxlint-enable import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * import/group-exports (#523): settleGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named settleGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): settleGuestMessage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): settleGuestMessage accepts response: Response; admission: { operationId: string; reservationId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */

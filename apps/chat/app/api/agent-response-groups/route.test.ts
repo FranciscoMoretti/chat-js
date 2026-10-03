@@ -49,10 +49,9 @@ beforeEach(() => {
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.create.mockResolvedValue({ candidates: [], id: input.operationId });
 });
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("authenticates and checks origin before dispatching with server-owned identity") uses 403, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("authenticates and checks origin before dispatching with server-owned identity") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("authenticates and checks origin before dispatching with server-owned identity") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("authenticates and checks origin before dispatching with server-owned identity", async () => {
   const resolvedResult1 = await POST(request("https://foreign.invalid"));
@@ -67,9 +66,8 @@ test("authenticates and checks origin before dispatching with server-owned ident
   );
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
-/* oxlint-disable no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test("unauthenticated requests cannot create groups") uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("unauthenticated requests cannot create groups") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("unauthenticated requests cannot create groups") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("unauthenticated requests cannot create groups", async () => {
@@ -78,9 +76,8 @@ test("unauthenticated requests cannot create groups", async () => {
   expect(resolvedResult3.status).toBe(401);
 });
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("reads only through the authenticated owner's scope and does not cache bindings" uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("reads only through the authenticated owner's scope and does not cache bindings" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("reads only through the authenticated owner's scope and does not cache bindings", async () => {
   const params = Promise.resolve({ id: input.operationId });
@@ -95,10 +92,9 @@ test("reads only through the authenticated owner's scope and does not cache bind
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
  * max-statements (#512): test("guest comparisons cannot dispatch without successful batch admission") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("guest comparisons cannot dispatch without successful batch admission") uses 429, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("guest comparisons cannot dispatch without successful batch admission") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("guest comparisons cannot dispatch without successful batch admission") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("guest comparisons cannot dispatch without successful batch admission", async () => {
@@ -127,10 +123,8 @@ test("guest comparisons cannot dispatch without successful batch admission", asy
 });
 /* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("schedules one title generation for an initial comparison chat") uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("schedules one title generation for an initial comparison chat") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("schedules one title generation for an initial comparison chat") handles optional mocks.after.mock.calls[0]?.[0]() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 test("schedules one title generation for an initial comparison chat", async () => {
   mocks.create.mockResolvedValue({

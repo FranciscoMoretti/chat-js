@@ -30,11 +30,9 @@ interface DefaultModelClientProviderProps {
   defaultModel: AppModelId;
 }
 
-/* oxlint-disable import/group-exports, no-console, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, no-console, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): DefaultModelProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named DefaultModelProvider API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-console (#514): DefaultModelProvider emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * oxc/no-async-await (#540): DefaultModelProvider sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): DefaultModelProvider accepts { children, defaultModel: initialModel, }: DefaultModelClientProviderProps; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const DefaultModelProvider = ({
@@ -83,9 +81,8 @@ export const DefaultModelProvider = ({
 };
 /* oxlint-enable import/group-exports, no-console, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): useDefaultModel stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named useDefaultModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-undefined (#519): useDefaultModel uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * react/only-export-components (#553): useDefaultModel is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  * typescript/explicit-function-return-type (#560): Keep useDefaultModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -102,9 +99,8 @@ export const useDefaultModel = () => {
 };
 /* oxlint-enable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): useModelChange stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named useModelChange API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-undefined (#519): useModelChange uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * react/only-export-components (#553): useModelChange is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  * typescript/explicit-function-return-type (#560): Keep useModelChange's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

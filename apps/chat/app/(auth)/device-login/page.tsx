@@ -9,9 +9,8 @@ import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
 import { toSearchParamRecord } from "@/lib/electron-auth";
 
-/* oxlint-disable import/exports-last, react/only-export-components  --
+/* oxlint-disable import/exports-last, react/only-export-components --
  * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/no-named-export (#527): Preserve the named metadata API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  */
 export const metadata: Metadata = {
@@ -31,10 +30,7 @@ const DeviceLoginFallback = (): React.JSX.Element => (
   </div>
 );
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
- * no-ternary (#518): DeviceLoginContent derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): DeviceLoginContent sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): DeviceLoginContent handles optional session?.user without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries.
  * typescript/explicit-function-return-type (#560): Keep DeviceLoginContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

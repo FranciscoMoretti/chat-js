@@ -4,12 +4,9 @@ import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
 import { clientEnvSchema, serverEnvSchema } from "./env-schema";
 import { resolveEveEnvironment } from "./eve/environment";
 
-/* oxlint-disable import/group-exports, node/no-process-env  --
+/* oxlint-disable import/group-exports, node/no-process-env --
  * import/group-exports (#523): env stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named env API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * no-ternary (#518): env derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * node/no-process-env (#537): env reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * oxc/no-rest-spread-properties (#543): env copies or separates ...(typeof window === "undefined" ? resolveEveEnvironment(process.env) : {}) while preserving existing object ownership; mutating source objects is not equivalent.
  */
 export const env = createEnv({
   client: clientEnvSchema,
@@ -26,9 +23,8 @@ export const env = createEnv({
 });
 /* oxlint-enable import/group-exports, node/no-process-env */
 
-/* oxlint-disable import/group-exports, node/no-process-env  --
+/* oxlint-disable import/group-exports, node/no-process-env --
  * import/group-exports (#523): gatewayEnv stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named gatewayEnv API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * node/no-process-env (#537): gatewayEnv reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 // Registry gateways declare their environment independently of the app schema.

@@ -1,7 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-file-purge"; "../lib/db/eve-files"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
@@ -37,11 +36,10 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("File removal acceptance requires local Postgres.");
 }
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("storage purge removes files and recovers a lost deletion acknowledgement and an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("storage purge removes files and recovers a lost deletion acknowledgement and an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("storage purge removes files and recovers a lost deletion acknowledgement and an uses 0, 2, 26, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("storage purge removes files and recovers a lost deletion acknowledgement and an sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("storage purge removes files and recovers a lost deletion acknowledgement and an unwritten reservation", async () => {
   const owner = crypto.randomUUID();

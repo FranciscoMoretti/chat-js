@@ -8,9 +8,8 @@ const genericErrorMessages = new Set([
   FALLBACK_STREAM_ERROR_MESSAGE,
 ]);
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): getErrorText uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): getErrorText derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * unicorn/no-null (#570): getErrorText preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const getErrorText = (error: unknown): string | null => {
@@ -70,9 +69,8 @@ const mapKnownStreamErrorMessage = (message: string): string => {
   return FALLBACK_STREAM_ERROR_MESSAGE;
 };
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): getStreamErrorMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getStreamErrorMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const getStreamErrorMessage = (error: unknown): string =>
   mapKnownStreamErrorMessage(
@@ -80,11 +78,9 @@ export const getStreamErrorMessage = (error: unknown): string =>
   );
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): getStreamErrorToastContent stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getStreamErrorToastContent API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): getStreamErrorToastContent uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): getStreamErrorToastContent derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): getStreamErrorToastContent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): getStreamErrorToastContent accepts error: Error; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): getStreamErrorToastContent intentionally keeps the existing falsy-value behavior of rawCause; distinguishing empty, zero, and absent states requires a domain behavior decision.

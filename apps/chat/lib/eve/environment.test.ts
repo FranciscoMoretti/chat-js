@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../env-schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
@@ -20,11 +19,10 @@ const base = {
 };
 const schema = z.object(getEveRuntimeEnvOptions({}));
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions  --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): describe("EVE environment defaults") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("EVE environment defaults") uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): describe("EVE environment defaults") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-rest-spread-properties (#543): describe("EVE environment defaults") copies or separates ...base; ...source; ...overrides while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/strict-boolean-expressions (#610): describe("EVE environment defaults") intentionally keeps the existing falsy-value behavior of DATABASE_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 describe("EVE environment defaults", () => {
@@ -224,10 +222,9 @@ afterEach(() => {
   vi.resetModules();
 });
 
-/* oxlint-disable import/no-relative-parent-imports, max-statements  --
+/* oxlint-disable import/no-relative-parent-imports, max-statements --
  * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
  * max-statements (#512): it("the application env resolves defaults with an explicit gateway secret") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("the application env resolves defaults with an explicit gateway secret") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("the application env resolves defaults with an explicit gateway secret", async () => {
   for (const key of [
@@ -251,9 +248,8 @@ it("the application env resolves defaults with an explicit gateway secret", asyn
 });
 /* oxlint-enable import/no-relative-parent-imports, max-statements */
 
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
- * oxc/no-async-await (#540): it("does not expose server credentials to client components") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("does not expose server credentials to client components", async () => {
   vi.stubGlobal("window", {});
@@ -266,10 +262,9 @@ it("does not expose server credentials to client components", async () => {
 });
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-relative-parent-imports, no-undefined  --
+/* oxlint-disable import/no-relative-parent-imports, no-undefined --
  * import/no-relative-parent-imports (#530): Keep the explicit "../env-schema" dependency within this package instead of introducing an alias or barrel API.
  * no-undefined (#519): it("normalizes the schema's Playwright fallback URL") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("normalizes the schema's Playwright fallback URL") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("normalizes the schema's Playwright fallback URL", async () => {
   vi.stubEnv("PLAYWRIGHT", "True");

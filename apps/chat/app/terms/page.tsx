@@ -22,10 +22,9 @@ const getPlanTypesLabel = ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): PricingSection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): PricingSection uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-optional-chaining (#542): PricingSection handles optional config.pricing?.free?.name; config.pricing?.free?.summary; config.pricing?.pro?.name; config.pricing?.pro?.monthlyPrice; config.pricing?.pro?.summary without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * react/jsx-max-depth (#548): PricingSection keeps related render components together; extraction changes component, state, and layout boundaries.
  * react/jsx-no-literals (#549): PricingSection owns this page copy; replacing literal text requires a localization/content-management contract.
  * typescript/prefer-readonly-parameter-types (#565): PricingSection accepts { hasAnyPlan, planTypesLabel, hasFree, hasPro, currencySymbol, paymentProcessors, }: ; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -107,11 +106,9 @@ const PricingSection = ({
 };
 /* oxlint-enable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/jsx-no-literals, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null  --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/jsx-no-literals, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): TermsPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): TermsPage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): TermsPage derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-optional-chaining (#542): TermsPage handles optional config.pricing?.currency; config.pricing?.free; config.pricing?.pro; config.services?.paymentProcessors without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * react-perf/jsx-no-new-array-as-prop (#556): TermsPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-no-literals (#549): TermsPage owns this page copy; replacing literal text requires a localization/content-management contract.
  * react/no-multi-comp (#552): TermsPage keeps related render components together; extraction changes component, state, and layout boundaries.

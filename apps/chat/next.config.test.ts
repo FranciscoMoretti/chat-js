@@ -21,9 +21,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-async-await (#540): routes sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): routes handles optional config.rewrites?.() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep routes's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const routes = async () => {

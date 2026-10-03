@@ -111,9 +111,8 @@ const hookContext = (
 });
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): startTurn uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-optional-chaining (#542): startTurn handles optional conversation.events?.["turn.started"]?.( { data: { sequence, turnId: `turn_${sequence without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep startTurn's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): startTurn accepts parent?: Parameters<typeof hookContext>[1]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): startTurn preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -132,8 +131,7 @@ const startTurn = (
   );
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null  --
- * oxc/no-optional-chaining (#542): readInstructions handles optional instructions.events["turn.started"]?.( {}, { channel: {}, messages: [], mo without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep readInstructions's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): readInstructions preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): readInstructions preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -166,10 +164,9 @@ beforeEach(() => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
  * max-statements (#512): test("refreshes project instructions for each turn and clears them after detachment") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("refreshes project instructions for each turn and clears them after detachment") uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("refreshes project instructions for each turn and clears them after detachment") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("refreshes project instructions for each turn and clears them after detachment") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("refreshes project instructions for each turn and clears them after detachment", async () => {
@@ -197,9 +194,8 @@ test("refreshes project instructions for each turn and clears them after detachm
 });
 /* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("propagates required context failures and removes the previous turn's instructio uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("propagates required context failures and removes the previous turn's instructio sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("propagates required context failures and removes the previous turn's instructions", async () => {
   mocks.state.content = "Stale instructions";
@@ -213,10 +209,9 @@ test("propagates required context failures and removes the previous turn's instr
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("loads root project context for descendants without writing child checkpoints") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("loads root project context for descendants without writing child checkpoints") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("loads root project context for descendants without writing child checkpoints") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 // A nested child must use the root branch, not the immediate parent's session.
 test("loads root project context for descendants without writing child checkpoints", async () => {
@@ -242,11 +237,8 @@ test("loads root project context for descendants without writing child checkpoin
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("does not project a child's waiting checkpoint into the root branch") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("does not project a child's waiting checkpoint into the root branch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("does not project a child's waiting checkpoint into the root branch") handles optional conversation.events?.["session.waiting"]?.( { ...waiting, data: { ...waiting.data, w without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("does not project a child's waiting checkpoint into the root branch") copies or separates ...waiting; ...waiting.data while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("does not project a child's waiting checkpoint into the root branch", async () => {
   const waiting = {
@@ -275,10 +267,8 @@ test("does not project a child's waiting checkpoint into the root branch", async
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("generates user follow-up suggestions only for the root session") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("generates user follow-up suggestions only for the root session") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("generates user follow-up suggestions only for the root session") handles optional followups.events?.["turn.completed"]?.( { data: { sequence: 0, turnId: "turn_0" }, m without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 test("generates user follow-up suggestions only for the root session", async () => {
   await followups.events?.["turn.completed"]?.(

@@ -65,9 +65,8 @@ beforeEach(() => {
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("retires before reading and settling the final snapshot, including retries") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("retires before reading and settling the final snapshot, including retries") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("retires before reading and settling the final snapshot, including retries", async () => {
   await retireEveSessionForDeletion("owner", "session");
@@ -86,9 +85,8 @@ it("retires before reading and settling the final snapshot, including retries", 
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("rejects non-deleting or foreign sessions before native access") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("rejects non-deleting or foreign sessions before native access") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("rejects non-deleting or foreign sessions before native access", async () => {
   mocks.deleting.mockResolvedValue(undefined);
@@ -99,10 +97,8 @@ it("rejects non-deleting or foreign sessions before native access", async () => 
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-undefined, typescript/promise-function-async  --
- * no-ternary (#518): it("refuses erasure when retirement or cost settlement is incomplete") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined, typescript/promise-function-async --
  * no-undefined (#519): it("refuses erasure when retirement or cost settlement is incomplete") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("refuses erasure when retirement or cost settlement is incomplete") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it("refuses erasure when retirement or cost settlement is incomplete") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("refuses erasure when retirement or cost settlement is incomplete", async () => {
@@ -124,9 +120,8 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
 });
 /* oxlint-enable no-undefined, typescript/promise-function-async */
 
-/* oxlint-disable no-undefined, unicorn/no-null  --
+/* oxlint-disable no-undefined, unicorn/no-null --
  * no-undefined (#519): it("does not enter native family cleanup for an inaccessible family or a missing sess uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("does not enter native family cleanup for an inaccessible family or a missing sess sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("does not enter native family cleanup for an inaccessible family or a missing sess preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("does not enter native family cleanup for an inaccessible family or a missing session binding", async () => {

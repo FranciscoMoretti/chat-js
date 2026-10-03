@@ -35,10 +35,8 @@ beforeEach(() => {
 });
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("checks the destination owner before reading local storage, regardless of the supp uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("checks the destination owner before reading local storage, regardless of the supp sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("checks the destination owner before reading local storage, regardless of the supp handles optional result?.bytes.toString(); result?.mediaType without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("checks the destination owner before reading local storage, regardless of the supplied host", async () => {
   const result = await fetchEveChannelFile(

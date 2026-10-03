@@ -123,77 +123,187 @@ const readDirectives = (
   return directives;
 };
 
-// oxlint-disable-next-line eslint/max-lines-per-function -- Fingerprint each directive against its matching enable, covered line or structural metric scope in one policy pass.
+interface SourceScope {
+  readonly start: number;
+  readonly end: number;
+}
+
+const FILE_METRICS = new Set([
+  "max-lines",
+  "max-classes-per-file",
+  "import/max-dependencies",
+  "react/no-multi-comp",
+]);
+const FUNCTION_METRICS = new Set([
+  "max-lines-per-function",
+  "max-statements",
+  "max-depth",
+  "max-params",
+  "complexity",
+]);
+
+const withoutDirectives = (
+  source: string,
+  directives: readonly CommentDirective[]
+): string => {
+  const characters = Array.from({ length: source.length }, (character, index) =>
+    source.charAt(index)
+  );
+  for (const directive of directives) {
+    for (let index = directive.start; index < directive.end; index += ONE) {
+      if (characters[index] !== "\n" && characters[index] !== "\r") {
+        characters[index] = " ";
+      }
+    }
+  }
+  return characters.join("");
+};
+
+// Compiler-owned mutable Nodes are read-only inputs; only source positions are collected.
+const functionScope = (
+  source: string,
+  filename: string,
+  target: SourceScope
+): SourceScope => {
+  const tree = ts.createSourceFile(
+    filename,
+    source,
+    ts.ScriptTarget.Latest,
+    true
+  );
+  const scopes: SourceScope[] = [];
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Compiler Nodes expose mutable library interfaces; this traversal only reads syntax and positions.
+  const visit = (node: ts.Node): void => {
+    if (ts.isFunctionLike(node) && "body" in node && node.body) {
+      const declaration =
+        ts.isVariableDeclaration(node.parent) &&
+        ts.isVariableDeclarationList(node.parent.parent)
+          ? node.parent.parent.parent
+          : node;
+      const start = declaration.getStart(tree);
+      if (start < target.end && declaration.end > target.start) {
+        scopes.push({ end: declaration.end, start });
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  const startingHere = scopes.filter((scope) => scope.start >= target.start);
+  const first = startingHere
+    .toSorted((left, right) => left.start - right.start)
+    .at(ZERO);
+  if (first) {
+    return {
+      end: Math.max(...startingHere.map((scope) => scope.end)),
+      start: first.start,
+    };
+  }
+  return (
+    scopes.toSorted(
+      (left, right) => left.end - left.start - (right.end - right.start)
+    )[ZERO] ?? target
+  );
+};
+
+const lineScope = (
+  source: string,
+  directive: CommentDirective
+): SourceScope => {
+  const start =
+    directive.kind === "disable-next-line"
+      ? source.indexOf("\n", directive.end) + ONE
+      : source.lastIndexOf("\n", directive.start) + ONE;
+  const finalLineStart =
+    directive.kind === "disable-next-line" ? start : directive.end;
+  const newline = source.indexOf("\n", finalLineStart);
+  return {
+    end: newline < ZERO ? source.length : newline,
+    start:
+      start === ZERO && directive.kind === "disable-next-line"
+        ? source.length
+        : start,
+  };
+};
+
+const normalizeScope = (value: string): string =>
+  value.replaceAll(/\s+/gu, " ").trim();
+
+const occurrenceIdentity = (
+  cleanSource: string,
+  scope: SourceScope,
+  line: boolean
+): number => {
+  const covered = cleanSource.slice(scope.start, scope.end).trim();
+  if (!covered) {
+    return ZERO;
+  }
+  const prefix = cleanSource.slice(ZERO, scope.start);
+  if (line && !covered.includes("\n")) {
+    return prefix
+      .split("\n")
+      .filter((candidate) => candidate.trim() === covered).length;
+  }
+  // Compare repeated covered regions after removing directives and normalizing
+  // whitespace; ordinary inserted lines do not change the occurrence ordinal.
+  return normalizeScope(prefix).split(normalizeScope(covered)).length - ONE;
+};
+
+// oxlint-disable-next-line eslint/max-lines-per-function -- Fingerprint each real directive with its reason, covered scope, repeated-source identity and closure boundary in one policy pass.
 const readExceptions = (
   source: string,
   filename = "source.ts"
 ): LintException[] => {
   const directives = readDirectives(source, filename);
-  return (
-    directives
-      .filter((directive) => directive.kind !== "enable")
-      // oxlint-disable-next-line eslint/max-lines-per-function -- Scope hashing keeps directive identity and covered source together, including multiline directives and whole-file metrics.
-      .map((directive) => {
-        const scopeFingerprints: Record<string, string> = {};
-        for (const rule of directive.rules) {
-          const fileMetric =
-            /(?:^|\/)(?:max-lines(?:-per-function)?|max-statements|complexity|max-depth)$/u.test(
-              rule
-            );
-          if (directive.kind === "disable") {
-            const enable = directives.find(
-              (candidate) =>
-                candidate.start > directive.start &&
-                candidate.kind === "enable" &&
-                candidate.engine === directive.engine &&
-                (candidate.rules.length === ZERO ||
-                  candidate.rules.includes(rule))
-            );
-            // Covered raw source preserves code and literal changes, including same
-            // token count replacements. Scope edits require explicit baseline review.
-            scopeFingerprints[rule] = new Bun.CryptoHasher("sha256")
-              .update(
-                JSON.stringify([
-                  directive.reason,
-                  fileMetric
-                    ? source
-                    : source.slice(
-                        directive.end,
-                        enable?.start ?? source.length
-                      ),
-                ])
-              )
-              .digest("hex");
-          } else {
-            const coveredLine =
-              directive.kind === "disable-next-line"
-                ? (source.slice(directive.end).split("\n")[ONE] ?? "")
-                : source
-                    .split("\n")
-                    .slice(
-                      directive.line - ONE,
-                      source.slice(ZERO, directive.end).split("\n").length
-                    )
-                    .join("\n");
-            scopeFingerprints[rule] = new Bun.CryptoHasher("sha256")
-              .update(
-                JSON.stringify([
-                  directive.reason,
-                  fileMetric ? source : coveredLine,
-                ])
-              )
-              .digest("hex");
-          }
+  const cleanSource = withoutDirectives(source, directives);
+  return directives
+    .filter((directive) => directive.kind !== "enable")
+    .map((directive) => {
+      const scopeFingerprints: Record<string, string> = {};
+      for (const rule of directive.rules) {
+        const enable = directives.find(
+          (candidate) =>
+            directive.kind === "disable" &&
+            candidate.start > directive.start &&
+            candidate.kind === "enable" &&
+            candidate.engine === directive.engine &&
+            (candidate.rules.length === ZERO || candidate.rules.includes(rule))
+        );
+        const physicalScope =
+          directive.kind === "disable"
+            ? { end: enable?.start ?? source.length, start: directive.end }
+            : lineScope(source, directive);
+        let scope = physicalScope;
+        if (FILE_METRICS.has(rule.replace(/^eslint\//u, ""))) {
+          scope = { end: source.length, start: ZERO };
+        } else if (
+          directive.kind !== "disable" &&
+          FUNCTION_METRICS.has(rule.replace(/^eslint\//u, ""))
+        ) {
+          scope = functionScope(source, filename, physicalScope);
         }
-        return {
-          directive: `${directive.engine}-${directive.kind}`,
-          line: directive.line,
-          reason: directive.reason,
-          rules: directive.rules,
-          scopeFingerprints,
-        };
-      })
-  );
+        scopeFingerprints[rule] = new Bun.CryptoHasher("sha256")
+          .update(
+            JSON.stringify([
+              directive.reason,
+              source.slice(scope.start, scope.end),
+              occurrenceIdentity(
+                cleanSource,
+                scope,
+                directive.kind !== "disable" && scope === physicalScope
+              ),
+              directive.kind === "disable" ? Boolean(enable) : "line",
+            ])
+          )
+          .digest("hex");
+      }
+      return {
+        directive: `${directive.engine}-${directive.kind}`,
+        line: directive.line,
+        reason: directive.reason,
+        rules: directive.rules,
+        scopeFingerprints,
+      };
+    });
 };
 
 // oxlint-disable-next-line eslint/max-statements -- Build counts, missing-reason debt and block scope fingerprints in one pass over actual directives.
@@ -328,6 +438,30 @@ const parseBaseline = (text: string): ExceptionBaseline => {
   };
 };
 
+const reviewBaselineUpdate = (
+  files: Readonly<Record<string, string>>,
+  prior: ExceptionBaseline,
+  allowNew = false
+): string[] => {
+  const snapshot = snapshotExceptions(files);
+  const { errors } = snapshot;
+  for (const [key, count] of Object.entries(snapshot.baseline.counts)) {
+    if (!allowNew && count > (prior.counts[key] ?? ZERO)) {
+      errors.push(
+        `Baseline exception count increased ${key}; review the new exception and use --write-baseline --allow-new`
+      );
+    }
+  }
+  for (const [key, count] of Object.entries(snapshot.baseline.missingReasons)) {
+    if (count > (prior.missingReasons[key] ?? ZERO)) {
+      errors.push(
+        `Baseline updates cannot introduce missing reasons ${key}; add a reason after --`
+      );
+    }
+  }
+  return errors;
+};
+
 // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- The CLI inventories files, validates errors and performs explicit baseline writes in their required execution order.
 const main = async (): Promise<void> => {
   // Git includes standalone and checked-in generated sources; ignored output stays excluded.
@@ -361,15 +495,9 @@ const main = async (): Promise<void> => {
     const savedBaseline = Bun.file(baselinePath);
     if (await savedBaseline.exists()) {
       const prior = parseBaseline(await savedBaseline.text());
-      for (const [key, count] of Object.entries(
-        snapshot.baseline.missingReasons
-      )) {
-        if (count > (prior.missingReasons[key] ?? ZERO)) {
-          snapshot.errors.push(
-            `Baseline updates cannot introduce missing reasons ${key}; add a reason after --`
-          );
-        }
-      }
+      snapshot.errors.push(
+        ...reviewBaselineUpdate(files, prior, Bun.argv.includes("--allow-new"))
+      );
     }
     if (snapshot.errors.length > ZERO) {
       throw new Error(snapshot.errors.join("\n"));
@@ -402,7 +530,13 @@ if (import.meta.main) {
   await main();
 }
 
-export { checkExceptions, parseBaseline, readExceptions, snapshotExceptions };
+export {
+  checkExceptions,
+  parseBaseline,
+  readExceptions,
+  reviewBaselineUpdate,
+  snapshotExceptions,
+};
 export type { ExceptionBaseline, LintException };
 
 /* oxlint-disable eslint/max-lines -- This file-level EOF diagnostic counts the standalone parser, persisted-budget validation and CLI policy together. */

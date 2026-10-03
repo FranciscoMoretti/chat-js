@@ -30,12 +30,10 @@ type ActiveGatewayVideoModelId = Parameters<
 >[0];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): getLanguageModel stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getLanguageModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): getLanguageModel uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * node/no-process-env (#537): getLanguageModel reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * oxc/no-async-await (#540): getLanguageModel sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep getLanguageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getLanguageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -68,9 +66,8 @@ export const getLanguageModel = async (modelId: AppModelId) => {
 };
 /* oxlint-enable import/group-exports, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): getImageModel stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getImageModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): getImageModel accepts modelId: ActiveGatewayImageModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -87,9 +84,8 @@ export const getImageModel = (modelId: ActiveGatewayImageModelId) => {
 };
 /* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): getVideoModel stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getVideoModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getVideoModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getVideoModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): getVideoModel accepts modelId: ActiveGatewayVideoModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -105,9 +101,8 @@ export const getVideoModel = (modelId: ActiveGatewayVideoModelId) => {
 };
 /* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): getMultimodalImageModel stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getMultimodalImageModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getMultimodalImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getMultimodalImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -116,10 +111,8 @@ export const getMultimodalImageModel = (modelId: ActiveGatewayModelId) =>
   getActiveGateway().createLanguageModel(modelId);
 /* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): getModelProviderOptions stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getModelProviderOptions API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): getModelProviderOptions sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep getModelProviderOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getModelProviderOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */

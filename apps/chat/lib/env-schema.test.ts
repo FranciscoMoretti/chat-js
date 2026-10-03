@@ -14,9 +14,8 @@ const valid = {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): describe("EVE runtime environment") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-rest-spread-properties (#543): describe("EVE runtime environment") copies or separates ...valid while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): describe("EVE runtime environment") accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 describe("EVE runtime environment", () => {

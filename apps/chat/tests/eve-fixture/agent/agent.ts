@@ -4,13 +4,10 @@
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
-/* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return  --
+/* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-statements (#512): default export keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): default export uses 5000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): default export derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): default export sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): default export handles optional lastUserMessage?.startsWith("slow"); lastUserMessage?.startsWith("confirm"); tool?.name without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of lastUserMessage?.startsWith("slow"); lastUserMessage?.startsWith("confirm"); distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): default export's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */

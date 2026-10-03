@@ -1,10 +1,7 @@
 import type { Sql } from "postgres";
 
-/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
- * import/no-named-export (#527): Preserve the named ensureWorkflowBackend API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): ensureWorkflowBackend remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): ensureWorkflowBackend's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): ensureWorkflowBackend sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): ensureWorkflowBackend accepts connection: Sql; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): ensureWorkflowBackend intentionally keeps the existing falsy-value behavior of registered; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */

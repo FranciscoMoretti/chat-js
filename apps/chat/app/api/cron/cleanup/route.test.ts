@@ -35,10 +35,9 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test.each([undefined, "", " "])("unconfigured cleanup rejects a matching interpolated uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test.each([undefined, "", " "])("unconfigured cleanup rejects a matching interpolated uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test.each([undefined, "", " "])("unconfigured cleanup rejects a matching interpolated sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test.each([undefined, "", "   "])(
   "unconfigured cleanup rejects a matching interpolated credential: %j",
@@ -57,10 +56,8 @@ test.each([undefined, "", "   "])(
 );
 /* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("cleanup uses EVE ownership") uses 200, 0, 4, 60, 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("cleanup uses EVE ownership") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("cleanup uses EVE ownership") handles optional mocks.cleanupEve.mock.calls[0]?.[0].getTime() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 test("cleanup uses EVE ownership", async () => {
   const response = await GET(
@@ -86,9 +83,8 @@ test("cleanup uses EVE ownership", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("cleanup still requires cron authorization") uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("cleanup still requires cron authorization") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("cleanup still requires cron authorization", async () => {
   const response = await GET(
@@ -98,9 +94,8 @@ test("cleanup still requires cron authorization", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("storage failure does not prevent expired guest cleanup and reports retry") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("storage failure does not prevent expired guest cleanup and reports retry") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("storage failure does not prevent expired guest cleanup and reports retry", async () => {
   mocks.cleanupEve.mockRejectedValueOnce(new Error("storage unavailable"));
@@ -118,9 +113,8 @@ test("storage failure does not prevent expired guest cleanup and reports retry",
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("pending guest deletion is retryable failure after attachment cleanup runs") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("pending guest deletion is retryable failure after attachment cleanup runs") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("pending guest deletion is retryable failure after attachment cleanup runs", async () => {
   mocks.cleanupGuests.mockResolvedValueOnce({

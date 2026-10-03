@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-namespace, import/no-relative-parent-imports  --
+/* oxlint-disable import/no-namespace, import/no-relative-parent-imports --
  * import/no-namespace (#528): The InstalledFeatures namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/tool-selection"; "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import {
   ContextContainer,
@@ -44,10 +43,7 @@ vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions  --
- * no-ternary (#518): startTurn derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-optional-chaining (#542): startTurn handles optional selectionHook.events?.["turn.started"]?.( { data: { sequence: 1, turnId: "turn_1" },  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): startTurn copies or separates ...(selectedTool ? { selectedTool } : {}); ...(principalType === "guest" ? { chatjsGuest: "true" } : {}) while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/explicit-function-return-type (#560): Keep startTurn's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): startTurn preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): startTurn intentionally keeps the existing falsy-value behavior of selectedTool; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -226,9 +222,8 @@ it("restores the selected capability from Eve serialized context before a resume
   });
 });
 
-/* oxlint-disable no-undefined  --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("guest automatic and explicit turns retain only configured anonymous tools") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("guest automatic and explicit turns retain only configured anonymous tools") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("guest automatic and explicit turns retain only configured anonymous tools", async () => {
   await contextStorage.run(new ContextContainer(), async () => {

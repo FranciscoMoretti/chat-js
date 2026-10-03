@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as delay } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { setTimeout as delay } from "node:timers/promises";
 
@@ -13,12 +12,10 @@ import { EveCreationRecoveryError } from "./creation-recovery-error";
 import { executeEveConversationCreation } from "./execute-conversation-creation";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions  --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): waitForConcurrentBinding's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): waitForConcurrentBinding's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): waitForConcurrentBinding uses 8, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): waitForConcurrentBinding sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): waitForConcurrentBinding handles optional current?.state without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/strict-boolean-expressions (#610): waitForConcurrentBinding intentionally keeps the existing falsy-value behavior of current.sessionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /** Only wait for an explicitly identified lock contender; never retry dispatch here. */
@@ -46,14 +43,11 @@ const waitForConcurrentBinding = async (
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, max-statements, no-continue, no-magic-numbers, unicorn/no-null  --
- * import/no-named-export (#527): Preserve the named recoverEveCreations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): recoverEveCreations remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-param, max-statements, no-continue, no-magic-numbers, unicorn/no-null --
  * jsdoc/require-param (#534): recoverEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): recoverEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): recoverEveCreations skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): recoverEveCreations uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): recoverEveCreations sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): recoverEveCreations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /** Finish admitted commands before accounting for their native usage or admitting more work. */

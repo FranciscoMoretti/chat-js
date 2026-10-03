@@ -1,8 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): MAX_SEARCH_QUERY_LENGTH stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named MAX_SEARCH_QUERY_LENGTH API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const MAX_SEARCH_QUERY_LENGTH = 255;
 /* oxlint-enable import/group-exports */
@@ -12,12 +11,10 @@ export interface EveSearchText {
   text: string;
 }
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): eveSeedSearchText stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named eveSeedSearchText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-ternary (#518): eveSeedSearchText derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/prefer-readonly-parameter-types (#565): eveSeedSearchText accepts messages: readonly { role: string; parts: readonly { type: string; text?: string }[];; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Index display text only: never reasoning, tool payloads, files, or auth metadata. */
@@ -39,13 +36,10 @@ export const eveSeedSearchText = (
   });
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): eveEventSearchText stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named eveEventSearchText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-ternary (#518): eveEventSearchText derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-optional-chaining (#542): eveEventSearchText handles optional event.data.message?.trim() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): eveEventSearchText intentionally keeps the existing falsy-value behavior of event.data.message?.trim(); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */

@@ -16,9 +16,8 @@ vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
 
 vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * id-length (#506): collect uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * oxc/no-async-await (#540): collect sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep collect's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): collect accepts value: T | Promise<T> | AsyncIterable<T>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -35,10 +34,8 @@ const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
 };
 /* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("native search streams sources and seals a final cost receipt") uses -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("native search streams sources and seals a final cost receipt") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("native search streams sources and seals a final cost receipt") handles optional results.at(-1)?.updates without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 test("native search streams sources and seals a final cost receipt", async () => {
   search.mockResolvedValue({
@@ -83,8 +80,7 @@ test("native search streams sources and seals a final cost receipt", async () =>
   expect(results.length).toBeGreaterThan(1);
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): test("strict fields remain required while explicit nulls apply defaults") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): test("strict fields remain required while explicit nulls apply defaults") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("strict fields remain required while explicit nulls apply defaults", async () => {

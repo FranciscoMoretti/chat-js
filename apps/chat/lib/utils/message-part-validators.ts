@@ -261,9 +261,8 @@ const dynamicToolPartSchema = z.union([
   dynamicToolPartOutputDeniedSchema,
 ]);
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): validateToolPart stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named validateToolPart API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): validateToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): validateToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/explicit-function-return-type (#560): Keep validateToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -277,9 +276,8 @@ export const validateToolPart = (part: unknown) =>
   toolPartSchema.safeParse(part);
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): validateDynamicToolPart stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named validateDynamicToolPart API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): validateDynamicToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): validateDynamicToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/explicit-function-return-type (#560): Keep validateDynamicToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

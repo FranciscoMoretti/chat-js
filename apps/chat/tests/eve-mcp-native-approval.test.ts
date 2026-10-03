@@ -22,8 +22,7 @@ const actor = {
   principalId: "owner",
   principalType: "user",
 };
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-rest-spread-properties (#543): session copies or separates ...actor while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const session = {
@@ -52,9 +51,8 @@ const batch: ResolvedInputBatch = {
     },
   ],
 };
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type  --
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
  * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-rest-spread-properties (#543): fixture copies or separates ...actor while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 function fixture() {
@@ -71,9 +69,7 @@ function fixture() {
 }
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): test("native executor receives only its exact authorized session/call/tool/input rece sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("native executor receives only its exact authorized session/call/tool/input rece copies or separates ...session while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): test("native executor receives only its exact authorized session/call/tool/input rece accepts toolContext; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("native executor receives only its exact authorized session/call/tool/input receipt", async () => {
@@ -104,11 +100,10 @@ test("native executor receives only its exact authorized session/call/tool/input
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-rest-spread-properties (#543): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") copies or separates ...batch; ...batch.inputs[0] while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("old audit history, denied responses, and ambiguous calls cannot mint receipts", () => {
   const { ctx, state } = fixture();
@@ -146,13 +141,10 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
 });
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test.each(["owner", "stranger"])("native harness binds approval to its authorized res keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test.each(["owner", "stranger"])("native harness binds approval to its authorized res keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test.each(["owner", "stranger"])("native harness binds approval to its authorized res uses 4, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test.each(["owner", "stranger"])("native harness binds approval to its authorized res derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test.each(["owner", "stranger"])("native harness binds approval to its authorized res sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test.each(["owner", "stranger"])("native harness binds approval to its authorized res copies or separates ...actor while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep test.each(["owner", "stranger"])("native harness binds approval to its authorized res's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): test.each(["owner", "stranger"])("native harness binds approval to its authorized res accepts context; { responder }: { responder: { principalId: string } }; input; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test.each(["owner", "stranger"])("native harness binds approval to its authorized res preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.

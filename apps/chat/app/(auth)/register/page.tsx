@@ -4,9 +4,8 @@ import React, { Suspense } from "react";
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { SignupForm } from "@/components/signup-form";
 
-/* oxlint-disable import/exports-last, react/only-export-components  --
+/* oxlint-disable import/exports-last, react/only-export-components --
  * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/no-named-export (#527): Preserve the named metadata API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  */
 export const metadata: Metadata = {

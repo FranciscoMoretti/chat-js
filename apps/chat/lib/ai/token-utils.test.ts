@@ -14,9 +14,8 @@ const _mockEncoder = {
 };
 /* oxlint-enable no-magic-numbers, no-underscore-dangle, typescript/explicit-function-return-type */
 
-/* oxlint-disable no-underscore-dangle  --
+/* oxlint-disable no-underscore-dangle --
  * no-underscore-dangle (#520): _originalModule accesses the established _originalModule field convention; renaming requires changing the owning SDK or backing-field contract.
- * node/no-top-level-await (#539): _originalModule runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
  */
 // Mock the module.
 const _originalModule = await import("./token-utils");

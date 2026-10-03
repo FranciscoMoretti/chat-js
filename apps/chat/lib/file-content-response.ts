@@ -9,10 +9,8 @@ import {
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null --
  * no-magic-numbers (#517): parseRange uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): parseRange derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-optional-chaining (#542): parseRange handles optional match.groups?.suffix; match.groups?.start; match.groups?.end without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep parseRange's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): parseRange intentionally keeps the existing falsy-value behavior of match.groups?.suffix; match.groups?.end; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): parseRange preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -41,16 +39,12 @@ const parseRange = (value: string, size: number) => {
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
- * import/no-named-export (#527): Preserve the named createFileContentResponse API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): createFileContentResponse remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): createFileContentResponse uses 206, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): createFileContentResponse derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): createFileContentResponse uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): createFileContentResponse sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): createFileContentResponse accepts request: Request; { allowRedirect = true }: { allowRedirect?: boolean } = {}; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): createFileContentResponse intentionally keeps the existing falsy-value behavior of providerUrl; rangeHeader; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): createFileContentResponse preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.

@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-namespace  --
+/* oxlint-disable import/no-namespace --
  * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type * as AI from "ai";
 import { MockVideoModelV4 } from "ai/test";
@@ -105,8 +104,7 @@ it("uses configured defaults", async () => {
     expect.objectContaining({ aspectRatio: "16:9", duration: 5 })
   );
 });
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("does not invent a charge when no video is returned") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("does not invent a charge when no video is returned") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("does not invent a charge when no video is returned", async () => {

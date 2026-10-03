@@ -2,10 +2,9 @@ const UNDERSCORE_COLLAPSE_REGEX = /_+/gu;
 const UNDERSCORE_TRIM_REGEX = /^_|_$/gu;
 const NON_ALPHANUMERIC_REGEX = /[^a-z0-9]/gu;
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): MCP_NAME_MAX_LENGTH is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): MCP_NAME_MAX_LENGTH stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named MCP_NAME_MAX_LENGTH API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 /** Maximum length for connector names */
 export const MCP_NAME_MAX_LENGTH = 20;
@@ -21,9 +20,8 @@ export type GenerateMcpNameIdResult =
   | { ok: true; nameId: string }
   | { ok: false; error: "empty" | "reserved" };
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns --
  * import/group-exports (#523): generateMcpNameId stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named generateMcpNameId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): generateMcpNameId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): generateMcpNameId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  */
@@ -54,9 +52,8 @@ export const generateMcpNameId = (name: string): GenerateMcpNameIdResult => {
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns --
  * import/group-exports (#523): createToolId stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named createToolId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): createToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): createToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  */
@@ -78,9 +75,8 @@ export const createToolId = (
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null --
  * import/group-exports (#523): parseToolId stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named parseToolId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): parseToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): parseToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): parseToolId keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

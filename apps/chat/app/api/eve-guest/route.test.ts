@@ -54,10 +54,8 @@ const request = (body: unknown, origin = "https://chat.example") =>
   });
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("creates a native session without application state, returning only its scoped c uses 200, 7 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("creates a native session without application state, returning only its scoped c sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("creates a native session without application state, returning only its scoped c handles optional creation?.sessionId; creation?.ownerId; readGuestCredential(body.credential)?.ownerId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 test("creates a native session without application state, returning only its scoped credential", async () => {
   const response = await POST(request({ modelId: "guest-model" }));
@@ -81,9 +79,8 @@ test("creates a native session without application state, returning only its sco
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("rejects cross-origin and unauthorized model creation before calling EVE") uses 403, 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("rejects cross-origin and unauthorized model creation before calling EVE") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("rejects cross-origin and unauthorized model creation before calling EVE", async () => {
   const crossOrigin = await POST(
@@ -100,9 +97,8 @@ test("rejects cross-origin and unauthorized model creation before calling EVE", 
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test("failed native creation never issues a browser credential") uses 502 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("failed native creation never issues a browser credential") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("failed native creation never issues a browser credential") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("failed native creation never issues a browser credential", async () => {
@@ -134,10 +130,9 @@ test("non-Vercel guest bootstrap stays on the application origin without leaking
   expect(init.headers["x-vercel-protection-bypass"]).toBeUndefined();
 });
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("never sends a creation credential to a request-derived host") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("never sends a creation credential to a request-derived host") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("never sends a creation credential to a request-derived host") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("never sends a creation credential to a request-derived host", async () => {
   settings.APP_URL = undefined;

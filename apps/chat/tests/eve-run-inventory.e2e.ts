@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-run-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 
@@ -20,9 +19,8 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const query = postgres(env.DATABASE_URL, { max: 1 });
 const ids: string[] = [];
 const streamIds: string[] = [];
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterAll(async () => {
   if (streamIds.length > 0) {
@@ -35,8 +33,7 @@ afterAll(async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): run sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): run accepts attributes: Record<string, string> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 async function run(
@@ -67,10 +64,9 @@ async function stream(
   return id;
 }
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("inventories native descendants and collectors without returning payloads or unr keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("inventories native descendants and collectors without returning payloads or unr uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("inventories native descendants and collectors without returning payloads or unr sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("inventories native descendants and collectors without returning payloads or unrelated runs", async () => {
   const collector = await run();
@@ -119,9 +115,8 @@ test("inventories native descendants and collectors without returning payloads o
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, unicorn/no-null  --
+/* oxlint-disable max-statements, unicorn/no-null --
  * max-statements (#512): test("reports active work, missing relationships, and streams without exclusive owner keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("reports active work, missing relationships, and streams without exclusive owner sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("reports active work, missing relationships, and streams without exclusive owner preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("reports active work, missing relationships, and streams without exclusive ownership", async () => {
@@ -161,8 +156,7 @@ test("cyclic parent metadata terminates without duplicating records", async () =
   );
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): test("retains missing queue-discovered seeds as incomplete ownership") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): test("retains missing queue-discovered seeds as incomplete ownership") accepts transaction; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("retains missing queue-discovered seeds as incomplete ownership", async () => {

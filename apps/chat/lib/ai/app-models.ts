@@ -10,16 +10,14 @@ import {
   models as generatedModels,
 } from "./models.generated";
 
-/* oxlint-disable import/exports-last  --
+/* oxlint-disable import/exports-last --
  * import/exports-last (#522): export from "./app-model-id" is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/no-named-export (#527): Preserve the named export from "./app-model-id" API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type { AppModelId, ModelId } from "./app-model-id";
 /* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last  --
+/* oxlint-disable import/exports-last --
  * import/exports-last (#522): AppModelDefinition is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/no-named-export (#527): Preserve the named AppModelDefinition API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type AppModelDefinition = Omit<ModelData, "id"> & {
   id: AppModelId;
@@ -30,8 +28,7 @@ export type AppModelDefinition = Omit<ModelData, "id"> & {
 const DISABLED_MODELS = new Set(config.ai.disabledModels);
 const PROVIDER_ORDER = config.ai.providerOrder;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-rest-spread-properties (#543): buildAppModels copies or separates ...model while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): buildAppModels accepts models: ModelData[]; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
@@ -77,10 +74,9 @@ const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
     ) as AppModelDefinition[];
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * id-length (#506): buildChatModels uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): buildChatModels uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): buildChatModels derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/prefer-readonly-parameter-types (#565): buildChatModels accepts appModels: AppModelDefinition[]; model; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const buildChatModels = (
@@ -114,11 +110,9 @@ const fetchAllAppModels = cache(
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
 
-/* oxlint-disable import/exports-last, import/group-exports  --
+/* oxlint-disable import/exports-last, import/group-exports --
  * import/exports-last (#522): fetchChatModels is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): fetchChatModels stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named fetchChatModels API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): fetchChatModels sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 export const fetchChatModels = cache(
   async (): Promise<AppModelDefinition[]> => {
@@ -130,12 +124,10 @@ export const fetchChatModels = cache(
 );
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types --
  * id-length (#506): getAppModelDefinition uses m as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/exports-last (#522): getAppModelDefinition is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): getAppModelDefinition stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getAppModelDefinition API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): getAppModelDefinition sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): getAppModelDefinition accepts m; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const getAppModelDefinition = async (
@@ -164,9 +156,8 @@ const snapshotMatchesGateway = (gateway: string): boolean =>
   generatedForGateway === gateway;
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
  * id-length (#506): KNOWN_MODEL_IDS uses m as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-ternary (#518): KNOWN_MODEL_IDS derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/prefer-readonly-parameter-types (#565): KNOWN_MODEL_IDS accepts m; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const KNOWN_MODEL_IDS = new Set<string>(
@@ -176,9 +167,8 @@ const KNOWN_MODEL_IDS = new Set<string>(
 );
 /* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): getDefaultEnabledModels stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getDefaultEnabledModels API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): getDefaultEnabledModels's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): getDefaultEnabledModels's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/prefer-readonly-parameter-types (#565): getDefaultEnabledModels accepts appModels: AppModelDefinition[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

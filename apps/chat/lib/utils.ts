@@ -7,18 +7,15 @@ import { v7 as uuidv7 } from "uuid";
 import { ChatSDKError } from "./ai/errors";
 import type { ErrorCode } from "./ai/errors";
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): cn stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named cn API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): cn accepts ...inputs: ClassValue[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const cn = (...inputs: ClassValue[]): string => twMerge(clsx(inputs));
 /* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): fetchWithErrorHandlers stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named fetchWithErrorHandlers API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): fetchWithErrorHandlers sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): fetchWithErrorHandlers accepts ...[input, init]: Parameters<typeof fetch>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const fetchWithErrorHandlers = async (
@@ -45,19 +42,16 @@ export const fetchWithErrorHandlers = async (
 };
 /* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): generateUUID stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named generateUUID API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const generateUUID = (): string => uuidv7();
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports, max-lines-per-function, typescript/strict-boolean-expressions  --
+/* oxlint-disable id-length, import/group-exports, max-lines-per-function, typescript/strict-boolean-expressions --
  * id-length (#506): getLanguageFromFileName uses R; c; h; r as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): getLanguageFromFileName stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getLanguageFromFileName API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): getLanguageFromFileName keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-optional-chaining (#542): getLanguageFromFileName handles optional fileName.split(".").pop()?.toLowerCase() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/strict-boolean-expressions (#610): getLanguageFromFileName intentionally keeps the existing falsy-value behavior of fileName.split(".").pop()?.toLowerCase(); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 export const getLanguageFromFileName = (fileName: string): string => {
@@ -115,9 +109,8 @@ export const getLanguageFromFileName = (fileName: string): string => {
 };
 /* oxlint-enable id-length, import/group-exports, max-lines-per-function, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): getTextContentFromModelMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getTextContentFromModelMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): getTextContentFromModelMessage accepts message: ModelMessage; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const getTextContentFromModelMessage = (

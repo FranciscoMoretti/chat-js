@@ -57,11 +57,8 @@ beforeEach(() => {
     token: "token",
   });
 });
-/* oxlint-disable no-undefined  --
- * no-ternary (#518): it.each(["python", "javascript"] as const)("dispatches %s to the sandbox and cleans u derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it.each(["python", "javascript"] as const)("dispatches %s to the sandbox and cleans u uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each(["python", "javascript"] as const)("dispatches %s to the sandbox and cleans u sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it.each(["python", "javascript"] as const)("dispatches %s to the sandbox and cleans u handles optional codeExecution.execute?.( { code: "source", language, title: "Calculate" }, testToolCo without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it.each(["python", "javascript"] as const)(
   "dispatches %s to the sandbox and cleans up",
@@ -114,10 +111,8 @@ it("normalizes execution errors and cleans up the sandbox", async () => {
   );
 });
 
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async  --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("reserves a named sandbox and releases ownership after provider cleanup") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("reserves a named sandbox and releases ownership after provider cleanup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("reserves a named sandbox and releases ownership after provider cleanup") handles optional codeExecution.execute?.( { code: "source", language: "python", title: "Calculate" },  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/promise-function-async (#606): it("reserves a named sandbox and releases ownership after provider cleanup") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("reserves a named sandbox and releases ownership after provider cleanup", async () => {
@@ -149,11 +144,9 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
 });
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-undefined, typescript/promise-function-async  --
+/* oxlint-disable max-statements, no-undefined, typescript/promise-function-async --
  * max-statements (#512): it("cancelling execution starts sandbox cleanup and observes its completion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): it("cancelling execution starts sandbox cleanup and observes its completion") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("cancelling execution starts sandbox cleanup and observes its completion") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("cancelling execution starts sandbox cleanup and observes its completion") handles optional codeExecution.execute?.( { code: "await new Promise(() => {})", language: "javascrip without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/promise-function-async (#606): it("cancelling execution starts sandbox cleanup and observes its completion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("cancelling execution starts sandbox cleanup and observes its completion", async () => {
@@ -182,9 +175,7 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
 });
 /* oxlint-enable max-statements, no-undefined, typescript/promise-function-async */
 
-/* oxlint-disable typescript/promise-function-async  --
- * oxc/no-async-await (#540): it("retains ownership when creation outcome is unknown") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("retains ownership when creation outcome is unknown") handles optional codeExecution.execute?.( { code: "source", language: "python", title: "Calculate" },  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("retains ownership when creation outcome is unknown") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("retains ownership when creation outcome is unknown", async () => {

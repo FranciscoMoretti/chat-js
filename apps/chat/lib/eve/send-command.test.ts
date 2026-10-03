@@ -13,10 +13,9 @@ const busy = new ClientError(
 /* oxlint-enable no-magic-numbers */
 afterEach(() => vi.useRealTimers());
 
-/* oxlint-disable no-magic-numbers, no-undefined  --
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("retries an undispatched message through the same send closure") uses 2000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("retries an undispatched message through the same send closure") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("retries an undispatched message through the same send closure") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("retries an undispatched message through the same send closure", async () => {
   vi.useFakeTimers();
@@ -29,9 +28,8 @@ it("retries an undispatched message through the same send closure", async () => 
 });
 /* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("bounds busy retries and never retries ambiguous connection errors") uses 30_000, 15 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("bounds busy retries and never retries ambiguous connection errors") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("bounds busy retries and never retries ambiguous connection errors", async () => {
   vi.useFakeTimers();

@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/search" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { HookContext, HookEvent } from "eve/hooks";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -25,8 +24,7 @@ const mocks = vi.hoisted(() => {
  */
 vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
- * no-ternary (#518): vi.mock("eve/context") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/context")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("eve/context") accepts current: EveSearchText[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -102,8 +100,7 @@ const started: HookEvent = {
   meta: restored.meta,
   type: "turn.started",
 };
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
- * oxc/no-optional-chaining (#542): dispatch handles optional search.events?.["*"]?.(event, hookContext) without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * typescript/explicit-function-return-type (#560): Keep dispatch's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): dispatch accepts event: HookEvent; hookContext = context; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): dispatch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -123,9 +120,8 @@ beforeEach(() => {
     ownerId: "owner",
   });
 });
-/* oxlint-disable no-console  --
+/* oxlint-disable no-console --
  * no-console (#514): it("defers inherited history until binding and retains it if indexing fails") emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * oxc/no-async-await (#540): it("defers inherited history until binding and retains it if indexing fails") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("defers inherited history until binding and retains it if indexing fails", async () => {
   await dispatch(restored);
@@ -180,13 +176,11 @@ it("retains newly received text when scope resolution fails and retries it", asy
   expect(mocks.state).toEqual([]);
 });
 
-/* oxlint-disable max-statements, no-console, no-magic-numbers, no-undefined  --
+/* oxlint-disable max-statements, no-console, no-magic-numbers, no-undefined --
  * max-statements (#512): it("bounds failed retries by entry count and records how omitted events can be recove keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): it("bounds failed retries by entry count and records how omitted events can be recove emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): it("bounds failed retries by entry count and records how omitted events can be recove uses 300, 1, 256 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("bounds failed retries by entry count and records how omitted events can be recove uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("bounds failed retries by entry count and records how omitted events can be recove sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("bounds failed retries by entry count and records how omitted events can be recove copies or separates ...restored.meta while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("bounds failed retries by entry count and records how omitted events can be recovered", async () => {
   mocks.index.mockRejectedValue(new Error("offline"));
@@ -213,11 +207,9 @@ it("bounds failed retries by entry count and records how omitted events can be r
 });
 /* oxlint-enable max-statements, no-console, no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-console, no-magic-numbers  --
+/* oxlint-disable no-console, no-magic-numbers --
  * no-console (#514): it("bounds pending text size and deduplicates replayed history") emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): it("bounds pending text size and deduplicates replayed history") uses 256_001, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("bounds pending text size and deduplicates replayed history") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("bounds pending text size and deduplicates replayed history") copies or separates ...restored while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("bounds pending text size and deduplicates replayed history", async () => {
   const oversized: HookEvent = {
@@ -244,11 +236,9 @@ it("bounds pending text size and deduplicates replayed history", async () => {
 });
 /* oxlint-enable no-console, no-magic-numbers */
 
-/* oxlint-disable id-length, no-magic-numbers  --
+/* oxlint-disable id-length, no-magic-numbers --
  * id-length (#506): it("automatically recovers a large restored history and the next message on a healthy uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): it("automatically recovers a large restored history and the next message on a healthy uses 256 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("automatically recovers a large restored history and the next message on a healthy sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("automatically recovers a large restored history and the next message on a healthy copies or separates ...restored; ...restored.meta while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("automatically recovers a large restored history and the next message on a healthy database", async () => {
   await dispatch({

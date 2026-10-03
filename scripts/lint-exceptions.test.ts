@@ -1,13 +1,20 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- The CLI integration fixture creates and removes its own isolated temporary Git repository.
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The isolated CLI fixture uses the operating system temporary directory.
+import { tmpdir } from "node:os";
 
 import {
   checkExceptions,
   parseBaseline,
   readExceptions,
+  reviewBaselineUpdate,
   snapshotExceptions,
 } from "./lint-exceptions";
 
 const ZERO = 0;
+const CLI_PROCESS_TIMEOUT_MS = 5000;
+const CLI_TEST_TIMEOUT_MS = 30_000;
 
 test("only real comments count, including comments inside template expressions and JSX", () => {
   const source = [
@@ -177,3 +184,216 @@ test("EOF file metric exceptions still cover the entire file", () => {
     checkExceptions({ "a.ts": `second();\n${source}` }, baseline)
   ).not.toEqual([]);
 });
+
+test("identical repeated lines and blocks retain their occurrence identity", () => {
+  const pairs = [
+    [
+      "// oxlint-disable-next-line rule -- Contract.\nrepeat();\nrepeat();",
+      "repeat();\n// oxlint-disable-next-line rule -- Contract.\nrepeat();",
+    ],
+    [
+      "repeat(); // oxlint-disable-line rule -- Contract.\nrepeat();",
+      "repeat();\nrepeat(); // oxlint-disable-line rule -- Contract.",
+    ],
+    [
+      "/* oxlint-disable rule -- Contract. */\nrepeat();\n/* oxlint-enable rule */\nrepeat();",
+      "repeat();\n/* oxlint-disable rule -- Contract. */\nrepeat();\n/* oxlint-enable rule */",
+    ],
+  ] as const;
+  for (const [original, relocated] of pairs) {
+    const { baseline } = snapshotExceptions({ "a.ts": original });
+    expect(checkExceptions({ "a.ts": relocated }, baseline)).not.toEqual([]);
+    expect(
+      checkExceptions(
+        { "a.ts": `// Unrelated inserted line.\n${original}` },
+        baseline
+      )
+    ).toEqual([]);
+  }
+});
+
+test("removing an enable at EOF changes the bounded block contract", () => {
+  const source =
+    "/* oxlint-disable rule -- Contract. */\nrun();\n/* oxlint-enable rule */";
+  const { baseline } = snapshotExceptions({ "a.ts": source });
+  expect(
+    checkExceptions(
+      { "a.ts": source.replace("/* oxlint-enable rule */", "") },
+      baseline
+    )
+  ).not.toEqual([]);
+});
+
+test("function metric scopes reject target growth but allow unrelated sibling edits", () => {
+  for (const rule of [
+    "max-lines-per-function",
+    "max-statements",
+    "complexity",
+    "max-depth",
+    "max-params",
+  ]) {
+    const source = `// oxlint-disable-next-line ${rule} -- Function contract.\nconst target = () => { return 1; };\nconst sibling = () => 2;`;
+    const { baseline } = snapshotExceptions({ "a.ts": source });
+    expect(
+      checkExceptions(
+        { "a.ts": source.replace("sibling = () => 2", "sibling = () => 3") },
+        baseline
+      )
+    ).toEqual([]);
+    expect(
+      checkExceptions(
+        { "a.ts": source.replace("return 1", "work(); return 1") },
+        baseline
+      )
+    ).not.toEqual([]);
+  }
+});
+
+test("function metric scope chooses the outer target before same-line nested functions", () => {
+  const source =
+    "// oxlint-disable-next-line complexity -- Function contract.\nconst outer = () => { const inner = () => 1; return 2; };";
+  const { baseline } = snapshotExceptions({ "a.ts": source });
+  expect(
+    checkExceptions(
+      { "a.ts": source.replace("return 2", "return 3") },
+      baseline
+    )
+  ).not.toEqual([]);
+});
+
+test("file metrics cover the full file for line and block waivers", () => {
+  for (const rule of [
+    "max-lines",
+    "max-classes-per-file",
+    "import/max-dependencies",
+    "react/no-multi-comp",
+  ]) {
+    const source = `first();\n// oxlint-disable-next-line ${rule} -- File contract.\nsecond();`;
+    const { baseline } = snapshotExceptions({ "a.ts": source });
+    expect(
+      checkExceptions({ "a.ts": source.replace("first", "changed") }, baseline)
+    ).not.toEqual([]);
+  }
+});
+
+test("baseline updates distinguish reviewed scope changes from explicit budget growth", () => {
+  const old = "// oxlint-disable-next-line rule -- Contract.\nfirst();";
+  const { baseline } = snapshotExceptions({ "a.ts": old });
+  expect(
+    reviewBaselineUpdate({ "a.ts": old.replace("first", "second") }, baseline)
+  ).toEqual([]);
+  expect(
+    reviewBaselineUpdate({ "a.ts": old, "b.ts": old }, baseline)
+  ).not.toEqual([]);
+  expect(
+    reviewBaselineUpdate({ "a.ts": `${old}\n${old}` }, baseline)
+  ).not.toEqual([]);
+  expect(
+    reviewBaselineUpdate({ "a.ts": old, "b.ts": old }, baseline, true)
+  ).toEqual([]);
+  expect(
+    reviewBaselineUpdate(
+      { "a.ts": old, "b.ts": "// oxlint-disable-next-line rule\nfirst();" },
+      baseline,
+      true
+    )
+  ).not.toEqual([]);
+});
+
+test("function metrics cover every declaration sharing the waived line", () => {
+  const source =
+    "// oxlint-disable-next-line complexity -- Function contract.\nconst one = () => 1; const two = () => 2;";
+  const { baseline } = snapshotExceptions({ "a.ts": source });
+  expect(
+    checkExceptions(
+      { "a.ts": source.replace("two = () => 2", "two = () => 3") },
+      baseline
+    )
+  ).not.toEqual([]);
+});
+
+/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- The isolated CLI scenario owns Git setup, baseline writes, failure/readback assertions and cleanup in one fixture lifetime. */
+test(
+  "CLI baseline growth requires explicit opt-in",
+  async () => {
+    const root = await mkdtemp(`${tmpdir()}/chatjs-lint-exceptions-`);
+    try {
+      await mkdir(`${root}/scripts`);
+      const guard = await Bun.file(
+        new URL("lint-exceptions.ts", import.meta.url)
+      ).text();
+      const parserURL = import.meta.resolve("typescript");
+      const parserImport = JSON.stringify(parserURL);
+      const scriptSource = guard.replace(
+        'from "typescript"',
+        `from ${parserImport}`
+      );
+      await Bun.write(`${root}/scripts/lint-exceptions.ts`, scriptSource);
+      const initialized = Bun.spawn(["git", "init", "-q", root], {
+        stderr: "ignore",
+        stdout: "ignore",
+      });
+      expect(await initialized.exited).toBe(ZERO);
+      const runGuard = async (
+        args: readonly string[]
+      ): Promise<{ readonly exitCode: number; readonly stderr: string }> => {
+        const child = Bun.spawn(
+          [process.execPath, `${root}/scripts/lint-exceptions.ts`, ...args],
+          { cwd: root, stderr: "pipe", stdout: "pipe" }
+        );
+        const deadline = setTimeout((): void => {
+          child.kill("SIGKILL");
+        }, CLI_PROCESS_TIMEOUT_MS);
+        try {
+          const [exitCode, stderr] = await Promise.all([
+            child.exited,
+            new Response(child.stderr).text(),
+            new Response(child.stdout).text(),
+          ]);
+          return { exitCode, stderr };
+        } finally {
+          clearTimeout(deadline);
+        }
+      };
+      const bootstrap = await runGuard(["--write-baseline"]);
+      expect(bootstrap.exitCode).toBe(ZERO);
+      const baselinePath = `${root}/scripts/lint-exceptions-baseline.json`;
+      const original = await Bun.file(baselinePath).text();
+      await Bun.write(
+        `${root}/fixture.ts`,
+        "// oxlint-disable-next-line rule -- Reviewed fixture contract.\nrun();"
+      );
+      const rejected = await runGuard(["--write-baseline"]);
+      expect(rejected.exitCode).not.toBe(ZERO);
+      expect(rejected.stderr).toContain("--allow-new");
+      expect(await Bun.file(baselinePath).text()).toBe(original);
+      const accepted = await runGuard(["--write-baseline", "--allow-new"]);
+      expect(accepted.exitCode).toBe(ZERO);
+      const checked = await runGuard([]);
+      expect(checked.exitCode).toBe(ZERO);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  },
+  CLI_TEST_TIMEOUT_MS
+);
+/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
+
+test("multiline inline waivers distinguish identical repeated regions", () => {
+  const guarded =
+    "first(); /* oxlint-disable-line rule -- Contract.\n*/ second();";
+  const plain = "first();\nsecond();";
+  const original = `${guarded}\n${plain}`;
+  const { baseline } = snapshotExceptions({ "a.ts": original });
+  expect(
+    checkExceptions({ "a.ts": `${plain}\n${guarded}` }, baseline)
+  ).not.toEqual([]);
+  expect(
+    checkExceptions(
+      { "a.ts": `// Unrelated inserted line.\n${original}` },
+      baseline
+    )
+  ).toEqual([]);
+});
+
+/* oxlint-disable eslint/max-lines -- The guard regression suite keeps parser, scope identity and isolated CLI budget-update contracts together in one test module. */

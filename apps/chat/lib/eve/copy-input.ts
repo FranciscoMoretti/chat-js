@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-/* oxlint-disable no-magic-numbers  --
- * import/no-named-export (#527): Preserve the named eveCopyInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): eveCopyInput uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 export const eveCopyInput = z.strictObject({

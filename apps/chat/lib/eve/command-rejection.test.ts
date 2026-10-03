@@ -3,9 +3,8 @@ import { expect, it } from "vitest";
 
 import { isEveCommandRejection, rejectEveCommand } from "./command-rejection";
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls  --
+/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
  * no-magic-numbers (#517): it("recognizes an explicit local refusal without treating a failed connection as reje uses 402, 502, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("recognizes an explicit local refusal without treating a failed connection as reje sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/max-nested-calls (#568): it("recognizes an explicit local refusal without treating a failed connection as reje keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 it("recognizes an explicit local refusal without treating a failed connection as rejection", async () => {

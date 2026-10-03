@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queue-fence"; "../lib/db/eve-queue-purge"; "../lib/db/eve-resource-fence"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -26,9 +25,8 @@ const ids: string[] = [];
 const runIds: string[] = [];
 await installEvePostgresResourceFence(query);
 await installEvePostgresQueueFence(query, task);
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterAll(async () => {
   if (ids.length > 0) {
@@ -90,9 +88,8 @@ test("queue fencing rejects retries and resilient child creation for fenced root
   await job({ __healthCheck: true, correlationId: "fixture" });
 });
 
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls  --
+/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
  * no-magic-numbers (#517): test("workers can release locks after fencing but cannot replace or move a protected  uses 0, -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("workers can release locks after fencing but cannot replace or move a protected  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/max-nested-calls (#568): test("workers can release locks after fencing but cannot replace or move a protected  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 test("workers can release locks after fencing but cannot replace or move a protected payload", async () => {
@@ -125,10 +122,9 @@ test("unsupported queue messages fail closed for registered tasks", async () => 
   });
 });
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("queue purge removes queued descendants and retains their IDs across retries") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("queue purge removes queued descendants and retains their IDs across retries") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("queue purge removes queued descendants and retains their IDs across retries") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("queue purge removes queued descendants and retains their IDs across retries", async () => {
   const root = runId();
@@ -170,9 +166,8 @@ test("queue purge removes queued descendants and retains their IDs across retrie
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("queue purge refuses even an old worker lock and succeeds after explicit release uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("queue purge refuses even an old worker lock and succeeds after explicit release sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("queue purge refuses even an old worker lock and succeeds after explicit release", async () => {
   const root = runId();

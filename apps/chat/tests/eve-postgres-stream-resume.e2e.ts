@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-stream-positions"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { Schema } from "@world-postgres-test/dist/drizzle/index.js";
 import { createStreamer } from "@world-postgres-test/dist/streamer.js";
@@ -39,8 +38,7 @@ afterAll(async () => {
   await positionConnection.end();
 });
 const encoder = new TextEncoder();
-/* oxlint-disable typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): fixture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): fixture accepts values: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 async function fixture(
@@ -58,10 +56,9 @@ async function fixture(
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("batched default-stream positions match the provider without counting EOF or oth keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("batched default-stream positions match the provider without counting EOF or oth uses 5, 100_000, 1, 2, 0, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("batched default-stream positions match the provider without counting EOF or oth sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("batched default-stream positions match the provider without counting EOF or other namespaces", async () => {
   const sessionId = `wrun_${crypto.randomUUID()}`;
@@ -95,8 +92,7 @@ test("batched default-stream positions match the provider without counting EOF o
   );
 });
 /* oxlint-enable max-statements, no-magic-numbers */
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-async-await (#540): read sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep read's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 async function read(name: string, index: number) {
@@ -117,9 +113,8 @@ async function read(name: string, index: number) {
 }
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("resume excludes consumed payloads in SQL, including an at-tail read") uses 100_000, 2, 0, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("resume excludes consumed payloads in SQL, including an at-tail read") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("resume excludes consumed payloads in SQL, including an at-tail read", async () => {
   const name = await fixture([
@@ -144,9 +139,8 @@ test("resume excludes consumed payloads in SQL, including an at-tail read", asyn
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("zero, relative-tail, and empty streams preserve their sequences") uses 0, -1, -20 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("zero, relative-tail, and empty streams preserve their sequences") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("zero, relative-tail, and empty streams preserve their sequences", async () => {
   const name = await fixture(["one", "two", "three"]);
@@ -157,9 +151,8 @@ test("zero, relative-tail, and empty streams preserve their sequences", async ()
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("a resumed live stream delivers appended chunks once and terminates at EOF") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("a resumed live stream delivers appended chunks once and terminates at EOF") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("a resumed live stream delivers appended chunks once and terminates at EOF", async () => {
   const name = await fixture(["consumed"], false);
@@ -177,10 +170,9 @@ test("a resumed live stream delivers appended chunks once and terminates at EOF"
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("a future cursor skips new chunks until its absolute index is reached") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a future cursor skips new chunks until its absolute index is reached") uses 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("a future cursor skips new chunks until its absolute index is reached") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("a future cursor skips new chunks until its absolute index is reached", async () => {
   const name = await fixture(["zero"], false);

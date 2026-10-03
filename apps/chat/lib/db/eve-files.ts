@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
 
@@ -9,13 +8,11 @@ import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-undefined  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-undefined --
  * import/group-exports (#523): isEveFileUnavailable stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named isEveFileUnavailable API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): isEveFileUnavailable's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): isEveFileUnavailable's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-undefined (#519): isEveFileUnavailable uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): isEveFileUnavailable sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 /** Legacy keys have no EVE row; only EVE deletion fences deny an existing URL. */
 export const isEveFileUnavailable = async (key: string): Promise<boolean> => {
@@ -27,13 +24,11 @@ export const isEveFileUnavailable = async (key: string): Promise<boolean> => {
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-undefined */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * import/group-exports (#523): canReadEveFile stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named canReadEveFile API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): canReadEveFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): canReadEveFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): canReadEveFile uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): canReadEveFile sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep canReadEveFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep canReadEveFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): canReadEveFile intentionally keeps the existing falsy-value behavior of file; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -73,11 +68,9 @@ export const canReadEveFile = async (key: string, ownerId?: string) => {
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param  --
+/* oxlint-disable import/group-exports, jsdoc/require-param --
  * import/group-exports (#523): reserveEveUpload stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named reserveEveUpload API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): reserveEveUpload's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): reserveEveUpload sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 /** Reserve a fresh upload before storage I/O; never overwrite an existing key. */
 export const reserveEveUpload = async (
@@ -91,13 +84,11 @@ export const reserveEveUpload = async (
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param */
 
-/* oxlint-disable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * id-length (#506): writeEveUpload uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): writeEveUpload stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named writeEveUpload API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): writeEveUpload's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): writeEveUpload's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): writeEveUpload sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep writeEveUpload's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep writeEveUpload's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): writeEveUpload accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -130,12 +121,9 @@ export const writeEveUpload = async <T>(
   });
 /* oxlint-enable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param  --
+/* oxlint-disable import/group-exports, jsdoc/require-param --
  * import/group-exports (#523): registerEveStoredFile stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named registerEveStoredFile API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): registerEveStoredFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): registerEveStoredFile sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): registerEveStoredFile handles optional saved?.ownerId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 /** Register server-created keys only; a caller-supplied URL is not ownership proof. */
 export const registerEveStoredFile = async (
@@ -156,13 +144,11 @@ export const registerEveStoredFile = async (
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): referenceEveFiles stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named referenceEveFiles API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): referenceEveFiles's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): referenceEveFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): referenceEveFiles uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): referenceEveFiles sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): referenceEveFiles accepts keys: string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): referenceEveFiles intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -226,12 +212,10 @@ export const referenceEveFiles = async (
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): assertEveFilesOwned stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named assertEveFilesOwned API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): assertEveFilesOwned's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): assertEveFilesOwned uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): assertEveFilesOwned sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): assertEveFilesOwned accepts keys: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Preflight rejects invalid initial input before a creation reservation exists. */
@@ -265,11 +249,9 @@ export const assertEveFilesOwned = async (
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): reserveEveGeneratedFile stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named reserveEveGeneratedFile API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): reserveEveGeneratedFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): reserveEveGeneratedFile sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): reserveEveGeneratedFile accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): reserveEveGeneratedFile intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -305,14 +287,12 @@ export const reserveEveGeneratedFile = async (
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * id-length (#506): writeEveGeneratedFile uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): writeEveGeneratedFile stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named writeEveGeneratedFile API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): writeEveGeneratedFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): writeEveGeneratedFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-params (#511): writeEveGeneratedFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): writeEveGeneratedFile sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep writeEveGeneratedFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep writeEveGeneratedFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): writeEveGeneratedFile accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -353,13 +333,11 @@ export const writeEveGeneratedFile = async <T>(
   });
 /* oxlint-enable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): retainEveDocumentFiles stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named retainEveDocumentFiles API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): retainEveDocumentFiles's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-params (#511): retainEveDocumentFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): retainEveDocumentFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): retainEveDocumentFiles sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): retainEveDocumentFiles accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; fileIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Caller holds the owner family lock and has authorized the document revision. */

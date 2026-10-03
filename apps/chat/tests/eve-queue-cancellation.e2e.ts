@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This test harness requires import { createServer } from "node:http";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
@@ -18,13 +17,11 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue cancellation acceptance requires local Postgres.");
 }
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return  --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * max-lines-per-function (#510): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup uses 1, 200, 0, 2, 3, 15_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup handles optional queue.close?.() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup accepts request; response; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup intentionally keeps the existing falsy-value behavior of address; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.

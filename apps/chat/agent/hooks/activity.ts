@@ -6,10 +6,8 @@ import { defineHook } from "eve/hooks";
 import { ingestEveActivity } from "../../lib/eve/activity";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
+/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * oxc/no-async-await (#540): default export sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): default export handles optional context.session.auth.initiator?.principalId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): default export accepts event; context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of ownerId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */

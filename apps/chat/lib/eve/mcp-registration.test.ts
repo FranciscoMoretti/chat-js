@@ -26,9 +26,7 @@ vi.mock("./mcp-tools", () => ({
   executeEveMcpTool: mocks.execute,
 }));
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("discovers for the session owner and preserves namespaced tool definitions") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("discovers for the session owner and preserves namespaced tool definitions") handles optional mcp.events["step.started"]?.( {}, { channel: {}, messages: [], model: null without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("discovers for the session owner and preserves namespaced tool definitions") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("discovers for the session owner and preserves namespaced tool definitions", async () => {
@@ -71,9 +69,7 @@ it("discovers for the session owner and preserves namespaced tool definitions", 
 
 afterEach(() => vi.restoreAllMocks());
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("continues ordinary chat when MCP discovery times out") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("continues ordinary chat when MCP discovery times out") handles optional mcp.events["step.started"]?.( {}, { channel: {}, messages: [], m without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("continues ordinary chat when MCP discovery times out") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("continues ordinary chat when MCP discovery times out", async () => {
@@ -96,8 +92,7 @@ it("continues ordinary chat when MCP discovery times out", async () => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null  --
- * no-ternary (#518): vi.mock("./turn-tools") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./turn-tools")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/no-null (#570): vi.mock("./turn-tools") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -107,9 +102,7 @@ vi.mock("./turn-tools", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("does not discover remote tools for an explicitly selected local capability") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("does not discover remote tools for an explicitly selected local capability") handles optional mcp.events["step.started"]?.( {}, { channel: {}, messages: [],  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("does not discover remote tools for an explicitly selected local capability") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("does not discover remote tools for an explicitly selected local capability", async () => {
@@ -134,9 +127,7 @@ it("does not discover remote tools for an explicitly selected local capability",
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("never discovers registered account connectors for a guest") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("never discovers registered account connectors for a guest") handles optional mcp.events["step.started"]?.( {}, { channel: {}, messages: [],  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("never discovers registered account connectors for a guest") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("never discovers registered account connectors for a guest", async () => {

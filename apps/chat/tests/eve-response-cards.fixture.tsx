@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-response-group-cards"; "../components/response-choice-cards" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- The fixture preserves the production-compatible role markup used by its visual contract. */
 import React, { useState } from "react";

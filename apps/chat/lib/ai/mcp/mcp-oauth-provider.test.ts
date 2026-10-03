@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports  --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
@@ -22,8 +21,7 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   saveTokensAndCleanup: mocks.save,
   setOAuthClientInfoOnceByState: mocks.setClientInfo,
 }));
-/* oxlint-disable typescript/explicit-function-return-type  --
- * oxc/no-async-await (#540): vi.mock("@/lib/db/mcp-oauth-lock") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/mcp-oauth-lock")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 vi.mock("@/lib/db/mcp-oauth-lock", () => ({
@@ -60,9 +58,8 @@ const refreshRequest = (refreshToken: string) =>
     method: "POST",
   });
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null  --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * no-magic-numbers (#517): beforeEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-rest-spread-properties (#543): beforeEach copies or separates ...stored while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts { tokens }: { tokens: Record<string, unknown> }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -106,12 +103,9 @@ test("an access-token winner is reused even when its refresh token did not chang
   expect(mocks.save).not.toHaveBeenCalled();
 });
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s handles optional stored.tokens?.pin; stored.tokens?.access_token without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s copies or separates ...stored while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK saves", async () => {
   const client = provider();
@@ -148,11 +142,9 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers  --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("refresh responses cannot replace the saved authorization-server pins") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("refresh responses cannot replace the saved authorization-server pins") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("refresh responses cannot replace the saved authorization-server pins") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("refresh responses cannot replace the saved authorization-server pins") copies or separates ...stored; ...stored.tokens; ...pins while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("refresh responses cannot replace the saved authorization-server pins", async () => {
   const pins = {
@@ -198,8 +190,7 @@ test("callback states cannot be adopted after a connector changes server URL", a
   );
 });
 
-/* oxlint-disable typescript/promise-function-async  --
- * oxc/no-async-await (#540): test("configured OAuth client information preserves credentials") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("configured OAuth client information preserves credentials") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("configured OAuth client information preserves credentials", async () => {
@@ -223,10 +214,8 @@ test("configured OAuth client information preserves credentials", async () => {
 });
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("failed client registration persistence can be retried without an optimistic cac uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("failed client registration persistence can be retried without an optimistic cac sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("failed client registration persistence can be retried without an optimistic cac copies or separates ...stored while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("failed client registration persistence can be retried without an optimistic cache", async () => {
   const client = provider();

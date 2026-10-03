@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-namespace  --
+/* oxlint-disable import/no-namespace --
  * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type * as AI from "ai";
 import { MockImageModelV3, MockLanguageModelV3 } from "ai/test";
@@ -77,8 +76,7 @@ vi.mock("@/lib/url", () => ({
   getBaseUrl: (): string => "https://example.com",
 }));
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
- * oxc/no-async-await (#540): execute sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * typescript/explicit-function-return-type (#560): Keep execute's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): execute accepts context = testToolContext(); deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -108,9 +106,8 @@ beforeEach(() => {
   mocks.images.mockReturnValue({ attachments: [], lastGeneratedImage: null });
 });
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses native image context for editing and persists provider cost") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("uses native image context for editing and persists provider cost") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("uses native image context for editing and persists provider cost", async () => {
   mocks.images.mockReturnValue({
@@ -139,9 +136,8 @@ it("uses native image context for editing and persists provider cost", async () 
   });
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("generates from a prompt without edit images") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("generates from a prompt without edit images") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("generates from a prompt without edit images", async () => {
   await execute();
@@ -149,8 +145,7 @@ it("generates from a prompt without edit images", async () => {
   expect(mocks.image.mock.calls[0][0].prompt).toBe("Blue sky");
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/no-null  --
- * oxc/no-async-await (#540): it("retains provider cost if authorized storage fails") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("retains provider cost if authorized storage fails") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("retains provider cost if authorized storage fails", async () => {
@@ -162,8 +157,7 @@ it("retains provider cost if authorized storage fails", async () => {
   });
 });
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
- * oxc/no-async-await (#540): it("forwards cancellation to EVE") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * typescript/prefer-readonly-parameter-types (#565): it("forwards cancellation to EVE") accepts { abortSignal }: { abortSignal: AbortSignal }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): it("forwards cancellation to EVE") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -187,10 +181,8 @@ it("forwards cancellation to EVE", async () => {
   expect(mocks.upload).not.toHaveBeenCalled();
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-/* oxlint-disable no-magic-numbers  --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses the selected native model and accounts nested model tokens") uses 0.000011 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("uses the selected native model and accounts nested model tokens") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("uses the selected native model and accounts nested model tokens") copies or separates ...context; ...context.session while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("uses the selected native model and accounts nested model tokens", async () => {
   mocks.definition.mockResolvedValue({

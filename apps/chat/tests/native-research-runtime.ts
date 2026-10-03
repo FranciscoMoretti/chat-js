@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules  --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { spawn } from "node:child_process";; import { once } from "node:events";; import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Assemble each fixture before starting the native worker. */
 
@@ -18,13 +17,12 @@ const modelSource = (
 import { mockModel } from "eve/evals";
 export default defineAgent({ description: "Research fixture", defaultTools: false, tool: false, modelContextWindowTokens: 128000, model: mockModel(${responder}) });`;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env  --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env --
  * max-lines-per-function (#510): main keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): main keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): main emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): main uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-process-env (#537): main reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * oxc/no-async-await (#540): main sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 const main = async (): Promise<void> => {
   const app = path.resolve(path.dirname(process.argv[1]), "..");
@@ -290,9 +288,8 @@ export default [defineEval({ description: "adaptive native research", async test
   await rm(fixture, { force: true, recursive: true });
 };
 /* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env */
-/* oxlint-disable no-console  --
+/* oxlint-disable no-console --
  * no-console (#514): try { await main(); } catch (error) { console.error(err emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * node/no-top-level-await (#539): try { await main(); } catch (error) { console.error(err runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
  */
 try {
   await main();

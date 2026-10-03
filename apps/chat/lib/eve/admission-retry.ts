@@ -5,20 +5,17 @@ import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 const ADMISSION_RETRY_WINDOW_MS = 30_000;
 const ADMISSION_RETRY_DELAY_MS = 2000;
 
-/* oxlint-disable import/group-exports  --
+/* oxlint-disable import/group-exports --
  * import/group-exports (#523): isEveAdmissionBusy stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named isEveAdmissionBusy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const isEveAdmissionBusy = (error: unknown): boolean =>
   error instanceof EveUsageReconciliationBusyError ||
   (error instanceof ClientError && error.code === "usage_reconciliation_busy");
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports  --
+/* oxlint-disable id-length, import/group-exports --
  * id-length (#506): retryEveAdmission uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): retryEveAdmission stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named retryEveAdmission API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): retryEveAdmission sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
 /**
  * Replay only a server-certified undispatched admission, retaining its closure/ID.
