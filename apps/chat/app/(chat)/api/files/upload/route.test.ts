@@ -49,9 +49,8 @@ beforeEach(() => {
     url: `/api/files/${key}`,
   });
 });
-/* oxlint-disable typescript/explicit-function-return-type -- request: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const request = () => {
+const request = (): Request => {
   const form = new FormData();
   form.append(
     "file",
@@ -63,7 +62,6 @@ const request = () => {
     method: "POST",
   });
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200);  */
 test("records the authenticated owner of a server-created storage key before returning it", async () => {

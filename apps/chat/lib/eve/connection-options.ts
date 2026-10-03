@@ -4,18 +4,21 @@
 import { env } from "../env";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): getEveConnectionOptions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): getEveConnectionOptions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep getEveConnectionOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveConnectionOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): getEveConnectionOptions intentionally keeps the existing falsy-value behavior of [env.VERCEL_URL, env.VERCEL_BRANCH_URL].some( (hostname) => hostname && new URL(host); hostname; sameDeployment; env.VERCEL_AUTOMATION_BYPASS_SECRET; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /** Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients. */
 export const getEveConnectionOptions = (
   ownerId: string,
   host = new URL("/eve/chat", env.EVE_INTERNAL_ORIGIN).href
-) => {
+): {
+  auth: { bearer: string };
+  headers: Record<string, string>;
+  host: string;
+  redirect: "error";
+} => {
   const headers: Record<string, string> = { "x-chatjs-owner": ownerId };
   // A separate worker must never receive this Vercel project's credential.
   const sameDeployment =
@@ -33,4 +36,4 @@ export const getEveConnectionOptions = (
     redirect: "error" as const,
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions */

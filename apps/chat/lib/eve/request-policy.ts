@@ -53,15 +53,14 @@ const cancel = z
   .object({ turnId: z.string().min(1).max(200).optional() })
   .strict();
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/group-exports (#523): parseSessionRequest stays exported at its declaration so its public contract is visible beside its implementation.
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * no-magic-numbers (#517): parseSessionRequest uses 1, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/explicit-function-return-type (#560): Keep parseSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep parseSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): parseSessionRequest intentionally keeps the existing falsy-value behavior of match?.[1]; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): parseSessionRequest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-export const parseSessionRequest = (path: string, method: string) => {
+const parseSessionRequest = (path: string, method: string) => {
   const match = sessionPath.exec(path);
   if (!match?.[1]) {
     return null;
@@ -80,15 +79,12 @@ export const parseSessionRequest = (path: string, method: string) => {
     schema: action === "cancel" ? cancel : z.union([message, respond]),
   };
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): safeStreamQuery stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep safeStreamQuery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep safeStreamQuery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): safeStreamQuery accepts params: URLSearchParams; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): safeStreamQuery preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-export const safeStreamQuery = (params: URLSearchParams) => {
+const safeStreamQuery = (params: URLSearchParams): URLSearchParams | null => {
   const result = new URLSearchParams();
   for (const [key, value] of params) {
     if (result.has(key)) {
@@ -108,19 +104,18 @@ export const safeStreamQuery = (params: URLSearchParams) => {
   }
   return result;
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): sameOrigin stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep sameOrigin's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep sameOrigin's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/prefer-readonly-parameter-types (#565): sameOrigin accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): sameOrigin intentionally keeps the existing falsy-value behavior of supplied; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-export const sameOrigin = (request: Request, origin: string) => {
+const sameOrigin = (request: Request, origin: string): boolean => {
   const supplied = request.headers.get("origin");
   return supplied
     ? supplied === origin
     : request.method === "GET" &&
         request.headers.get("sec-fetch-site") !== "cross-site";
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
+export { parseSessionRequest, safeStreamQuery, sameOrigin };
