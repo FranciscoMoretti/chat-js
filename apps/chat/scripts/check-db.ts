@@ -63,11 +63,14 @@ const checkDatabase = async () => {
   await checkPurpose("migration");
 };
 
-try {
-  await checkDatabase();
-} catch {
-  console.error(
-    "Database check failed. Check your connection settings in .env.local."
-  );
-  process.exitCode = 1;
-}
+// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: The Node/tsx diagnostic runner loads this CommonJS-scoped entrypoint; keep its asynchronous startup inside an IIFE.
+void (async () => {
+  try {
+    await checkDatabase();
+  } catch {
+    console.error(
+      "Database check failed. Check your connection settings in .env.local."
+    );
+    process.exitCode = 1;
+  }
+})();

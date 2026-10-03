@@ -20,9 +20,12 @@ const check = async () => {
     await connection.end();
   }
 };
-try {
-  await check();
-} catch (error) {
-  console.error(error);
-  process.exitCode = 1;
-}
+// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: build-eve invokes this entrypoint through tsx in a CommonJS package; top-level await cannot compile there.
+void (async () => {
+  try {
+    await check();
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  }
+})();
