@@ -1,3 +1,13 @@
+/* oxlint-disable eslint/max-lines-per-function -- A story lists every renderer state in one capture call, so its length grows with the states it covers. */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- Stories import the shared harness from the sibling _shared directory. */
+/* oxlint-disable oxc/no-async-await -- Captures await rendering, fonts and animations in a fixed order. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable typescript/explicit-function-return-type -- Return types are inferred from the fixtures and helpers they wrap. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Parameters are DOM elements and library props, which are mutable host objects. */
+/* oxlint-disable typescript/promise-function-async -- Test and settle callbacks return the capture promise directly. */
+
+import React from "react";
 import { expect, test } from "vitest";
 
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
@@ -117,3 +127,11 @@ test("retrieve-url renders every state in the chat", () =>
       ),
     },
   ]));
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-enable eslint/max-lines-per-function */

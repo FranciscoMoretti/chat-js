@@ -1,3 +1,11 @@
+/* oxlint-disable eslint/id-length -- Short names follow the callback and canvas conventions of the code they wrap. */
+/* oxlint-disable eslint/no-magic-numbers -- Fixture values, viewport widths and canvas sizes are literal test data. */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- Stories import the shared harness from the sibling _shared directory. */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Each story renders once per capture; memoizing fixture props would only add noise. */
+/* oxlint-disable typescript/promise-function-async -- Test and settle callbacks return the capture promise directly. */
+
+import React from "react";
 import { test } from "vitest";
 import type { z } from "zod";
 
@@ -91,3 +99,9 @@ test("get-weather renders every state in the chat", () =>
       ),
     },
   ]));
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/id-length */

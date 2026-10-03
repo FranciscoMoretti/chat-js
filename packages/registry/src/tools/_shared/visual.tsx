@@ -1,9 +1,28 @@
+/* oxlint-disable eslint/id-length -- Short names follow the callback and canvas conventions of the code they wrap. */
+/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation. */
+/* oxlint-disable eslint/max-lines-per-function -- A story lists every renderer state in one capture call, so its length grows with the states it covers. */
+/* oxlint-disable eslint/max-params -- The state builder takes exactly the fields that vary between states. */
+/* oxlint-disable eslint/max-statements -- Capture steps run in a fixed order (render, settle, resize, snapshot); splitting them hides that sequence. */
+/* oxlint-disable eslint/no-magic-numbers -- Fixture values, viewport widths and canvas sizes are literal test data. */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/exports-last -- Each helper is exported next to the code it depends on. */
+/* oxlint-disable import/group-exports -- Each helper is exported where it is declared, next to its documentation. */
+/* oxlint-disable import/no-named-export -- Stories import the harness helpers by name. */
+/* oxlint-disable jsdoc/require-param -- The comment explains why; the TypeScript signature describes the parameters. */
+/* oxlint-disable oxc/no-async-await -- Captures await rendering, fonts and animations in a fixed order. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable typescript/consistent-type-definitions -- Story state shapes are type aliases like the rest of the harness. */
+/* oxlint-disable typescript/explicit-function-return-type -- Return types are inferred from the fixtures and helpers they wrap. */
+/* oxlint-disable typescript/explicit-module-boundary-types -- Return types are inferred from the fixtures and helpers they wrap. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Parameters are DOM elements and library props, which are mutable host objects. */
+/* oxlint-disable typescript/promise-function-async -- Test and settle callbacks return the capture promise directly. */
+
 import { takeSnapshot } from "@uiverify/vitest";
 import geistMonoUrl from "geist-mono.woff2";
 import geistSansUrl from "geist-sans.woff2";
 import { MotionGlobalConfig } from "motion/react";
 import type { ReactNode } from "react";
-import { act } from "react";
+import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { page } from "vitest/browser";
 
@@ -309,3 +328,21 @@ export const captureChatStory = async (
     MotionGlobalConfig.skipAnimations = false;
   }
 };
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable typescript/consistent-type-definitions */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable jsdoc/require-param */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable eslint/max-params */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-enable eslint/id-length */
