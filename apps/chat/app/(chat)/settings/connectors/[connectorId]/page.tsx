@@ -12,7 +12,7 @@ import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
+
 const ConnectorDetailsHeader = () => (
   <SettingsPageHeader>
     <h2 className="text-lg font-semibold">Connector details</h2>
@@ -21,12 +21,12 @@ const ConnectorDetailsHeader = () => (
     </p>
   </SettingsPageHeader>
 );
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
+
 const ConnectorDetailsBodyFallback = () => (
   <div className="flex flex-col gap-3">
     <Skeleton className="h-10 w-48" />
@@ -35,7 +35,7 @@ const ConnectorDetailsBodyFallback = () => (
     <Skeleton className="h-16 w-5/6" />
   </div>
 );
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 

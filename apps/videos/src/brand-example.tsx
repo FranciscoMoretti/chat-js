@@ -3,8 +3,6 @@ import { AbsoluteFill } from "remotion";
 
 import { Logo } from "./shared/brand";
 
-/* oxlint-disable react/jsx-no-literals -- BrandExample: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
-/* oxlint-disable react/forbid-component-props -- BrandExample: className/style are the deliberate styling interface of these UI/layout primitives. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- BrandExample: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 export const BrandExample = (): React.JSX.Element => (
   <AbsoluteFill
@@ -27,5 +25,3 @@ export const BrandExample = (): React.JSX.Element => (
   </AbsoluteFill>
 );
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/jsx-no-literals */

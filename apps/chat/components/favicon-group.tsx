@@ -17,7 +17,7 @@ interface FaviconGroupProps {
   // Use the simpler interface
   sources: FaviconSource[];
 }
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- FaviconGroup: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources, maxVisible = 4, className, }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including source.title). */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- FaviconGroup: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources, maxVisible = 4, className, }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including source.title). */
 
 export const FaviconGroup: React.FC<FaviconGroupProps> = ({
   sources,
@@ -44,4 +44,4 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

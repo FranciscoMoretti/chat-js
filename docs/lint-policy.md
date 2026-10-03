@@ -1,6 +1,6 @@
 # Practical lint policy
 
-This policy replaces enable-all adoption as the completion criterion for the [Oxlint audit #503](https://github.com/FranciscoMoretti/chat-js/issues/503). Of the 110 audited rules with findings, nine are deliberately disabled below and 101 remain enforced. Enabling a rule while suppressing its findings does not establish that the underlying work is complete. Existing retained waivers remain unreviewed until they have a concrete contract justification or linked deferred work.
+This policy replaces enable-all adoption as the completion criterion for the [Oxlint audit #503](https://github.com/FranciscoMoretti/chat-js/issues/503). Of the 110 audited rules with findings, 11 are deliberately disabled below and 99 remain enforced, with the UI scopes/options described below. Enabling a rule while suppressing its findings does not establish that the underlying work is complete. Existing retained waivers remain unreviewed until they have a concrete contract justification or linked deferred work.
 
 ## Deliberately disabled rules
 
@@ -15,8 +15,27 @@ This policy replaces enable-all adoption as the completion criterion for the [Ox
 | `node/no-top-level-await` | The [rule bans top-level await](https://oxc.rs/docs/guide/usage/linter/rules/node/no-top-level-await), while both lint configs enforce `unicorn/prefer-top-level-await`. Modern ESM tooling supports the retained convention. |
 | `react/react-in-jsx-scope` | The [rule addresses React-in-scope JSX transforms](https://oxc.rs/docs/guide/usage/linter/rules/react/react-in-jsx-scope). `apps/chat/tsconfig.json` uses the automatic `react-jsx` runtime. |
 | `sort-imports` | [Oxlint sorts declarations by binding syntax/name](https://oxc.rs/docs/guide/usage/linter/rules/eslint/sort-imports.html). `oxfmt.config.ts` imports the Ultracite formatter preset, which owns ordering; `button.tsx` uses its module-path/type import order. One formatter convention avoids rewrite cycles. |
+| `react/forbid-component-props` | Tailwind styling and typed primitive APIs intentionally accept `className` and `style` on custom components. The [default restriction](https://oxc.rs/docs/guide/usage/linter/rules/react/forbid-component-props) forbids those supported props; `button.tsx`, `SidebarInset` and registry chart components demonstrate the contract. |
+| `react/jsx-no-literals` | Chat and registry UI have no translation-layer contract. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-no-literals) accepts expression-wrapped copy without providing localization; accessible text such as MessageAttachment's “Remove” remains ordinary UI content. |
 
-These are policy decisions, not deferred violations. No other rule is disabled by this revision. Broader proposed relaxations require their own evidence and decision.
+These are policy decisions, not deferred violations. Broader relaxations require their own evidence and decision.
+
+## UI scopes and performance options
+
+`react/jsx-props-no-spreading` remains an error in feature components and canonical registry features. It is off only in `apps/chat/components/ui/**` and `apps/chat/components/ai-elements/**`, mirrored as `components/ui/**` and `components/ai-elements/**` in the standalone config. These wrappers expose native/Radix/React Hook Form prop contracts: `FormField` forwards typed `ControllerProps`, `FormControl` forwards Slot accessibility/event bindings, and `Actions` forwards native attributes. Enumerating a subset would narrow their supported APIs. The registry currently has no equivalent primitive wrapper directory; `src/ui/code-execution/**` and `src/tools/**` remain checked. See [Oxlint options](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-props-no-spreading).
+
+The three `react-perf/jsx-no-new-{function,object,array}-as-prop` rules remain errors with `nativeAllowList: "all"`. Native DOM props do not establish custom component memoization boundaries. Custom component callbacks, arrays and objects remain checked; this batch adds no memoization and does not relax `jsx-no-jsx-as-prop`. Options are documented for [functions](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-function-as-prop), [objects](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-object-as-prop) and [arrays](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-array-as-prop).
+
+The UI batch removes 759 suppression rule entries from canonical source: 291 styling-prop entries, 182 literal-text entries, 271 primitive spread entries and 15 newly unused native performance entries. Generated mirrors account for 56 additional removals, for 815 total. These count one rule per disable directive, not diagnostics or bugs. The 15 native performance removals were checked against the previous default options; pre-existing SDK/Query compatibility directives remain untouched.
+
+| Retained UI rule | Canonical entries before | Canonical entries after |
+| --- | --: | --: |
+| `react/jsx-props-no-spreading` | 302 | 31 |
+| `react-perf/jsx-no-new-function-as-prop` | 127 | 118 |
+| `react-perf/jsx-no-new-object-as-prop` | 66 | 60 |
+| `react-perf/jsx-no-new-array-as-prop` | 16 | 16 |
+
+Component source changes are comments only: all 254 changed code files have identical comment-free ASTs, including regenerated mirrors. The exception baseline requires a separately reviewed update during integration; these counts do not endorse the remaining waivers.
 
 ## Acceptance criteria
 
@@ -107,15 +126,15 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `promise/always-return` | Enforced | [#544](https://github.com/FranciscoMoretti/chat-js/issues/544) |
 | `promise/prefer-await-to-then` | Enforced | [#576](https://github.com/FranciscoMoretti/chat-js/issues/576) |
 | `react-perf/jsx-no-jsx-as-prop` | Enforced | [#555](https://github.com/FranciscoMoretti/chat-js/issues/555) |
-| `react-perf/jsx-no-new-array-as-prop` | Enforced | [#556](https://github.com/FranciscoMoretti/chat-js/issues/556) |
-| `react-perf/jsx-no-new-function-as-prop` | Enforced | [#557](https://github.com/FranciscoMoretti/chat-js/issues/557) |
-| `react-perf/jsx-no-new-object-as-prop` | Enforced | [#558](https://github.com/FranciscoMoretti/chat-js/issues/558) |
-| `react/forbid-component-props` | Enforced | [#545](https://github.com/FranciscoMoretti/chat-js/issues/545) |
+| `react-perf/jsx-no-new-array-as-prop` | Enforced for custom components; native props allowed | [#556](https://github.com/FranciscoMoretti/chat-js/issues/556) |
+| `react-perf/jsx-no-new-function-as-prop` | Enforced for custom components; native props allowed | [#557](https://github.com/FranciscoMoretti/chat-js/issues/557) |
+| `react-perf/jsx-no-new-object-as-prop` | Enforced for custom components; native props allowed | [#558](https://github.com/FranciscoMoretti/chat-js/issues/558) |
+| `react/forbid-component-props` | Off — policy | [#545](https://github.com/FranciscoMoretti/chat-js/issues/545) |
 | `react/jsx-boolean-value` | Enforced | [#546](https://github.com/FranciscoMoretti/chat-js/issues/546) |
 | `react/jsx-filename-extension` | Enforced | [#547](https://github.com/FranciscoMoretti/chat-js/issues/547) |
 | `react/jsx-max-depth` | Enforced | [#548](https://github.com/FranciscoMoretti/chat-js/issues/548) |
-| `react/jsx-no-literals` | Enforced | [#549](https://github.com/FranciscoMoretti/chat-js/issues/549) |
-| `react/jsx-props-no-spreading` | Enforced | [#550](https://github.com/FranciscoMoretti/chat-js/issues/550) |
+| `react/jsx-no-literals` | Off — policy | [#549](https://github.com/FranciscoMoretti/chat-js/issues/549) |
+| `react/jsx-props-no-spreading` | Enforced in features; off in primitive wrapper scopes | [#550](https://github.com/FranciscoMoretti/chat-js/issues/550) |
 | `react/no-array-index-key` | Enforced | [#551](https://github.com/FranciscoMoretti/chat-js/issues/551) |
 | `react/no-multi-comp` | Enforced | [#552](https://github.com/FranciscoMoretti/chat-js/issues/552) |
 | `react/only-export-components` | Enforced | [#553](https://github.com/FranciscoMoretti/chat-js/issues/553) |

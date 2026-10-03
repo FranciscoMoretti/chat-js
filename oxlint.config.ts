@@ -17,6 +17,14 @@ export default defineConfig({
   ],
   options: { typeAware: true },
   overrides: [
+    // Typed primitive wrappers forward the supported events, refs and accessibility props.
+    {
+      files: [
+        "apps/chat/components/ui/**",
+        "apps/chat/components/ai-elements/**",
+      ],
+      rules: { "react/jsx-props-no-spreading": "off" },
+    },
     // #533: The Forge launcher is CommonJS; Electron declarations augment the global Window namespace.
     // This zero-offset rule does not honor source disable directives.
     {

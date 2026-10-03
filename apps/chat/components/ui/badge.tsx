@@ -33,7 +33,7 @@ export interface BadgeProps
     VariantProps<typeof badgeVariants> {}
 /* oxlint-enable import/exports-last */
 
-/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Badge: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }: BadgeProps). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Badge: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }: BadgeProps). */
 
 const Badge = ({
   className,
@@ -42,7 +42,7 @@ const Badge = ({
 }: BadgeProps): React.JSX.Element => (
   <div className={cn(badgeVariants({ variant }), className)} {...props} />
 );
-/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/only-export-components -- badge.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Badge, badgeVariants };

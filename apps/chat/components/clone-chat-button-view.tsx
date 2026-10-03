@@ -4,7 +4,7 @@ import { Copy, Loader2 } from "lucide-react";
 import React from "react";
 
 import { Button } from "@/components/ui/button";
-/* oxlint-disable react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- CloneChatButtonView: ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- CloneChatButtonView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const CloneChatButtonView = ({
   isPending,
@@ -42,4 +42,4 @@ export const CloneChatButtonView = ({
     </Button>
   </div>
 );
-/* oxlint-enable react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

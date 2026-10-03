@@ -53,7 +53,7 @@ export const SettingsPageContent = ({
 );
 /* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageScrollArea: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageScrollArea: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const SettingsPageScrollArea = ({
   children,
@@ -64,4 +64,4 @@ export const SettingsPageScrollArea = ({
 }): React.JSX.Element => (
   <ScrollArea className={className}>{children}</ScrollArea>
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */

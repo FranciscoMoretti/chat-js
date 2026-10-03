@@ -37,11 +37,11 @@ vi.mock("@/lib/ai/tool-renderer-registry", async () => {
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
+
 vi.mock("@/components/part/message-annotations", () => ({
   ResearchUpdates: () => <span>Search updates</span>,
 }));
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */

@@ -3,7 +3,7 @@
 import React from "react";
 
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-/* oxlint-disable react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- SettingsHeader: ; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- SettingsHeader: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 export const SettingsHeader = () => {
   const { isMobile } = useSidebar();
@@ -20,4 +20,4 @@ export const SettingsHeader = () => {
     </div>
   );
 };
-/* oxlint-enable react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

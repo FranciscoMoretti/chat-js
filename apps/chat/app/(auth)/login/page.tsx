@@ -1,6 +1,4 @@
-/* oxlint-disable import/max-dependencies --
- * import/max-dependencies (#524): import from "lucide-react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
+/* oxlint-disable import/max-dependencies -- * import/max-dependencies (#524): import from "lucide-react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling. */
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -21,23 +19,18 @@ import {
 import { cn } from "@/lib/utils";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable import/exports-last, react/only-export-components --
- * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
+/* oxlint-disable import/exports-last, react/only-export-components -- * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
 export const metadata: Metadata = {
   description: "Login to your account",
   title: "Login",
 };
 /* oxlint-enable import/exports-last, react/only-export-components */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * react-perf/jsx-no-jsx-as-prop (#555): LoginPageContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/forbid-component-props (#545): LoginPageContent uses className/style as established component styling interfaces; removing them changes the rendered contract.
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- * react-perf/jsx-no-jsx-as-prop (#555): LoginPageContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * typescript/explicit-function-return-type (#560): Keep LoginPageContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): LoginPageContent accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): LoginPageContent preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+ * unicorn/no-null (#570): LoginPageContent preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const LoginPageContent = async ({
   searchParams,
 }: {
@@ -68,16 +61,12 @@ const LoginPageContent = async ({
     </Suspense>
   );
 };
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types --
- * react-perf/jsx-no-jsx-as-prop (#555): LoginPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/forbid-component-props (#545): LoginPage uses className/style as established component styling interfaces; removing them changes the rendered contract.
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- * react-perf/jsx-no-jsx-as-prop (#555): LoginPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): LoginPage keeps related render components together; extraction changes component, state, and layout boundaries.
- * react/jsx-no-literals (#549): LoginPage owns this page copy; replacing literal text requires a localization/content-management contract.
  * react/no-multi-comp (#552): LoginPage keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/prefer-readonly-parameter-types (#565): LoginPage accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+ * typescript/prefer-readonly-parameter-types (#565): LoginPage accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const LoginPage = ({
   searchParams,
 }: {
@@ -109,10 +98,8 @@ const LoginPage = ({
     </div>
   </div>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
+/* oxlint-disable import/no-default-export -- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract. */
 export default LoginPage;
 /* oxlint-enable import/no-default-export */

@@ -8,7 +8,6 @@ interface Tech {
   name: string;
 }
 
-/* oxlint-disable react/forbid-component-props -- TECHS: className/style are the deliberate styling interface of these UI/layout primitives. */
 const TECHS: Tech[] = [
   {
     glowColor: "#a1a1a1",
@@ -181,7 +180,6 @@ const TECHS: Tech[] = [
     name: "Motion",
   },
 ];
-/* oxlint-enable react/forbid-component-props */
 
 /* oxlint-disable eslint/no-magic-numbers -- TechCard: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechCard: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
@@ -223,7 +221,7 @@ const TechCard = ({
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable react/no-multi-comp -- TechStack: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable react/jsx-no-literals -- TechStack: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechStack: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable react/jsx-max-depth -- TechStack: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable eslint/id-length -- TechStack: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
@@ -276,5 +274,5 @@ export const TechStack = (): React.JSX.Element => (
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable react/no-multi-comp */

@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSession } from "@/providers/session-provider";
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type -- PureHeaderActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type -- PureHeaderActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const PureHeaderActions = () => {
   const { data: session } = useSession();
@@ -46,6 +46,6 @@ const PureHeaderActions = () => {
     </div>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type */
 
 export const HeaderActions = memo(PureHeaderActions);

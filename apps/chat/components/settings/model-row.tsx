@@ -10,7 +10,7 @@ import { ModelSelectorLogo } from "../model-selector-logo";
 /* oxlint-disable import/no-relative-parent-imports -- ../ui/switch import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
 import { Switch } from "../ui/switch";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/exports-last, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ModelRow: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model.reasoning). */
+/* oxlint-disable import/exports-last, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ModelRow: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model.reasoning). */
 
 export const ModelRow = memo(
   ({
@@ -51,6 +51,6 @@ export const ModelRow = memo(
     );
   }
 );
-/* oxlint-enable import/exports-last, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 ModelRow.displayName = "PureModelRow";

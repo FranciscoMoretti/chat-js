@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { HeaderActions } from "@/components/header-actions";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-/* oxlint-disable react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ChatHeaderView: ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ChatHeaderView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ChatHeaderView = ({
   breadcrumb,
@@ -33,4 +33,4 @@ export const ChatHeaderView = ({
     <HeaderActions />
   </header>
 );
-/* oxlint-enable react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

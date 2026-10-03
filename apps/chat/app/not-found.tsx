@@ -3,10 +3,7 @@ import React from "react";
 import { InternalLink } from "@/components/internal-link";
 import { Button } from "@/components/ui/button";
 
-/* oxlint-disable react/jsx-max-depth, react/jsx-no-literals --
- * react/jsx-max-depth (#548): NotFound keeps related render components together; extraction changes component, state, and layout boundaries.
- * react/jsx-no-literals (#549): NotFound owns this page copy; replacing literal text requires a localization/content-management contract.
- */
+/* oxlint-disable react/jsx-max-depth -- * react/jsx-max-depth (#548): NotFound keeps related render components together; extraction changes component, state, and layout boundaries. */
 const NotFound = (): React.JSX.Element => (
   <div className="bg-background min-h-screen">
     <div className="container mx-auto p-6">
@@ -25,7 +22,7 @@ const NotFound = (): React.JSX.Element => (
     </div>
   </div>
 );
-/* oxlint-enable react/jsx-max-depth, react/jsx-no-literals */
+/* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-disable import/no-default-export --
  * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.

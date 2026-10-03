@@ -3,7 +3,7 @@ import React from "react";
 import { toast } from "sonner";
 
 import { MessageAction } from "./ai-elements/message";
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, typescript/prefer-readonly-parameter-types -- MessageVoteActions: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- MessageVoteActions: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const MessageVoteActions = ({
   vote,
@@ -49,4 +49,4 @@ export const MessageVoteActions = ({
     </MessageAction>
   </>
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */

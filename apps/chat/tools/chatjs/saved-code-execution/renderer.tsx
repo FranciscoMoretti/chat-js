@@ -6,7 +6,6 @@ import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-e
 
 import { documentExecutionInput, eveCodeExecutionResult } from "./schemas";
 
-/* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const SavedCodeRenderer = defineToolRenderer({
   inputSchema: documentExecutionInput,
@@ -22,4 +21,3 @@ export const SavedCodeRenderer = defineToolRenderer({
     ),
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/jsx-no-literals */

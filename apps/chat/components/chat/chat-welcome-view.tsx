@@ -2,7 +2,6 @@ import React from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable react/jsx-no-literals -- WelcomeMessage: react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
 
 const WelcomeMessage = (): React.JSX.Element => (
   <div className="pointer-events-none text-center">
@@ -11,7 +10,7 @@ const WelcomeMessage = (): React.JSX.Element => (
     </h1>
   </div>
 );
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatWelcomeView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ChatWelcomeView = ({

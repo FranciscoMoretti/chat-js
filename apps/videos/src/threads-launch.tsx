@@ -20,7 +20,6 @@ import type { LaunchScript, ReplyState, StoryState } from "./story";
 
 import "./styles.css";
 
-/* oxlint-disable react/jsx-no-literals -- Author: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 const Author = (): React.JSX.Element => (
   <>
     <div className="avatar">
@@ -29,7 +28,7 @@ const Author = (): React.JSX.Element => (
     Assistant
   </>
 );
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-disable react/no-multi-comp -- Status: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- Status: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Status: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
@@ -92,7 +91,7 @@ const ActionIcon = ({
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable react/no-multi-comp -- VersionActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/no-magic-numbers -- VersionActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-no-literals -- VersionActions: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- VersionActions: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable unicorn/no-null -- VersionActions: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 const VersionActions = ({
@@ -125,13 +124,13 @@ const VersionActions = ({
   ) : null;
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- MessageActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/no-magic-numbers -- MessageActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/jsx-no-literals -- MessageActions: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 const MessageActions = ({
   user = false,
   index = 1,
@@ -176,7 +175,7 @@ const MessageActions = ({
     )}
   </div>
 );
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable eslint/id-length -- getPromptText: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
@@ -206,9 +205,9 @@ const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
 
 /* oxlint-disable react/no-multi-comp -- PromptMessage: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- PromptMessage: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable react/jsx-no-literals -- PromptMessage: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable eslint/no-magic-numbers -- PromptMessage: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react/forbid-component-props -- PromptMessage: className/style are the deliberate styling interface of these UI/layout primitives. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- PromptMessage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const PromptMessage = ({
   s,
@@ -245,20 +244,20 @@ const PromptMessage = ({
   </div>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- Chat: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/max-lines-per-function -- Chat: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/id-length -- Chat: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable react/jsx-no-literals -- Chat: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Chat: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable eslint/no-magic-numbers -- Chat: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- Chat: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable react/forbid-component-props -- Chat: className/style are the deliberate styling interface of these UI/layout primitives. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Chat: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Chat = ({
   s,
@@ -342,18 +341,18 @@ const Chat = ({
   </div>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable react/no-multi-comp -- ConversationTree: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/max-lines-per-function -- ConversationTree: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/id-length -- ConversationTree: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable react/jsx-no-literals -- ConversationTree: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- ConversationTree: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable eslint/no-magic-numbers -- ConversationTree: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- ConversationTree: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
@@ -510,15 +509,14 @@ const ConversationTree = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable react/no-multi-comp -- ThreadsLaunch: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/max-lines-per-function -- ThreadsLaunch: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/id-length -- ThreadsLaunch: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable react/jsx-no-literals -- ThreadsLaunch: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
-/* oxlint-disable react/forbid-component-props -- ThreadsLaunch: className/style are the deliberate styling interface of these UI/layout primitives. */
+
 /* oxlint-disable react/jsx-props-no-spreading -- ThreadsLaunch: The wrapper forwards its typed native/library prop contract; enumerating props would narrow that interface. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- ThreadsLaunch: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable eslint/no-magic-numbers -- ThreadsLaunch: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
@@ -603,8 +601,7 @@ export const ThreadsLaunch = ({
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/jsx-props-no-spreading */
-/* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */

@@ -24,7 +24,7 @@ const USE_CASES = [
 ];
 
 /* oxlint-disable eslint/max-lines-per-function -- UseCases: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable react/jsx-no-literals -- UseCases: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react/jsx-max-depth -- UseCases: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- UseCases: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable eslint/no-magic-numbers -- UseCases: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
@@ -110,5 +110,5 @@ export const UseCases = (): React.JSX.Element => (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/max-lines-per-function */

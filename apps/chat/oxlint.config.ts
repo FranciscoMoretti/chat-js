@@ -15,6 +15,11 @@ export default defineConfig({
     "tests/eve-results/**",
   ],
   overrides: [
+    // Typed primitive wrappers forward the supported events, refs and accessibility props.
+    {
+      files: ["components/ui/**", "components/ai-elements/**"],
+      rules: { "react/jsx-props-no-spreading": "off" },
+    },
     // #533: The Forge launcher is CommonJS; Electron declarations augment the global Window namespace.
     // This zero-offset rule does not honor source disable directives.
     {

@@ -111,9 +111,9 @@ const architectureRows = [
 ] as const;
 
 /* oxlint-disable eslint/max-lines-per-function -- ThreadsPage: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable react/jsx-no-literals -- ThreadsPage: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react/jsx-max-depth -- ThreadsPage: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable react/forbid-component-props -- ThreadsPage: className/style are the deliberate styling interface of these UI/layout primitives. */
+
 /* oxlint-disable eslint/no-magic-numbers -- ThreadsPage: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsPage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const ThreadsPage = (): React.JSX.Element => (
@@ -361,9 +361,9 @@ const ThreadsPage = (): React.JSX.Element => (
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable import/no-default-export -- page.tsx: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */

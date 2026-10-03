@@ -5,7 +5,7 @@ import React from "react";
 
 import { Action } from "@/components/ai-elements/actions";
 import { cn } from "@/lib/utils";
-/* oxlint-disable react/forbid-component-props, typescript/prefer-readonly-parameter-types -- RetryButtonView: ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- RetryButtonView: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const RetryButtonView = ({
   onRetry,
@@ -28,4 +28,4 @@ export const RetryButtonView = ({
     <RefreshCcw className="h-3.5 w-3.5" />
   </Action>
 );
-/* oxlint-enable react/forbid-component-props, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
