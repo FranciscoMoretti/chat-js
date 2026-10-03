@@ -47,6 +47,13 @@ const successTool: RetrieveUrlRendererTool = {
   toolCallId: "url-output",
 };
 
+const emptyTool: RetrieveUrlRendererTool = {
+  input,
+  output: { results: [] },
+  state: "output-available",
+  toolCallId: "url-empty",
+};
+
 test("retrieve-url renders every state in the chat", () =>
   captureChatStory("retrieve-url", [
     {
@@ -90,6 +97,23 @@ test("retrieve-url renders every state in the chat", () =>
           isReadonly
           messageId={messageId}
           tool={successTool}
+        />
+      ),
+    },
+    {
+      label: "Retrieved, nothing extracted",
+      // With no result the source link is a bare `#`, which resolves against the
+      // per-run test page URL; pin it so the archive is the same every run.
+      settle: (section) => {
+        section
+          .querySelector('a[href="#"]')
+          ?.setAttribute("href", "https://example.com/#");
+      },
+      ui: (
+        <RetrieveUrlRenderer
+          isReadonly
+          messageId={messageId}
+          tool={emptyTool}
         />
       ),
     },

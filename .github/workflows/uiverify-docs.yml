@@ -7,12 +7,14 @@ on:
       - "apps/docs/**"
       - "packages/thread/**"
       - "bun.lock"
+      - "package.json"
       - ".github/workflows/uiverify-docs.yml"
   pull_request:
     paths:
       - "apps/docs/**"
       - "packages/thread/**"
       - "bun.lock"
+      - "package.json"
       - ".github/workflows/uiverify-docs.yml"
 
 permissions:
@@ -27,18 +29,22 @@ jobs:
     name: uiverify-docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Fork and Dependabot PRs get no repository secrets: capture still runs, the
+    # upload is skipped.
+    env:
+      HAS_UIVERIFY_KEY: ${{ secrets.UIVERIFY_DOCS_API_KEY != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.1
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
@@ -49,6 +55,7 @@ jobs:
       - name: Capture docs
         run: bun run test:visual:docs
       - name: Upload UI Verify build
+        if: env.HAS_UIVERIFY_KEY == 'true'
         env:
           UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_DOCS_API_KEY }}
         # Merged UI becomes the baseline; PR builds still require review.

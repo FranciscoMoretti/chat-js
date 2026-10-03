@@ -76,4 +76,18 @@ test("get-weather renders every state in the chat", () =>
         />
       ),
     },
+    {
+      label: "Result missing",
+      ui: (
+        <GetWeatherRenderer
+          isReadonly
+          messageId={messageId}
+          tool={{
+            input: { latitude: 0, longitude: 0 },
+            state: "output-available",
+            toolCallId: "weather-missing",
+          }}
+        />
+      ),
+    },
   ]));

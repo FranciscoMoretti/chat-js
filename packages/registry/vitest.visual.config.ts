@@ -61,6 +61,11 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("../../apps/chat", import.meta.url)),
       echarts: createRequire(import.meta.url).resolve("echarts"),
+      // The chart imports the CommonJS build, which reaches the browser without
+      // default-export interop (the component arrives as a module object).
+      "echarts-for-react/lib/index": fileURLToPath(
+        new URL("node_modules/echarts-for-react/esm/index.js", import.meta.url)
+      ),
       "geist-mono.woff2": path.join(
         geistFonts,
         "geist-mono/GeistMono-Variable.woff2"
@@ -85,6 +90,7 @@ export default defineConfig({
     },
     include: [
       "src/tools/*/renderer.visual.tsx",
+      "visual/*.browser.test.tsx",
       "../../apps/chat/tests/visual/*.browser.tsx",
     ],
   },

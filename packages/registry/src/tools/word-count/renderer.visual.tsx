@@ -23,6 +23,16 @@ const messageId = "word-count-message";
 test("word-count renders every state in the chat", () =>
   captureChatStory("word-count", [
     {
+      label: "Input still streaming (renders nothing)",
+      ui: (
+        <WordCountRenderer
+          isReadonly
+          messageId={messageId}
+          tool={{ state: "input-streaming", toolCallId: "word-count-stream" }}
+        />
+      ),
+    },
+    {
       label: "Counting",
       ui: (
         <WordCountRenderer

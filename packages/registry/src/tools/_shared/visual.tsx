@@ -150,6 +150,9 @@ export type ChatState = {
    * settle animations). Receives this state's own `<section>`, so a story with
    * several instances of the same widget settles each independently. */
   settle?: (section: HTMLElement) => Promise<void> | void;
+  /** Re-run after each viewport resize, before that width's snapshots, for
+   * layout that has to be measured at the width being captured. */
+  perViewport?: (section: HTMLElement) => Promise<void> | void;
 };
 
 export type CaptureOptions = {
@@ -239,6 +242,9 @@ export const captureChatStory = async (
         await page.viewport(width, 100);
         await nextFrame();
       });
+      for (const [index, state] of states.entries()) {
+        await state.perViewport?.(sections[index]);
+      }
       for (const theme of THEMES) {
         document.documentElement.classList.toggle("dark", theme === "dark");
         await takeSnapshot(`${name}-${viewport}-${theme}`);

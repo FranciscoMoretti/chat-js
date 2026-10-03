@@ -19,6 +19,19 @@ const imageUrl = makeCanvasDataUri(512, 384, (ctx, width, height) => {
 test("generate-image renders every state in the chat", () =>
   captureChatStory("generate-image", [
     {
+      label: "Prompt still streaming",
+      ui: (
+        <GenerateImageRenderer
+          isReadonly
+          messageId="image-message"
+          tool={{
+            state: "input-streaming",
+            toolCallId: "generate-image-stream",
+          }}
+        />
+      ),
+    },
+    {
       label: "Generating (skeleton)",
       ui: (
         <GenerateImageRenderer

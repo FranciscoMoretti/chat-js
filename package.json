@@ -27,7 +27,7 @@
     "test:types": "turbo run test:types",
     "docs:links": "turbo run docs:links --filter=@chatjs/docs",
     "test:visual:docs": "bun --filter=@chatjs/docs run test:visual",
-    "uiverify:upload:docs": "uiverify upload --static-dir apps/docs/uiverify-archive --only-changed",
+    "uiverify:upload:docs": "uiverify upload --static-dir apps/docs/uiverify-archive",
     "uiverify:docs": "bun run test:visual:docs && bun run uiverify:upload:docs",
     "demo:sync": "turbo run demo:sync --filter=@chat-js/registry --",
     "demo:check": "turbo run demo:check --filter=@chat-js/registry",
