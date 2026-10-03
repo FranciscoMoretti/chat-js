@@ -14,14 +14,12 @@ interface DownloadResult {
 
 type AssetDownloadResult = DownloadResult | null;
 
-/* oxlint-disable import/exports-last, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): DownloadImplementation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * typescript/prefer-readonly-parameter-types (#565): DownloadImplementation accepts args: { url: URL; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export type DownloadImplementation = (args: {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/prefer-readonly-parameter-types (#565): DownloadImplementation accepts args: { url: URL; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+type DownloadImplementation = (args: {
   url: URL;
 }) => Promise<AssetDownloadResult>;
-/* oxlint-enable import/exports-last, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): defaultDownload keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -216,7 +214,7 @@ const mapImagePart = (
  * Inlines any URL-based file/image parts within ModelMessage[] by replacing the URLs
  * with downloaded binary data. This ensures providers receive actual bytes.
  */
-export const replaceFilePartUrlByBinaryDataInMessages = async (
+const replaceFilePartUrlByBinaryDataInMessages = async (
   messages: ModelMessage[],
   downloadImplementation: DownloadImplementation = defaultDownload
 ): Promise<ModelMessage[]> => {
@@ -275,3 +273,5 @@ export const replaceFilePartUrlByBinaryDataInMessages = async (
   return [...leadingSystemMessages, ...availableMessages.slice(firstUserIndex)];
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+export { replaceFilePartUrlByBinaryDataInMessages };
+export type { DownloadImplementation };

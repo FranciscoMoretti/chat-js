@@ -12,17 +12,13 @@ import {
 } from "../../../registry/src/tools/research";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const researchTestFiles = [
+const researchTestFiles = [
   "lib/eve/research-availability.test.ts",
   "lib/eve/research-tool.test.ts",
   "lib/eve/research-steps.test.ts",
   "lib/eve/research-search-updates.test.ts",
   "tests/native-research-runtime.ts",
 ];
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
@@ -123,35 +119,24 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
   );
 };
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const shouldCopyChatAppFile = (relativePath: string): boolean =>
+const shouldCopyChatAppFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) && !isRepositoryOnlyFile(relativePath);
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const shouldCopyElectronFile = (relativePath: string): boolean =>
+const shouldCopyElectronFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&
   !relativePath
     .split(path.sep)
     .some((segment) => segment === "release" || segment === "branding.json");
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 // Remove the reference-app project while retaining the starter behavior suites.
 const REFERENCE_VISUAL_PROJECT =
   /^ {4}\{\n {6}name: "visual",[\s\S]*?^ {4}\},\n/gmu;
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-export const normalizeScaffoldContent = async (
-  destination: string
-): Promise<void> => {
+const normalizeScaffoldContent = async (destination: string): Promise<void> => {
   const packagePath = path.join(destination, "package.json");
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
@@ -235,4 +220,9 @@ export const normalizeScaffoldContent = async (
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
+export {
+  normalizeScaffoldContent,
+  researchTestFiles,
+  shouldCopyChatAppFile,
+  shouldCopyElectronFile,
+};

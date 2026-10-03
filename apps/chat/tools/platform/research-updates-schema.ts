@@ -29,19 +29,9 @@ const WebSearchSchema = TaskUpdateSchema.extend({
 });
 /* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): WebSearchUpdate is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): WebSearchUpdate stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
-/* oxlint-enable import/exports-last, import/group-exports */
+type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): SearchResultItem is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): SearchResultItem stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
-/* oxlint-enable import/exports-last, import/group-exports */
+type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
 
 const StartedSchema = BaseStreamUpdateSchema.extend({
   timestamp: z.number(),
@@ -63,7 +53,7 @@ const WritingSchema = TaskUpdateSchema.extend({
   type: z.literal("writing"),
 });
 
-export const ResearchUpdateSchema = z.discriminatedUnion("type", [
+const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WebSearchSchema,
   StartedSchema,
   CompletedSchema,
@@ -71,8 +61,6 @@ export const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WritingSchema,
 ]);
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): ResearchUpdate stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
-/* oxlint-enable import/group-exports */
+type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
+export { ResearchUpdateSchema };
+export type { ResearchUpdate, SearchResultItem, WebSearchUpdate };

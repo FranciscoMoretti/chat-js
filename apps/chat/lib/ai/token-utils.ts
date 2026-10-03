@@ -9,13 +9,10 @@ const MESSAGE_WRAPPER_TOKEN_OVERHEAD = 5;
 const ESTIMATED_CHARACTERS_PER_TOKEN = 3;
 const encoder = getEncoding("o200k_base");
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): calculateMessagesTokens is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): calculateMessagesTokens stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): calculateMessagesTokens accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/prefer-readonly-parameter-types (#565): calculateMessagesTokens accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Calculate total tokens from messages
-export const calculateMessagesTokens = (messages: ModelMessage[]): number => {
+const calculateMessagesTokens = (messages: ModelMessage[]): number => {
   let totalTokens = 0;
 
   for (const message of messages) {
@@ -42,7 +39,7 @@ export const calculateMessagesTokens = (messages: ModelMessage[]): number => {
 
   return totalTokens;
 };
-/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): trimPrompt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -276,14 +273,11 @@ const truncateLastMessageIfNeeded = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): truncateMessages stays exported at its declaration so its public contract is visible beside its implementation.
- * max-statements (#512): truncateMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): truncateMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): truncateMessages accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-statements (#512): truncateMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): truncateMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): truncateMessages accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Truncate messages array to fit within token limit
-export const truncateMessages = (
+const truncateMessages = (
   messages: ModelMessage[],
   maxTokens: number,
   preserveSystemMessage = true
@@ -322,4 +316,5 @@ export const truncateMessages = (
     ? [systemMessage, ...truncatedMessages]
     : truncatedMessages;
 };
-/* oxlint-enable import/group-exports, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+export { calculateMessagesTokens, truncateMessages };

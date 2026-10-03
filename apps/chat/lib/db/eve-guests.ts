@@ -46,14 +46,11 @@ const windows = (now: Date) =>
   }));
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): createEveGuest is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): createEveGuest stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): createEveGuest accepts input: { tokenHash: string; messageLimit: number; expiresAt: Date; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const createEveGuest = async (input: {
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/explicit-function-return-type (#560): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): createEveGuest accepts input: { tokenHash: string; messageLimit: number; expiresAt: Date; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const createEveGuest = async (input: {
   tokenHash: string;
   messageLimit: number;
   expiresAt: Date;
@@ -80,15 +77,12 @@ export const createEveGuest = async (input: {
     return guest;
   });
 };
-/* oxlint-enable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/exports-last (#522): readExistingEveGuestMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): readExistingEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const readExistingEveGuestMessage = async (
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/explicit-function-return-type (#560): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const readExistingEveGuestMessage = async (
   ownerId: string,
   operationId: string
 ) => {
@@ -107,7 +101,7 @@ export const readExistingEveGuestMessage = async (
     );
   return message;
 };
-/* oxlint-enable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): GuestBootstrap preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
@@ -328,25 +322,22 @@ const reserveMessage = async (
 };
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * import/exports-last (#522): reserveEveGuestMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): reserveEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessage accepts bootstrap?: GuestBootstrap; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): reserveEveGuestMessage preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessage accepts bootstrap?: GuestBootstrap; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): reserveEveGuestMessage preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /** Reserve before native admission. Ambiguous admission keeps its reservation. */
-export const reserveEveGuestMessage = async (
+const reserveEveGuestMessage = async (
   input: GuestReservationInput,
   bootstrap?: GuestBootstrap
 ) => {
   validateReservation(input, bootstrap);
   return await db.transaction((tx) => reserveMessage(tx, input, bootstrap));
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 type GuestReservationResult = Awaited<ReturnType<typeof reserveMessage>>;
 type GuestReservationFailure = Exclude<
@@ -362,22 +353,19 @@ class GuestBatchRejectedError extends Error {
   }
 }
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/exports-last (#522): reserveEveGuestMessages is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): reserveEveGuestMessages stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): reserveEveGuestMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessages accepts inputs: GuestReservationInput[]; bootstrap?: GuestBootstrap; tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): reserveEveGuestMessages intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable id-length, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): reserveEveGuestMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessages accepts inputs: GuestReservationInput[]; bootstrap?: GuestBootstrap; tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): reserveEveGuestMessages intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Comparisons admit every candidate or none, including first-guest account creation. */
-export const reserveEveGuestMessages = async <T = undefined>(
+const reserveEveGuestMessages = async <T = undefined>(
   inputs: GuestReservationInput[],
   bootstrap?: GuestBootstrap,
   persistAdmission?: (
@@ -429,13 +417,9 @@ export const reserveEveGuestMessages = async <T = undefined>(
     throw error;
   }
 };
-/* oxlint-enable id-length, import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): commitEveGuestMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): commitEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const commitEveGuestMessage = async (
+const commitEveGuestMessage = async (
   ownerId: string,
   operationId: string,
   reservationId: string
@@ -454,7 +438,6 @@ export const commitEveGuestMessage = async (
     .returning();
   return Boolean(row);
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -540,49 +523,50 @@ const releaseMessage = async (
   });
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns --
- * import/group-exports (#523): releaseEveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
 /** Only a proven unaccepted request can be refunded; never use this on a timeout. */
-export const releaseEveGuestMessage = async (
+const releaseEveGuestMessage = async (
   ownerId: string,
   operationId: string,
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, false);
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns --
- * import/group-exports (#523): releaseEveGuestCreation stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
 /** Serialize proof of no creation with the same family lock used before native dispatch. */
-export const releaseEveGuestCreation = async (
+const releaseEveGuestCreation = async (
   ownerId: string,
   operationId: string,
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, true);
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): readEveGuestOwner stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /** Includes expired identities so cleanup and policy never reclassify a guest as a user. */
-export const readEveGuestOwner = async (ownerId: string) => {
+const readEveGuestOwner = async (ownerId: string) => {
   const [guest] = await db
     .select({ expiresAt: eveGuest.expiresAt })
     .from(eveGuest)
     .where(eq(eveGuest.ownerId, ownerId));
   return guest;
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 /* oxlint-disable max-lines -- #509: This eve-guests.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+export {
+  commitEveGuestMessage,
+  createEveGuest,
+  readEveGuestOwner,
+  readExistingEveGuestMessage,
+  releaseEveGuestCreation,
+  releaseEveGuestMessage,
+  reserveEveGuestMessage,
+  reserveEveGuestMessages,
+};

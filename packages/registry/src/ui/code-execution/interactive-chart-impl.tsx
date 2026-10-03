@@ -35,41 +35,25 @@ interface BaseChartCommon {
   y_label?: string;
 }
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export type LineChart = BaseChartCommon & {
+type LineChart = BaseChartCommon & {
   type: "line";
   x_scale?: "datetime";
   elements: LineScatterElement[];
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export type ScatterChart = BaseChartCommon & {
+type ScatterChart = BaseChartCommon & {
   type: "scatter";
   x_scale?: "datetime";
   elements: LineScatterElement[];
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export type BarChart = BaseChartCommon & {
+type BarChart = BaseChartCommon & {
   type: "bar";
   x_scale?: undefined;
   elements: BarElement[];
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export type BaseChart = LineChart | ScatterChart | BarChart;
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
+type BaseChart = LineChart | ScatterChart | BarChart;
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -304,6 +288,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
+export type { BarChart, BaseChart, LineChart, ScatterChart };
+/* oxlint-disable import/no-default-export -- #623: The chart loader and dynamic import consume this existing default chart entrypoint; preserving that contract retains its established Fast Refresh exception. */
 export default InteractiveChart;
 /* oxlint-enable import/no-default-export */

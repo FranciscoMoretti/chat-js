@@ -12,21 +12,16 @@ const normalizedCredentialGroups = (
     .toSorted()
     .join(" or ");
 
-export interface EnvRequirement {
+interface EnvRequirement {
   allOf?: EnvRequirement[];
   description?: string;
   options: EnvVarName[][];
   runtimeAuth?: string;
 }
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): formatRequirementDescription stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): formatRequirementDescription accepts requirement: EnvRequirement; group; option; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): formatRequirementDescription intentionally keeps the existing falsy-value behavior of requirement.description; groupsAlreadyListed; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const formatRequirementDescription = (
-  requirement: EnvRequirement
-): string => {
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- typescript/prefer-readonly-parameter-types (#565): formatRequirementDescription accepts requirement: EnvRequirement; group; option; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): formatRequirementDescription intentionally keeps the existing falsy-value behavior of requirement.description; groupsAlreadyListed; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const formatRequirementDescription = (requirement: EnvRequirement): string => {
   if (requirement.allOf) {
     return requirement.allOf
       .map((group) => `(${formatRequirementDescription(group)})`)
@@ -52,35 +47,26 @@ export const formatRequirementDescription = (
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   return requirement.description || keys;
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): authEnvRequirements stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const authEnvRequirements: Record<
-  keyof AuthenticationConfig,
-  EnvRequirement
-> = {
-  github: {
-    description: "AUTH_GITHUB_ID, AUTH_GITHUB_SECRET",
-    options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
-  },
-  google: {
-    description: "AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET",
-    options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
-  },
-  vercel: {
-    description: "VERCEL_APP_CLIENT_ID, VERCEL_APP_CLIENT_SECRET",
-    options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
-  },
-};
-/* oxlint-enable import/group-exports */
+const authEnvRequirements: Record<keyof AuthenticationConfig, EnvRequirement> =
+  {
+    github: {
+      description: "AUTH_GITHUB_ID, AUTH_GITHUB_SECRET",
+      options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
+    },
+    google: {
+      description: "AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET",
+      options: [["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"]],
+    },
+    vercel: {
+      description: "VERCEL_APP_CLIENT_ID, VERCEL_APP_CLIENT_SECRET",
+      options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
+    },
+  };
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): isRequirementSatisfied stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): isRequirementSatisfied accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; group; option; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const isRequirementSatisfied = (
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): isRequirementSatisfied accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; group; option; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const isRequirementSatisfied = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
 ): boolean => {
@@ -96,18 +82,22 @@ export const isRequirementSatisfied = (
     )
   );
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): getMissingRequirement stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): getMissingRequirement accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): getMissingRequirement preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const getMissingRequirement = (
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- typescript/prefer-readonly-parameter-types (#565): getMissingRequirement accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): getMissingRequirement preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const getMissingRequirement = (
   requirement: EnvRequirement,
   env: NodeJS.ProcessEnv
 ): string | null =>
   isRequirementSatisfied(requirement, env)
     ? null
     : formatRequirementDescription(requirement);
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+export {
+  authEnvRequirements,
+  formatRequirementDescription,
+  getMissingRequirement,
+  isRequirementSatisfied,
+};
+export type { EnvRequirement };

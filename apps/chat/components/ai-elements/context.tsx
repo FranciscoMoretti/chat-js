@@ -46,14 +46,12 @@ const useContextValue = () => {
   return context;
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports -- ContextProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type ContextProps = ComponentProps<typeof HoverCard> & ContextSchema;
-/* oxlint-enable import/exports-last, import/group-exports */
+type ContextProps = ComponentProps<typeof HoverCard> & ContextSchema;
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- Context: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- Context: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const Context = ({
+const Context = ({
   usedTokens,
   maxTokens,
   usage,
@@ -71,7 +69,7 @@ export const Context = ({
     </ContextContext.Provider>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type -- ContextIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
@@ -115,14 +113,12 @@ const ContextIcon = () => {
   );
 };
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports -- ContextTriggerProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type ContextTriggerProps = ComponentProps<typeof Button>;
-/* oxlint-enable import/exports-last, import/group-exports */
+type ContextTriggerProps = ComponentProps<typeof Button>;
 
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ContextTrigger: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: ContextTriggerProps). */
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ContextTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: ContextTriggerProps). */
 
-export const ContextTrigger = ({ children, ...props }: ContextTriggerProps) => {
+const ContextTrigger = ({ children, ...props }: ContextTriggerProps) => {
   const { usedTokens, maxTokens } = useContextValue();
   const usedPercent = usedTokens / maxTokens;
   const renderedPercent = new Intl.NumberFormat("en-US", {
@@ -143,16 +139,13 @@ export const ContextTrigger = ({ children, ...props }: ContextTriggerProps) => {
     </HoverCardTrigger>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- ContextContentProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ContextContentProps = ComponentProps<typeof HoverCardContent>;
 
-export type ContextContentProps = ComponentProps<typeof HoverCardContent>;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ContextContentProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ContextContentProps). */
-
-export const ContextContent = ({
+const ContextContent = ({
   className,
   ...props
 }: ContextContentProps): React.JSX.Element => (
@@ -161,16 +154,13 @@ export const ContextContent = ({
     {...props}
   />
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- ContextContentHeaderProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ContextContentHeaderProps = ComponentProps<"div">;
 
-export type ContextContentHeaderProps = ComponentProps<"div">;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ContextContentHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ContextContentHeader: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-export const ContextContentHeader = ({
+const ContextContentHeader = ({
   children,
   className,
   ...props
@@ -206,16 +196,13 @@ export const ContextContentHeader = ({
     </div>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- ContextContentBodyProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ContextContentBodyProps = ComponentProps<"div">;
 
-export type ContextContentBodyProps = ComponentProps<"div">;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: ContextContentBodyProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ContextContentBody: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: ContextContentBodyProps). */
-
-export const ContextContentBody = ({
+const ContextContentBody = ({
   children,
   className,
   ...props
@@ -224,16 +211,13 @@ export const ContextContentBody = ({
     {children}
   </div>
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- ContextContentFooterProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ContextContentFooterProps = ComponentProps<"div">;
 
-export type ContextContentFooterProps = ComponentProps<"div">;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ContextContentFooter: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ContextContentFooter: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-export const ContextContentFooter = ({
+const ContextContentFooter = ({
   children,
   className,
   ...props
@@ -271,12 +255,9 @@ export const ContextContentFooter = ({
     </div>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- ContextInputUsageProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type ContextInputUsageProps = ComponentProps<"div">;
-/* oxlint-enable import/exports-last, import/group-exports */
+type ContextInputUsageProps = ComponentProps<"div">;
 
 /* oxlint-disable no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- TokensWithCost: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including costText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -299,9 +280,9 @@ const TokensWithCost = ({
   </span>
 );
 /* oxlint-enable no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextInputUsage: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextInputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextInputUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextInputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const ContextInputUsage = ({
+const ContextInputUsage = ({
   className,
   children,
   ...props
@@ -338,15 +319,13 @@ export const ContextInputUsage = ({
     </div>
   );
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- ContextOutputUsageProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ContextOutputUsageProps = ComponentProps<"div">;
 
-export type ContextOutputUsageProps = ComponentProps<"div">;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextOutputUsage: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextOutputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextOutputUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextOutputUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const ContextOutputUsage = ({
+const ContextOutputUsage = ({
   className,
   children,
   ...props
@@ -383,15 +362,13 @@ export const ContextOutputUsage = ({
     </div>
   );
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- ContextReasoningUsageProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ContextReasoningUsageProps = ComponentProps<"div">;
 
-export type ContextReasoningUsageProps = ComponentProps<"div">;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextReasoningUsage: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextReasoningUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const ContextReasoningUsage = ({
+const ContextReasoningUsage = ({
   className,
   children,
   ...props
@@ -428,15 +405,13 @@ export const ContextReasoningUsage = ({
     </div>
   );
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- ContextCacheUsageProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ContextCacheUsageProps = ComponentProps<"div">;
 
-export type ContextCacheUsageProps = ComponentProps<"div">;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextCacheUsage: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextCacheUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- ContextCacheUsage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ContextCacheUsageProps); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const ContextCacheUsage = ({
+const ContextCacheUsage = ({
   className,
   children,
   ...props
@@ -473,6 +448,30 @@ export const ContextCacheUsage = ({
     </div>
   );
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- context keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
+export {
+  Context,
+  ContextCacheUsage,
+  ContextContent,
+  ContextContentBody,
+  ContextContentFooter,
+  ContextContentHeader,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextReasoningUsage,
+  ContextTrigger,
+};
+export type {
+  ContextCacheUsageProps,
+  ContextContentBodyProps,
+  ContextContentFooterProps,
+  ContextContentHeaderProps,
+  ContextContentProps,
+  ContextInputUsageProps,
+  ContextOutputUsageProps,
+  ContextProps,
+  ContextReasoningUsageProps,
+  ContextTriggerProps,
+};

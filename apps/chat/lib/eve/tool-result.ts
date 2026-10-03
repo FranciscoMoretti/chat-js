@@ -1,18 +1,14 @@
 import { z } from "zod";
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): ToolOutput is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): ToolOutput stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /** JSON values, permitting optional object properties omitted by persistence. */
-export type ToolOutput =
+type ToolOutput =
   | string
   | number
   | boolean
   | null
   | ToolOutput[]
   | { [key: string]: ToolOutput | undefined };
-/* oxlint-enable import/exports-last, import/group-exports */
+
 const jsonOutput: z.ZodType<ToolOutput> = z.lazy(() =>
   z.union([
     z.string(),
@@ -32,11 +28,8 @@ const base = z.object({
   version: z.literal(1),
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): toolOutputSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): toolOutputSchema stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const toolOutputSchema = z.discriminatedUnion("status", [
+
+const toolOutputSchema = z.discriminatedUnion("status", [
   base.extend({ output: jsonOutput, status: z.literal("success") }),
   base.extend({
     error: z.string(),
@@ -44,24 +37,16 @@ export const toolOutputSchema = z.discriminatedUnion("status", [
     status: z.literal("error"),
   }),
 ]);
-/* oxlint-enable import/exports-last, import/group-exports */
+
 const usage = z.object({
   costUsd: z.number().nonnegative().optional(),
 });
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): toolResultSchema stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const toolResultSchema = z.intersection(
-  toolOutputSchema,
-  z.object({ usage })
-);
-/* oxlint-enable import/group-exports */
-/* oxlint-disable id-length, import/group-exports, no-magic-numbers --
- * id-length (#506): ToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): ToolResult stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): ToolResult uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export type ToolResult<T extends ToolOutput> = {
+
+const toolResultSchema = z.intersection(toolOutputSchema, z.object({ usage }));
+
+/* oxlint-disable id-length, no-magic-numbers -- id-length (#506): ToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+no-magic-numbers (#517): ToolResult uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+type ToolResult<T extends ToolOutput> = {
   kind: "chatjs.tool-result";
   version: 1;
   usage: { costUsd?: number };
@@ -70,24 +55,17 @@ export type ToolResult<T extends ToolOutput> = {
   | { status: "success"; output: T }
   | { status: "error"; output: null; error: string }
 );
-/* oxlint-enable id-length, import/group-exports, no-magic-numbers */
+/* oxlint-enable id-length, no-magic-numbers */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): hasEveToolReceipt stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const hasEveToolReceipt = (value: unknown): boolean =>
+const hasEveToolReceipt = (value: unknown): boolean =>
   typeof value === "object" &&
   value !== null &&
   "kind" in value &&
   value.kind === "chatjs.tool-result";
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): createToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): createToolResult stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): createToolResult accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const createToolResult = <T extends ToolOutput>(
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): createToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+typescript/prefer-readonly-parameter-types (#565): createToolResult accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const createToolResult = <T extends ToolOutput>(
   output: T,
   costUsd: number | undefined,
   updates?: ToolOutput[]
@@ -106,13 +84,10 @@ export const createToolResult = <T extends ToolOutput>(
     version: 1,
   };
 };
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): createToolError stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): createToolError accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): createToolError preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const createToolError = (
+/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- typescript/prefer-readonly-parameter-types (#565): createToolError accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): createToolError preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const createToolError = (
   costUsd: number | undefined,
   updates?: ToolOutput[]
 ): ToolResult<never> => ({
@@ -121,4 +96,12 @@ export const createToolError = (
   output: null,
   status: "error",
 });
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+export {
+  createToolError,
+  createToolResult,
+  hasEveToolReceipt,
+  toolOutputSchema,
+  toolResultSchema,
+};
+export type { ToolOutput, ToolResult };

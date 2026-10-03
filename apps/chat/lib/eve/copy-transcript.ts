@@ -53,17 +53,14 @@ const REVISION_FIELDS = new Set([
   "expectedRevisionId",
   "parentRevisionId",
 ]);
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): EveCopyNotReadyError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): EveCopyNotReadyError stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export class EveCopyNotReadyError extends Error {
+
+class EveCopyNotReadyError extends Error {
   public constructor() {
     super("Wait for the shared conversation to finish before saving a copy.");
     this.name = "EveCopyNotReadyError";
   }
 }
-/* oxlint-enable import/exports-last, import/group-exports */
+
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): completedPart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): completedPart uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -183,20 +180,14 @@ const transformFileReferences = (
     return key ? replace(key) + token.slice(candidate.length) : token;
   });
 /* oxlint-enable init-declarations, max-statements, typescript/strict-boolean-expressions */
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): eveCopyResources is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): eveCopyResources stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): eveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep eveCopyResources's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveCopyResources's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): eveCopyResources intentionally keeps the existing falsy-value behavior of field; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): eveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): eveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep eveCopyResources's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep eveCopyResources's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): eveCopyResources intentionally keeps the existing falsy-value behavior of field; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Also use for every authorized document revision's content before reserving keys. */
-export const eveCopyResources = (
-  value: unknown,
-  documentReferences = false
-) => {
+const eveCopyResources = (value: unknown, documentReferences = false) => {
   const files = new Set<string>();
   const documents = new Set<string>();
   const revisions = new Set<string>();
@@ -222,7 +213,7 @@ export const eveCopyResources = (
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 /* oxlint-disable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): transcriptResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): transcriptResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -258,22 +249,17 @@ const transcriptResources = (seed: Seed) => {
   };
 };
 /* oxlint-enable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): prepareEveCopyTranscript is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): prepareEveCopyTranscript stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): prepareEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): prepareEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): prepareEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): prepareEveCopyTranscript uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep prepareEveCopyTranscript's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep prepareEveCopyTranscript's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): prepareEveCopyTranscript accepts events: readonly MessageStreamEvent[]; event; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): prepareEveCopyTranscript intentionally keeps the existing falsy-value behavior of message.metadata?.modelId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): prepareEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): prepareEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): prepareEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): prepareEveCopyTranscript uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep prepareEveCopyTranscript's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep prepareEveCopyTranscript's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): prepareEveCopyTranscript accepts events: readonly MessageStreamEvent[]; event; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): prepareEveCopyTranscript intentionally keeps the existing falsy-value behavior of message.metadata?.modelId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Pure preparation: no model calls, storage access, or source runtime identities. */
-export const prepareEveCopyTranscript = (
-  events: readonly MessageStreamEvent[]
-) => {
+const prepareEveCopyTranscript = (events: readonly MessageStreamEvent[]) => {
   const boundary = events.findLast((event) => COPY_BOUNDARIES.has(event.type));
   if (
     boundary?.type !== "session.waiting" &&
@@ -331,7 +317,7 @@ export const prepareEveCopyTranscript = (
     resources: transcriptResources(seed),
   };
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): CopyAllocations preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
@@ -342,20 +328,17 @@ type CopyAllocations = {
   inlineFiles?: ReadonlyMap<string, string>;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable id-length, import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/exports-last (#522): rewriteEveCopyResources is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): rewriteEveCopyResources stays exported at its declaration so its public contract is visible beside its implementation.
- * init-declarations (#507): rewriteEveCopyResources assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): rewriteEveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): rewriteEveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): rewriteEveCopyResources accepts allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): rewriteEveCopyResources intentionally keeps the existing falsy-value behavior of fileId; key; field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable id-length, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+moving it below executable initialization can obscure ordering and API ownership.
+init-declarations (#507): rewriteEveCopyResources assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+jsdoc/require-param (#534): rewriteEveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): rewriteEveCopyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/prefer-readonly-parameter-types (#565): rewriteEveCopyResources accepts allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): rewriteEveCopyResources intentionally keeps the existing falsy-value behavior of fileId; key; field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Maps come from durable, ownership-checked allocations, never from browser input. */
-export const rewriteEveCopyResources = <T>(
+const rewriteEveCopyResources = <T>(
   value: T,
   allocations: CopyAllocations,
   documentReferences = false
@@ -454,7 +437,7 @@ export const rewriteEveCopyResources = <T>(
   );
   return root.value;
 };
-/* oxlint-enable id-length, import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
  * no-magic-numbers (#517): decodeInlineAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/explicit-function-return-type (#560): Keep decodeInlineAttachment's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -487,18 +470,15 @@ const decodeInlineAttachment = (
   };
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): eveCopyInlineAttachments is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): eveCopyInlineAttachments stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): eveCopyInlineAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveCopyInlineAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-continue (#515): eveCopyInlineAttachments skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/explicit-function-return-type (#560): Keep eveCopyInlineAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveCopyInlineAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): eveCopyInlineAttachments accepts seed: Seed; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): eveCopyInlineAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): eveCopyInlineAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+no-continue (#515): eveCopyInlineAttachments skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+typescript/explicit-function-return-type (#560): Keep eveCopyInlineAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep eveCopyInlineAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): eveCopyInlineAttachments accepts seed: Seed; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Decode only published attachment parts; IDs bind their MIME type and exact bytes. */
-export const eveCopyInlineAttachments = (seed: Seed) => {
+const eveCopyInlineAttachments = (seed: Seed) => {
   const files = new Map<
     string,
     {
@@ -518,7 +498,7 @@ export const eveCopyInlineAttachments = (seed: Seed) => {
   }
   return [...files.values()];
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -617,17 +597,14 @@ const rewriteDocumentPart = (
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): materializeEveCopyTranscript stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): materializeEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): materializeEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-params (#511): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): materializeEveCopyTranscript uses 8, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): materializeEveCopyTranscript accepts seed: Seed; allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): materializeEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): materializeEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-params (#511): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): materializeEveCopyTranscript uses 8, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): materializeEveCopyTranscript accepts seed: Seed; allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Metadata binds planned destination bytes; acceptance requires matching committed receipts. */
-export const materializeEveCopyTranscript = async (
+const materializeEveCopyTranscript = async (
   seed: Seed,
   allocations: CopyAllocations,
   loadDestinationFile: (key: string) => Promise<Pick<Blob, "type" | "size">>,
@@ -669,6 +646,14 @@ export const materializeEveCopyTranscript = async (
   }
   return copied;
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This copy-transcript.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+export {
+  eveCopyInlineAttachments,
+  EveCopyNotReadyError,
+  eveCopyResources,
+  materializeEveCopyTranscript,
+  prepareEveCopyTranscript,
+  rewriteEveCopyResources,
+};

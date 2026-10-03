@@ -44,22 +44,20 @@ const useReasoning = () => {
   return context;
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports -- ReasoningProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type ReasoningProps = ComponentProps<typeof Collapsible> & {
+type ReasoningProps = ComponentProps<typeof Collapsible> & {
   isStreaming?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   duration?: number;
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
 const AUTO_CLOSE_DELAY = 1000;
 const MS_IN_S = 1000;
-/* oxlint-disable import/exports-last, import/group-exports, max-lines-per-function, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Reasoning: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Reasoning: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const Reasoning = memo(
+const Reasoning = memo(
   ({
     className,
     isStreaming = false,
@@ -136,12 +134,9 @@ export const Reasoning = memo(
     );
   }
 );
-/* oxlint-enable import/exports-last, import/group-exports, max-lines-per-function, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/exports-last, import/group-exports -- ReasoningTriggerProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
-/* oxlint-enable import/exports-last, import/group-exports */
+type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
 
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type -- getThinkingMessage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
@@ -155,9 +150,9 @@ const getThinkingMessage = (isStreaming: boolean, duration?: number) => {
   return <p>Thought for {duration} seconds</p>;
 };
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
 
-export const ReasoningTrigger = memo(
+const ReasoningTrigger = memo(
   ({ className, children, ...props }: ReasoningTriggerProps) => {
     const { isStreaming, isOpen, duration } = useReasoning();
 
@@ -185,20 +180,15 @@ export const ReasoningTrigger = memo(
     );
   }
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- ReasoningContentProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type ReasoningContentProps = ComponentProps<
-  typeof CollapsibleContent
-> & {
+type ReasoningContentProps = ComponentProps<typeof CollapsibleContent> & {
   children: string;
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningContentProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningContentProps). */
 
-export const ReasoningContent = memo(
+const ReasoningContent = memo(
   ({
     className,
     children,
@@ -216,8 +206,10 @@ export const ReasoningContent = memo(
     </CollapsibleContent>
   )
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 Reasoning.displayName = "Reasoning";
 ReasoningTrigger.displayName = "ReasoningTrigger";
 ReasoningContent.displayName = "ReasoningContent";
+export { Reasoning, ReasoningContent, ReasoningTrigger };
+export type { ReasoningContentProps, ReasoningProps, ReasoningTriggerProps };

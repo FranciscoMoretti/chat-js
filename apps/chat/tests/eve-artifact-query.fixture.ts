@@ -11,31 +11,20 @@ import { z } from "zod";
 import type { AppRouter } from "../trpc/routers/_app";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): conversationId is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): conversationId stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const conversationId = "00000000-0000-4000-8000-000000000010";
-/* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): existingId is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): existingId stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const existingId = "00000000-0000-4000-8000-000000000003";
-/* oxlint-enable import/exports-last, import/group-exports */
+const conversationId = "00000000-0000-4000-8000-000000000010";
+
+const existingId = "00000000-0000-4000-8000-000000000003";
+
 const inputSchema = z.object({
   conversationId: z.literal(conversationId),
   documentId: z.enum([existingId, "00000000-0000-4000-8000-000000000001"]),
   revisionId: z.uuid().optional(),
 });
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): queryClient is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): queryClient stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const queryClient = new QueryClient({
+
+const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
-/* oxlint-enable import/exports-last, import/group-exports */
+
 const olderId = "00000000-0000-4000-8000-000000000005";
 const restoredId = "00000000-0000-4000-8000-000000000006";
 /* oxlint-disable init-declarations --
@@ -43,19 +32,16 @@ const restoredId = "00000000-0000-4000-8000-000000000006";
  */
 let restoredContent: string | undefined;
 /* oxlint-enable init-declarations */
-/* oxlint-disable import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
- * import/group-exports (#523): trpcClient stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): trpcClient uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): trpcClient uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): trpcClient accepts input; init; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): trpcClient preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): trpcClient intentionally keeps the existing falsy-value behavior of request.revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): trpcClient preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
-export const trpcClient = createTRPCClient<AppRouter>({
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- max-lines-per-function (#510): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): trpcClient uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+no-undefined (#519): trpcClient uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/prefer-readonly-parameter-types (#565): trpcClient accepts input; init; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): trpcClient preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+typescript/strict-boolean-expressions (#610): trpcClient intentionally keeps the existing falsy-value behavior of request.revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/max-nested-calls (#568): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+unicorn/no-null (#570): trpcClient preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
+const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       fetch(input, init): Promise<Response> {
@@ -188,4 +174,5 @@ export const trpcClient = createTRPCClient<AppRouter>({
     }),
   ],
 });
-/* oxlint-enable import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+export { conversationId, existingId, queryClient, trpcClient };

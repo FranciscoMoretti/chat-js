@@ -9,10 +9,8 @@ import path from "node:path";
 import type { PackageManager } from "../types";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-export const launcherPackageManager = (): PackageManager => {
+const launcherPackageManager = (): PackageManager => {
   const ua = process.env.npm_config_user_agent ?? "";
   if (ua.startsWith("pnpm/")) {
     return "pnpm";
@@ -30,8 +28,6 @@ export const launcherPackageManager = (): PackageManager => {
   return "bun";
 };
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
@@ -78,10 +74,9 @@ const readDeclaredPackageManager = (
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-export const inferPackageManager = (cwd = process.cwd()): PackageManager => {
+const inferPackageManager = (cwd = process.cwd()): PackageManager => {
   let currentDir = path.resolve(cwd);
   while (true) {
     const manifestPath = path.join(currentDir, "package.json");
@@ -116,4 +111,4 @@ export const inferPackageManager = (cwd = process.cwd()): PackageManager => {
 };
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
+export { inferPackageManager, launcherPackageManager };

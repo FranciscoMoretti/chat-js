@@ -3,12 +3,9 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveSubagentSession } from "./schema";
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): getEveSubagent stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const getEveSubagent = async (ownerId: string, sessionId: string) => {
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const getEveSubagent = async (ownerId: string, sessionId: string) => {
   const [binding] = await db
     .select({
       conversationId: eveSubagentSession.conversationId,
@@ -35,21 +32,18 @@ export const getEveSubagent = async (ownerId: string, sessionId: string) => {
     );
   return binding;
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): registerEveSubagent stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-params (#511): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): registerEveSubagent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): registerEveSubagent intentionally keeps the existing falsy-value behavior of root; rootTurnId; bound; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-params (#511): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-undefined (#519): registerEveSubagent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): registerEveSubagent intentionally keeps the existing falsy-value behavior of root; rootTurnId; bound; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Call only with native hook lineage or a trusted EVE subagent.called event. */
-export const registerEveSubagent = async (
+const registerEveSubagent = async (
   ownerId: string,
   parentSessionId: string,
   sessionId: string,
@@ -90,19 +84,13 @@ export const registerEveSubagent = async (
   }
   return bound;
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): listEveSubagents stays exported at its declaration so its public contract is visible beside its implementation.
- * no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): listEveSubagents intentionally keeps the existing falsy-value behavior of rootSessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const listEveSubagents = async (
-  ownerId: string,
-  rootSessionId?: string
-) =>
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): listEveSubagents intentionally keeps the existing falsy-value behavior of rootSessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
   await db
     .select({
       rootSessionId: eveConversation.sessionId,
@@ -124,13 +112,10 @@ export const listEveSubagents = async (
         rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
       )
     );
-/* oxlint-enable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, no-magic-numbers --
- * import/group-exports (#523): advanceEveSubagentUsageCursor stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export const advanceEveSubagentUsageCursor = async (
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const advanceEveSubagentUsageCursor = async (
   ownerId: string,
   sessionId: string,
   streamIndex: number
@@ -150,4 +135,10 @@ export const advanceEveSubagentUsageCursor = async (
       )
     );
 };
-/* oxlint-enable import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
+export {
+  advanceEveSubagentUsageCursor,
+  getEveSubagent,
+  listEveSubagents,
+  registerEveSubagent,
+};

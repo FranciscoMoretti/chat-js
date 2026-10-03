@@ -8,10 +8,7 @@ import { siteConfig } from "@/lib/site-config";
 
 import "./globals.css";
 
-/* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- metadata: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-export const metadata: Metadata = {
+const metadata: Metadata = {
   alternates: {
     types: {
       "application/rss+xml": `${siteConfig.docsUrl}/rss.xml`,
@@ -63,14 +60,8 @@ export const metadata: Metadata = {
     title: `${siteConfig.title} — The Prod-Ready AI Chat App`,
   },
 };
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- viewport: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- viewport: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable react/only-export-components -- viewport: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-export const viewport: Viewport = {
+const viewport: Viewport = {
   initialScale: 1,
   themeColor: [
     { color: "#f8f7f4", media: "(prefers-color-scheme: light)" },
@@ -78,9 +69,6 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
 };
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 const geist = Geist({
   display: "swap",
@@ -128,6 +116,9 @@ const RootLayout = ({
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-default-export -- layout.tsx: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
+/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
+export { metadata, viewport };
+/* oxlint-enable react/only-export-components */
+/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;
 /* oxlint-enable import/no-default-export */

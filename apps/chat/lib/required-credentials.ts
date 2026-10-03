@@ -4,13 +4,10 @@ import {
 } from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): MissingCredentialsError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): MissingCredentialsError stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): MissingCredentialsError accepts requirements: readonly EnvRequirement[]; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/prefer-readonly-parameter-types (#565): MissingCredentialsError accepts requirements: readonly EnvRequirement[]; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Shared explicit failure for installed integrations; never carries secret values. */
-export class MissingCredentialsError extends Error {
+class MissingCredentialsError extends Error {
   public readonly code = "CHATJS_MISSING_CREDENTIALS";
   public readonly integration: string;
   public readonly requirements: readonly EnvRequirement[];
@@ -27,7 +24,7 @@ export class MissingCredentialsError extends Error {
     this.requirements = requirements;
   }
 }
-/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): missingRequirement uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -49,12 +46,9 @@ const missingRequirement = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): requireCredentials stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): requireCredentials uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): requireCredentials accepts requirements: readonly EnvRequirement[]; env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const requireCredentials = (
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): requireCredentials uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): requireCredentials accepts requirements: readonly EnvRequirement[]; env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const requireCredentials = (
   integration: string,
   requirements: readonly EnvRequirement[],
   env: NodeJS.ProcessEnv
@@ -67,4 +61,5 @@ export const requireCredentials = (
     throw new MissingCredentialsError(integration, missing);
   }
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+export { MissingCredentialsError, requireCredentials };

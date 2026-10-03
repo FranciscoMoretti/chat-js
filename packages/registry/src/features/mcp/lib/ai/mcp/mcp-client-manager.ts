@@ -4,14 +4,13 @@ import { MCPClient } from "@/lib/ai/mcp/mcp-client";
 // Map to store active MCP clients by connector ID
 const clientsMap = new Map<string, MCPClient>();
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Get or create an MCP client for a connector.
  */
-export const getOrCreateMcpClient = ({
+const getOrCreateMcpClient = ({
   id,
   name,
   url,
@@ -43,15 +42,13 @@ export const getOrCreateMcpClient = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /**
  * Remove an MCP client from the cache and close it.
  */
-export const removeMcpClient = async (
+const removeMcpClient = async (
   id: string,
   expectedOAuthState?: string
 ): Promise<void> => {
@@ -71,9 +68,7 @@ export const removeMcpClient = async (
 };
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -81,7 +76,7 @@ export const removeMcpClient = async (
  * Create a fresh MCP client for OAuth callback handling.
  * Does NOT use the cache - creates a new instance to avoid state conflicts.
  */
-export const createMcpClientForCallback = ({
+const createMcpClientForCallback = ({
   id,
   name,
   url,
@@ -107,4 +102,4 @@ export const createMcpClientForCallback = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable import/group-exports */
+export { createMcpClientForCallback, getOrCreateMcpClient, removeMcpClient };

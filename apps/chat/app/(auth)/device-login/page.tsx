@@ -9,15 +9,10 @@ import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
 import { toSearchParamRecord } from "@/lib/electron-auth";
 
-/* oxlint-disable import/exports-last, react/only-export-components --
- * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
-export const metadata: Metadata = {
+const metadata: Metadata = {
   description: "Sign in for the desktop app",
   title: "Device Login",
 };
-/* oxlint-enable import/exports-last, react/only-export-components */
 
 const DeviceLoginFallback = (): React.JSX.Element => (
   <div className="container mx-auto flex h-dvh w-screen items-center justify-center px-4">
@@ -84,8 +79,9 @@ const DeviceLoginRoute = ({
 };
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
+/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
+export { metadata };
+/* oxlint-enable react/only-export-components */
+/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default DeviceLoginRoute;
 /* oxlint-enable import/no-default-export */

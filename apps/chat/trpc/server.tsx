@@ -9,31 +9,18 @@ import { createTRPCContext } from "./init";
 import { makeQueryClient } from "./query-client";
 import { appRouter } from "./routers/_app";
 
-/* oxlint-disable import/group-exports, react/only-export-components --
- * import/group-exports (#523): getQueryClient stays exported at its declaration so its public contract is visible beside its implementation.
- * react/only-export-components (#553): getQueryClient is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
-export const getQueryClient = cache(makeQueryClient);
-/* oxlint-enable import/group-exports, react/only-export-components */
+const getQueryClient = cache(makeQueryClient);
 
-/* oxlint-disable import/group-exports, react/only-export-components --
- * import/group-exports (#523): trpc stays exported at its declaration so its public contract is visible beside its implementation.
- * react/only-export-components (#553): trpc is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
-export const trpc = createTRPCOptionsProxy({
+const trpc = createTRPCOptionsProxy({
   ctx: createTRPCContext,
   queryClient: getQueryClient,
   router: appRouter,
 });
-/* oxlint-enable import/group-exports, react/only-export-components */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): HydrateClient stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): HydrateClient accepts props: { children: React.ReactNode }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const HydrateClient = (props: {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): HydrateClient accepts props: { children: React.ReactNode }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const HydrateClient = (props: {
   children: React.ReactNode;
 }): React.JSX.Element => {
   const queryClient = getQueryClient();
@@ -43,16 +30,13 @@ export const HydrateClient = (props: {
     </HydrationBoundary>
   );
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, import/group-exports, no-magic-numbers, react/only-export-components --
- * id-length (#506): prefetch uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): prefetch stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): prefetch uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * react/only-export-components (#553): prefetch is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
+/* oxlint-disable id-length, no-magic-numbers -- id-length (#506): prefetch uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+no-magic-numbers (#517): prefetch uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ splitting exports requires an API and Fast Refresh boundary decision. */
 // oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- #593: Preserve concrete query option inference across normal and infinite prefetch overloads.
-export const prefetch = <T extends ReturnType<TRPCQueryOptions<ResolverDef>>>(
+const prefetch = <T extends ReturnType<TRPCQueryOptions<ResolverDef>>>(
   queryOptions: T
 ): void => {
   const queryClient = getQueryClient();
@@ -70,4 +54,7 @@ export const prefetch = <T extends ReturnType<TRPCQueryOptions<ResolverDef>>>(
     void queryClient.prefetchQuery(queryOptions);
   }
 };
-/* oxlint-enable id-length, import/group-exports, no-magic-numbers, react/only-export-components */
+/* oxlint-enable id-length, no-magic-numbers */
+/* oxlint-disable react/only-export-components -- #619: Consumers import getQueryClient, HydrateClient, prefetch, trpc from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
+export { getQueryClient, HydrateClient, prefetch, trpc };
+/* oxlint-enable react/only-export-components */

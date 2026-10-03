@@ -288,13 +288,8 @@ const handle = async (
   }
 };
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): GET stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const GET = handle;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): POST stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const POST = handle;
-/* oxlint-enable import/group-exports */
+
+const GET = handle;
+
+const POST = handle;
+export { GET, POST };

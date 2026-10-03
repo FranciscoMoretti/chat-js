@@ -4,8 +4,8 @@ import React from "react";
 import type { ComponentType } from "react";
 import { z } from "zod";
 
-/* oxlint-disable import/exports-last, import/group-exports -- * import/exports-last (#522): ValidatedToolRenderer is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): ValidatedToolRenderer stays exported at its declaration so its public contract is visible beside its implementation. */
+/* oxlint-disable import/exports-last, import/group-exports -- import/exports-last: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
+import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types. */
 export type ValidatedToolRenderer = ComponentType<{
   isReadonly: boolean;
   messageId: string;
@@ -13,8 +13,8 @@ export type ValidatedToolRenderer = ComponentType<{
 }> & { validatedToolRenderer: true };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports -- * import/exports-last (#522): isValidatedToolRenderer is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): isValidatedToolRenderer stays exported at its declaration so its public contract is visible beside its implementation. */
+/* oxlint-disable import/exports-last, import/group-exports -- import/exports-last: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
+import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types. */
 export const isValidatedToolRenderer = (
   renderer: unknown
 ): renderer is ValidatedToolRenderer =>
@@ -29,10 +29,10 @@ type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "output-available"; input: TInput; output: TOutput }
 );
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, typescript/consistent-type-definitions -- * id-length (#506): ToolRendererProps uses I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/exports-last (#522): ToolRendererProps is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): ToolRendererProps stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/consistent-type-definitions (#559): ToolRendererProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+/* oxlint-disable id-length, import/exports-last, import/group-exports, typescript/consistent-type-definitions -- id-length (#506): ToolRendererProps uses I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+import/exports-last: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
+import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
+typescript/consistent-type-definitions (#559): ToolRendererProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
 export type ToolRendererProps<I extends z.ZodType, O extends z.ZodType> = {
   tool: RenderableTool<z.output<I>, z.output<O>>;
   messageId: string;
@@ -63,19 +63,19 @@ const InvalidResult = (): React.JSX.Element => (
 );
 /* oxlint-enable react/only-export-components */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- * import/group-exports (#523): defineToolRenderer stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): defineToolRenderer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react-perf/jsx-no-new-object-as-prop (#558): defineToolRenderer creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/jsx-props-no-spreading (#550): defineToolRenderer forwards its typed component props; enumerating them would narrow the wrapper's supported interface.
- * react/no-multi-comp (#552): defineToolRenderer keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/explicit-function-return-type (#560): Keep defineToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep defineToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): defineToolRenderer accepts { inputSchema, streamingInputSchema, outputSchema, updateSchema, renderProgress: Prog; { tool, messageId, isReadonly, }: { tool: unknown; messageId: string; isRe; props: { tool: unknown; messageId: string; isReadonly: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): defineToolRenderer intentionally keeps the existing falsy-value behavior of input?.success; value?.success; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
+jsdoc/require-param (#534): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-undefined (#519): defineToolRenderer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+react-perf/jsx-no-new-object-as-prop (#558): defineToolRenderer creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+react/jsx-props-no-spreading (#550): defineToolRenderer forwards its typed component props; enumerating them would narrow the wrapper's supported interface.
+react/no-multi-comp (#552): defineToolRenderer keeps related render components together; extraction changes component, state, and layout boundaries.
+typescript/explicit-function-return-type (#560): Keep defineToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep defineToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): defineToolRenderer accepts { inputSchema, streamingInputSchema, outputSchema, updateSchema, renderProgress: Prog; { tool, messageId, isReadonly, }: { tool: unknown; messageId: string; isRe; props: { tool: unknown; messageId: string; isReadonly: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): defineToolRenderer intentionally keeps the existing falsy-value behavior of input?.success; value?.success; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Keep executable tools on the server and validate their persisted data at the UI boundary. */
 export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
   inputSchema,

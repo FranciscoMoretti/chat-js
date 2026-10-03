@@ -17,7 +17,7 @@ const registrationRules = (
   return rules;
 };
 
-export const generatedRegistrationSource = (source: string): string => {
+const generatedRegistrationSource = (source: string): string => {
   const defaultDependencyLimit = 10;
   const importCount = source
     .split("\n")
@@ -48,3 +48,4 @@ export const generatedRegistrationSource = (source: string): string => {
   }
   return rendered;
 };
+export { generatedRegistrationSource };

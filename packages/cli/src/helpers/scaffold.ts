@@ -373,7 +373,6 @@ const excludeElectronFromRootTypecheck = async (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
@@ -382,7 +381,7 @@ const excludeElectronFromRootTypecheck = async (
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export const scaffoldFromTemplate = async (
+const scaffoldFromTemplate = async (
   destination: string,
   options?: {
     packageManager?: PackageManager;
@@ -513,14 +512,12 @@ export const scaffoldFromTemplate = async (
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const scaffoldElectron = async (
+const scaffoldElectron = async (
   projectDir: string,
   opts: { projectName: string; packageManager?: PackageManager }
 ): Promise<void> => {
@@ -567,10 +564,8 @@ export const scaffoldElectron = async (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const scaffoldFromGit = async (
+const scaffoldFromGit = async (
   url: string,
   destination: string
 ): Promise<void> => {
@@ -584,6 +579,6 @@ export const scaffoldFromGit = async (
     recursive: true,
   });
 };
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+export { scaffoldElectron, scaffoldFromGit, scaffoldFromTemplate };

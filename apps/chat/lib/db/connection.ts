@@ -1,11 +1,8 @@
 import { z } from "zod";
 
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined --
- * import/group-exports (#523): databaseEnvOptions stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): databaseEnvOptions uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): databaseEnvOptions uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
-export const databaseEnvOptions = {
+/* oxlint-disable no-magic-numbers, no-undefined -- no-magic-numbers (#517): databaseEnvOptions uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): databaseEnvOptions uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+const databaseEnvOptions = {
   DATABASE_MAX_CONNECTIONS: z
     .preprocess(
       (value) => (value === "" ? undefined : value),
@@ -26,18 +23,15 @@ export const databaseEnvOptions = {
     .transform((value) => value === "true")
     .describe("Enable prepared statements for runtime queries"),
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined */
+/* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): databaseConnection stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): databaseConnection uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): databaseConnection uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep databaseConnection's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep databaseConnection's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): databaseConnection accepts environment: { DATABASE_URL?: string; DATABASE_MIGRATION_URL?: string; DATABASE_PREPA; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): databaseConnection intentionally keeps the existing falsy-value behavior of environment.DATABASE_MIGRATION_URL; url; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const databaseConnection = (
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): databaseConnection uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): databaseConnection uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep databaseConnection's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep databaseConnection's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): databaseConnection accepts environment: { DATABASE_URL?: string; DATABASE_MIGRATION_URL?: string; DATABASE_PREPA; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): databaseConnection intentionally keeps the existing falsy-value behavior of environment.DATABASE_MIGRATION_URL; url; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const databaseConnection = (
   environment: {
     DATABASE_URL?: string;
     DATABASE_MIGRATION_URL?: string;
@@ -69,4 +63,5 @@ export const databaseConnection = (
     url,
   };
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+export { databaseConnection, databaseEnvOptions };

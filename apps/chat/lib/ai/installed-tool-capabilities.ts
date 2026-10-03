@@ -1,21 +1,11 @@
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): CodeSandboxCleanupSession is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): CodeSandboxCleanupSession stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export interface CodeSandboxCleanupSession {
+interface CodeSandboxCleanupSession {
   deleteAndConfirmAbsent: (name: string) => Promise<void>;
   provider: { projectId: string; teamId: string };
 }
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): CodeSandboxCleanupCapability is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): CodeSandboxCleanupCapability stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export interface CodeSandboxCleanupCapability {
+interface CodeSandboxCleanupCapability {
   createCleanupSession: () => CodeSandboxCleanupSession;
 }
-/* oxlint-enable import/exports-last, import/group-exports */
 
 const codeSandboxCleanup = Symbol("chatjs.code-sandbox-cleanup");
 
@@ -26,15 +16,12 @@ interface CodeSandboxCleanupTool {
 const hasCodeSandboxCleanup = (tool: object): tool is CodeSandboxCleanupTool =>
   codeSandboxCleanup in tool;
 
-/* oxlint-disable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
- * id-length (#506): withCodeSandboxCleanup uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): withCodeSandboxCleanup stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): withCodeSandboxCleanup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): withCodeSandboxCleanup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): withCodeSandboxCleanup accepts capability: CodeSandboxCleanupCapability; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable id-length, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- id-length (#506): withCodeSandboxCleanup uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+jsdoc/require-param (#534): withCodeSandboxCleanup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): withCodeSandboxCleanup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/prefer-readonly-parameter-types (#565): withCodeSandboxCleanup accepts capability: CodeSandboxCleanupCapability; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Attach provider lifecycle behavior without changing the AI SDK Tool contract. */
-export const withCodeSandboxCleanup = <T extends object>(
+const withCodeSandboxCleanup = <T extends object>(
   tool: T,
   capability: CodeSandboxCleanupCapability
 ): T => {
@@ -46,13 +33,10 @@ export const withCodeSandboxCleanup = <T extends object>(
   });
   return tool;
 };
-/* oxlint-enable id-length, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-undefined --
- * import/group-exports (#523): getCodeSandboxCleanup stays exported at its declaration so its public contract is visible beside its implementation.
- * no-undefined (#519): getCodeSandboxCleanup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
-export const getCodeSandboxCleanup = (
+/* oxlint-disable no-undefined -- no-undefined (#519): getCodeSandboxCleanup uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+const getCodeSandboxCleanup = (
   tool: unknown
 ): CodeSandboxCleanupCapability | undefined => {
   if (
@@ -64,4 +48,6 @@ export const getCodeSandboxCleanup = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getCodeSandboxCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return hasCodeSandboxCleanup(tool) ? tool[codeSandboxCleanup] : undefined;
 };
-/* oxlint-enable import/group-exports, no-undefined */
+/* oxlint-enable no-undefined */
+export { getCodeSandboxCleanup, withCodeSandboxCleanup };
+export type { CodeSandboxCleanupCapability, CodeSandboxCleanupSession };

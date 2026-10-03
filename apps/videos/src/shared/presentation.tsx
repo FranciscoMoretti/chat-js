@@ -3,10 +3,9 @@ import type { ReactNode } from "react";
 
 import "./presentation.css";
 
-/* oxlint-disable import/group-exports -- Caption: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Caption: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Caption: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
-export const Caption = ({
+const Caption = ({
   children,
   opacity,
 }: {
@@ -19,12 +18,11 @@ export const Caption = ({
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports -- Pointer: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+
 /* oxlint-disable react/no-multi-comp -- Pointer: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- Pointer: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Pointer: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
-export const Pointer = ({
+const Pointer = ({
   x,
   y,
 }: {
@@ -48,14 +46,13 @@ export const Pointer = ({
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports -- ClickPulse: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+
 /* oxlint-disable react/no-multi-comp -- ClickPulse: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- ClickPulse: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- ClickPulse: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- ClickPulse: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable unicorn/no-null -- ClickPulse: React refs/rendering and selected-state contracts use null as an explicit empty state. */
-export const ClickPulse = ({
+const ClickPulse = ({
   age,
   x,
   y,
@@ -80,4 +77,4 @@ export const ClickPulse = ({
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/group-exports */
+export { Caption, ClickPulse, Pointer };

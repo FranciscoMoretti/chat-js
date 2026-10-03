@@ -8,16 +8,13 @@ class ExpectedToolFailureError extends Error {
   public override name = "ExpectedToolFailureError";
 }
 
-/* oxlint-disable import/group-exports, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): createToolUsage stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-returns (#535): createToolUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): createToolUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): createToolUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-returns (#535): createToolUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+no-magic-numbers (#517): createToolUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): createToolUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge. */
-export const createToolUsage = () => {
+const createToolUsage = () => {
   let reported = false;
   let unknown = false;
   let total = 0;
@@ -55,16 +52,13 @@ export const createToolUsage = () => {
     },
   };
 };
-/* oxlint-enable import/group-exports, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-export type ToolUsage = ReturnType<typeof createToolUsage>;
+/* oxlint-enable jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+type ToolUsage = ReturnType<typeof createToolUsage>;
 
-/* oxlint-disable id-length, import/group-exports, max-statements, typescript/prefer-readonly-parameter-types --
- * id-length (#506): executeWithToolUsage uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): executeWithToolUsage stays exported at its declaration so its public contract is visible beside its implementation.
- * max-statements (#512): executeWithToolUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): executeWithToolUsage accepts context: Pick<ToolContext, "abortSignal">; usage: ToolUsage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const executeWithToolUsage = async <T extends ToolOutput>(
+/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): executeWithToolUsage uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+max-statements (#512): executeWithToolUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/prefer-readonly-parameter-types (#565): executeWithToolUsage accepts context: Pick<ToolContext, "abortSignal">; usage: ToolUsage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const executeWithToolUsage = async <T extends ToolOutput>(
   context: Pick<ToolContext, "abortSignal">,
   execute: (usage: ToolUsage) => T | Promise<T>
 ): Promise<ToolResult<T>> => {
@@ -85,21 +79,18 @@ export const executeWithToolUsage = async <T extends ToolOutput>(
     return createToolError(costUsd);
   }
 };
-/* oxlint-enable id-length, import/group-exports, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, import/group-exports, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * id-length (#506): executeWithToolProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): executeWithToolProgress stays exported at its declaration so its public contract is visible beside its implementation.
- * init-declarations (#507): executeWithToolProgress assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): executeWithToolProgress's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-undefined (#519): executeWithToolProgress uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): executeWithToolProgress accepts context: Pick<ToolContext, "abortSignal">; options: { usage: ToolUsage; abortSignal: AbortSignal; publish: (output: T, updates?:; updates?: ToolOutput[]; controller; nextUpdates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): executeWithToolProgress preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- id-length (#506): executeWithToolProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+init-declarations (#507): executeWithToolProgress assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+jsdoc/require-param (#534): executeWithToolProgress's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+no-undefined (#519): executeWithToolProgress uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/prefer-readonly-parameter-types (#565): executeWithToolProgress accepts context: Pick<ToolContext, "abortSignal">; options: { usage: ToolUsage; abortSignal: AbortSignal; publish: (output: T, updates?:; updates?: ToolOutput[]; controller; nextUpdates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): executeWithToolProgress preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /** Streaming alone needs a queue; accounting is shared.
  * @yields {object} Progress snapshots followed by the final usage receipt.
  */
-export const executeWithToolProgress = async function* executeWithToolProgress<
+const executeWithToolProgress = async function* executeWithToolProgress<
   T extends ToolOutput,
 >(
   context: Pick<ToolContext, "abortSignal">,
@@ -146,4 +137,6 @@ export const executeWithToolProgress = async function* executeWithToolProgress<
   });
   yield* stream;
 };
-/* oxlint-enable id-length, import/group-exports, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+export { createToolUsage, executeWithToolProgress, executeWithToolUsage };
+export type { ToolUsage };

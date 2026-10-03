@@ -45,12 +45,11 @@ const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export class OpenAIGateway
+class OpenAIGateway
   extends GatewayRuntime
   implements
     GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId, never>
@@ -136,8 +135,4 @@ export class OpenAIGateway
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
-
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export { OpenAIGateway as Gateway };
-/* oxlint-enable import/group-exports */
+export { OpenAIGateway as Gateway, OpenAIGateway };

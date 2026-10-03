@@ -27,20 +27,17 @@ import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
- * import/exports-last (#522): reconcileEveSubagentUsage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): reconcileEveSubagentUsage stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): reconcileEveSubagentUsage skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): reconcileEveSubagentUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): reconcileEveSubagentUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): reconcileEveSubagentUsage intentionally keeps the existing falsy-value behavior of nested; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-continue (#515): reconcileEveSubagentUsage skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+no-magic-numbers (#517): reconcileEveSubagentUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): reconcileEveSubagentUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/strict-boolean-expressions (#610): reconcileEveSubagentUsage intentionally keeps the existing falsy-value behavior of nested; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Settle native descendants before admission or erasing a root session. */
-export const reconcileEveSubagentUsage = async (
+const reconcileEveSubagentUsage = async (
   ownerId: string,
   sessionId: string,
   replayUnpriced = false
@@ -100,19 +97,16 @@ export const reconcileEveSubagentUsage = async (
   }
   return !unresolved;
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers --
- * import/exports-last (#522): reconcileEveUsage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): reconcileEveUsage stays exported at its declaration so its public contract is visible beside its implementation.
- * init-declarations (#507): reconcileEveUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): reconcileEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): reconcileEveUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+/* oxlint-disable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
+init-declarations (#507): reconcileEveUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+jsdoc/require-param (#534): reconcileEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): reconcileEveUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
-export const reconcileEveUsage = async (
+const reconcileEveUsage = async (
   ownerId: string,
   sessionId: string,
   replayUnpriced = false
@@ -164,7 +158,7 @@ export const reconcileEveUsage = async (
     await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
   }
 };
-/* oxlint-enable import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers */
+/* oxlint-enable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * init-declarations (#507): reconcileAllOwnerUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -259,13 +253,10 @@ const reconcileAllOwnerUsage = async (
 };
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): reconcileEveOwnerUsage stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): reconcileEveOwnerUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): reconcileEveOwnerUsage accepts unpricedSessions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): reconcileEveOwnerUsage intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const reconcileEveOwnerUsage = async (
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): reconcileEveOwnerUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): reconcileEveOwnerUsage accepts unpricedSessions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): reconcileEveOwnerUsage intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const reconcileEveOwnerUsage = async (
   ownerId: string,
   sessionId?: string
 ): Promise<void> => {
@@ -290,4 +281,5 @@ export const reconcileEveOwnerUsage = async (
     }
   );
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };

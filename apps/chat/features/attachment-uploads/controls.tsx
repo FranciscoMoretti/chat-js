@@ -18,18 +18,13 @@ const loginPrompt = (
   />
 );
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const AttachFilesControl = ({
-  disabled,
-  onAttach,
-}: ComposerControlProps) => {
+const AttachFilesControl = ({ disabled, onAttach }: ComposerControlProps) => {
   const { data: session } = useSession();
   if (!installedFeatures.has("attachment-uploads")) {
     return null;
@@ -56,11 +51,7 @@ export const AttachFilesControl = ({
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -68,10 +59,7 @@ export const AttachFilesControl = ({
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const TakePhotoControl = ({
-  disabled,
-  onAttach,
-}: ComposerControlProps) => {
+const TakePhotoControl = ({ disabled, onAttach }: ComposerControlProps) => {
   const mobile = useIsMobile();
   const { data: session } = useSession();
   if (!installedFeatures.has("attachment-uploads") || !mobile) {
@@ -100,10 +88,9 @@ export const TakePhotoControl = ({
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 AttachFilesControl.isAvailable = (): boolean =>
   installedFeatures.has("attachment-uploads");
 TakePhotoControl.isAvailable = (mobile: boolean): boolean =>
   installedFeatures.has("attachment-uploads") && mobile;
+export { AttachFilesControl, TakePhotoControl };

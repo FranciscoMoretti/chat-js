@@ -31,14 +31,10 @@ const scopeFor = async (context: Context) => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const requestDocumentDeletion = async (
-  value: unknown,
-  context: Context
-) => {
+const requestDocumentDeletion = async (value: unknown, context: Context) => {
   const input = deleteDocumentInput.parse(value);
   const scope = await scopeFor(context);
   const revision = await getEveDocumentRevision(
@@ -63,13 +59,11 @@ export const requestDocumentDeletion = async (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const executeDocumentDeletion = async (
+const executeDocumentDeletion = async (
   input: z.infer<typeof deleteDocumentInput>,
   context: Context
 ) => {
@@ -94,4 +88,4 @@ export const executeDocumentDeletion = async (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
+export { executeDocumentDeletion, requestDocumentDeletion };

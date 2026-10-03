@@ -128,8 +128,6 @@ const withConnector = async <T>(
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -141,7 +139,7 @@ const withConnector = async <T>(
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /** Only serializable descriptions leave discovery; no credentials or open clients enter a workflow closure. */
-export const discoverEveMcpTools = async (
+const discoverEveMcpTools = async (
   ownerId: string | undefined,
   signal: AbortSignal
 ) => {
@@ -245,8 +243,6 @@ export const discoverEveMcpTools = async (
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -321,7 +317,6 @@ const requiresMcpApproval = async (
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-params */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -330,7 +325,7 @@ const requiresMcpApproval = async (
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export const executeEveMcpTool = async (
+const executeEveMcpTool = async (
   connectorId: string,
   remoteName: string,
   input: unknown,
@@ -397,9 +392,7 @@ export const executeEveMcpTool = async (
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
@@ -407,7 +400,7 @@ export const executeEveMcpTool = async (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /** Native request evaluation; only serializable identifiers enter durable callbacks. */
-export const requestEveMcpApproval = async (
+const requestEveMcpApproval = async (
   connectorId: string,
   remoteName: string,
   input: unknown,
@@ -446,6 +439,6 @@ export const requestEveMcpApproval = async (
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+export { discoverEveMcpTools, executeEveMcpTool, requestEveMcpApproval };

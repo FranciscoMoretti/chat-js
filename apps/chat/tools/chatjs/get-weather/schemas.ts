@@ -1,16 +1,13 @@
 import { z } from "zod";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const weatherInput = z.object({
+const weatherInput = z.object({
   latitude: z.number(),
   longitude: z.number(),
 });
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-export const weatherResult = z.object({
+const weatherResult = z.object({
   current: z.object({
     interval: z.number(),
     temperature_2m: z.number(),
@@ -46,4 +43,4 @@ export const weatherResult = z.object({
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable import/group-exports */
+export { weatherInput, weatherResult };

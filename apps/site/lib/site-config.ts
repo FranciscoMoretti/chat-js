@@ -1,5 +1,4 @@
-/* oxlint-disable import/group-exports -- siteConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export const siteConfig = {
+const siteConfig = {
   creator: "@franmoretti_",
   demoUrl: "https://demo.chatjs.dev",
   description:
@@ -22,10 +21,8 @@ export const siteConfig = {
   title: "ChatJS",
   url: "https://chatjs.dev",
 } as const;
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- siteLinks: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export const siteLinks = {
+const siteLinks = {
   demo: siteConfig.demoUrl,
   desktop: siteConfig.desktopUrl,
   docs: siteConfig.docsUrl,
@@ -40,8 +37,6 @@ export const siteLinks = {
   sitemap: `${siteConfig.url}/sitemap.xml`,
   threads: `${siteConfig.url}/threads`,
 } as const;
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- siteLastModified: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
-/* oxlint-enable import/group-exports */
+const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
+export { siteConfig, siteLastModified, siteLinks };
