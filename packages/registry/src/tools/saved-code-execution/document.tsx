@@ -1,6 +1,6 @@
 "use client";
-
 import { Play } from "lucide-react";
+import React from "react";
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,6 @@ import { documentExecutionLanguage } from "./schemas";
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
@@ -118,7 +117,6 @@ export const EveDocumentRun = ({
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable eslint/no-ternary */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */

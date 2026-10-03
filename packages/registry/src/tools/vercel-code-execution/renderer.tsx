@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { SandboxComposed } from "@/components/sandbox";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
@@ -24,7 +25,6 @@ export type CodeExecutionTool = ToolRendererProps<
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
@@ -54,7 +54,6 @@ const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-ternary */
 /* oxlint-enable typescript/explicit-function-return-type */

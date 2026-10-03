@@ -1,6 +1,6 @@
 "use client";
-
 import { format, isWithinInterval } from "date-fns";
+import React from "react";
 import type { z } from "zod";
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -191,7 +191,6 @@ const n = (num: number): number => Math.ceil(num);
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const WeatherCard = ({
@@ -281,7 +280,6 @@ const WeatherCard = ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -291,7 +289,6 @@ const WeatherCard = ({
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GetWeatherView = ({
@@ -317,7 +314,6 @@ const GetWeatherView = ({
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */

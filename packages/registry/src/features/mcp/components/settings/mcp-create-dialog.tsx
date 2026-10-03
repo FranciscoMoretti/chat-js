@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 /* oxlint-enable eslint/sort-imports */
 import { ChevronDown } from "lucide-react";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 /* oxlint-enable eslint/sort-imports */
 import { useForm } from "react-hook-form";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -92,7 +92,6 @@ type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -361,7 +360,6 @@ export const McpCreateDialog = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable oxc/no-optional-chaining */

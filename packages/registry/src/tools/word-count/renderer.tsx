@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -16,7 +17,6 @@ type WordCountRendererTool = ToolRendererProps<
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const Stat = ({ label, value }: { label: string; value: number }) => (
   <div className="flex flex-col items-center gap-1">
@@ -25,7 +25,6 @@ const Stat = ({ label, value }: { label: string; value: number }) => (
   </div>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 
@@ -33,7 +32,6 @@ const Stat = ({ label, value }: { label: string; value: number }) => (
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -74,7 +72,6 @@ const WordCountView = ({
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */

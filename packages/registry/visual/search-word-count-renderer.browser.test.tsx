@@ -1,6 +1,6 @@
 import { takeSnapshot } from "@uiverify/vitest";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
-import { act } from "react";
+import React, { act } from "react";
 /* oxlint-enable eslint/sort-imports */
 import { createRoot } from "react-dom/client";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -48,11 +48,9 @@ vi.mock("@/lib/ai/tool-renderer-registry", async () => {
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 vi.mock("@/components/part/message-annotations", () => ({
   ResearchUpdates: () => <span>Search updates</span>,
 }));
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -65,7 +63,6 @@ vi.mock("@/lib/stores/hooks-message-parts", () => ({
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -215,7 +212,6 @@ test("search and word-count renderers preserve their visible states", async (): 
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

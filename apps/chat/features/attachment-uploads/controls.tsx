@@ -1,6 +1,6 @@
 "use client";
-
 import { Camera, Paperclip } from "lucide-react";
+import React from "react";
 import { toast } from "sonner";
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -15,14 +15,12 @@ import { config } from "@/lib/config";
 /* oxlint-enable eslint/sort-imports */
 import { useSession } from "@/providers/session-provider";
 
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 const loginPrompt = (
   <LoginPrompt
     title="Sign in to attach files"
     description="Sign in to use this feature in your conversation."
   />
 );
-/* oxlint-enable react/react-in-jsx-scope */
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
@@ -31,7 +29,6 @@ const loginPrompt = (
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -62,7 +59,6 @@ export const AttachFilesControl = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -79,7 +75,6 @@ export const AttachFilesControl = ({
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -111,7 +106,6 @@ export const TakePhotoControl = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */

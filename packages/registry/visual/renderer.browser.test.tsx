@@ -3,7 +3,7 @@ import { takeSnapshot } from "@uiverify/vitest";
 import { getInstanceByDom } from "echarts";
 /* oxlint-enable eslint/sort-imports */
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
-import { act } from "react";
+import React, { act } from "react";
 /* oxlint-enable eslint/sort-imports */
 import { createRoot } from "react-dom/client";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -165,7 +165,6 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
 /* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -285,14 +284,12 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 test("weather and retrieved URL renderer states", async (): Promise<void> => {
   const container = document.createElement("main");
   container.style.cssText = "padding:24px;width:1000px;display:grid;gap:16px";
@@ -335,5 +332,4 @@ test("weather and retrieved URL renderer states", async (): Promise<void> => {
   await act((): void => root.unmount());
   container.remove();
 });
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable oxc/no-async-await */

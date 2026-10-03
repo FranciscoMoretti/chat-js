@@ -1,6 +1,6 @@
 import { takeSnapshot } from "@uiverify/vitest";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
-import { act } from "react";
+import React, { act } from "react";
 /* oxlint-enable eslint/sort-imports */
 import { createRoot } from "react-dom/client";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -22,7 +22,6 @@ import "../../../apps/chat/tests/visual/sandbox.css";
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 test("sandbox code updates while streaming without switching tabs", async (): Promise<void> => {
@@ -78,6 +77,5 @@ test("sandbox code updates while streaming without switching tabs", async (): Pr
 });
 /* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

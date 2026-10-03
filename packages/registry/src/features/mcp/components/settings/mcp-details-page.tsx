@@ -14,7 +14,7 @@ import {
 /* oxlint-enable eslint/sort-imports */
 import { useRouter, useSearchParams } from "next/navigation";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 /* oxlint-enable eslint/sort-imports */
 import { toast } from "sonner";
 
@@ -72,7 +72,6 @@ const formatMcpError = (message: string): string => {
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -118,7 +117,6 @@ const DetailsSection = ({
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -126,7 +124,6 @@ const DetailsSection = ({
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
@@ -247,7 +244,6 @@ const DiscoveryContent = ({
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */
@@ -267,7 +263,6 @@ const DiscoveryContent = ({
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
@@ -567,7 +562,6 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-ternary */

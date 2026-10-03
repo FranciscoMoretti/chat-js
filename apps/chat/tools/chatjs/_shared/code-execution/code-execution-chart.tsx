@@ -1,6 +1,6 @@
 "use client";
-
 import Image from "next/image";
+import React from "react";
 import { z } from "zod";
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -69,7 +69,6 @@ const pngSchema = z.object({
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const CodeExecutionChart = ({ value }: { value: unknown }) => {
@@ -102,7 +101,6 @@ export const CodeExecutionChart = ({ value }: { value: unknown }) => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-ternary */
 /* oxlint-enable typescript/explicit-function-return-type */

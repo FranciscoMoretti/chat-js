@@ -11,7 +11,7 @@ import { EditorView } from "@codemirror/view";
 /* oxlint-enable eslint/sort-imports */
 import { basicSetup } from "codemirror";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
-import { memo, useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef } from "react";
 /* oxlint-enable eslint/sort-imports */
 
 interface EditorProps {
@@ -51,7 +51,6 @@ const getLanguageExtension = (language: string) => {
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const PureCodeEditor = ({
@@ -125,7 +124,6 @@ const PureCodeEditor = ({
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable unicorn/no-null */

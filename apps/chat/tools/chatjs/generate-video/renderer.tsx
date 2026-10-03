@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -17,7 +18,6 @@ type GenerateVideoTool = ToolRendererProps<
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
@@ -56,7 +56,6 @@ const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */

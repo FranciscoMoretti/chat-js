@@ -27,7 +27,7 @@ import type { EditorState } from "lexical";
 import { $getRoot } from "lexical";
 /* oxlint-enable eslint/sort-imports */
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
-import { memo, useEffect, useRef } from "react";
+import React, { memo, useEffect, useRef } from "react";
 /* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -45,7 +45,6 @@ interface EditorProps {
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Content update plugin
@@ -104,7 +103,6 @@ const ContentUpdatePlugin = ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 
@@ -112,7 +110,6 @@ const ContentUpdatePlugin = ({
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -161,7 +158,6 @@ const PureEditor = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable typescript/explicit-function-return-type */

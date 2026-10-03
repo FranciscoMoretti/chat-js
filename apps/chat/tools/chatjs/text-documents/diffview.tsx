@@ -10,7 +10,7 @@ import { diffWords } from "diff";
 import { $createParagraphNode, $getRoot, TextNode } from "lexical";
 /* oxlint-enable eslint/sort-imports */
 import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { createEditorConfig } from "./editor-config";
@@ -222,7 +222,6 @@ interface DiffEditorProps {
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -257,7 +256,6 @@ export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */

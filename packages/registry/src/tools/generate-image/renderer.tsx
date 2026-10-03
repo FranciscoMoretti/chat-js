@@ -1,7 +1,9 @@
 "use client";
 
 import { ImageOffIcon } from "lucide-react";
-import { useState } from "react";
+/* oxlint-disable eslint/sort-imports -- Oxfmt groups the React value import with the existing dependency imports; preserve formatter ordering. */
+import React, { useState } from "react";
+/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ImageActions, ImageModal } from "@/components/image-modal";
@@ -28,7 +30,6 @@ type GenerateImageTool = ToolRendererProps<
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -114,7 +115,6 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-ternary */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable typescript/explicit-function-return-type */

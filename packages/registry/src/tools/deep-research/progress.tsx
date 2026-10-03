@@ -1,3 +1,5 @@
+import React from "react";
+
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
@@ -10,7 +12,6 @@ import { ResearchProgress } from "./progress-panel";
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const ReasonSearchResearchProgress = ({
@@ -26,7 +27,6 @@ export const ReasonSearchResearchProgress = ({
   ) : null;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-ternary */
 /* oxlint-enable typescript/explicit-function-return-type */

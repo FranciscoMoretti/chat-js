@@ -1,6 +1,8 @@
 "use client";
-
 import dynamic from "next/dynamic";
+/* oxlint-disable eslint/sort-imports -- Oxfmt groups the React value import with the existing dependency imports; preserve formatter ordering. */
+import React from "react";
+/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,7 +26,6 @@ const CodeEditor = dynamic(() => import("./editor").then((m) => m.CodeEditor), {
 /* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
 /* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const documentUi: DocumentUi = {
@@ -39,7 +40,6 @@ export const documentUi: DocumentUi = {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-props-no-spreading */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable import/no-named-export */
 /* oxlint-enable import/prefer-default-export */

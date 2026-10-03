@@ -1,6 +1,6 @@
 "use client";
-
 import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
@@ -19,7 +19,6 @@ type RetrieveUrlRendererTool = ToolRendererProps<
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 const LoadingState = () => (
@@ -41,7 +40,6 @@ const LoadingState = () => (
 );
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 
@@ -49,7 +47,6 @@ const LoadingState = () => (
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -73,7 +70,6 @@ const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
@@ -101,7 +97,6 @@ const getItemProperty = <T,>(
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -151,7 +146,6 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
@@ -161,7 +155,6 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -190,7 +183,6 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
@@ -242,7 +234,6 @@ const getErrorMessage = (
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -283,7 +274,6 @@ const RetrieveUrlView = ({
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */

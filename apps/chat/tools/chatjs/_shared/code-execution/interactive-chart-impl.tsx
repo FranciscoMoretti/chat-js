@@ -1,11 +1,13 @@
 "use client";
-
 import ReactECharts from "echarts-for-react/lib/index";
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { EChartsOption } from "echarts-for-react/lib/types";
 /* oxlint-enable eslint/sort-imports */
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
+/* oxlint-disable eslint/sort-imports -- Oxfmt groups the React value import with the existing dependency imports; preserve formatter ordering. */
+import React from "react";
+/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { Card } from "@/components/ui/card";
@@ -92,7 +94,6 @@ export type BaseChart = LineChart | ScatterChart | BarChart;
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
-/* oxlint-disable react/react-in-jsx-scope -- The TypeScript/Next automatic JSX runtime supplies JSX helpers; a legacy React binding is not required for rendering. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -313,7 +314,6 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-undefined */
