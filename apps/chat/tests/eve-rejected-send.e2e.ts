@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
@@ -6,9 +10,18 @@ import { eveConversation, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * max-lines-per-function (#510): test("rejected send survives reload as an unsent draft and can be restored and sent o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("rejected send survives reload as an unsent draft and can be restored and sent o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("rejected send survives reload as an unsent draft and can be restored and sent o uses 210_000, 402, 0, 1, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("rejected send survives reload as an unsent draft and can be restored and sent o sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("rejected send survives reload as an unsent draft and can be restored and sent o accepts { page, }; testInfo; route; response; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("rejected send survives reload as an unsent draft and can be restored and sent o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("rejected send survives reload as an unsent draft and can be restored and sent once", async ({
   page,
 }, testInfo) => {
@@ -187,3 +200,4 @@ test("rejected send survives reload as an unsent draft and can be restored and s
   expect(failedRead.status()).toBe(404);
   expect(await failedRead.json()).not.toHaveProperty("code");
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

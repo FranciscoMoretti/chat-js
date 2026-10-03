@@ -1,20 +1,35 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { spawn } from "node:child_process";; import { once } from "node:events";; import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/no-await-in-loop -- Assemble each fixture before starting the native worker. */
-/* oxlint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- CommonJS-compatible CLI entry point reports rejected startup work. */
+
 /** Exercise the production workflow in a real EVE worker with deterministic models and storage. */
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
-const modelSource = (responder: string) => `import { defineAgent } from "eve";
+const modelSource = (
+  responder: string
+): string => `import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 export default defineAgent({ description: "Research fixture", defaultTools: false, tool: false, modelContextWindowTokens: 128000, model: mockModel(${responder}) });`;
 
-const main = async () => {
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, oxc/no-async-await --
+ * max-lines-per-function (#510): main keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): main keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-console (#514): main emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+ * no-magic-numbers (#517): main uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * node/no-process-env (#537): main reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ * oxc/no-async-await (#540): main sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
+const main = async (): Promise<void> => {
   const app = path.resolve(path.dirname(process.argv[1]), "..");
   const fixture = await mkdtemp(path.join(tmpdir(), "chatjs-native-research-"));
-  const write = async (name: string, content: string) => {
+  const write = async (name: string, content: string): Promise<void> => {
     const target = path.join(fixture, name);
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, content);
@@ -274,9 +289,15 @@ export default [defineEval({ description: "adaptive native research", async test
   }
   await rm(fixture, { force: true, recursive: true });
 };
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, oxc/no-async-await */
+/* oxlint-disable no-console, node/no-top-level-await --
+ * no-console (#514): try { await main(); } catch (error) { console.error(err emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+ * node/no-top-level-await (#539): try { await main(); } catch (error) { console.error(err runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+ */
 try {
   await main();
 } catch (error) {
   console.error(error);
   process.exitCode = 1;
 }
+/* oxlint-enable no-console, node/no-top-level-await */

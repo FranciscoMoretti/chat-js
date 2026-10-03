@@ -1,8 +1,18 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { ModelMessage } from "ai";
 import { expect, test } from "vitest";
 
 import { eveImageContext } from "./image-context";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null --
+ * max-lines-per-function (#510): test("uses only the latest user attachments and generated images from this native bra keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("uses only the latest user attachments and generated images from this native bra uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test("uses only the latest user attachments and generated images from this native bra uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * unicorn/no-null (#570): test("uses only the latest user attachments and generated images from this native bra preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("uses only the latest user attachments and generated images from this native branch", () => {
   const url = "/api/files/abcdefghijklmnopqrstuvwx.png";
   const messages: ModelMessage[] = [
@@ -65,3 +75,4 @@ test("uses only the latest user attachments and generated images from this nativ
       .attachments
   ).toEqual([]);
 });
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null */

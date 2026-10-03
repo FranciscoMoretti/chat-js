@@ -1,10 +1,23 @@
+/* oxlint-disable eslint/max-statements -- listBranches: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable oxc/no-async-await -- listBranches: Await sequencing preserves this operation's dependent I/O and error propagation. */
+/* oxlint-disable eslint/init-declarations -- listBranches: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
+/* oxlint-disable eslint/no-ternary -- listBranches: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable eslint/no-magic-numbers -- listBranches: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable oxc/no-optional-chaining -- listBranches: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- listBranches: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- listBranches: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /**
  * @typedef {{id: string, name: string, parent_id: string, created_at: string, default?: boolean, primary?: boolean, protected?: boolean}} NeonBranch
  * @typedef {{state: string, closed_at: string, head: {ref: string, repo: {full_name: string} | null}}} PullRequest
  * @typedef {{rest: {pulls: {get: (params: Record<string, unknown>) => Promise<{data: PullRequest}>, list: unknown}}, paginate: (method: unknown, params: Record<string, unknown>) => Promise<unknown[]>}} GitHubClient
  */
 
-/** @param {string} base @param {Record<string, string>} headers @param {(url: string, options: RequestInit) => Promise<Response>} request */
+/**
+ * @param {string} base - Neon branch-list endpoint.
+ * @param {Record<string, string>} headers - Authentication headers for Neon.
+ * @param {(url: string, options: RequestInit) => Promise<Response>} request - Injectable HTTP request implementation.
+ * @returns {Promise<NeonBranch[]>} All branch pages after validating pagination.
+ */
 const listBranches = async (base, headers, request) => {
   /** @type {NeonBranch[]} */
   const branches = [];
@@ -37,8 +50,22 @@ const listBranches = async (base, headers, request) => {
   } while (cursor);
   return branches;
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
-/** @param {NeonBranch} branch @param {string} parentId */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- isDeletablePreview: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- isDeletablePreview: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
+/**
+ * @param {NeonBranch} branch - Candidate preview branch returned by Neon.
+ * @param {string} parentId - Parent branch that must never be deleted.
+ * @returns {boolean} Whether the candidate is an unprotected child of the expected parent.
+ */
 const isDeletablePreview = (branch, parentId) =>
   typeof branch.id === "string" &&
   branch.id !== parentId &&
@@ -46,9 +73,23 @@ const isDeletablePreview = (branch, parentId) =>
   !branch.default &&
   !branch.primary &&
   !branch.protected;
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/prefer-default-export -- cleanupPreviewDatabase: Consumers use this named API so adding another export will not require changing existing imports. */
+/* oxlint-disable eslint/max-statements -- cleanupPreviewDatabase: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable import/no-named-export -- cleanupPreviewDatabase: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable eslint/max-lines-per-function -- cleanupPreviewDatabase: The operation keeps its validation, ordered side effects and cleanup in one scope. */
+/* oxlint-disable oxc/no-async-await -- cleanupPreviewDatabase: Await sequencing preserves this operation's dependent I/O and error propagation. */
+/* oxlint-disable oxc/no-rest-spread-properties -- cleanupPreviewDatabase: Fresh object composition preserves immutable state/configuration and existing override order. */
+/* oxlint-disable oxc/no-optional-chaining -- cleanupPreviewDatabase: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable eslint/no-magic-numbers -- cleanupPreviewDatabase: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- cleanupPreviewDatabase: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- cleanupPreviewDatabase: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 // Maintainer infrastructure only: never copied into generated applications.
-/** @param {{github: GitHubClient, repository: {owner: string, repo: string}, number: number, apiKey?: string, request?: (url: string, options: RequestInit) => Promise<Response>}} options - GitHub workflow context and the injectable Neon request implementation. */
+/**
+ * @returns {Promise<string>} Cleanup outcome after validating current pull-request and branch ownership.
+ * @param {{github: GitHubClient, repository: {owner: string, repo: string}, number: number, apiKey?: string, request?: (url: string, options: RequestInit) => Promise<Response>}} options - GitHub workflow context and the injectable Neon request implementation. */
 export const cleanupPreviewDatabase = async ({
   github,
   repository,
@@ -132,3 +173,13 @@ export const cleanupPreviewDatabase = async ({
   }
   return `Deleted preview database for PR #${number}.`;
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export */

@@ -14,6 +14,7 @@ const preview = {
   VERCEL_ENV: "preview",
 };
 
+/* oxlint-disable oxc/no-rest-spread-properties -- isolated preview databases: The scenario copies fixture inputs so later assertions retain their original values. */
 describe("isolated preview databases", () => {
   it("uses the standard runtime URL and direct migration connection", () => {
     expect(
@@ -64,7 +65,9 @@ describe("isolated preview databases", () => {
     }
   );
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable oxc/no-rest-spread-properties -- rejects the parent regardless of hostname spelling: %s: The scenario copies fixture inputs so later assertions retain their original values. */
 it.each([
   "EP-CHILD.EU.NEON.TECH",
   "ep-child.eu.neon.tech.",
@@ -77,7 +80,9 @@ it.each([
     })
   ).toThrow("not its parent");
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable oxc/no-rest-spread-properties -- rejects malformed parent configuration: %s: The scenario copies fixture inputs so later assertions retain their original values. */
 it.each([
   "https://ep-parent.eu.neon.tech",
   "ep-parent.eu.neon.tech/path",
@@ -93,7 +98,9 @@ it.each([
     })
   ).toThrow("parent must be a Neon hostname");
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable oxc/no-rest-spread-properties -- normalizes connection hostnames too when rejecting the parent: The scenario copies fixture inputs so later assertions retain their original values. */
 it("normalizes connection hostnames too when rejecting the parent", () => {
   expect(() =>
     resolveMaintainerPreviewDatabase({
@@ -110,7 +117,9 @@ it("normalizes connection hostnames too when rejecting the parent", () => {
     })
   ).toThrow("not its parent");
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable oxc/no-rest-spread-properties -- rejects mismatched or invalid connection authorities: The scenario copies fixture inputs so later assertions retain their original values. */
 it.each([
   preview.DATABASE_URL_UNPOOLED.replace(":secret@", ":different@"),
   preview.DATABASE_URL_UNPOOLED.replace("/neondb", ":6543/neondb"),
@@ -124,7 +133,10 @@ it.each([
     })
   ).toThrow("Preview database");
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable oxc/no-optional-chaining -- accepts equivalent default ports and percent-encoded credentials: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable oxc/no-rest-spread-properties -- accepts equivalent default ports and percent-encoded credentials: The scenario copies fixture inputs so later assertions retain their original values. */
 it("accepts equivalent default ports and percent-encoded credentials", () => {
   const direct = preview.DATABASE_URL_UNPOOLED.replace(
     "preview:secret",
@@ -137,3 +149,5 @@ it("accepts equivalent default ports and percent-encoded credentials", () => {
     })?.DATABASE_MIGRATION_URL
   ).toBe(direct);
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable oxc/no-optional-chaining */

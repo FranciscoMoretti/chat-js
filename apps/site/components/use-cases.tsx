@@ -1,3 +1,5 @@
+import React from "react";
+
 import { siteLinks } from "@/lib/site-config";
 
 const USE_CASES = [
@@ -21,7 +23,15 @@ const USE_CASES = [
   },
 ];
 
-export const UseCases = () => (
+/* oxlint-disable import/prefer-default-export -- UseCases: Consumers use this named API so adding another export will not require changing existing imports. */
+/* oxlint-disable import/no-named-export -- UseCases: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable eslint/max-lines-per-function -- UseCases: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
+/* oxlint-disable react/jsx-no-literals -- UseCases: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+/* oxlint-disable react/jsx-max-depth -- UseCases: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- UseCases: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+/* oxlint-disable eslint/no-magic-numbers -- UseCases: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- UseCases: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+export const UseCases = (): React.JSX.Element => (
   <section
     aria-labelledby="use-cases-heading"
     className="relative overflow-hidden py-24 sm:py-32"
@@ -98,3 +108,11 @@ export const UseCases = () => (
     </div>
   </section>
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/prefer-default-export */

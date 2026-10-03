@@ -15,6 +15,8 @@ const contentSections = [
   "storage",
 ] as const;
 
+/* oxlint-disable import/no-default-export -- blume.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
+/* oxlint-disable eslint/id-length -- blume.config.ts: The local index/OS/library binding retains its conventional API notation. */
 export default defineConfig({
   ai: {
     // Publish monorepo agent skills at /.well-known/agent-skills/
@@ -242,3 +244,5 @@ export default defineConfig({
   },
   title: "ChatJS Documentation",
 });
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable import/no-default-export */

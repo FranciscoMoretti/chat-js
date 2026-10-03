@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../eve/copy-boundaries" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import type { EveCopyBoundary } from "../eve/copy-boundaries";
@@ -11,7 +15,18 @@ import {
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
 } from "./schema";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): snapshotCopyCheckpoints uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * max-lines-per-function (#510): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): snapshotCopyCheckpoints uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): snapshotCopyCheckpoints sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): snapshotCopyCheckpoints handles optional byId.get(head.revisionId)?.documentId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep snapshotCopyCheckpoints's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): snapshotCopyCheckpoints accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; input: { conversationId: string; ownerId: string; documentIds: string[]; boundaries:; boundary; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 const snapshotCopyCheckpoints = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   input: {
@@ -132,7 +147,25 @@ const snapshotCopyCheckpoints = async (
   });
   return checkpoints;
 };
+/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+ * import/no-named-export (#527): Preserve the named snapshotPublicEveCopyDocuments API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): snapshotPublicEveCopyDocuments remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-param (#534): snapshotPublicEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): snapshotPublicEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): snapshotPublicEveCopyDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): snapshotPublicEveCopyDocuments derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): snapshotPublicEveCopyDocuments sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep snapshotPublicEveCopyDocuments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep snapshotPublicEveCopyDocuments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): snapshotPublicEveCopyDocuments accepts resources: { documentIds: readonly string[]; revisionIds: readonly string[]; }; boundaries: readonly EveCopyBoundary[]; tx; revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): snapshotPublicEveCopyDocuments intentionally keeps the existing falsy-value behavior of identity; source; id; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/max-nested-calls (#568): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 /** Internal copy preparation: IDs must come from the sanitized published transcript. */
 export const snapshotPublicEveCopyDocuments = async (
   conversationId: string,
@@ -272,3 +305,4 @@ export const snapshotPublicEveCopyDocuments = async (
     return { checkpoints, documents };
   });
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

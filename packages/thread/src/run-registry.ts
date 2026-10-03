@@ -1,9 +1,15 @@
 import { isToolUIPart } from "ai";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ChatStatus, UIMessage } from "ai";
+/* oxlint-enable eslint/sort-imports */
 
 import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ThreadConcurrency, ThreadRun } from "./types";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
 export type RunRecord<TMessage extends UIMessage> = {
   chat: ThreadRunChat<TMessage>;
   error: Error | undefined;
@@ -11,7 +17,21 @@ export type RunRecord<TMessage extends UIMessage> = {
   spec: ThreadRunSpec;
   status: ChatStatus;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export class RunRegistry<TMessage extends UIMessage> {
   readonly #concurrency: Required<ThreadConcurrency>;
   readonly #runIdByApprovalId = new Map<string, string>();
@@ -27,27 +47,27 @@ export class RunRegistry<TMessage extends UIMessage> {
     };
   }
 
-  public add(record: RunRecord<TMessage>) {
+  public add(record: RunRecord<TMessage>): void {
     if (this.#runsById.has(record.spec.id)) {
       throw new Error(`Run ${record.spec.id} already exists`);
     }
     this.#runsById.set(record.spec.id, record);
   }
 
-  public assertHasCapacity(parentMessageId: string | null) {
+  public assertHasCapacity(parentMessageId: string | null): void {
     const activeRuns = this.getActive();
     if (activeRuns.length >= this.#concurrency.maxActiveRuns) {
       throw new Error("Cannot start run: max active runs reached");
     }
     const activeFromMessage = activeRuns.filter(
-      (run) => run.spec.parentMessageId === parentMessageId
+      (run): boolean => run.spec.parentMessageId === parentMessageId
     ).length;
     if (activeFromMessage >= this.#concurrency.maxActiveRunsPerMessage) {
       throw new Error(`Cannot start another run from ${parentMessageId}`);
     }
   }
 
-  public clear() {
+  public clear(): void {
     this.#selectedRunId = null;
     this.#runIdByApprovalId.clear();
     this.#runIdByToolCallId.clear();
@@ -60,37 +80,45 @@ export class RunRegistry<TMessage extends UIMessage> {
 
   public getActive() {
     return this.values().filter(
-      (run) => run.status === "submitted" || run.status === "streaming"
+      (run): boolean => run.status === "submitted" || run.status === "streaming"
     );
   }
 
   public findForApproval(approvalId: string) {
     const runId = this.#runIdByApprovalId.get(approvalId);
-    return runId ? this.#runsById.get(runId) : undefined;
+    return typeof runId === "string" && runId !== ""
+      ? this.#runsById.get(runId)
+      : undefined;
   }
 
   public getForMessage(messageId: string) {
     const runs = this.values().toReversed();
     return (
-      runs.find((candidate) => candidate.spec.messageId === messageId) ??
       runs.find(
-        (candidate) =>
+        (candidate): boolean => candidate.spec.messageId === messageId
+      ) ??
+      runs.find(
+        (candidate): boolean =>
           candidate.spec.parentMessageId === messageId &&
           (candidate.status === "submitted" || candidate.status === "streaming")
       ) ??
-      runs.find((candidate) => candidate.spec.parentMessageId === messageId)
+      runs.find(
+        (candidate): boolean => candidate.spec.parentMessageId === messageId
+      )
     );
   }
 
   public findForToolCall(toolCallId: string) {
     const runId = this.#runIdByToolCallId.get(toolCallId);
-    return runId ? this.#runsById.get(runId) : undefined;
+    return typeof runId === "string" && runId !== ""
+      ? this.#runsById.get(runId)
+      : undefined;
   }
 
   public getForResponseMessage(messageId: string) {
     return this.values()
       .toReversed()
-      .find((candidate) => candidate.spec.messageId === messageId);
+      .find((candidate): boolean => candidate.spec.messageId === messageId);
   }
 
   public getInsertionIndex({
@@ -101,12 +129,13 @@ export class RunRegistry<TMessage extends UIMessage> {
     childIds: string[];
     parentMessageId: string | null;
     siblingOrder: number;
-  }) {
+  }): number {
     const siblingOrderByMessageId = new Map<string, number>();
     for (const candidate of this.#runsById.values()) {
       if (
         candidate.spec.parentMessageId === parentMessageId &&
-        candidate.spec.messageId
+        typeof candidate.spec.messageId === "string" &&
+        candidate.spec.messageId !== ""
       ) {
         siblingOrderByMessageId.set(
           candidate.spec.messageId,
@@ -114,7 +143,7 @@ export class RunRegistry<TMessage extends UIMessage> {
         );
       }
     }
-    return childIds.filter((childId) => {
+    return childIds.filter((childId): boolean => {
       const order = siblingOrderByMessageId.get(childId);
       return order === undefined || order < siblingOrder;
     }).length;
@@ -123,12 +152,12 @@ export class RunRegistry<TMessage extends UIMessage> {
   public getSnapshot() {
     const runs = this.snapshots();
     const activeRuns = runs.filter(
-      (run) => run.status === "submitted" || run.status === "streaming"
+      (run): boolean => run.status === "submitted" || run.status === "streaming"
     );
     let status: ChatStatus = "ready";
-    if (activeRuns.some((run) => run.status === "streaming")) {
+    if (activeRuns.some((run): boolean => run.status === "streaming")) {
       status = "streaming";
-    } else if (activeRuns.some((run) => run.status === "submitted")) {
+    } else if (activeRuns.some((run): boolean => run.status === "submitted")) {
       status = "submitted";
     }
     return { activeRuns, runs, status };
@@ -150,27 +179,27 @@ export class RunRegistry<TMessage extends UIMessage> {
 
     const runs = this.values().toReversed();
     const responseRun = runs.find(
-      (run) =>
+      (run): boolean =>
         run.spec.messageId !== undefined && pathIds.has(run.spec.messageId)
     );
     if (responseRun) {
       return responseRun;
     }
-    if (!cursorId) {
+    if (!(typeof cursorId === "string" && cursorId !== "")) {
       // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
       return;
     }
 
     return (
       runs.find(
-        (run) =>
+        (run): boolean =>
           run.spec.parentMessageId === cursorId &&
           (run.status === "submitted" || run.status === "streaming")
-      ) ?? runs.find((run) => run.spec.parentMessageId === cursorId)
+      ) ?? runs.find((run): boolean => run.spec.parentMessageId === cursorId)
     );
   }
 
-  public indexMessageOwnership(runId: string, message: TMessage) {
+  public indexMessageOwnership(runId: string, message: TMessage): void {
     const toolCallIds: string[] = [];
     const approvalIds: string[] = [];
     for (const part of message.parts) {
@@ -207,11 +236,11 @@ export class RunRegistry<TMessage extends UIMessage> {
     }
   }
 
-  public isExplicitlySelected(runId: string) {
+  public isExplicitlySelected(runId: string): boolean {
     return this.#selectedRunId === runId;
   }
 
-  public registerToolCall(runId: string, toolCallId: string) {
+  public registerToolCall(runId: string, toolCallId: string): void {
     RunRegistry.assertOwnershipAvailable(
       this.#runIdByToolCallId,
       toolCallId,
@@ -229,7 +258,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     return run;
   }
 
-  public reserveId(generateId: () => string) {
+  public reserveId(generateId: () => string): string {
     const runId = generateId();
     if (this.#runsById.has(runId)) {
       throw new Error(`Run ${runId} already exists`);
@@ -240,19 +269,19 @@ export class RunRegistry<TMessage extends UIMessage> {
   public reserveSiblingOrder(
     parentMessageId: string | null,
     existingChildrenCount: number
-  ) {
+  ): number {
     const existingMessageOrder = existingChildrenCount - 1;
     const runOrders = this.values()
-      .filter((run) => run.spec.parentMessageId === parentMessageId)
-      .map((run) => run.spec.siblingOrder);
+      .filter((run): boolean => run.spec.parentMessageId === parentMessageId)
+      .map((run): number => run.spec.siblingOrder);
     return Math.max(existingMessageOrder, ...runOrders) + 1;
   }
 
-  public select(runId: string | null) {
+  public select(runId: string | null): void {
     this.#selectedRunId = runId;
   }
 
-  public setError(runId: string, error: Error | undefined) {
+  public setError(runId: string, error: Error | undefined): void {
     const run = this.#runsById.get(runId);
     if (!run) {
       return;
@@ -260,7 +289,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     run.error = error;
   }
 
-  public setStatus(runId: string, status: ChatStatus) {
+  public setStatus(runId: string, status: ChatStatus): void {
     const run = this.#runsById.get(runId);
     if (run) {
       run.status = status;
@@ -290,12 +319,30 @@ export class RunRegistry<TMessage extends UIMessage> {
     id: string,
     runId: string,
     label: string
-  ) {
+  ): void {
     const existingRunId = owners.get(id);
-    if (existingRunId && existingRunId !== runId) {
+    if (
+      typeof existingRunId === "string" &&
+      existingRunId !== "" &&
+      existingRunId !== runId
+    ) {
       throw new Error(
         `${label} ${id} is already owned by run ${existingRunId}`
       );
     }
   }
 }
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/max-params */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/no-continue */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable typescript/explicit-module-boundary-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+
+/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

@@ -1,3 +1,8 @@
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+ * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-file-purge"; "../lib/db/eve-files"; "../lib/db/eve-orphaned-files" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray, sql } from "drizzle-orm";
@@ -34,12 +39,16 @@ import {
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("File ownership acceptance requires local Postgres.");
 }
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
+/* oxlint-disable node/no-top-level-await --
+ * node/no-top-level-await (#539): await db.insert(user).values( [owner, stranger].map((id runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+ */
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -47,6 +56,10 @@ await db.insert(user).values(
     name: "File ownership fixture",
   }))
 );
+/* oxlint-enable node/no-top-level-await */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 afterAll(async () => {
   await db
     .delete(eveFileReference)
@@ -59,7 +72,12 @@ afterAll(async () => {
     .where(inArray(eveStoredFile.ownerId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("server-created file ownership is retryable but cannot be reassigned") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("server-created file ownership is retryable but cannot be reassigned") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("server-created file ownership is retryable but cannot be reassigned", async () => {
   const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
   await registerEveStoredFile(owner, key);
@@ -74,7 +92,12 @@ test("server-created file ownership is retryable but cannot be reassigned", asyn
       .where(eq(eveStoredFile.key, key))
   ).toEqual([{ ownerId: owner }]);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("registration rejects URLs and invalid storage keys") uses 25 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("registration rejects URLs and invalid storage keys") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("registration rejects URLs and invalid storage keys", async () => {
   for (const key of [
     "../file",
@@ -87,7 +110,13 @@ test("registration rejects URLs and invalid storage keys", async () => {
     );
   }
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+ * max-statements (#512): test("references reject foreign files and become immutable behind the deletion fence" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("references reject foreign files and become immutable behind the deletion fence" uses 0, 24, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("references reject foreign files and become immutable behind the deletion fence" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("references reject foreign files and become immutable behind the deletion fence", async () => {
   const id = crypto.randomUUID();
   await insertEveConversationFixtures({
@@ -126,7 +155,12 @@ test("references reject foreign files and become immutable behind the deletion f
     "unavailable"
   );
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("fork reservation retains the source file references before dispatch") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("fork reservation retains the source file references before dispatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("fork reservation retains the source file references before dispatch", async () => {
   const root = await createEveConversation(
     owner,
@@ -162,7 +196,13 @@ test("fork reservation retains the source file references before dispatch", asyn
       .where(eq(eveFileReference.conversationId, fork.id))
   ).toEqual([{ key }]);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): test("attachment creation commits references before dispatch with a single applicatio uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("attachment creation commits references before dispatch with a single applicatio sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("attachment creation commits references before dispatch with a single applicatio accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("attachment creation commits references before dispatch with a single application connection", async () => {
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await registerEveStoredFile(owner, key);
@@ -187,7 +227,13 @@ test("attachment creation commits references before dispatch with a single appli
     await worker.end();
   }
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/promise-function-async --
+ * no-magic-numbers (#517): test("generated file reservations survive storage failure and cannot write after dele uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("generated file reservations survive storage failure and cannot write after dele sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/promise-function-async (#606): test("generated file reservations survive storage failure and cannot write after dele preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("generated file reservations survive storage failure and cannot write after deletion begins", async () => {
   const conversation = await createEveConversation(
     owner,
@@ -221,7 +267,14 @@ test("generated file reservations survive storage failure and cannot write after
     reserveEveGeneratedFile(owner, conversation.id, "abcdefghijklmnopqrstuvwx")
   ).rejects.toThrow("unavailable");
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/promise-function-async */
 
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await --
+ * max-statements (#512): test("deletion waits for an admitted generated-file write before fencing the family") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("deletion waits for an admitted generated-file write before fencing the family") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test("deletion waits for an admitted generated-file write before fencing the family") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test("deletion waits for an admitted generated-file write before fencing the family") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("deletion waits for an admitted generated-file write before fencing the family", async () => {
   const conversation = await createEveConversation(
     owner,
@@ -265,7 +318,13 @@ test("deletion waits for an admitted generated-file write before fencing the fam
     .where(eq(eveConversation.id, conversation.id));
   expect(saved.state).toBe("deleting");
 });
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+ * max-statements (#512): test("file purge preserves outside references and keeps durable progress across retri keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("file purge preserves outside references and keeps durable progress across retri uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("file purge preserves outside references and keeps durable progress across retri sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("file purge preserves outside references and keeps durable progress across retries", async () => {
   const target = await createEveConversation(
     owner,
@@ -314,7 +373,16 @@ test("file purge preserves outside references and keeps durable progress across 
     .where(eq(eveStoredFile.key, shared));
   expect(preserved.state).toBe("active");
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * max-lines-per-function (#510): test("concurrent family cleanup cannot abandon a shared file") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("concurrent family cleanup cannot abandon a shared file") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("concurrent family cleanup cannot abandon a shared file") uses 0, 24, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-ternary (#518): test("concurrent family cleanup cannot abandon a shared file") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): test("concurrent family cleanup cannot abandon a shared file") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("concurrent family cleanup cannot abandon a shared file") accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("concurrent family cleanup cannot abandon a shared file", async () => {
   const first = await createEveConversation(
     owner,
@@ -386,7 +454,12 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
       .where(eq(eveFileReference.key, key))
   ).toEqual([]);
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("upload reservations are durable and reject existing identities even for the sam uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("upload reservations are durable and reject existing identities even for the sam sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("upload reservations are durable and reject existing identities even for the same owner", async () => {
   const key = `${crypto.randomUUID().replaceAll("-", "").slice(0, 24)}.png`;
   await reserveEveUpload(owner, key);
@@ -405,7 +478,16 @@ test("upload reservations are durable and reject existing identities even for th
     "Invalid upload ownership"
   );
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * max-statements (#512): test("orphan cleanup retains references and young uploads and retries reappearing tom keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("orphan cleanup retains references and young uploads and retries reappearing tom uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("orphan cleanup retains references and young uploads and retries reappearing tom sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("orphan cleanup retains references and young uploads and retries reappearing tom handles optional fenced.find((file) => file.key === foreign)?.ownerId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): test("orphan cleanup retains references and young uploads and retries reappearing tom accepts file; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("orphan cleanup retains references and young uploads and retries reappearing tom preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("orphan cleanup retains references and young uploads and retries reappearing tombstones", async () => {
   const keys = Array.from({ length: 5 }, () =>
     crypto.randomUUID().replaceAll("-", "").slice(0, 24)
@@ -455,7 +537,14 @@ test("orphan cleanup retains references and young uploads and retries reappearin
     { key: orphan, ownerId: owner },
   ]);
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await --
+ * max-statements (#512): test("orphan cleanup waits for an admitted upload before committing its fence") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("orphan cleanup waits for an admitted upload before committing its fence") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test("orphan cleanup waits for an admitted upload before committing its fence") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test("orphan cleanup waits for an admitted upload before committing its fence") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("orphan cleanup waits for an admitted upload before committing its fence", async () => {
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
   await reserveEveUpload(owner, key);
@@ -492,7 +581,13 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
     .where(eq(eveStoredFile.key, key));
   expect(file.state).toBe("deleting");
 });
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+ * max-statements (#512): test("file downloads follow ownership and current share visibility") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("file downloads follow ownership and current share visibility") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("file downloads follow ownership and current share visibility") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("file downloads follow ownership and current share visibility", async () => {
   const id = crypto.randomUUID();
   const key = crypto.randomUUID().replaceAll("-", "").slice(0, 24);
@@ -537,3 +632,6 @@ test("file downloads follow ownership and current share visibility", async () =>
     managed: false,
   });
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
+
+/* oxlint-disable max-lines -- #509: This eve-files.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

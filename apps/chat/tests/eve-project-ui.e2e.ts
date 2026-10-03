@@ -1,8 +1,12 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 
 test.use({ actionTimeout: 20_000 });
 
@@ -10,8 +14,24 @@ const projectUrl = /\/project\/[a-f\d-]+$/u;
 const conversationUrl = /\/chat\/[a-f\d-]+$/u;
 const modelId = "openai/gpt-5-nano";
 
+/* oxlint-disable node/no-process-env --
+ * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-enable node/no-process-env */
 
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+ * init-declarations (#507): test("project UI edits instructions, creates a native conversation and lists it after assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-lines-per-function (#510): test("project UI edits instructions, creates a native conversation and lists it after keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("project UI edits instructions, creates a native conversation and lists it after keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("project UI edits instructions, creates a native conversation and lists it after uses 180_000, -1, 1100, 390, 150_000, 200, 1000, 2000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("project UI edits instructions, creates a native conversation and lists it after sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("project UI edits instructions, creates a native conversation and lists it after handles optional response?.status() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): test("project UI edits instructions, creates a native conversation and lists it after accepts { page, }; testInfo; route; url; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("project UI edits instructions, creates a native conversation and lists it after preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * typescript/strict-boolean-expressions (#610): test("project UI edits instructions, creates a native conversation and lists it after intentionally keeps the existing falsy-value behavior of conversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): test("project UI edits instructions, creates a native conversation and lists it after preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("project UI edits instructions, creates a native conversation and lists it after reload", async ({
   page,
 }, testInfo) => {
@@ -367,3 +387,6 @@ test("project UI edits instructions, creates a native conversation and lists it 
     throw cleanupFailure.error;
   }
 });
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+
+/* oxlint-disable max-lines -- #509: This eve-project-ui.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

@@ -1,4 +1,5 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import {
   useInfiniteQuery,
@@ -7,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { ProjectChatItem } from "@/components/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
@@ -20,7 +21,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { listEveConversations } from "@/lib/db/eve-queries";
+/* oxlint-disable import/max-dependencies -- @/lib/eve/optimistic-metadata import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
+/* oxlint-enable import/max-dependencies */
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
@@ -29,9 +32,11 @@ import { useEveDeletion } from "./eve-deletion-provider";
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
 import { EveShareDialogContent } from "./eve-share-dialog";
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
+/* oxlint-enable sort-imports */
 
 const titlePollIntervalMs = 1000;
 const titlePollLimitMs = 30_000;
+/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- groupLabel: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const groupLabel = (
   item: Awaited<ReturnType<typeof listEveConversations>>["items"][number]
@@ -54,6 +59,8 @@ const groupLabel = (
   }
   return "Older";
 };
+/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveHistoryList: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including projectId ? "p-0" : "group-data-[collapsible=icon]:hidden"); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including history.data?.pages.flatMap((page) => page.items)); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including page); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveHistoryList = ({
   initialPage,
@@ -170,7 +177,7 @@ export const EveHistoryList = ({
       {!projectId && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
       {grouped
         .filter((group) => group.items.length)
-        .map((group) => (
+        .map((group): React.JSX.Element => (
           <div className="[&:not(:first-child)]:mt-6" key={group.label}>
             {group.label && (
               <div className="text-sidebar-foreground/50 px-2 py-1 text-xs">
@@ -208,7 +215,10 @@ export const EveHistoryList = ({
                         onRename={async (id, title) => {
                           await rename.mutateAsync({ id, title });
                         }}
-                        renderShareContent={(_chatId, onClose) => (
+                        renderShareContent={(
+                          _chatId,
+                          onClose
+                        ): React.JSX.Element => (
                           <EveShareDialogContent
                             chatId={item.conversationId}
                             onClose={onClose}
@@ -233,7 +243,10 @@ export const EveHistoryList = ({
                     onRename={async (id, title) => {
                       await rename.mutateAsync({ id, title });
                     }}
-                    renderShareContent={(_chatId, onClose) => (
+                    renderShareContent={(
+                      _chatId,
+                      onClose
+                    ): React.JSX.Element => (
                       <EveShareDialogContent
                         chatId={item.conversationId}
                         onClose={onClose}
@@ -255,12 +268,11 @@ export const EveHistoryList = ({
         <div className="p-2 text-sm" role="alert">
           <p>Could not load conversations.</p>
           <Button
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: History mutations and pagination expose pending and error state through their React Query owners.
-            onClick={() =>
-              history.isFetchNextPageError
+            onClick={() => {
+              void (history.isFetchNextPageError
                 ? history.fetchNextPage()
-                : history.refetch()
-            }
+                : history.refetch());
+            }}
             size="sm"
             variant="ghost"
           >
@@ -273,8 +285,9 @@ export const EveHistoryList = ({
           className="mt-2"
           disabled={history.isFetching}
 
-          // oxlint-disable-next-line typescript/no-misused-promises -- #585: History mutations and pagination expose pending and error state through their React Query owners.
-          onClick={() => history.fetchNextPage()}
+          onClick={() => {
+            void history.fetchNextPage();
+          }}
           size="sm"
           variant="ghost"
         >
@@ -307,3 +320,6 @@ export const EveHistoryList = ({
     </SidebarGroup>
   );
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+
+/* oxlint-disable max-lines -- eve-history-list keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

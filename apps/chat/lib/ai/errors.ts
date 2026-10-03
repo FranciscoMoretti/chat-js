@@ -1,3 +1,8 @@
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): ErrorType is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): ErrorType stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named ErrorType API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type ErrorType =
   | "bad_request"
   | "unauthorized"
@@ -6,7 +11,13 @@ export type ErrorType =
   | "not_found"
   | "rate_limit"
   | "offline";
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): Surface is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): Surface stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named Surface API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type Surface =
   | "chat"
   | "auth"
@@ -17,8 +28,15 @@ export type Surface =
   | "vote"
   | "document"
   | "suggestions";
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): ErrorCode is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): ErrorCode stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named ErrorCode API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type ErrorCode = `${ErrorType}:${Surface}`;
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
 
 type ErrorVisibility = "response" | "log" | "none";
 
@@ -34,6 +52,10 @@ const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   vote: "response",
 };
 
+/* oxlint-disable max-lines-per-function, max-statements --
+ * max-lines-per-function (#510): getMessageByErrorCode keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): getMessageByErrorCode keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 const getMessageByErrorCode = (errorCode: ErrorCode): string => {
   if (errorCode.includes("database")) {
     return "An error occurred while executing a database query.";
@@ -88,7 +110,11 @@ const getMessageByErrorCode = (errorCode: ErrorCode): string => {
     }
   }
 };
+/* oxlint-enable max-lines-per-function, max-statements */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): getStatusCodeByType uses 400, 401, 403, 404, 429, 503, 500 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 const getStatusCodeByType = (type: ErrorType): number => {
   switch (type) {
     case "bad_request":
@@ -115,7 +141,12 @@ const getStatusCodeByType = (type: ErrorType): number => {
     }
   }
 };
+/* oxlint-enable no-magic-numbers */
 
+/* oxlint-disable import/no-named-export, no-console --
+ * import/no-named-export (#527): Preserve the named ChatSDKError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-console (#514): ChatSDKError emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+ */
 export class ChatSDKError extends Error {
   public name = "ChatSDKError";
   public type: ErrorType;
@@ -135,7 +166,7 @@ export class ChatSDKError extends Error {
     this.statusCode = getStatusCodeByType(this.type);
   }
 
-  public toResponse() {
+  public toResponse(): Response {
     const code: ErrorCode = `${this.type}:${this.surface}`;
     const visibility = visibilityBySurface[this.surface];
 
@@ -157,3 +188,4 @@ export class ChatSDKError extends Error {
     return Response.json({ cause, code, message }, { status: statusCode });
   }
 }
+/* oxlint-enable import/no-named-export, no-console */

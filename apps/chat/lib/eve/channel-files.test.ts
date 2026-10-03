@@ -7,6 +7,9 @@ vi.mock("../db/eve-files", () => ({ assertEveFilesOwned: mocks.owned }));
 vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
 
 const key = "abcdefghijklmnopqrstuvwx.png";
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): owner uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ */
 const owner = {
   attributes: {},
   authenticator: "test",
@@ -15,10 +18,14 @@ const owner = {
 } satisfies NonNullable<
   NonNullable<Parameters<typeof fetchEveChannelFile>[1]>["session"]
 >["auth"]["current"];
+/* oxlint-enable no-magic-numbers */
 const context = {
   session: { auth: { current: owner, initiator: owner } },
   state: {},
 };
+/* oxlint-disable no-undefined --
+ * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.owned.mockResolvedValue(undefined);
@@ -26,7 +33,13 @@ beforeEach(() => {
     new Blob(["image bytes"], { type: "image/png" })
   );
 });
+/* oxlint-enable no-undefined */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+ * no-magic-numbers (#517): it("checks the destination owner before reading local storage, regardless of the supp uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("checks the destination owner before reading local storage, regardless of the supp sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): it("checks the destination owner before reading local storage, regardless of the supp handles optional result?.bytes.toString(); result?.mediaType without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ */
 it("checks the destination owner before reading local storage, regardless of the supplied host", async () => {
   const result = await fetchEveChannelFile(
     `https://untrusted.example/api/files/${key}`,
@@ -40,7 +53,11 @@ it("checks the destination owner before reading local storage, regardless of the
   expect(result?.bytes.toString()).toBe("image bytes");
   expect(result?.mediaType).toBe("image/png");
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("never reads a foreign or deleted file after an ownership rejection") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("never reads a foreign or deleted file after an ownership rejection", async () => {
   mocks.owned.mockRejectedValue(new Error("Not owned"));
   await expect(
@@ -48,7 +65,11 @@ it("never reads a foreign or deleted file after an ownership rejection", async (
   ).rejects.toThrow("Not owned");
   expect(mocks.download).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("does not resolve files without authenticated session context") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("does not resolve files without authenticated session context", async () => {
   await expect(fetchEveChannelFile(`/api/files/${key}`)).rejects.toThrow(
     "authenticated owner"
@@ -56,7 +77,11 @@ it("does not resolve files without authenticated session context", async () => {
   expect(mocks.owned).not.toHaveBeenCalled();
   expect(mocks.download).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it.each([ "https://foreign.example/private", "/api/files/../../private", "https://for sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it.each([
   "https://foreign.example/private",
   "/api/files/../../private",
@@ -69,3 +94,4 @@ it.each([
     expect(mocks.download).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */

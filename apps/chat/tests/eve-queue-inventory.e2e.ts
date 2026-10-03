@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queue-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import postgres from "postgres";
@@ -5,6 +9,7 @@ import { afterAll, expect, test } from "vitest";
 
 import { readEvePostgresQueueInventory } from "../lib/db/eve-queue-inventory";
 import { env } from "../lib/env";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue inventory acceptance requires local Postgres.");
@@ -12,6 +17,10 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const query = postgres(env.DATABASE_URL, { max: 1 });
 const taskIdentifier = `eve-queue-fixture-${crypto.randomUUID()}`;
 const jobIds: string[] = [];
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 afterAll(async () => {
   if (jobIds.length > 0) {
     // Only the fixture jobs are deliberately locked by this test.
@@ -22,8 +31,12 @@ afterAll(async () => {
   await query`delete from graphile_worker._private_tasks where identifier = ${taskIdentifier}`;
   await query.end();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
-async function job(body: unknown) {
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): job sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
+async function job(body: unknown): Promise<string> {
   const [row] = await query<
     { id: string }[]
   >`select id::text from graphile_worker.add_job(
@@ -39,7 +52,13 @@ async function job(body: unknown) {
   jobIds.push(row.id);
   return row.id;
 }
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable id-length, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): test("finds retries and queued child creation without returning input payloads") uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * oxc/no-async-await (#540): test("finds retries and queued child creation without returning input payloads") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts a; b; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();
   const retry = await job({
@@ -77,7 +96,11 @@ test("finds retries and queued child creation without returning input payloads",
     ).jobs
   ).toEqual([]);
 });
+/* oxlint-enable id-length, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("reports worker locks and unsupported messages; ignores ordinary health probes") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("reports worker locks and unsupported messages; ignores ordinary health probes", async () => {
   const runId = crypto.randomUUID();
   const locked = await job({ runId });
@@ -92,7 +115,11 @@ test("reports worker locks and unsupported messages; ignores ordinary health pro
   expect(result.jobs).toEqual([{ id: locked, locked: true, runId }]);
   expect(result.unsupportedJobIds).toEqual([unsupported]);
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("missing envelopes are reported and invalid encoding cannot silently disappear") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("missing envelopes are reported and invalid encoding cannot silently disappear", async () => {
   const runId = crypto.randomUUID();
   const id = await job({ runId });
@@ -107,3 +134,4 @@ test("missing envelopes are reported and invalid encoding cannot silently disapp
     readEvePostgresQueueInventory(query, { runIds: [runId], taskIdentifier })
   ).rejects.toThrow();
 });
+/* oxlint-enable oxc/no-async-await */

@@ -1,12 +1,17 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
+import React from "react";
 
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+/* oxlint-enable sort-imports */
+/* oxlint-disable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types -- DocumentSkeleton: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const DocumentSkeleton = ({
   artifactKind: _artifactKind,
 }: {
   artifactKind: ArtifactKind;
-}) => (
+}): React.JSX.Element => (
   <div className="flex w-full flex-col gap-4">
     <div className="bg-muted-foreground/20 h-12 w-1/2 animate-pulse rounded-lg" />
     <div className="bg-muted-foreground/20 h-5 w-full animate-pulse rounded-lg" />
@@ -17,8 +22,11 @@ export const DocumentSkeleton = ({
     <div className="bg-muted-foreground/20 h-5 w-2/3 animate-pulse rounded-lg" />
   </div>
 );
+/* oxlint-enable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
 
-export const InlineDocumentSkeleton = () => (
+/* oxlint-disable import/group-exports, import/no-named-export, react/no-multi-comp -- InlineDocumentSkeleton: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+
+export const InlineDocumentSkeleton = (): React.JSX.Element => (
   <div className="flex w-full flex-col gap-4">
     <div className="bg-muted-foreground/20 h-4 w-48 animate-pulse rounded-lg" />
     <div className="bg-muted-foreground/20 h-4 w-3/4 animate-pulse rounded-lg" />
@@ -29,3 +37,4 @@ export const InlineDocumentSkeleton = () => (
     <div className="bg-muted-foreground/20 h-4 w-64 animate-pulse rounded-lg" />
   </div>
 );
+/* oxlint-enable import/group-exports, import/no-named-export, react/no-multi-comp */

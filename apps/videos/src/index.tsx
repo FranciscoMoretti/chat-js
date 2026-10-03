@@ -1,10 +1,17 @@
+import React from "react";
+/* oxlint-disable eslint/sort-imports -- the remotion import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { Composition, registerRoot } from "remotion";
+/* oxlint-enable eslint/sort-imports */
 
 import { BrandExample } from "./brand-example";
+/* oxlint-disable eslint/sort-imports -- the ./story import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { DURATION, FPS, script } from "./story";
+/* oxlint-enable eslint/sort-imports */
 import { ThreadsLaunch } from "./threads-launch";
 
-const Root = () => (
+/* oxlint-disable react/only-export-components -- Root: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Root: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+const Root = (): React.JSX.Element => (
   <>
     <Composition
       id="BrandExample"
@@ -25,4 +32,6 @@ const Root = () => (
     />
   </>
 );
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable react/only-export-components */
 registerRoot(Root);

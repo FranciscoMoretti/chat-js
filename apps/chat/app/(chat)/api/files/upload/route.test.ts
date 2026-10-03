@@ -3,10 +3,16 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({ register: vi.fn(), upload: vi.fn() }));
+/* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+
 vi.mock("next/headers", () => ({ headers: () => new Headers() }));
+/* oxlint-enable typescript/explicit-function-return-type */
+
+/* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: () => ({ user: { id: "owner" } }) } },
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/config", () => ({
   config: {
     attachments: { acceptedTypes: { "image/png": [".png"] }, maxBytes: 10 },
@@ -15,6 +21,8 @@ vi.mock("@/lib/config", () => ({
 vi.mock("@/lib/env", () => ({
   env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost/fixture" },
 }));
+/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type -- route.test route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+
 vi.mock("@/lib/db/eve-files", () => ({
   reserveEveUpload: mocks.register,
   writeEveUpload: async (
@@ -23,10 +31,14 @@ vi.mock("@/lib/db/eve-files", () => ({
     write: () => Promise<unknown>
   ) => await write(),
 }));
+/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type */
+
+/* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("@/lib/file-storage", () => ({
   createFileId: () => "abcdefghijklmnopqrstuvwx.png",
   uploadFileAtKey: mocks.upload,
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 
 const key = "abcdefghijklmnopqrstuvwx.png";
 beforeEach(() => {
@@ -37,6 +49,8 @@ beforeEach(() => {
     url: `/api/files/${key}`,
   });
 });
+/* oxlint-disable typescript/explicit-function-return-type -- request: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+
 const request = () => {
   const form = new FormData();
   form.append(
@@ -49,6 +63,9 @@ const request = () => {
     method: "POST",
   });
 };
+/* oxlint-enable typescript/explicit-function-return-type */
+
+/* oxlint-disable no-magic-numbers, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 test("records the authenticated owner of a server-created storage key before returning it", async () => {
   const response = await POST(request());
   expect(response.status).toBe(200);
@@ -57,6 +74,9 @@ test("records the authenticated owner of a server-created storage key before ret
     url: `/api/files/${key}`,
   });
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+
+/* oxlint-disable no-magic-numbers, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 500); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 test("does not return a usable upload when ownership registration fails", async () => {
   mocks.register.mockRejectedValue(new Error("database unavailable"));
   const response = await POST(request());
@@ -64,6 +84,9 @@ test("does not return a usable upload when ownership registration fails", async 
   expect(await response.json()).toEqual({ error: "Upload failed" });
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+
+/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await, typescript/promise-function-async -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("waits for durable ownership before starting storage I/O", async () => {
   const gate = Promise.withResolvers<undefined>();
@@ -83,6 +106,9 @@ test("waits for durable ownership before starting storage I/O", async () => {
     "image/png"
   );
 });
+/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await, typescript/promise-function-async */
+
+/* oxlint-disable no-magic-numbers, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 500); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test("retains the reserved identity after an uncertain storage failure", async () => {
   mocks.upload.mockRejectedValue(new Error("storage response lost"));
@@ -96,6 +122,9 @@ test("retains the reserved identity after an uncertain storage failure", async (
     "image/png"
   );
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+
+/* oxlint-disable no-magic-numbers, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test("enforces retained upload type and byte limits before reserving storage", async () => {
   for (const file of [
@@ -116,6 +145,9 @@ test("enforces retained upload type and byte limits before reserving storage", a
   expect(mocks.register).not.toHaveBeenCalled();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+
+/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test.each([undefined, "not multipart"])(
   "rejects malformed upload body %s before storage admission",
@@ -127,6 +159,9 @@ test.each([undefined, "not multipart"])(
     expect(mocks.register).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await */
+
+/* oxlint-disable no-magic-numbers, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 64); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test("rejects a declared oversized request without reading its body", async () => {
   const uploadRequest = request();
@@ -136,6 +171,8 @@ test("rejects a declared oversized request without reading its body", async () =
   expect(uploadRequest.bodyUsed).toBe(false);
   expect(mocks.register).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-disable max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- route.test route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including controller); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including contentLength). */
 
 test.each([undefined, "1"])(
   "bounds multipart consumption with content-length %s and cancels the source",
@@ -180,6 +217,9 @@ test.each([undefined, "1"])(
     expect(mocks.upload).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
+/* oxlint-disable no-magic-numbers, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test("accepts a file at the configured byte limit with multipart overhead", async () => {
   const form = new FormData();
@@ -195,3 +235,4 @@ test("accepts a file at the configured byte limit with multipart overhead", asyn
   );
   expect(response.status).toBe(200);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */

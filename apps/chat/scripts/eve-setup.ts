@@ -1,3 +1,8 @@
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+ * import/no-nodejs-modules (#529): This server/tooling module requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queue-fence"; "../lib/db/eve-resource-fence"; "../lib/eve/environment"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { execFileSync } from "node:child_process";
 
 import { config } from "dotenv";
@@ -8,10 +13,21 @@ import { installEvePostgresResourceFence } from "../lib/db/eve-resource-fence";
 import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 import { resolveEveSetup } from "./eve-setup-config";
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });
 
-const run = async () => {
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync, oxc/no-async-await, oxc/no-rest-spread-properties --
+ * max-lines-per-function (#510): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-console (#514): run emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+ * no-magic-numbers (#517): run uses 2, 3, 30_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * node/no-process-env (#537): run reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ * node/no-sync (#538): run uses execFileSync( process.execPath, [ "-e", 'import("@workflow/world-postgre within its synchronous startup or SDK contract; asynchronous conversion changes its callers and lifecycle.
+ * oxc/no-async-await (#540): run sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): run copies or separates ...process.env while preserving existing object ownership; mutating source objects is not equivalent.
+ */
+const run = async (): Promise<void> => {
   const [mode] = process.argv.slice(2);
   if (
     process.argv.length > 3 ||
@@ -96,7 +112,14 @@ const run = async () => {
     await connection.end({ timeout: 1 });
   }
 };
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync, oxc/no-async-await, oxc/no-rest-spread-properties */
 
+/* oxlint-disable no-console, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type --
+ * no-console (#514): void (async () => { try { await run(); } catch (error)  emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+ * no-ternary (#518): void (async () => { try { await run(); } catch (error)  derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): void (async () => { try { await run(); } catch (error)  sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await run(); } catch (error) 's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
 void (async () => {
   try {
@@ -118,3 +141,4 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
+/* oxlint-enable no-console, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type */

@@ -19,4 +19,8 @@ const manifest = (): MetadataRoute.Manifest => ({
   theme_color: "#fff",
 });
 
+/* oxlint-disable import/no-default-export --
+ * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
+ */
 export default manifest;
+/* oxlint-enable import/no-default-export */

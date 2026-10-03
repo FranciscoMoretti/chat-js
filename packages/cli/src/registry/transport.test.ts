@@ -1,11 +1,23 @@
 import { expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { mkdtemp, rm } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { installItems } from "./shadcn";
+/* oxlint-enable eslint/sort-imports */
 import { withRegistryTransport } from "./transport";
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("shadcn transitive registry requests retain transport policy and restore host fetch", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-transport-"));
   const original = globalThis.fetch;
@@ -36,3 +48,5 @@ test("shadcn transitive registry requests retain transport policy and restore ho
     await rm(cwd, { force: true, recursive: true });
   }
 });
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable oxc/no-async-await */

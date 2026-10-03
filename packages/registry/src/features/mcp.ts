@@ -1,7 +1,11 @@
 import type { RegistryItem } from "shadcn/schema";
 
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { featureDefinitionSchema } from "../../metadata";
+/* oxlint-enable import/no-relative-parent-imports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 // Canonical MCP implementation; apps/chat contains installed demo copies.
 export const mcpFiles = [
   "agent/tools/mcp.ts",
@@ -30,14 +34,22 @@ export const mcpFiles = [
   "lib/nuqs/mcp-search-params.server.ts",
   "trpc/routers/mcp.router.ts",
 ];
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const mcpDefinition = featureDefinitionSchema.parse({
   contractVersion: 1,
   envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
   id: "mcp",
   kind: "feature",
 });
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const mcpItem: RegistryItem = {
   description: "MCP connectors, management pages, OAuth and composer control",
   files: mcpFiles.map((file) => ({
@@ -51,3 +63,5 @@ export const mcpItem: RegistryItem = {
   name: "mcp",
   type: "registry:item",
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

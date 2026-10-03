@@ -5,9 +5,13 @@ import {
   retireEveSessionForDeletion,
 } from "./retire-session";
 
+/* oxlint-disable typescript/promise-function-async --
+ * typescript/promise-function-async (#606): vi.mock("./reconcile-usage") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 vi.mock("./reconcile-usage", () => ({
   reconcileEveSubagentUsage: vi.fn(() => Promise.resolve(true)),
 }));
+/* oxlint-enable typescript/promise-function-async */
 
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
@@ -35,6 +39,9 @@ vi.mock("../db/eve-native-purge", () => ({
   retireEveNativeSessions: mocks.retireMany,
 }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.usage }));
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("eve/client", () => ({
   Client: class {
     public constructor(options: unknown) {
@@ -45,6 +52,10 @@ vi.mock("eve/client", () => ({
     };
   },
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable no-undefined --
+ * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.deleting.mockResolvedValue({ id: "conversation" });
@@ -52,7 +63,12 @@ beforeEach(() => {
   mocks.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
   mocks.usage.mockResolvedValue(undefined);
 });
+/* oxlint-enable no-undefined */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): it("retires before reading and settling the final snapshot, including retries") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("retires before reading and settling the final snapshot, including retries") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("retires before reading and settling the final snapshot, including retries", async () => {
   await retireEveSessionForDeletion("owner", "session");
   expect(mocks.client).toHaveBeenCalledWith(
@@ -68,7 +84,12 @@ it("retires before reading and settling the final snapshot, including retries", 
     retireEveSessionForDeletion("owner", "session")
   ).resolves.toMatchObject({ events: [{ type: "session.completed" }] });
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-undefined, oxc/no-async-await --
+ * no-undefined (#519): it("rejects non-deleting or foreign sessions before native access") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): it("rejects non-deleting or foreign sessions before native access") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("rejects non-deleting or foreign sessions before native access", async () => {
   mocks.deleting.mockResolvedValue(undefined);
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
@@ -76,7 +97,14 @@ it("rejects non-deleting or foreign sessions before native access", async () => 
   );
   expect(mocks.reset).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-undefined, oxc/no-async-await */
 
+/* oxlint-disable no-ternary, no-undefined, oxc/no-async-await, typescript/promise-function-async --
+ * no-ternary (#518): it("refuses erasure when retirement or cost settlement is incomplete") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): it("refuses erasure when retirement or cost settlement is incomplete") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): it("refuses erasure when retirement or cost settlement is incomplete") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/promise-function-async (#606): it("refuses erasure when retirement or cost settlement is incomplete") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 it("refuses erasure when retirement or cost settlement is incomplete", async () => {
   mocks.snapshot.mockResolvedValue({ events: [{ type: "step.completed" }] });
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(
@@ -94,7 +122,13 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
     "Usage must be reconciled"
   );
 });
+/* oxlint-enable no-ternary, no-undefined, oxc/no-async-await, typescript/promise-function-async */
 
+/* oxlint-disable no-undefined, oxc/no-async-await, unicorn/no-null --
+ * no-undefined (#519): it("does not enter native family cleanup for an inaccessible family or a missing sess uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): it("does not enter native family cleanup for an inaccessible family or a missing sess sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/no-null (#570): it("does not enter native family cleanup for an inaccessible family or a missing sess preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 it("does not enter native family cleanup for an inaccessible family or a missing session binding", async () => {
   mocks.begin.mockResolvedValueOnce(undefined);
   expect(
@@ -110,7 +144,11 @@ it("does not enter native family cleanup for an inaccessible family or a missing
   );
   expect(mocks.retireMany).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-undefined, oxc/no-async-await, unicorn/no-null */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("rejects PostgreSQL retirement on Vercel before changing application access") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("rejects PostgreSQL retirement on Vercel before changing application access", async () => {
   mocks.env.VERCEL = "1";
   mocks.env.VERCEL_ENV = "production";
@@ -120,3 +158,4 @@ it("rejects PostgreSQL retirement on Vercel before changing application access",
   expect(mocks.begin).not.toHaveBeenCalled();
   expect(mocks.retireMany).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

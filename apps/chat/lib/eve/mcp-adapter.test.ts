@@ -1,16 +1,26 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable max-lines-per-function, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+ * max-lines-per-function (#510): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): describe("Eve tool contract") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): describe("Eve tool contract") accepts _input; options: ToolExecutionOptions<typeof services>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * unicorn/max-nested-calls (#568): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 describe("Eve tool contract", () => {
   it("removes executable schema metadata from the advertised JSON schema", async () => {
     const adapted = await describeMcpTool(
       tool({
         description: "Count words",
-        execute: ({ text }) => text.length,
+        execute: ({ text }): number => text.length,
         inputSchema: z.object({ text: z.string() }),
       })
     );
@@ -25,7 +35,7 @@ describe("Eve tool contract", () => {
       describeMcpTool(
         tool({
           description: "Protected",
-          execute: () => "done",
+          execute: (): string => "done",
           inputSchema: z.object({}),
           // oxlint-disable-next-line typescript/no-deprecated -- #583: This test verifies compatibility with approval metadata on legacy tool definitions.
           needsApproval: true,
@@ -38,8 +48,10 @@ describe("Eve tool contract", () => {
     const services = { selectedModel: "selected/model" };
     const definition = tool({
       description: "Inspect context",
-      execute: (_input, options: ToolExecutionOptions<typeof services>) =>
-        options.toolCallId,
+      execute: (
+        _input,
+        options: ToolExecutionOptions<typeof services>
+      ): string => options.toolCallId,
       inputSchema: z.object({}),
     });
 
@@ -58,3 +70,4 @@ describe("Eve tool contract", () => {
     expect(output).toEqual(["context-test"]);
   });
 });
+/* oxlint-enable max-lines-per-function, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */

@@ -1,5 +1,11 @@
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 export const isSafeTarget = (targetPath: string, root: string): boolean => {
   if (targetPath.includes("\0")) {
     return false;
@@ -41,3 +47,7 @@ export const isSafeTarget = (targetPath: string, root: string): boolean => {
     resolvedPath.startsWith(`${normalizedRoot}${path.sep}`)
   );
 };
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export */

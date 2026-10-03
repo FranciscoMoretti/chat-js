@@ -1,4 +1,5 @@
 import Image from "next/image";
+import React from "react";
 import type { ReactNode } from "react";
 
 interface Tech {
@@ -7,6 +8,7 @@ interface Tech {
   name: string;
 }
 
+/* oxlint-disable react/forbid-component-props -- TECHS: className/style are the deliberate styling interface of these UI/layout primitives. */
 const TECHS: Tech[] = [
   {
     glowColor: "#a1a1a1",
@@ -179,8 +181,18 @@ const TECHS: Tech[] = [
     name: "Motion",
   },
 ];
+/* oxlint-enable react/forbid-component-props */
 
-const TechCard = ({ tech, index }: { tech: Tech; index: number }) => {
+/* oxlint-disable eslint/no-magic-numbers -- TechCard: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechCard: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- TechCard: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+const TechCard = ({
+  tech,
+  index,
+}: {
+  tech: Tech;
+  index: number;
+}): React.JSX.Element => {
   const delay = `${0.04 * index}s`;
 
   return (
@@ -206,8 +218,19 @@ const TechCard = ({ tech, index }: { tech: Tech; index: number }) => {
     </div>
   );
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable eslint/no-magic-numbers */
 
-export const TechStack = () => (
+/* oxlint-disable import/prefer-default-export -- TechStack: Consumers use this named API so adding another export will not require changing existing imports. */
+/* oxlint-disable react/no-multi-comp -- TechStack: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
+/* oxlint-disable import/no-named-export -- TechStack: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable react/jsx-no-literals -- TechStack: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechStack: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+/* oxlint-disable react/jsx-max-depth -- TechStack: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
+/* oxlint-disable eslint/id-length -- TechStack: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- TechStack: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+export const TechStack = (): React.JSX.Element => (
   <section className="bg-secondary relative overflow-hidden py-24 sm:py-32">
     {/* Seamless edge blending — tall gradients for a smooth transition */}
     <div className="from-background via-background/60 pointer-events-none absolute inset-x-0 top-0 h-48 bg-linear-to-b to-transparent sm:h-56" />
@@ -251,3 +274,11 @@ export const TechStack = () => (
     </div>
   </section>
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable react/no-multi-comp */
+/* oxlint-enable import/prefer-default-export */

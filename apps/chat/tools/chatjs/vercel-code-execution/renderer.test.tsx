@@ -1,15 +1,34 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
 
 import { CodeExecution } from "./renderer";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/components/sandbox") accepts { code }: { code: string }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 vi.mock("@/components/sandbox", () => ({
-  SandboxComposed: ({ code }: { code: string }) => <pre>{code}</pre>,
+  SandboxComposed: ({ code }: { code: string }): React.JSX.Element => (
+    <pre>{code}</pre>
+  ),
 }));
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * unicorn/no-null (#570): vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts", () => ({
   default: () => null,
 }));
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop --
+ * react-perf/jsx-no-new-object-as-prop (#558): test("passes validated partial code to the sandbox while input is streaming") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ */
 test("passes validated partial code to the sandbox while input is streaming", () => {
   const html = renderToStaticMarkup(
     <CodeExecution
@@ -24,7 +43,11 @@ test("passes validated partial code to the sandbox while input is streaming", ()
   );
   expect(html).toContain("print(53 *");
 });
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop --
+ * react-perf/jsx-no-new-object-as-prop (#558): test("does not render malformed partial code") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ */
 test("does not render malformed partial code", () => {
   const html = renderToStaticMarkup(
     <CodeExecution
@@ -40,7 +63,11 @@ test("does not render malformed partial code", () => {
   expect(html).not.toContain("invalid");
   expect(html).toContain("<pre></pre>");
 });
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop --
+ * react-perf/jsx-no-new-object-as-prop (#558): test.each(["pyth", "java"])("keeps code visible while language is %s") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ */
 test.each(["pyth", "java"])(
   "keeps code visible while language is %s",
   (language) => {
@@ -58,3 +85,4 @@ test.each(["pyth", "java"])(
     expect(html).toContain("print(1)");
   }
 );
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */

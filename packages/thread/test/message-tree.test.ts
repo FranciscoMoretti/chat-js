@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import type { UIMessage } from "ai";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { MessageTree } from "../src/message-tree";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 
 const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
   id,
@@ -10,6 +14,11 @@ const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
   role,
 });
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("MessageTree", () => {
   test("derives the selected path without deleting sibling branches", () => {
     const tree = new MessageTree({
@@ -187,3 +196,8 @@ describe("MessageTree", () => {
     ).toThrow("Unknown parent message b");
   });
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable eslint/max-statements */

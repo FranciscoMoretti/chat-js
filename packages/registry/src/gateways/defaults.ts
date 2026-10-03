@@ -6,6 +6,7 @@ import type { OpenAIGateway } from "./openai/gateway.ts";
 import type { OpenRouterGateway } from "./openrouter/gateway.ts";
 import type { VercelGateway } from "./vercel/gateway.ts";
 
+/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
 type Gateways = {
   vercel: VercelGateway;
   openai: OpenAIGateway;
@@ -13,6 +14,7 @@ type Gateways = {
   openrouter: OpenRouterGateway;
   litellm: LiteLLMGateway;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 type GatewayType = keyof Gateways;
 const vercelDefaults = {
   anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
@@ -132,9 +134,11 @@ const openaiDefaults = {
   },
 } satisfies GatewayModelDefaults<Gateways["openai"]>;
 
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 const openaiCompatibleDefaults = {
   ...openaiDefaults,
 } satisfies GatewayModelDefaults<Gateways["openai-compatible"]>;
+/* oxlint-enable oxc/no-rest-spread-properties */
 
 const litellmDefaults = {
   anonymousModels: ["openai/gpt-4o-mini"],
@@ -170,6 +174,9 @@ const litellmDefaults = {
   },
 } satisfies GatewayModelDefaults<Gateways["litellm"]>;
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 // Record ensures a compile error if a new gateway is added but not here.
 export const GATEWAY_MODEL_DEFAULTS = {
   litellm: litellmDefaults,
@@ -178,3 +185,6 @@ export const GATEWAY_MODEL_DEFAULTS = {
   openrouter: openrouterDefaults,
   vercel: vercelDefaults,
 } satisfies { [G in GatewayType]: GatewayModelDefaults<Gateways[G]> };
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/prefer-default-export */

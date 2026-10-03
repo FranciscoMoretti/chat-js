@@ -1,5 +1,7 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable eslint/sort-imports -- the vitest import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { expect, test } from "vitest";
+/* oxlint-enable eslint/sort-imports */
 
 const pages = [
   { name: "threads", path: "/docs/threads" },
@@ -23,6 +25,12 @@ const pages = [
   { name: "features", path: "/docs/features/overview" },
 ] as const;
 
+/* oxlint-disable eslint/max-statements -- docs-visual.browser.test.ts: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
+/* oxlint-disable oxc/no-async-await -- docs-visual.browser.test.ts: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
+/* oxlint-disable eslint/no-undefined -- docs-visual.browser.test.ts: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
+/* oxlint-disable oxc/no-optional-chaining -- docs-visual.browser.test.ts: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- docs-visual.browser.test.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
+/* oxlint-disable typescript/promise-function-async -- docs-visual.browser.test.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 for (const page of pages) {
   test(`docs ${page.name}`, async () => {
     document.head.replaceChildren();
@@ -65,3 +73,9 @@ for (const page of pages) {
     await takeSnapshot(page.name);
   });
 }
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */

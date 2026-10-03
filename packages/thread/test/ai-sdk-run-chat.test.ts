@@ -3,9 +3,17 @@ import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { ThreadRunChat } from "../src/ai-sdk-run-chat";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { ThreadRunSpec } from "../src/ai-sdk-run-chat";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
+/* oxlint-enable eslint/sort-imports */
 import { TestRunHost } from "./support/test-run-host";
 
 const userMessage = (): UIMessage => ({
@@ -21,7 +29,8 @@ const createSpec = (): ThreadRunSpec => ({
   siblingOrder: 0,
 });
 
-const emitRichResponse = (transport: ControlledTransport) => {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const emitRichResponse = (transport: ControlledTransport): void => {
   transport.emit(
     { messageId: "assistant-1", type: "start" },
     { id: "reasoning-1", type: "reasoning-start" },
@@ -34,8 +43,14 @@ const emitRichResponse = (transport: ControlledTransport) => {
   );
   transport.finish();
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+const waitFor = async (
+  predicate: () => boolean,
+  attemptsRemaining = 500
+): Promise<void> => {
   if (predicate()) {
     return;
   }
@@ -46,15 +61,23 @@ const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
   // oxlint-disable-next-line typescript/no-confusing-void-expression -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
   return await waitFor(predicate, attemptsRemaining - 1);
 };
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
 
-describe("ThreadRunChat", () => {
-  test("matches the AI SDK React Chat reducer for one response", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+describe("ThreadRunChat", (): void => {
+  test("matches the AI SDK React Chat reducer for one response", async (): Promise<void> => {
     const spec = createSpec();
     const standardTransport = new ControlledTransport();
     const threadTransport = new ControlledTransport();
     const input = userMessage();
     const standardChat = new Chat<UIMessage>({
-      generateId: () => "client-response",
+      generateId: (): string => "client-response",
       id: "standard-chat",
       transport: standardTransport,
     });
@@ -80,7 +103,7 @@ describe("ThreadRunChat", () => {
     expect(host.status).toBe("ready");
   });
 
-  test("adopts the server response identity from the start chunk", async () => {
+  test("adopts the server response identity from the start chunk", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
     const input = userMessage();
@@ -103,17 +126,19 @@ describe("ThreadRunChat", () => {
     expect(spec.messageId).toBe("server-id");
   });
 
-  test("reports a failed stream exactly once without adding a response", async () => {
+  test("reports a failed stream exactly once without adding a response", async (): Promise<void> => {
     const error = new Error("stream failed");
     const callbackErrors: Error[] = [];
     const spec = createSpec();
     const transport = new ControlledTransport();
     const host = new TestRunHost(transport, userMessage(), spec);
-    host.onError = (callbackError) => callbackErrors.push(callbackError);
+    host.onError = (callbackError): void => {
+      callbackErrors.push(callbackError);
+    };
     const chat = new ThreadRunChat(host, spec);
 
     const request = chat.start();
-    await waitFor(() => transport.requests.length === 1);
+    await waitFor((): boolean => transport.requests.length === 1);
     transport.fail(error);
     await request;
 
@@ -123,15 +148,15 @@ describe("ThreadRunChat", () => {
     expect(host.tree.getChildren(spec.parentMessageId)).toEqual([]);
   });
 
-  test("continues one response after an automatic tool follow-up", async () => {
+  test("continues one response after an automatic tool follow-up", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
     const host = new TestRunHost(transport, userMessage(), spec);
-    host.sendAutomaticallyWhen = () => transport.requests.length < 2;
+    host.sendAutomaticallyWhen = (): boolean => transport.requests.length < 2;
     const chat = new ThreadRunChat(host, spec);
 
     const request = chat.start();
-    await waitFor(() => transport.requests.length === 1);
+    await waitFor((): boolean => transport.requests.length === 1);
     transport.emit(
       { messageId: "assistant-1", type: "start" },
       {
@@ -151,7 +176,7 @@ describe("ThreadRunChat", () => {
     );
     transport.finish();
 
-    await waitFor(() => transport.requests.length === 2);
+    await waitFor((): boolean => transport.requests.length === 2);
     expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
     transport.emit(
       { messageId: "assistant-1", type: "start" },
@@ -165,7 +190,7 @@ describe("ThreadRunChat", () => {
 
     expect(transport.requests).toHaveLength(2);
     expect(
-      host.tree.getChildren(spec.parentMessageId).map(({ id }) => id)
+      host.tree.getChildren(spec.parentMessageId).map(({ id }): string => id)
     ).toEqual(["assistant-1"]);
     expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
       expect.objectContaining({
@@ -182,3 +207,9 @@ describe("ThreadRunChat", () => {
     expect(host.status).toBe("ready");
   });
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable eslint/max-statements */

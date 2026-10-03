@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/func-names -- Anonymous spies expose their behavior through the owning test variable. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
@@ -15,35 +19,55 @@ import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/server", () => ({ assertEveConfigured: vi.fn() }));
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): transport accepts options: { startIndex?: number; follow?: boolean }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 const transport = vi.hoisted(() => ({
   stream:
     vi.fn<
       (options: { startIndex?: number; follow?: boolean }) => Iterable<unknown>
     >(),
 }));
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("eve/client", () => ({
   Client: class {
     public sessions = { attach: () => ({ stream: transport.stream }) };
   },
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+/* oxlint-disable node/no-top-level-await --
+ * node/no-top-level-await (#539): await db .insert(user) .values({ email: `${owner}@test. runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+ */
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Cursor test" });
+/* oxlint-enable node/no-top-level-await */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(userCredit).where(eq(userCredit.userId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
+/* oxlint-enable oxc/no-async-await */
 beforeEach(() => {
   transport.stream.mockReset();
 });
-async function session() {
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): session sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
+async function session(): Promise<string> {
   const row = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -55,6 +79,10 @@ async function session() {
   }
   return row.sessionId;
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep step's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 function step(costUsd: number | undefined) {
   return {
     data: { turnId: "turn_0", usage: { costUsd } },
@@ -62,7 +90,14 @@ function step(costUsd: number | undefined) {
     type: "step.completed",
   };
 }
+/* oxlint-enable typescript/explicit-function-return-type */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * max-statements (#512): test("settled prefixes are not downloaded again and appended charges are ingested") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("settled prefixes are not downloaded again and appended charges are ingested") uses 0.05, 0.02, 0, 1, 2, 7 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("settled prefixes are not downloaded again and appended charges are ingested") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("settled prefixes are not downloaded again and appended charges are ingested") accepts { startIndex, follow }; [options]; event; row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("settled prefixes are not downloaded again and appended charges are ingested", async () => {
   const id = await session();
   const events = [step(0.05)];
@@ -89,7 +124,14 @@ test("settled prefixes are not downloaded again and appended charges are ingeste
     .where(eq(eveUsage.sessionId, id));
   expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(7);
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * max-statements (#512): test("a transport failure after a debit retains the cursor and retry does not charge  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("a transport failure after a debit retains the cursor and retry does not charge  uses 0.05, 0, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("a transport failure after a debit retains the cursor and retry does not charge  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("a transport failure after a debit retains the cursor and retry does not charge  accepts { startIndex }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("a transport failure after a debit retains the cursor and retry does not charge twice", async () => {
   const id = await session();
   const event = step(0.05);
@@ -116,7 +158,15 @@ test("a transport failure after a debit retains the cursor and retry does not ch
   expect(rows).toHaveLength(1);
   expect(rows[0].chargedCents).toBe(5);
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): test.each(["step.completed", "compaction.usage"])("missing %s cost blocks cursor adva uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test.each(["step.completed", "compaction.usage"])("missing %s cost blocks cursor adva uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test.each(["step.completed", "compaction.usage"])("missing %s cost blocks cursor adva sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test.each(["step.completed", "compaction.usage"])("missing %s cost blocks cursor adva copies or separates ...step(undefined) while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test.each(["step.completed", "compaction.usage"])("missing %s cost blocks cursor adva accepts { startIndex }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test.each(["step.completed", "compaction.usage"])(
   "missing %s cost blocks cursor advancement until durable provider reconciliation",
   async (type) => {
@@ -142,7 +192,14 @@ test.each(["step.completed", "compaction.usage"])(
     expect(await getEveUsageCursor(owner, id)).toBe(1);
   }
 );
+/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): test("compaction attempts share per-turn rounding and replay does not double-charge") uses 0.004, 0.003, 3, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("compaction attempts share per-turn rounding and replay does not double-charge") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test("compaction attempts share per-turn rounding and replay does not double-charge") copies or separates ...step(0.003); ...step(0.004) while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test("compaction attempts share per-turn rounding and replay does not double-charge") accepts { startIndex }; row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("compaction attempts share per-turn rounding and replay does not double-charge", async () => {
   const id = await session();
   const events = [
@@ -163,7 +220,12 @@ test("compaction attempts share per-turn rounding and replay does not double-cha
   expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(2);
   expect(await getEveUsageCursor(owner, id)).toBe(3);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("cursor writes are monotonic, owner scoped, and fenced after retirement") uses 9, 3, 10, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("cursor writes are monotonic, owner scoped, and fenced after retirement") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("cursor writes are monotonic, owner scoped, and fenced after retirement", async () => {
   const id = await session();
   await advanceEveUsageCursor(owner, id, 9);
@@ -187,7 +249,13 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
     "Conversation not found"
   );
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): test("unpriced auxiliary usage retains the unread cursor until its exact attempt is r uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("unpriced auxiliary usage retains the unread cursor until its exact attempt is r sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("unpriced auxiliary usage retains the unread cursor until its exact attempt is r accepts { startIndex }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("unpriced auxiliary usage retains the unread cursor until its exact attempt is reconciled", async () => {
   const id = await session();
   const event = {
@@ -218,3 +286,4 @@ test("unpriced auxiliary usage retains the unread cursor until its exact attempt
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */

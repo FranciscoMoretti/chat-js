@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../config"; "../db/eve-files"; "../db/eve-queries"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { Client, defaultMessageReducer } from "eve/client";
 
 import { config } from "../config";
@@ -17,7 +21,11 @@ import { keyFromFileUrl } from "../file-url";
 import { getEveConnectionOptions } from "./connection-options";
 import { attachmentDigest, draftAttachment } from "./draft";
 import { assertEveConfigured } from "./server";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep parseContentType's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 const parseContentType = (value: string) => {
   const parsed = draftAttachment.shape.contentType.safeParse(value);
   if (!parsed.success) {
@@ -25,11 +33,15 @@ const parseContentType = (value: string) => {
   }
   return parsed.data;
 };
+/* oxlint-enable typescript/explicit-function-return-type */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): validateAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 const validateAttachment = (
   file: Pick<Blob, "type" | "size">,
   contentType: string
-) => {
+): void => {
   if (
     file.type !== contentType ||
     file.size === 0 ||
@@ -38,7 +50,12 @@ const validateAttachment = (
     throw new Error("This attachment has an unsupported type or size.");
   }
 };
+/* oxlint-enable no-magic-numbers */
 
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
+ * no-magic-numbers (#517): inlineAttachment uses 1, 4, 3 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * typescript/explicit-function-return-type (#560): Keep inlineAttachment's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 const inlineAttachment = (url: string, contentType: string) => {
   const encoded = url.slice(url.indexOf(",") + 1);
   if (encoded.length > 4 * Math.ceil(config.attachments.maxBytes / 3)) {
@@ -52,7 +69,26 @@ const inlineAttachment = (url: string, contentType: string) => {
   validateAttachment(blob, contentType);
   return blob;
 };
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+ * import/no-named-export (#527): Preserve the named restoreMessageAttachments API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): restoreMessageAttachments remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-param (#534): restoreMessageAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): restoreMessageAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-continue (#515): restoreMessageAttachments skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+ * no-magic-numbers (#517): restoreMessageAttachments uses 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): restoreMessageAttachments sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): restoreMessageAttachments handles optional conversation?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): restoreMessageAttachments copies or separates ...copied while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/explicit-function-return-type (#560): Keep restoreMessageAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep restoreMessageAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): restoreMessageAttachments accepts input: { conversationId: string; messageId: string }; state; event; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): restoreMessageAttachments preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * typescript/strict-boolean-expressions (#610): restoreMessageAttachments intentionally keeps the existing falsy-value behavior of conversation?.sessionId; url; key; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** Copy trusted native history for editing; callers cannot supply file bytes or URLs. */
 export const restoreMessageAttachments = async (
   ownerId: string,
@@ -142,3 +178,4 @@ export const restoreMessageAttachments = async (
   }
   return attachments;
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

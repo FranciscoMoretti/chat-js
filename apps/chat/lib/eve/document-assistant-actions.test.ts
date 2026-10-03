@@ -25,6 +25,10 @@ beforeEach(() => {
   }
 });
 
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): it("does not offer spreadsheet analysis without its code-document destination") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * typescript/prefer-readonly-parameter-types (#565): it("does not offer spreadsheet analysis without its code-document destination") accepts action; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 it("does not offer spreadsheet analysis without its code-document destination", () => {
   expect(documentAssistantActions("sheet")).toHaveLength(2);
   kinds.delete("code");
@@ -33,6 +37,7 @@ it("does not offer spreadsheet analysis without its code-document destination", 
   ).toEqual(["Format and clean data"]);
   expect(documentAssistantActions("code")).toEqual([]);
 });
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 it("hides actions when their source implementation is absent", () => {
   kinds.delete("sheet");

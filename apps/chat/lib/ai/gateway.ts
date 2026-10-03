@@ -1,27 +1,50 @@
 import { createGateway } from "@ai-sdk/gateway";
 import type { gateway } from "@ai-sdk/gateway";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
+/* oxlint-enable eslint/sort-imports */
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
   aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
 } from "@chat-js/gateways/models";
+/* oxlint-enable eslint/sort-imports */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 import type { StrictLiterals } from "@chat-js/gateways/provider-types";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+/* oxlint-enable eslint/sort-imports */
 import type { ImageModel } from "ai";
 
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 type VercelImageModelId = Parameters<(typeof gateway)["imageModel"]>[0];
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 type VercelVideoModelId = Parameters<(typeof gateway)["videoModel"]>[0];
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 type VercelLanguageModelId = StrictLiterals<
   Parameters<(typeof gateway)["languageModel"]>[0]
 >;
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export class VercelGateway
   extends GatewayRuntime
   implements
@@ -63,7 +86,7 @@ export class VercelGateway
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
-    if (!apiKey) {
+    if (!(typeof apiKey === "string" && apiKey !== "")) {
       this.log.warn("No AI gateway API key found, using fallback models");
       return [...this.getFallbackModels(this.type)];
     }
@@ -127,5 +150,20 @@ export class VercelGateway
     }
   }
 }
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/no-continue */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export { VercelGateway as Gateway };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

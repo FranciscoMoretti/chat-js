@@ -1,10 +1,13 @@
 import { defineConfig } from "oxlint";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module path; binding-name ordering would conflict with the repository formatter.
 import core from "ultracite/oxlint/core";
 import next from "ultracite/oxlint/next";
 import react from "ultracite/oxlint/react";
 
-import { documentedRuleExceptions } from "./apps/chat/oxlint-policy.ts";
+// oxlint-disable-next-line sort-imports -- Shared local policy imports stay after external presets in Oxfmt module-path order.
+import { auditedRestrictionRules } from "./apps/chat/oxlint-policy.ts";
 
+// oxlint-disable-next-line import/no-default-export -- Oxlint loads its configuration through this required default export.
 export default defineConfig({
   extends: [core, react, next],
   // Oxlint does not inherit ignorePatterns from extended configs.
@@ -34,7 +37,8 @@ export default defineConfig({
     },
   ],
   rules: {
-    ...documentedRuleExceptions,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Copy the shared rule map before local overrides without mutating the map used by the other config.
+    ...auditedRestrictionRules,
     "capitalized-comments": [
       "error",
       "always",

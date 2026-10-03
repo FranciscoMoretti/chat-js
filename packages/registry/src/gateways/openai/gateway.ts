@@ -1,15 +1,21 @@
 import { createOpenAI } from "@ai-sdk/openai";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
+/* oxlint-enable eslint/sort-imports */
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   ExtractImageModelIdFromProvider,
   ExtractModelIdFromProvider,
   StrictLiterals,
 } from "@chat-js/gateways/provider-types";
+/* oxlint-enable eslint/sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 
@@ -27,6 +33,9 @@ interface OpenAIModelResponse {
   owned_by: string;
 }
 
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
   context_window: 0,
   created: model.created ?? 0,
@@ -40,7 +49,17 @@ const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
   pricing: {},
   type: "language",
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export class OpenAIGateway
   extends GatewayRuntime
   implements
@@ -50,7 +69,7 @@ export class OpenAIGateway
 
   private getProvider() {
     const apiKey = this.getApiKey();
-    if (!apiKey) {
+    if (!(typeof apiKey === "string" && apiKey !== "")) {
       throw new Error("OPENAI_API_KEY is not configured");
     }
     return createOpenAI({ apiKey });
@@ -79,7 +98,7 @@ export class OpenAIGateway
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
-    if (!apiKey) {
+    if (!(typeof apiKey === "string" && apiKey !== "")) {
       this.log.warn("No OPENAI_API_KEY found, using fallback models");
       return [...this.getFallbackModels(this.type)];
     }
@@ -123,5 +142,16 @@ export class OpenAIGateway
     }
   }
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export { OpenAIGateway as Gateway };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

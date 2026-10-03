@@ -1,6 +1,16 @@
+import React from "react";
+
 import { config } from "@/lib/config";
 
-const PrivacyPage = () => (
+/* oxlint-disable max-lines-per-function, no-ternary, react/jsx-max-depth, react/jsx-no-literals, typescript/strict-boolean-expressions, unicorn/no-null --
+ * max-lines-per-function (#510): PrivacyPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-ternary (#518): PrivacyPage derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * react/jsx-max-depth (#548): PrivacyPage keeps related render components together; extraction changes component, state, and layout boundaries.
+ * react/jsx-no-literals (#549): PrivacyPage owns this page copy; replacing literal text requires a localization/content-management contract.
+ * typescript/strict-boolean-expressions (#610): PrivacyPage intentionally keeps the existing falsy-value behavior of config.policies.privacy.lastUpdated; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): PrivacyPage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
+const PrivacyPage = (): React.JSX.Element => (
   <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
     <h1>{config.policies.privacy.title}</h1>
     {config.policies.privacy.lastUpdated ? (
@@ -147,5 +157,10 @@ const PrivacyPage = () => (
     </p>
   </main>
 );
+/* oxlint-enable max-lines-per-function, no-ternary, react/jsx-max-depth, react/jsx-no-literals, typescript/strict-boolean-expressions, unicorn/no-null */
 
+/* oxlint-disable import/no-default-export --
+ * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
+ */
 export default PrivacyPage;
+/* oxlint-enable import/no-default-export */

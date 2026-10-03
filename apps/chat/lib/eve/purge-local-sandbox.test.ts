@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
@@ -5,9 +9,14 @@ import nodePath from "node:path";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
 const mocks = vi.hoisted(() => ({ destroySandbox: vi.fn(), remove: vi.fn() }));
 const { remove } = mocks;
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("microsandbox")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/promise-function-async (#606): vi.mock("microsandbox") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 vi.mock("microsandbox", () => ({
   Sandbox: {
     get: () =>
@@ -23,18 +32,30 @@ vi.mock("microsandbox", () => ({
   },
   Snapshot: { remove: mocks.remove },
 }));
+/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
 
 const directories: string[] = [];
 beforeEach(() => {
   remove.mockReset();
   mocks.destroySandbox.mockReset();
 });
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): afterEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): afterEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 afterEach(async () => {
   for (const directory of directories.splice(0)) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await rm(directory, { force: true, recursive: true });
   }
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type --
+ * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): fixture uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): fixture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 const fixture = async (letter = "a") => {
   const root = await mkdtemp(nodePath.join(tmpdir(), "eve-snapshot-purge-"));
   directories.push(root);
@@ -69,7 +90,11 @@ const fixture = async (letter = "a") => {
     snapshotName,
   };
 };
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("retains identities through provider failure and treats only explicit missing sn sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("retains identities through provider failure and treats only explicit missing snapshots as removed", async () => {
   const input = await fixture();
   remove.mockRejectedValueOnce(new Error("provider unavailable"));
@@ -95,7 +120,14 @@ test("retains identities through provider failure and treats only explicit missi
     errors: [expect.objectContaining({ message: "runtime library not found" })],
   });
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+ * max-statements (#512): test("validates all records before deletion and rejects another session or shared tem keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("validates all records before deletion and rejects another session or shared tem uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("validates all records before deletion and rejects another session or shared tem sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test("validates all records before deletion and rejects another session or shared tem copies or separates ...input.record while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 test("validates all records before deletion and rejects another session or shared template", async () => {
   const input = await fixture();
   for (const record of [
@@ -119,7 +151,16 @@ test("validates all records before deletion and rejects another session or share
   expect(remove).not.toHaveBeenCalled();
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * max-statements (#512): test("validates the whole family and removes all VMs before resolving snapshot depend keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("validates the whole family and removes all VMs before resolving snapshot depend uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("validates the whole family and removes all VMs before resolving snapshot depend sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test("validates the whole family and removes all VMs before resolving snapshot depend copies or separates ...child.record while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test("validates the whole family and removes all VMs before resolving snapshot depend accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("validates the whole family and removes all VMs before resolving snapshot depend preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("validates the whole family and removes all VMs before resolving snapshot dependencies", async () => {
   const parent = await fixture("a");
   const child = await fixture("b");
@@ -152,7 +193,14 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     parent.snapshotName,
   ]);
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
+/* oxlint-disable max-statements, no-magic-numbers, no-ternary, oxc/no-async-await --
+ * max-statements (#512): test("retains resources created before metadata and across replacements") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("retains resources created before metadata and across replacements") uses 32, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-ternary (#518): test("retains resources created before metadata and across replacements") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): test("retains resources created before metadata and across replacements") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("retains resources created before metadata and across replacements", async () => {
   const input = await fixture();
   await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
@@ -196,7 +244,15 @@ test("retains resources created before metadata and across replacements", async 
   );
   expect(mocks.destroySandbox).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable max-statements, no-magic-numbers, no-ternary, oxc/no-async-await */
 
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties --
+ * max-statements (#512): test("an owned attempt that failed before provider creation can finish cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("an owned attempt that failed before provider creation can finish cleanup") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test("an owned attempt that failed before provider creation can finish cleanup") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test("an owned attempt that failed before provider creation can finish cleanup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test("an owned attempt that failed before provider creation can finish cleanup") copies or separates ...owner while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 test("an owned attempt that failed before provider creation can finish cleanup", async () => {
   const input = await fixture();
   await rm(nodePath.join(input.sessionDirectory, "metadata.json"));
@@ -234,3 +290,4 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
   expect(remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties */

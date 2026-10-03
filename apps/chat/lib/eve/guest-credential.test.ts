@@ -1,6 +1,10 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { expect, test } from "vitest";
 
 import { createEveGuestCredential, eveGuestIpHash } from "./guest-credential";
+/* oxlint-enable sort-imports */
 
 test("legacy cleanup fixture credentials are independently generated", () => {
   const first = createEveGuestCredential();

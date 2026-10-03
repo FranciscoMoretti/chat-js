@@ -1,8 +1,9 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { Github } from "lucide-react";
+import React, { useMemo } from "react";
 import type { ComponentType } from "react";
-import { useMemo } from "react";
 import { toast } from "sonner";
 
 import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
@@ -19,10 +20,16 @@ import type {
   SocialAuthProvider,
   SocialAuthSignInOptions,
 } from "@/lib/social-auth";
+/* oxlint-enable sort-imports */
 
 const emptyQuery: Record<string, string> = {};
+/* oxlint-disable react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- GoogleIcon: react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className }: { className?: string }). */
 
-const GoogleIcon = ({ className }: { className?: string }) => (
+const GoogleIcon = ({
+  className,
+}: {
+  className?: string;
+}): React.JSX.Element => (
   <svg className={className} viewBox="0 0 24 24">
     <title>Google</title>
     <path
@@ -43,19 +50,26 @@ const GoogleIcon = ({ className }: { className?: string }) => (
     />
   </svg>
 );
+/* oxlint-enable react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- VercelIcon: react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className }: { className?: string }). */
 
-const VercelIcon = ({ className }: { className?: string }) => (
+const VercelIcon = ({
+  className,
+}: {
+  className?: string;
+}): React.JSX.Element => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
     <title>Vercel</title>
     <path d="M12 1L24 22H0L12 1z" />
   </svg>
 );
+/* oxlint-enable react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-type AuthProviderDefinition = {
+interface AuthProviderDefinition {
   icon: ComponentType<{ className?: string }>;
   id: SocialAuthProvider;
   label: string;
-};
+}
 
 const AUTH_PROVIDER_METADATA = {
   github: {
@@ -72,6 +86,7 @@ const AUTH_PROVIDER_METADATA = {
     label: "Vercel",
   },
 } satisfies Record<SocialAuthProvider, Omit<AuthProviderDefinition, "id">>;
+/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, no-console, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- SocialAuthProviders: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including isSocialAuthProvider(remembered) ? remembered : null); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including result.data?.url); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon: Icon, id, label }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const SocialAuthProviders = ({
   callbackURL,
@@ -127,7 +142,7 @@ export const SocialAuthProviders = ({
       });
 
       const redirectUrl = result.data?.url;
-      if (redirectUrl) {
+      if (typeof redirectUrl === "string" && redirectUrl !== "") {
         onRedirectToUrl?.(redirectUrl);
       }
     } catch (error) {
@@ -146,8 +161,9 @@ export const SocialAuthProviders = ({
             className="relative w-full"
             key={id}
 
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Authentication owns redirect and loading behavior; changing rejection handling requires a sign-in flow decision.
-            onClick={() => signIn(id)}
+            onClick={() => {
+              void signIn(id);
+            }}
             type="button"
             variant="outline"
           >
@@ -167,3 +183,4 @@ export const SocialAuthProviders = ({
     </div>
   );
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, no-console, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

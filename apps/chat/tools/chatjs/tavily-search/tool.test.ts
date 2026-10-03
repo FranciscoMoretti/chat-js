@@ -1,3 +1,6 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { expect, test, vi } from "vitest";
 import { z } from "zod";
 
@@ -5,11 +8,24 @@ import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 import { webSearchInput } from "./schemas";
 import { webSearch } from "./tool";
+/* oxlint-enable sort-imports */
 
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("@tavily/core")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("@tavily/core", () => ({ tavily: () => ({ search }) }));
+/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
-vi.mock("@/lib/utils", () => ({ generateUUID: () => "search-update" }));
+
+vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
+
+/* oxlint-disable id-length, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): collect uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * oxc/no-async-await (#540): collect sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep collect's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): collect accepts value: T | Promise<T> | AsyncIterable<T>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
   const result = await value;
   if (
@@ -21,7 +37,13 @@ const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
   }
   return await Array.fromAsync(result);
 };
+/* oxlint-enable id-length, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+ * no-magic-numbers (#517): test("native search streams sources and seals a final cost receipt") uses -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("native search streams sources and seals a final cost receipt") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("native search streams sources and seals a final cost receipt") handles optional results.at(-1)?.updates without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ */
 test("native search streams sources and seals a final cost receipt", async () => {
   search.mockResolvedValue({
     results: [
@@ -64,6 +86,11 @@ test("native search streams sources and seals a final cost receipt", async () =>
   );
   expect(results.length).toBeGreaterThan(1);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-disable oxc/no-async-await, unicorn/no-null --
+ * oxc/no-async-await (#540): test("strict fields remain required while explicit nulls apply defaults") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/no-null (#570): test("strict fields remain required while explicit nulls apply defaults") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("strict fields remain required while explicit nulls apply defaults", async () => {
   search.mockResolvedValue({ results: [] });
   const json = z.toJSONSchema(webSearchInput);
@@ -100,3 +127,4 @@ test("strict fields remain required while explicit nulls apply defaults", async 
     })
   );
 });
+/* oxlint-enable oxc/no-async-await, unicorn/no-null */

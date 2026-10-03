@@ -1,6 +1,10 @@
+/* oxlint-disable import/no-relative-parent-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../ai/gateway-model-defaults" dependency within this package instead of introducing an alias or barrel API.
+ */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { gatewayModelDefaults } from "../ai/gateway-model-defaults";
+/* oxlint-enable import/no-relative-parent-imports */
 
 const { getAppModelDefinition } = vi.hoisted(() => ({
   getAppModelDefinition:
@@ -19,7 +23,16 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable node/no-top-level-await --
+ * node/no-top-level-await (#539): { CostAccumulator } runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+ */
 const { CostAccumulator } = await import("./cost-accumulator");
+/* oxlint-enable node/no-top-level-await */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, oxc/no-async-await --
+ * max-lines-per-function (#510): describe("CostAccumulator") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): describe("CostAccumulator") uses 3, 0, 5, 35, 8, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): describe("CostAccumulator") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 describe("CostAccumulator", () => {
   describe("LLM cost calculation", () => {
     it("should calculate cost from tokens and pricing", async () => {
@@ -165,3 +178,4 @@ describe("CostAccumulator", () => {
     });
   });
 });
+/* oxlint-enable max-lines-per-function, no-magic-numbers, oxc/no-async-await */

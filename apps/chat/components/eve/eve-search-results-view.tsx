@@ -1,7 +1,8 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { LoaderCircle, MessageSquare, X } from "lucide-react";
-import { useRef } from "react";
+import React, { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,8 +13,10 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
+/* oxlint-enable sort-imports */
+/* oxlint-disable no-magic-numbers, no-ternary -- highlightedExcerpt: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable */
 
-const highlightedExcerpt = (excerpt: string) =>
+const highlightedExcerpt = (excerpt: string): (React.JSX.Element | string)[] =>
   excerpt.split(/(?<match>⟦[^⟧]*⟧)/u).map((part, index) =>
     part.startsWith("⟦") && part.endsWith("⟧") ? (
       <mark
@@ -27,6 +30,8 @@ const highlightedExcerpt = (excerpt: string) =>
       part
     )
   );
+/* oxlint-enable no-magic-numbers, no-ternary */
+/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, no-magic-numbers, no-ternary, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- EveSearchResultsView: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including searching ? "Searching…" : ""); oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including inputRef.current?.focus()); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item). */
 
 export const EveSearchResultsView = ({
   query,
@@ -63,7 +68,7 @@ export const EveSearchResultsView = ({
   loadingMore: boolean;
   onLoadMore: () => void;
   disableLoadMore: boolean;
-}) => {
+}): React.JSX.Element => {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <Command
@@ -126,14 +131,19 @@ export const EveSearchResultsView = ({
               <div className="flex h-8 items-center px-2">
                 <Skeleton className="bg-foreground/10 h-3 w-20" />
               </div>
-              {["w-40", "w-56", "w-32", "w-48", "w-36", "w-44"].map((width) => (
-                <div className="flex h-11 items-center gap-3 px-2" key={width}>
-                  <Skeleton className="bg-foreground/10 size-4 shrink-0" />
-                  <Skeleton
-                    className={`bg-foreground/10 h-4 max-w-[75%] ${width}`}
-                  />
-                </div>
-              ))}
+              {["w-40", "w-56", "w-32", "w-48", "w-36", "w-44"].map(
+                (width): React.JSX.Element => (
+                  <div
+                    className="flex h-11 items-center gap-3 px-2"
+                    key={width}
+                  >
+                    <Skeleton className="bg-foreground/10 size-4 shrink-0" />
+                    <Skeleton
+                      className={`bg-foreground/10 h-4 max-w-[75%] ${width}`}
+                    />
+                  </div>
+                )
+              )}
             </div>
           </output>
         )}
@@ -154,7 +164,7 @@ export const EveSearchResultsView = ({
         )}
         {items.length > 0 && (
           <CommandGroup heading={isSearch ? "Best matches" : "Recent chats"}>
-            {items.map((item) => (
+            {items.map((item): React.JSX.Element => (
               <CommandItem
                 className="cursor-pointer items-start gap-3 px-2 py-3"
                 key={item.id}
@@ -187,3 +197,4 @@ export const EveSearchResultsView = ({
     </Command>
   );
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, no-magic-numbers, no-ternary, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */

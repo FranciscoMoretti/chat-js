@@ -14,6 +14,11 @@ vi.mock("@vercel/blob", () => ({
 vi.mock("files-sdk/vercel-blob", () => ({ vercelBlob: mocks.adapter }));
 afterEach(() => vi.useRealTimers());
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+ * max-statements (#512): test("signs only private reads of the requested object for five minutes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("signs only private reads of the requested object for five minutes") uses 300_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("signs only private reads of the requested object for five minutes") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("signs only private reads of the requested object for five minutes", async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-25T00:00:00Z"));
@@ -45,3 +50,4 @@ test("signs only private reads of the requested object for five minutes", async 
     validUntil,
   });
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */

@@ -1,7 +1,11 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { toolResultSchema } from "@/lib/eve/tool-result";
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   env: { FIRECRAWL_API_KEY: "test-key" },
@@ -15,15 +19,24 @@ vi.mock("@mendable/firecrawl-js", () => ({
     public extract = mocks.extract;
   },
 }));
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ error: vi.fn() }),
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
   mocks.env.FIRECRAWL_API_KEY = "test-key";
 });
 
+/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-async-await --
+ * no-magic-numbers (#517): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-ternary (#518): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test.each(["missing configuration", "invalid URL"])(
   "%s produces a zero-cost receipt without calling Firecrawl",
   async (reason) => {
@@ -42,7 +55,11 @@ test.each(["missing configuration", "invalid URL"])(
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test.each([false, true])("provider completion keeps unknown cost explicit (failure=%s sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test.each([false, true])(
   "provider completion keeps unknown cost explicit (failure=%s)",
   async (fails) => {
@@ -64,3 +81,4 @@ test.each([false, true])(
     expect(mocks.scrape).toHaveBeenCalledOnce();
   }
 );
+/* oxlint-enable oxc/no-async-await */

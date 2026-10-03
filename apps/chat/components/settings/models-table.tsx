@@ -1,7 +1,8 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 import { Table, TableBody } from "@/components/ui/table";
@@ -11,6 +12,8 @@ import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
 
 import { ModelRow } from "./model-row";
+/* oxlint-enable sort-imports */
+/* oxlint-disable id-length, import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ModelsTable: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including context?.prev); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _err). */
 
 export const ModelsTable = ({
   search,
@@ -85,7 +88,6 @@ export const ModelsTable = ({
   // Stable sort order: computed once on initial load, never changes
   const initialSortRef = useRef<AppModelId[] | null>(null);
   const sortedModels = useMemo(() => {
-    // oxlint-disable-next-line react/refs -- Keep the user's initial model ordering stable across query updates.
     if (initialSortRef.current === null) {
       // First render: enabled models first, then the rest
       const enabledSet = new Set(enabledModels.map((m) => m.id));
@@ -130,7 +132,7 @@ export const ModelsTable = ({
   if (prefsLoading) {
     return (
       <div className="animate-pulse space-y-1">
-        {[1, 2, 3, 4, 5].map((i) => (
+        {[1, 2, 3, 4, 5].map((i): React.JSX.Element => (
           <div className="bg-muted/50 h-11 rounded" key={i} />
         ))}
       </div>
@@ -144,7 +146,7 @@ export const ModelsTable = ({
       </p>
       <Table className={className}>
         <TableBody>
-          {filteredModels.map((model) => (
+          {filteredModels.map((model): React.JSX.Element => (
             <ModelRow
               isEnabled={enabledModelsSet.has(model.id)}
               key={model.id}
@@ -163,3 +165,4 @@ export const ModelsTable = ({
     </>
   );
 };
+/* oxlint-enable id-length, import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

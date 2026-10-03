@@ -1,14 +1,26 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
 
 import { keyFromFileUrl } from "../file-url";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): textPart uses 1, 16_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 const textPart = z
   .object({
     type: z.literal("text"),
     text: z.string().trim().min(1).max(16_000),
   })
   .strict();
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): filePart uses 1, 255 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 const filePart = z
   .object({
     type: z.literal("file"),
@@ -23,6 +35,13 @@ const filePart = z
     filename: z.string().min(1).max(255),
   })
   .strict();
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+ * import/group-exports (#523): eveMessageInput stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named eveMessageInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-magic-numbers (#517): eveMessageInput uses 1, 16_000, 17, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * typescript/prefer-readonly-parameter-types (#565): eveMessageInput accepts parts; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 export const eveMessageInput = z.union([
   z.string().trim().min(1).max(16_000),
   z
@@ -35,8 +54,18 @@ export const eveMessageInput = z.union([
         parts.filter((part) => part.type === "file").length <= 16
     ),
 ]);
+/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export --
+ * import/no-named-export (#527): Preserve the named EveMessageInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type EveMessageInput = z.infer<typeof eveMessageInput>;
-export const eveMessageTitle = (message: EveMessageInput) => {
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+ * import/group-exports (#523): eveMessageTitle stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named eveMessageTitle API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * typescript/prefer-readonly-parameter-types (#565): eveMessageTitle accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
+export const eveMessageTitle = (message: EveMessageInput): string => {
   if (typeof message === "string") {
     return message;
   }
@@ -49,3 +78,4 @@ export const eveMessageTitle = (message: EveMessageInput) => {
     .map((part) => part.filename)
     .join(", ");
 };
+/* oxlint-enable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */

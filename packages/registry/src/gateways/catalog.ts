@@ -1,7 +1,9 @@
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 import gatewayPackage from "@chat-js/gateways/package.json";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { GATEWAY_MODEL_DEFAULTS } from "./defaults";
+/* oxlint-enable eslint/sort-imports */
 import { gatewayMetadata } from "./metadata";
 
 const environment = {
@@ -12,6 +14,9 @@ const environment = {
   vercel: [["AI_GATEWAY_API_KEY"], ["VERCEL_OIDC_TOKEN"]],
 };
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const builtInGateways = Object.entries(gatewayMetadata).map(
   ([id, metadata]) => {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
@@ -55,3 +60,6 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
     };
   }
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/prefer-default-export */

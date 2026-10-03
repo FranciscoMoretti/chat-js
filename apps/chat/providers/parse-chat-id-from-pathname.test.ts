@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { parseChatIdFromPathname } from "./parse-chat-id-from-pathname";
 
+/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --
+ * max-lines-per-function (#510): describe("parseChatIdFromPathname") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): describe("parseChatIdFromPathname") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * unicorn/no-null (#570): describe("parseChatIdFromPathname") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 describe("parseChatIdFromPathname", () => {
   it("returns home for /", () => {
     expect(parseChatIdFromPathname("/")).toEqual({
@@ -102,3 +107,4 @@ describe("parseChatIdFromPathname", () => {
     });
   });
 });
+/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */

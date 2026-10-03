@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-namespace, sort-imports --
+ * import/no-namespace (#528): The ChatjsUI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
@@ -5,11 +9,24 @@ import { expect, test, vi } from "vitest";
 import { EveToolResult } from "@/components/eve/eve-tool-result";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import type * as ChatjsUI from "@/tools/chatjs/ui";
+/* oxlint-enable import/no-namespace, sort-imports */
 
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("@/components/eve/eve-document-tool")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * unicorn/no-null (#570): vi.mock("@/components/eve/eve-document-tool") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 vi.mock("@/components/eve/eve-document-tool", () => ({
   EveDocumentTool: () => null,
 }));
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
+/* oxlint-disable id-length, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): vi.mock("@/tools/chatjs/ui") uses z as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-ternary (#518): vi.mock("@/tools/chatjs/ui") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): vi.mock("@/tools/chatjs/ui") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): vi.mock("@/tools/chatjs/ui") copies or separates ...original.ui while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/tools/chatjs/ui") accepts { tool, messageId, isReadonly }; { updates }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const { z } = await import("zod");
   const { createElement: reactCreateElement } = await import("react");
@@ -38,13 +55,17 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
     },
   };
 });
+/* oxlint-enable id-length, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable max-params --
+ * max-params (#511): renderResult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 const renderResult = (
   toolName: string,
   input: unknown,
   output: unknown,
   isReadonly = true
-) =>
+): string =>
   renderToStaticMarkup(
     createElement(EveToolResult, {
       isReadonly,
@@ -59,6 +80,7 @@ const renderResult = (
       },
     })
   );
+/* oxlint-enable max-params */
 
 test("dispatches a custom registry renderer and preserves view context", () => {
   const html = renderResult(
@@ -123,6 +145,9 @@ test("shows a failed tool instead of its loading skeleton", () => {
   expect(html).not.toContain("skeleton");
 });
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): test("validates receipt progress and retains completed evidence when execution fails" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ */
 test("validates receipt progress and retains completed evidence when execution fails", () => {
   const updates = [
     { label: "Source found" },
@@ -146,3 +171,4 @@ test("validates receipt progress and retains completed evidence when execution f
   }
   expect(failure).toContain("The tool did not complete.");
 });
+/* oxlint-enable no-magic-numbers */

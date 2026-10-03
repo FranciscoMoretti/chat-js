@@ -7,15 +7,26 @@ const mocks = vi.hoisted(() => ({
   snapshot: vi.fn(),
 }));
 vi.mock("../db/eve-search", () => ({ indexEveSearchText: mocks.index }));
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("./connection-options")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("./connection-options", () => ({
   getEveConnectionOptions: () => ({}),
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("eve/client", () => ({
   Client: class {
     public sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
   },
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 
+/* oxlint-disable id-length --
+ * id-length (#506): beforeEach uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.snapshot.mockResolvedValue({
@@ -37,7 +48,15 @@ beforeEach(() => {
     ],
   });
 });
+/* oxlint-enable id-length */
 
+/* oxlint-disable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): it("recovers every restored entry and the latest message, and can retry after a parti uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-magic-numbers (#517): it("recovers every restored entry and the latest message, and can retry after a parti uses 4, 0, 3, 2, 100 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): it("recovers every restored entry and the latest message, and can retry after a parti uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): it("recovers every restored entry and the latest message, and can retry after a parti sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): it("recovers every restored entry and the latest message, and can retry after a parti accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 it("recovers every restored entry and the latest message, and can retry after a partial failure", async () => {
   mocks.index
     .mockResolvedValueOnce(undefined)
@@ -64,3 +83,4 @@ it("recovers every restored entry and the latest message, and can retry after a 
     { key: "event:latest", text: "Newest message" },
   ]);
 });
+/* oxlint-enable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types */

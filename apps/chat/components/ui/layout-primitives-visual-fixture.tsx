@@ -1,6 +1,8 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { InboxIcon } from "lucide-react";
+import React from "react";
 
 import {
   AlertDialog,
@@ -47,8 +49,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+/* oxlint-enable sort-imports */
+/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, react/jsx-max-depth, react/jsx-no-literals -- LayoutPrimitivesVisualFixture: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
 
-export const LayoutPrimitivesVisualFixture = () => (
+export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
   <main
     className="grid max-w-3xl gap-8 p-8"
     data-testid="layout-primitives-fixture"
@@ -123,3 +127,4 @@ export const LayoutPrimitivesVisualFixture = () => (
     </section>
   </main>
 );
+/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, react/jsx-max-depth, react/jsx-no-literals */

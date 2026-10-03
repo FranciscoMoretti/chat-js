@@ -1,9 +1,16 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
+import React from "react";
 
 import { Button } from "@/components/ui/button";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 
 import type { useEveFork } from "./use-eve-fork";
+/* oxlint-enable sort-imports */
+/* oxlint-disable max-lines-per-function -- EveForkRecovery: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision. */
+
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-void-return -- EveForkRecovery: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 /** Only exceptional recovery needs extra chrome; successful forks stay in the transcript. */
 export const EveForkRecovery = ({
@@ -20,8 +27,9 @@ export const EveForkRecovery = ({
         <p className="text-sm" role="alert">
           Versions could not be loaded.{" "}
           <Button
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Fork recovery and family refetch own retry and error state in the fork hook.
-            onClick={() => fork.family.refetch()}
+            onClick={() => {
+              void fork.family.refetch();
+            }}
             variant="ghost"
           >
             Retry
@@ -58,3 +66,5 @@ export const EveForkRecovery = ({
     </>
   );
 };
+/* oxlint-enable max-lines-per-function */
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */

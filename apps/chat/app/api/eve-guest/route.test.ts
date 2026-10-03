@@ -1,8 +1,12 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { readGuestCredential } from "@/lib/eve/disposable-guest";
 
 import { POST } from "./route";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), model: vi.fn() }));
 const settings = vi.hoisted(
@@ -43,13 +47,22 @@ beforeEach(() => {
     Response.json({ sessionId: "owned-session" })
   );
 });
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 const request = (body: unknown, origin = "https://chat.example") =>
   new Request("https://chat.example/api/eve-guest", {
     body: JSON.stringify(body),
     headers: { origin },
     method: "POST",
   });
+/* oxlint-enable typescript/explicit-function-return-type */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+ * no-magic-numbers (#517): test("creates a native session without application state, returning only its scoped c uses 200, 7 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("creates a native session without application state, returning only its scoped c sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("creates a native session without application state, returning only its scoped c handles optional creation?.sessionId; creation?.ownerId; readGuestCredential(body.credential)?.ownerId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ */
 test("creates a native session without application state, returning only its scoped credential", async () => {
   const response = await POST(request({ modelId: "guest-model" }));
   expect(response.status).toBe(200);
@@ -70,7 +83,12 @@ test("creates a native session without application state, returning only its sco
   // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(creation?.ownerId).toBe(readGuestCredential(body.credential)?.ownerId);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("rejects cross-origin and unauthorized model creation before calling EVE") uses 403, 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("rejects cross-origin and unauthorized model creation before calling EVE") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("rejects cross-origin and unauthorized model creation before calling EVE", async () => {
   const crossOrigin = await POST(
     request({ modelId: "guest-model" }, "https://evil.example")
@@ -84,14 +102,24 @@ test("rejects cross-origin and unauthorized model creation before calling EVE", 
   expect(arbitrarySession.status).toBe(400);
   expect(mocks.fetch).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+ * no-magic-numbers (#517): test("failed native creation never issues a browser credential") uses 502 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("failed native creation never issues a browser credential") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/no-null (#570): test("failed native creation never issues a browser credential") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("failed native creation never issues a browser credential", async () => {
   mocks.fetch.mockResolvedValue(new Response(null, { status: 500 }));
   const response = await POST(request({ modelId: "guest-model" }));
   expect(response.status).toBe(502);
   expect(await response.json()).not.toHaveProperty("credential");
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("protected custom-domain bootstrap uses this deployment rather than a separate r sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("protected custom-domain bootstrap uses this deployment rather than a separate registered worker", async () => {
   settings.VERCEL_URL = "deployment.vercel.app";
   await POST(request({ modelId: "guest-model" }));
@@ -104,7 +132,11 @@ test("protected custom-domain bootstrap uses this deployment rather than a separ
     "deployment-bypass-test"
   );
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("non-Vercel guest bootstrap stays on the application origin without leaking bypa sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("non-Vercel guest bootstrap stays on the application origin without leaking bypass credentials", async () => {
   await POST(request({ modelId: "guest-model" }));
   const [[url, init]] = mocks.fetch.mock.calls;
@@ -112,7 +144,13 @@ test("non-Vercel guest bootstrap stays on the application origin without leaking
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(init.headers["x-vercel-protection-bypass"]).toBeUndefined();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await --
+ * no-magic-numbers (#517): test("never sends a creation credential to a request-derived host") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test("never sends a creation credential to a request-derived host") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test("never sends a creation credential to a request-derived host") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("never sends a creation credential to a request-derived host", async () => {
   settings.APP_URL = undefined;
   const response = await POST(
@@ -125,3 +163,4 @@ test("never sends a creation credential to a request-derived host", async () => 
   expect(response.status).toBe(503);
   expect(mocks.fetch).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await */

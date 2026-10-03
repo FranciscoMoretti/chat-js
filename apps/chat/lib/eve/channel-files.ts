@@ -1,11 +1,31 @@
+/* oxlint-disable import/no-relative-parent-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-files"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
+ */
 import type { EveChannelInput } from "eve/channels/eve";
 
 import { assertEveFilesOwned } from "../db/eve-files";
 import { downloadFile } from "../file-storage";
 import { keyFromFileUrl } from "../file-url";
+/* oxlint-enable import/no-relative-parent-imports */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): FileContext uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
+/* oxlint-enable no-magic-numbers */
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * import/no-named-export (#527): Preserve the named fetchEveChannelFile API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): fetchEveChannelFile remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-param (#534): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * oxc/no-async-await (#540): fetchEveChannelFile sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): fetchEveChannelFile handles optional context?.session?.auth.current without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/strict-boolean-expressions (#610): fetchEveChannelFile intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): fetchEveChannelFile preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 /** Interpret owned storage keys locally; never fetch the URL's hostname. */
 export const fetchEveChannelFile = async (
   url: string,
@@ -26,3 +46,4 @@ export const fetchEveChannelFile = async (
     mediaType: file.type,
   };
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */

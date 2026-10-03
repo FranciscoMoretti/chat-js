@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -6,9 +10,25 @@ import { db } from "../lib/db/client";
 import { eveChat, eveConversation, project } from "../lib/db/schema";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable node/no-process-env --
+ * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-enable node/no-process-env */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
+ * max-lines-per-function (#510): test("assigned Eve conversations resolve through project URLs and remain accessible a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("assigned Eve conversations resolve through project URLs and remain accessible a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("assigned Eve conversations resolve through project URLs and remain accessible a uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("assigned Eve conversations resolve through project URLs and remain accessible a sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("assigned Eve conversations resolve through project URLs and remain accessible a accepts { page, browser, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("assigned Eve conversations resolve through project URLs and remain accessible a preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * typescript/strict-boolean-expressions (#610): test("assigned Eve conversations resolve through project URLs and remain accessible a intentionally keeps the existing falsy-value behavior of root; chat; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/max-nested-calls (#568): test("assigned Eve conversations resolve through project URLs and remain accessible a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * unicorn/no-null (#570): test("assigned Eve conversations resolve through project URLs and remain accessible a preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("assigned Eve conversations resolve through project URLs and remain accessible after project deletion", async ({
   page,
   browser,
@@ -119,3 +139,4 @@ test("assigned Eve conversations resolve through project URLs and remain accessi
     await db.delete(project).where(eq(project.id, projectId));
   }
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */

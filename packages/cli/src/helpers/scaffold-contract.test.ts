@@ -1,7 +1,11 @@
 import { describe, expect, it } from "bun:test";
 
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { GATEWAYS } from "../types";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { Gateway } from "../types";
+/* oxlint-enable import/no-relative-parent-imports */
 import { buildConfigTs } from "./config-builder";
 
 const buildConfigFor = (gateway: Gateway): string =>
@@ -25,6 +29,7 @@ const buildConfigFor = (gateway: Gateway): string =>
     withElectron: false,
   });
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 describe("scaffold contracts", () => {
   it("builds valid configs without tool presence switches for every gateway", () => {
     for (const gateway of GATEWAYS) {
@@ -53,3 +58,4 @@ describe("scaffold contracts", () => {
     expect(litellm).not.toMatch(/video:\s*\{[^}]*enabled:/mu);
   });
 });
+/* oxlint-enable eslint/max-statements */

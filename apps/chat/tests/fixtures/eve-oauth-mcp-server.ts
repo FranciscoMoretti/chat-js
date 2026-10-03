@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { createHash, randomUUID } from "node:crypto";; import { createServer } from "node:http";; import type { IncomingMessage, ServerResponse } from "node:http";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
 /* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
@@ -7,9 +11,14 @@ import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { z } from "zod";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
 const BEARER_PREFIX = /^Bearer /u;
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): registrationInput uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ */
 const registrationInput = z.object({ redirect_uris: z.array(z.url()).min(1) });
+/* oxlint-enable no-magic-numbers */
 const rpcInput = z.object({
   id: z.union([z.string(), z.number()]).optional(),
   method: z.string(),
@@ -18,6 +27,9 @@ const rpcInput = z.object({
 
 const eveOAuthMcpTokenResultMarker = "EVE_OAUTH_MCP_TOKEN";
 
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): EveOAuthMcpServer preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ */
 type EveOAuthMcpServer = {
   origin: string;
   mcpUrl: string;
@@ -33,27 +45,44 @@ type EveOAuthMcpServer = {
     authenticatedInitializations: number;
   };
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): RegisteredClient preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ */
 type RegisteredClient = {
   redirectUris: string[];
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): AuthorizationCode preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ */
 type AuthorizationCode = {
   clientId: string;
   codeChallenge: string;
   redirectUri: string;
   used: boolean;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): RefreshGrant preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ */
 type RefreshGrant = {
   clientId: string;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 
-function pkceChallenge(verifier: string) {
+function pkceChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
 }
 
-function readBody(request: IncomingMessage) {
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * typescript/prefer-readonly-parameter-types (#565): readBody accepts request: IncomingMessage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): readBody preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
+function readBody(request: IncomingMessage): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let body = "";
     request.setEncoding("utf-8");
@@ -64,13 +93,39 @@ function readBody(request: IncomingMessage) {
     request.on("error", reject);
   });
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-function sendJson(response: ServerResponse, status: number, value: unknown) {
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): sendJson accepts response: ServerResponse; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
+function sendJson(
+  response: ServerResponse,
+  status: number,
+  value: unknown
+): void {
   response
     .writeHead(status, { "content-type": "application/json" })
     .end(JSON.stringify(value));
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
+ * import/no-named-export (#527): Preserve the named startEveOAuthMcpServer API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): startEveOAuthMcpServer remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-returns (#535): startEveOAuthMcpServer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): startEveOAuthMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): startEveOAuthMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): startEveOAuthMcpServer uses 401, 200, 201, 400, 302, 50, 202, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-ternary (#518): startEveOAuthMcpServer derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): startEveOAuthMcpServer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): startEveOAuthMcpServer sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): startEveOAuthMcpServer handles optional client?.redirectUris.includes(redirectUri); url.searchParams.get("scope")?.split(" ").includes("mcp:tools"); request.headers.authorization?.replace(BEARER_PREFIX, ""); rpc.params?.name without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): startEveOAuthMcpServer copies or separates ...body while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/explicit-function-return-type (#560): Keep startEveOAuthMcpServer's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): startEveOAuthMcpServer accepts response: ServerResponse; request: IncomingMessage; url: URL; params: URLSearchParams; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): startEveOAuthMcpServer intentionally keeps the existing falsy-value behavior of client?.redirectUris.includes(redirectUri); valid; token; address; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * typescript/strict-void-return (#611): startEveOAuthMcpServer's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
+ */
 /**
  * Starts an OAuth-protected Streamable HTTP MCP server for local Eve tests.
  * The authorization endpoint immediately redirects to the registered callback.
@@ -90,7 +145,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   };
   let origin = "";
 
-  function reject(response: ServerResponse) {
+  function reject(response: ServerResponse): void {
     response
       .writeHead(401, {
         "www-authenticate": `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource/mcp"`,
@@ -111,7 +166,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     };
   }
 
-  function sendProtectedResourceMetadata(response: ServerResponse) {
+  function sendProtectedResourceMetadata(response: ServerResponse): void {
     sendJson(response, 200, {
       authorization_servers: [origin],
       resource: `${origin}/mcp`,
@@ -119,7 +174,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     });
   }
 
-  function sendAuthorizationServerMetadata(response: ServerResponse) {
+  function sendAuthorizationServerMetadata(response: ServerResponse): void {
     sendJson(response, 200, {
       authorization_endpoint: `${origin}/authorize`,
       code_challenge_methods_supported: ["S256"],
@@ -135,7 +190,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   async function registerClient(
     request: IncomingMessage,
     response: ServerResponse
-  ) {
+  ): Promise<void> {
     const body = registrationInput.parse(JSON.parse(await readBody(request)));
     const clientId = `client_${randomUUID()}`;
     clients.set(clientId, { redirectUris: body.redirect_uris });
@@ -147,7 +202,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     });
   }
 
-  function authorize(url: URL, response: ServerResponse) {
+  function authorize(url: URL, response: ServerResponse): void {
     const clientId = url.searchParams.get("client_id") ?? "";
     const redirectUri = url.searchParams.get("redirect_uri") ?? "";
     const state = url.searchParams.get("state") ?? "";
@@ -177,7 +232,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     params: URLSearchParams,
     clientId: string,
     response: ServerResponse
-  ) {
+  ): void {
     const code = codes.get(params.get("code") ?? "");
     const verifier = params.get("code_verifier") ?? "";
     const redirectUri = params.get("redirect_uri") ?? "";
@@ -200,7 +255,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     params: URLSearchParams,
     clientId: string,
     response: ServerResponse
-  ) {
+  ): void {
     const token = params.get("refresh_token") ?? "";
     const grant = refreshTokens.get(token);
     if (!grant || grant.clientId !== clientId) {
@@ -215,7 +270,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   async function exchangeToken(
     request: IncomingMessage,
     response: ServerResponse
-  ) {
+  ): Promise<void> {
     const params = new URLSearchParams(await readBody(request));
     const clientId = params.get("client_id") ?? "";
     if (!clients.has(clientId)) {
@@ -239,11 +294,14 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     response: ServerResponse,
     id: string | number,
     result: unknown
-  ) {
+  ): void {
     sendJson(response, 200, { id, jsonrpc: "2.0", result });
   }
 
-  async function handleMcp(request: IncomingMessage, response: ServerResponse) {
+  async function handleMcp(
+    request: IncomingMessage,
+    response: ServerResponse
+  ): Promise<void> {
     const token = request.headers.authorization?.replace(BEARER_PREFIX, "");
     if (!(token && accessTokens.has(token))) {
       reject(response);
@@ -293,7 +351,10 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     });
   }
 
-  async function route(request: IncomingMessage, response: ServerResponse) {
+  async function route(
+    request: IncomingMessage,
+    response: ServerResponse
+  ): Promise<void> {
     try {
       const url = new URL(request.url ?? "/", origin);
       switch (`${request.method} ${url.pathname}`) {
@@ -344,14 +405,14 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
   origin = `http://127.0.0.1:${address.port}`;
   return {
-    async close() {
+    async close(): Promise<void> {
       server.closeAllConnections();
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve()))
       );
     },
     counters,
-    invalidateAccessTokens() {
+    invalidateAccessTokens(): void {
       accessTokens.clear();
     },
     mcpUrl: `${origin}/mcp`,
@@ -359,3 +420,6 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     tokenResult: eveOAuthMcpTokenResultMarker,
   };
 }
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+
+/* oxlint-disable max-lines -- #509: This eve-oauth-mcp-server.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

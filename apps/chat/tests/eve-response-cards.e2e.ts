@@ -1,7 +1,21 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * max-lines-per-function (#510): test("response cards preserve layout and select native candidates on desktop and mobi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("response cards preserve layout and select native candidates on desktop and mobi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("response cards preserve layout and select native candidates on desktop and mobi uses 20, 1024, 11, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * node/no-sync (#538): test("response cards preserve layout and select native candidates on desktop and mobi uses execFileSync( "bun", [ "-e", 'const result = await Bun.build({entrypoints:["test; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+ * oxc/no-async-await (#540): test("response cards preserve layout and select native candidates on desktop and mobi sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("response cards preserve layout and select native candidates on desktop and mobi accepts { page, }; testInfo; error; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("response cards preserve layout and select native candidates on desktop and mobi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 // Dense state gallery uses the real application CSS and components, without a server or database.
 test("response cards preserve layout and select native candidates on desktop and mobile", async ({
   page,
@@ -93,3 +107,4 @@ test("response cards preserve layout and select native candidates on desktop and
   ).toBe(true);
   expect(errors).toEqual([]);
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

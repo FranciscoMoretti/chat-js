@@ -1,3 +1,5 @@
+/* oxlint-disable import/group-exports -- siteConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- siteConfig: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const siteConfig = {
   creator: "@franmoretti_",
   demoUrl: "https://demo.chatjs.dev",
@@ -21,7 +23,11 @@ export const siteConfig = {
   title: "ChatJS",
   url: "https://chatjs.dev",
 } as const;
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- siteLinks: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- siteLinks: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const siteLinks = {
   demo: siteConfig.demoUrl,
   desktop: siteConfig.desktopUrl,
@@ -37,5 +43,11 @@ export const siteLinks = {
   sitemap: `${siteConfig.url}/sitemap.xml`,
   threads: `${siteConfig.url}/threads`,
 } as const;
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- siteLastModified: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- siteLastModified: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

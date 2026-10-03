@@ -1,9 +1,13 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
+import React from "react";
 
 import { ModelSelector } from "@/components/model-selector";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
+/* oxlint-enable sort-imports */
 
 const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   {
@@ -66,6 +70,7 @@ const alternativeFixtureModels = [
     { reasoning: false, toolCall: true }
   ),
 ];
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- fixtureModels: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including model). */
 
 const fixtureModels = [
   primaryFixtureModel,
@@ -75,8 +80,10 @@ const fixtureModels = [
       models.findIndex(({ id }) => id === model.id) === index
   ),
 ];
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals -- ModelToolbarVisualFixture: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
 
-export const ModelToolbarVisualFixture = () => (
+export const ModelToolbarVisualFixture = (): React.JSX.Element => (
   <ChatModelsProvider models={fixtureModels}>
     <main
       className="h-[32rem] w-[48rem] p-8"
@@ -89,7 +96,9 @@ export const ModelToolbarVisualFixture = () => (
           data.
         </p>
         <ModelSelector
-          onModelSelectionChangeAction={() => null}
+          onModelSelectionChangeAction={() => {
+            // This capability has no subscription to clean up.
+          }}
           selectedModelId={primaryFixtureModel.id}
           selectedModelSelection={primaryFixtureModel.id}
         />
@@ -97,3 +106,4 @@ export const ModelToolbarVisualFixture = () => (
     </main>
   </ChatModelsProvider>
 );
+/* oxlint-enable import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals */

@@ -1,8 +1,14 @@
+/* oxlint-disable import/no-nodejs-modules -- { spawnSync }: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 // This explicit .cjs entrypoint must retain CommonJS startup semantics.
 /* oxlint-disable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires -- Electron Forge is launched from this explicit CommonJS entrypoint; require and __dirname preserve its Node startup contract. */
 const { spawnSync } = require("node:child_process");
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- fs: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 const fs = require("node:fs");
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- path: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 const path = require("node:path");
+/* oxlint-enable import/no-nodejs-modules */
 
 const candidates = [
   path.resolve(
@@ -27,6 +33,7 @@ const candidates = [
   ),
 ];
 
+/* oxlint-disable node/no-sync -- forgeEntrypoint: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
 const forgeEntrypoint = candidates.find((candidate) => {
   try {
     fs.accessSync(candidate);
@@ -35,13 +42,23 @@ const forgeEntrypoint = candidates.find((candidate) => {
     return false;
   }
 });
+/* oxlint-enable node/no-sync */
 
+/* oxlint-disable eslint/no-console -- run-forge.cjs: This command or desktop boundary reports startup, progress and failures to its operator. */
+/* oxlint-disable eslint/no-magic-numbers -- run-forge.cjs: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable typescript/strict-boolean-expressions -- run-forge.cjs: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 if (!forgeEntrypoint) {
   console.error("Could not locate @electron-forge/cli.");
   // oxlint-disable-next-line unicorn/no-process-exit -- Missing Forge cannot launch; terminate this wrapper before spawning a child.
   process.exit(1);
 }
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/no-console */
 
+/* oxlint-disable node/no-sync -- result: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
+/* oxlint-disable eslint/no-magic-numbers -- result: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable node/no-process-env -- result: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 const result = spawnSync(
   process.execPath,
   [forgeEntrypoint, ...process.argv.slice(2)],
@@ -50,6 +67,11 @@ const result = spawnSync(
     stdio: "inherit",
   }
 );
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable node/no-sync */
 
+/* oxlint-disable eslint/no-magic-numbers -- run-forge.cjs: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 // oxlint-disable-next-line unicorn/no-process-exit -- Forward the completed child status to the invoking package manager.
 process.exit(result.status ?? 1);
+/* oxlint-enable eslint/no-magic-numbers */

@@ -27,6 +27,9 @@ const group = {
   candidates: eveResponseGroupCandidates(input.operationId, input.modelIds),
   id: crypto.randomUUID(),
 };
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): admission accepts { operationId }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 const admission = {
   group,
   reservations: group.candidates.map(({ operationId }) => ({
@@ -34,6 +37,7 @@ const admission = {
     reservationId: crypto.randomUUID(),
   })),
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -47,6 +51,10 @@ beforeEach(() => {
   mocks.refund.mockResolvedValue(true);
 });
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): it("refunds undispatched siblings after a proven primary rejection") uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("refunds undispatched siblings after a proven primary rejection") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("refunds undispatched siblings after a proven primary rejection", async () => {
   const result = await createEveResponseGroup("guest", input, admission);
   expect(result.candidates.map((candidate) => candidate.state)).toEqual([
@@ -64,14 +72,22 @@ it("refunds undispatched siblings after a proven primary rejection", async () =>
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("retains recovery if a sibling has concurrently claimed its creation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("retains recovery if a sibling has concurrently claimed its creation", async () => {
   mocks.refund.mockResolvedValue(false);
   await expect(
     createEveResponseGroup("guest", input, admission)
   ).rejects.toThrow("Retain comparison recovery");
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("does not declare terminal rejection when the primary refund cannot prove non-admi sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("does not declare terminal rejection when the primary refund cannot prove non-admission", async () => {
   mocks.settle.mockResolvedValue(false);
   const result = await createEveResponseGroup("guest", input, admission);
@@ -81,7 +97,14 @@ it("does not declare terminal rejection when the primary refund cannot prove non
   ]);
   expect(mocks.refund).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): it("marks every multi-model edited candidate with the shared user intent") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("marks every multi-model edited candidate with the shared user intent") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): it("marks every multi-model edited candidate with the shared user intent") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): it("marks every multi-model edited candidate with the shared user intent") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 it("marks every multi-model edited candidate with the shared user intent", async () => {
   mocks.reserve.mockResolvedValue(group);
   await createEveResponseGroup("owner", {
@@ -96,3 +119,4 @@ it("marks every multi-model edited candidate with the shared user intent", async
     "edit",
   ]);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */

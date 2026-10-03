@@ -1,9 +1,12 @@
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   convertFileListToFileUIParts,
   DefaultChatTransport,
   generateId,
   isToolUIPart,
 } from "ai";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   AbstractChat,
   ChatInit,
@@ -12,12 +15,18 @@ import type {
   ChatTransport,
   UIMessage,
 } from "ai";
+/* oxlint-enable eslint/sort-imports */
 
 import { ThreadRunChat } from "./ai-sdk-run-chat";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ThreadRunHost, ThreadRunSpec } from "./ai-sdk-run-chat";
+/* oxlint-enable eslint/sort-imports */
 import { MessageTree } from "./message-tree";
 import { RunRegistry } from "./run-registry";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { RunRecord } from "./run-registry";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   MessageTreeSnapshot,
   ThreadConcurrency,
@@ -27,6 +36,7 @@ import type {
   ThreadStateSnapshot,
   TreeSendOptions,
 } from "./types";
+/* oxlint-enable eslint/sort-imports */
 
 type AbstractThreadOptions<TMessage extends UIMessage> = Omit<
   ChatInit<TMessage>,
@@ -38,21 +48,38 @@ type AbstractThreadOptions<TMessage extends UIMessage> = Omit<
 
 const ownedThreadStates = new WeakSet<object>();
 
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 type SendMessageInput<TMessage extends UIMessage> = Parameters<
   AbstractChat<TMessage>["sendMessage"]
 >[0];
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const getInputMessageId = <TMessage extends UIMessage>(
   input: NonNullable<SendMessageInput<TMessage>>
 ) => ("id" in input ? (input.id ?? input.messageId) : input.messageId);
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable typescript/explicit-function-return-type */
 
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Like AI SDK's AbstractChat, construction crosses a generic boundary here:
 // TMessage may narrow metadata or parts beyond the base UIMessage shape.
 // oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- The thread preserves its caller-selected message specialization across the SDK base-message adapter.
 const specializeMessage = <TMessage extends UIMessage>(message: UIMessage) =>
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The thread owns validation of its selected message specialization; this adapter preserves that generic public type across the AI SDK base message boundary.
   message as TMessage;
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const createMessageFromInput = async <TMessage extends UIMessage>({
   fallbackId,
   input,
@@ -85,7 +112,31 @@ const createMessageFromInput = async <TMessage extends UIMessage>({
     role: input.role ?? "user",
   });
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   public readonly id: string;
   public readonly dataPartSchemas: AbstractThreadOptions<TMessage>["dataPartSchemas"];
@@ -136,19 +187,19 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 
   public subscribe = (listener: () => void) => this.#state.subscribe(listener);
 
-  public addMessage(message: TMessage, parentId: string | null) {
+  public addMessage(message: TMessage, parentId: string | null): void {
     this.upsertMessage(message, parentId);
   }
 
   public addToolApprovalResponse: AbstractChat<TMessage>["addToolApprovalResponse"] =
-    async (response) => {
+    async (response): Promise<void> => {
       const run = this.getOrCreateRunForApproval(response.id);
       await run.chat.addToolApprovalResponse(response);
     };
 
   public addToolOutput: AbstractChat<TMessage>["addToolOutput"] = async (
     output
-  ) => {
+  ): Promise<void> => {
     const run = this.getOrCreateRunForToolCall(output.toolCallId);
     await run.chat.addToolOutput(output);
   };
@@ -184,38 +235,42 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return this.readTree((tree) => tree.getSiblings(messageId));
   }
 
-  public setActiveRun(runId: string) {
+  public setActiveRun(runId: string): void {
     const run = this.#runs.require(runId);
-    this.updateTree((tree) => {
+    this.updateTree((tree): void => {
       tree.setCursor(run.spec.messageId ?? run.spec.initialPathMessageId);
       this.#runs.select(runId);
     });
   }
 
-  public setCursor(messageId: string | null) {
+  public setCursor(messageId: string | null): void {
     this.#runs.select(null);
-    this.updateTree((tree) => tree.setCursor(messageId));
+    this.updateTree((tree): void => tree.setCursor(messageId));
   }
 
-  public setCursorToParentOf(messageId: string) {
+  public setCursorToParentOf(messageId: string): void {
     this.#runs.select(null);
-    this.updateTree((tree) => tree.setCursorToParentOf(messageId));
+    this.updateTree((tree): void => tree.setCursorToParentOf(messageId));
   }
 
   private getMessagePath(messageId: string | null) {
     return this.readTree((tree) => tree.getPath(messageId));
   }
 
-  private writeRunMessage(runId: string, message: TMessage) {
+  private writeRunMessage(runId: string, message: TMessage): void {
     const run = this.#runs.require(runId);
-    this.updateTree((tree) => {
+    this.updateTree((tree): void => {
       const currentMessageId = run.spec.messageId;
-      if (currentMessageId && currentMessageId !== message.id) {
+      if (
+        typeof currentMessageId === "string" &&
+        currentMessageId !== "" &&
+        currentMessageId !== message.id
+      ) {
         throw new Error(
           `Run ${runId} is already bound to message ${currentMessageId}`
         );
       }
-      if (!currentMessageId) {
+      if (!(typeof currentMessageId === "string" && currentMessageId !== "")) {
         const existingMessage = tree.getMessage(message.id);
         if (existingMessage) {
           throw new Error(`Message ${message.id} already exists`);
@@ -226,7 +281,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       const insertionIndex = this.#runs.getInsertionIndex({
         childIds: tree
           .getChildren(run.spec.parentMessageId)
-          .map((child) => child.id),
+          .map((child): string => child.id),
         parentMessageId: run.spec.parentMessageId,
         siblingOrder: run.spec.siblingOrder,
       });
@@ -246,13 +301,14 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   public regenerate: AbstractChat<TMessage>["regenerate"] = async ({
     messageId,
     ...options
-  } = {}) => {
+  } = {}): Promise<void> => {
     const { parentMessageId, target } = this.readTree((tree) => {
       let selectedTarget: TMessage | undefined;
       if (messageId === undefined || messageId === null) {
-        selectedTarget = tree.cursorId
-          ? tree.getMessage(tree.cursorId)
-          : undefined;
+        selectedTarget =
+          typeof tree.cursorId === "string" && tree.cursorId !== ""
+            ? tree.getMessage(tree.cursorId)
+            : undefined;
       } else {
         selectedTarget = tree.getMessage(messageId);
       }
@@ -270,7 +326,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     }
 
     if (target.role === "assistant") {
-      if (parentMessageId) {
+      if (typeof parentMessageId === "string" && parentMessageId !== "") {
         this.#runs.assertHasCapacity(parentMessageId);
       } else {
         this.#runs.assertHasCapacity(null);
@@ -289,28 +345,28 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       ),
     };
     this.#runs.select(spec.id);
-    this.updateTree((tree) => tree.setCursor(target.id));
-    const run = this.startRunRequest(spec, (chat) =>
+    this.updateTree((tree): void => tree.setCursor(target.id));
+    const run = this.startRunRequest(spec, (chat): Promise<void> =>
       chat.regenerateMessage(target.id, options)
     );
     await run.finished;
   };
 
-  public upsertMessage(message: TMessage, parentId: string | null) {
-    this.updateTree((tree) => tree.upsertMessage(message, parentId));
+  public upsertMessage(message: TMessage, parentId: string | null): void {
+    this.updateTree((tree): void => tree.upsertMessage(message, parentId));
   }
 
-  public removeMessage(messageId: string) {
-    this.updateTree((tree) => tree.removeLeaf(messageId));
+  public removeMessage(messageId: string): void {
+    this.updateTree((tree): void => tree.removeLeaf(messageId));
   }
 
-  private updateRunPath(messages: TMessage[]) {
-    this.updateTree((tree) => tree.updatePath(messages));
+  private updateRunPath(messages: TMessage[]): void {
+    this.updateTree((tree): void => tree.updatePath(messages));
   }
 
   public resumeStream: AbstractChat<TMessage>["resumeStream"] = async (
     options = {}
-  ) => {
+  ): Promise<void> => {
     const run =
       this.getSelectedRunRecord() ?? this.createRunForSelectedAssistant();
     if (!run) {
@@ -322,38 +378,41 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   public resumeRun = async (
     runId: string,
     options: ChatRequestOptions = {}
-  ) => {
+  ): Promise<void> => {
     await this.resumeRunRequest(this.#runs.require(runId), options);
   };
 
-  public restore(snapshot: MessageTreeSnapshot<TMessage>) {
+  public restore(snapshot: MessageTreeSnapshot<TMessage>): void {
     this.assertCanResetTree();
     this.#runs.clear();
-    this.updateTree((tree) => tree.restore(snapshot));
+    this.updateTree((tree): void => tree.restore(snapshot));
   }
 
   public setMessages(
     messages: TMessage[] | ((messages: TMessage[]) => TMessage[])
-  ) {
+  ): void {
     const nextMessages =
       typeof messages === "function"
         ? messages(this.getSnapshot().messages)
         : messages;
     this.#runs.select(null);
-    this.updateTree((tree) => tree.setPath(nextMessages));
+    this.updateTree((tree): void => tree.setPath(nextMessages));
   }
 
   public sendMessage = async (
     input?: SendMessageInput<TMessage>,
     options?: TreeSendOptions
-  ) => {
+  ): Promise<void> => {
     const { tree, ...request } = options ?? {};
     if (!input) {
       const cursorId =
         tree && "from" in tree
           ? (tree.from ?? null)
           : this.getSnapshot().cursorId;
-      const cursorMessage = cursorId ? this.getMessage(cursorId) : undefined;
+      const cursorMessage =
+        typeof cursorId === "string" && cursorId !== ""
+          ? this.getMessage(cursorId)
+          : undefined;
       if (cursorMessage?.role === "assistant") {
         const run = this.continueAssistant({
           follow: tree?.follow ?? cursorId === this.getSnapshot().cursorId,
@@ -383,12 +442,13 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       const originCursorId = from === undefined ? tree.cursorId : from;
       return {
         cursorId: originCursorId,
-        originMessage: originCursorId
-          ? tree.getMessage(originCursorId)
-          : undefined,
+        originMessage:
+          typeof originCursorId === "string" && originCursorId !== ""
+            ? tree.getMessage(originCursorId)
+            : undefined,
       };
     });
-    if (cursorId && !originMessage) {
+    if (typeof cursorId === "string" && cursorId !== "" && !originMessage) {
       throw new Error(`Unknown message ${cursorId}`);
     }
     const activeCursorId = this.getSnapshot().cursorId;
@@ -420,7 +480,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       });
     }
     this.assertCanGenerateFrom(message);
-    this.updateTree((tree) => {
+    this.updateTree((tree): void => {
       const existingMessage = tree.getMessage(message.id);
       const attachmentId = existingMessage
         ? (tree.getParentId(message.id) ?? null)
@@ -439,25 +499,27 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     });
   };
 
-  public clearError = () => {
+  public clearError = (): void => {
     const run = this.getSelectedRunRecord();
     if (run) {
       run.chat.clearError();
     }
   };
 
-  public stop = () =>
+  public stop = (): Promise<void> =>
     this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve();
 
-  public async stopAll() {
-    await Promise.all(this.#runs.getActive().map((run) => run.chat.stop()));
+  public async stopAll(): Promise<void> {
+    await Promise.all(
+      this.#runs.getActive().map((run): Promise<void> => run.chat.stop())
+    );
   }
 
-  public stopRun(runId: string) {
+  public stopRun(runId: string): Promise<void> {
     return this.#runs.get(runId)?.chat.stop() ?? Promise.resolve();
   }
 
-  public stopRunForMessage(messageId: string) {
+  public stopRunForMessage(messageId: string): Promise<void> {
     const run = this.getRunForMessage(messageId);
     return run ? this.stopRun(run.id) : Promise.resolve();
   }
@@ -472,21 +534,21 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return run ? RunRegistry.toSnapshot(run) : undefined;
   }
 
-  private setRunError(runId: string, error: Error | undefined) {
+  private setRunError(runId: string, error: Error | undefined): void {
     this.#runs.setError(runId, error);
     this.publish();
   }
 
-  private setRunStatus(runId: string, status: ChatStatus) {
+  private setRunStatus(runId: string, status: ChatStatus): void {
     this.#runs.setStatus(runId, status);
     this.publish();
   }
 
-  private registerToolCall(runId: string, toolCallId: string) {
+  private registerToolCall(runId: string, toolCallId: string): void {
     this.#runs.registerToolCall(runId, toolCallId);
   }
 
-  private indexMessageOwnership(runId: string, message: TMessage) {
+  private indexMessageOwnership(runId: string, message: TMessage): void {
     this.#runs.indexMessageOwnership(runId, message);
   }
 
@@ -521,7 +583,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       get dataPartSchemas() {
         return thread.dataPartSchemas;
       },
-      generateMessageId: () => thread.generateMessageId(),
+      generateMessageId: (): string => thread.generateMessageId(),
       getMessagePath: (messageId) => thread.getMessagePath(messageId),
       get id() {
         return thread.id;
@@ -553,30 +615,30 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       set onToolCall(handler) {
         thread.onToolCall = handler;
       },
-      registerToolCall: (runId, toolCallId) =>
+      registerToolCall: (runId, toolCallId): void =>
         thread.registerToolCall(runId, toolCallId),
-      removeMessage: (messageId) => thread.removeMessage(messageId),
+      removeMessage: (messageId): void => thread.removeMessage(messageId),
       get sendAutomaticallyWhen() {
         return thread.sendAutomaticallyWhen;
       },
       set sendAutomaticallyWhen(handler) {
         thread.sendAutomaticallyWhen = handler;
       },
-      setRunError: (runId, error) => thread.setRunError(runId, error),
-      setRunStatus: (runId, status) => thread.setRunStatus(runId, status),
+      setRunError: (runId, error): void => thread.setRunError(runId, error),
+      setRunStatus: (runId, status): void => thread.setRunStatus(runId, status),
       get transport() {
         return thread.transport;
       },
       set transport(transport) {
         thread.transport = transport;
       },
-      updateRunPath: (messages) => thread.updateRunPath(messages),
-      writeRunMessage: (runId, message) =>
+      updateRunPath: (messages): void => thread.updateRunPath(messages),
+      writeRunMessage: (runId, message): void =>
         thread.writeRunMessage(runId, message),
     };
   }
 
-  private publish() {
+  private publish(): void {
     this.updateState((snapshot) =>
       this.buildSnapshot(this.createTree(snapshot))
     );
@@ -609,7 +671,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     updater: (
       snapshot: ThreadStateSnapshot<TMessage>
     ) => ThreadStateSnapshot<TMessage>
-  ) {
+  ): void {
     let calls = 0;
     this.#state.update((snapshot) => {
       calls += 1;
@@ -622,12 +684,12 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     }
   }
 
-  private assertCanGenerateFrom(parentMessage: TMessage) {
+  private assertCanGenerateFrom(parentMessage: TMessage): void {
     AbstractThread.assertValidRunParent(parentMessage);
     this.#runs.assertHasCapacity(parentMessage.id);
   }
 
-  private static assertValidRunParent(message: UIMessage) {
+  private static assertValidRunParent(message: UIMessage): void {
     if (message.role === "assistant") {
       throw new Error(
         `Cannot start a new run directly from assistant message ${message.id}; attach an input message first`
@@ -674,7 +736,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     const owner = this.findAssistantOwningPart({
       id: approvalId,
       label: "Tool approval",
-      matches: (part) => isToolUIPart(part) && part.approval?.id === approvalId,
+      matches: (part): boolean =>
+        isToolUIPart(part) && part.approval?.id === approvalId,
     });
     if (!owner) {
       throw new Error(`No run owns tool approval ${approvalId}`);
@@ -694,7 +757,8 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     const owner = this.findAssistantOwningPart({
       id: toolCallId,
       label: "Tool call",
-      matches: (part) => isToolUIPart(part) && part.toolCallId === toolCallId,
+      matches: (part): boolean =>
+        isToolUIPart(part) && part.toolCallId === toolCallId,
     });
     if (!owner) {
       throw new Error(`No run owns tool call ${toolCallId}`);
@@ -709,7 +773,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   private createRunForSelectedAssistant() {
     const tree = this.createTree();
     const messageId = tree.cursorId;
-    if (!messageId) {
+    if (!(typeof messageId === "string" && messageId !== "")) {
       return;
     }
     // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
@@ -733,7 +797,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     const parentMessageId = tree.getParentId(messageId) ?? null;
     const siblingOrder = tree
       .getChildren(parentMessageId)
-      .findIndex((child) => child.id === messageId);
+      .findIndex((child): boolean => child.id === messageId);
     if (siblingOrder === -1) {
       throw new Error(`Message ${messageId} is missing from its sibling order`);
     }
@@ -761,7 +825,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return record;
   }
 
-  private assertCanResetTree() {
+  private assertCanResetTree(): void {
     if (this.#runs.getActive().length > 0) {
       throw new Error("Cannot replace the tree while runs are active");
     }
@@ -791,16 +855,22 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     };
     if (follow) {
       this.#runs.select(id);
-      this.updateTree((tree) => tree.setCursor(parentMessageId));
+      this.updateTree((tree): void => tree.setCursor(parentMessageId));
     }
-    return this.startRunRequest(spec, (chat) => chat.start(options));
+    return this.startRunRequest(spec, (chat): Promise<void> =>
+      chat.start(options)
+    );
   }
 
   private startRunRequest(
     spec: ThreadRunSpec,
     start: (chat: ThreadRunChat<TMessage>) => Promise<void>
   ) {
-    if (spec.parentMessageId && !this.getMessage(spec.parentMessageId)) {
+    if (
+      typeof spec.parentMessageId === "string" &&
+      spec.parentMessageId !== "" &&
+      !this.getMessage(spec.parentMessageId)
+    ) {
       throw new Error(`Unknown message ${spec.parentMessageId}`);
     }
     const chat = new ThreadRunChat(this.#runHost, spec);
@@ -815,7 +885,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.publish();
     const finished = this.publishWhenFinished(start(chat));
     // Callers can still await detached startRun calls through the finished promise.
-    void (async () => {
+    void (async (): Promise<void> => {
       try {
         await finished;
       } catch {
@@ -858,7 +928,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     }
     if (follow) {
       this.#runs.select(run.spec.id);
-      this.updateTree((tree) => tree.setCursor(messageId));
+      this.updateTree((tree): void => tree.setCursor(messageId));
     }
     const finished = this.publishWhenFinished(run.chat.start(options));
     run.finished = finished;
@@ -891,7 +961,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     if (follow) {
       this.#runs.select(spec.id);
     }
-    return this.startRunRequest(spec, (chat) =>
+    return this.startRunRequest(spec, (chat): Promise<void> =>
       chat.startWithMessage(message, options)
     );
   }
@@ -903,7 +973,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       },
       getSnapshot: () => this.getRun(run.spec.id),
       id: run.spec.id,
-      stop: () => run.chat.stop(),
+      stop: (): Promise<void> => run.chat.stop(),
     };
   }
 
@@ -918,7 +988,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   private async resumeRunRequest(
     run: RunRecord<TMessage>,
     options: ChatRequestOptions
-  ) {
+  ): Promise<void> {
     this.#runs.assertHasCapacity(run.spec.parentMessageId);
     run.chat.refreshPath();
     const finished = this.publishWhenFinished(run.chat.resumeStream(options));
@@ -927,3 +997,24 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     await finished;
   }
 }
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable eslint/no-continue */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-module-boundary-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export */
+
+/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

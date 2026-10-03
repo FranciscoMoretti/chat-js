@@ -34,6 +34,9 @@ const input = {
   operationId: "00000000-0000-4000-8000-000000000001",
 };
 
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 const request = () =>
   new Request("http://localhost:3790/api/agent-conversations", {
     body: JSON.stringify(input),
@@ -43,6 +46,7 @@ const request = () =>
     },
     method: "POST",
   });
+/* oxlint-enable typescript/explicit-function-return-type */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -57,6 +61,10 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("keeps a terminal creation response ambiguous when its refund is refused") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("keeps a terminal creation response ambiguous when its refund is refused") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("keeps a terminal creation response ambiguous when its refund is refused", async () => {
   mocks.create.mockResolvedValue(
     Response.json(
@@ -79,7 +87,12 @@ test("keeps a terminal creation response ambiguous when its refund is refused", 
     "reservation"
   );
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("preserves authoritative deletion when its committed quota cannot be refunded") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("preserves authoritative deletion when its committed quota cannot be refunded") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("preserves authoritative deletion when its committed quota cannot be refunded", async () => {
   mocks.create.mockResolvedValue(
     Response.json(
@@ -101,7 +114,13 @@ test("preserves authoritative deletion when its committed quota cannot be refund
     creationRejected: true,
   });
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+ * no-magic-numbers (#517): test("defers root title generation until after the creation response") uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("defers root title generation until after the creation response") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("defers root title generation until after the creation response") handles optional mocks.after.mock.calls[0]?.[0]() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ */
 test("defers root title generation until after the creation response", async () => {
   mocks.create.mockResolvedValue(
     Response.json({
@@ -123,3 +142,4 @@ test("defers root title generation until after the creation response", async () 
     ownerId: "guest",
   });
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */

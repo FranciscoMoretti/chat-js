@@ -1,9 +1,30 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-billing"; "../db/eve-subagents" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { MessageStreamEvent } from "eve/client";
 
 import { recordEveUsage } from "../db/eve-billing";
 import { registerEveSubagent } from "../db/eve-subagents";
 import { toolResultSchema, hasEveToolReceipt } from "./tool-result";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * import/no-named-export (#527): Preserve the named ingestEveUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): ingestEveUsage remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * max-lines-per-function (#510): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): ingestEveUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): ingestEveUsage derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): ingestEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): ingestEveUsage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): ingestEveUsage handles optional attribution?.sessionId; call.usage?.costUsd; call.providerMetadata?.gateway?.generationId; attribution?.turnId; event.data.usage?.costUsd without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep ingestEveUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep ingestEveUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): ingestEveUsage accepts event: MessageStreamEvent; attribution?: { sessionId: string; turnId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): ingestEveUsage intentionally keeps the existing falsy-value behavior of call.failed; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
 export const ingestEveUsage = async (
   ownerId: string,
@@ -84,3 +105,4 @@ export const ingestEveUsage = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: ingestEveUsage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return event.type === "step.failed" ? undefined : priced;
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

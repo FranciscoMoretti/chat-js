@@ -1,8 +1,9 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Search } from "lucide-react";
-import { useDeferredValue, useState } from "react";
+import React, { useDeferredValue, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,8 @@ import { useTRPC } from "@/trpc/react";
 
 import { ModelsTable } from "./models-table";
 import { SettingsPageContent, SettingsPageScrollArea } from "./settings-page";
+/* oxlint-enable sort-imports */
+/* oxlint-disable id-length, import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ModelsSettings: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
 export const ModelsSettings = () => {
   const trpc = useTRPC();
@@ -28,12 +31,11 @@ export const ModelsSettings = () => {
           value={search}
         />
         <Button
-          // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns model-preference invalidation and error state.
-          onClick={() =>
-            queryClient.invalidateQueries({
+          onClick={() => {
+            void queryClient.invalidateQueries({
               queryKey: trpc.settings.getModelPreferences.queryKey(),
-            })
-          }
+            });
+          }}
           size="icon"
           variant="ghost"
         >
@@ -47,3 +49,4 @@ export const ModelsSettings = () => {
     </SettingsPageContent>
   );
 };
+/* oxlint-enable id-length, import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

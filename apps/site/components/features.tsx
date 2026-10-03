@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+/* oxlint-disable eslint/sort-imports -- the lucide-react import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   BrainCircuit,
   Code,
@@ -13,6 +14,8 @@ import {
   Search,
   Video,
 } from "lucide-react";
+/* oxlint-enable eslint/sort-imports */
+import React from "react";
 
 interface Feature {
   description: string;
@@ -99,9 +102,11 @@ const TOOLS: Feature[] = [
   },
 ];
 
+/* oxlint-disable react/jsx-max-depth -- FeatureCard: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- FeatureCard: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* ── Shared card component ────────────────────────────────────────── */
 
-const FeatureCard = ({ feature }: { feature: Feature }) => (
+const FeatureCard = ({ feature }: { feature: Feature }): React.JSX.Element => (
   <div className="group border-border/50 bg-card hover:border-border hover:shadow-foreground/3 relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
     <div className="bg-foreground/2 pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
     <div className="relative flex h-full flex-col">
@@ -117,8 +122,16 @@ const FeatureCard = ({ feature }: { feature: Feature }) => (
     </div>
   </div>
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth */
 
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+/* oxlint-disable react/no-multi-comp -- SectionLabel: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SectionLabel: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+const SectionLabel = ({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element => (
   <div className="mb-8 flex items-center gap-4">
     <span className="text-foreground/70 font-mono text-xs tracking-[0.2em] uppercase">
       {children}
@@ -126,10 +139,19 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
     <div className="bg-border h-px flex-1" />
   </div>
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
+/* oxlint-disable import/prefer-default-export -- Features: Consumers use this named API so adding another export will not require changing existing imports. */
+/* oxlint-disable react/no-multi-comp -- Features: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
+/* oxlint-disable import/no-named-export -- Features: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable react/jsx-no-literals -- Features: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+/* oxlint-disable react/jsx-max-depth -- Features: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
+/* oxlint-disable eslint/id-length -- Features: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Features: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* ── Main component ───────────────────────────────────────────────── */
 
-export const Features = () => (
+export const Features = (): React.JSX.Element => (
   <section className="relative overflow-hidden py-24 sm:py-32">
     {/* Subtle atmosphere to differentiate from TechStack grid below */}
     <div className="pointer-events-none absolute inset-0">
@@ -166,3 +188,10 @@ export const Features = () => (
     </div>
   </section>
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable react/no-multi-comp */
+/* oxlint-enable import/prefer-default-export */

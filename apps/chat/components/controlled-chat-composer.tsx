@@ -1,6 +1,8 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import type { ChatStatus } from "ai";
+import React from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import {
@@ -11,6 +13,8 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { LexicalChatInput } from "@/components/lexical-chat-input";
 import { useIsMobile } from "@/hooks/use-mobile";
+/* oxlint-enable sort-imports */
+/* oxlint-disable react/forbid-component-props, typescript/prefer-readonly-parameter-types -- ChatComposerFooter: react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ChatComposerFooter = ({
   tools,
@@ -18,7 +22,7 @@ const ChatComposerFooter = ({
 }: {
   tools?: ReactNode;
   actions: ReactNode;
-}) => (
+}): React.JSX.Element => (
   <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
     <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
       {tools}
@@ -26,6 +30,8 @@ const ChatComposerFooter = ({
     <div className="flex items-center gap-1">{actions}</div>
   </PromptInputFooter>
 );
+/* oxlint-enable react/forbid-component-props, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, no-ternary, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ControlledChatComposer: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16_000); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including isMobile ? event.ctrlKey : !event.shiftKey); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 /** A controlled composer for runtimes that own their own submission lifecycle. */
 export const ControlledChatComposer = ({
@@ -131,3 +137,4 @@ export const ControlledChatComposer = ({
     </PromptInput>
   );
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, no-ternary, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

@@ -1,7 +1,11 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { databaseConnection, databaseEnvOptions } from "./connection";
+/* oxlint-enable sort-imports */
 
 const databaseOptionsSchema = z.object(databaseEnvOptions);
 

@@ -1,3 +1,9 @@
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+ * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
+ * import/no-nodejs-modules (#529): This test harness requires import { randomBytes } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-copy-dispatch"; "../lib/db/eve-copy-journal"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
@@ -32,6 +38,7 @@ import { saveEveCopyOperation } from "../lib/eve/save-copy-operation";
 import { keyFromFileUrl } from "../lib/file-url";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const mocks = vi.hoisted(() => ({
@@ -55,17 +62,25 @@ vi.mock("../lib/eve/server", () => ({
   assertEveConfigured: vi.fn(),
   eveRequest: mocks.request,
 }));
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): vi.mock("../lib/file-storage") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ */
 vi.mock("../lib/file-storage", () => ({
-  createFileId: () => crypto.randomUUID().replaceAll("-", "").slice(0, 24),
+  createFileId: (): string =>
+    crypto.randomUUID().replaceAll("-", "").slice(0, 24),
   deleteFilesByUrls: mocks.remove,
   downloadFile: mocks.download,
   uploadFileAtKey: mocks.upload,
 }));
+/* oxlint-enable no-magic-numbers */
 
 const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
 const owners = [ownerId, sourceOwnerId];
 const modelId = "google/gemini-2.5-flash-lite";
+/* oxlint-disable node/no-top-level-await --
+ * node/no-top-level-await (#539): await db.insert(user).values( owners.map((id) => ({ ema runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+ */
 await db.insert(user).values(
   owners.map((id) => ({
     email: `${id}@test.invalid`,
@@ -73,6 +88,10 @@ await db.insert(user).values(
     name: "Save copy fixture",
   }))
 );
+/* oxlint-enable node/no-top-level-await */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 afterAll(async () => {
   for (const table of [
     eveConversationCopyFile,
@@ -89,6 +108,17 @@ afterAll(async () => {
   }
   await db.delete(user).where(inArray(user.id, owners));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+ * max-statements (#512): beforeEach keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): beforeEach uses -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-ternary (#518): beforeEach derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): beforeEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): beforeEach handles optional init?.body without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts urls: string[]; file: Blob; init?: RequestInit; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * typescript/strict-boolean-expressions (#610): beforeEach intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.files.clear();
@@ -139,7 +169,16 @@ beforeEach(() => {
     }
   );
 });
+/* oxlint-enable max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type --
+ * max-lines-per-function (#510): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): fixture uses 18, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): fixture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): fixture copies or separates ...source while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 async function fixture() {
   const source = {
     id: crypto.randomUUID(),
@@ -257,7 +296,18 @@ async function fixture() {
     source,
   };
 }
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type */
 
+/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+ * id-length (#506): test("saves a complete independent copy, including inline bytes and files only in old uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * max-lines-per-function (#510): test("saves a complete independent copy, including inline bytes and files only in old keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("saves a complete independent copy, including inline bytes and files only in old keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("saves a complete independent copy, including inline bytes and files only in old uses 2, -1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("saves a complete independent copy, including inline bytes and files only in old sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("saves a complete independent copy, including inline bytes and files only in old handles optional operation?.copy; native?.sessionId; native?.seed.attachments; native?.seed; mocks.request.mock.calls.at(-1)?.[3] without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): test("saves a complete independent copy, including inline bytes and files only in old accepts revision; receipt; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * unicorn/no-null (#570): test("saves a complete independent copy, including inline bytes and files only in old preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("saves a complete independent copy, including inline bytes and files only in old document revisions", async () => {
   const f = await fixture();
   const bound = await saveEveCopyOperation(
@@ -310,7 +360,16 @@ test("saves a complete independent copy, including inline bytes and files only i
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(mocks.request.mock.calls.at(-1)?.[3]).toBe(modelId);
 });
+/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
+/* oxlint-disable id-length, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): test("a lost native reply recovers without reopening or reading a revoked source") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * max-statements (#512): test("a lost native reply recovers without reopening or reading a revoked source") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("a lost native reply recovers without reopening or reading a revoked source") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("a lost native reply recovers without reopening or reading a revoked source") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("a lost native reply recovers without reopening or reading a revoked source") handles optional operation?.conversation.state; mocks.native.get(`${ownerId}/${bound.id}`)?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): test("a lost native reply recovers without reopening or reading a revoked source") accepts ...args; call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("a lost native reply recovers without reopening or reading a revoked source", async () => {
   const f = await fixture();
   const original = mocks.request.getMockImplementation();
@@ -353,7 +412,12 @@ test("a lost native reply recovers without reopening or reading a revoked source
     )
   ).toHaveLength(1);
 });
+/* oxlint-enable id-length, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable id-length, oxc/no-async-await --
+ * id-length (#506): test("unrelated private file references are denied before any bytes or destination re uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * oxc/no-async-await (#540): test("unrelated private file references are denied before any bytes or destination re sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("unrelated private file references are denied before any bytes or destination resources are written", async () => {
   const f = await fixture();
   await db.delete(eveFileReference).where(eq(eveFileReference.key, f.key));
@@ -367,7 +431,17 @@ test("unrelated private file references are denied before any bytes or destinati
     await getEveCopyOperation(ownerId, f.input.operationId)
   ).toBeUndefined();
 });
+/* oxlint-enable id-length, oxc/no-async-await */
 
+/* oxlint-disable id-length, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * id-length (#506): test("uncertain storage writes retry persisted keys without taking another snapshot o uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-magic-numbers (#517): test("uncertain storage writes retry persisted keys without taking another snapshot o uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("uncertain storage writes retry persisted keys without taking another snapshot o sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("uncertain storage writes retry persisted keys without taking another snapshot o handles optional operation?.conversation.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): test("uncertain storage writes retry persisted keys without taking another snapshot o copies or separates ...f.input while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test("uncertain storage writes retry persisted keys without taking another snapshot o accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("uncertain storage writes retry persisted keys without taking another snapshot o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("uncertain storage writes retry persisted keys without taking another snapshot or making a second copy", async () => {
   const f = await fixture();
   mocks.upload.mockImplementationOnce(
@@ -397,7 +471,14 @@ test("uncertain storage writes retry persisted keys without taking another snaps
     )
   ).rejects.toThrow("different source or model");
 });
+/* oxlint-enable id-length, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
+/* oxlint-disable id-length, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+ * id-length (#506): test("an unavailable native lookup leaves acceptance recoverable and never blindly di uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-magic-numbers (#517): test("an unavailable native lookup leaves acceptance recoverable and never blindly di uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("an unavailable native lookup leaves acceptance recoverable and never blindly di sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("an unavailable native lookup leaves acceptance recoverable and never blindly di handles optional (await getEveCopyOperation(ownerId, f.input.operationId))?.copy.phase without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ */
 test("an unavailable native lookup leaves acceptance recoverable and never blindly dispatches", async () => {
   const f = await fixture();
   mocks.request.mockResolvedValue(
@@ -412,7 +493,15 @@ test("an unavailable native lookup leaves acceptance recoverable and never blind
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(mocks.native.size).toBe(0);
 });
+/* oxlint-enable id-length, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
 
+/* oxlint-disable id-length, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * id-length (#506): test("concurrent requests converge on the persisted allocation and one native copy") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-magic-numbers (#517): test("concurrent requests converge on the persisted allocation and one native copy") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("concurrent requests converge on the persisted allocation and one native copy") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("concurrent requests converge on the persisted allocation and one native copy") accepts attempt; call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("concurrent requests converge on the persisted allocation and one native copy") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("concurrent requests converge on the persisted allocation and one native copy", async () => {
   const f = await fixture();
   const attempts = await Promise.allSettled(
@@ -439,7 +528,17 @@ test("concurrent requests converge on the persisted allocation and one native co
     )
   ).toHaveLength(1);
 });
+/* oxlint-enable id-length, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
+/* oxlint-disable id-length, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+ * id-length (#506): test("revocation before acceptance purges only the rejected destination and keeps a r uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * max-statements (#512): test("revocation before acceptance purges only the rejected destination and keeps a r keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("revocation before acceptance purges only the rejected destination and keeps a r uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("revocation before acceptance purges only the rejected destination and keeps a r sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("revocation before acceptance purges only the rejected destination and keeps a r accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("revocation before acceptance purges only the rejected destination and keeps a r preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * unicorn/no-null (#570): test("revocation before acceptance purges only the rejected destination and keeps a r preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("revocation before acceptance purges only the rejected destination and keeps a replay tombstone", async () => {
   const f = await fixture();
   mocks.upload.mockImplementationOnce(
@@ -472,7 +571,17 @@ test("revocation before acceptance purges only the rejected destination and keep
   ).rejects.toThrow();
   expect(mocks.source).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable id-length, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
+/* oxlint-disable id-length, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * id-length (#506): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * max-statements (#512): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure handles optional (await getEveCopyOperation(ownerId, f.input.operationId))?.copy.phase without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure", async () => {
   const f = await fixture();
   mocks.upload.mockImplementationOnce(
@@ -506,7 +615,12 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
   expect(mocks.source).toHaveBeenCalledTimes(1);
   expect(mocks.files.size).toBe(1);
 });
+/* oxlint-enable id-length, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
+/* oxlint-disable id-length, oxc/no-async-await --
+ * id-length (#506): test("deletion of an unwritten source file rejects preparation before another storage uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * oxc/no-async-await (#540): test("deletion of an unwritten source file rejects preparation before another storage sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("deletion of an unwritten source file rejects preparation before another storage read", async () => {
   const f = await fixture();
   mocks.upload.mockRejectedValueOnce(new Error("Interrupted preparation"));
@@ -529,7 +643,13 @@ test("deletion of an unwritten source file rejects preparation before another st
   });
   expect(mocks.request).not.toHaveBeenCalled();
 });
+/* oxlint-enable id-length, oxc/no-async-await */
 
+/* oxlint-disable id-length, no-undefined, oxc/no-async-await --
+ * id-length (#506): test("a definitive model rejection tombstones the operation but transient catalog fai uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-undefined (#519): test("a definitive model rejection tombstones the operation but transient catalog fai uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test("a definitive model rejection tombstones the operation but transient catalog fai sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("a definitive model rejection tombstones the operation but transient catalog failures remain retryable", async () => {
   const f = await fixture();
   mocks.model.mockRejectedValueOnce(new Error("Catalog unavailable"));
@@ -553,3 +673,6 @@ test("a definitive model rejection tombstones the operation but transient catalo
   ).rejects.toThrow();
   expect(mocks.source).not.toHaveBeenCalled();
 });
+/* oxlint-enable id-length, no-undefined, oxc/no-async-await */
+
+/* oxlint-disable max-lines -- #509: This eve-save-copy.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

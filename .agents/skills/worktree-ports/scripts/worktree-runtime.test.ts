@@ -20,6 +20,9 @@ const config = {
   url: "http://localhost:{port}",
 } satisfies WorktreeEnvConfig;
 
+/* oxlint-disable eslint/max-lines-per-function -- resolveWorktreeRuntime: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
+/* oxlint-disable eslint/no-magic-numbers -- resolveWorktreeRuntime: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
+/* oxlint-disable oxc/no-rest-spread-properties -- resolveWorktreeRuntime: The scenario copies fixture inputs so later assertions retain their original values. */
 describe("resolveWorktreeRuntime", () => {
   it("assigns stable app offsets within slot 6", () => {
     expect(resolveWorktreeRuntime(config, { CHATJS_DEV_SLOT: "6" })).toEqual({
@@ -124,3 +127,6 @@ describe("resolveWorktreeRuntime", () => {
     ).toThrow("url must not reference other apps");
   });
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-lines-per-function */

@@ -1,11 +1,20 @@
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { execFileSync } from "node:child_process";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { PackageManager } from "../types";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 
 type DependencyMap = Record<string, string>;
 type ScriptMap = Record<string, string>;
 
+/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
 type PackageJson = {
   type?: "module" | "commonjs";
   packageManager?: string;
@@ -14,6 +23,7 @@ type PackageJson = {
   devDependencies?: DependencyMap;
   overrides?: Record<string, unknown>;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 
 const ESBUILD_VERSION = "^0.28.0";
 const BETTER_AUTH_PACKAGES = [
@@ -24,6 +34,9 @@ const BETTER_AUTH_PACKAGES = [
 
 const toExactVersion = (range: string): string => range.replace(/^[~^]/u, "");
 
+/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const resolveBetterAuthVersion = (packageJson: PackageJson): string | null => {
   for (const dependencyGroup of [
     packageJson.dependencies,
@@ -43,7 +56,11 @@ const resolveBetterAuthVersion = (packageJson: PackageJson): string | null => {
 
   return null;
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-continue */
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const pinBetterAuthVersions = (
   dependencyGroup: DependencyMap | undefined,
   version: string
@@ -58,7 +75,10 @@ const pinBetterAuthVersions = (
     }
   }
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
@@ -87,7 +107,11 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts["ai:devtools"] = "npx @ai-sdk/devtools";
   scripts["fetch:models"] = "tsx scripts/fetch-models.ts && oxfmt --write .";
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const normalizeElectronScripts = (scripts: ScriptMap): void => {
   const prebuild =
     "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
@@ -119,7 +143,10 @@ const normalizeElectronScripts = (scripts: ScriptMap): void => {
   delete scripts["publish:mac"];
   delete scripts["publish:win"];
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const normalizeElectronDevDependencies = (
   devDependencies: DependencyMap | undefined,
   tsxVersion?: string
@@ -129,11 +156,22 @@ const normalizeElectronDevDependencies = (
   }
 
   devDependencies.esbuild = ESBUILD_VERSION;
-  if (tsxVersion) {
+  if (typeof tsxVersion === "string" && tsxVersion !== "") {
     devDependencies.tsx = tsxVersion;
   }
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const normalizeScaffoldedPackageJson = (
   packageJson: PackageJson,
   options?: {
@@ -145,7 +183,7 @@ export const normalizeScaffoldedPackageJson = (
 ): PackageJson => {
   const betterAuthVersion = resolveBetterAuthVersion(packageJson);
 
-  if (betterAuthVersion) {
+  if (typeof betterAuthVersion === "string" && betterAuthVersion !== "") {
     pinBetterAuthVersions(packageJson.dependencies, betterAuthVersion);
     pinBetterAuthVersions(packageJson.devDependencies, betterAuthVersion);
     packageJson.overrides = {
@@ -196,3 +234,13 @@ export const normalizeScaffoldedPackageJson = (
 
   return packageJson;
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable node/no-sync */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export */

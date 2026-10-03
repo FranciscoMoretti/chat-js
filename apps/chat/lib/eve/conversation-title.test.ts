@@ -1,3 +1,6 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import {
@@ -6,6 +9,7 @@ import {
   generateEveConversationTitleResult,
   persistGeneratedEveConversationTitle,
 } from "./conversation-title";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   generate: vi.fn(),
@@ -26,9 +30,13 @@ vi.mock("@/lib/db/eve-queries", () => ({
   replaceEveRootFallbackTitle: mocks.replace,
   settleEveRootFallbackTitle: mocks.settle,
 }));
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("@/lib/logger", () => ({
   createModuleLogger: () => ({ warn: vi.fn() }),
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -36,6 +44,9 @@ beforeEach(() => {
   mocks.pending.mockResolvedValue(true);
 });
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("uses the configured ChatJS title model for a concise title") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("uses the configured ChatJS title model for a concise title", async () => {
   mocks.generate.mockResolvedValue({ text: "Plan A Weekend In Lisbon" });
 
@@ -56,7 +67,11 @@ it("uses the configured ChatJS title model for a concise title", async () => {
     })
   );
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("keeps a compact fallback when the provider is unavailable") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("keeps a compact fallback when the provider is unavailable", async () => {
   mocks.generate.mockRejectedValue(new Error("provider unavailable"));
   const message =
@@ -74,7 +89,11 @@ it("keeps a compact fallback when the provider is unavailable", async () => {
     title: eveConversationTitleFallback(message),
   });
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("normalizes overlong provider output before persisting it") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("normalizes overlong provider output before persisting it", async () => {
   mocks.generate.mockResolvedValue({
     text: '"A Very Long Generated Title That Cannot Fit In The Conversation List"',
@@ -85,7 +104,11 @@ it("normalizes overlong provider output before persisting it", async () => {
   expect(title.length).toBeLessThanOrEqual(EVE_TITLE_MAX_LENGTH);
   expect(title).not.toMatch(/["']|[,:;.?!]$/u);
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("writes only a successful generated title through the canonical root update") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("writes only a successful generated title through the canonical root update", async () => {
   mocks.generate.mockResolvedValue({ text: "Compare Server Rendering" });
 
@@ -106,7 +129,11 @@ it("writes only a successful generated title through the canonical root update",
     "Compare Server Rendering"
   );
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("does not mark a fallback as generated when the provider fails") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("does not mark a fallback as generated when the provider fails", async () => {
   mocks.generate.mockRejectedValue(new Error("provider unavailable"));
 
@@ -123,7 +150,11 @@ it("does not mark a fallback as generated when the provider fails", async () => 
     "A message that stays a fallback title"
   );
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("contains persistence failures after a title has been generated") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("contains persistence failures after a title has been generated", async () => {
   mocks.generate.mockResolvedValue({ text: "Generated Title" });
   mocks.replace.mockRejectedValue(new Error("database unavailable"));
@@ -136,7 +167,11 @@ it("contains persistence failures after a title has been generated", async () =>
     })
   ).resolves.toEqual({ source: "generated", title: "Generated Title" });
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("does not spend a title generation after the canonical title settles") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("does not spend a title generation after the canonical title settles", async () => {
   mocks.pending.mockResolvedValue(false);
 
@@ -150,3 +185,4 @@ it("does not spend a title generation after the canonical title settles", async 
   expect(mocks.replace).not.toHaveBeenCalled();
   expect(mocks.settle).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

@@ -1,3 +1,6 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { auth } from "@/lib/auth";
 import { getEveCreation } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
@@ -5,9 +8,18 @@ import { eveCopyInput } from "@/lib/eve/copy-input";
 import { EveCopyNotReadyError } from "@/lib/eve/copy-transcript";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { saveEveCopyOperation } from "@/lib/eve/save-copy-operation";
+/* oxlint-enable sort-imports */
 
 const headers = { "cache-control": "no-store" };
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+ * max-statements (#512): readCopyBody keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): readCopyBody uses 2048 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): readCopyBody sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): readCopyBody handles optional request.body?.getReader() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): readCopyBody accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * unicorn/no-null (#570): readCopyBody preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 const readCopyBody = async (request: Request): Promise<unknown> => {
   const reader = request.body?.getReader();
   if (!reader) {
@@ -40,8 +52,23 @@ const readCopyBody = async (request: Request): Promise<unknown> => {
     reader.releaseLock();
   }
 };
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-export const POST = async (request: Request) => {
+/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * import/no-named-export (#527): Preserve the named POST API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): POST remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * init-declarations (#507): POST assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): POST uses 409, 503 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): POST derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): POST uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): POST sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): POST handles optional session?.user; existing?.creationKind without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): POST accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of rejected; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
+export const POST = async (request: Request): Promise<Response> => {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user) {
     return new Response(null, { headers, status: 401 });
@@ -91,3 +118,4 @@ export const POST = async (request: Request) => {
     );
   }
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

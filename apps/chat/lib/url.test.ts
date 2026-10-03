@@ -32,13 +32,16 @@ it("does not use the preview branch hostname outside previews", () => {
 
 afterEach(() => vi.unstubAllEnvs());
 
-const localPrefix = () =>
+const localPrefix = (): string =>
   authSessionOptions({
     baseUrl: getBaseUrl(),
     databaseUrl: "postgres://dev:secret@localhost:5432/chat",
     development: true,
   }).advanced.cookiePrefix;
 
+/* oxlint-disable no-undefined --
+ * no-undefined (#519): it("isolates direct Next starts using the actual listener port without APP_URL") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
 it("isolates direct Next starts using the actual listener port without APP_URL", () => {
   mocks.env.VERCEL_ENV = "";
   mocks.env.VERCEL_URL = "";
@@ -51,3 +54,4 @@ it("isolates direct Next starts using the actual listener port without APP_URL",
   vi.stubEnv("PORT", undefined);
   expect(getBaseUrl()).toBe("http://localhost:3000");
 });
+/* oxlint-enable no-undefined */

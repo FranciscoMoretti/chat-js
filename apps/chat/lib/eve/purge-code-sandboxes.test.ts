@@ -13,12 +13,18 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../tools/chatjs/tools", () => ({
   tools: { codeExecution: {} },
 }));
+/* oxlint-disable no-ternary, no-undefined, typescript/explicit-function-return-type --
+ * no-ternary (#518): vi.mock("../ai/installed-tool-capabilities") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): vi.mock("../ai/installed-tool-capabilities") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("../ai/installed-tool-capabilities")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("../ai/installed-tool-capabilities", () => ({
   getCodeSandboxCleanup: () =>
     mocks.capabilityInstalled
       ? { createCleanupSession: mocks.createCleanupSession }
       : undefined,
 }));
+/* oxlint-enable no-ternary, no-undefined, typescript/explicit-function-return-type */
 vi.mock("../db/eve-code-sandboxes", () => ({
   listEveCodeSandboxesForDeletion: mocks.list,
   recordEveCodeSandboxDeletion: mocks.record,
@@ -39,6 +45,9 @@ const resource = {
   sessionId: "session",
 };
 
+/* oxlint-disable no-undefined --
+ * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.capabilityInstalled = true;
@@ -47,24 +56,37 @@ beforeEach(() => {
     provider,
   });
   mocks.list.mockResolvedValue([resource]);
-  // eslint-disable-next-line unicorn/no-useless-undefined -- these mocks resolve void-returning APIs.
+
   mocks.record.mockResolvedValue(undefined);
-  // eslint-disable-next-line unicorn/no-useless-undefined -- these mocks resolve void-returning APIs.
+
   mocks.cleanup.mockResolvedValue(undefined);
 });
+/* oxlint-enable no-undefined */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("cleans confirmed ownership and releases its durable record") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("cleans confirmed ownership and releases its durable record", async () => {
   await purgeEveFamilyCodeSandboxes("owner", "root");
   expect(mocks.cleanup).toHaveBeenCalledWith(name);
   expect(mocks.record).toHaveBeenCalledWith("owner", "conversation", name);
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("a retry accepts provider-confirmed absence") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("a retry accepts provider-confirmed absence", async () => {
   await purgeEveFamilyCodeSandboxes("owner", "root");
   expect(mocks.cleanup).toHaveBeenCalledOnce();
   expect(mocks.record).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
+ * oxc/no-async-await (#540): test("unknown creation never uses absence to declare deletion complete") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test("unknown creation never uses absence to declare deletion complete") copies or separates ...resource while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 test("unknown creation never uses absence to declare deletion complete", async () => {
   mocks.list.mockResolvedValue([{ ...resource, creationConfirmed: false }]);
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -73,7 +95,11 @@ test("unknown creation never uses absence to declare deletion complete", async (
   expect(mocks.createCleanupSession).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("provider failures retain ownership") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("provider failures retain ownership", async () => {
   mocks.list.mockRejectedValueOnce(new Error("family is active"));
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -86,7 +112,12 @@ test("provider failures retain ownership", async () => {
   );
   expect(mocks.record).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
+ * oxc/no-async-await (#540): test("changed provider scope cannot release a resource") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test("changed provider scope cannot release a resource") copies or separates ...provider while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 test("changed provider scope cannot release a resource", async () => {
   mocks.createCleanupSession.mockReturnValue({
     deleteAndConfirmAbsent: mocks.cleanup,
@@ -98,7 +129,11 @@ test("changed provider scope cannot release a resource", async () => {
   expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("zero resources need no installed provider capability") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("zero resources need no installed provider capability", async () => {
   mocks.capabilityInstalled = false;
   mocks.list.mockResolvedValue([]);
@@ -106,7 +141,11 @@ test("zero resources need no installed provider capability", async () => {
     purgeEveFamilyCodeSandboxes("owner", "root")
   ).resolves.toBeUndefined();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("durable resources cannot be released without their provider capability") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("durable resources cannot be released without their provider capability", async () => {
   mocks.capabilityInstalled = false;
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -115,3 +154,4 @@ test("durable resources cannot be released without their provider capability", a
   expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

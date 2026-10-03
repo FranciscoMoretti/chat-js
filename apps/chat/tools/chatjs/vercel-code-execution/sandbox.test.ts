@@ -1,7 +1,14 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { getVercelOidcTokenSync } from "@vercel/oidc";
 import { APIError, Sandbox } from "@vercel/sandbox";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable no-undefined --
+ * no-undefined (#519): envMock uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
 const envMock: {
   VERCEL_PROJECT_ID: string | undefined;
   VERCEL_SANDBOX_RUNTIME: string | undefined;
@@ -17,14 +24,18 @@ const envMock: {
   VERCEL_TEAM_ID: undefined,
   VERCEL_TOKEN: undefined,
 };
+/* oxlint-enable no-undefined */
 
 vi.mock("@/lib/env", () => ({
   env: envMock,
 }));
 
-const jwt = (payload: unknown) =>
+const jwt = (payload: unknown): string =>
   `header.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.signature`;
 
+/* oxlint-disable no-undefined --
+ * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
 beforeEach(() => {
   vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
@@ -32,12 +43,16 @@ beforeEach(() => {
     envMock[key] = undefined;
   }
 });
+/* oxlint-enable no-undefined */
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): describe("getSandboxRuntime") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 describe("getSandboxRuntime", () => {
   it("uses Python defaults when no override is set", async () => {
     const { getSandboxRuntime } = await import("./execution-sandbox");
@@ -87,7 +102,14 @@ describe("getSandboxRuntime", () => {
     expect(getSandboxRuntime("javascript")).toBe("node22");
   });
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable max-lines-per-function, no-undefined, node/no-sync, oxc/no-async-await --
+ * max-lines-per-function (#510): describe("resolveSandboxAuth") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-undefined (#519): describe("resolveSandboxAuth") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * node/no-sync (#538): describe("resolveSandboxAuth") uses getVercelOidcTokenSync() within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+ * oxc/no-async-await (#540): describe("resolveSandboxAuth") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 describe("resolveSandboxAuth", () => {
   it("resolves request-scoped OIDC credentials without an environment token", async () => {
     const token = jwt({ owner_id: "team", project_id: "project" });
@@ -200,7 +222,13 @@ describe("resolveSandboxAuth", () => {
     });
   });
 });
+/* oxlint-enable max-lines-per-function, no-undefined, node/no-sync, oxc/no-async-await */
 
+/* oxlint-disable max-statements, oxc/no-async-await, typescript/promise-function-async --
+ * max-statements (#512): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/promise-function-async (#606): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<never>();
@@ -230,7 +258,11 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
     signal: expect.any(AbortSignal),
   });
 });
+/* oxlint-enable max-statements, oxc/no-async-await, typescript/promise-function-async */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("creates disposable sandboxes rather than enabling the SDK persistence default") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("creates disposable sandboxes rather than enabling the SDK persistence default", async () => {
   const { createSandbox } = await import("./execution-sandbox");
   const create = vi
@@ -245,7 +277,13 @@ it("creates disposable sandboxes rather than enabling the SDK persistence defaul
     create.mockRestore();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable max-statements, oxc/no-async-await, typescript/promise-function-async --
+ * max-statements (#512): it("does not report successful cleanup until deletion has completed") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): it("does not report successful cleanup until deletion has completed") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/promise-function-async (#606): it("does not report successful cleanup until deletion has completed") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 it("does not report successful cleanup until deletion has completed", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<undefined>();
@@ -259,7 +297,17 @@ it("does not report successful cleanup until deletion has completed", async () =
   gate.reject(new Error("delete unavailable"));
   await rejected;
 });
+/* oxlint-enable max-statements, oxc/no-async-await, typescript/promise-function-async */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+ * max-lines-per-function (#510): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): describe("codeSandboxCleanupCapability") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): describe("codeSandboxCleanupCapability") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): describe("codeSandboxCleanupCapability") accepts identity; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): describe("codeSandboxCleanupCapability") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * unicorn/no-null (#570): describe("codeSandboxCleanupCapability") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 describe("codeSandboxCleanupCapability", () => {
   it("deletes an exact disposable sandbox and confirms provider absence", async () => {
     Object.assign(envMock, {
@@ -333,3 +381,6 @@ describe("codeSandboxCleanupCapability", () => {
     }
   });
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+
+/* oxlint-disable max-lines -- #509: This sandbox.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

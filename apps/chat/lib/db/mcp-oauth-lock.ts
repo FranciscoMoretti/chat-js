@@ -1,17 +1,34 @@
 import postgres from "postgres";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { databaseConnection } from "@/lib/db/connection";
+/* oxlint-enable eslint/sort-imports */
 import { env } from "@/lib/env";
 
 const OAUTH_REFRESH_LOCK_TIMEOUT = "40s";
 const connectionConfig = databaseConnection(env);
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const lockPool = postgres(connectionConfig.url, {
   ...connectionConfig.options,
   idle_timeout: 20,
   max: Math.min(connectionConfig.options.max ?? 2, 2),
   prepare: false,
 });
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Bound refresh lock waiters separately from the app pool used by the refresh callback. */
 export const withMcpOAuthRefreshLock = async <T>(
   connectorId: string,
@@ -22,7 +39,7 @@ export const withMcpOAuthRefreshLock = async <T>(
   const aborted = Promise.withResolvers<never>();
   let refreshStarted = false;
   let cancelQuery: (() => void) | undefined;
-  const cancel = () => {
+  const cancel = (): void => {
     cancelQuery?.();
     if (!refreshStarted) {
       aborted.reject(signal?.reason);
@@ -35,7 +52,7 @@ export const withMcpOAuthRefreshLock = async <T>(
       await transaction`select set_config('lock_timeout', ${OAUTH_REFRESH_LOCK_TIMEOUT}, true)`;
       signal?.throwIfAborted();
       const lock = transaction`select pg_advisory_xact_lock(hashtextextended(${`mcp-oauth-refresh:${connectorId}`}, 0))`;
-      cancelQuery = () => lock.cancel();
+      cancelQuery = (): void => lock.cancel();
       try {
         await lock;
       } finally {
@@ -52,3 +69,14 @@ export const withMcpOAuthRefreshLock = async <T>(
     signal?.removeEventListener("abort", cancel);
   }
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable jsdoc/require-param */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable jsdoc/require-returns */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export */

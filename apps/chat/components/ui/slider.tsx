@@ -1,9 +1,17 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
+/* oxlint-disable import/no-namespace -- @radix-ui/react-slider import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
 
 import * as SliderPrimitive from "@radix-ui/react-slider";
+/* oxlint-enable import/no-namespace */
+/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
 import * as React from "react";
+/* oxlint-enable import/no-namespace */
 
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
+/* oxlint-disable id-length, max-lines-per-function, no-magic-numbers, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- Slider: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Slider = ({
   className,
@@ -13,7 +21,7 @@ const Slider = ({
   max = 100,
   ...props
 }: React.ComponentProps<typeof SliderPrimitive.Root>) => {
-  const _values = React.useMemo(() => {
+  const sliderValues = React.useMemo(() => {
     if (Array.isArray(value)) {
       return value;
     }
@@ -49,15 +57,21 @@ const Slider = ({
           data-slot="slider-range"
         />
       </SliderPrimitive.Track>
-      {Array.from({ length: _values.length }, (_, index) => (
-        <SliderPrimitive.Thumb
-          className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
-          data-slot="slider-thumb"
-          key={index}
-        />
-      ))}
+      {Array.from(
+        { length: sliderValues.length },
+        (_, index): React.JSX.Element => (
+          <SliderPrimitive.Thumb
+            className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+            data-slot="slider-thumb"
+            key={index}
+          />
+        )
+      )}
     </SliderPrimitive.Root>
   );
 };
+/* oxlint-enable id-length, max-lines-per-function, no-magic-numbers, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export, import/prefer-default-export -- slider.tsx exports: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration. */
 
 export { Slider };
+/* oxlint-enable import/no-named-export, import/prefer-default-export */

@@ -1,14 +1,23 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
+/* oxlint-enable sort-imports */
 
 const receiptSchema = z.object({
   runIds: z.array(z.string()),
   streamIds: z.array(z.string()),
 });
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): assertPayloadPurgeReady uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): assertPayloadPurgeReady sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): assertPayloadPurgeReady accepts query: TransactionSql; inventory: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 const assertPayloadPurgeReady = async (
   query: TransactionSql,
   taskIdentifier: string,
@@ -16,7 +25,7 @@ const assertPayloadPurgeReady = async (
     runIds: string[];
     streamIds: string[];
   }
-) => {
+): Promise<void> => {
   const resources = [
     ...inventory.runIds.map((id) => `run:${id}`),
     ...inventory.streamIds.map((id) => `stream:${id}`),
@@ -39,7 +48,22 @@ const assertPayloadPurgeReady = async (
     throw new Error("Clear queued payloads before purging native runs.");
   }
 };
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * import/no-named-export (#527): Preserve the named purgeEvePostgresSessionPayloads API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): purgeEvePostgresSessionPayloads remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-param (#534): purgeEvePostgresSessionPayloads's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): purgeEvePostgresSessionPayloads's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): purgeEvePostgresSessionPayloads keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): purgeEvePostgresSessionPayloads keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): purgeEvePostgresSessionPayloads uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): purgeEvePostgresSessionPayloads sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep purgeEvePostgresSessionPayloads's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep purgeEvePostgresSessionPayloads's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): purgeEvePostgresSessionPayloads accepts connection: Sql; input: { sessionId: string; taskIdentifier: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): purgeEvePostgresSessionPayloads intentionally keeps the existing falsy-value behavior of saved; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /**
  * Erase the pinned provider's fenced payload tables for an authorized session.
  * Retains only resource identities as an atomic retry receipt. Accounting and
@@ -106,3 +130,4 @@ export const purgeEvePostgresSessionPayloads = async (
     }
   );
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
