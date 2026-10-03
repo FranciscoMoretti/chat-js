@@ -51,7 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- PromptInputHoverCard: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types -- PromptInputHoverCard: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const PromptInputHoverCard = ({
   openDelay = 0,
@@ -60,9 +60,9 @@ export const PromptInputHoverCard = ({
 }: PromptInputHoverCardProps): React.JSX.Element => (
   <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
 );
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHoverCardContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHoverCardContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const PromptInputHoverCardContent = ({
   align = "start",
@@ -70,7 +70,7 @@ export const PromptInputHoverCardContent = ({
 }: PromptInputHoverCardContentProps): React.JSX.Element => (
   <HoverCardContent align={align} {...props} />
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -80,7 +80,7 @@ export type PromptInputProps = HTMLAttributes<HTMLFormElement> & {
 };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInput: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInput: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const PromptInput = ({
   className,
@@ -94,7 +94,7 @@ export const PromptInput = ({
     </InputGroup>
   </form>
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputHeaderProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -104,7 +104,7 @@ export type PromptInputHeaderProps = Omit<
 >;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHeader: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputHeaderProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHeader: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputHeaderProps). */
 
 export const PromptInputHeader = ({
   className,
@@ -116,7 +116,7 @@ export const PromptInputHeader = ({
     {...props}
   />
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputFooterProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -126,7 +126,7 @@ export type PromptInputFooterProps = Omit<
 >;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputFooter: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputFooterProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputFooter: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputFooterProps). */
 
 export const PromptInputFooter = ({
   className,
@@ -138,14 +138,14 @@ export const PromptInputFooter = ({
     {...props}
   />
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputToolsProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputToolsProps = HTMLAttributes<HTMLDivElement>;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTools: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputToolsProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTools: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputToolsProps). */
 
 export const PromptInputTools = ({
   className,
@@ -153,14 +153,14 @@ export const PromptInputTools = ({
 }: PromptInputToolsProps): React.JSX.Element => (
   <div className={cn("flex items-center gap-1", className)} {...props} />
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputButtonProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputButtonProps = ComponentProps<typeof InputGroupButton>;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- PromptInputButton: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- PromptInputButton: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const PromptInputButton = ({
   variant = "ghost",
@@ -182,25 +182,25 @@ export const PromptInputButton = ({
     />
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputActionMenuProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputActionMenuProps = ComponentProps<typeof DropdownMenu>;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenu: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputActionMenuProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenu: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputActionMenuProps). */
 export const PromptInputActionMenu = (
   props: PromptInputActionMenuProps
 ): React.JSX.Element => <DropdownMenu {...props} />;
-/* oxlint-enable import/exports-last, import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputActionMenuTriggerProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputActionMenuTriggerProps = PromptInputButtonProps;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuTrigger: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuTrigger: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const PromptInputActionMenuTrigger = ({
   className,
@@ -213,7 +213,7 @@ export const PromptInputActionMenuTrigger = ({
     </PromptInputButton>
   </DropdownMenuTrigger>
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputActionMenuContentProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -222,14 +222,14 @@ export type PromptInputActionMenuContentProps = ComponentProps<
 >;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuContentProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuContentProps). */
 export const PromptInputActionMenuContent = ({
   className,
   ...props
 }: PromptInputActionMenuContentProps): React.JSX.Element => (
   <DropdownMenuContent align="start" className={cn(className)} {...props} />
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputActionMenuItemProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -238,14 +238,14 @@ export type PromptInputActionMenuItemProps = ComponentProps<
 >;
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuItem: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuItemProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuItem: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuItemProps). */
 export const PromptInputActionMenuItem = ({
   className,
   ...props
 }: PromptInputActionMenuItemProps): React.JSX.Element => (
   <DropdownMenuItem className={cn(className)} {...props} />
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/exports-last, import/group-exports -- PromptInputSubmitProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -257,7 +257,7 @@ export type PromptInputSubmitProps = ComponentProps<typeof InputGroupButton> & {
 };
 /* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- PromptInputSubmit: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- PromptInputSubmit: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const PromptInputSubmit = ({
   className,
@@ -290,7 +290,7 @@ export const PromptInputSubmit = ({
     </InputGroupButton>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SpeechRecognition: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including this: SpeechRecognition). */
 
@@ -353,7 +353,7 @@ export type PromptInputSpeechButtonProps = ComponentProps<
   onTranscriptionChange?: (text: string) => void;
 };
 /* oxlint-enable import/group-exports */
-/* oxlint-disable id-length, import/group-exports, max-lines-per-function, max-statements, no-console, no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PromptInputSpeechButton: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including window.SpeechRecognition); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable id-length, import/group-exports, max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PromptInputSpeechButton: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including window.SpeechRecognition); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const PromptInputSpeechButton = ({
   className,
@@ -457,18 +457,18 @@ export const PromptInputSpeechButton = ({
     </PromptInputButton>
   );
 };
-/* oxlint-enable id-length, import/group-exports, max-lines-per-function, max-statements, no-console, no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable id-length, import/group-exports, max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable import/group-exports -- PromptInputSelectProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputSelectProps = ComponentProps<typeof Select>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelect: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputSelectProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelect: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputSelectProps). */
 
 export const PromptInputSelect = (
   props: PromptInputSelectProps
 ): React.JSX.Element => <Select {...props} />;
-/* oxlint-enable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputSelectTriggerProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -476,7 +476,7 @@ export type PromptInputSelectTriggerProps = ComponentProps<
   typeof SelectTrigger
 >;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectTrigger: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectTriggerProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectTrigger: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectTriggerProps). */
 
 export const PromptInputSelectTrigger = ({
   className,
@@ -491,7 +491,7 @@ export const PromptInputSelectTrigger = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputSelectContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -499,7 +499,7 @@ export type PromptInputSelectContentProps = ComponentProps<
   typeof SelectContent
 >;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectContentProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectContentProps). */
 
 export const PromptInputSelectContent = ({
   className,
@@ -507,13 +507,13 @@ export const PromptInputSelectContent = ({
 }: PromptInputSelectContentProps): React.JSX.Element => (
   <SelectContent className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputSelectItemProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputSelectItemProps = ComponentProps<typeof SelectItem>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectItem: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectItemProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectItem: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectItemProps). */
 
 export const PromptInputSelectItem = ({
   className,
@@ -521,13 +521,13 @@ export const PromptInputSelectItem = ({
 }: PromptInputSelectItemProps): React.JSX.Element => (
   <SelectItem className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputSelectValueProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputSelectValueProps = ComponentProps<typeof SelectValue>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectValue: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectValueProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputSelectValue: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputSelectValueProps). */
 
 export const PromptInputSelectValue = ({
   className,
@@ -535,7 +535,7 @@ export const PromptInputSelectValue = ({
 }: PromptInputSelectValueProps): React.JSX.Element => (
   <SelectValue className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputHoverCardProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -548,12 +548,12 @@ export type PromptInputHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger
 >;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHoverCardTrigger: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputHoverCardTriggerProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHoverCardTrigger: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputHoverCardTriggerProps). */
 
 export const PromptInputHoverCardTrigger = (
   props: PromptInputHoverCardTriggerProps
 ): React.JSX.Element => <HoverCardTrigger {...props} />;
-/* oxlint-enable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputHoverCardContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -566,7 +566,7 @@ export type PromptInputHoverCardContentProps = ComponentProps<
 
 export type PromptInputTabsListProps = HTMLAttributes<HTMLDivElement>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabsList: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabsListProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabsList: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabsListProps). */
 
 export const PromptInputTabsList = ({
   className,
@@ -574,13 +574,13 @@ export const PromptInputTabsList = ({
 }: PromptInputTabsListProps): React.JSX.Element => (
   <div className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputTabProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputTabProps = HTMLAttributes<HTMLDivElement>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTab: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTab: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabProps). */
 
 export const PromptInputTab = ({
   className,
@@ -588,13 +588,13 @@ export const PromptInputTab = ({
 }: PromptInputTabProps): React.JSX.Element => (
   <div className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputTabLabelProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabLabel: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabLabelProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabLabel: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabLabelProps). */
 
 export const PromptInputTabLabel = ({
   className,
@@ -611,13 +611,13 @@ export const PromptInputTabLabel = ({
     />
   </>
 );
-/* oxlint-enable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputTabBodyProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabBody: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabBodyProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabBody: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabBodyProps). */
 
 export const PromptInputTabBody = ({
   className,
@@ -625,13 +625,13 @@ export const PromptInputTabBody = ({
 }: PromptInputTabBodyProps): React.JSX.Element => (
   <div className={cn("space-y-1", className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputTabItemProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputTabItemProps = HTMLAttributes<HTMLDivElement>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabItem: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabItemProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputTabItem: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputTabItemProps). */
 
 export const PromptInputTabItem = ({
   className,
@@ -645,13 +645,13 @@ export const PromptInputTabItem = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputCommandProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputCommandProps = ComponentProps<typeof Command>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommand: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommand: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandProps). */
 
 export const PromptInputCommand = ({
   className,
@@ -659,13 +659,13 @@ export const PromptInputCommand = ({
 }: PromptInputCommandProps): React.JSX.Element => (
   <Command className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputCommandInputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputCommandInputProps = ComponentProps<typeof CommandInput>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandInput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandInputProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandInput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandInputProps). */
 
 export const PromptInputCommandInput = ({
   className,
@@ -673,13 +673,13 @@ export const PromptInputCommandInput = ({
 }: PromptInputCommandInputProps): React.JSX.Element => (
   <CommandInput className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputCommandListProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputCommandListProps = ComponentProps<typeof CommandList>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandList: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandListProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandList: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandListProps). */
 
 export const PromptInputCommandList = ({
   className,
@@ -687,13 +687,13 @@ export const PromptInputCommandList = ({
 }: PromptInputCommandListProps): React.JSX.Element => (
   <CommandList className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputCommandEmptyProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputCommandEmptyProps = ComponentProps<typeof CommandEmpty>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandEmpty: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandEmptyProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandEmpty: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandEmptyProps). */
 
 export const PromptInputCommandEmpty = ({
   className,
@@ -701,13 +701,13 @@ export const PromptInputCommandEmpty = ({
 }: PromptInputCommandEmptyProps): React.JSX.Element => (
   <CommandEmpty className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputCommandGroupProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputCommandGroupProps = ComponentProps<typeof CommandGroup>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandGroup: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandGroupProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandGroup: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandGroupProps). */
 
 export const PromptInputCommandGroup = ({
   className,
@@ -715,13 +715,13 @@ export const PromptInputCommandGroup = ({
 }: PromptInputCommandGroupProps): React.JSX.Element => (
   <CommandGroup className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputCommandItemProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type PromptInputCommandItemProps = ComponentProps<typeof CommandItem>;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandItem: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandItemProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandItem: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandItemProps). */
 
 export const PromptInputCommandItem = ({
   className,
@@ -729,7 +729,7 @@ export const PromptInputCommandItem = ({
 }: PromptInputCommandItemProps): React.JSX.Element => (
   <CommandItem className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports -- PromptInputCommandSeparatorProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
@@ -737,7 +737,7 @@ export type PromptInputCommandSeparatorProps = ComponentProps<
   typeof CommandSeparator
 >;
 /* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandSeparator: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandSeparatorProps). */
+/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputCommandSeparator: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputCommandSeparatorProps). */
 
 export const PromptInputCommandSeparator = ({
   className,
@@ -745,6 +745,6 @@ export const PromptInputCommandSeparator = ({
 }: PromptInputCommandSeparatorProps): React.JSX.Element => (
   <CommandSeparator className={cn(className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- prompt-input keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

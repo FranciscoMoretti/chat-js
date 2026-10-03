@@ -401,10 +401,8 @@ ipcMain.handle("better-auth:getUser", async () => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- getAppAssetPath: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const getAppAssetPath = (...segments: string[]): string =>
+const getAppAssetPath = (...segments: readonly string[]): string =>
   path.join(app.getAppPath(), ...segments);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- authenticateFromDeepLink: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable unicorn/no-null -- authenticateFromDeepLink: The SDK/wire/OS contract uses null as an explicit absence value. */

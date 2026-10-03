@@ -30,7 +30,7 @@ const toggleVariants = cva(
     },
   }
 );
-/* oxlint-disable react/forbid-component-props, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Toggle: react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Toggle: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Toggle = ({
   className,
@@ -45,7 +45,7 @@ const Toggle = ({
     {...props}
   />
 );
-/* oxlint-enable react/forbid-component-props, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/only-export-components -- toggle.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Toggle, toggleVariants };

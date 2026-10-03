@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import React from "react";
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ThemeToggle: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
-/* oxlint-disable react/forbid-component-props -- ThemeToggle: className/style are the deliberate styling interface of these UI/layout primitives. */
+
 export const ThemeToggle = (): React.JSX.Element => {
   const { resolvedTheme, setTheme } = useTheme();
 
@@ -23,5 +23,5 @@ export const ThemeToggle = (): React.JSX.Element => {
     </button>
   );
 };
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */

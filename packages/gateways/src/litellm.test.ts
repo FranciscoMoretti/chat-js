@@ -19,10 +19,9 @@ afterEach((): void => {
 });
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-const mockModelsFetch = () => {
-  const fetchMock = vi.fn(() =>
+const mockModelsFetch = (): ReturnType<typeof vi.fn<typeof fetch>> => {
+  const fetchMock = vi.fn<typeof fetch>((): Promise<Response> =>
     Promise.resolve(
       Response.json({
         data: [
@@ -40,23 +39,14 @@ const mockModelsFetch = () => {
   return fetchMock;
 };
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const getFetchCall = (fetchMock: ReturnType<typeof mockModelsFetch>) =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-  fetchMock.mock.calls[0] as unknown as [
-    string,
-    {
-      headers: Record<string, string>;
-      next?: { revalidate: number };
-    },
-  ];
+const getFetchCall = (
+  fetchMock: ReturnType<typeof mockModelsFetch>
+): Parameters<typeof fetch> => fetchMock.mock.calls[0];
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
@@ -107,7 +97,7 @@ describe("LiteLLMGateway", (): void => {
         "Content-Type": "application/json",
       },
     });
-    expect(init.headers.Authorization).toBeUndefined();
+    expect(new Headers(init?.headers).has("Authorization")).toBe(false);
   });
 
   it("does not duplicate /v1 when the configured base URL includes it", async (): Promise<void> => {

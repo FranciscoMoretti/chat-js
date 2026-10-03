@@ -20,8 +20,7 @@ const COMMUNITY_LINKS = [
 ];
 
 /* oxlint-disable eslint/max-lines-per-function -- Footer: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable react/jsx-no-literals -- Footer: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
-/* oxlint-disable react/forbid-component-props -- Footer: className/style are the deliberate styling interface of these UI/layout primitives. */
+
 /* oxlint-disable react/jsx-max-depth -- Footer: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Footer: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const Footer = (): React.JSX.Element => (
@@ -117,6 +116,5 @@ export const Footer = (): React.JSX.Element => (
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/forbid-component-props */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/max-lines-per-function */

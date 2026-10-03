@@ -9,7 +9,7 @@ import { SidebarToggle } from "@/components/sidebar-toggle";
 import { useSidebar } from "@/components/ui/sidebar";
 import { config } from "@/lib/config";
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- SidebarTopRow: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- SidebarTopRow: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 export const SidebarTopRow = () => {
   const { isMobile, openMobile, setOpenMobile, state, toggleSidebar } =
@@ -59,4 +59,4 @@ export const SidebarTopRow = () => {
     </div>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

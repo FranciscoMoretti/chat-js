@@ -8,7 +8,7 @@ import { InternalLink } from "@/components/internal-link";
 import { cn } from "@/lib/utils";
 
 type ActionContainerProps = React.ComponentProps<"div">;
-/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- ActionContainer: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerProps). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ActionContainer: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerProps). */
 
 const ActionContainer = ({
   className,
@@ -22,10 +22,10 @@ const ActionContainer = ({
     {...props}
   />
 );
-/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ActionContainerLinkProps = React.ComponentProps<typeof InternalLink>;
-/* oxlint-disable no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerLink: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerLink: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ActionContainerLink = ({
   className,
@@ -38,10 +38,10 @@ const ActionContainerLink = ({
     {...props}
   />
 );
-/* oxlint-enable no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ActionContainerTopProps = React.ComponentProps<"div">;
-/* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerTop: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerTopProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerTop: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerTopProps). */
 
 const ActionContainerTop = ({
   className,
@@ -49,6 +49,6 @@ const ActionContainerTop = ({
 }: ActionContainerTopProps): React.JSX.Element => (
   <div className={cn("z-20", className)} {...props} />
 );
-/* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { ActionContainer, ActionContainerLink, ActionContainerTop };

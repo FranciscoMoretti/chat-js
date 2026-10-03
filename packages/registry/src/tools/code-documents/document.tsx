@@ -17,7 +17,6 @@ const CodeEditor = dynamic(() => import("./editor").then((m) => m.CodeEditor), {
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/id-length */
 
-/* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const documentUi: DocumentUi = {
@@ -32,4 +31,3 @@ export const documentUi: DocumentUi = {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-props-no-spreading */
-/* oxlint-enable react/forbid-component-props */

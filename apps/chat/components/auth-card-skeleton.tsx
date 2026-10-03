@@ -16,7 +16,7 @@ interface AuthCardSkeletonProps {
   cardClassName?: string;
   variant?: "form" | "device";
 }
-/* oxlint-disable react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- AuthCardSkeleton: ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- AuthCardSkeleton: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const AuthCardSkeleton = ({
   title,
@@ -51,4 +51,4 @@ export const AuthCardSkeleton = ({
     </Card>
   </div>
 );
-/* oxlint-enable react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

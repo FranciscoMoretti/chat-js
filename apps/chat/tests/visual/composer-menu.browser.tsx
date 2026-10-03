@@ -207,14 +207,12 @@ vi.mock("@/providers/default-model-provider", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable react/jsx-no-literals -- composer-menu.browser route: react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
 vi.mock("@/components/eve/eve-model-picker", () => ({
   EveModelPicker: (): React.JSX.Element => <button type="button">Model</button>,
 }));
-/* oxlint-enable react/jsx-no-literals */
 
 const originalControls = [...composerControls];
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- mount: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 350); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ...args); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- mount: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 350); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ...args); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const mount = async (
   disabled = false,
@@ -285,7 +283,7 @@ const mount = async (
     container.remove();
   };
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
 /* oxlint-disable max-statements, no-magic-numbers -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
 
 afterEach(() => {

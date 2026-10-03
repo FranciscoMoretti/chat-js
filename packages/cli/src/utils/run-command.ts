@@ -1,13 +1,13 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- The published CLI targets Node; subprocess creation uses its child_process API rather than a Bun-only process API. */
 import { spawn } from "node:child_process";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const EXIT_SUCCESS = 0;
+
+/* oxlint-disable eslint/no-undefined -- The completion-only child-process promise uses Promise.withResolvers<undefined> and resolves its close event with that exact value. */
 export const runCommand = async (
   command: string,
-  args: string[],
+  args: readonly string[],
   cwd: string
 ): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
@@ -18,7 +18,7 @@ export const runCommand = async (
   });
   child.on("error", reject);
   child.on("close", (code) => {
-    if (code === 0) {
+    if (code === EXIT_SUCCESS) {
       resolve(undefined);
     } else {
       reject(
@@ -30,6 +30,4 @@ export const runCommand = async (
   });
   await promise;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-magic-numbers */

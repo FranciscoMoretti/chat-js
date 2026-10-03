@@ -9,13 +9,15 @@ import {
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null --
  * no-magic-numbers (#517): parseRange uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep parseRange's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): parseRange intentionally keeps the existing falsy-value behavior of match.groups?.suffix; match.groups?.end; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): parseRange preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const parseRange = (value: string, size: number) => {
+const parseRange = (
+  value: string,
+  size: number
+): { end: number; start: number } | null => {
   const match = RANGE_HEADER.exec(value);
   if (!match) {
     return null;
@@ -37,7 +39,7 @@ const parseRange = (value: string, size: number) => {
     ? { end, start }
     : null;
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -45,7 +47,7 @@ const parseRange = (value: string, size: number) => {
  * max-statements (#512): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): createFileContentResponse uses 206, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): createFileContentResponse uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): createFileContentResponse accepts request: Request; { allowRedirect = true }: { allowRedirect?: boolean } = {}; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): createFileContentResponse accepts request: Request; { allowRedirect = true }: {readonly allowRedirect?: boolean} = {}; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): createFileContentResponse intentionally keeps the existing falsy-value behavior of providerUrl; rangeHeader; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): createFileContentResponse preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */

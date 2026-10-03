@@ -43,14 +43,10 @@ const originals = await Promise.all(
     file,
   }))
 );
-/* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable node/no-sync -- run: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- run: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const run = (args: string[], cwd = root) =>
+const run = (args: readonly string[], cwd = root): Buffer =>
   execFileSync("bun", args, { cwd, stdio: "inherit" });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable unicorn/no-null -- test-eve-package.ts: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-magic-numbers -- test-eve-package.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */

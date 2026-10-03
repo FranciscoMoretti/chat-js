@@ -40,12 +40,18 @@ export const auditedRestrictionRules = {
   // Modern targets support typed object composition; no-map-spread still prevents accumulator copying.
   "oxc/no-rest-spread-properties": "off",
   "react-perf/jsx-no-jsx-as-prop": "error",
-  "react-perf/jsx-no-new-array-as-prop": "error",
-  "react-perf/jsx-no-new-function-as-prop": "error",
-  "react-perf/jsx-no-new-object-as-prop": "error",
-  "react/forbid-component-props": "error",
+  // Native DOM props do not form component memoization boundaries; custom components remain checked.
+  "react-perf/jsx-no-new-array-as-prop": ["error", { nativeAllowList: "all" }],
+  "react-perf/jsx-no-new-function-as-prop": [
+    "error",
+    { nativeAllowList: "all" },
+  ],
+  "react-perf/jsx-no-new-object-as-prop": ["error", { nativeAllowList: "all" }],
+  // Tailwind and primitive components expose className/style as supported typed APIs.
+  "react/forbid-component-props": "off",
   "react/jsx-max-depth": "error",
-  "react/jsx-no-literals": "error",
+  // UI copy has no translation-layer contract; expression wrapping would not add localization.
+  "react/jsx-no-literals": "off",
   "react/jsx-props-no-spreading": "error",
   "react/no-multi-comp": "error",
   "react/only-export-components": "error",

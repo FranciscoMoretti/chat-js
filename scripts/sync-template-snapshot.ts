@@ -8,9 +8,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- join: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const join = (...segments: string[]): string => path.join(...segments);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const join = (...segments: readonly string[]): string => path.join(...segments);
 
 /* oxlint-disable import/exports-last -- SNAPSHOT_CONCURRENCY: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- SNAPSHOT_CONCURRENCY: Keep the named API with its implementation; existing direct exports are the consumer contract. */

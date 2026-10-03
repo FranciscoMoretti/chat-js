@@ -2,18 +2,14 @@ import type { UIMessage } from "ai";
 
 import type { MessageTreeSnapshot } from "./types";
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-const clone = <T>(value: T): T => structuredClone(value);
-/* oxlint-enable eslint/id-length */
+const clone = <TValue>(value: TValue): TValue => structuredClone(value);
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export class MessageTree<TMessage extends UIMessage = UIMessage> {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The public tree accepts SDK TMessage arrays/snapshots and clones them before indexing; a readonly reader view requires a separate public ownership audit in #622. */
+class MessageTree<TMessage extends UIMessage = UIMessage> {
   readonly #childrenByParentId = new Map<string | null, string[]>();
   readonly #messagesById = new Map<string, TMessage>();
   readonly #parentById = new Map<string, string | null>();
@@ -32,7 +28,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
     }
   }
 
-  public get cursorId() {
+  public get cursorId(): string | null {
     return this.#cursorId;
   }
 
@@ -40,37 +36,37 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
     return this.#messagesById.has(messageId);
   }
 
-  public getMessage(messageId: string) {
+  public getMessage(messageId: string): TMessage | undefined {
     const message = this.#messagesById.get(messageId);
     return message ? clone(message) : undefined;
   }
 
-  public getParentId(messageId: string) {
+  public getParentId(messageId: string): string | null | undefined {
     return this.#parentById.get(messageId);
   }
 
-  public getParent(messageId: string) {
+  public getParent(messageId: string): TMessage | undefined {
     const parentId = this.#parentById.get(messageId);
     return typeof parentId === "string" && parentId !== ""
       ? this.getMessage(parentId)
       : undefined;
   }
 
-  public getChildren(messageId: string | null) {
+  public getChildren(messageId: string | null): TMessage[] {
     return (this.#childrenByParentId.get(messageId) ?? [])
       .map((id) => this.#messagesById.get(id))
       .filter((message): message is TMessage => Boolean(message))
       .map((message) => clone(message));
   }
 
-  public getSiblings(messageId: string) {
+  public getSiblings(messageId: string): TMessage[] {
     if (!this.#messagesById.has(messageId)) {
       return [];
     }
     return this.getChildren(this.#parentById.get(messageId) ?? null);
   }
 
-  public getLeaves(messageId: string | null = null) {
+  public getLeaves(messageId: string | null = null): TMessage[] {
     const leaves: TMessage[] = [];
 
     for (const id of this.walkDescendantIds(messageId)) {
@@ -86,7 +82,9 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
     return leaves;
   }
 
-  public getPathIds(messageId: string | null | undefined = this.#cursorId) {
+  public getPathIds(
+    messageId: string | null | undefined = this.#cursorId
+  ): string[] {
     if (!(typeof messageId === "string" && messageId !== "")) {
       return [];
     }
@@ -102,7 +100,9 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
     return ids;
   }
 
-  public getPath(messageId: string | null | undefined = this.#cursorId) {
+  public getPath(
+    messageId: string | null | undefined = this.#cursorId
+  ): TMessage[] {
     return this.getPathIds(messageId)
       .map((id) => this.#messagesById.get(id))
       .filter((message): message is TMessage => Boolean(message))
@@ -129,7 +129,12 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
     };
   }
 
-  public getIndexes() {
+  public getIndexes(): {
+    childrenByParentId: Record<string, string[]>;
+    messagesById: Record<string, TMessage>;
+    parentById: Record<string, string | null>;
+    rootIds: string[];
+  } {
     return {
       childrenByParentId: Object.fromEntries(
         [...this.#childrenByParentId.entries()]
@@ -297,7 +302,7 @@ export class MessageTree<TMessage extends UIMessage = UIMessage> {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
+
+export { MessageTree };

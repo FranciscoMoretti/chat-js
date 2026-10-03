@@ -16,11 +16,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { dirname, join, resolve } = path;
-
 const smokeTimeout = 180_000;
-const packageDirectory = resolve(import.meta.dir, "..");
+const packageDirectory = path.resolve(import.meta.dir, "..");
 
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -57,7 +54,7 @@ test(
   "the packed package loads its core and React entry points",
   async (): Promise<void> => {
     const temporaryDirectory = await mkdtemp(
-      join(tmpdir(), "chatjs-thread-package-")
+      path.join(tmpdir(), "chatjs-thread-package-")
     );
 
     try {
@@ -68,21 +65,21 @@ test(
           "pm",
           "pack",
           "--filename",
-          join(temporaryDirectory, "thread.tgz"),
+          path.join(temporaryDirectory, "thread.tgz"),
           "--ignore-scripts",
           "--quiet",
         ],
         packageDirectory
       );
 
-      const installedPackage = join(
+      const installedPackage = path.join(
         temporaryDirectory,
         "node_modules",
         "@chat-js",
         "thread"
       );
       await writeFile(
-        join(temporaryDirectory, "package.json"),
+        path.join(temporaryDirectory, "package.json"),
         JSON.stringify({
           dependencies: {
             "@chat-js/thread": "file:./thread.tgz",
@@ -98,7 +95,7 @@ test(
         [
           "tar",
           "-xzf",
-          join(temporaryDirectory, "thread.tgz"),
+          path.join(temporaryDirectory, "thread.tgz"),
           "--strip-components=1",
           "-C",
           installedPackage,
@@ -106,17 +103,19 @@ test(
         temporaryDirectory
       );
       const linkDependency = async (name: string): Promise<void> => {
-        const destination = join(temporaryDirectory, "node_modules", name);
-        await mkdir(dirname(destination), { recursive: true });
+        const destination = path.join(temporaryDirectory, "node_modules", name);
+        await mkdir(path.dirname(destination), { recursive: true });
         await symlink(
-          dirname(Bun.resolveSync(`${name}/package.json`, packageDirectory)),
+          path.dirname(
+            Bun.resolveSync(`${name}/package.json`, packageDirectory)
+          ),
           destination,
           "dir"
         );
       };
       await linkDependency("ai");
 
-      const coreConsumerPath = join(temporaryDirectory, "core.mjs");
+      const coreConsumerPath = path.join(temporaryDirectory, "core.mjs");
       await writeFile(
         coreConsumerPath,
         `
@@ -136,16 +135,16 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       );
 
       const indexSource = await readFile(
-        join(installedPackage, "dist/index.js"),
+        path.join(installedPackage, "dist/index.js"),
         "utf-8"
       );
       const reactSource = await readFile(
-        join(installedPackage, "dist/react.js"),
+        path.join(installedPackage, "dist/react.js"),
         "utf-8"
       );
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      const packageMetadata = await Bun.file(
-        join(installedPackage, "package.json")
+
+      const packageMetadata: unknown = await Bun.file(
+        path.join(installedPackage, "package.json")
       ).json();
       const indexChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
         indexSource
@@ -154,7 +153,15 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
         reactSource
       )?.groups?.chunk;
 
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+      if (
+        typeof packageMetadata !== "object" ||
+        !packageMetadata ||
+        !("peerDependenciesMeta" in packageMetadata)
+      ) {
+        throw new Error(
+          "Installed package must declare optional peer metadata"
+        );
+      }
       expect(packageMetadata.peerDependenciesMeta).toEqual({
         react: { optional: true },
       });
@@ -166,7 +173,7 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       if (!(typeof reactChunk === "string" && reactChunk !== "")) {
         throw new Error("Expected a shared package chunk");
       }
-      const coreChunkPath = resolve(installedPackage, "dist", reactChunk);
+      const coreChunkPath = path.resolve(installedPackage, "dist", reactChunk);
       expect(await Bun.file(coreChunkPath).exists()).toBeTrue();
       const coreChunkSource = await readFile(coreChunkPath, "utf-8");
       expect(indexSource).not.toContain('from "react"');
@@ -182,7 +189,10 @@ if (typeof chat.id !== "string" || typeof useThread !== "function") {
   throw new Error("Package exports did not load");
 }
 `;
-      const resolutionConsumerPath = join(temporaryDirectory, "resolution.mjs");
+      const resolutionConsumerPath = path.join(
+        temporaryDirectory,
+        "resolution.mjs"
+      );
       await writeFile(
         resolutionConsumerPath,
         `
@@ -193,18 +203,43 @@ for (const [specifier, file] of [["@chat-js/thread", "index.js"], ["@chat-js/thr
 `
       );
       run(["node", resolutionConsumerPath], temporaryDirectory);
-      const runtimeConsumerPath = join(temporaryDirectory, "consumer.mjs");
-      const typeConsumerPath = join(temporaryDirectory, "consumer.ts");
+      const runtimeConsumerPath = path.join(temporaryDirectory, "consumer.mjs");
+      const typeConsumerPath = path.join(temporaryDirectory, "consumer.ts");
       await Promise.all([
         writeFile(runtimeConsumerPath, consumerSource),
-        writeFile(typeConsumerPath, consumerSource),
+        writeFile(
+          typeConsumerPath,
+          `${consumerSource}
+import type { UIMessage } from "ai";
+import { createThread } from "@chat-js/thread";
+
+type LabeledMessage = UIMessage<{ threadLabel: string }>;
+const labeledThread = new Thread<LabeledMessage>();
+const createdThread = createThread<LabeledMessage>();
+const threadLabel: string | undefined = labeledThread.getSnapshot().messages[0]?.metadata?.threadLabel;
+const createdLabel: string | undefined = createdThread.getSnapshot().messages[0]?.metadata?.threadLabel;
+// @ts-expect-error Thread metadata must retain its specialized shape.
+labeledThread.getSnapshot().messages[0]?.metadata?.absentProperty;
+// @ts-expect-error createThread metadata must retain its specialized shape.
+createdThread.getSnapshot().messages[0]?.metadata?.absentProperty;
+
+// This function is only type-checked, never passed to the runtime consumer.
+function checkHookInference() {
+  const helpers = useThread({ thread: labeledThread });
+  const hookLabel: string | undefined = helpers.messages[0]?.metadata?.threadLabel;
+  // @ts-expect-error useThread must infer the supplied thread's metadata shape.
+  helpers.messages[0]?.metadata?.absentProperty;
+  return hookLabel;
+}
+`
+        ),
       ]);
 
       run(["node", runtimeConsumerPath], temporaryDirectory);
       run(
         [
           "node",
-          join(temporaryDirectory, "node_modules/typescript/bin/tsc"),
+          path.join(temporaryDirectory, "node_modules/typescript/bin/tsc"),
           "--ignoreConfig",
           "--noEmit",
           "--strict",

@@ -2,7 +2,6 @@ import React from "react";
 
 const PROVIDERS = ["OpenAI", "Anthropic", "Google", "xAI", "Meta"];
 
-/* oxlint-disable react/jsx-no-literals -- LogoCloud: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/jsx-max-depth -- LogoCloud: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 export const LogoCloud = (): React.JSX.Element => (
   <section className="border-border/30 border-y py-12">
@@ -24,4 +23,3 @@ export const LogoCloud = (): React.JSX.Element => (
   </section>
 );
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/jsx-no-literals */

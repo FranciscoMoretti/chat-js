@@ -5,12 +5,16 @@ import type { SharedV4ProviderOptions } from "@ai-sdk/provider";
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const getModelProviderOptions = (model: {
-  apiModelId: string;
-  owned_by: string;
-  reasoning: boolean;
-}): SharedV4ProviderOptions => {
+const ANTHROPIC_REASONING_BUDGET_TOKENS = 4096;
+const GOOGLE_REASONING_BUDGET_TOKENS = 10_000;
+
+const getModelProviderOptions = (
+  model: Readonly<{
+    apiModelId: string;
+    owned_by: string;
+    reasoning: boolean;
+  }>
+): SharedV4ProviderOptions => {
   if (model.owned_by === "openai") {
     if (model.reasoning) {
       // Strip provider prefix (e.g. "openai/gpt-5-mini" → "gpt-5-mini")
@@ -34,7 +38,7 @@ export const getModelProviderOptions = (model: {
       return {
         anthropic: {
           thinking: {
-            budgetTokens: 4096,
+            budgetTokens: ANTHROPIC_REASONING_BUDGET_TOKENS,
             type: "enabled",
           },
         } satisfies AnthropicProviderOptions,
@@ -52,7 +56,7 @@ export const getModelProviderOptions = (model: {
       return {
         google: {
           thinkingConfig: {
-            thinkingBudget: 10_000,
+            thinkingBudget: GOOGLE_REASONING_BUDGET_TOKENS,
           },
         } satisfies GoogleLanguageModelOptions,
       };
@@ -61,6 +65,7 @@ export const getModelProviderOptions = (model: {
   }
   return {};
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+
+export { getModelProviderOptions };

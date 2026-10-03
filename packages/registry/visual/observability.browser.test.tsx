@@ -20,7 +20,7 @@ vi.mock("next/navigation", () => ({
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
+
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 test("layout telemetry leaves every installed/omitted combination visually unchanged", async (): Promise<void> => {
@@ -70,5 +70,5 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
 });
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/max-statements */

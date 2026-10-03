@@ -21,7 +21,7 @@ const alertVariants = cva(
     },
   }
 );
-/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Alert: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Alert: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }). */
 
 const Alert = React.forwardRef<
   HTMLDivElement,
@@ -34,9 +34,9 @@ const Alert = React.forwardRef<
     {...props}
   />
 ));
-/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 Alert.displayName = "Alert";
-/* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertTitle: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const AlertTitle = React.forwardRef<
   HTMLParagraphElement,
@@ -51,9 +51,9 @@ const AlertTitle = React.forwardRef<
     />
   </>
 ));
-/* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 AlertTitle.displayName = "AlertTitle";
-/* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDescription: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const AlertDescription = React.forwardRef<
   HTMLParagraphElement,
@@ -65,7 +65,7 @@ const AlertDescription = React.forwardRef<
     {...props}
   />
 ));
-/* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 AlertDescription.displayName = "AlertDescription";
 
 export { Alert, AlertDescription, AlertTitle };

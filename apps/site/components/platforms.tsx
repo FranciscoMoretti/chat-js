@@ -103,9 +103,9 @@ const BrowserFrame = ({
 
 /* oxlint-disable react/no-multi-comp -- Platforms: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/max-lines-per-function -- Platforms: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable react/jsx-no-literals -- Platforms: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react/jsx-max-depth -- Platforms: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable react/forbid-component-props -- Platforms: className/style are the deliberate styling interface of these UI/layout primitives. */
+
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Platforms: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* ── Main Component ───────────────────────────────────────────────── */
 
@@ -242,8 +242,8 @@ export const Platforms = (): React.JSX.Element => (
   </section>
 );
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */

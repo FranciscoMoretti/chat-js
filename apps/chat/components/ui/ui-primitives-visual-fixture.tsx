@@ -21,7 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-/* oxlint-disable max-lines-per-function, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals -- UiPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- UiPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
   <main
@@ -86,4 +86,4 @@ export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
     </section>
   </main>
 );
-/* oxlint-enable max-lines-per-function, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth */

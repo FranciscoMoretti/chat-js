@@ -141,7 +141,7 @@ const SectionLabel = ({
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- Features: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable react/jsx-no-literals -- Features: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+
 /* oxlint-disable react/jsx-max-depth -- Features: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable eslint/id-length -- Features: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Features: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
@@ -187,5 +187,5 @@ export const Features = (): React.JSX.Element => (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react/jsx-no-literals */
+
 /* oxlint-enable react/no-multi-comp */

@@ -32,9 +32,8 @@ const hash = (content: Buffer): string =>
   createHash("sha256").update(content).digest("hex");
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-const optionalFile = async (file: string) => {
+const optionalFile = async (file: string): Promise<Buffer | null> => {
   try {
     return await readFile(file);
   } catch (error) {
@@ -45,21 +44,19 @@ const optionalFile = async (file: string) => {
   }
 };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const readReceipt = async (cwd: string) => {
+const readReceipt = async (
+  cwd: string
+): Promise<z.infer<typeof receiptSchema>> => {
   await preflight(cwd, [receiptFile]);
   const source = await optionalFile(path.join(cwd, receiptFile));
   return source ? receiptSchema.parse(JSON.parse(source.toString())) : {};
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const sourceTargets = (plan: Plan) => [
+const sourceTargets = (plan: Plan): string[] => [
   ...new Set(
     plan.items.flatMap((item) =>
       (item.files ?? []).flatMap((file) =>
@@ -71,7 +68,6 @@ const sourceTargets = (plan: Plan) => [
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const directoryFiles = async (

@@ -17,14 +17,14 @@ const icons: Record<ResearchUpdate["type"], React.ElementType> = {
 } as const;
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const StepTypeIcon = ({ update }: { update: ResearchUpdate }) => {
   const Icon = icons[update.type];
   return <Icon className="text-muted-foreground h-4 w-4" />;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */

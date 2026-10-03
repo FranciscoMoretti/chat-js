@@ -6,7 +6,7 @@ import type { ImageModel } from "ai";
 
 import type { AiGatewayModel } from "./models.ts";
 
-export interface GatewayProvider<
+interface GatewayProvider<
   TGateway extends string = string,
   TModelId extends string = string,
   TImageModelId extends string = string,
@@ -27,3 +27,5 @@ export interface GatewayProvider<
   fetchModels: () => Promise<AiGatewayModel[]>;
   readonly type: TGateway;
 }
+
+export type { GatewayProvider };

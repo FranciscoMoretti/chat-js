@@ -15,7 +15,7 @@ interface ChatMenuItemsProps {
   onTogglePin: () => void;
   showShare?: boolean;
 }
-/* oxlint-disable react/forbid-component-props, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- ChatMenuItems: ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatMenuItems: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ChatMenuItems = ({
   isPinned,
@@ -57,4 +57,4 @@ export const ChatMenuItems = ({
     )}
   </>
 );
-/* oxlint-enable react/forbid-component-props, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

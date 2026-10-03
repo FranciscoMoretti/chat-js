@@ -22,6 +22,7 @@ import type {
   MessageTreeSnapshot,
   ThreadConcurrency,
   ThreadRunHandle,
+  ThreadRun,
   ThreadStartRunOptions,
   ThreadState,
   ThreadStateSnapshot,
@@ -44,27 +45,26 @@ type SendMessageInput<TMessage extends UIMessage> = Parameters<
 >[0];
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
 const getInputMessageId = <TMessage extends UIMessage>(
   input: NonNullable<SendMessageInput<TMessage>>
-) => ("id" in input ? (input.id ?? input.messageId) : input.messageId);
+): string | undefined =>
+  "id" in input ? (input.id ?? input.messageId) : input.messageId;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
 // Like AI SDK's AbstractChat, construction crosses a generic boundary here:
 // TMessage may narrow metadata or parts beyond the base UIMessage shape.
 // oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- The thread preserves its caller-selected message specialization across the SDK base-message adapter.
-const specializeMessage = <TMessage extends UIMessage>(message: UIMessage) =>
+const specializeMessage = <TMessage extends UIMessage>(
+  message: UIMessage
+): TMessage =>
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The thread owns validation of its selected message specialization; this adapter preserves that generic public type across the AI SDK base message boundary.
   message as TMessage;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
 const createMessageFromInput = async <TMessage extends UIMessage>({
   fallbackId,
   input,
@@ -101,19 +101,16 @@ const createMessageFromInput = async <TMessage extends UIMessage>({
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
+abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   public readonly id: string;
   public readonly dataPartSchemas: AbstractThreadOptions<TMessage>["dataPartSchemas"];
   public readonly generateMessageId: NonNullable<
@@ -159,9 +156,11 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     }
   }
 
-  public getSnapshot = () => this.#state.getSnapshot();
+  public getSnapshot = (): ThreadStateSnapshot<TMessage> =>
+    this.#state.getSnapshot();
 
-  public subscribe = (listener: () => void) => this.#state.subscribe(listener);
+  public subscribe = (listener: () => void): (() => void) =>
+    this.#state.subscribe(listener);
 
   public addMessage(message: TMessage, parentId: string | null): void {
     this.upsertMessage(message, parentId);
@@ -183,31 +182,31 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   public addToolResult: AbstractChat<TMessage>["addToolResult"] =
     this.addToolOutput;
 
-  public getTreeSnapshot() {
+  public getTreeSnapshot(): MessageTreeSnapshot<TMessage> {
     return this.readTree((tree) => tree.getSnapshot());
   }
 
-  public getChildren(messageId: string | null) {
+  public getChildren(messageId: string | null): TMessage[] {
     return this.readTree((tree) => tree.getChildren(messageId));
   }
 
-  public getLeaves(messageId: string | null = null) {
+  public getLeaves(messageId: string | null = null): TMessage[] {
     return this.readTree((tree) => tree.getLeaves(messageId));
   }
 
-  public getMessage(messageId: string) {
+  public getMessage(messageId: string): TMessage | undefined {
     return this.readTree((tree) => tree.getMessage(messageId));
   }
 
-  public getParent(messageId: string) {
+  public getParent(messageId: string): TMessage | undefined {
     return this.readTree((tree) => tree.getParent(messageId));
   }
 
-  public getPath(messageId?: string | null) {
+  public getPath(messageId?: string | null): TMessage[] {
     return this.readTree((tree) => tree.getPath(messageId));
   }
 
-  public getSiblings(messageId: string) {
+  public getSiblings(messageId: string): TMessage[] {
     return this.readTree((tree) => tree.getSiblings(messageId));
   }
 
@@ -229,7 +228,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.updateTree((tree): void => tree.setCursorToParentOf(messageId));
   }
 
-  private getMessagePath(messageId: string | null) {
+  private getMessagePath(messageId: string | null): TMessage[] {
     return this.readTree((tree) => tree.getPath(messageId));
   }
 
@@ -500,12 +499,12 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return run ? this.stopRun(run.id) : Promise.resolve();
   }
 
-  public getRun(runId: string) {
+  public getRun(runId: string): ThreadRun | undefined {
     const run = this.#runs.get(runId);
     return run ? RunRegistry.toSnapshot(run) : undefined;
   }
 
-  public getRunForMessage(messageId: string) {
+  public getRunForMessage(messageId: string): ThreadRun | undefined {
     const run = this.#runs.getForMessage(messageId);
     return run ? RunRegistry.toSnapshot(run) : undefined;
   }
@@ -547,7 +546,9 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     };
   }
 
-  private createTree(snapshot?: ThreadStateSnapshot<TMessage>) {
+  private createTree(
+    snapshot?: ThreadStateSnapshot<TMessage>
+  ): MessageTree<TMessage> {
     const resolvedSnapshot = snapshot ?? this.#state.getSnapshot();
     return new MessageTree<TMessage>({ snapshot: resolvedSnapshot });
   }
@@ -556,36 +557,37 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     thread: AbstractThread<TMessage>
   ): ThreadRunHost<TMessage> {
     return {
-      get dataPartSchemas() {
+      get dataPartSchemas(): ThreadRunHost<TMessage>["dataPartSchemas"] {
         return thread.dataPartSchemas;
       },
       generateMessageId: (): string => thread.generateMessageId(),
-      getMessagePath: (messageId) => thread.getMessagePath(messageId),
-      get id() {
+      getMessagePath: (messageId): TMessage[] =>
+        thread.getMessagePath(messageId),
+      get id(): string {
         return thread.id;
       },
-      get messageMetadataSchema() {
+      get messageMetadataSchema(): ThreadRunHost<TMessage>["messageMetadataSchema"] {
         return thread.messageMetadataSchema;
       },
-      get onData() {
+      get onData(): ThreadRunHost<TMessage>["onData"] {
         return thread.onData;
       },
       set onData(handler) {
         thread.onData = handler;
       },
-      get onError() {
+      get onError(): ThreadRunHost<TMessage>["onError"] {
         return thread.onError;
       },
       set onError(handler) {
         thread.onError = handler;
       },
-      get onFinish() {
+      get onFinish(): ThreadRunHost<TMessage>["onFinish"] {
         return thread.onFinish;
       },
       set onFinish(handler) {
         thread.onFinish = handler;
       },
-      get onToolCall() {
+      get onToolCall(): ThreadRunHost<TMessage>["onToolCall"] {
         return thread.onToolCall;
       },
       set onToolCall(handler) {
@@ -594,7 +596,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       registerToolCall: (runId, toolCallId): void =>
         thread.registerToolCall(runId, toolCallId),
       removeMessage: (messageId): void => thread.removeMessage(messageId),
-      get sendAutomaticallyWhen() {
+      get sendAutomaticallyWhen(): ThreadRunHost<TMessage>["sendAutomaticallyWhen"] {
         return thread.sendAutomaticallyWhen;
       },
       set sendAutomaticallyWhen(handler) {
@@ -602,7 +604,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
       },
       setRunError: (runId, error): void => thread.setRunError(runId, error),
       setRunStatus: (runId, status): void => thread.setRunStatus(runId, status),
-      get transport() {
+      get transport(): ThreadRunHost<TMessage>["transport"] {
         return thread.transport;
       },
       set transport(transport) {
@@ -673,7 +675,9 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     }
   }
 
-  private getSelectedRunRecord(tree = this.createTree()) {
+  private getSelectedRunRecord(
+    tree = this.createTree()
+  ): RunRecord<TMessage> | undefined {
     return this.#runs.resolveSelected({
       cursorId: tree.cursorId,
       pathIds: new Set(tree.getPathIds()),
@@ -688,7 +692,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     id: string;
     label: string;
     matches: (part: TMessage["parts"][number]) => boolean;
-  }) {
+  }): TMessage | undefined {
     let owner: TMessage | undefined;
     for (const { message } of this.getTreeSnapshot().nodes) {
       if (message.role !== "assistant" || !message.parts.some(matches)) {
@@ -704,7 +708,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return owner;
   }
 
-  private getOrCreateRunForApproval(approvalId: string) {
+  private getOrCreateRunForApproval(approvalId: string): RunRecord<TMessage> {
     const existing = this.#runs.findForApproval(approvalId);
     if (existing) {
       return existing;
@@ -725,7 +729,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return run;
   }
 
-  private getOrCreateRunForToolCall(toolCallId: string) {
+  private getOrCreateRunForToolCall(toolCallId: string): RunRecord<TMessage> {
     const existing = this.#runs.findForToolCall(toolCallId);
     if (existing) {
       return existing;
@@ -746,7 +750,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return run;
   }
 
-  private createRunForSelectedAssistant() {
+  private createRunForSelectedAssistant(): RunRecord<TMessage> | undefined {
     const tree = this.createTree();
     const messageId = tree.cursorId;
     if (!(typeof messageId === "string" && messageId !== "")) {
@@ -756,7 +760,10 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     return this.createRunForAssistant(messageId, true);
   }
 
-  private createRunForAssistant(messageId: string, select = false) {
+  private createRunForAssistant(
+    messageId: string,
+    select = false
+  ): RunRecord<TMessage> | undefined {
     const existing = this.#runs.getForResponseMessage(messageId);
     if (existing) {
       if (select) {
@@ -819,7 +826,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     follow: boolean;
     options?: ChatRequestOptions;
     parentMessageId: string;
-  }) {
+  }): ThreadRunHandle {
     const spec: ThreadRunSpec & { parentMessageId: string } = {
       id,
       initialPathMessageId: parentMessageId,
@@ -841,7 +848,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   private startRunRequest(
     spec: ThreadRunSpec,
     start: (chat: ThreadRunChat<TMessage>) => Promise<void>
-  ) {
+  ): ThreadRunHandle {
     if (
       typeof spec.parentMessageId === "string" &&
       spec.parentMessageId !== "" &&
@@ -880,7 +887,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     follow: boolean;
     messageId: string;
     options?: ChatRequestOptions;
-  }) {
+  }): ThreadRunHandle {
     const existing = this.#runs.getForResponseMessage(messageId);
     if (existing?.status === "submitted" || existing?.status === "streaming") {
       throw new Error(
@@ -922,7 +929,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     message: TMessage;
     options?: ChatRequestOptions;
     parentMessageId: string | null;
-  }) {
+  }): ThreadRunHandle {
     this.#runs.assertHasCapacity(parentMessageId);
     const spec: ThreadRunSpec = {
       id: this.#runs.reserveId(this.generateMessageId),
@@ -944,16 +951,18 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 
   private createRunHandle(run: RunRecord<TMessage>): ThreadRunHandle {
     return {
-      get finished() {
+      get finished(): Promise<void> {
         return run.finished;
       },
-      getSnapshot: () => this.getRun(run.spec.id),
+      getSnapshot: (): ThreadRun | undefined => this.getRun(run.spec.id),
       id: run.spec.id,
       stop: (): Promise<void> => run.chat.stop(),
     };
   }
 
-  private async publishWhenFinished<T>(promise: Promise<T>) {
+  private async publishWhenFinished<TValue>(
+    promise: Promise<TValue>
+  ): Promise<TValue> {
     try {
       return await promise;
     } finally {
@@ -976,15 +985,14 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+
+export { AbstractThread };

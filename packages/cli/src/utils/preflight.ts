@@ -11,11 +11,10 @@ import { isSafeTarget } from "./is-safe-target";
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Protect ChatJS-managed outputs before generating integration files. */
 export const preflight = async (
   cwd: string,
-  targets: string[]
+  targets: readonly string[]
 ): Promise<void> => {
   const resolvedCwd = path.resolve(cwd);
   const root = await lstat(resolvedCwd);
@@ -51,7 +50,6 @@ export const preflight = async (
     }
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable jsdoc/require-param */

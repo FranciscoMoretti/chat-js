@@ -30,7 +30,7 @@ const generateCsv = (data: (string | number)[][]): string => unparse(data);
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
+
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -162,7 +162,7 @@ const PureSpreadsheetEditor = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */

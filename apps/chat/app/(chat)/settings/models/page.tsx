@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
 
-/* oxlint-disable react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- ModelsSettingsHeader: react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ModelsSettingsHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ModelsSettingsHeader = ({
   showRegistryLink = false,
@@ -45,7 +45,7 @@ const ModelsSettingsHeader = ({
     )}
   </SettingsPageHeader>
 );
-/* oxlint-enable react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type -- ModelsSettingsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const ModelsSettingsContent = async () => {
@@ -66,7 +66,7 @@ const ModelsSettingsContent = async () => {
 };
 /* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, react/jsx-max-depth, react/no-multi-comp -- ModelsSettingsPage: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp -- ModelsSettingsPage: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 const ModelsSettingsPage = (): React.JSX.Element => (
   <Suspense
@@ -84,7 +84,7 @@ const ModelsSettingsPage = (): React.JSX.Element => (
     <ModelsSettingsContent />
   </Suspense>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, react/jsx-max-depth, react/no-multi-comp */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */
 /* oxlint-disable import/no-default-export -- page route: import/no-default-export: Next.js loads this route entry point through its required default export. */
 
 export default ModelsSettingsPage;

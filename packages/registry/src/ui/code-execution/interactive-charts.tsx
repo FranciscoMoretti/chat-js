@@ -9,7 +9,7 @@ export type { BaseChart } from "./interactive-chart-impl";
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
+
 const ChartSkeleton = () => (
   <Card className="border-border bg-card overflow-hidden">
     <div className="flex h-[400px] items-center justify-center p-6">
@@ -17,7 +17,7 @@ const ChartSkeleton = () => (
     </div>
   </Card>
 );
-/* oxlint-enable react/forbid-component-props */
+
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 

@@ -7,9 +7,8 @@ interface GatewayLogger {
   error: (data: unknown, message?: string) => void;
 }
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export interface GatewayOptions {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- GatewayOptions fetch preserves native Parameters<typeof fetch>/ReturnType<typeof fetch> and platform Request/RequestInit/AbortSignal interfaces; env/logger objects remain caller supplied. */
+interface GatewayOptions {
   env?: Record<string, string | undefined>;
   fetch?: (
     ...args: Parameters<typeof globalThis.fetch>
@@ -18,7 +17,6 @@ export interface GatewayOptions {
   logger?: GatewayLogger;
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/exports-last */
 
 const silentLogger: GatewayLogger = {
   debug: (): void => {
@@ -36,10 +34,9 @@ const silentLogger: GatewayLogger = {
 };
 
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- GatewayOptions fetch preserves native Parameters<typeof fetch>/ReturnType<typeof fetch> and platform Request/RequestInit/AbortSignal interfaces; env/logger objects remain caller supplied. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export class GatewayRuntime {
+class GatewayRuntime {
   protected readonly env;
   protected readonly fetch;
   protected readonly getFallbackModels;
@@ -47,12 +44,19 @@ export class GatewayRuntime {
 
   public constructor(options: GatewayOptions = {}) {
     this.env = options.env ?? process.env;
-    this.fetch = options.fetch ?? ((...args) => globalThis.fetch(...args));
-    this.getFallbackModels = options.getFallbackModels ?? (() => []);
+    this.fetch =
+      options.fetch ??
+      ((
+        ...args: Parameters<typeof globalThis.fetch>
+      ): ReturnType<typeof globalThis.fetch> => globalThis.fetch(...args));
+    this.getFallbackModels = options.getFallbackModels ?? ((): never[] => []);
     this.log = options.logger ?? silentLogger;
   }
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable node/no-process-env */
+
+export { GatewayRuntime };
+
+export type { GatewayOptions };

@@ -61,12 +61,9 @@ const candidates: EveResponseCardCandidate[] = [
     status: "awaiting-input",
   },
 ];
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/jsx-no-literals, react/only-export-components --
- * no-magic-numbers (#517): Fixture uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/only-export-components -- * no-magic-numbers (#517): Fixture uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
- * react/jsx-no-literals (#549): Fixture owns this fixture copy; replacing literal text requires a localization/content-management contract.
- * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
+ * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
 const Fixture = (): React.JSX.Element => {
   const [selected, setSelected] = useState<string | null>("ready");
   return (
@@ -117,7 +114,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/jsx-no-literals, react/only-export-components */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/only-export-components */
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");

@@ -41,7 +41,7 @@ const ScopedEveSearch = async () => {
   );
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable react/forbid-component-props, react/no-multi-comp -- HistorySkeleton: react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-disable react/no-multi-comp -- HistorySkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 const HistorySkeleton = (): React.JSX.Element => (
   <SidebarGroup>
@@ -53,9 +53,9 @@ const HistorySkeleton = (): React.JSX.Element => (
     </div>
   </SidebarGroup>
 );
-/* oxlint-enable react/forbid-component-props, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null -- RegisteredEveProjects: react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null -- RegisteredEveProjects: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const RegisteredEveProjects = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -68,8 +68,8 @@ const RegisteredEveProjects = async () => {
     </SidebarGroup>
   ) : null;
 };
-/* oxlint-enable react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp -- AppSidebar: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp -- AppSidebar: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 export const AppSidebar = (): React.JSX.Element => (
   <Sidebar
@@ -115,4 +115,4 @@ export const AppSidebar = (): React.JSX.Element => (
     </SidebarFooter>
   </Sidebar>
 );
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */
