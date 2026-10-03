@@ -90,8 +90,94 @@ beforeEach(() => {
     }
   );
 });
+test("absent stored credentials return undefined", async () => {
+  stored = { ...stored, clientInfo: null, tokens: null };
+  const client = provider();
+  await expect(client.clientInformation()).resolves.toBeUndefined();
+  await expect(client.tokens()).resolves.toBeUndefined();
+});
+
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 afterEach(() => vi.unstubAllGlobals());
+
+test("stored client information retains metadata, credentials, pins and extensions", async () => {
+  const clientInfo = {
+    authorization_server: "https://auth.example.test",
+    client_id: "registered",
+    client_secret: "secret",
+    issuer: "https://auth.example.test",
+    redirect_uris: ["http://localhost:3790/callback"],
+    registration_access_token: "registration-secret",
+    token_endpoint: "https://auth.example.test/token",
+    token_endpoint_auth_method: "client_secret_basic",
+  };
+  stored = { ...stored, clientInfo };
+  await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
+});
+
+test("older records without authorization-server pins remain readable", async () => {
+  const clientInfo = {
+    client_id: "legacy",
+    redirect_uris: ["http://localhost:3790/callback"],
+  };
+  stored = { ...stored, clientInfo };
+  const client = provider();
+  await expect(client.clientInformation()).resolves.toEqual(clientInfo);
+  await expect(client.tokens()).resolves.toEqual(stored.tokens);
+});
+
+test.each([
+  {},
+  { client_id: "registered" },
+  { client_id: "registered", redirect_uris: "https://chat.example/callback" },
+  { client_id: "registered", redirect_uris: ["data:secret"] },
+  { client_id: "registered", client_secret: false, redirect_uris: [] },
+])(
+  "malformed stored client information fails without leaking or changing credentials: %j",
+  async (clientInfo: Readonly<Record<string, unknown>>) => {
+    stored = { ...stored, clientInfo };
+    await expect(provider().clientInformation()).rejects.toThrow(
+      "Invalid stored MCP OAuth client information; reconnect this connector."
+    );
+    expect(stored.clientInfo).toEqual(clientInfo);
+    expect(mocks.setClientInfo).not.toHaveBeenCalled();
+  }
+);
+
+test.each([
+  {},
+  { access_token: "secret" },
+  { access_token: false, token_type: "Bearer" },
+  { access_token: "secret", expires_in: "3600", token_type: "Bearer" },
+  { access_token: "secret", refresh_token: false, token_type: "Bearer" },
+  { access_token: "secret", issuer: "invalid-url", token_type: "Bearer" },
+  {
+    access_token: "secret",
+    token_endpoint: "data:secret",
+    token_type: "Bearer",
+  },
+])(
+  "malformed stored tokens fail without leaking or overwriting credentials: %j",
+  async (tokens: Readonly<Record<string, unknown>>) => {
+    stored = { ...stored, tokens };
+    await expect(provider().tokens()).rejects.toThrow(
+      "Invalid stored MCP OAuth tokens; reconnect this connector."
+    );
+    expect(stored.tokens).toEqual(tokens);
+    expect(mocks.save).not.toHaveBeenCalled();
+  }
+);
+
+test("tokens read under the refresh lock are decoded before reuse", async () => {
+  const client = provider();
+  await client.tokens();
+  stored = { ...stored, tokens: { refresh_token: "other-secret" } };
+  await expect(client.fetch(refreshRequest("refresh-old"))).rejects.toThrow(
+    "Invalid stored MCP OAuth tokens; reconnect this connector."
+  );
+  expect(mocks.fetch).not.toHaveBeenCalled();
+  expect(mocks.save).not.toHaveBeenCalled();
+});
 
 test("an access-token winner is reused even when its refresh token did not change", async () => {
   const client = provider();
