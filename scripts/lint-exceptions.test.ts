@@ -396,4 +396,22 @@ test("multiline inline waivers distinguish identical repeated regions", () => {
   ).toEqual([]);
 });
 
+test("continuation-line metrics include the enclosing initializer before nested functions", () => {
+  const source =
+    "const outer =\n// oxlint-disable-next-line complexity -- Function contract.\n  () => { const inner = () => 1; return 2; };\nconst sibling = () => 3;";
+  const { baseline } = snapshotExceptions({ "a.ts": source });
+  expect(
+    checkExceptions(
+      { "a.ts": source.replace("return 2", "return 4") },
+      baseline
+    )
+  ).not.toEqual([]);
+  expect(
+    checkExceptions(
+      { "a.ts": source.replace("sibling = () => 3", "sibling = () => 4") },
+      baseline
+    )
+  ).toEqual([]);
+});
+
 /* oxlint-disable eslint/max-lines -- The guard regression suite keeps parser, scope identity and isolated CLI budget-update contracts together in one test module. */

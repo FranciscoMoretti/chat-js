@@ -40865,7 +40865,7 @@
       "75c06f254c7de8573485fc374371a8ee286242b683cee40be88e6ceae424a704"
     ],
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-lines\",\"oxlint-disable\"]": [
-      "54d2340ec249eeb83eff36493ad9da91c1d8d18060aada7b3830bde9d9a19cde"
+      "28fbc7f2c5d18d86f16719e585ac86d02f15ca6813e50a2e38a0459c23288430"
     ],
     "[\"scripts/lint-exceptions.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
       "b3b5e3117f8aca5fef32b57e7f5ac8d80e0e8e2b6cc7ddcd26b7bcc5131f708f",
@@ -40889,7 +40889,7 @@
       "cbd016622059f4cd949f5e4cc6cbe53b503a588cc72ae02b9c21b6598b2401c8"
     ],
     "[\"scripts/lint-exceptions.ts\",\"eslint/max-lines\",\"oxlint-disable\"]": [
-      "32f69c80fec907d7b0060c0eaa4fc656752c1fc5f799753d098c89c64695ae38"
+      "bd8a4839c08f7d83de14013e8c79854e5921fc076746f6114a5e499f377e9657"
     ],
     "[\"scripts/release-fallback.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "1c32453e4e05fd3d61f49fb3994953f07aaeeb71ac4d5359d9135382e9a27531",

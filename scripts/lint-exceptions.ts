@@ -128,6 +128,10 @@ interface SourceScope {
   readonly end: number;
 }
 
+interface FunctionSourceScope extends SourceScope {
+  readonly anchor: number;
+}
+
 const FILE_METRICS = new Set([
   "max-lines",
   "max-classes-per-file",
@@ -171,7 +175,7 @@ const functionScope = (
     ts.ScriptTarget.Latest,
     true
   );
-  const scopes: SourceScope[] = [];
+  const scopes: FunctionSourceScope[] = [];
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Compiler Nodes expose mutable library interfaces; this traversal only reads syntax and positions.
   const visit = (node: ts.Node): void => {
     if (ts.isFunctionLike(node) && "body" in node && node.body) {
@@ -182,13 +186,19 @@ const functionScope = (
           : node;
       const start = declaration.getStart(tree);
       if (start < target.end && declaration.end > target.start) {
-        scopes.push({ end: declaration.end, start });
+        scopes.push({
+          anchor: node.getStart(tree),
+          end: declaration.end,
+          start,
+        });
       }
     }
     ts.forEachChild(node, visit);
   };
   visit(tree);
-  const startingHere = scopes.filter((scope) => scope.start >= target.start);
+  const startingHere = scopes.filter(
+    (scope) => scope.anchor >= target.start && scope.anchor < target.end
+  );
   const first = startingHere
     .toSorted((left, right) => left.start - right.start)
     .at(ZERO);
