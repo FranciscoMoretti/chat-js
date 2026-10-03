@@ -1899,11 +1899,10 @@
     "[\"apps/chat/lib/ai/app-models.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/app-models.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/ai/app-models.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/exports-last\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/group-exports\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"id-length\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"react/only-export-components\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/group-exports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
@@ -1916,6 +1915,7 @@
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/group-exports\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/ai/errors.test.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/errors.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/errors.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
@@ -14597,61 +14597,56 @@
       "cc10e3b0417158621fba31bc206b89c6157803b2c2f48e6f52e173d32b72301a",
       "2874e88f001f282f155e416b518d25cb8d6c7eb53f1bec5454fc965482c3932a"
     ],
-    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/exports-last\",\"oxlint-disable\"]": [
-      "c4c813536791ef1202a193a898e7762a092490c4717fbbac86ddcbaf1d5b4385",
-      "855ea055c26fbceb3ed6cb20de5570c7bf60e7a07a498afa14cb45c12fe8ec69",
-      "776127b2115cec37d4357906a3f84a38916df666f7f6fcd0a8bf1016cf3ec4eb"
-    ],
-    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/group-exports\",\"oxlint-disable\"]": [
-      "c4c813536791ef1202a193a898e7762a092490c4717fbbac86ddcbaf1d5b4385",
-      "855ea055c26fbceb3ed6cb20de5570c7bf60e7a07a498afa14cb45c12fe8ec69",
-      "776127b2115cec37d4357906a3f84a38916df666f7f6fcd0a8bf1016cf3ec4eb",
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
-    ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"id-length\",\"oxlint-disable\"]": [
-      "776127b2115cec37d4357906a3f84a38916df666f7f6fcd0a8bf1016cf3ec4eb"
+      "c42861caf8713be56bcd022d33bd11c03adae3879fd1855c70680a88c1d376b9"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": [
-      "776127b2115cec37d4357906a3f84a38916df666f7f6fcd0a8bf1016cf3ec4eb"
+      "c42861caf8713be56bcd022d33bd11c03adae3879fd1855c70680a88c1d376b9"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"react/only-export-components\",\"oxlint-disable\"]": [
       "3487aab3a4e28936929bf9aec22d125ceb49220a51738b91e5771fca26aa2914"
     ],
+    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/group-exports\",\"oxlint-disable\"]": [
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
+    ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"max-statements\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"no-undefined\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": [
-      "2461a80c8829892a4197f7edc1fd66b1271264fe4130d2a570c5dd3cbecf4057"
+      "62ba85ff6c2801edc46443a8a721fbaa1d0e079a3c403565bf0424c3761824e6"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
     ],
     "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "a48e6f53d69ce375a828da7b3abb75dd6a6eef35cd8f79739e9cbd2e7faeddbd"
+      "146676f5f1e51b00a70b41aac11774dc5fa25958ce7acf900ae60795239d4bb2"
+    ],
+    "[\"apps/chat/lib/ai/define-tool-renderer.tsx\",\"import/group-exports\",\"oxlint-disable-next-line\"]": [
+      "561caeae64d67038a92894685a73f9e29ea075dc194a904c577386900073ce38"
     ],
     "[\"apps/chat/lib/ai/errors.test.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "a7024016a4d05f8d887617f7cabd63dbebb6484b32951b8148af6bcaed0198d7"
