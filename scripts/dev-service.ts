@@ -36,13 +36,11 @@ const logs = nodePath.join(homedir(), "Library/Logs/ChatJS", id);
 const action = process.argv[2] ?? "status";
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable node/no-sync -- ctl: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ctl: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const ctl = (...args: string[]): string =>
+const ctl = (...args: readonly string[]): string =>
   execFileSync("launchctl", args, {
     encoding: "utf-8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-disable eslint/id-length -- stop: The local index/OS/library binding retains its conventional API notation. */
 /* oxlint-disable eslint/no-magic-numbers -- stop: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */

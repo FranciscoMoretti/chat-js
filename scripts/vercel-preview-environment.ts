@@ -33,12 +33,9 @@ const matchingAuthority = (app: URL, migration: URL): boolean => {
 
 /* oxlint-disable import/group-exports -- resolveMaintainerPreviewDatabase: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- resolveMaintainerPreviewDatabase: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- resolveMaintainerPreviewDatabase: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable eslint/max-lines-per-function -- resolveMaintainerPreviewDatabase: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable typescript/explicit-function-return-type -- resolveMaintainerPreviewDatabase: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-undefined -- resolveMaintainerPreviewDatabase: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable eslint/init-declarations -- resolveMaintainerPreviewDatabase: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- resolveMaintainerPreviewDatabase: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- resolveMaintainerPreviewDatabase: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /**
  * Validate the ChatJS demo preview infrastructure configuration.
@@ -46,8 +43,8 @@ const matchingAuthority = (app: URL, migration: URL): boolean => {
  * @returns Isolated pooled/direct database URLs, or undefined outside preview deployments.
  */
 export const resolveMaintainerPreviewDatabase = (
-  source: Record<string, string | undefined>
-) => {
+  source: Readonly<Record<string, string | undefined>>
+): { DATABASE_MIGRATION_URL: string; DATABASE_URL: string } | undefined => {
   if (source.VERCEL !== "1" || source.VERCEL_ENV !== "preview") {
     // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
     return undefined;
@@ -107,11 +104,8 @@ export const resolveMaintainerPreviewDatabase = (
   return { DATABASE_MIGRATION_URL: direct, DATABASE_URL: pooled };
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */

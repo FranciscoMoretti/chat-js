@@ -24,13 +24,10 @@ import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched
 /* oxlint-enable import/no-relative-parent-imports */
 import { collectSnapshot } from "./sync-template-snapshot";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- join: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const join = (...segments: string[]): string => path.join(...segments);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const join = (...segments: readonly string[]): string => path.join(...segments);
 const relative = (from: string, to: string): string => path.relative(from, to);
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- resolve: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const resolve = (...segments: string[]): string => path.resolve(...segments);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const resolve = (...segments: readonly string[]): string =>
+  path.resolve(...segments);
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
 const rootPackageJsonPath = join(rootDir, "package.json");

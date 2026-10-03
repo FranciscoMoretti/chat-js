@@ -71,10 +71,13 @@ type Checkpoint = {
 /* oxlint-enable typescript/consistent-type-definitions */
 type DB = Sql | TransactionSql;
 
-/* oxlint-disable typescript/explicit-function-return-type -- ownedBranch: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ownedBranch: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- ownedBranch: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-const ownedBranch = async (sql: DB, owner: string, id: string) => {
+const ownedBranch = async (
+  sql: DB,
+  owner: string,
+  id: string
+): Promise<Branch> => {
   const [row] = await sql<
     Branch[]
   >`select * from branch where id=${id} and owner=${owner} for update`;
@@ -85,7 +88,6 @@ const ownedBranch = async (sql: DB, owner: string, id: string) => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable import/exports-last -- history: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- history: Keep the named API with its implementation; existing direct exports are the consumer contract. */
@@ -115,12 +117,10 @@ export const history = async (sql: DB, owner: string, head: string | null) => {
 /* oxlint-disable import/exports-last -- validatePrefix: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- validatePrefix: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- validatePrefix: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- validatePrefix: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
-/* oxlint-disable typescript/explicit-function-return-type -- validatePrefix: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- validatePrefix: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- validatePrefix: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 // A bounded neutral prototype format, NOT a claimed public EVE seed schema.
-export const validatePrefix = (messages: Message[]) => {
+export const validatePrefix = (messages: Message[]): void => {
   if (
     messages.length > MAX_PREFIX_MESSAGES ||
     Buffer.byteLength(JSON.stringify(messages)) > MAX_PREFIX_BYTES
@@ -152,14 +152,11 @@ export const validatePrefix = (messages: Message[]) => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
 /* oxlint-disable eslint/max-params -- requireResources: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/explicit-function-return-type -- requireResources: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- requireResources: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- requireResources: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const requireResources = async (
@@ -167,7 +164,7 @@ const requireResources = async (
   owner: string,
   ids: string[],
   kind: "file" | "document"
-) => {
+): Promise<void> => {
   if (ids.length === 0) {
     return;
   }
@@ -179,7 +176,6 @@ const requireResources = async (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 
 /* oxlint-disable import/group-exports -- append: Keep the named API with its implementation; existing direct exports are the consumer contract. */

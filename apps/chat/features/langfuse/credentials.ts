@@ -5,11 +5,10 @@ import { requireCredentials } from "@/lib/required-credentials";
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 // Read at registration time so an omitted integration never validates credentials.
 export const getLangfuseEnvironment = (
-  environment: NodeJS.ProcessEnv = process.env
+  environment: Readonly<NodeJS.ProcessEnv> = process.env
 ) => {
   requireCredentials("langfuse", descriptor.envRequirements, environment);
   return {
@@ -21,7 +20,6 @@ export const getLangfuseEnvironment = (
   };
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable typescript/explicit-function-return-type */

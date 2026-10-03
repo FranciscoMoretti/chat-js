@@ -68,12 +68,10 @@ class UncachedConnectionStatusError extends Error {
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 export const createCachedConnectionStatus = (
   connectorId: string,
   fetcher: () => Promise<ConnectionStatusResult>
-) => {
+): (() => Promise<ConnectionStatusResult>) => {
   const cached = unstable_cache(
     async () => {
       const result = await fetcher();
@@ -102,16 +100,12 @@ export const createCachedConnectionStatus = (
     }
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
@@ -121,7 +115,7 @@ export const createCachedConnectionStatus = (
 export const createCachedDiscovery = (
   connectorId: string,
   fetcher: () => Promise<DiscoveryResult>
-) =>
+): (() => Promise<DiscoveryResult>) =>
   unstable_cache(
     () => {
       log.debug({ connectorId }, "Fetching discovery (cache miss)");
@@ -135,8 +129,6 @@ export const createCachedDiscovery = (
   );
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
