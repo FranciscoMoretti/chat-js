@@ -57,11 +57,14 @@ const getSafeReturnTo = (url: URL): string | null => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- max-statements (#512): proxy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): proxy accepts req: NextRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const proxy = async (req: NextRequest) => {
+/* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+ * import/group-exports (#523): Next.js statically discovers the proxy entrypoint and inline config matcher; retain their declaration exports together (#619).
+ * max-statements (#512): proxy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * typescript/explicit-function-return-type (#560): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): proxy accepts req: NextRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
+export const proxy = async (req: NextRequest) => {
   const url = req.nextUrl;
   const { pathname } = url;
 
@@ -93,9 +96,12 @@ const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(new URL("/login", url));
   }
 };
-/* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-const config = {
+/* oxlint-disable import/group-exports --
+ * import/group-exports (#523): Next.js extractExportedConstValue requires inline export const config to discover this proxy matcher (#619).
+ */
+export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
@@ -112,4 +118,4 @@ const config = {
     "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };
-export { config, proxy };
+/* oxlint-enable import/group-exports */

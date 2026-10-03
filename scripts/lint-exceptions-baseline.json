@@ -4051,6 +4051,7 @@
     "[\"apps/chat/proxy.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/proxy.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/proxy.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/proxy.ts\",\"import/group-exports\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/proxy.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/proxy.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/proxy.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
@@ -22583,7 +22584,7 @@
     ],
     "[\"apps/chat/proxy.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "e113444dd71557748800a7f3d75ce9e155ca580028114ca4f46fa9d005fec9a4",
-      "ec89ce10d765b6c62bc18b7410b04e0c07e95b89b5923feba32ceb52beb142e6"
+      "c2ad393ec9d3164e349ab57a972ab76d84f926d69c803b86338eb7d127d7f1da"
     ],
     "[\"apps/chat/proxy.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "e113444dd71557748800a7f3d75ce9e155ca580028114ca4f46fa9d005fec9a4"
@@ -22591,14 +22592,18 @@
     "[\"apps/chat/proxy.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
       "e113444dd71557748800a7f3d75ce9e155ca580028114ca4f46fa9d005fec9a4"
     ],
+    "[\"apps/chat/proxy.ts\",\"import/group-exports\",\"oxlint-disable\"]": [
+      "c2ad393ec9d3164e349ab57a972ab76d84f926d69c803b86338eb7d127d7f1da",
+      "d7376c7af8736efe8ae513e36f993290b637a981cf94c8efdd37a1c894e85812"
+    ],
     "[\"apps/chat/proxy.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "ec89ce10d765b6c62bc18b7410b04e0c07e95b89b5923feba32ceb52beb142e6"
+      "c2ad393ec9d3164e349ab57a972ab76d84f926d69c803b86338eb7d127d7f1da"
     ],
     "[\"apps/chat/proxy.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "ec89ce10d765b6c62bc18b7410b04e0c07e95b89b5923feba32ceb52beb142e6"
+      "c2ad393ec9d3164e349ab57a972ab76d84f926d69c803b86338eb7d127d7f1da"
     ],
     "[\"apps/chat/proxy.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "ec89ce10d765b6c62bc18b7410b04e0c07e95b89b5923feba32ceb52beb142e6"
+      "c2ad393ec9d3164e349ab57a972ab76d84f926d69c803b86338eb7d127d7f1da"
     ],
     "[\"apps/chat/proxy.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
       "75fb12f1c0bf11249d553141d3c3a4f8e7f487b1d3fe461bbd3adb68d655faeb",
