@@ -3,7 +3,6 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { mkdir } from "node:fs/promises";
 
 import { expect, test } from "@playwright/test";
@@ -101,16 +100,14 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     await renamedRow.getByRole("button", { exact: true, name: "More" }).click();
     await page.getByRole("menuitem", { exact: true, name: "Pin" }).click();
     await expect
-      .poll(
-        async () =>
-          (
-            await db
-              .select({ isPinned: eveChat.isPinned })
-              .from(eveConversation)
-              .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
-              .where(eq(eveConversation.id, ids[0]))
-          )?.[0]?.isPinned
-      )
+      .poll(async () => {
+        const conversationRows = await db
+          .select({ isPinned: eveChat.isPinned })
+          .from(eveConversation)
+          .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
+          .where(eq(eveConversation.id, ids[0]));
+        return conversationRows?.[0]?.isPinned;
+      })
       .toBe(true);
     await page.reload();
     await expect(
@@ -133,16 +130,14 @@ test("rename and pin persist, preserve input, and reject another owner's changes
     });
     await page.getByRole("menuitem", { exact: true, name: "Unpin" }).click();
     await expect
-      .poll(
-        async () =>
-          (
-            await db
-              .select({ isPinned: eveChat.isPinned })
-              .from(eveConversation)
-              .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
-              .where(eq(eveConversation.id, ids[0]))
-          )?.[0]?.isPinned
-      )
+      .poll(async () => {
+        const conversationRows = await db
+          .select({ isPinned: eveChat.isPinned })
+          .from(eveConversation)
+          .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
+          .where(eq(eveConversation.id, ids[0]));
+        return conversationRows?.[0]?.isPinned;
+      })
       .toBe(false);
     await page.reload();
     await expect(conversationLinks.first()).toHaveText(secondTitle);

@@ -32,9 +32,9 @@ type Binding = z.infer<typeof bindingSchema> & {
   firstMessage: string;
   modelId: string;
 };
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- retireGuest: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including binding: Binding). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- retireGuest: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including binding: Binding). */
 
-const retireGuest = async (binding: Binding) => {
+const retireGuest = async (binding: Binding): Promise<void> => {
   try {
     await fetch(`/eve/guest/v1/session/${binding.sessionId}/reset`, {
       body: "{}",
@@ -49,7 +49,7 @@ const retireGuest = async (binding: Binding) => {
     // Unload delivery is best effort. EVE's session timeout handles abandonment.
   }
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type -- createGuestSession: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 

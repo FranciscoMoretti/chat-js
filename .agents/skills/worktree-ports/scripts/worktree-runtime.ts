@@ -44,15 +44,13 @@ interface TemplateContext {
   url?: string;
 }
 
-/* oxlint-disable typescript/explicit-function-return-type -- assertNonNegativeInteger: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- assertNonNegativeInteger: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-const assertNonNegativeInteger = (value: number, label: string) => {
+const assertNonNegativeInteger = (value: number, label: string): void => {
   if (!(Number.isSafeInteger(value) && value >= 0)) {
     throw new Error(`${label} must be a non-negative integer`);
   }
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- renderTemplate: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/id-length -- renderTemplate: The local index/OS/library binding retains its conventional API notation. */
