@@ -144,6 +144,7 @@
         "@playwright/test": "^1.50.1",
         "@tailwindcss/postcss": "^4.1.12",
         "@tailwindcss/typography": "^0.5.19",
+        "@types/json-schema": "7.0.15",
         "@types/node": "^22.8.6",
         "@types/papaparse": "^5.3.15",
         "@types/pg": "8.23.1",
