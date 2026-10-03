@@ -14,7 +14,7 @@ const useCompatibilityCheck = () => {
   const chatCompatible: UseChatHelpers<UIMessage> = thread;
 
   void chatCompatible.messages;
-  chatCompatible.sendMessage({ text: "hello" });
+  void chatCompatible.sendMessage({ text: "hello" });
   chatCompatible.setMessages((messages) => messages);
 
   thread.tree.setCursor(messageId);
@@ -22,29 +22,30 @@ const useCompatibilityCheck = () => {
   thread.tree.getPath(messageId);
   thread.tree.getChildren(null);
   thread.tree.getSiblings(messageId);
-  thread.tree.stopAll();
+  void thread.tree.stopAll();
   void thread.tree.activeRuns;
   void thread.tree.runs;
   void thread.tree.status;
   thread.tree.setActiveRun(messageId);
   thread.tree.getRunForMessage(messageId);
   thread.tree.getSnapshot();
-  thread.tree.startRun({ from: messageId, message: { text: "branch" } });
+  void thread.tree.startRun({ from: messageId, message: { text: "branch" } });
 
+  // oxlint-disable-next-line typescript/no-unnecessary-type-arguments -- Verify the hook result remains assignable to the explicitly parameterized public helper type.
   const explicitHelpers: UseThreadHelpers<UIMessage> = thread;
   return explicitHelpers;
 };
 
-class StateBackedThread extends AbstractThread<UIMessage> {
-  public constructor(threadState: ThreadState<UIMessage>) {
+class StateBackedThread extends AbstractThread {
+  public constructor(threadState: ThreadState) {
     super({ state: threadState });
   }
 }
 
 const useExternalThreadCheck = () => {
-  const thread = new Thread<UIMessage>();
+  const thread = new Thread();
   const defaultThread = useThread({ thread });
-  const state = new MemoryThreadState<UIMessage>();
+  const state = new MemoryThreadState();
 
   const stateBackedThread = useThread({
     thread: new StateBackedThread(state),
@@ -53,11 +54,11 @@ const useExternalThreadCheck = () => {
 };
 
 const useInvalidOwnershipChecks = () => {
-  const state = new MemoryThreadState<UIMessage>();
+  const state = new MemoryThreadState();
   // @ts-expect-error Thread uses its own memory-backed state.
   void new Thread({ state });
   // @ts-expect-error useThread accepts a thread, not a chat projection.
-  useThread({ chat: new Thread<UIMessage>() });
+  useThread({ chat: new Thread() });
 };
 
 void useCompatibilityCheck;

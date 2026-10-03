@@ -13,9 +13,10 @@ export const validateCustomToolKeys = (
   if (!existsSync(filename)) {
     return;
   }
-  const configPath = ts.findConfigFile(cwd, ts.sys.fileExists);
+  const configPath = ts.findConfigFile(cwd, (file) => ts.sys.fileExists(file));
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- TypeScript owns parsing and diagnostics for tsconfig; preserve its compiler configuration object rather than define a competing parser.
   const config = configPath
-    ? ts.readConfigFile(configPath, ts.sys.readFile).config
+    ? ts.readConfigFile(configPath, (file) => ts.sys.readFile(file)).config
     : {};
   const { options } = ts.parseJsonConfigFileContent(config, ts.sys, cwd);
   const program = ts.createProgram([filename], { ...options, noEmit: true });

@@ -176,6 +176,7 @@ export const EveChatHeader = ({
                 ) : (
                   <Input
                     aria-label="Chat title"
+                    // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Rename replaces the title with this input and transfers keyboard focus into it.
                     autoFocus
                     className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
                     maxLength={255}

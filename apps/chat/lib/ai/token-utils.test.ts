@@ -100,6 +100,7 @@ describe("truncateMessages", () => {
     expect(result[1].role).toBe("user");
 
     // Content should remain unchanged when under limit
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This token-utils fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     const content = result[1].content as string;
     expect(content).toBe(longMessages[1].content);
   });
@@ -178,6 +179,7 @@ describe("truncateMessages", () => {
     expect(result[0].role).toBe("system");
 
     // Content should remain unchanged when it fits
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This token-utils fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     const content = result[0].content as string;
     expect(content).toBe(systemMessages[0].content);
   });
@@ -200,6 +202,7 @@ describe("truncateMessages", () => {
 
     // If we get a result, it should be truncated or the message should be removed
     if (result.length > 0) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This token-utils fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       const content = result[0].content as string;
       expect(typeof content).toBe("string");
     }

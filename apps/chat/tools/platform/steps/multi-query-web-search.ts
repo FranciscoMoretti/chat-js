@@ -74,6 +74,7 @@ export const multiQueryWebSearchStep = async ({
     dataStream?.write({
       data: {
         queries: queries.map((q) => q.query),
+        // oxlint-disable-next-line oxc/no-map-spread -- #541: Tag search output without mutating the collected provider results.
         results: allResults.map((result) => ({
           ...result,
           source: "web",

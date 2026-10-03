@@ -41,6 +41,8 @@ export const EveFeedbackActions = ({
     return (
       <MessageAction
         disabled={votes.isFetching}
+
+        // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns retry state and error reporting for this refetch interaction.
         onClick={async () => {
           await votes.refetch();
         }}

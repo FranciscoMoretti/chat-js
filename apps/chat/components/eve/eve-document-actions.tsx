@@ -117,6 +117,8 @@ export const EveDocumentActions = ({
             }
             variant="outline"
             disabled={disabled}
+
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Document copy owns clipboard conversion and user feedback; changing completion behavior needs a separate copy-flow review.
             onClick={copy}
           >
             <Copy size={kind === "sheet" ? 16 : 18} />

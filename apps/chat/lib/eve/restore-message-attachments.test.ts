@@ -89,6 +89,7 @@ it("restores exact trusted inline history without an installed upload feature", 
   expect(attachments).toEqual([
     expect.objectContaining({
       contentType: "image/png",
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This restore-message-attachments fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       digest: expect.stringMatching(/^[a-f0-9]{64}$/u),
       name: "photo.png",
       url: "/api/files/abcdefghijklmnopqrstuvwx.png",

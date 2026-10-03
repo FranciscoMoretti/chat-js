@@ -223,6 +223,7 @@ export const prepareEveCopyTranscript = (
   ) {
     throw new EveCopyNotReadyError();
   }
+  // oxlint-disable-next-line oxc/no-map-spread -- #541: Build copy seeds without mutating messages or parts from the source transcript.
   const messages: Seed["messages"] = sharedEveMessages(events).map(
     (message) => {
       if (message.role === "user") {

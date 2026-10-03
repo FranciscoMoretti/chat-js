@@ -84,7 +84,11 @@ export const EveMoveProjectDialog = ({
         {projects.isError && (
           <div role="alert">
             <p>Could not load projects.</p>
-            <Button onClick={() => projects.refetch()} variant="outline">
+            <Button
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns project-list retry state and error reporting.
+              onClick={() => projects.refetch()}
+              variant="outline"
+            >
               Retry
             </Button>
           </div>

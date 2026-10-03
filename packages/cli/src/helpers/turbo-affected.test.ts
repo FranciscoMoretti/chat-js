@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import pathModule from "node:path";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { dirname, join, resolve } = pathModule;
 
 const repoRoot = resolve(import.meta.dir, "../../../..");
@@ -118,10 +119,13 @@ test.each([
     "--exit-code",
   ]);
   expect(result.exitCode, result.stderr.toString()).toBe(affected ? 1 : 0);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const output = JSON.parse(result.stdout.toString());
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const taskNames = output.data.affectedTasks.items.map(
     (task: { fullName: string }) => task.fullName
   );
+  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(taskNames.includes("@chat-js/cli#test:scaffold")).toBe(affected);
 
   // CI's execution phase must agree with the pre-install query, including
@@ -135,6 +139,7 @@ test.each([
   );
   expect(execution.exitCode, execution.stderr.toString()).toBe(0);
   const plannedTasks = new Set(
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     JSON.parse(execution.stdout.toString()).tasks.map(
       (task: { taskId: string }) => task.taskId
     )

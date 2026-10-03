@@ -5,7 +5,7 @@ const getServerSnapshot = () => false;
 export const useMediaQuery = (query: string) => {
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      const mediaQueryList = window.matchMedia(query);
+      const mediaQueryList = globalThis.matchMedia(query);
       mediaQueryList.addEventListener("change", onStoreChange);
 
       return () => mediaQueryList.removeEventListener("change", onStoreChange);
@@ -14,7 +14,7 @@ export const useMediaQuery = (query: string) => {
   );
 
   const getSnapshot = useCallback(
-    () => window.matchMedia(query).matches,
+    () => globalThis.matchMedia(query).matches,
     [query]
   );
 

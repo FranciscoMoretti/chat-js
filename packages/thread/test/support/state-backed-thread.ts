@@ -3,11 +3,8 @@ import type { ChatTransport, UIMessage } from "ai";
 import { AbstractThread } from "../../src/abstract-thread";
 import type { ThreadState } from "../../src/types";
 
-export class StateBackedThread extends AbstractThread<UIMessage> {
-  public constructor(
-    state: ThreadState<UIMessage>,
-    transport?: ChatTransport<UIMessage>
-  ) {
+export class StateBackedThread extends AbstractThread {
+  public constructor(state: ThreadState, transport?: ChatTransport<UIMessage>) {
     super({ state, transport });
   }
 }

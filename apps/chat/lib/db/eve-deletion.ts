@@ -181,6 +181,7 @@ export const getEveDeletionState = async (
     return;
   }
   if (row.state) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDeletionState has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return { rootId: row.chatId, state: row.state };
   }
   const [member] = await db
@@ -193,5 +194,6 @@ export const getEveDeletionState = async (
       )
     )
     .limit(1);
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDeletionState has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return member ? { rootId: row.chatId, state: member.state } : undefined;
 };

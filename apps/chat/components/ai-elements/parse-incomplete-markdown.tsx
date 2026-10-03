@@ -16,6 +16,7 @@ const countMatches = (value: string, pattern: RegExp): number =>
   value.match(pattern)?.length ?? 0;
 
 const countStandaloneMarkers = (value: string, marker: string): number => {
+  // oxlint-disable-next-line typescript/no-misused-spread -- #586: This transformation intentionally iterates Unicode code points; changing to graphemes or UTF-16 units would alter its existing text contract.
   const characters = [...value];
   let count = 0;
 
@@ -117,7 +118,7 @@ export const parseIncompleteMarkdown = (text: string): string => {
     return text;
   }
 
-  const linkMatch = text.match(incompleteLinkOrImagePattern);
+  const linkMatch = incompleteLinkOrImagePattern.exec(text);
   let result = linkMatch?.groups?.marker
     ? text.slice(0, text.lastIndexOf(linkMatch.groups.marker))
     : text;

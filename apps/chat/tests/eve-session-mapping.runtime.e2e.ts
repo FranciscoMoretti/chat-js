@@ -26,12 +26,14 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
       expect(response.ok).toBe(true);
       // Hold the native response inside the transport: the caller cannot bind.
       const deadline = Date.now() + 25_000;
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
       const session = await response.clone().json();
       while (Date.now() < deadline) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Observe the independent real worker while the HTTP caller is held.
         const [row] = await db
           .select()
           .from(eveConversation)
+          // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
           .where(eq(eveConversation.sessionId, session.sessionId));
         if (row?.state === "bound") {
           probe.beforeResponse = true;
@@ -129,12 +131,14 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       const receipts = await Promise.all(
         responses.map((response) => response.json())
       );
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
       expect(receipts[0].sessionId).toBe(receipts[1].sessionId);
       const ownReceipt = await actual.eveRequest(
         owner,
         `/eve/chat/v1/operation/${reservationId}`
       );
       expect(await ownReceipt.json()).toMatchObject({
+        // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
         sessionId: receipts[0].sessionId,
       });
       const foreignReceipt = await actual.eveRequest(
@@ -142,6 +146,7 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
         `/eve/chat/v1/operation/${reservationId}`
       );
       expect(foreignReceipt.status).toBe(404);
+      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
       return receipts[0].sessionId;
     }
   );

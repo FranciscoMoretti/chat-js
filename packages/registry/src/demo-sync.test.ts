@@ -44,7 +44,7 @@ test("types and comments drift; canonical changes sync and repeated sync is dete
       ...fixtureOptions,
       expected: new Map([["implementation.ts", source]]),
     };
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each change is checked before synchronizing the next baseline.
+    // oxlint-disable-next-line eslint/no-await-in-loop, typescript/await-thenable, typescript/no-confusing-void-expression -- Each change is checked before synchronizing the next baseline. Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncDemo({ ...options, check: true })).rejects.toThrow(
       "Demo source drift"
     );
@@ -63,6 +63,7 @@ test("local edits stop all writes; explicit discard restores canonical source", 
   );
   const before = await readFile(options.baseline, "utf-8");
   options.expected.set("new.ts", "// new upstream file\n");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncDemo(options)).rejects.toThrow("implementation.ts");
   expect(await Bun.file(path.join(options.root, "new.ts")).exists()).toBe(
     false
@@ -79,12 +80,14 @@ test("local edits stop all writes; explicit discard restores canonical source", 
 test("missing tracked files are edits and an untracked existing file is protected", async () => {
   const options = await fixture();
   await rm(path.join(options.root, "implementation.ts"));
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncDemo(options)).rejects.toThrow(
     "Edited registry-owned demo files"
   );
   await syncDemo({ ...options, discard: true });
   await writeFile(path.join(options.root, "new.ts"), "// user file\n");
   options.expected.set("new.ts", "// canonical file\n");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncDemo(options)).rejects.toThrow("new.ts");
 });
 
@@ -113,6 +116,7 @@ test("sync preserves app-owned UI order and extensions and rejects removed owner
       files.map((file) => readFile(path.join(options.root, file), "utf-8"))
     )
   ).toEqual(files.map(() => "// app-owned order and extensions\n"));
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncDemo({ ...options, expected: new Map() })).rejects.toThrow(
     "removal is outside demo sync scope"
   );
@@ -130,6 +134,7 @@ test("symlink destinations are rejected before writes", async () => {
     path.join(options.root, "implementation.ts"),
     "utf-8"
   );
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncDemo({ ...options, discard: true })).rejects.toThrow(
     "symlink"
   );
@@ -144,6 +149,7 @@ test("edits moved upstream can advance the baseline without discarding", async (
     "// edit now canonical upstream\nexport type Result = number;\n";
   await writeFile(path.join(options.root, "implementation.ts"), source);
   options.expected.set("implementation.ts", source);
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncDemo({ ...options, check: true })).rejects.toThrow(
     `Baseline drift: ${options.baseline}`
   );
@@ -170,8 +176,11 @@ test("baseline key ordering uses locale-independent code-unit order", async () =
   } finally {
     collation.mockRestore();
   }
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
   const baseline = JSON.parse(await readFile(options.baseline, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
   expect(Object.keys(baseline.files)).toEqual(
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
     [...options.expected.keys()].toSorted()
   );
 });
@@ -211,6 +220,7 @@ test.each(["source", "baseline"])(
       }
     );
     try {
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(syncDemo(options)).rejects.toThrow(
         "Injected replacement failure"
       );
@@ -241,6 +251,7 @@ test("a symlinked baseline is rejected before source or external target writes",
   await rm(options.baseline);
   await fs.symlink(external, options.baseline);
   options.expected.set("implementation.ts", "// changed canonical\n");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncDemo(options)).rejects.toThrow("symlink");
   expect(await readFile(external, "utf-8")).toBe(before);
   expect(
@@ -259,6 +270,7 @@ test("generator setup failure removes its temporary installation directory", asy
     throw new Error("Injected server setup failure");
   });
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(generateDemo()).rejects.toThrow(
       "Injected server setup failure"
     );
@@ -270,5 +282,6 @@ test("generator setup failure removes its temporary installation directory", asy
     throw new Error("Generator did not clean up its temporary directory");
   }
   expect(path.basename(temporary).startsWith("chatjs-demo-")).toBe(true);
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(fs.stat(temporary)).rejects.toThrow("ENOENT");
 });

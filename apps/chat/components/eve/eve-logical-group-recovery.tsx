@@ -54,12 +54,18 @@ export const EveLogicalGroupRecovery = ({
     <section aria-label="Comparison recovery">
       <p>This response is not confirmed.</p>
       {failure && <p role="alert">{failure}</p>}
-      <Button disabled={busy} onClick={recover}>
+      <Button
+        disabled={busy}
+        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Response recovery owns admission/retry state; React Query owns branch invalidation failures.
+        onClick={recover}
+      >
         Retry response
       </Button>
       <Button
         disabled={busy}
         variant="ghost"
+
+        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Response recovery owns admission/retry state; React Query owns branch invalidation failures.
         onClick={() =>
           queryClient.invalidateQueries({
             queryKey: trpc.eve.branches.pathKey(),

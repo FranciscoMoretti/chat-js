@@ -19,7 +19,8 @@ test("installed deleteDocument requires approval, survives reload, and honors re
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
     await page.evaluate(async () => {
       const response = await fetch("/api/auth/get-session");
-      return await response.json();
+      const responseBody: unknown = await response.json();
+      return responseBody;
     })
   );
   await db

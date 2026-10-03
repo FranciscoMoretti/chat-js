@@ -132,7 +132,7 @@ export const DeviceLoginPage = () => {
             setState("waiting-for-app");
           },
           onSuccess: () => {
-            window.history.replaceState(
+            globalThis.history.replaceState(
               {},
               "",
               `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`
@@ -158,6 +158,7 @@ export const DeviceLoginPage = () => {
       }
     })();
 
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return () => {
       cancelled = true;
     };
@@ -175,7 +176,7 @@ export const DeviceLoginPage = () => {
               setState("waiting-for-app");
             },
             onSuccess: () => {
-              window.history.replaceState(
+              globalThis.history.replaceState(
                 {},
                 "",
                 `${pathname}?${DEVICE_LOGIN_COMPLETED_PARAM}=1`

@@ -13,6 +13,10 @@ declare global {
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+const originalMatchMedia = Object.getOwnPropertyDescriptor(
+  globalThis,
+  "matchMedia"
+);
 
 const Value = ({ value }: { value: boolean }) => (
   <output>{String(value)}</output>
@@ -69,6 +73,10 @@ const installMatchMedia = ({
     matchMedia: vi.fn(() => mediaQueryList),
   };
 
+  Object.defineProperty(globalThis, "matchMedia", {
+    configurable: true,
+    value: browserWindow.matchMedia,
+  });
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: browserWindow,
@@ -88,6 +96,12 @@ const installMatchMedia = ({
 };
 
 afterEach(() => {
+  if (originalMatchMedia) {
+    Object.defineProperty(globalThis, "matchMedia", originalMatchMedia);
+  } else {
+    Reflect.deleteProperty(globalThis, "matchMedia");
+  }
+
   if (originalWindow) {
     Object.defineProperty(globalThis, "window", originalWindow);
     return;
@@ -116,9 +130,12 @@ describe("responsive hooks", () => {
     });
     const mountedValues: boolean[] = [];
     let mobile = false;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <>
           <MountedValue onValue={(value) => mountedValues.push(value)} />
@@ -139,6 +156,7 @@ describe("responsive hooks", () => {
       throw new Error("Expected hook harness to render");
     }
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => rendered.unmount());
   });
 
@@ -149,9 +167,12 @@ describe("responsive hooks", () => {
     });
     let media = false;
     let mobile = false;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <>
           <MediaQueryValue
@@ -166,6 +187,7 @@ describe("responsive hooks", () => {
     expect(media).toBe(false);
     expect(mobile).toBe(false);
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
       browser.browserWindow.innerWidth = 640;
       browser.setMatches(true);
@@ -179,6 +201,7 @@ describe("responsive hooks", () => {
       throw new Error("Expected hook harness to render");
     }
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => rendered.unmount());
     expect(browser.removeEventListener).toHaveBeenCalledTimes(2);
   });

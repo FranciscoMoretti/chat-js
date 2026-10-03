@@ -62,7 +62,7 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
         return { prev };
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
+        void queryClient.invalidateQueries({ queryKey });
       },
     })
   );
@@ -96,6 +96,7 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
                 <DropdownMenuCheckboxItem
                   key={connector.id}
                   checked={connector.enabled}
+                  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
                   disabled={disabled || connector.userId === null}
                   onSelect={(event) => event.preventDefault()}
                   onCheckedChange={(enabled) =>

@@ -98,6 +98,7 @@ export const initializeObservability = async (cwd: string) => {
   if (!(await exists(manifestPath))) {
     return;
   }
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Dependency removal must preserve unrelated package manifest fields; adopting a stricter manifest schema requires compatibility decisions.
   const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
   for (const dependency of [
     "@vercel/analytics",
@@ -106,6 +107,7 @@ export const initializeObservability = async (cwd: string) => {
     "langfuse-vercel",
     "langfuse",
   ]) {
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Dependency removal must preserve unrelated package manifest fields; adopting a stricter manifest schema requires compatibility decisions.
     delete manifest.dependencies?.[dependency];
   }
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);

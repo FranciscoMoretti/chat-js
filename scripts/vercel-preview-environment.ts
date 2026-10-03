@@ -29,7 +29,8 @@ export const resolveMaintainerPreviewDatabase = (
   source: Record<string, string | undefined>
 ) => {
   if (source.VERCEL !== "1" || source.VERCEL_ENV !== "preview") {
-    return;
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
+    return undefined;
   }
 
   if (

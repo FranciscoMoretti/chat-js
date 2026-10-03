@@ -76,6 +76,7 @@ it("retains ambiguous operations and exposes only an owned recovery location", a
   });
   const response = await POST(request());
   expect(response.status).toBe(503);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const body = await response.json();
   expect(body).toMatchObject({
     conversationId: input.operationId,

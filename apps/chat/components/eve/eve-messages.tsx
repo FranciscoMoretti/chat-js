@@ -279,6 +279,8 @@ export const EveMessages = ({
         onStartEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
         role={message.role}
         siblings={renderVersions?.(message, userMessage)}
+
+        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Message copy manages clipboard failures and feedback within the async handler.
         onCopy={async () => {
           if (!text.trim()) {
             toast.error("There's no text to copy!");
@@ -291,6 +293,10 @@ export const EveMessages = ({
             toast.error("Unable to copy this message.");
           }
         }}
+
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.
+
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value.
         feedback={
           message.role === "assistant" && !isReadonly ? (
             <>
@@ -306,6 +312,7 @@ export const EveMessages = ({
                   disabled={
                     actionsDisabled ||
                     Boolean(editor) ||
+                    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These flags express independent truthy conditions, not a nullish fallback.
                     !(message.metadata?.turnId || message.metadata?.modelId) ||
                     !(userMessage && eveUserForkBoundary(userMessage))
                   }
@@ -333,7 +340,7 @@ export const EveMessages = ({
           attachments={message.parts
             .filter((part) => part.type === "file")
             .map((part, index) => (
-              // File parts retain their position in the streamed message.
+              // oxlint-disable-next-line react/no-array-index-key -- #551: File parts retain their position in the streamed message.
               <EveAttachment key={`${message.id}:file:${index}`} part={part} />
             ))}
           editor={editing?.content}
@@ -359,7 +366,7 @@ export const EveMessages = ({
             <Part
               disabled={disabled}
               isReadonly={isReadonly}
-              // Eve message parts are append-only; their index is their stable identity.
+              // oxlint-disable-next-line react/no-array-index-key -- #551: EVE message parts are append-only; their index is their stable identity.
               key={`${message.id}:${index}`}
               messageId={message.id}
               part={part}

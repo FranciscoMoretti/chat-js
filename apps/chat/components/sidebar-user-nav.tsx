@@ -79,6 +79,7 @@ export const SidebarUserNav = () => {
 
   const displayName = user.name || user.email || "User";
   const userInitials = displayName.slice(0, 2).toUpperCase();
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const avatarImageSrc = user.image || `https://avatar.vercel.sh/${user.email}`;
 
   return (
@@ -169,17 +170,21 @@ export const SidebarUserNav = () => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Sign-out coordinates Electron session synchronization and navigation; changing failure handling requires authentication lifecycle review.
               onClick={async () => {
                 if (
                   isElectronRenderer() &&
+                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
                   typeof window.signOut === "function"
                 ) {
+                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
                   await window.signOut();
+                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
                   await window.electronAPI?.syncAuthSession?.();
                 } else {
                   await authClient.signOut();
                 }
-                window.location.href = "/";
+                globalThis.location.href = "/";
               }}
             >
               <LogOut className="mr-2 size-4" />

@@ -93,6 +93,7 @@ const AUTH_LABELS: Record<AuthProvider, string> = {
 const handleCancel: (value: unknown) => asserts value is never = (value) => {
   if (isCancel(value)) {
     cancel("Operation cancelled.");
+    // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
     process.exit(1);
   }
 };
@@ -109,6 +110,7 @@ const toSelectionRecord = <T extends string>(
   keys: readonly T[],
   selected: readonly string[]
 ): Record<T, boolean> =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Prompt entries are constructed from the validated option catalog; Object.fromEntries loses the known key/value relationship.
   Object.fromEntries(
     keys.map((key) => [key, selected.includes(key)])
   ) as Record<T, boolean>;
@@ -124,6 +126,7 @@ export const promptProjectName = async (
   const name = await text({
     initialValue: targetArg ?? "my-chat-app",
     message: "What is your project named?",
+    // oxlint-disable-next-line typescript/consistent-return -- Prompt validation returns an error message for invalid input and no value for accepted input.
     validate: (value?: string) => {
       const kebab = toKebabCase(value);
       if (!kebab) {
@@ -142,7 +145,7 @@ export const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   }
 
   const gateway = await select({
-    initialValue: "vercel" as Gateway,
+    initialValue: "vercel",
     message: `Which ${highlighter.info("AI gateway")} would you like to use?`,
     options: [
       ...GATEWAYS.map((gw) => ({
@@ -217,6 +220,7 @@ export const promptStorage = async (
     }
     const input = await text({
       message: `Non-secret adapter options as JSON (${keys.join(", ")}). Credentials use environment variables.`,
+      // oxlint-disable-next-line typescript/consistent-return -- Prompt validation returns an error message for invalid input and no value for accepted input.
       validate: (v) => {
         try {
           parseStorageOptions(v ?? "");
@@ -247,6 +251,7 @@ export const promptStorage = async (
         let alternatives: string[][] = [[]];
         for (const variable of option) {
           alternatives = alternatives.flatMap((alternative) =>
+            // oxlint-disable-next-line oxc/no-map-spread -- #541: Each environment-variable alternative needs its own array; mutating a prefix would alter other combinations.
             [variable.key, ...variable.aliases].map((key) => [
               ...alternative,
               key,
@@ -385,9 +390,8 @@ export const promptAssistantTools = async (
     options: [
       ...supportedBuiltInTools.map((key) => ({
         hint:
-          builtInToolEnvRequirements[
-            key as keyof typeof builtInToolEnvRequirements
-          ]?.description ?? BUILT_IN_TOOL_HINTS[key],
+          builtInToolEnvRequirements[key]?.description ??
+          BUILT_IN_TOOL_HINTS[key],
         label: BUILT_IN_TOOL_LABELS[key],
         value: key,
       })),
@@ -642,6 +646,7 @@ export const promptObservability = async (yes: boolean): Promise<string[]> => {
   });
   if (isCancel(result)) {
     cancel("Operation cancelled.");
+    // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
     process.exit(0);
   }
   return result;

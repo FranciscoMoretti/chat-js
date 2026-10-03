@@ -118,5 +118,7 @@ export const persistGeneratedEveConversationTitle = async ({
       "Eve title persistence failed"
     );
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
+  // oxlint-disable-next-line typescript/consistent-return -- #580: persistGeneratedEveConversationTitle has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
 };

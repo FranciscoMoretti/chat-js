@@ -52,6 +52,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   vi.stubGlobal("fetch", mocks.fetch);
   mocks.verify.mockImplementation(async (_connection, _scope, verify) => {
+    // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This verify-local-coverage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     await verify(sessionId);
   });
   mocks.fetch.mockImplementation(() =>
@@ -75,11 +76,13 @@ it("matches native evidence to a local identity and carries owner/root authoriza
   expect(String(url)).toBe(
     "http://worker.local/eve/chat/v1/session/session/sandbox-identity"
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This verify-local-coverage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(init.headers).toMatchObject({
     "x-chatjs-deletion": "1",
     "x-chatjs-deletion-root": sessionId,
     "x-chatjs-owner": "owner",
   });
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This verify-local-coverage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(init.redirect).toBe("error");
   expect(mocks.end).toHaveBeenCalledOnce();
 });

@@ -54,6 +54,7 @@ export const EveDocumentRun = ({
             <Button
               className="hover:bg-accent h-fit px-2 py-1.5 [&_svg]:size-[18px]"
               disabled={disabled}
+              // oxlint-disable-next-line typescript/no-misused-promises -- TanStack Query tracks refetch state and errors; this UI event deliberately initiates refresh without awaiting a DOM return value.
               onClick={() =>
                 onAction({
                   message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,

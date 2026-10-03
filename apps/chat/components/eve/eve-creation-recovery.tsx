@@ -68,7 +68,7 @@ export const EveCreationRecovery = ({
         pending,
         scope
       );
-      window.location.assign(`/chat/${id}`);
+      globalThis.location.assign(`/chat/${id}`);
     } catch (error) {
       if (error instanceof CreationRejectedError && scope?.projectId) {
         setRejected(true);
@@ -95,7 +95,7 @@ export const EveCreationRecovery = ({
         scope.projectId,
         pending.operationId
       );
-      window.location.assign("/");
+      globalThis.location.assign("/");
     } catch (error) {
       setFailure(
         error instanceof Error ? error.message : "Unable to restore the draft."
@@ -129,7 +129,11 @@ export const EveCreationRecovery = ({
         </Button>
       ) : null}
       {!rejected && pending ? (
-        <Button disabled={busy} onClick={retry}>
+        <Button
+          disabled={busy}
+          // oxlint-disable-next-line typescript/no-misused-promises -- #585: Creation recovery owns its durable operation and displayed failures; the button triggers that existing lifecycle.
+          onClick={retry}
+        >
           {busy ? "Recovering…" : "Retry creation"}
         </Button>
       ) : null}

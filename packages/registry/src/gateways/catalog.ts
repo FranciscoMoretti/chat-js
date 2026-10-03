@@ -14,6 +14,7 @@ const environment = {
 
 export const builtInGateways = Object.entries(gatewayMetadata).map(
   ([id, metadata]) => {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     const name = id as keyof typeof environment;
     let optionalEnv: string[] = [];
     if (id === "litellm") {

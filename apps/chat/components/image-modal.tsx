@@ -76,6 +76,8 @@ export const ImageActions = ({
   <div className={cn("flex items-center gap-1", className)}>
     <Button
       className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
+
+      // oxlint-disable-next-line typescript/no-misused-promises -- #585: Image copy/download handlers own clipboard, fetch, and error feedback; preserve their event argument and async lifecycle.
       onClick={(e) => handleCopyImage(e, imageUrl)}
       size="icon-sm"
       title="Copy image"
@@ -86,6 +88,8 @@ export const ImageActions = ({
     </Button>
     <Button
       className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
+
+      // oxlint-disable-next-line typescript/no-misused-promises -- #585: Image copy/download handlers own clipboard, fetch, and error feedback; preserve their event argument and async lifecycle.
       onClick={(e) => handleDownload(e, imageUrl)}
       size="icon-sm"
       title="Download image"

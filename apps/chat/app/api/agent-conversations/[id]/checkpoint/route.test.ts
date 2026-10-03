@@ -81,6 +81,7 @@ it("returns readiness only after the matching immutable checkpoint is available"
     "owner",
     "/eve/chat/v1/session/native-source/checkpoint",
   ]);
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(JSON.parse(mocks.capture.mock.calls[0][2].body)).toEqual(input);
   expect(mocks.ready).toHaveBeenCalledWith(
     "owner",
@@ -96,6 +97,7 @@ it("keeps uncertain capture retryable using the exact same coordinates", async (
   const resolvedResult6 = await POST(request(), context);
   expect(resolvedResult6.status).toBe(200);
   expect(
+    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #598: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     mocks.capture.mock.calls.map((call) => JSON.parse(call[2].body))
   ).toEqual([input, input]);
 });

@@ -9,7 +9,7 @@ import { syncTools } from "../utils/sync-tools";
 export const sync = new Command("sync")
   .description("regenerate typed tool, feature, and router registrations")
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
-  .action(async (options) => {
+  .action(async (options: { cwd: string }) => {
     try {
       await syncTools(path.resolve(options.cwd));
       await syncFeatures(path.resolve(options.cwd));

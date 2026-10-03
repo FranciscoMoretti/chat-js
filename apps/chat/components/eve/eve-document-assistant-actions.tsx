@@ -99,6 +99,8 @@ export const EveDocumentAssistantActions = ({
               aria-label="Stop generation"
               className="h-auto w-auto rounded-full p-3"
               variant="ghost"
+
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: The parent owns document action and cancellation promises; preserve that callback contract and pending-state management.
               onClick={onStop}
             >
               <Square size={16} />
@@ -117,6 +119,8 @@ export const EveDocumentAssistantActions = ({
                   variant="ghost"
                   className="h-auto w-auto rounded-full p-3"
                   aria-label={action.label}
+
+                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: The parent owns document action and cancellation promises; preserve that callback contract and pending-state management.
                   onClick={() =>
                     onAction?.(
                       documentAssistantRequest(action, documentId, revisionId)

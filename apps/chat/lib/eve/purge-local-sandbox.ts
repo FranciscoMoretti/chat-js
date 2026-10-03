@@ -44,6 +44,7 @@ const readResourceRecords = async (input: {
     }
   );
   const records: z.infer<typeof resourceSchema>[] = [];
+  // oxlint-disable-next-line typescript/require-array-sort-compare -- #607: Canonical resource names use deterministic default UTF-16 ordering; locale-dependent comparison would change the ordering contract.
   for (const entry of resourceEntries.toSorted()) {
     if (entry.endsWith(".tmp")) {
       continue;
@@ -107,6 +108,7 @@ const readLocalSandboxResources = async (input: {
   const snapshots: string[] = metadata?.stateSnapshotName
     ? [metadata.stateSnapshotName, ...recordedSnapshots]
     : [...recordedSnapshots];
+  // oxlint-disable-next-line typescript/require-array-sort-compare -- #607: Canonical resource names use deterministic default UTF-16 ordering; locale-dependent comparison would change the ordering contract.
   for (const entry of entries.toSorted()) {
     // Atomic-write leftovers precede provider creation and are not published records.
     if (entry.endsWith(".tmp")) {

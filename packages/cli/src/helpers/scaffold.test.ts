@@ -22,6 +22,7 @@ import {
   scaffoldFromTemplate,
 } from "./scaffold";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = pathModule;
 
 const tempDirs: string[] = [];
@@ -138,8 +139,10 @@ describe("buildConfigTs", () => {
 
 describe("scaffoldFromTemplate", () => {
   it("ships remaining patches as archives and preserves the eve package dependency", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const destination = await makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     ) as { dependencies: Record<string, string> };
@@ -226,6 +229,7 @@ describe("scaffoldFromTemplate", () => {
     expect(tsconfig).not.toContain("@world-postgres-test");
     const lint = await readFile(join(destination, "oxlint.config.ts"), "utf-8");
     expect(lint).not.toContain("tests/eve-fixture");
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     );
@@ -236,8 +240,10 @@ describe("scaffoldFromTemplate", () => {
       "evalite",
       "better-sqlite3",
     ]) {
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.devDependencies[dependency]).toBeUndefined();
     }
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.overrides?.evalite).toBeUndefined();
     for (const script of [
       "eval:dev",
@@ -245,18 +251,24 @@ describe("scaffoldFromTemplate", () => {
       "test:research:native",
       "test:tools:live",
     ]) {
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.scripts[script]).toBeUndefined();
     }
   });
 
   it("leaves the storage slot and provider peers to registry installation", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const destination = await makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     );
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["files-sdk"]).toBe("2.1.0");
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
     expect(
       await Bun.file(join(destination, "lib/storage-provider.ts")).exists()
@@ -264,10 +276,12 @@ describe("scaffoldFromTemplate", () => {
   });
 
   it("writes a standalone-safe root package.json", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const destination = await makeTempDir("chat-app");
 
     await scaffoldFromTemplate(destination);
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     ) as {
@@ -323,10 +337,12 @@ describe("scaffoldFromTemplate", () => {
   });
 
   it("rewrites the generated web app to be npm-friendly", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const destination = await makeTempDir("chat-app-npm");
 
     await scaffoldFromTemplate(destination, { packageManager: "npm" });
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     ) as {
@@ -378,10 +394,12 @@ describe("scaffoldFromTemplate", () => {
 
   it("allows known native package build scripts for pnpm scaffolds", async () => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const destination = await makeTempDir("chat-app-pnpm");
 
     await scaffoldFromTemplate(destination, { packageManager: "pnpm" });
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     ) as {
@@ -406,6 +424,7 @@ describe("scaffoldFromTemplate", () => {
   });
 
   it("starts generated apps with an empty installable tool registry", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     const destination = await makeTempDir("chat-app-tools");
 
     await scaffoldFromTemplate(destination);
@@ -435,6 +454,7 @@ describe("scaffoldFromTemplate", () => {
   });
 
   it("falls back to repo source apps when synced templates are missing", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const projectDir = await makeTempDir("chat-app-fallback");
     const templatesDir = join(getCliPackageRoot(), "templates");
     const backupDir = join(
@@ -452,12 +472,22 @@ describe("scaffoldFromTemplate", () => {
         packageManager: "npm",
         projectName: "my-chat-app",
       });
+      const electronTsconfig = await readFile(
+        join(projectDir, "electron", "tsconfig.json"),
+        "utf-8"
+      );
+      expect(electronTsconfig).toContain('"../next-env.d.ts"');
+      expect(electronTsconfig).toContain('"../electron.d.ts"');
+      expect(electronTsconfig).not.toContain("../chat/");
+      expect(existsSync(join(projectDir, "electron.d.ts"))).toBe(true);
 
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const packageJson = JSON.parse(
         await readFile(join(projectDir, "package.json"), "utf-8")
       ) as {
         dependencies: Record<string, string>;
       };
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const electronPackageJson = JSON.parse(
         await readFile(join(projectDir, "electron", "package.json"), "utf-8")
       ) as {
@@ -495,7 +525,9 @@ describe("scaffoldFromTemplate", () => {
 
 describe("scaffoldFromGit", () => {
   it("leaves repositories without the ChatJS storage seam untouched", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const source = await makeTempDir("plain-git-source");
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const destination = await makeTempDir("plain-git-destination");
     await mkdir(source, { recursive: true });
     await writeFile(
@@ -521,6 +553,7 @@ describe("scaffoldFromGit", () => {
 
     await scaffoldFromGit(source, destination);
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
     ) as { dependencies: Record<string, string> };
@@ -530,6 +563,7 @@ describe("scaffoldFromGit", () => {
 
 describe("scaffoldElectron", () => {
   it("runs generated Electron prebuild under Node and tsx", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const projectDir = await makeTempDir("electron-node-prebuild");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
     await scaffoldElectron(projectDir, {
@@ -567,6 +601,7 @@ describe("scaffoldElectron", () => {
       exitCode: result.exitCode,
       stderr: result.stderr.toString(),
     }).toEqual({ exitCode: 0, stderr: "" });
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const branding = JSON.parse(
       await readFile(join(electronDir, "branding.json"), "utf-8")
     );
@@ -588,6 +623,7 @@ describe("scaffoldElectron", () => {
   });
 
   it("runs generated Forge prebuild and build hooks with the selected package manager", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const projectDir = await makeTempDir("electron-forge");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
     await scaffoldElectron(projectDir, {
@@ -666,6 +702,7 @@ describe("scaffoldElectron", () => {
   });
 
   it("pins Better Auth versions in the generated electron app", async () => {
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const projectDir = await makeTempDir("electron");
 
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
@@ -674,6 +711,7 @@ describe("scaffoldElectron", () => {
       projectName: "my-chat-app",
     });
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
       await readFile(join(projectDir, "electron", "package.json"), "utf-8")
     ) as {
@@ -689,16 +727,27 @@ describe("scaffoldElectron", () => {
     expect(packageJson.devDependencies["@better-auth/electron"]).toBe("1.5.6");
     expect(packageJson.devDependencies["better-auth"]).toBe("1.5.6");
     expect(packageJson.devDependencies.esbuild).toBeDefined();
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const rootPackageJson = JSON.parse(
       await readFile(join(projectDir, "package.json"), "utf-8")
     ) as {
       devDependencies: Record<string, string>;
     };
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const rootTsconfig = JSON.parse(
       await readFile(join(projectDir, "tsconfig.json"), "utf-8")
     ) as {
       exclude?: string[];
     };
+    const electronTsconfig = await readFile(
+      join(projectDir, "electron", "tsconfig.json"),
+      "utf-8"
+    );
+    expect(electronTsconfig).toContain('"../next-env.d.ts"');
+    expect(electronTsconfig).toContain('"../electron.d.ts"');
+    expect(electronTsconfig).not.toContain("../chat/");
+    expect(existsSync(join(projectDir, "electron.d.ts"))).toBe(true);
+
     expect(packageJson.devDependencies.tsx).toBe(
       rootPackageJson.devDependencies.tsx
     );
@@ -715,6 +764,7 @@ describe("scaffoldElectron", () => {
 
   it("allows Electron install/build scripts for pnpm scaffolds", async () => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     const projectDir = await makeTempDir("electron-pnpm");
 
     await scaffoldFromTemplate(projectDir, { packageManager: "pnpm" });
@@ -723,6 +773,7 @@ describe("scaffoldElectron", () => {
       projectName: "my-chat-app",
     });
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
       await readFile(join(projectDir, "electron", "package.json"), "utf-8")
     ) as { pnpm?: unknown };

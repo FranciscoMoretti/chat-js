@@ -32,6 +32,7 @@ export const EveAttachment = ({
       }
     };
     void resolveAttachment();
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return () => {
       disposed = true;
       if (objectUrl) {

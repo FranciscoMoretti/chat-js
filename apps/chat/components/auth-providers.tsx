@@ -59,6 +59,7 @@ type AuthProviderDefinition = {
 
 const AUTH_PROVIDER_METADATA = {
   github: {
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the existing GitHub sign-in brand icon until its visual replacement is selected.
     icon: Github,
     label: "GitHub",
   },
@@ -95,6 +96,7 @@ export const SocialAuthProviders = ({
   const providers = useMemo<AuthProviderDefinition[]>(() => {
     const providerDefinitions = getEnabledSocialAuthProviders(
       config.authentication
+      // oxlint-disable-next-line oxc/no-map-spread -- #541: Add provider IDs to view records without mutating shared authentication metadata.
     ).map((id) => ({
       id,
       ...AUTH_PROVIDER_METADATA[id],
@@ -143,6 +145,8 @@ export const SocialAuthProviders = ({
           <Button
             className="relative w-full"
             key={id}
+
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Authentication owns redirect and loading behavior; changing rejection handling requires a sign-in flow decision.
             onClick={() => signIn(id)}
             type="button"
             variant="outline"

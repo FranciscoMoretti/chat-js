@@ -44,9 +44,9 @@ export const ProjectChatItem = ({
   };
 
   const lastMessageText = chat.updatedAt
-    ? `${formatDistance(new Date(chat.updatedAt), new Date(), {
+    ? formatDistance(new Date(chat.updatedAt), new Date(), {
         addSuffix: true,
-      })}`
+      })
     : "";
 
   return (

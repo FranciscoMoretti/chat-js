@@ -70,6 +70,7 @@ export const proxy = async (req: NextRequest) => {
   const returnTo = getSafeReturnTo(url);
 
   if (isLoggedIn && isAuthPage(pathname) && !isDeviceLoginRoute) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: proxy has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return NextResponse.redirect(new URL(returnTo ?? "/", url));
   }
 
@@ -78,6 +79,7 @@ export const proxy = async (req: NextRequest) => {
   }
 
   if (!isLoggedIn) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: proxy has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return NextResponse.redirect(new URL("/login", url));
   }
 };

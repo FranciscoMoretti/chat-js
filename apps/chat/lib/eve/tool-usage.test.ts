@@ -43,11 +43,13 @@ test.each([
 ])("preserves native exceptions unchanged: %s", async (failure) => {
   await expect(
     executeWithToolUsage(context(), () => {
+      // oxlint-disable-next-line typescript/only-throw-error -- #601: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
       throw failure;
     })
   ).rejects.toBe(failure);
   await expect(
     Array.fromAsync(
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
       executeWithToolProgress(context(), () => Promise.reject(failure))
     )
   ).rejects.toBe(failure);

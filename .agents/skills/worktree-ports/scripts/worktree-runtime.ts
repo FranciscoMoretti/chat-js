@@ -66,8 +66,8 @@ const renderTemplate = (template: string, context: TemplateContext): string =>
     if (appMatch) {
       const [, appName, property] = appMatch;
       const app = context.apps[appName];
-      if (app) {
-        return String(app[property as "port" | "url"]);
+      if (app && (property === "port" || property === "url")) {
+        return String(app[property]);
       }
     }
 
@@ -177,5 +177,6 @@ export const loadWorktreeConfig = async (
   if (!(await configFile.exists())) {
     throw new Error(`Missing worktree environment config: ${path}`);
   }
-  return configFile.json();
+  // oxlint-disable-next-line typescript/no-unsafe-return -- This repository-owned config is consumed by the runtime resolver; a separate input schema requires a config-format decision.
+  return await configFile.json();
 };

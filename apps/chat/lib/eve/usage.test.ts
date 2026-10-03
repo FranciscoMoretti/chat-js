@@ -25,6 +25,7 @@ it("records each auxiliary model attempt with replay-stable independent identiti
   };
   expect(await ingestEveUsage("owner", "session", event)).toBe(true);
   expect(
+    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     record.mock.calls.map(([call]) => [call.eventId, call.costUsd])
   ).toEqual([
     ["hook-event:model-call:0", 0.001],
@@ -53,6 +54,7 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
     })
   ).toBe(true);
   expect(record).toHaveBeenCalledTimes(2);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(record.mock.calls[1][0].costUsd).toBe(0);
 });
 
@@ -137,6 +139,7 @@ it("retains unpriced and malformed external receipts for reconciliation", async 
     const priced = await ingestEveUsage("owner", "session", toolEvent(output));
     expect(priced).toBe(false);
   }
+  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(record.mock.calls.map(([value]) => value.costUsd)).toEqual([
     undefined,
     undefined,

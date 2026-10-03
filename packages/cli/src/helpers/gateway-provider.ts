@@ -34,15 +34,21 @@ export const configureGatewayProvider = async (
     ".env.example",
   ]);
   const snapshotPath = path.join(destination, "lib/ai/models.generated.ts");
-  const snapshot = await readFile(snapshotPath, "utf-8").catch((error) => {
-    if (error.code === "ENOENT") {
-      return "";
+  const snapshot = await readFile(snapshotPath, "utf-8").catch(
+    (error: unknown) => {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        return "";
+      }
+      throw error;
     }
-    throw error;
-  });
+  );
   const example = path.join(destination, ".env.example");
-  let env = await readFile(example, "utf-8").catch((error) => {
-    if (error.code === "ENOENT") {
+  let env = await readFile(example, "utf-8").catch((error: unknown) => {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return "";
     }
     throw error;

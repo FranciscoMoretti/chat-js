@@ -345,6 +345,7 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
         return rows.map((row) => row.key).toSorted();
       })
       .toEqual(
+        // oxlint-disable-next-line typescript/require-array-sort-compare -- Optional storage keys are compared in default UTF-16 order on both sides; locale collation would change this assertion.
         urls
           .slice(1)
           .map((url) => keyFromFileUrl(url))

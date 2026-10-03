@@ -199,6 +199,7 @@ export const getSessionByState = async ({
     .select()
     .from(mcpOAuthSession)
     .where(eq(mcpOAuthSession.state, state));
+  // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return session;
 };
 

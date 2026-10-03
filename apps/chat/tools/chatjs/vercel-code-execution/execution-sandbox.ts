@@ -44,6 +44,7 @@ const tokenClaims = (token: string) => {
   ) {
     throw new Error("Sandbox provider identity is unavailable.");
   }
+  // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return { projectId: payload.project_id, teamId: payload.owner_id };
 };
 
@@ -117,6 +118,7 @@ export const createSandbox = (
     name,
     persistent: false,
     resources: { vcpus: 2 },
+    // oxlint-disable-next-line typescript/no-deprecated -- The pinned Sandbox SDK still accepts this configured runtime; switching runtime identifiers requires execution compatibility validation.
     runtime,
     signal,
     timeout: 5 * 60 * 1000,
@@ -157,6 +159,7 @@ const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
     });
   } catch (error) {
     if (error instanceof APIError && error.response.status === 404) {
+      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
       return;
     }
     throw error;

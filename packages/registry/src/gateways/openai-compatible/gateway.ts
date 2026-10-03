@@ -107,7 +107,9 @@ export class OpenAICompatibleGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
       const body = await response.json();
+      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
       const models = (body.data ?? []) as OpenAICompatibleModelResponse[];
       const result = models.map((model) => toAiGatewayModel(model));
 

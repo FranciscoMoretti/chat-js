@@ -20,11 +20,9 @@ const check = async () => {
     await connection.end();
   }
 };
-void (async () => {
-  try {
-    await check();
-  } catch (error) {
-    console.error(error);
-    process.exitCode = 1;
-  }
-})();
+try {
+  await check();
+} catch (error) {
+  console.error(error);
+  process.exitCode = 1;
+}

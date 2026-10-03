@@ -97,6 +97,10 @@ export const EveComposer = ({
         }
         disabled={locked || unsupported || unavailableTool}
         hasAttachments={files.attachments.length > 0}
+
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.
+
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value.
         tools={
           <>
             <ComposerMenu
@@ -112,6 +116,7 @@ export const EveComposer = ({
               onClear={() => onToolChange(null)}
             />
             <EveModelPicker
+              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These flags express independent truthy conditions, not a nullish fallback.
               disabled={locked || props.readOnly || Boolean(retainedModelId)}
               modelSelection={modelSelection}
               retainedModelId={retainedModelId}

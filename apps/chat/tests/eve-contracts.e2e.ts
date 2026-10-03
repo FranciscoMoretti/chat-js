@@ -332,7 +332,7 @@ test.each(["codeExecution", "webSearch"])(
         result: {
           callId,
           kind: "tool-result",
-          // oxlint-disable-next-line unicorn/prefer-structured-clone -- The event carries persisted JSON, not in-memory optional undefined fields.
+          // oxlint-disable-next-line typescript/no-unsafe-assignment, unicorn/prefer-structured-clone -- The event carries persisted JSON, not in-memory optional undefined fields. Round-trip the controlled tool-result fixture through JSON to exercise persisted protocol values rather than in-memory undefined fields.
           output: JSON.parse(
             JSON.stringify(createToolResult({ message: "42", chart: "" }, 0.05))
           ),

@@ -104,13 +104,16 @@ export const EveHistoryList = ({
         hadPendingTitle.current &&
         pendingEveMetadataMutations(queryClient) === 0
       ) {
-        queryClient.invalidateQueries({ queryKey: trpc.eve.get.pathKey() });
+        void queryClient.invalidateQueries({
+          queryKey: trpc.eve.get.pathKey(),
+        });
       }
       hadPendingTitle.current = false;
       titlePollStartedAt.current = undefined;
       return;
     }
     hadPendingTitle.current = true;
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
     if (titlePollStartedAt.current === undefined) {
       titlePollStartedAt.current = Date.now();
     }
@@ -119,20 +122,21 @@ export const EveHistoryList = ({
     if (remaining <= 0) {
       return;
     }
-    const interval = window.setInterval(() => {
+    const interval = globalThis.setInterval(() => {
       if (pendingEveMetadataMutations(queryClient) === 0) {
-        history.refetch();
+        void history.refetch();
       }
     }, titlePollIntervalMs);
-    const timeout = window.setTimeout(() => {
-      window.clearInterval(interval);
+    const timeout = globalThis.setTimeout(() => {
+      globalThis.clearInterval(interval);
       if (pendingEveMetadataMutations(queryClient) === 0) {
-        history.refetch();
+        void history.refetch();
       }
     }, remaining);
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return () => {
-      window.clearInterval(interval);
-      window.clearTimeout(timeout);
+      globalThis.clearInterval(interval);
+      globalThis.clearTimeout(timeout);
     };
   }, [hasPendingTitle, history, queryClient, trpc]);
   // Activity can move a row across a loaded page boundary between requests.
@@ -251,6 +255,7 @@ export const EveHistoryList = ({
         <div className="p-2 text-sm" role="alert">
           <p>Could not load conversations.</p>
           <Button
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: History mutations and pagination expose pending and error state through their React Query owners.
             onClick={() =>
               history.isFetchNextPageError
                 ? history.fetchNextPage()
@@ -267,6 +272,8 @@ export const EveHistoryList = ({
         <Button
           className="mt-2"
           disabled={history.isFetching}
+
+          // oxlint-disable-next-line typescript/no-misused-promises -- #585: History mutations and pagination expose pending and error state through their React Query owners.
           onClick={() => history.fetchNextPage()}
           size="sm"
           variant="ghost"

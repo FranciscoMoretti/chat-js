@@ -13,6 +13,7 @@ import {
   parseStorageOptions,
 } from "./storage-provider";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = pathModule;
 
 describe("storage registry integration", () => {
@@ -95,8 +96,10 @@ describe("storage registry integration", () => {
           meta: { chatjs: { ...definition, contractVersion: 999 } },
         })
       );
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(resolveStorage(source, cwd)).rejects.toThrow();
       await writeFile(source, JSON.stringify({ ...item, files: [] }));
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(resolveStorage(source, cwd)).rejects.toThrow(
         "storage-provider.ts"
       );

@@ -6,6 +6,7 @@ import pathModule from "node:path";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { validateCustomToolKeys } from "./custom-tool-keys";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = pathModule;
 
 const roots: string[] = [];

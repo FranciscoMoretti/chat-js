@@ -145,6 +145,7 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     return Promise.resolve();
   });
   await purgeLocalEveSandboxes([parent, child]);
+  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This purge-local-sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(remove.mock.calls.map(([name]) => name)).toEqual([
     parent.snapshotName,
     child.snapshotName,

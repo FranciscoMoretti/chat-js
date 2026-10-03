@@ -112,6 +112,7 @@ test("partial MCP installation cannot register routes", async () => {
   await initializeFeatureUi(root);
   await install(root);
   await rm(path.join(root, "app/api/mcp/oauth/callback/route.ts"));
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncFeatures(root, { expectedMcp: true })).rejects.toThrow(
     "app/api/mcp/oauth/callback/route.ts"
   );
@@ -135,6 +136,7 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
     await readFile(path.join(root, "lib/db/schema.ts"), "utf-8")
   ).toContain('"McpConnector"');
   const files = await Promise.all(
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Load file contents into independent installation fixtures without mutating registry metadata.
     (mcpItem.files ?? []).map(async (file) => ({
       ...file,
       content: await readFile(
@@ -165,6 +167,7 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
       await readFile(path.join(root, "features/installed-routers.ts"), "utf-8")
     ).toContain("mcp: mcpRouter");
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     server.stop(true);
   }
 }, 30_000);
@@ -238,6 +241,7 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
     const before = await Promise.all(
       paths.map((entry) => readFile(path.join(root, entry), "utf-8"))
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncFeatures(root, { addUi: true })).rejects.toThrow(
       "retry chat-js add"
     );
@@ -254,6 +258,7 @@ test("missing descriptors report partial MCP source and how to recover", async (
   await initializeFeatureUi(root);
   await install(root);
   await rm(path.join(root, "features/mcp/chatjs.json"));
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncFeatures(root)).rejects.toThrow("chat-js add mcp");
 });
 
@@ -318,6 +323,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     expect(await Bun.file(path.join(root, file)).exists()).toBe(true);
   }
   const files = await Promise.all(
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Load file contents into independent installation fixtures without mutating registry metadata.
     (attachmentUploadsItem.files ?? []).map(async (file) => ({
       ...file,
       content: await readFile(
@@ -388,10 +394,12 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       ).toBe(customControls);
     }
     await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncFeatures(root, { expectedUploads: true })).rejects.toThrow(
       "app/(chat)/api/files/upload/route.ts"
     );
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     server.stop(true);
   }
 }, 30_000);
@@ -411,6 +419,7 @@ test("unrelated additions preserve computed feature UI; requesting MCP still req
   expect(await readFile(path.join(root, "settings-items.ts"), "utf-8")).toBe(
     settings
   );
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncFeatures(root, { addUi: ["mcp"] })).rejects.toThrow(
     "manually"
   );

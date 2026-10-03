@@ -145,7 +145,7 @@ export const createPlaygroundTransport =
       body,
       messages,
     }: Parameters<ChatTransport<PlaygroundMessage>["sendMessages"]>[0]) => {
-      const requestBody = body as StreamBody | undefined;
+      const requestBody: StreamBody | undefined = body;
       const responseLabel = requestBody?.responseLabel ?? "Assistant";
       const streamId = crypto.randomUUID();
       const userMessage = messages.at(-1);
@@ -154,7 +154,7 @@ export const createPlaygroundTransport =
       const words = response.split(" ");
       // Different cadences make independent streams easy to follow in the demo.
       const responseNumber = Number(
-        responseLabel.match(RESPONSE_NUMBER_PATTERN)?.[0] ?? 1
+        RESPONSE_NUMBER_PATTERN.exec(responseLabel)?.[0] ?? 1
       );
       const tokenDelay = 140 + (responseNumber % 3) * 35;
 

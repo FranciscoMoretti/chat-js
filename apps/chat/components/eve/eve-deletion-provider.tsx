@@ -50,8 +50,14 @@ export const EveDeletionProvider = ({ children }: { children: ReactNode }) => {
         const response = await fetch(`/api/agent-conversations/${route.id}`, {
           signal: AbortSignal.timeout(10_000),
         });
-        const status = await response.json();
-        if (response.ok && status.rootId === rootId) {
+        const status: unknown = await response.json();
+        if (
+          response.ok &&
+          typeof status === "object" &&
+          status !== null &&
+          "rootId" in status &&
+          status.rootId === rootId
+        ) {
           const projectId =
             conversation?.projectId ??
             (route.source === "project" ? route.projectId : undefined);

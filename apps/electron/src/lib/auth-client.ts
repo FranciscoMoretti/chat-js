@@ -19,11 +19,11 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 const memoryStorage = () => {
-  const store = new Map<string, string>();
+  const store = new Map<string, unknown>();
 
   return {
     getItem: (key: string) => store.get(key) ?? null,
-    setItem: (key: string, value: string) => {
+    setItem: (key: string, value: unknown) => {
       store.set(key, value);
     },
   };
@@ -45,17 +45,14 @@ export const authClient = createAuthClient({
       },
       signInURL: `${APP_URL}/device-login`,
       storage: electronAuthStorage,
-      // `as any`: @better-auth/electron does not export a typed Storage union
-      // compatible with both `storage()` and our in-memory shim, and the
-      // plugin's inferred return type leaks through to createAuthClient.
-    }) as unknown as Parameters<typeof createAuthClient>[0]["plugins"][number],
+    }),
   ],
 });
 
 export type ElectronAuthClient = typeof authClient & {
   authenticate: (data: { token: string }) => Promise<unknown>;
   getCookie: () => string;
-  getSession: () => Promise<{ data?: { user?: unknown | null } | null }>;
+  getSession: () => Promise<{ data?: { user?: unknown } | null }>;
   requestAuth: (options?: { provider?: string }) => Promise<void>;
   signOut: () => Promise<unknown>;
   setupMain: (cfg?: {
@@ -64,4 +61,4 @@ export type ElectronAuthClient = typeof authClient & {
   }) => void;
 };
 
-export const electronAuthClient = authClient as ElectronAuthClient;
+export const electronAuthClient: ElectronAuthClient = authClient;

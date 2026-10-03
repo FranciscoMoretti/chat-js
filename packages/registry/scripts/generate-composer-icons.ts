@@ -3,6 +3,7 @@ import { writeFile } from "node:fs/promises";
 import * as lucide from "lucide-react";
 
 const components = new Set<unknown>(Object.values(lucide.icons));
+// oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- Reflect all Lucide module exports, including aliases, to generate the exact available icon catalog.
 const names = Object.entries(lucide)
   .filter(([, value]) => components.has(value))
   .map(([name]) => name)

@@ -28,17 +28,19 @@ export const HydrateClient = (props: { children: React.ReactNode }) => {
   );
 };
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- #593: Preserve concrete query option inference across normal and infinite prefetch overloads.
 export const prefetch = <T extends ReturnType<TRPCQueryOptions<ResolverDef>>>(
   queryOptions: T
 ) => {
   const queryClient = getQueryClient();
   if (queryOptions.queryKey[1]?.type === "infinite") {
-    queryClient.prefetchInfiniteQuery(
+    void queryClient.prefetchInfiniteQuery(
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Lazy prefetch bridges tagged tRPC query options and TanStack infinite-query overloads; removing the generic adapter requires preserving their correlated types.
       queryOptions as unknown as Parameters<
         typeof queryClient.prefetchInfiniteQuery
       >[0]
     );
   } else {
-    queryClient.prefetchQuery(queryOptions);
+    void queryClient.prefetchQuery(queryOptions);
   }
 };

@@ -18,7 +18,12 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/server", () => ({ assertEveConfigured: vi.fn() }));
-const transport = vi.hoisted(() => ({ stream: vi.fn() }));
+const transport = vi.hoisted(() => ({
+  stream:
+    vi.fn<
+      (options: { startIndex?: number; follow?: boolean }) => Iterable<unknown>
+    >(),
+}));
 vi.mock("eve/client", () => ({
   Client: class {
     public sessions = { attach: () => ({ stream: transport.stream }) };

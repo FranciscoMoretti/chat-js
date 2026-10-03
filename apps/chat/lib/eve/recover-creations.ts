@@ -48,7 +48,7 @@ export const recoverEveCreations = async (ownerId: string) => {
     );
     if (!response.ok) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Decode only the failed operation before continuing the recovery loop.
-      const body = await response.json().catch(() => null);
+      const body: unknown = await response.json().catch(() => null);
       const conflict = z
         .object({ code: z.literal("creation_in_progress") })
         .safeParse(body);

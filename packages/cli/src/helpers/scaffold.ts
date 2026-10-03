@@ -18,8 +18,6 @@ import {
 } from "./scaffold-content";
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
-const { join, relative, resolve } = pathModule;
-
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "cbor-extract",
   "electron",
@@ -34,8 +32,8 @@ const getCliPackageRoot = (): string => {
   const __dir = import.meta.dirname;
 
   for (const relativePath of ["..", "../.."]) {
-    const candidate = resolve(__dir, relativePath);
-    if (existsSync(join(candidate, "package.json"))) {
+    const candidate = pathModule.resolve(__dir, relativePath);
+    if (existsSync(pathModule.join(candidate, "package.json"))) {
       return candidate;
     }
   }
@@ -43,18 +41,19 @@ const getCliPackageRoot = (): string => {
   throw new Error("Could not locate the @chat-js/cli package root.");
 };
 
-const getRepoRoot = (): string => resolve(getCliPackageRoot(), "../..");
+const getRepoRoot = (): string =>
+  pathModule.resolve(getCliPackageRoot(), "../..");
 
 const findTemplateDir = (name: string): string | null => {
   const cliRoot = getCliPackageRoot();
-  const candidate = join(cliRoot, "templates", name);
+  const candidate = pathModule.join(cliRoot, "templates", name);
   return existsSync(candidate) ? candidate : null;
 };
 
 const shouldCopyChatAppFilePath = (
   sourceDir: string,
   filePath: string
-): boolean => shouldCopyChatAppFile(relative(sourceDir, filePath));
+): boolean => shouldCopyChatAppFile(pathModule.relative(sourceDir, filePath));
 
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
@@ -74,7 +73,7 @@ const replaceInFile = async (
 };
 
 const resetInstallableTools = async (destination: string): Promise<void> => {
-  const toolsDir = join(destination, "tools", "chatjs");
+  const toolsDir = pathModule.join(destination, "tools", "chatjs");
   await rm(toolsDir, { force: true, recursive: true });
   await mkdir(toolsDir, { recursive: true });
   await syncTools(destination);
@@ -99,7 +98,7 @@ const writePnpmWorkspaceConfig = async (
       : [];
 
   await writeFile(
-    join(destination, "pnpm-workspace.yaml"),
+    pathModule.join(destination, "pnpm-workspace.yaml"),
     `${[
       ...packageLines,
       ...pnpm10Lines,
@@ -114,11 +113,15 @@ const applyChatTemplateSourceTransforms = async (
 ): Promise<void> => {
   await Promise.all(
     ["components/github-link.tsx", "components/docs-link.tsx"].map((file) =>
-      rm(join(destination, file), { force: true })
+      rm(pathModule.join(destination, file), { force: true })
     )
   );
 
-  const headerPath = join(destination, "components", "header-actions.tsx");
+  const headerPath = pathModule.join(
+    destination,
+    "components",
+    "header-actions.tsx"
+  );
   await replaceInFile(headerPath, [
     ['import { DocsLink } from "@/components/docs-link";\n', ""],
     ['import { GitHubLink } from "@/components/github-link";\n', ""],
@@ -126,7 +129,7 @@ const applyChatTemplateSourceTransforms = async (
     ["<GitHubLink />", ""],
   ]);
 
-  const globalsCssPath = join(destination, "app", "globals.css");
+  const globalsCssPath = pathModule.join(destination, "app", "globals.css");
   await replaceInFile(globalsCssPath, [
     [
       '@source "../node_modules/streamdown/dist/*.js";\n@source "../../../node_modules/streamdown/dist/*.js";',
@@ -134,11 +137,13 @@ const applyChatTemplateSourceTransforms = async (
     ],
   ]);
 
-  const repoPackageJsonPath = join(getRepoRoot(), "package.json");
+  const repoPackageJsonPath = pathModule.join(getRepoRoot(), "package.json");
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const rootPackageJson = JSON.parse(
     await readFile(repoPackageJsonPath, "utf-8")
   ) as { packageManager?: string };
-  const packageJsonPath = join(destination, "package.json");
+  const packageJsonPath = pathModule.join(destination, "package.json");
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
     packageManager?: string;
   };
@@ -149,19 +154,23 @@ const applyChatTemplateSourceTransforms = async (
     destination,
     packageDir: await resolvePackageDirectory(
       "@ai-sdk/mcp",
-      join(getRepoRoot(), "apps", "chat")
+      pathModule.join(getRepoRoot(), "apps", "chat")
     ),
     packageName: "@ai-sdk/mcp",
-    patchPath: join(getRepoRoot(), "patches", "ai-sdk-mcp@2.0.52.patch"),
+    patchPath: pathModule.join(
+      getRepoRoot(),
+      "patches",
+      "ai-sdk-mcp@2.0.52.patch"
+    ),
   });
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(
       "@workflow/world-postgres",
-      join(getRepoRoot(), "apps", "chat")
+      pathModule.join(getRepoRoot(), "apps", "chat")
     ),
     packageName: "@workflow/world-postgres",
-    patchPath: join(
+    patchPath: pathModule.join(
       getRepoRoot(),
       "patches",
       "workflow-world-postgres@5.0.0-beta.40.patch"
@@ -172,10 +181,14 @@ const applyChatTemplateSourceTransforms = async (
 const applyElectronTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
-  const tsconfigPath = join(destination, "tsconfig.json");
-  await replaceInFile(tsconfigPath, [['"../chat/*"', '"../*"']]);
+  const tsconfigPath = pathModule.join(destination, "tsconfig.json");
+  await replaceInFile(tsconfigPath, [
+    ['"../chat/*"', '"../*"'],
+    ['"../chat/next-env.d.ts"', '"../next-env.d.ts"'],
+    ['"../chat/electron.d.ts"', '"../electron.d.ts"'],
+  ]);
 
-  const packageJsonPath = join(destination, "package.json");
+  const packageJsonPath = pathModule.join(destination, "package.json");
   await replaceInFile(packageJsonPath, [
     ['"name": "@chat-js/electron"', '"name": "__PROJECT_NAME__-electron"'],
     [
@@ -188,7 +201,7 @@ const applyElectronTemplateSourceTransforms = async (
 const copyChatTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
-  const sourceDir = join(getRepoRoot(), "apps", "chat");
+  const sourceDir = pathModule.join(getRepoRoot(), "apps", "chat");
   await cp(sourceDir, destination, {
     filter: (filePath) => shouldCopyChatAppFilePath(sourceDir, filePath),
     recursive: true,
@@ -199,9 +212,10 @@ const copyChatTemplateFromRepoSource = async (
 const copyElectronTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
-  const sourceDir = join(getRepoRoot(), "apps", "electron");
+  const sourceDir = pathModule.join(getRepoRoot(), "apps", "electron");
   await cp(sourceDir, destination, {
-    filter: (filePath) => shouldCopyElectronFile(relative(sourceDir, filePath)),
+    filter: (filePath) =>
+      shouldCopyElectronFile(pathModule.relative(sourceDir, filePath)),
     recursive: true,
   });
   await applyElectronTemplateSourceTransforms(destination);
@@ -213,11 +227,11 @@ const normalizeChatAppFiles = async (
 ): Promise<void> => {
   await normalizeScaffoldContent(destination);
 
-  await replaceInFile(join(destination, "playwright.config.ts"), [
+  await replaceInFile(pathModule.join(destination, "playwright.config.ts"), [
     ['command: "bun dev"', `command: "${runScript(packageManager, "dev")}"`],
   ]);
 
-  await replaceInFile(join(destination, "scripts", "check-env.ts"), [
+  await replaceInFile(pathModule.join(destination, "scripts", "check-env.ts"), [
     [
       " * Run via `bun run check-env` or automatically in prebuild.",
       ` * Run via \`${runScript(packageManager, "check-env")}\` or automatically in prebuild.`,
@@ -226,15 +240,17 @@ const normalizeChatAppFiles = async (
   ]);
 
   await replaceInFile(
-    join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
+    pathModule.join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
     [["bun fetch:models", runScript(packageManager, "fetch:models")]]
   );
 
-  await replaceInFile(join(destination, "scripts", "worktree-setup.sh"), [
-    ["bun i", `${packageManager} install`],
-  ]);
+  await replaceInFile(
+    pathModule.join(destination, "scripts", "worktree-setup.sh"),
+    [["bun i", `${packageManager} install`]]
+  );
 
-  const vercelJsonPath = join(destination, "vercel.json");
+  const vercelJsonPath = pathModule.join(destination, "vercel.json");
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const vercelJson = JSON.parse(await readFile(vercelJsonPath, "utf-8")) as {
     installCommand?: string;
     buildCommand?: string;
@@ -256,7 +272,7 @@ const normalizeElectronFiles = async (
 ): Promise<void> => {
   const scriptPlaceholder = `\${script}`;
 
-  await replaceInFile(join(destination, "forge.config.ts"), [
+  await replaceInFile(pathModule.join(destination, "forge.config.ts"), [
     [
       "Run \\`bun run prebuild\\`",
       `Run \\\`${runScript(packageManager, "prebuild")}\\\``,
@@ -272,7 +288,7 @@ const normalizeElectronFiles = async (
     ],
   ]);
 
-  await replaceInFile(join(destination, "README.md"), [
+  await replaceInFile(pathModule.join(destination, "README.md"), [
     ["bun install", `${packageManager} install`],
     ["bun run dev", runScript(packageManager, "dev")],
     ["bun run generate-icons", runScript(packageManager, "generate-icons")],
@@ -289,7 +305,8 @@ const normalizeElectronFiles = async (
 const excludeElectronFromRootTypecheck = async (
   projectDir: string
 ): Promise<void> => {
-  const tsconfigPath = join(projectDir, "tsconfig.json");
+  const tsconfigPath = pathModule.join(projectDir, "tsconfig.json");
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf-8")) as {
     exclude?: string[];
   };
@@ -316,11 +333,12 @@ export const scaffoldFromTemplate = async (
 
   // Packing with npm omits nested .gitignore files, so materialize the app's rules.
   await writeFile(
-    join(destination, ".gitignore"),
+    pathModule.join(destination, ".gitignore"),
     "node_modules/\n.next/\n.env*\n!.env.example\n.vercel/\n.devtools/\n*.tsbuildinfo\nelectron/out/\nelectron/dist/\n"
   );
-  const packageJsonPath = join(destination, "package.json");
+  const packageJsonPath = pathModule.join(destination, "package.json");
   const packageJson = normalizeScaffoldedPackageJson(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
     JSON.parse(await readFile(packageJsonPath, "utf-8")) as Record<
       string,
       unknown
@@ -332,37 +350,50 @@ export const scaffoldFromTemplate = async (
   );
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
   // This is a new scaffold, so remove the reference app's selection before install.
-  await rm(join(destination, "lib/ai/gateway.ts"));
+  await rm(pathModule.join(destination, "lib/ai/gateway.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const manifest = JSON.parse(await readFile(packageJsonPath, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.dependencies["@ai-sdk/gateway"];
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.dependencies["@vercel/blob"];
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.dependencies["@tavily/core"];
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.dependencies["@mendable/firecrawl-js"];
-  await rm(join(destination, "tools/chatjs/generate-video"), {
+  await rm(pathModule.join(destination, "tools/chatjs/generate-video"), {
     force: true,
     recursive: true,
   });
-  await rm(join(destination, "tools/chatjs/generate-image"), {
+  await rm(pathModule.join(destination, "tools/chatjs/generate-image"), {
     force: true,
     recursive: true,
   });
-  await rm(join(destination, "tools/chatjs/retrieve-url"), {
+  await rm(pathModule.join(destination, "tools/chatjs/retrieve-url"), {
     force: true,
     recursive: true,
   });
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.dependencies["@vercel/sandbox"];
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.dependencies["browser-image-compression"];
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.dependencies["react-dropzone"];
-  await rm(join(destination, "tools/chatjs/tavily-search"), {
+  await rm(pathModule.join(destination, "tools/chatjs/tavily-search"), {
     force: true,
     recursive: true,
   });
-  await rm(join(destination, "tools/chatjs/search.ts"), { force: true });
-  await rm(join(destination, "lib/storage-provider.ts"));
+  await rm(pathModule.join(destination, "tools/chatjs/search.ts"), {
+    force: true,
+  });
+  await rm(pathModule.join(destination, "lib/storage-provider.ts"));
   await writeFile(packageJsonPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  const componentsPath = join(destination, "components.json");
+  const componentsPath = pathModule.join(destination, "components.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const components = JSON.parse(await readFile(componentsPath, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   components.registries = {
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
     ...components.registries,
     "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
   };
@@ -374,7 +405,9 @@ export const scaffoldFromTemplate = async (
     "features/attachment-uploads/chatjs.json",
   ];
   await Promise.all(
-    optionalFiles.map((file) => rm(join(destination, file), { force: true }))
+    optionalFiles.map((file) =>
+      rm(pathModule.join(destination, file), { force: true })
+    )
   );
   const directories = new Set<string>();
   for (const file of optionalFiles) {
@@ -389,7 +422,7 @@ export const scaffoldFromTemplate = async (
   )) {
     try {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Remove children before their empty parents.
-      await rmdir(join(destination, directory));
+      await rmdir(pathModule.join(destination, directory));
     } catch (error) {
       if (
         !(
@@ -411,25 +444,28 @@ export const scaffoldElectron = async (
   opts: { projectName: string; packageManager?: PackageManager }
 ): Promise<void> => {
   const packageManager = opts.packageManager ?? "bun";
-  const rootPackageJsonPath = join(projectDir, "package.json");
+  const rootPackageJsonPath = pathModule.join(projectDir, "package.json");
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const rootPackageJson = JSON.parse(
     await readFile(rootPackageJsonPath, "utf-8")
   ) as {
     devDependencies?: Record<string, string>;
   };
-  const destination = join(projectDir, "electron");
+  const destination = pathModule.join(projectDir, "electron");
   const templateDir = findTemplateDir("electron");
 
   await (templateDir
     ? cp(templateDir, destination, {
-        filter: (file) => shouldCopyElectronFile(relative(templateDir, file)),
+        filter: (file) =>
+          shouldCopyElectronFile(pathModule.relative(templateDir, file)),
         recursive: true,
       })
     : copyElectronTemplateFromRepoSource(destination));
 
-  const packageJsonPath = join(destination, "package.json");
+  const packageJsonPath = pathModule.join(destination, "package.json");
   const packageJsonSource = await readFile(packageJsonPath, "utf-8");
   const packageJson = normalizeScaffoldedPackageJson(
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
     JSON.parse(
       packageJsonSource
         .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
@@ -456,5 +492,8 @@ export const scaffoldFromGit = async (
     ["clone", "--depth", "1", url, destination],
     process.cwd()
   );
-  await rm(join(destination, ".git"), { force: true, recursive: true });
+  await rm(pathModule.join(destination, ".git"), {
+    force: true,
+    recursive: true,
+  });
 };

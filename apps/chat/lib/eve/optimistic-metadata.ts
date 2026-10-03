@@ -50,6 +50,7 @@ export const optimisticEveMetadata = async (
     if (data) {
       cache.setQueryData(key, {
         ...data,
+        // oxlint-disable-next-line oxc/no-map-spread -- #541: React Query updates require fresh page and item objects rather than mutating cached snapshots.
         pages: data.pages.map((page) => ({
           ...page,
           items: page.items.map((item) =>

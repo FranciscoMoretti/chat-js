@@ -89,6 +89,7 @@ if (import.meta.main) {
     const require = createRequire(
       new URL("../apps/chat/package.json", import.meta.url)
     );
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Resolve the chat workspace postgres package explicitly; its exported default has the imported postgres type.
     const { default: postgres }: { default: typeof postgresType } =
       await import(require.resolve("postgres"));
     await runMaintainerBuild(process.env, {

@@ -70,6 +70,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     disabled: uploadQueue.length > 0,
     noClick: true,
     noKeyboard: true,
+    // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
     onDrop: upload,
   });
   return {
@@ -82,6 +83,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
           multiple
           ref={input}
           type="file"
+          // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
           onChange={async (event) => {
             if (!disabled) {
               await upload([...(event.target.files ?? [])]);
@@ -110,7 +112,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
               if (event.clipboardData.files.length > 0) {
                 event.preventDefault();
                 event.stopPropagation();
-                upload([...event.clipboardData.files]);
+                void upload([...event.clipboardData.files]);
               }
             },
           },

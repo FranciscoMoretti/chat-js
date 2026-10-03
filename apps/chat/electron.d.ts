@@ -1,3 +1,4 @@
+// This ambient declaration intentionally augments the global Window interface; adding an export would change its scope.
 interface ElectronAuthErrorContext {
   message?: string;
   path?: string;

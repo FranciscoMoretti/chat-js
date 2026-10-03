@@ -26,7 +26,8 @@ test("native code execution renders real output and reconciles its fixed charge 
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message:
@@ -106,7 +107,8 @@ test("Python results render an interactive chart and survive reload", async ({
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message: `Use the codeExecution tool exactly once with language python and title "Python chart". Execute this exact code, then report its output. Use no other tool:\n${code}`,

@@ -52,6 +52,7 @@ export const prepareEveFamilyDeletion = async (
       streamIds.add(id);
     }
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: prepareEveFamilyDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     ...family,
     nativeInventories,

@@ -115,6 +115,7 @@ test("defers root title generation until after the creation response", async () 
   expect(response.status).toBe(200);
   expect(mocks.persistTitle).not.toHaveBeenCalled();
   expect(mocks.after).toHaveBeenCalledOnce();
+  // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   await mocks.after.mock.calls[0]?.[0]();
   expect(mocks.persistTitle).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",

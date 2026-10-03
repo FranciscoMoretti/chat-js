@@ -34,9 +34,11 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
   let settled = false;
   const rejected = expect(pending).rejects.toThrow("cancelled");
   pending
+    // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- Observe settlement without awaiting or adding a value; the test must inspect the still-pending refresh.
     .then(() => {
       settled = true;
     })
+    // oxlint-disable-next-line promise/prefer-await-to-then -- Observe rejection without awaiting the refresh; intermediate settlement is the behavior under test.
     .catch(() => {
       settled = true;
     });

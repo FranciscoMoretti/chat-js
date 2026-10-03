@@ -157,6 +157,7 @@ test("chart output validates shapes and fits PNG output", async () => {
     },
   ];
   const outputs = [...malformed, ...valid, png];
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() => {
     root.render(
       <>
@@ -215,6 +216,7 @@ test("chart output validates shapes and fits PNG output", async () => {
   expect(img.naturalWidth).toBe(600);
   expect(img.getBoundingClientRect().width).toBeLessThanOrEqual(900);
   await takeSnapshot("validated-chart-output");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() => root.unmount());
   container.remove();
 });
@@ -224,6 +226,7 @@ test("weather and retrieved URL renderer states", async () => {
   container.style.cssText = "padding:24px;width:1000px;display:grid;gap:16px";
   document.body.append(container);
   const root = createRoot(container);
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() => {
     root.render(
       <>
@@ -256,6 +259,7 @@ test("weather and retrieved URL renderer states", async () => {
     );
   });
   await takeSnapshot("weather-and-retrieved-url-states");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() => root.unmount());
   container.remove();
 });

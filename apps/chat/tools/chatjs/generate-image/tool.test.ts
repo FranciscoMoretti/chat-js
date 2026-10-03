@@ -88,6 +88,7 @@ it("uses native image context for editing and persists provider cost", async () 
     },
   });
   const result = await execute();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.image.mock.calls[0][0].prompt).toEqual({
     images: [Buffer.from("previous"), Buffer.from("attachment")],
     text: "Blue sky",
@@ -100,6 +101,7 @@ it("uses native image context for editing and persists provider cost", async () 
 });
 it("generates from a prompt without edit images", async () => {
   await execute();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.image.mock.calls[0][0].prompt).toBe("Blue sky");
 });
 it("retains provider cost if authorized storage fails", async () => {

@@ -31,6 +31,7 @@ export const prepareEveCopyDocuments = (
     }
   }
   const copied = rewriteEveCopyResources(snapshot, allocations, true);
+  // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate copied document revisions without mutating resource-rewrite results.
   return copied.map((document) => ({
     ...document,
     revisions: document.revisions.map((revision) => ({

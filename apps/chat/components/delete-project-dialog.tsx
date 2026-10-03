@@ -99,6 +99,8 @@ export const DeleteProjectDialog = ({
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={deleteMutation.isPending}
+
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Deletion prevents the native event and delegates pending/error handling to the existing mutation flow.
             onClick={(event) => {
               event.preventDefault();
               return handleDelete();

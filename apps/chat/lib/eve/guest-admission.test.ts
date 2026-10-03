@@ -156,6 +156,7 @@ it("binds quota to the complete creation intent and retains native operation rep
     expect.objectContaining({
       operationId: input.operationId,
       ownerId: "guest",
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This guest-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       requestHash: expect.stringMatching(HASH),
       requestsPerMinute: 5,
     }),

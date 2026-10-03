@@ -45,8 +45,11 @@ test("does not append an edited turn after the source transcript", () => {
 });
 
 test("renders stable disabled generating cards from the durable comparison request", () => {
+  // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
   let renderer: ReturnType<typeof create> | undefined;
+  // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
   act(() => {
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     renderer = create(
       <EveOptimisticResponseGroup
         operation={{
@@ -61,6 +64,7 @@ test("renders stable disabled generating cards from the durable comparison reque
   try {
     const buttons = renderer?.root.findAllByType("button") ?? [];
     expect(buttons).toHaveLength(2);
+    // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This eve-optimistic-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     expect(buttons.map((button) => button.props.disabled)).toEqual([
       true,
       true,
@@ -71,6 +75,7 @@ test("renders stable disabled generating cards from the durable comparison reque
     expect(output).toContain("Second model");
     expect(output.match(/Generating\.\.\./gu)).toHaveLength(2);
   } finally {
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => renderer?.unmount());
   }
 });

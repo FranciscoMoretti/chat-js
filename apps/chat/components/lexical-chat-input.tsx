@@ -232,6 +232,7 @@ export const LexicalChatInput = ({
               onPaste={onPaste}
               spellCheck
               style={{
+                // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the Firefox-specific focus appearance override until browser rendering verifies its removal.
                 MozBoxShadow: "none",
                 WebkitBoxShadow: "none",
                 boxShadow: "none",

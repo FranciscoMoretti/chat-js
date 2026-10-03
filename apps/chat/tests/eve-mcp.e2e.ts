@@ -23,12 +23,11 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const requestSchema = z.object({
   id: z.union([z.string(), z.number()]).optional(),
   method: z.string(),
-  params: z.object({ name: z.string().optional() }).passthrough().optional(),
+  params: z.object({ name: z.string().optional() }).loose().optional(),
 });
 
-async function localMcpServer(
-  invoke: (response: ServerResponse) => unknown | Promise<unknown>
-) {
+async function localMcpServer(invoke: (response: ServerResponse) => unknown) {
+  // oxlint-disable-next-line typescript/no-misused-promises -- The async fixture handler catches request failures and writes an HTTP response; Node does not consume its return value.
   const server = createServer(async (request, response) => {
     if (request.method !== "POST") {
       response.writeHead(405).end();
@@ -37,6 +36,9 @@ async function localMcpServer(
     try {
       let body = "";
       for await (const chunk of request) {
+        if (typeof chunk !== "string" && !Buffer.isBuffer(chunk)) {
+          throw new TypeError("Expected a string or Buffer HTTP body chunk");
+        }
         body += chunk.toString();
       }
       const rpc = requestSchema.parse(JSON.parse(body));
@@ -487,7 +489,7 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
       throw new Error("Missing fixture executor");
     }
     const controller = new AbortController();
-    const result = execute(
+    const result: unknown = execute(
       {},
       {
         abortSignal: controller.signal,

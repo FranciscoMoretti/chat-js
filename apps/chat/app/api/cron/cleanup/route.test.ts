@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   cleanupEve: vi.fn(),
   cleanupGuests: vi.fn(),
   env: {
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- #591: This controlled fixture models the mocked boundary explicitly; changing its widening or coercion requires preserving the exercised failure scenario.
     CRON_SECRET: "fixture-secret" as string | undefined,
 
     WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve-test",
@@ -67,6 +68,7 @@ test("cleanup uses EVE ownership", async () => {
   });
 
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
+  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.cleanupEve.mock.calls[0]?.[0].getTime()).toBeLessThanOrEqual(
     Date.now() - 4 * 60 * 60 * 1000
   );

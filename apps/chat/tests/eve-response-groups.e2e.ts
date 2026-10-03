@@ -79,6 +79,7 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
       const binding = await createEveConversation(
         ownerId,
         operation.operationId,
+        // oxlint-disable-next-line typescript/no-base-to-string -- These response-group fixtures submit string messages; coercion preserves the mock launcher contract without constraining the production message union.
         String(operation.message),
         (id) => {
           nativeCalls.push(id);
@@ -144,6 +145,7 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
       const binding = await createEveConversation(
         ownerId,
         operation.operationId,
+        // oxlint-disable-next-line typescript/no-base-to-string -- These response-group fixtures submit string messages; coercion preserves the mock launcher contract without constraining the production message union.
         String(operation.message),
         (id) => Promise.resolve(`continued-${id}`),
         { fork: operation.fork, initialModelId: operation.modelId }

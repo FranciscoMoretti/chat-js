@@ -17,7 +17,7 @@ export type EveCopyBoundary = {
 /** Private provenance used only to snapshot application resources, never copied into native history. */
 export const eveCopyBoundaries = (events: readonly MessageStreamEvent[]) => {
   const reducer = defaultMessageReducer();
-  const reduceEvent = reducer.reduce;
+  const reduceEvent = reducer.reduce.bind(reducer);
   return (
     events
       // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.

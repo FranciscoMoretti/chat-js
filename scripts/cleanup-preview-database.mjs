@@ -1,6 +1,15 @@
+/**
+ * @typedef {{id: string, name: string, parent_id: string, created_at: string, default?: boolean, primary?: boolean, protected?: boolean}} NeonBranch
+ * @typedef {{state: string, closed_at: string, head: {ref: string, repo: {full_name: string} | null}}} PullRequest
+ * @typedef {{rest: {pulls: {get: (params: Record<string, unknown>) => Promise<{data: PullRequest}>, list: unknown}}, paginate: (method: unknown, params: Record<string, unknown>) => Promise<unknown[]>}} GitHubClient
+ */
+
+/** @param {string} base @param {Record<string, string>} headers @param {(url: string, options: RequestInit) => Promise<Response>} request */
 const listBranches = async (base, headers, request) => {
+  /** @type {NeonBranch[]} */
   const branches = [];
   const cursors = new Set();
+  /** @type {string | undefined} */
   let cursor;
   do {
     const url = cursor ? `${base}?cursor=${encodeURIComponent(cursor)}` : base;
@@ -13,7 +22,8 @@ const listBranches = async (base, headers, request) => {
     if (!response.ok) {
       throw new Error(`Neon branch lookup failed (${response.status}).`);
     }
-    // eslint-disable-next-line no-await-in-loop
+    /** @type {{branches: NeonBranch[], pagination?: {next?: string}}} */
+    // oxlint-disable-next-line typescript/no-unsafe-assignment, eslint/no-await-in-loop -- Neon JSON is checked for a branch array and bounded cursor below; destructive candidates are validated before deletion.
     const page = await response.json();
     if (!Array.isArray(page.branches)) {
       throw new TypeError("Expected a Neon branch list.");
@@ -28,6 +38,7 @@ const listBranches = async (base, headers, request) => {
   return branches;
 };
 
+/** @param {NeonBranch} branch @param {string} parentId */
 const isDeletablePreview = (branch, parentId) =>
   typeof branch.id === "string" &&
   branch.id !== parentId &&
@@ -37,6 +48,7 @@ const isDeletablePreview = (branch, parentId) =>
   !branch.protected;
 
 // Maintainer infrastructure only: never copied into generated applications.
+/** @param {{github: GitHubClient, repository: {owner: string, repo: string}, number: number, apiKey?: string, request?: (url: string, options: RequestInit) => Promise<Response>}} options - GitHub workflow context and the injectable Neon request implementation. */
 export const cleanupPreviewDatabase = async ({
   github,
   repository,

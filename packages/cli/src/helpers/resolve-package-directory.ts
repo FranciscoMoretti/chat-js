@@ -1,8 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import path from "node:path";
-
-const { dirname, join, parse } = path;
+import pathModule from "node:path";
 
 /** Resolve an installed package from the workspace that declares the dependency. */
 export const resolvePackageDirectory = async (
@@ -10,18 +8,19 @@ export const resolvePackageDirectory = async (
   resolveFrom: string
 ): Promise<string> => {
   const resolveDependency = createRequire(
-    join(resolveFrom, "package.json")
+    pathModule.join(resolveFrom, "package.json")
   ).resolve;
-  let directory = dirname(resolveDependency(packageName));
-  const filesystemRoot = parse(directory).root;
+  let directory = pathModule.dirname(resolveDependency(packageName));
+  const filesystemRoot = pathModule.parse(directory).root;
 
   while (directory !== filesystemRoot) {
     try {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Each parent depends on the resolved entry's preceding directory.
       const manifestSource = await readFile(
-        join(directory, "package.json"),
+        pathModule.join(directory, "package.json"),
         "utf-8"
       );
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Package discovery reads only the manifest name and leaves unrelated package metadata untouched.
       const manifest = JSON.parse(manifestSource) as { name?: string };
       if (manifest.name === packageName) {
         return directory;
@@ -35,7 +34,7 @@ export const resolvePackageDirectory = async (
         throw error;
       }
     }
-    directory = dirname(directory);
+    directory = pathModule.dirname(directory);
   }
 
   throw new Error(`Could not locate the installed ${packageName} package.`);

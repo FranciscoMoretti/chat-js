@@ -32,6 +32,7 @@ const ElectronAuthOverlay = ({
       "Your browser has returned to ChatJS. We're finalizing the session now.";
   } else {
     detailMessage =
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
       state.detail || "If nothing changes, try the browser flow again.";
   }
 
@@ -56,8 +57,11 @@ const ElectronAuthOverlay = ({
             {canCancel ? (
               <Button
                 className="mt-2"
+
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Electron cancellation catches and reports bridge failures inside the handler.
                 onClick={async () => {
                   try {
+                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
                     await window.electronAPI?.cancelAuthFlow?.();
                   } catch (error) {
                     console.error("Failed to cancel Electron auth flow", error);
@@ -110,6 +114,7 @@ export const ElectronAuthHandler = () => {
     }
 
     const id = authClient.ensureElectronRedirect();
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return () => clearInterval(id);
   }, [isDesktopAppEnabled]);
 
@@ -118,14 +123,19 @@ export const ElectronAuthHandler = () => {
       return;
     }
 
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     if (typeof window.requestAuth !== "function") {
       return;
     }
 
     if (
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       typeof window.onAuthenticated !== "function" ||
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       typeof window.onUserUpdated !== "function" ||
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       typeof window.onAuthError !== "function" ||
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       typeof window.electronAPI?.onAuthStateChanged !== "function"
     ) {
       return;
@@ -133,6 +143,7 @@ export const ElectronAuthHandler = () => {
 
     const loadAuthState = async () => {
       try {
+        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
         const state = await window.electronAPI?.getAuthState?.();
         if (state) {
           setAuthState(state);
@@ -145,10 +156,12 @@ export const ElectronAuthHandler = () => {
     void loadAuthState();
 
     const syncAndRefresh = async () => {
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       await window.electronAPI?.syncAuthSession?.();
       router.refresh();
     };
 
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeAuthenticated = window.onAuthenticated(() => {
       const syncAuthenticatedSession = async () => {
         try {
@@ -162,6 +175,7 @@ export const ElectronAuthHandler = () => {
       };
       void syncAuthenticatedSession();
     });
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeUserUpdated = window.onUserUpdated(() => {
       const syncUpdatedUser = async () => {
         try {
@@ -172,17 +186,21 @@ export const ElectronAuthHandler = () => {
       };
       void syncUpdatedUser();
     });
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeAuthError = window.onAuthError(
       (ctx: ElectronAuthErrorContext) => {
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
         toast.error(ctx.message || "Authentication failed");
       }
     );
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeAuthState = window.electronAPI.onAuthStateChanged(
       (state) => {
         setAuthState(state);
       }
     );
 
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return () => {
       unsubscribeAuthenticated();
       unsubscribeUserUpdated();

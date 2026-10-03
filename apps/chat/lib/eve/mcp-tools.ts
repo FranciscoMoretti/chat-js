@@ -144,6 +144,7 @@ export const discoverEveMcpTools = async (
               // MCP output and approval policies are adapted explicitly below.
               const {
                 toModelOutput: _outputAdapter,
+                // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
                 needsApproval: _approval,
                 ...definition
               } = tool;
@@ -233,13 +234,16 @@ const requiresMcpApproval = async (
       ? validated.error
       : new Error("Invalid tool input.");
   }
+  // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
   return typeof tool.needsApproval === "function"
-    ? await tool.needsApproval(validated.value, {
+    ? // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
+      await tool.needsApproval(validated.value, {
         context: undefined,
         messages: [...messages],
         toolCallId: callId,
       })
-    : Boolean(tool.needsApproval);
+    : // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
+      Boolean(tool.needsApproval);
 };
 
 export const executeEveMcpTool = async (

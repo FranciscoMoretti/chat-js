@@ -110,6 +110,7 @@ const getFeatureIcons = (model: AppModelDefinition) => {
 const buildMultiModelSelection = (
   modelIds: AppModelId[]
 ): Record<AppModelId, number> => {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
   const selection = {} as Record<AppModelId, number>;
   for (const modelId of modelIds) {
     selection[modelId] = 1;
@@ -295,6 +296,7 @@ const PureModelSelector = ({
     return new Set<AppModelId>(
       Object.entries(optimisticSelection)
         .filter(([, count]) => typeof count === "number" && count > 0)
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
         .map(([modelId]) => modelId as AppModelId)
     );
   }, [optimisticSelection]);
@@ -395,9 +397,11 @@ const PureModelSelector = ({
   );
   const triggerLabel = useMemo(() => {
     if (useMultipleModels && selectedModelCount > 1) {
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
       return `${selectedItem?.model.name || "Selected model"} +${selectedModelCount - 1}`;
     }
 
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
     return selectedItem?.model.name || "Select model";
   }, [selectedItem?.model.name, selectedModelCount, useMultipleModels]);
 
@@ -418,8 +422,10 @@ const PureModelSelector = ({
         const { current } = optimisticSelectionRef;
         const currentCounts: Record<AppModelId, number> =
           typeof current === "string"
-            ? ({ [current]: 1 } as Record<AppModelId, number>)
-            : (current as Record<AppModelId, number>);
+            ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
+              ({ [current]: 1 } as Record<AppModelId, number>)
+            : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
+              (current as Record<AppModelId, number>);
 
         const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
 
@@ -431,15 +437,13 @@ const PureModelSelector = ({
           if (remaining.length === 0) {
             return;
           }
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
           nextSelection = Object.fromEntries(remaining) as Record<
             AppModelId,
             number
           >;
         } else {
-          nextSelection = { ...currentCounts, [id]: 1 } as Record<
-            AppModelId,
-            number
-          >;
+          nextSelection = { ...currentCounts, [id]: 1 };
         }
 
         setOptimisticSelection(nextSelection);
@@ -455,8 +459,10 @@ const PureModelSelector = ({
         const { current } = optimisticSelectionRef;
         const currentCounts: Record<AppModelId, number> =
           typeof current === "string"
-            ? ({ [current]: 1 } as Record<AppModelId, number>)
-            : (current as Record<AppModelId, number>);
+            ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
+              ({ [current]: 1 } as Record<AppModelId, number>)
+            : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
+              (current as Record<AppModelId, number>);
 
         const newCount = (currentCounts[id] ?? 0) + delta;
         let nextSelection: SelectedModelValue;
@@ -468,15 +474,13 @@ const PureModelSelector = ({
           if (remaining.length === 0) {
             return;
           }
+          // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #591: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types. #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
           nextSelection = Object.fromEntries(remaining) as Record<
             AppModelId,
             number
           >;
         } else {
-          nextSelection = { ...currentCounts, [id]: newCount } as Record<
-            AppModelId,
-            number
-          >;
+          nextSelection = { ...currentCounts, [id]: newCount };
         }
 
         setOptimisticSelection(nextSelection);
@@ -546,9 +550,12 @@ const PureModelSelector = ({
         align="start"
         className="w-[350px] p-0"
         onFocusOutside={(e) => e.preventDefault()}
+
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
         onInteractOutside={(e) => {
           // Prevent closing when interacting with nested popovers rendered in portals
           if (
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preserve the existing CSS custom-property or DOM event-target contract; stronger narrowing requires an interface-specific migration.
             (e.target as HTMLElement).closest(
               "[data-radix-popper-content-wrapper]"
             )
@@ -676,7 +683,8 @@ const PureModelSelector = ({
                     : model.id === optimisticModelId;
                   const count =
                     useMultipleModels && typeof optimisticSelection !== "string"
-                      ? ((optimisticSelection as Record<AppModelId, number>)[
+                      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
+                        ((optimisticSelection as Record<AppModelId, number>)[
                           model.id
                         ] ?? 0)
                       : undefined;

@@ -10,12 +10,17 @@ if (!argument) {
   );
 }
 const archive = path.resolve(argument);
-const candidate = JSON.parse(
+const candidate: unknown = JSON.parse(
   execFileSync("tar", ["-xOf", archive, "package/package.json"], {
     encoding: "utf-8",
   })
 );
-if (candidate.name !== "@chat-js/eve") {
+if (
+  typeof candidate !== "object" ||
+  candidate === null ||
+  !("name" in candidate) ||
+  candidate.name !== "@chat-js/eve"
+) {
   throw new Error("Expected a packed @chat-js/eve distribution.");
 }
 const manifestPaths = [
@@ -36,8 +41,17 @@ try {
     originals
       .filter(({ file }) => manifestPaths.includes(file))
       .map(({ content, file }) => {
-        const manifest = JSON.parse(content);
-        manifest.dependencies.eve = `file:${archive}`;
+        const manifest: unknown = JSON.parse(content);
+        if (
+          typeof manifest !== "object" ||
+          manifest === null ||
+          !("dependencies" in manifest) ||
+          typeof manifest.dependencies !== "object" ||
+          manifest.dependencies === null
+        ) {
+          throw new Error(`Expected dependencies in ${file}`);
+        }
+        Object.assign(manifest.dependencies, { eve: `file:${archive}` });
         return writeFile(
           path.join(root, file),
           `${JSON.stringify(manifest, null, 2)}\n`

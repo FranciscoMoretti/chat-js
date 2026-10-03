@@ -99,6 +99,7 @@ export const MessageAction = ({
   const button = (
     <Button size={size} type="button" variant={variant} {...props}>
       {children}
+      {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
       <span className="sr-only">{label || tooltip}</span>
     </Button>
   );
@@ -208,6 +209,7 @@ export const MessageBranchContent = ({
 }: MessageBranchContentProps) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
   const childrenArray = useMemo(
+    // oxlint-disable-next-line typescript/no-unsafe-return -- #598: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
     () => (Array.isArray(children) ? children : [children]),
     [children]
   );
@@ -215,6 +217,7 @@ export const MessageBranchContent = ({
   // Use useEffect to update branches when they change
   useEffect(() => {
     if (branches.length !== childrenArray.length) {
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- #594: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
       setBranches(childrenArray);
     }
   }, [childrenArray, branches, setBranches]);
@@ -225,6 +228,8 @@ export const MessageBranchContent = ({
         "grid gap-2 overflow-hidden [&>div]:pb-0",
         index === currentBranch ? "block" : "hidden"
       )}
+
+      // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract. #597: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
       key={branch.key}
       {...props}
     >
@@ -356,6 +361,7 @@ export const MessageAttachment = ({
   onRemove,
   ...props
 }: MessageAttachmentProps) => {
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const filename = data.filename || "";
   const mediaType =
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";

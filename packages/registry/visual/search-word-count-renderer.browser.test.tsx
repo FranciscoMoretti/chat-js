@@ -36,6 +36,7 @@ test("search and word-count renderers preserve their visible states", async () =
   document.body.append(container);
   const root = createRoot(container);
 
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() => {
     root.render(
       <>
@@ -162,6 +163,7 @@ test("search and word-count renderers preserve their visible states", async () =
   expect(container.textContent).toContain("No spaces");
   expect(container.textContent).toContain("Searching…");
   await takeSnapshot("search-and-word-count-renderers");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() => root.unmount());
   container.remove();
 });

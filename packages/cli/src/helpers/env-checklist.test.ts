@@ -178,6 +178,7 @@ it("includes every installed MCP requirement and preserves combined and alternat
       entries.filter((entry) => entry.vars === "MCP_ENCRYPTION_KEY")
     ).toHaveLength(1);
     expect(entries.map((entry) => entry.vars)).toEqual(
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
       expect.arrayContaining([
         "MCP_ENCRYPTION_KEY",
         "TEAM + TOKEN",

@@ -25,6 +25,6 @@ const result = await build({
   target: "browser",
 });
 if (!result.success) {
-  throw new Error(String(result.logs));
+  throw new Error(result.logs.map((entry) => entry.message).join("\n"));
 }
 process.stdout.write(await result.outputs[0].text());

@@ -19,6 +19,7 @@ import type { GatewayOptions } from "./runtime";
 const callUnsupportedModel = <T>(
   method: (modelId: never) => T,
   receiver: object
+  // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
 ): T => Reflect.apply(method, receiver, ["unsupported-model"]);
 
 const adapters: {
@@ -55,6 +56,7 @@ const adapters: {
       new OpenAIGateway(o).createLanguageModel("gpt-5-mini"),
     createVideoModel: (o) => {
       const gateway = new OpenAIGateway(o);
+      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { OPENAI_API_KEY: "test" },
@@ -66,12 +68,14 @@ const adapters: {
     create: (o) => new OpenRouterGateway(o),
     createImageModel: (o) => {
       const gateway = new OpenRouterGateway(o);
+      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
       return callUnsupportedModel(gateway.createImageModel, gateway);
     },
     createLanguageModel: (o) =>
       new OpenRouterGateway(o).createLanguageModel("openai/gpt-5-mini"),
     createVideoModel: (o) => {
       const gateway = new OpenRouterGateway(o);
+      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { OPENROUTER_API_KEY: "test" },
@@ -87,6 +91,7 @@ const adapters: {
       new OpenAICompatibleGateway(o).createLanguageModel("custom-model"),
     createVideoModel: (o) => {
       const gateway = new OpenAICompatibleGateway(o);
+      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { OPENAI_COMPATIBLE_BASE_URL: "https://example.test/v1" },
@@ -102,6 +107,7 @@ const adapters: {
       new LiteLLMGateway(o).createLanguageModel("custom-model"),
     createVideoModel: (o) => {
       const gateway = new LiteLLMGateway(o);
+      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { LITELLM_BASE_URL: "https://example.test" },

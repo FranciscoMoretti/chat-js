@@ -13,6 +13,7 @@ import path from "node:path";
 import { syncTools } from "./sync-tools";
 
 const roots: string[] = [];
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = path;
 
 afterEach(async () => {
@@ -79,13 +80,21 @@ test("generated registries sort by registration key instead of directory name", 
   await install(root, "a-tool", "zebra");
   await install(root, "z-tool", "alpha");
   await syncTools(root);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { ui } = await import(join(root, "tools/chatjs/ui.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(tools)).toEqual(["alpha", "zebra"]);
+  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(ui)).toEqual(["tool-alpha", "tool-zebra"]);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { alpha } = await import(join(root, "tools/chatjs/z-tool/tool.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { zebra } = await import(join(root, "tools/chatjs/a-tool/tool.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(tools.alpha).toBe(alpha);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(tools.zebra).toBe(zebra);
   await syncTools(root);
 });
@@ -96,25 +105,30 @@ test("missing descriptors and edited generated output fail without dropping regi
   const index = join(root, "tools/chatjs/tools.ts");
   const before = await readFile(index, "utf-8");
   await rm(join(root, "tools/chatjs/word-count/chatjs.json"));
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("Missing descriptor");
   expect(await readFile(index, "utf-8")).toBe(before);
   await writeFile(index, `${before}\n// custom edit`);
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
 test("duplicate keys and symlink directories fail before writing indexes", async () => {
   const root = await project();
   await install(root);
   await install(root, "other");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("Duplicate installed");
   await rm(join(root, "tools/chatjs/other"), { recursive: true });
   await symlink(
     join(root, "tools/chatjs/word-count"),
     join(root, "tools/chatjs/other")
   );
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("symlinks");
 });
 test("a requested tool cannot report successful registration without its descriptor", async () => {
   const root = await project();
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(
     syncTools(root, {
       expected: [
@@ -161,6 +175,7 @@ test("search selections register standard tools without requiring a renderer", a
   expect(
     await readFile(join(root, "tools/chatjs/providers.ts"), "utf-8")
   ).toContain("./external-search/tool");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(
     readFile(join(root, "tools/chatjs/search-config.ts"), "utf-8")
   ).rejects.toMatchObject({ code: "ENOENT" });
@@ -171,6 +186,7 @@ test("search selections register standard tools without requiring a renderer", a
     await readFile(join(root, "tools/chatjs/ui.ts"), "utf-8")
   ).not.toContain("external-search");
   await installSearch(root, "another-search", "ANOTHER_KEY");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("Only one webSearch");
   await rm(join(root, "tools/chatjs/external-search"), { recursive: true });
   await syncTools(root);
@@ -213,6 +229,7 @@ test("external execution tools compose with search and reject duplicate provider
     await readFile(join(root, "tools/chatjs/ui.ts"), "utf-8")
   ).not.toContain("external-runner");
   await installExecution(root, "second-runner");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("Only one codeExecution");
   expect(await readFile(selection, "utf-8")).toBe(before);
   await rm(join(root, "tools/chatjs/external-runner"), { recursive: true });
@@ -220,6 +237,7 @@ test("external execution tools compose with search and reject duplicate provider
   await syncTools(root);
   expect(await readFile(selection, "utf-8")).not.toContain("codeExecution:");
   await writeFile(selection, "// user code");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("custom or legacy");
 });
 
@@ -250,6 +268,7 @@ test("URL retrieval uses the selected export and rejects duplicate providers", a
   expect(server).toContain("readPage as tool");
   expect(server).toContain("retrieveUrl: tool");
   await installRetrieval("second-retrieval");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("Only one retrieveUrl");
   expect(await readFile(join(root, "tools/chatjs/providers.ts"), "utf-8")).toBe(
     server
@@ -260,15 +279,20 @@ test("tools register natively, retain renderers and cannot collide with custom t
   const root = await project();
   await install(root, "native-counter", "countWords");
   await syncTools(root);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { ui } = await import(join(root, "tools/chatjs/ui.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(tools)).toEqual(["countWords"]);
+  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(ui)).toEqual(["tool-countWords"]);
   await writeFile(
     join(root, "tools/chatjs/custom-tools.ts"),
     "export const customTools = { countWords: {} };\n"
   );
   const before = await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("Custom tools conflict");
   expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8")).toBe(
     before
@@ -279,7 +303,9 @@ test("sync preserves request-context auth and environment credential fallbacks",
   const root = await project();
   await installExecution(root, "vercel-runner");
   const descriptor = join(root, "tools/chatjs/vercel-runner/chatjs.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   definition.envRequirements[0].runtimeAuth = "vercel-oidc";
   await writeFile(descriptor, JSON.stringify(definition));
   const definitions = await syncTools(root);
@@ -320,17 +346,22 @@ test("a bundle registers each native tool and renderer and rejects cross-bundle 
     "export const DocumentRenderer = () => null;"
   );
   await syncTools(root);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { ui } = await import(join(root, "tools/chatjs/ui.ts"));
+  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(tools)).toEqual([
     "createTextDocument",
     "editTextDocument",
   ]);
+  // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(Object.keys(ui)).toEqual([
     "tool-createTextDocument",
     "tool-editTextDocument",
   ]);
   await install(root, "other", "editTextDocument");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("Duplicate installed");
 });
 
@@ -339,16 +370,20 @@ test("sync rejects removing a dependency but permits uninstalling a complete bun
   await install(root, "read-document", "readDocument");
   await install(root, "text-documents", "createTextDocument");
   const descriptor = join(root, "tools/chatjs/text-documents/chatjs.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   definition.requiresTools = ["readDocument"];
   await writeFile(descriptor, JSON.stringify(definition));
   await syncTools(root);
   const index = join(root, "tools/chatjs/tools.ts");
   const before = await readFile(index, "utf-8");
   await rm(join(root, "tools/chatjs/read-document"), { recursive: true });
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow(
     "requires installed tools: readDocument"
   );
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root, { checkOnly: true })).rejects.toThrow(
     "requires installed tools: readDocument"
   );
@@ -362,11 +397,14 @@ test("saved-code registration requires an explicitly compatible executor", async
   const root = await project();
   await installExecution(root, "external-runner");
   await install(root, "saved-code-execution", "runCodeDocument");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow(
     "compatible codeExecution provider"
   );
   const descriptor = join(root, "tools/chatjs/external-runner/chatjs.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   definition.codeExecutorExport = "executeCode";
   await writeFile(descriptor, JSON.stringify(definition));
   await writeFile(
@@ -392,6 +430,7 @@ export const runCode = {};`
   expect(registration).toContain(
     "codeExecutor: CodeExecutor | undefined = execute"
   );
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { codeExecutor } = await import(
     join(root, "tools/chatjs/code-executor.ts")
   );
@@ -417,6 +456,7 @@ test.each([false, true])(
         tools: [{ toolExport: "research", workflow: true }],
       })
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncTools(root)).rejects.toThrow();
     await mkdir(join(root, "agent/tools"), { recursive: true });
     await writeFile(
@@ -429,17 +469,21 @@ test.each([false, true])(
         join(root, "tools/chatjs/custom-tools.ts"),
         "export const customTools = { research: {} };\n"
       );
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(syncTools(root)).rejects.toThrow(
         "Custom tools conflict with installed tools: research"
       );
       return;
     }
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const { tools } = await import(join(root, "tools/chatjs/tools.ts"));
+    // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(Object.keys(tools)).toEqual([]);
     expect(
       await readFile(join(root, "tools/chatjs/workflow-types.ts"), "utf-8")
     ).toContain("research: typeof workflow0");
     await rm(join(dir, "chatjs.json"));
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncTools(root)).rejects.toThrow("Missing descriptor");
   }
 );
@@ -448,7 +492,9 @@ test("composer metadata follows installation and removal without editing UI orde
   const root = await project();
   await install(root);
   const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   definition.tools[0].composer = {
     icon: "Hash",
     name: "Count words",
@@ -481,13 +527,16 @@ test("invalid composer icon is rejected before generated files change", async ()
   const generated = join(root, "tools/chatjs/composer-tools.ts");
   const before = await readFile(generated, "utf-8");
   const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   definition.tools[0].composer = {
     icon: "NotALucideIcon",
     name: "Count words",
     shortName: "Words",
   };
   await writeFile(descriptor, JSON.stringify(definition));
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncTools(root)).rejects.toThrow("icon");
   expect(await readFile(generated, "utf-8")).toBe(before);
 });
@@ -498,7 +547,9 @@ test.each(["GlobeIcon", "BookOpen", "Edit3"])(
     const root = await project();
     await install(root);
     const descriptor = join(root, "tools/chatjs/word-count/chatjs.json");
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const definition = JSON.parse(await readFile(descriptor, "utf-8"));
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     definition.tools[0].composer = {
       icon,
       name: "Count words",

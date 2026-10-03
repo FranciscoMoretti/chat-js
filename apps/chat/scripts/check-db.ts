@@ -33,6 +33,7 @@ const checkDatabase = async () => {
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
       max: 1,
     });
+    // oxlint-disable-next-line typescript/no-misused-promises -- #585: The deadline asynchronously closes the SQL connection before signaling failure; preserving timeout cleanup requires this callback lifecycle.
     const deadline = setTimeout(async () => {
       try {
         await sql.end({ timeout: 0 });
@@ -62,13 +63,11 @@ const checkDatabase = async () => {
   await checkPurpose("migration");
 };
 
-void (async () => {
-  try {
-    await checkDatabase();
-  } catch {
-    console.error(
-      "Database check failed. Check your connection settings in .env.local."
-    );
-    process.exitCode = 1;
-  }
-})();
+try {
+  await checkDatabase();
+} catch {
+  console.error(
+    "Database check failed. Check your connection settings in .env.local."
+  );
+  process.exitCode = 1;
+}

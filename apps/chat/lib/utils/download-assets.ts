@@ -49,6 +49,7 @@ const defaultDownload = async ({
       `Failed to download asset: ${url.toString()} (${response.status})`
     );
   }
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const contentType = response.headers.get("content-type") || undefined;
   const arrayBuffer = await response.arrayBuffer();
   return { data: new Uint8Array(arrayBuffer), mediaType: contentType };
@@ -143,8 +144,10 @@ const mapFilePart = (
 };
 
 const mapImagePart = (
+  // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
   part: ImagePart,
   downloaded: Record<string, AssetDownloadResult>
+  // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
 ): ImagePart | null => {
   const url = toHttpUrl(part.image);
   if (url) {
@@ -177,13 +180,16 @@ export const replaceFilePartUrlByBinaryDataInMessages = async (
   );
 
   const mapPart = (
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
     part: TextPart | ImagePart | FilePart
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
   ): TextPart | ImagePart | FilePart | null => {
     if (part.type === "file") {
-      return mapFilePart(part as FilePart, downloaded);
+      return mapFilePart(part, downloaded);
     }
     if (part.type === "image") {
-      return mapImagePart(part as ImagePart, downloaded);
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
+      return mapImagePart(part, downloaded);
     }
     // Pass through text, tool, reasoning, and other parts unchanged.
     return part;
@@ -196,11 +202,10 @@ export const replaceFilePartUrlByBinaryDataInMessages = async (
 
     return {
       ...message,
-      content: message.content
-        .map(mapPart)
-        .filter(
-          (part): part is TextPart | ImagePart | FilePart => part !== null
-        ),
+      content: message.content.map(mapPart).filter(
+        // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
+        (part): part is TextPart | ImagePart | FilePart => part !== null
+      ),
     };
   });
 

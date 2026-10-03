@@ -25,4 +25,4 @@ export const models = ${JSON.stringify(models, null, 2)} as const satisfies read
   );
 };
 
-fetchAndSaveModels();
+await fetchAndSaveModels();

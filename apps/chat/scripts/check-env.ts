@@ -82,6 +82,7 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
 const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
   const errors: ValidationError[] = [];
 
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Environment checks enumerate typed configuration keys and report a mismatched snapshot; preserving legacy config diagnostics requires runtime config-schema migration.
   const authKeys = Object.keys(
     authEnvRequirements
   ) as (keyof typeof authEnvRequirements)[];
@@ -123,8 +124,12 @@ const validateInstalledItems = async (
   const toolsDir = path.join(projectRoot, directory);
   const entries = await fs
     .readdir(toolsDir, { withFileTypes: true })
-    .catch((error: NodeJS.ErrnoException) => {
-      if (error.code === "ENOENT") {
+    .catch((error: unknown) => {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
         return [];
       }
       throw error;
@@ -167,6 +172,7 @@ const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
     return null;
   }
 
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const hasBaseUrl = Boolean(env.APP_URL || env.VERCEL_URL);
   if (hasBaseUrl) {
     return null;
@@ -184,6 +190,7 @@ const checkGatewaySnapshot = (): string | null => {
   if (config.ai.gateway === generatedForGateway) {
     return null;
   }
+  // oxlint-disable-next-line typescript/restrict-template-expressions -- #608: Environment checks enumerate typed configuration keys and report a mismatched snapshot; preserving legacy config diagnostics requires runtime config-schema migration.
   return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
 };
 
@@ -258,11 +265,9 @@ const checkEnv = async (): Promise<void> => {
   console.log("✅ Environment validation passed");
 };
 
-void (async () => {
-  try {
-    await checkEnv();
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
-  }
-})();
+try {
+  await checkEnv();
+} catch (error) {
+  console.error(error);
+  process.exit(1);
+}

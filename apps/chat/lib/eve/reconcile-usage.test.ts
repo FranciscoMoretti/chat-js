@@ -114,6 +114,7 @@ it("stops scheduling on failure and waits for in-flight billing reads", async ()
   );
   mocks.read.mockImplementation((id) => gates[Number(id)].promise);
   let finished = false;
+  // oxlint-disable-next-line promise/prefer-await-to-then -- Observe settlement without blocking the assertions on still-pending billing reads.
   const reconciliation = reconcileEveOwnerUsage("owner").finally(() => {
     finished = true;
   });
@@ -215,6 +216,7 @@ it("resumes managed reads at the persisted billing cursor without following live
 it("reconciles only the target during a managed owner cooldown, then sweeps when due", async () => {
   mocks.env.VERCEL = "1";
   mocks.managed.mockImplementationOnce((_owner, reconcile) =>
+    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     reconcile(false, new Set())
   );
   await reconcileEveOwnerUsage("owner", "target");
@@ -222,6 +224,7 @@ it("reconciles only the target during a managed owner cooldown, then sweeps when
   expect(mocks.bindings).not.toHaveBeenCalled();
   mocks.read.mockClear();
   mocks.managed.mockImplementationOnce((_owner, reconcile) =>
+    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     reconcile(true, new Set())
   );
   await reconcileEveOwnerUsage("owner", "target");
@@ -243,6 +246,7 @@ it("replays historical unpriced evidence even when its stream cursor already adv
   ]);
   mocks.cursor.mockResolvedValue(20);
   mocks.managed.mockImplementationOnce((_owner, reconcile) =>
+    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     reconcile(false, new Set(["failed-attempt"]))
   );
   await reconcileEveOwnerUsage("owner", "failed-attempt");

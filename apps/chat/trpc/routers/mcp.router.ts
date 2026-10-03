@@ -163,7 +163,7 @@ export const mcpRouter = createTRPCRouter({
    * Returns the authorization URL that the client should open in a popup.
    */
   authorize: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
@@ -223,7 +223,7 @@ export const mcpRouter = createTRPCRouter({
    * Check if a connector has valid OAuth tokens.
    */
   checkAuth: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
@@ -249,7 +249,7 @@ export const mcpRouter = createTRPCRouter({
         oauthClientId: z.string().optional(),
         oauthClientSecret: z.string().optional(),
         type: z.enum(["http", "sse"]),
-        url: z.string().url(),
+        url: z.url(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -274,7 +274,7 @@ export const mcpRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
       assertMcpReady();
       await getConnectorWithPermission({
@@ -291,7 +291,7 @@ export const mcpRouter = createTRPCRouter({
    * Disconnect an MCP connector by removing OAuth session data only.
    */
   disconnect: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
       assertMcpReady();
       await getConnectorWithPermission({
@@ -371,7 +371,7 @@ export const mcpRouter = createTRPCRouter({
                     name,
                   }))
                 )
-                .catch((error) => {
+                .catch((error: unknown) => {
                   log.warn(
                     { connectorId: connector.id, err: error },
                     "failed to list tools"
@@ -388,7 +388,7 @@ export const mcpRouter = createTRPCRouter({
                     uri: res.uri,
                   }))
                 )
-                .catch((error) => {
+                .catch((error: unknown) => {
                   log.warn(
                     { connectorId: connector.id, err: error },
                     "failed to list resources"
@@ -409,7 +409,7 @@ export const mcpRouter = createTRPCRouter({
                     name: p.name,
                   }))
                 )
-                .catch((error) => {
+                .catch((error: unknown) => {
                   log.warn(
                     { connectorId: connector.id, err: error },
                     "failed to list prompts"
@@ -441,7 +441,7 @@ export const mcpRouter = createTRPCRouter({
 
       const cachedFetch = createCachedDiscovery(connector.id, fetchDiscovery);
 
-      return cachedFetch();
+      return await cachedFetch();
     }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -502,7 +502,7 @@ export const mcpRouter = createTRPCRouter({
    * Refresh/reconnect an MCP client after OAuth completion.
    */
   refreshClient: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
@@ -537,7 +537,7 @@ export const mcpRouter = createTRPCRouter({
    * Cached for 60 seconds.
    */
   testConnection: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
@@ -586,14 +586,14 @@ export const mcpRouter = createTRPCRouter({
         fetchConnectionStatus
       );
 
-      return cachedFetch();
+      return await cachedFetch();
     }),
 
   toggleEnabled: protectedProcedure
     .input(
       z.object({
         enabled: z.boolean(),
-        id: z.string().uuid(),
+        id: z.uuid(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -613,14 +613,14 @@ export const mcpRouter = createTRPCRouter({
   update: protectedProcedure
     .input(
       z.object({
-        id: z.string().uuid(),
+        id: z.uuid(),
         updates: z.object({
           enabled: z.boolean().optional(),
           name: z.string().min(1).max(MCP_NAME_MAX_LENGTH).optional(),
           oauthClientId: z.string().nullable().optional(),
           oauthClientSecret: z.string().nullable().optional(),
           type: z.enum(["http", "sse"]).optional(),
-          url: z.string().url().optional(),
+          url: z.url().optional(),
         }),
       })
     )

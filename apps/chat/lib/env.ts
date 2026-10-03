@@ -7,6 +7,7 @@ import { resolveEveEnvironment } from "./eve/environment";
 export const env = createEnv({
   client: clientEnvSchema,
   experimental__runtimeEnv: {
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
     ...(typeof window === "undefined"
       ? resolveEveEnvironment(process.env)
       : {}),

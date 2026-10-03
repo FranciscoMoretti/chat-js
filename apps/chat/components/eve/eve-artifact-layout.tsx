@@ -69,7 +69,12 @@ const DocumentSaveStatus = ({
         <div className="space-y-2" role="alert">
           <p>{editing.error} Your draft has been kept.</p>
           <div className="flex gap-2">
-            <Button onClick={handleRetry} size="sm" variant="outline">
+            <Button
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Draft retry and query refetch expose asynchronous lifecycle state through their owning hooks.
+              onClick={handleRetry}
+              size="sm"
+              variant="outline"
+            >
               Retry save
             </Button>
             <Button onClick={handleDiscard} size="sm" variant="outline">
@@ -283,7 +288,11 @@ const EveArtifactPanel = ({
               <p>
                 This document could not be loaded. It may no longer be shared.
               </p>
-              <Button onClick={() => document.refetch()} variant="outline">
+              <Button
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Draft retry and query refetch expose asynchronous lifecycle state through their owning hooks.
+                onClick={() => document.refetch()}
+                variant="outline"
+              >
                 Retry
               </Button>
             </div>
@@ -325,6 +334,7 @@ const EveArtifactPanel = ({
           )}
           {owned &&
             index === history.length - 1 &&
+            // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.
             (onDocumentAction || onStop) &&
             revision && (
               <EveDocumentAssistantActions

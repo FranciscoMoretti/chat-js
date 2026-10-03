@@ -64,6 +64,7 @@ test("lost creation replies retain the exact ordered operation across changed co
     ])
   ).toEqual(operation);
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(fetcher.mock.calls[0][1].body).toBe(JSON.stringify(operation));
   expect(() => prepareCreation(storage, "owner", "Another request")).toThrow(
     "saved comparison"
@@ -227,7 +228,9 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     .mockResolvedValueOnce(Response.json(result));
   await resolveCreationRequest(storage, "owner", recovered, scope);
   expect(fetcher.mock.calls[1][0]).toEqual(fetcher.mock.calls[0][0]);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(fetcher.mock.calls[1][1].body).toEqual(fetcher.mock.calls[0][1].body);
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual(operation);
   expect(readCreationRequest(storage, "owner", scope)).toBeUndefined();
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(
@@ -305,6 +308,7 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
   await expect(
     resolveCreationRequest(storage, "owner", operation, scope)
   ).rejects.toBeInstanceOf(CreationRejectedError);
+  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint"))).toBe(
     true
   );

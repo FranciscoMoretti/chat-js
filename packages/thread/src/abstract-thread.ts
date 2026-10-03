@@ -48,7 +48,9 @@ const getInputMessageId = <TMessage extends UIMessage>(
 
 // Like AI SDK's AbstractChat, construction crosses a generic boundary here:
 // TMessage may narrow metadata or parts beyond the base UIMessage shape.
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- The thread preserves its caller-selected message specialization across the SDK base-message adapter.
 const specializeMessage = <TMessage extends UIMessage>(message: UIMessage) =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The thread owns validation of its selected message specialization; this adapter preserves that generic public type across the AI SDK base message boundary.
   message as TMessage;
 
 const createMessageFromInput = async <TMessage extends UIMessage>({
@@ -710,6 +712,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     if (!messageId) {
       return;
     }
+    // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
     return this.createRunForAssistant(messageId, true);
   }
 
@@ -724,6 +727,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     const tree = this.createTree();
     const message = tree.getMessage(messageId);
     if (!message || message.role !== "assistant") {
+      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
       return;
     }
     const parentMessageId = tree.getParentId(messageId) ?? null;

@@ -73,6 +73,7 @@ test("a failed batch retains its deletion fence without starving subsequent batc
     .mockRejectedValueOnce(new Error("partial storage failure"))
     .mockResolvedValue(undefined);
   await expect(cleanupEveOrphanedFiles(cutoff)).rejects.toThrow("incomplete");
+  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This cleanup-orphaned-files fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This cleanup-orphaned-files fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.prepare.mock.calls.map(([fileKeys]) => fileKeys.length)).toEqual(
     [100, 1]
   );

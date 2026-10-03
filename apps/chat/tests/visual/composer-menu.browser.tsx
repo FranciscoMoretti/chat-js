@@ -212,7 +212,9 @@ const mount = async (
             selectedModelId="fixture"
             selectedTool={selectedTool}
             onToolChange={setSelectedTool}
-            onAttach={(...args) => state.attach(...args)}
+            onAttach={(...args) => {
+              state.attach(...args);
+            }}
           />
           <ActiveTool
             selectedTool={selectedTool}
@@ -226,8 +228,10 @@ const mount = async (
       </>
     );
   };
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
   await act(() => root.render(<Fixture />));
   return async () => {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   };
@@ -355,6 +359,7 @@ test("mobile camera and guest controls respect the same order; disabled composer
     await expect
       .element(page.getByRole("button", { name: "Composer options" }))
       .toBeDisabled();
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => {
       const trigger = page
         .getByRole("button", { name: "Composer options" })
@@ -650,6 +655,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     if (!input) {
       throw new Error("Missing installed upload picker");
     }
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => {
       input.files = transfer.files;
       input.dispatchEvent(new Event("change", { bubbles: true }));
@@ -668,6 +674,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const message = page
       .getByRole("textbox", { exact: true, name: "Message" })
       .element();
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => {
       message.dispatchEvent(
         new ClipboardEvent("paste", {
@@ -681,6 +688,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const composer = page
       .getByRole("group", { name: "Message composer" })
       .element();
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => {
       composer.dispatchEvent(
         new DragEvent("drop", {
@@ -698,6 +706,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     unsupported.items.add(
       new File(["plain text"], "notes.txt", { type: "text/plain" })
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => {
       composer.dispatchEvent(
         new DragEvent("drop", {
@@ -748,6 +757,7 @@ test("installed uploads handle picker, paste and drop; omitted uploads leave no 
     const message = page
       .getByRole("textbox", { exact: true, name: "Message" })
       .element();
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => {
       composer.dispatchEvent(
         new DragEvent("drop", {

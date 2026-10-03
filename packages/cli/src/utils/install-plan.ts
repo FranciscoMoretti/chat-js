@@ -125,12 +125,13 @@ export const installPlan = async (
   // A replacement writes shared source. Unknown/native source requires explicit authorization.
   const replacingShared = plan.items.some(
     (item) =>
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
       item.meta?.chatjs?.kind === "gateway" ||
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
       item.meta?.chatjs?.kind === "storage"
   );
-  const overwrite = Boolean(
-    options.overwrite || options.fresh || replacingShared
-  );
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
+  const overwrite = options.overwrite || options.fresh || replacingShared;
   // The shadcn installer infers destinations for native UI files. Until those paths are
   // explicit, they cannot participate in protection or registration rollback.
   if (overwrite) {
@@ -192,7 +193,7 @@ export const installPlan = async (
       result.status === "rejected" ? [String(result.reason)] : []
     );
     throw new Error(
-      `Installation did not complete. ${restorationErrors.length > 0 ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : error}`,
+      `Installation did not complete. ${restorationErrors.length > 0 ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
       { cause: error }
     );
   }
@@ -208,6 +209,7 @@ export const installPlan = async (
       if (!targets.includes(target)) {
         return previous && receipt[target] === hash(previous);
       }
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
       return !previous || options.overwrite || options.fresh || replacingShared;
     })
   );

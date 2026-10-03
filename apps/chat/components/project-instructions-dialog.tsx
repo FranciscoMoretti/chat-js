@@ -49,6 +49,7 @@ export const ProjectInstructionsDialog = ({
       <div className="py-4">
         <Textarea
           aria-label="Project instructions"
+          // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening the instructions dialog intentionally focuses its editable instructions field.
           autoFocus
           className="min-h-[200px] resize-none"
           disabled={isPending}

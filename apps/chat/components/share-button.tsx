@@ -62,10 +62,14 @@ export const ShareDialogView = ({
     }
   };
 
-  const handleCopyLink = () => {
-    const shareUrl = `${window.location.origin}/share/${chatId}`;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success("Share link copied to clipboard");
+  const handleCopyLink = async () => {
+    const shareUrl = `${globalThis.location.origin}/share/${chatId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Share link copied to clipboard");
+    } catch {
+      toast.error("Unable to copy share link.");
+    }
   };
 
   return (
@@ -114,6 +118,8 @@ export const ShareDialogView = ({
                   <Button
                     className="flex-1"
                     disabled={isPending}
+
+                    // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
                     onClick={handleUnshare}
                     variant="outline"
                   >
@@ -142,6 +148,8 @@ export const ShareDialogView = ({
                 <Button
                   className="w-full"
                   disabled={isPending}
+
+                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
                   onClick={handleShare}
                 >
                   {isPending ? (
@@ -177,13 +185,15 @@ export const ShareDialogView = ({
               </label>
               <input
                 className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
-                defaultValue={`${window.location.origin}/share/${chatId}`}
+                defaultValue={`${globalThis.location.origin}/share/${chatId}`}
                 id="link"
                 readOnly
               />
             </div>
             <Button
               className="px-3"
+
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
               onClick={handleCopyLink}
               size="sm"
               type="submit"
@@ -198,6 +208,8 @@ export const ShareDialogView = ({
             </Button>
             <Button
               disabled={isPending}
+
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
               onClick={handleUnshare}
               size="sm"
               variant="outline"

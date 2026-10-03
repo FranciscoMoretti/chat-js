@@ -23,9 +23,10 @@ export const voteEveMessage = async (
     .attach(conversation.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const reducer = defaultMessageReducer();
+  const reduceEvent = reducer.reduce.bind(reducer);
   // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
   const { messages } = snapshot.events.reduce(
-    reducer.reduce,
+    (state, event) => reduceEvent(state, event),
     reducer.initial()
   );
   if (

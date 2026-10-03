@@ -167,6 +167,7 @@ it("retains ownership when creation outcome is unknown", async () => {
       testToolContext({ callId: "lost" })
     )
   ).resolves.toMatchObject({
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     output: { message: expect.stringContaining("lost create") },
   });
   expect(sandboxOwnership.created).not.toHaveBeenCalled();
@@ -180,6 +181,7 @@ it("retains the completed execution charge when its result is invalid", async ()
     testToolContext()
   );
   expect(result).toMatchObject({
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     output: { message: expect.stringContaining("Sandbox execution failed") },
     usage: { costUsd: 0.05 },
   });

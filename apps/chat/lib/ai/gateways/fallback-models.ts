@@ -25,5 +25,5 @@ export const getFallbackModels = (
     );
     return [];
   }
-  return fallbackModels as unknown as AiGatewayModel[];
+  return fallbackModels;
 };

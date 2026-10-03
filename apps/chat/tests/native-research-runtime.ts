@@ -265,7 +265,8 @@ export default [defineEval({ description: "adaptive native research", async test
       stdio: "inherit",
     }
   );
-  const [code] = await once(worker, "exit");
+  const exitArguments: unknown[] = await once(worker, "exit");
+  const [code] = exitArguments;
   if (code !== 0) {
     throw new Error(
       `Native research verification failed. Fixture retained at ${fixture}`
@@ -273,7 +274,9 @@ export default [defineEval({ description: "adaptive native research", async test
   }
   await rm(fixture, { force: true, recursive: true });
 };
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error(error);
   process.exitCode = 1;
-});
+}

@@ -20,11 +20,13 @@ import { getBaseUrl } from "./url";
 type BetterAuthOptions = Parameters<typeof betterAuth>[0];
 type BetterAuthPlugin = NonNullable<BetterAuthOptions["plugins"]>[number];
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The Electron plugin adapter bridges installed Better Auth plugin types; removing the compatibility assertion requires coordinated dependency/API migration.
 const electronAuthPlugin = electron({
   clientID: ELECTRON_AUTH_CLIENT_ID,
   cookiePrefix: ELECTRON_AUTH_COOKIE_PREFIX,
 }) as unknown as BetterAuthPlugin;
 const baseUrl =
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
   env.APP_URL ||
   (process.env.VERCEL_ENV === "production" ? config.appUrl : getBaseUrl());
 

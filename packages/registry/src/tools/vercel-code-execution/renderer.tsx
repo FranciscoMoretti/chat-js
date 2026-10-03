@@ -43,9 +43,9 @@ export const CodeExecution = defineToolRenderer({
   outputSchema: codeExecutionResult,
   render: CodeExecutionView,
   streamingInputSchema: codeExecutionInput.partial().extend({
-    // oxlint-disable-next-line promise/prefer-await-to-then -- Zod schema fallback, not a Promise.
+    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/prefer-top-level-await -- #574: Zod schema fallback, not a Promise.
     language: codeExecutionInput.shape.language.optional().catch(undefined),
-    // oxlint-disable-next-line promise/prefer-await-to-then -- Zod schema fallback, not a Promise.
+    // oxlint-disable-next-line promise/prefer-await-to-then, unicorn/prefer-top-level-await -- #574: Zod schema fallback, not a Promise.
     title: codeExecutionInput.shape.title.optional().catch(undefined),
   }),
 });

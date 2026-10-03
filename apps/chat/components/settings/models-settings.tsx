@@ -28,6 +28,7 @@ export const ModelsSettings = () => {
           value={search}
         />
         <Button
+          // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns model-preference invalidation and error state.
           onClick={() =>
             queryClient.invalidateQueries({
               queryKey: trpc.settings.getModelPreferences.queryKey(),

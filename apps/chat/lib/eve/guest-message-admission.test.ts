@@ -92,6 +92,7 @@ it("distinguishes content and destination in quota identity", async () => {
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     await admitGuestMessage(request, "owner", sessionId, { ...input, message });
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This guest-message-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
   }
   expect(new Set(hashes).size).toBe(3);

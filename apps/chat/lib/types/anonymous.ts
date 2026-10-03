@@ -1,11 +1,10 @@
-import type { ToolName } from "../ai/types";
 import { config } from "../config";
 
 const anonConfig = config.anonymous;
 
 export const ANONYMOUS_LIMITS = {
   AVAILABLE_MODELS: config.ai.anonymousModels,
-  AVAILABLE_TOOLS: anonConfig.availableTools as ToolName[],
+  AVAILABLE_TOOLS: anonConfig.availableTools,
   CREDITS: anonConfig.credits,
   RATE_LIMIT: {
     REQUESTS_PER_MINUTE: anonConfig.rateLimit.requestsPerMinute,

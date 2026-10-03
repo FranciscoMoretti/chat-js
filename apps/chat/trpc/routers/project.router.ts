@@ -36,7 +36,7 @@ export const projectRouter = createTRPCRouter({
     }),
 
   getById: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .query(async ({ ctx, input }) => {
       const project = await getProjectById({ id: input.id });
       if (!project) {
@@ -60,7 +60,7 @@ export const projectRouter = createTRPCRouter({
   }),
 
   remove: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.uuid() }))
     .mutation(async ({ ctx, input }) => {
       const project = await getProjectById({ id: input.id });
       if (!project) {
@@ -82,7 +82,7 @@ export const projectRouter = createTRPCRouter({
   setInstructions: protectedProcedure
     .input(
       z.object({
-        id: z.string().uuid(),
+        id: z.uuid(),
         instructions: z.string(),
       })
     )
@@ -110,7 +110,7 @@ export const projectRouter = createTRPCRouter({
   update: protectedProcedure
     .input(
       z.object({
-        id: z.string().uuid(),
+        id: z.uuid(),
         updates: z.object({
           icon: z.enum(PROJECT_ICONS).optional(),
           iconColor: z.enum(PROJECT_COLOR_NAMES).optional(),

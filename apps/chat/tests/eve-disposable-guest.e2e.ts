@@ -244,7 +244,7 @@ test("back-forward cache restoration starts a fresh guest chat", async ({
     page.getByText("This chat has expired. Start a new chat to continue.")
   ).toBeVisible();
   await page.evaluate(() =>
-    window.dispatchEvent(
+    globalThis.dispatchEvent(
       new PageTransitionEvent("pageshow", { persisted: true })
     )
   );

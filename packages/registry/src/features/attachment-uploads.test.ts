@@ -4,6 +4,7 @@ const compression = mock(
   (_file: File, _options: { maxWidthOrHeight: number }) =>
     Promise.resolve(new Blob(["png"], { type: "image/png" }))
 );
+// oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
 mock.module("browser-image-compression", () => ({ default: compression }));
 const { processFilesForUpload } =
   await import("./attachment-uploads/features/attachment-uploads/upload-prep");
@@ -42,6 +43,7 @@ test("compresses large accepted images and retains failed oversized originals", 
   expect(prepared.files[0]?.name).toBe("photo.png");
   expect(prepared.files[0]?.size).toBe(3);
   expect(compression.mock.calls[0]?.[1]).toEqual(
+    // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
     expect.objectContaining({
       maxSizeMB: options.maxBytes / (1024 * 1024),
       maxWidthOrHeight: options.maxDimension,

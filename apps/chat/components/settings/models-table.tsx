@@ -63,7 +63,7 @@ export const ModelsTable = ({
         return { prev };
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey });
+        void queryClient.invalidateQueries({ queryKey });
       },
     })
   );
@@ -72,8 +72,10 @@ export const ModelsTable = ({
     const enabled = getDefaultEnabledModels(allModels);
     for (const pref of preferences ?? []) {
       if (pref.enabled) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preference IDs originate from the catalog-backed settings API; replacing the assertion requires migrating persisted model-ID types.
         enabled.add(pref.modelId as AppModelId);
       } else {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preference IDs originate from the catalog-backed settings API; replacing the assertion requires migrating persisted model-ID types.
         enabled.delete(pref.modelId as AppModelId);
       }
     }

@@ -107,7 +107,7 @@ export const createEveConversationOperation = async (
       { status: 503 }
     );
   }
-  return executeEveConversationCreation(
+  return await executeEveConversationCreation(
     ownerId,
     input,
     guestReservationId,

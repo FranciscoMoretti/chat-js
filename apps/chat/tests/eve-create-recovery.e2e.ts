@@ -212,6 +212,7 @@ test("an unresolved project conversation recovers after its project is deleted",
   );
   expect(
     await page.evaluate(
+      // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
       (key) => JSON.parse(sessionStorage.getItem(key) ?? "null"),
       storageKey
     )
@@ -338,6 +339,7 @@ test("a missing project preserves an unreserved request until definitive rejecti
   );
   const saved = await page.evaluate(
     ({ key, ownerId }) => ({
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
       next: JSON.parse(
         sessionStorage.getItem(`chatjs.eve.pending:${ownerId}`) ?? "null"
       ),
@@ -350,7 +352,9 @@ test("a missing project preserves an unreserved request until definitive rejecti
     message: operation.message,
     modelId: operation.modelId,
   });
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
   expect(saved.next.operationId).not.toBe(operation.operationId);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
   expect(saved.next.projectId).toBeUndefined();
 });
 

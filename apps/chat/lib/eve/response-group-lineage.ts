@@ -142,5 +142,6 @@ export const resolveEveResponseGroupLineage = (
       });
     }
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: resolveEveResponseGroupLineage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId: group.id, replacements };
 };

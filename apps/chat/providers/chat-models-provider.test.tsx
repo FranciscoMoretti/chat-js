@@ -74,9 +74,12 @@ const ContextProbe = ({
 describe("ChatModelsProvider", () => {
   it("preserves the context identity when its semantic inputs are unchanged", () => {
     const values: ReturnType<typeof useChatModels>[] = [];
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ChatModelsProvider models={models}>
           <ContextProbe onValue={(value) => values.push(value)} />
@@ -90,6 +93,7 @@ describe("ChatModelsProvider", () => {
     }
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         rendered.update(
           <ChatModelsProvider models={models}>
@@ -101,15 +105,19 @@ describe("ChatModelsProvider", () => {
       expect(values).toHaveLength(2);
       expect(values[1]).toBe(values[0]);
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => rendered.unmount());
     }
   });
 
   it("updates lookup and filtered models when the model input changes", () => {
     const values: ReturnType<typeof useChatModels>[] = [];
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(
         <ChatModelsProvider models={models}>
           <ContextProbe onValue={(value) => values.push(value)} />
@@ -123,6 +131,7 @@ describe("ChatModelsProvider", () => {
     }
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         rendered.update(
           <ChatModelsProvider models={updatedModels}>
@@ -138,6 +147,7 @@ describe("ChatModelsProvider", () => {
         updatedModels[0]
       );
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => rendered.unmount());
     }
   });

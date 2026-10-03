@@ -15,6 +15,7 @@ import {
   collectSnapshot,
 } from "../../../scripts/sync-template-snapshot";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = path;
 
 const hash = (value: string): string =>
@@ -26,6 +27,7 @@ const collectFileOrder = async (
 ): Promise<string[]> => {
   const entries = await readdir(dir, { withFileTypes: true });
   const paths = await Promise.all(
+    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
     entries.map((entry) => {
       const absolute = join(dir, entry.name);
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;

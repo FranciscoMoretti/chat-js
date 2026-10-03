@@ -11,7 +11,9 @@ await rm(path.join(cwd, "dist"), { force: true, recursive: true });
 await mkdir(path.join(cwd, "dist/source"), { recursive: true });
 await Promise.all(
   registry.items.map(async (item) => {
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     const metadata = item.meta?.chatjs;
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     if (metadata?.kind === "tool" || metadata?.kind === "feature") {
       const sourcePath = `dist/source/${item.name}.json`;
       const formatted = await format(sourcePath, JSON.stringify(metadata), {
@@ -26,6 +28,7 @@ await Promise.all(
       item.files.push({
         path: sourcePath,
         target:
+          // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
           metadata.kind === "feature"
             ? `~/features/${item.name}/chatjs.json`
             : `~/tools/chatjs/${item.name}/chatjs.json`,

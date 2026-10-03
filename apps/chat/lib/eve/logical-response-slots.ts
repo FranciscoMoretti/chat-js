@@ -45,6 +45,7 @@ export const logicalResponseSlots = (
         rejection: undefined,
       }));
   const selectedPath = snapshot.paths.get(snapshot.conversationId) ?? [];
+  // oxlint-disable-next-line oxc/no-map-spread -- #541: Derive UI slot metadata without mutating candidates retained by the lineage snapshot.
   const slots = candidates.map((candidate) => {
     const original = snapshot.branches.find(
       (branch) => branch.operationId === candidate.operationId
@@ -77,5 +78,6 @@ export const logicalResponseSlots = (
       selected: Boolean(selectedAttempt),
     };
   });
+  // oxlint-disable-next-line typescript/consistent-return -- #580: logicalResponseSlots has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId, slots };
 };

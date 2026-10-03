@@ -62,6 +62,7 @@ const reserveGroupRow = async (
     return;
   }
   if (existing) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return existing;
   }
   const candidates = eveResponseGroupCandidates(
@@ -82,6 +83,7 @@ const reserveGroupRow = async (
       sourceIdentityKnown: true,
     })
     .returning();
+  // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return group;
 };
 
@@ -190,6 +192,7 @@ export const recordEveResponseGroupRejection = async (
     ) {
       throw new Error("Response group is unavailable.");
     }
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
     const candidates = group.candidates.map((candidate) =>
       candidate.operationId === operationId
         ? {
@@ -234,6 +237,7 @@ export const getEveResponseGroup = async (ownerId: string, id: string) => {
   ) {
     return;
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
     candidates: group.candidates.map((candidate) => {
       const identity = {
@@ -407,8 +411,10 @@ export const getEveResponseGroupForConversation = async (
   if (!group) {
     return;
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroupForConversation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
     ...group,
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
     candidates: group.candidates.map((candidate) => {
       const replacement = groupLineage.replacements.get(candidate.operationId);
       return candidate.state === "bound" && replacement

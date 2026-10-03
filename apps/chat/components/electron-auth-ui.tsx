@@ -26,6 +26,7 @@ export const ElectronBrowserSignIn = ({
       <Button
         className="w-full"
         onClick={() => {
+          // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
           const { requestAuth } = window;
           if (typeof requestAuth !== "function") {
             return;
@@ -39,7 +40,7 @@ export const ElectronBrowserSignIn = ({
             }
           };
           void launchBrowserSignIn();
-          window.setTimeout(() => setOpened(true), 300);
+          globalThis.setTimeout(() => setOpened(true), 300);
         }}
         type="button"
         variant="outline"

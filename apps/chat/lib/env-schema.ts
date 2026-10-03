@@ -210,11 +210,7 @@ export const serverEnvSchema = {
     .string()
     .optional()
     .describe("LiteLLM proxy API key (master or virtual key)"),
-  LITELLM_BASE_URL: z
-    .string()
-    .url()
-    .optional()
-    .describe("LiteLLM proxy base URL"),
+  LITELLM_BASE_URL: z.url().optional().describe("LiteLLM proxy base URL"),
   MCP_ENCRYPTION_KEY: z
     .union([z.string().length(44), z.literal("")])
     .optional()
@@ -228,7 +224,6 @@ export const serverEnvSchema = {
     .optional()
     .describe("API key for OpenAI-compatible provider"),
   OPENAI_COMPATIBLE_BASE_URL: z
-    .string()
     .url()
     .optional()
     .describe("Base URL for OpenAI-compatible provider"),

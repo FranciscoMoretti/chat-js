@@ -18,15 +18,18 @@ const { ingestEveUsage } = await import("../eve/usage");
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
 beforeAll(async () => {
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const journal = JSON.parse(
     await readFile(
       new URL("migrations/meta/_journal.json", import.meta.url),
       "utf-8"
     )
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   for (const entry of journal.entries) {
     await postgres.exec(
       await readFile(
+        // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This eve-subagents fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
         new URL(`migrations/${entry.tag}.sql`, import.meta.url),
         "utf-8"
       )

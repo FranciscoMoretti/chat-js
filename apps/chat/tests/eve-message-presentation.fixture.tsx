@@ -65,6 +65,7 @@ const Editor = ({ onSubmit }: { onSubmit?: (value: string) => void }) => {
   return (
     <div className="w-full space-y-2" data-testid="inline-editor">
       <ControlledChatComposer
+        // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: This fixture reproduces focus entering the inline message editor after the user chooses Edit.
         autoFocus
         draft={draft}
         disabled={false}
@@ -236,6 +237,7 @@ const Fixture = () => {
       <section aria-label="Comparison cards" data-testid="comparison-cards">
         <h2 className="text-lg font-medium">Comparison cards</h2>
         <ResponseChoiceCards
+          // oxlint-disable-next-line oxc/no-map-spread -- #541: Attach this fixture instance's handlers without mutating shared comparison slots.
           slots={comparisonSlots.map((slot) => ({
             ...slot,
             handleSelect: () => setSelected(slot.id),

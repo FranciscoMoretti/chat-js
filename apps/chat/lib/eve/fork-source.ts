@@ -15,8 +15,10 @@ export const eveUserForkBoundary = (
     message.metadata?.turnId &&
     nativeBoundary.test(message.metadata.turnId)
   ) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return message.metadata.turnId;
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return importedBoundary.test(message.id) ? message.id : undefined;
 };
 

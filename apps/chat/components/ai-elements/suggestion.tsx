@@ -48,6 +48,7 @@ export const Suggestion = ({
       variant={variant}
       {...props}
     >
+      {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
       {children || suggestion}
     </Button>
   );

@@ -74,10 +74,10 @@ const filesBelow = async (
 ): Promise<string[]> => {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(
-    entries.map((entry) => {
+    entries.map(async (entry) => {
       const file = path.posix.join(prefix, entry.name);
       return entry.isDirectory()
-        ? filesBelow(path.join(directory, entry.name), file)
+        ? await filesBelow(path.join(directory, entry.name), file)
         : [file];
     })
   );
@@ -92,8 +92,10 @@ export const generateDemo = async (): Promise<Map<string, string>> => {
     // This source-only registry retains registry dependencies, but omits package
     // installation: the demo already owns its workspace dependency manifest.
     const items = await Promise.all(
+      // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
       registry.items.map(async (item) => {
         const files = await Promise.all(
+          // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
           (item.files ?? []).map(async (file) => ({
             ...file,
             content: await readFile(
@@ -102,9 +104,12 @@ export const generateDemo = async (): Promise<Map<string, string>> => {
             ),
           }))
         );
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
         const metadata = item.meta?.chatjs;
+        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
         if (metadata?.kind === "tool" || metadata?.kind === "feature") {
           const target =
+            // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
             metadata.kind === "tool"
               ? `~/tools/chatjs/${item.name}/chatjs.json`
               : `~/features/${item.name}/chatjs.json`;
@@ -131,10 +136,13 @@ export const generateDemo = async (): Promise<Map<string, string>> => {
       hostname: "127.0.0.1",
       port: 0,
     });
+    // oxlint-disable-next-line typescript/no-misused-promises -- Bun owns server shutdown; the teardown callback initiates stopping without making synchronous cleanup callers depend on its promise.
     stopServer = () => server.stop(true);
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     const components = JSON.parse(
       await readFile(path.join(demoRoot, "components.json"), "utf-8")
     );
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- The demo installer edits generated shadcn configuration while preserving its extensible registry metadata.
     components.registries = {
       "@chatjs": `http://127.0.0.1:${server.port}/{name}.json`,
     };

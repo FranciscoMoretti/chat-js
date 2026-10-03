@@ -23,6 +23,7 @@ import type {
 } from "./types";
 
 const useIsomorphicLayoutEffect =
+  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 type ThreadHookOptions = {
@@ -255,13 +256,14 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
 
   useEffect(() => {
     if (options.resume) {
-      thread.resumeStream();
+      void thread.resumeStream();
     }
   }, [options.resume, thread]);
 
   return {
     addToolApprovalResponse: thread.addToolApprovalResponse,
     addToolOutput: thread.addToolOutput,
+    // oxlint-disable-next-line typescript/no-deprecated -- Keep the public AI SDK-compatible helper name until consumers migrate their tool-result calls.
     addToolResult: thread.addToolResult,
     clearError: thread.clearError,
     error,

@@ -60,6 +60,7 @@ const PureCodeEditor = ({
       }),
     });
     editorRef.current = view;
+    // oxlint-disable-next-line typescript/consistent-return -- The effect returns a cleanup only when an editor exists; the inactive branch intentionally has no cleanup.
     return () => {
       view.destroy();
       editorRef.current = null;

@@ -229,6 +229,7 @@ export const getEveChatPageConversation = async (
     .where(and(eq(eveChat.id, routeId), eq(eveChat.ownerId, ownerId)))
     .limit(1);
   if (!logical) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: getEveChatPageConversation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return;
   }
   if (logical.activeConversationId) {
@@ -645,6 +646,7 @@ export const beginEveConversationDeletion = async (
         id: eveConversation.id,
         sessionId: eveConversation.sessionId,
       });
+    // oxlint-disable-next-line typescript/consistent-return -- #580: beginEveConversationDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return {
       conversations: conversations.toSorted((left, right) =>
         left.id.localeCompare(right.id)
@@ -1111,6 +1113,7 @@ export const listEveConversationBranches = async (
       )
     )
     .orderBy(eveConversation.createdAt, eveConversation.id);
+  // oxlint-disable-next-line typescript/consistent-return -- #580: listEveConversationBranches has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { branches, chatId: conversation.chatId, rootId };
 };
 

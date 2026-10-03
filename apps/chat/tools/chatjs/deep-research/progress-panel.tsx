@@ -38,7 +38,7 @@ export const ResearchProgress = ({
     () =>
       updates
         .filter((u) => u.type === "web")
-        .reduce((acc, u) => acc + (u.results?.length || 0), 0),
+        .reduce((acc, u) => acc + (u.results?.length ?? 0), 0),
     [updates]
   );
 

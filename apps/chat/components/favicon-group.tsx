@@ -29,6 +29,7 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
     <div className={cn("flex items-center", className)}>
       {visibleSources.map((source, index) => (
         <Favicon
+          // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
           alt={`Favicon for ${source.title || new URL(source.url).hostname}`}
           className={cn(
             "border-background h-5 w-5 rounded-full border-2",

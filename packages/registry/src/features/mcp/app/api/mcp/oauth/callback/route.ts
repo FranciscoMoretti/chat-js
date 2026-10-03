@@ -24,6 +24,7 @@ export const GET = async (request: NextRequest) => {
     state,
     error,
     error_description: errorDesc,
+    // oxlint-disable-next-line typescript/await-thenable -- Keep the callback loader await boundary shared with the asynchronous route flow; changing search-parameter loader timing is outside this lint cleanup.
   } = await loadMcpOAuthCallbackSearchParams(request);
 
   const redirectToConnector = ({

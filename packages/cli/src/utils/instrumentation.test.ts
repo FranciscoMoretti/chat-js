@@ -51,7 +51,8 @@ for (const runtime of ["nodejs", "edge"]) {
         throw new Error("Missing register export");
       }
       await (fail
-        ? expect(exports.register()).rejects.toBe(failure)
+        ? // oxlint-disable-next-line typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
+          expect(exports.register()).rejects.toBe(failure)
         : exports.register());
       expect(received).toEqual(fail ? [{ appPrefix: "test", runtime }] : []);
       expect(events).toEqual([

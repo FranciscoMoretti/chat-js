@@ -9,6 +9,7 @@ type KnownTag =
   | "image-generation"
   | "implicit-caching";
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Gateway tags are extensible provider strings; the KnownTag annotation supplies completion without rejecting new provider tags.
 const tagSchema = z.string() as z.ZodType<KnownTag>;
 
 export const supportedAiGatewayModelTypes = [
@@ -71,7 +72,7 @@ export type AiGatewayModel = Omit<ParsedAiGatewayModel, "type"> & {
 export const isAiGatewayModelType = (
   type: string
 ): type is AiGatewayModelType =>
-  supportedAiGatewayModelTypes.includes(type as AiGatewayModelType);
+  supportedAiGatewayModelTypes.some((supportedType) => supportedType === type);
 
 export const aiGatewayModelDiscriminatorSchema = z.object({
   type: z.string(),

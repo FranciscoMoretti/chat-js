@@ -1,5 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
+import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import {
@@ -69,7 +70,12 @@ test.each(["before-dispatch", "lost-response"])(
         if (fail && failure === "before-dispatch") {
           throw new TypeError("connection refused");
         }
-        const command = JSON.parse(String(init.body));
+        if (typeof init.body !== "string") {
+          throw new TypeError("Expected a JSON creation request body");
+        }
+        const command = z
+          .object({ operationId: z.string() })
+          .parse(JSON.parse(init.body));
         const sessionId = `wrun_${command.operationId}`;
         receipts.set(command.operationId, sessionId);
         allocations.push(command.operationId);

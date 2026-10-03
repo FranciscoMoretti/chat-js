@@ -10,6 +10,7 @@ export const webpackOverride: WebpackOverrideFn = (config) => ({
   resolve: {
     ...config.resolve,
     alias: {
+      // oxlint-disable-next-line typescript/no-misused-spread -- Remotion supplies an alias map here; converting the alternative webpack array form needs an explicit resolution-precedence policy.
       ...config.resolve?.alias,
       react: path.dirname(require.resolve("react/package.json")),
       "react-dom": path.dirname(require.resolve("react-dom/package.json")),

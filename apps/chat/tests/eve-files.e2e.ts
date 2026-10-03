@@ -174,8 +174,9 @@ test("attachment creation commits references before dispatch with a single appli
       crypto.randomUUID(),
       "attached",
       async (id) => {
-        const references =
-          await worker`select key from "EveFileReference" where "conversationId" = ${id}`;
+        const references = await worker<
+          { key: string }[]
+        >`select key from "EveFileReference" where "conversationId" = ${id}`;
         expect(references.map((row) => row.key)).toEqual([key]);
         return crypto.randomUUID();
       },

@@ -15,5 +15,6 @@ export const getBaseUrl = (): string => {
     return `https://${env.VERCEL_URL}`;
   }
   // Next sets PORT to the actual listener, including --port and automatic fallback.
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
   return `http://localhost:${process.env.PORT || "3000"}`;
 };

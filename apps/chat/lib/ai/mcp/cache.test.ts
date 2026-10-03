@@ -16,6 +16,7 @@ it.each(["disconnected", "authorizing", "connecting", "incompatible"])(
       (fetcher: () => Promise<ConnectionStatusResult>) => {
         let stored: ConnectionStatusResult | undefined;
         return async () => {
+          // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
           if (!stored) {
             stored = await fetcher();
           }

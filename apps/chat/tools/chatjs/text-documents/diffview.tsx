@@ -108,6 +108,7 @@ class DiffTextNode extends TextNode {
       return true;
     }
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Lexical dispatches nodes of the registered replacement class; the cast preserves that subclass relationship for the superclass DOM update.
     return super.updateDOM(prevNode as this, dom, config);
   }
 }

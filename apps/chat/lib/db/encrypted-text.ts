@@ -59,6 +59,7 @@ export const encryptedText = customType<{ driverData: string; data: string }>({
 export const encryptedJson = <T>() =>
   customType<{ driverData: string; data: T }>({
     dataType: () => "text",
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Encrypted JSON columns are typed by their Drizzle declaration; adding per-column runtime schemas requires a database serialization contract migration.
     fromDriver: (value) => JSON.parse(decrypt(value)) as T,
     toDriver: (value) => encrypt(JSON.stringify(value)),
   });

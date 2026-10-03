@@ -78,6 +78,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await page.route(
     "**/api/agent-conversations",
     async (route) => {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture the actual native operation payload; subsequent assertions verify tool selection on the wire.
       operation = route.request().postDataJSON();
       const response = await route.fetch();
       expect(response.status()).toBe(200);

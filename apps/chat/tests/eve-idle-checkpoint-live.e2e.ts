@@ -68,6 +68,7 @@ test("compiled idle capture preserves native history and exact document revision
   const original = await saveEveDocumentRevision(document);
   const workerRoot = await realpath(process.cwd());
   async function birthIdentity(sessionId: string) {
+    // oxlint-disable-next-line typescript/no-unsafe-return -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
     return JSON.parse(
       await readFile(
         path.join(
@@ -80,6 +81,7 @@ test("compiled idle capture preserves native history and exact document revision
       )
     );
   }
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
   const sourceIdentity = await birthIdentity(source.sessionId);
   expect(sourceIdentity).toMatchObject({
     appRoot: workerRoot,
@@ -99,6 +101,7 @@ test("compiled idle capture preserves native history and exact document revision
   await page.route(
     `**/api/agent-conversations/${source.id}/checkpoint`,
     async (route) => {
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
       captureRequests.push(route.request().postDataJSON());
       const response = await route.fetch();
       expect(response.status()).toBe(200);
@@ -214,15 +217,17 @@ test("compiled idle capture preserves native history and exact document revision
   });
   expect(
     await page.evaluate(
-      () => window.document.documentElement.scrollWidth <= innerWidth
+      () => globalThis.document.documentElement.scrollWidth <= innerWidth
     )
   ).toBe(true);
   await page.setViewportSize({ height: 720, width: 1280 });
   await page.unroute("**/api/agent-response-groups");
   await page.route("**/api/agent-response-groups", (route) => {
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
     const input = route.request().postDataJSON();
     return route.fulfill({
       json: {
+        // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
         candidates: input.modelIds.map((modelId: string) => ({
           modelId,
           operationId: crypto.randomUUID(),
@@ -306,6 +311,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
   await page.route(
     `**/api/agent-conversations/${source.id}/checkpoint`,
     async (route) => {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- The controlled checkpoint fixture captures native request and manifest shapes; preserving raw fields is part of the recovery assertions.
       checkpoint = route.request().postDataJSON();
       // Another tab wins the next turn before the saved checkpoint reaches the worker.
       await other

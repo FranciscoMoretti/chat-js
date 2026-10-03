@@ -48,6 +48,7 @@ test("installed text, code and sheet bundles render saved content", async () => 
   document.body.append(container);
   const root = createRoot(container);
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <div className="grid gap-6">
@@ -78,6 +79,7 @@ test("installed text, code and sheet bundles render saved content", async () => 
       .toContain("Apples");
     await takeSnapshot("installed-document-bundles");
   } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   }
@@ -91,6 +93,7 @@ test("a removed editor has an explicit notice in panel and inline views", async 
   document.body.append(container);
   const root = createRoot(container);
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <div>
@@ -118,6 +121,7 @@ test("a removed editor has an explicit notice in panel and inline views", async 
     await takeSnapshot("uninstalled-document-editor");
   } finally {
     documentUi.text = original;
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   }
@@ -143,6 +147,7 @@ test("saved code run controls follow installed execution and retain disabled sta
     title: "saved.js",
   };
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <div className="grid gap-6">
@@ -176,10 +181,12 @@ test("saved code run controls follow installed execution and retain disabled sta
     );
     expect(onAction).toHaveBeenCalledWith(
       expect.objectContaining({
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Vitest asymmetric string matchers intentionally occupy the expected save-result message field.
         message: expect.stringContaining(props.revisionId),
       })
     );
     installed.delete("runCodeDocument");
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <section>
@@ -194,6 +201,7 @@ test("saved code run controls follow installed execution and retain disabled sta
     await takeSnapshot("saved-code-absent-run-controls");
   } finally {
     vi.restoreAllMocks();
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   }

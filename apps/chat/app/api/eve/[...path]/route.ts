@@ -49,6 +49,7 @@ const checkTurnAdmission = async (
     return;
   }
   if (principal.kind === "guest") {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: checkTurnAdmission has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return await admitGuestMessage(request, principal.ownerId, sessionId, {
       message: command.message,
       modelId: command.modelId,
@@ -57,6 +58,7 @@ const checkTurnAdmission = async (
   }
   await reconcileEveOwnerUsage(principal.ownerId, sessionId);
   if (!(await canSpend(principal.ownerId))) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: checkTurnAdmission has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return rejectEveCommand("Insufficient credits", 402);
   }
 };

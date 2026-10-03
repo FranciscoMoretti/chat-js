@@ -21,6 +21,8 @@ const Progress = ({
     <ProgressPrimitive.Indicator
       className="bg-primary h-full w-full flex-1 transition-all"
       data-slot="progress-indicator"
+
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
     />
   </ProgressPrimitive.Root>

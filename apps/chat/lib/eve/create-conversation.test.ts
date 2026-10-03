@@ -23,6 +23,7 @@ it("aborts a stalled creation without resending or changing its operation", asyn
       new Promise<Response>((_resolve, reject) => {
         init.signal?.addEventListener(
           "abort",
+          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
           () => reject(init.signal?.reason),
           { once: true }
         );
@@ -128,6 +129,7 @@ it("automatically retries busy creation with the same operation identity", async
   await vi.advanceTimersByTimeAsync(2000);
   await expect(result).resolves.toMatchObject({ sessionId: "session" });
   expect(fetchMock).toHaveBeenCalledTimes(2);
+  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(fetchMock.mock.calls.map(([, init]) => init.body)).toEqual([
     JSON.stringify(operation),
     JSON.stringify(operation),

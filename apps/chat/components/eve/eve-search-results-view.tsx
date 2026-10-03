@@ -18,6 +18,7 @@ const highlightedExcerpt = (excerpt: string) =>
     part.startsWith("⟦") && part.endsWith("⟧") ? (
       <mark
         className="text-foreground bg-transparent font-medium"
+        // oxlint-disable-next-line react/no-array-index-key -- #551: Repeated matched text needs its offset in this excerpt; marks have no component state.
         key={`${index}:${part}`}
       >
         {part.slice(1, -1)}

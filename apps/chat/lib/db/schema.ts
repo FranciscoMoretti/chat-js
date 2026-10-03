@@ -62,6 +62,7 @@ export const userCredit = pgTable("UserCredit", {
 
 export type UserCredit = InferSelectModel<typeof userCredit>;
 
+// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 export const userModelPreference = pgTable(
   "UserModelPreference",
   {
@@ -86,6 +87,7 @@ export const userModelPreference = pgTable(
 
 export type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 
+// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 export const project = pgTable(
   "Project",
   {
@@ -239,6 +241,7 @@ export const verification = pgTable("verification", {
   value: text("value").notNull(),
 });
 
+// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 export const mcpConnector = pgTable(
   "McpConnector",
   {
@@ -275,6 +278,7 @@ export const mcpConnector = pgTable(
 
 export type McpConnector = InferSelectModel<typeof mcpConnector>;
 
+// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 export const mcpOAuthSession = pgTable(
   "McpOAuthSession",
   {

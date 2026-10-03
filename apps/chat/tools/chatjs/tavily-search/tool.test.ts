@@ -19,7 +19,7 @@ const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
   ) {
     throw new Error("Expected streaming search results");
   }
-  return Array.fromAsync(result);
+  return await Array.fromAsync(result);
 };
 
 test("native search streams sources and seals a final cost receipt", async () => {

@@ -57,6 +57,7 @@ export const Reasoning = memo(
     isStreaming = false,
     open,
     defaultOpen = true,
+    // oxlint-disable-next-line typescript/unbound-method -- #613: onOpenChange is a React callback supplied through component props, not an object method relying on a receiver.
     onOpenChange,
     duration: durationProp,
     children,
@@ -89,6 +90,7 @@ export const Reasoning = memo(
     }, [isStreaming, startTime, setDuration]);
 
     // Auto-open when streaming starts, auto-close when streaming ends (once only)
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     useEffect(() => {
       if (defaultOpen && !isStreaming && isOpen && !hasAutoClosed) {
         // Add a small delay before closing to allow user to see the content

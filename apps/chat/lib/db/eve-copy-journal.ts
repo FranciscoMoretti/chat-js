@@ -188,6 +188,7 @@ export const getEveCopyOperation = async (
       "This operation belongs to ordinary message creation."
     );
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveCopyOperation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readEveCopy(db, ownerId, conversation.id);
 };
 

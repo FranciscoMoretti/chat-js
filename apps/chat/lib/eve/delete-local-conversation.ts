@@ -44,5 +44,6 @@ export const deleteLocalEveConversationFamily = async (
     );
   }
   await completeEveConversationDeletion(ownerId, family.rootId);
+  // oxlint-disable-next-line typescript/consistent-return -- #580: deleteLocalEveConversationFamily has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { rootId: family.rootId };
 };

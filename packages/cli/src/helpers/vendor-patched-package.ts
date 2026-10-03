@@ -18,9 +18,11 @@ export const vendorPatchedPackage = async (input: {
   patchPath: string;
 }) => {
   const manifestPath = nodePath.join(input.destination, "package.json");
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const manifest = JSON.parse(await readFile(manifestPath, "utf-8")) as {
     dependencies?: Record<string, string>;
   };
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const installed = JSON.parse(
     await readFile(nodePath.join(input.packageDir, "package.json"), "utf-8")
   ) as {

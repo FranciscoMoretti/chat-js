@@ -90,6 +90,7 @@ it("marks every multi-model edited candidate with the shared user intent", async
     forkKind: "edit",
   });
   expect(mocks.create).toHaveBeenCalledTimes(2);
+  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.create.mock.calls.map((call) => call[1].forkKind)).toEqual([
     "edit",
     "edit",

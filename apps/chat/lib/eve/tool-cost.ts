@@ -64,5 +64,5 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
       );
     });
   },
-  totalUsd: usage.totalUsd,
+  totalUsd: usage.totalUsd.bind(usage),
 });

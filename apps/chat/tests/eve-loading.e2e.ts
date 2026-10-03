@@ -14,6 +14,7 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     headers: { origin: new URL(page.url()).origin },
   });
   expect(response.ok()).toBe(true);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- The fixture creation endpoint supplies the conversation ID used by this loading-state scenario.
   const binding = await response.json();
   const gate = Promise.withResolvers<undefined>();
   await page.route("**/api/trpc/*", async (route) => {
@@ -23,6 +24,7 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     await route.continue();
   });
   try {
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- The fixture creation endpoint supplies the conversation ID used by this loading-state scenario.
     await page.goto(`/chat/${binding.id}`);
     await expect(
       page.getByRole("status", { name: "Loading conversation" })

@@ -17,7 +17,9 @@ export const isDesktopAppEnabled = (): boolean => config.desktopApp.enabled;
 
 export const isElectronRenderer = (): boolean =>
   isDesktopAppEnabled() &&
+  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window !== "undefined" &&
+  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
   typeof window.requestAuth === "function";
 
 type SearchParamValue = string | string[] | undefined;

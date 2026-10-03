@@ -30,6 +30,7 @@ it("refuses to distribute a stale installed runtime", async () => {
       patchPath,
       "diff --git a/runtime.js b/runtime.js\n--- a/runtime.js\n+++ b/runtime.js\n@@ -1 +1 @@\n-original\n+patched\n"
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       vendorPatchedPackage({
         destination,
@@ -93,9 +94,11 @@ it.each([
         packageName: name,
         patchPath,
       });
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const manifest = JSON.parse(
         await readFile(nodePath.join(destination, "package.json"), "utf-8")
       );
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies[name]).toBe(`file:vendor/${archiveName}`);
       const archive = nodePath.join(destination, "vendor", archiveName);
       const metadata = execFileSync("tar", [
