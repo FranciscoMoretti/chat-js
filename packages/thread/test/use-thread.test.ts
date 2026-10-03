@@ -54,6 +54,7 @@ const renderUseThread = (
   onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void
 ) => {
   let current: UseThreadHelpers | undefined;
+  // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
   let renderer: ReactTestRenderer | undefined;
   const render = (options: UseThreadOptions) =>
     createElement(HookHarness, {
@@ -64,7 +65,9 @@ const renderUseThread = (
       options,
     });
 
+  // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
   act(() => {
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     renderer = create(render(initialOptions));
   });
 
@@ -76,9 +79,11 @@ const renderUseThread = (
       return current;
     },
     unmount() {
+      // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
       act(() => renderer?.unmount());
     },
     update(options: UseThreadOptions) {
+      // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
       act(() => renderer?.update(render(options)));
     },
   };
@@ -92,7 +97,8 @@ const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
     throw new Error("Timed out waiting for condition");
   }
   await Bun.sleep(1);
-  return waitFor(predicate, attemptsRemaining - 1);
+  // oxlint-disable-next-line typescript/no-confusing-void-expression -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
+  return await waitFor(predicate, attemptsRemaining - 1);
 };
 
 describe("useThread", () => {
@@ -106,6 +112,7 @@ describe("useThread", () => {
 
     expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-1"]);
 
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     act(() => {
       thread.addMessage(user("user-2"), "user-1");
       thread.setCursor("user-2");
@@ -117,10 +124,12 @@ describe("useThread", () => {
     ]);
 
     let send: Promise<void> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       send = hook.current.sendMessage({ text: "user-3" });
       await waitFor(() => transport.requests.length === 1);
     });
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
@@ -134,6 +143,7 @@ describe("useThread", () => {
       await send;
     });
 
+    // oxlint-disable-next-line typescript/no-unsafe-argument -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(hook.current.messages.map(({ id }) => id)).toEqual([
       "user-1",
       "user-2",
@@ -183,6 +193,7 @@ describe("useThread", () => {
       onError: secondError,
       transport: secondTransport,
     });
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       await hook.current.sendMessage({ text: "first request" });
     });
@@ -200,6 +211,7 @@ describe("useThread", () => {
     });
     expect(hook.current.id).toBe("thread-2");
     expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-2"]);
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       await hook.current.sendMessage({ text: "second request" });
     });
@@ -226,6 +238,7 @@ describe("useThread", () => {
     const { setMessages } = hook.current;
 
     hook.update({ thread: second });
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     act(() => {
       setMessages([user("user-c")]);
     });
@@ -245,6 +258,7 @@ describe("useThread", () => {
     });
     const hook = renderUseThread({ resume: true, thread });
 
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       await Bun.sleep(0);
     });
@@ -266,10 +280,12 @@ describe("useThread", () => {
     });
     const hook = renderUseThread({ resume: true, thread: first });
 
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       await Bun.sleep(0);
     });
     hook.update({ resume: true, thread: second });
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       await Bun.sleep(0);
     });
@@ -291,11 +307,13 @@ describe("useThread", () => {
       transport,
     });
 
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     act(() => hook.current.tree.setCursor("user-1"));
 
     let run:
       | Awaited<ReturnType<UseThreadHelpers["tree"]["startRun"]>>
       | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       run = await hook.current.tree.startRun({ from: "user-1" });
       await waitFor(() => transport.requests.length === 1);
@@ -303,6 +321,7 @@ describe("useThread", () => {
     expect(hook.current.status).toBe("submitted");
     expect(hook.current.tree.status).toBe("submitted");
 
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
@@ -317,6 +336,7 @@ describe("useThread", () => {
     expect(hook.current.tree.status).toBe("streaming");
     expect(hook.current.messages.map(({ id }) => id)).toEqual(["user-1"]);
 
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       await Bun.sleep(110);
     });
@@ -327,6 +347,7 @@ describe("useThread", () => {
       )
     ).toBe("streaming");
 
+    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
     await act(async () => {
       transport.finish(0);
       await run?.finished;

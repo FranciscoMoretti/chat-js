@@ -16,6 +16,7 @@ export const describeMcpTool = async <TInput, TOutput>(
   definition: Tool<TInput, TOutput>
 ) => {
   if (
+    // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
     definition.needsApproval ||
     definition.toModelOutput ||
     definition.type === "provider" ||
@@ -30,6 +31,7 @@ export const describeMcpTool = async <TInput, TOutput>(
     .parse(
       JSON.parse(
         JSON.stringify(await schema.jsonSchema, (key, value) =>
+          // oxlint-disable-next-line typescript/no-unsafe-return -- The JSON replacer preserves arbitrary tool-schema values except the explicitly removed standard-schema hook.
           key === "~standard" ? undefined : value
         )
       )

@@ -51,6 +51,7 @@ const contributionBinding = (
     (node) =>
       ts.isStringLiteral(node.moduleSpecifier) &&
       node.moduleSpecifier.text === marker &&
+      // oxlint-disable-next-line typescript/no-deprecated -- The installer reads the existing TypeScript import-clause flag to preserve type-only imports across supported templates.
       !node.importClause?.isTypeOnly
   );
   const bindings = imported?.importClause?.namedBindings;
@@ -87,7 +88,7 @@ const planContribution = async (
   );
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
-    .flatMap((statement) => [...statement.declarationList.declarations])
+    .flatMap((statement) => statement.declarationList.declarations)
     .find((item) => item.name.getText(parsed) === name);
   if (
     !declaration?.initializer ||
@@ -251,7 +252,8 @@ export const syncFeatures = async (
   const uiFeatures =
     options.addUi === true
       ? ["mcp", "attachment-uploads"]
-      : options.addUi || [];
+      : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- False explicitly disables optional UI installation; the empty array must replace false as well as undefined.
+        options.addUi || [];
 
   const observability = await planObservability(cwd);
   const mcp = await validateMcp(cwd, options.expectedMcp);

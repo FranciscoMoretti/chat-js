@@ -126,7 +126,9 @@ test("fencing waits for admitted writers to commit before rejecting later writes
   });
   await entered.promise;
   const fencer = postgres(env.DATABASE_URL, { max: 1 });
-  const [backend] = await fencer`select pg_backend_pid() as pid`;
+  const [backend] = await fencer<
+    { pid: number }[]
+  >`select pg_backend_pid() as pid`;
   const fencing = fenceEvePostgresResources(fencer, {
     runIds: [id],
     streamIds: [],
@@ -134,8 +136,9 @@ test("fencing waits for admitted writers to commit before rejecting later writes
   try {
     await expect
       .poll(async () => {
-        const [row] =
-          await query`select cardinality(pg_blocking_pids(${backend.pid})) > 0 as blocked`;
+        const [row] = await query<
+          { blocked: boolean }[]
+        >`select cardinality(pg_blocking_pids(${backend.pid})) > 0 as blocked`;
         return row.blocked;
       })
       .toBe(true);
@@ -165,6 +168,7 @@ test("a repeatable-read snapshot from before the fence cannot restore payloads",
       values (${crypto.randomUUID()}, ${streamId}, ${id}, ${Buffer.from("late")}, false)`;
   });
   const rejected = expect(writer).rejects.toMatchObject({
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Vitest asymmetric matchers intentionally stand in for values in the expected error shape.
     code: expect.stringMatching(rejectedWriteCode),
   });
   try {
@@ -215,14 +219,17 @@ test("session fencing re-inventories a collector child committed while its fence
   });
   await entered.promise;
   const fencer = postgres(env.DATABASE_URL, { max: 1 });
-  const [backend] = await fencer`select pg_backend_pid() as pid`;
+  const [backend] = await fencer<
+    { pid: number }[]
+  >`select pg_backend_pid() as pid`;
   const fencing = fenceEvePostgresSession(fencer, root);
   try {
     try {
       await expect
         .poll(async () => {
-          const [row] =
-            await query`select cardinality(pg_blocking_pids(${backend.pid})) > 0 as blocked`;
+          const [row] = await query<
+            { blocked: boolean }[]
+          >`select cardinality(pg_blocking_pids(${backend.pid})) > 0 as blocked`;
           return row.blocked;
         })
         .toBe(true);

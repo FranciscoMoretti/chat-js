@@ -80,6 +80,7 @@ export const ControlledChatComposer = ({
       {attachments}
       <LexicalChatInput
         aria-label="Message"
+        // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: The caller owns initial focus; this shared composer defaults autoFocus to false.
         autoFocus={autoFocus}
         className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
         data-testid="multimodal-input"

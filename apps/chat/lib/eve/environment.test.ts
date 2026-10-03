@@ -164,6 +164,7 @@ describe("EVE environment defaults", () => {
       };
       const worker: Record<string, string | undefined> = { ...source };
       configureWorkflowEnvironment(worker);
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
       expect(worker.WORKFLOW_POSTGRES_URL).toBe(DATABASE_URL || undefined);
       expect(schema.safeParse(resolveEveEnvironment(source)).success).toBe(
         false

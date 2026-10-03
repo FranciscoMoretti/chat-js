@@ -25,6 +25,7 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
     document.head.querySelectorAll(telemetrySelector)
   );
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
     await act(() => {
       root.render(
         <>
@@ -47,6 +48,7 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
       path: "../uiverify-archive/observability-layout.png",
     });
   } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
     await act(() => root.unmount());
     for (const script of document.head.querySelectorAll(telemetrySelector)) {
       if (!existingScripts.has(script)) {

@@ -8,14 +8,20 @@ export const uploadAttachment = async (file: File) => {
     method: "POST",
   });
   if (!response.ok) {
-    const failure = await response.json().catch(() => null);
+    const failure: unknown = await response.json().catch(() => null);
     throw new Error(
-      typeof failure?.error === "string"
+      failure !== null &&
+        typeof failure === "object" &&
+        "error" in failure &&
+        typeof failure.error === "string"
         ? failure.error
         : `Unable to upload ${file.name}.`
     );
   }
-  const uploaded = await response.json();
+  const uploaded: unknown = await response.json();
+  if (uploaded === null || typeof uploaded !== "object") {
+    throw new Error(`Invalid upload response for ${file.name}.`);
+  }
   return draftAttachment.parse({
     ...uploaded,
     contentType: file.type,

@@ -182,6 +182,7 @@ const parseExecutionOutput = async (execResult: {
   try {
     const outLines = (stdout ?? "").trim().split("\n");
     const lastLine = outLines.at(-1);
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
     execInfo = JSON.parse(lastLine ?? "{}");
     outLines.pop();
 
@@ -191,6 +192,7 @@ const parseExecutionOutput = async (execResult: {
     if (chartLineIdx !== -1) {
       const raw = outLines[chartLineIdx].slice(CHART_JSON_PREFIX.length);
       try {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
         chartData = JSON.parse(raw) as Record<string, unknown>;
       } catch {
         // Ignore malformed chart JSON from the sandboxed snippet.
@@ -216,6 +218,7 @@ const parseExecutionOutput = async (execResult: {
   return { chartData, execInfo, outputText };
 };
 
+// oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const checkForChart = async (
   sandbox: Sandbox,
   chartPath: string,

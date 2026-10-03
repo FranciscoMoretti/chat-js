@@ -253,6 +253,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
           )}
           <ReactECharts
             notMerge
+            // oxlint-disable-next-line typescript/no-unsafe-assignment -- ECharts options are assembled across supported chart variants; replacing its open option type requires a separate chart-schema design.
             option={getChartOptions()}
             style={{ height: "400px", width: "100%" }}
             theme={resolvedTheme === "dark" ? "dark" : undefined}

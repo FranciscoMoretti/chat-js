@@ -33,6 +33,7 @@ const checkDatabase = async () => {
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
       max: 1,
     });
+    // oxlint-disable-next-line typescript/no-misused-promises -- #585: The deadline asynchronously closes the SQL connection before signaling failure; preserving timeout cleanup requires this callback lifecycle.
     const deadline = setTimeout(async () => {
       try {
         await sql.end({ timeout: 0 });
@@ -62,6 +63,7 @@ const checkDatabase = async () => {
   await checkPurpose("migration");
 };
 
+// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: The Node/tsx diagnostic runner loads this CommonJS-scoped entrypoint; keep its asynchronous startup inside an IIFE.
 void (async () => {
   try {
     await checkDatabase();

@@ -158,6 +158,7 @@ const renderPage = async (
     );
   }
   // Render each route's client subtree with the same header/layout, without the server prefetch wrapper.
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
   await act(() =>
     root.render(
       <SettingsPage>
@@ -177,6 +178,7 @@ const renderPage = async (
     )
   );
   return async () => {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   };
@@ -357,11 +359,12 @@ test("dismissed OAuth ignores a late authorization result", async () => {
       page.getByRole("button", { exact: true, name: "Cancel" }).click()
     );
     await act(() =>
+      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Invoke the success callback captured from the real mutation call; this fixture tests how the component handles both valid and invalid authorization URLs.
       callbacks.onSuccess({
         authorizationUrl: "https://authorization.example.test",
       })
     );
-    expect(window.location.hostname).not.toBe("authorization.example.test");
+    expect(globalThis.location.hostname).not.toBe("authorization.example.test");
   } finally {
     await cleanup();
   }
@@ -441,6 +444,7 @@ test("invalid authorization links keep the dialog open and display an error", as
         .click()
     );
     const [[, callbacks]] = mocks.mutate.mock.calls;
+    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Invoke the success callback captured from the real mutation call; this fixture tests how the component handles both valid and invalid authorization URLs.
     await act(() => callbacks.onSuccess({ authorizationUrl: "not a URL" }));
     await expect
       .element(page.getByText("Invalid authorization URL", { exact: true }))

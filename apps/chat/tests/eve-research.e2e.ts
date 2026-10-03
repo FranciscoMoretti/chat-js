@@ -50,7 +50,8 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   const session = z.object({ user: z.object({ id: z.string() }) }).parse(
     await page.evaluate(async () => {
       const response = await fetch("/api/auth/get-session");
-      return response.json();
+      const responseBody: unknown = await response.json();
+      return responseBody;
     })
   );
   await db
@@ -67,7 +68,8 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message:

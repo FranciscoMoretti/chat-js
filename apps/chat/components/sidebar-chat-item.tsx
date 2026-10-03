@@ -40,7 +40,7 @@ const PureSidebarChatItem = ({
   isActive: boolean;
   onDelete?: (chatId: string) => void;
   onMoveProject?: () => void;
-  onRename: (chatId: string, title: string) => void;
+  onRename: (chatId: string, title: string) => void | Promise<void>;
   onPin: (chatId: string, isPinned: boolean) => void;
   setOpenMobile: (open: boolean) => void;
   prefetch?: boolean;
@@ -74,7 +74,7 @@ const PureSidebarChatItem = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleRename();
+      void handleRename();
     } else if (e.key === "Escape") {
       setIsEditing(false);
       setEditTitle(chat.title);
@@ -86,9 +86,12 @@ const PureSidebarChatItem = ({
       {isEditing ? (
         <div className="bg-background flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm">
           <Input
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing inline Rename replaces the sidebar item with this focused title editor.
             autoFocus
             className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
             maxLength={255}
+
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Inline rename awaits its parent callback and catches failures before leaving edit mode.
             onBlur={handleRename}
             onChange={(e) => setEditTitle(e.target.value)}
             onKeyDown={handleKeyDown}

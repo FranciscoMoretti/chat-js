@@ -87,8 +87,11 @@ Avoid:
           });
 
           if (extractResult.success && extractResult.data) {
+            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
             title ||= extractResult.data.title;
+            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
             description ||= extractResult.data.description;
+            // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
             extractedContent ||= extractResult.data.content;
           }
         }
@@ -96,9 +99,12 @@ Avoid:
         return {
           results: [
             {
+              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
               content: extractedContent || "",
+              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
               description: description || "",
               language: metadata.language,
+              // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
               title: title || "Untitled",
               url: redactedUrl,
             },

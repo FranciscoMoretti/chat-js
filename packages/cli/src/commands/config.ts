@@ -41,7 +41,7 @@ export const config = new Command()
     "the working directory (defaults to current directory)",
     process.cwd()
   )
-  .action(async (opts) => {
+  .action(async (opts: { cwd: string }) => {
     try {
       const cwd = path.resolve(opts.cwd);
 
@@ -58,6 +58,7 @@ export const config = new Command()
 
       let code: number | null;
       try {
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Node child-process close emits the exit code followed by a signal; the event library exposes an untyped tuple.
         [code] = await once(child, "close");
       } catch (error) {
         throw new Error(

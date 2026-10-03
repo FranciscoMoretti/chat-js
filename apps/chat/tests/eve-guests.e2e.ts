@@ -521,6 +521,7 @@ test("comparison persistence failure rolls back guest identity and every quota r
   );
   await expect(
     reserveEveGuestMessages(
+      // oxlint-disable-next-line oxc/no-map-spread -- #541: Each guest candidate needs a distinct reservation fixture while preserving the shared first reservation.
       candidates.map((candidate) => ({
         ...first,
         operationId: candidate.operationId,

@@ -40,6 +40,7 @@ beforeEach(() => {
 test("all resources and native family payloads finish before the application tombstone", async () => {
   const gate = Promise.withResolvers<undefined>();
   mocks.native.mockImplementationOnce(async (_url, _scope, retire) => {
+    // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     await retire();
   });
   mocks.native.mockReturnValueOnce(gate.promise);
@@ -55,6 +56,7 @@ test("all resources and native family payloads finish before the application tom
     "/trusted/app"
   );
   expect(mocks.retire).toHaveBeenCalledWith("owner", "session-root");
+  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.native.mock.calls.map((call) => call[1].sessionId)).toEqual([
     "session-root",
     "session-branch",
@@ -86,6 +88,7 @@ test("partial native purge retains pending state and retry runs the full orderin
     await deleteLocalEveConversationFamily("owner", "root", "/app")
   ).toEqual({ rootId: "root" });
   expect(mocks.resources).toHaveBeenCalledTimes(2);
+  // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.native.mock.calls.map((call) => call[1].sessionId)).toEqual([
     "session-root",
     "session-branch",

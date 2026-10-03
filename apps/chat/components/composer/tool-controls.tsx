@@ -42,6 +42,8 @@ const ToolControl = ({
     <DropdownMenuCheckboxItem
       checked={checked}
       className="pr-8 pl-2 [&>span:first-child]:right-2 [&>span:first-child]:left-auto"
+
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.
       disabled={disabled || (!checked && unsupported)}
       onSelect={() => {
         if (checked) {

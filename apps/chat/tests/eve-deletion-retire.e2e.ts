@@ -125,6 +125,7 @@ test("internal retirement settles usage after access revocation and is retryable
       ],
       { cwd: process.cwd(), timeout: 30_000 }
     );
+    // oxlint-disable-next-line typescript/no-unsafe-return -- The controlled Bun child prints the deletion fixture as JSON; callers assert its raw persisted state.
     return JSON.parse(stdout);
   };
   expect(await purgeResources()).toEqual(prepared);

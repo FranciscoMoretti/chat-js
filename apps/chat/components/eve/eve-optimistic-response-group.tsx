@@ -33,6 +33,7 @@ export const EveOptimisticResponseGroup = ({
   const candidates: EveResponseCardCandidate[] = eveResponseGroupCandidates(
     operation.operationId,
     operation.modelIds
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Disable the optimistic view without mutating the shared logical candidate records.
   ).map((candidate) => ({
     ...candidate,
     disabled: true,

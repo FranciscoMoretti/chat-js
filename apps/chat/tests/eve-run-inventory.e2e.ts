@@ -137,7 +137,9 @@ test("retains missing queue-discovered seeds as incomplete ownership", async () 
   const inventory = await query.begin(
     "isolation level repeatable read read only",
     async (transaction) =>
-      readEvePostgresRunInventoryInTransaction(transaction, root, [missing])
+      await readEvePostgresRunInventoryInTransaction(transaction, root, [
+        missing,
+      ])
   );
   expect(inventory.missingRunIds).toEqual([missing]);
   expect(inventory.runs.map((row) => row.id)).toEqual([root]);

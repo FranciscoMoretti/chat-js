@@ -39,7 +39,7 @@ export const SidebarProjects = () => {
   const createProjectMutation = useMutation(
     trpc.project.create.mutationOptions({
       onSuccess: (data) => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.project.list.queryKey(),
         });
         setNewProjectDialogOpen(false);

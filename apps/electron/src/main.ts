@@ -250,6 +250,7 @@ ipcMain.handle("better-auth:requestAuth", async (_event, options) => {
   });
 
   try {
+    // oxlint-disable-next-line typescript/no-unsafe-argument -- Electron IPC supplies untyped payloads; Better Auth validates its request options at this bridge.
     await electronAuthClient.requestAuth(options);
   } catch (error) {
     isAuthFlowInProgress = false;
@@ -477,7 +478,7 @@ const createWindow = (): BrowserWindow => {
   // Avoid touching encrypted auth storage on app launch. On macOS this can
   // trigger an immediate Keychain prompt before the window even loads, which
   // feels like a crash. Session sync still runs after explicit auth events.
-  win.loadURL(APP_URL);
+  void win.loadURL(APP_URL);
 
   win.webContents.on("did-finish-load", () => {
     if (currentAuthOverlayMessage) {
@@ -490,7 +491,7 @@ const createWindow = (): BrowserWindow => {
 
   // Open all new-window requests (including OAuth popups) in the default browser.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    void shell.openExternal(url);
     return { action: "deny" };
   });
 
@@ -618,19 +619,18 @@ ipcMain.handle("chatjs:sync-auth-session", async () => {
 
 ipcMain.handle("chatjs:get-auth-state", () => currentAuthState);
 
+// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: Start readiness asynchronously so deep-link and second-instance handlers below register immediately.
 void (async () => {
   await app.whenReady();
   app.setName(APP_NAME);
   setupApplicationMenu();
-  mainWindow = await createWindow();
+  mainWindow = createWindow();
   tray = createTray();
   void setupAutoUpdater();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      void (async () => {
-        mainWindow = await createWindow();
-      })();
+      mainWindow = createWindow();
     } else {
       mainWindow?.show();
     }

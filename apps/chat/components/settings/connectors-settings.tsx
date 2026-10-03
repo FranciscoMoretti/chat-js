@@ -282,8 +282,8 @@ export const ConnectorsSettings = () => {
         return { prev };
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({ queryKey });
+        void queryClient.invalidateQueries({
           queryKey: trpc.mcp.listConnected.queryKey(),
         });
       },
@@ -300,19 +300,19 @@ export const ConnectorsSettings = () => {
           toast.error(err.message || "Failed to disconnect");
         },
         onSettled: (_data, _err, vars) => {
-          queryClient.invalidateQueries({ queryKey });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({ queryKey });
+          void queryClient.invalidateQueries({
             queryKey: trpc.mcp.listConnected.queryKey(),
           });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: trpc.mcp.checkAuth.queryKey({ id: vars.id }),
           });
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: trpc.mcp.discover.queryKey({ id: vars.id }),
           });
         },
         onSuccess: (_data, vars) => {
-          queryClient.invalidateQueries({
+          void queryClient.invalidateQueries({
             queryKey: trpc.mcp.testConnection.queryKey({ id: vars.id }),
           });
           toast.success("Disconnected");
@@ -328,7 +328,7 @@ export const ConnectorsSettings = () => {
       dialog: McpConnectorsDialog | null;
       connectorId?: string | null;
     }) => {
-      setQs({
+      void setQs({
         connectorId: connectorId ?? null,
         dialog,
       });
@@ -388,6 +388,7 @@ export const ConnectorsSettings = () => {
         >
           <p className="text-sm font-medium">Could not load connectors</p>
           <p className="text-muted-foreground mt-1 text-xs">{error.message}</p>
+          {/* oxlint-disable-next-line typescript/no-misused-promises -- TanStack Query tracks refetch state and errors; this UI event deliberately initiates refresh without awaiting a DOM return value. */}
           <Button onClick={() => refetchConnectors()} variant="outline">
             Retry
           </Button>

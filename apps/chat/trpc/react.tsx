@@ -21,6 +21,7 @@ export const { TRPCProvider, useTRPC, useTRPCClient } =
 let browserQueryClient: QueryClient | undefined;
 
 const getQueryClient = () => {
+  // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve TanStack Query server detection until its SSR and hydration boundary is migrated together.
   if (isServer) {
     // Server: always make a new query client
     return makeQueryClient();
@@ -29,6 +30,7 @@ const getQueryClient = () => {
   // This is very important, so we don't re-make a new client if React
   // suspends during the initial render. This may not be needed if we
   // have a suspense boundary BELOW the creation of the query client
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
   if (!browserQueryClient) {
     browserQueryClient = makeQueryClient();
   }
@@ -37,6 +39,7 @@ const getQueryClient = () => {
 
 const getUrl = () => {
   const base = (() => {
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
     if (typeof window !== "undefined") {
       return "";
     }

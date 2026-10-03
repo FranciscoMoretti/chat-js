@@ -28,7 +28,7 @@ import { useTRPC } from "@/trpc/react";
 const HTTP_STATUS_REGEX = /HTTP (?<status>\d{3})/u;
 
 const formatMcpError = (message: string): string => {
-  const httpMatch = message.match(HTTP_STATUS_REGEX);
+  const httpMatch = HTTP_STATUS_REGEX.exec(message);
   if (httpMatch) {
     const [, status] = httpMatch;
     if (status === "502") {
@@ -245,7 +245,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         return { prev };
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
+        void queryClient.invalidateQueries({ queryKey });
       },
     })
   );
@@ -272,10 +272,10 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         return { prev };
       },
       onSettled: () => {
-        queryClient.invalidateQueries({ queryKey });
+        void queryClient.invalidateQueries({ queryKey });
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.mcp.listConnected.queryKey(),
         });
         toast.success("Connector uninstalled");
@@ -321,13 +321,13 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
     if (connected || err) {
       router.replace(`/settings/connectors/${connectorId}`);
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: trpc.mcp.checkAuth.queryKey({ id: connectorId }),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: trpc.mcp.discover.queryKey({ id: connectorId }),
       });
-      refetchDiscovery();
+      void refetchDiscovery();
     }
   }, [
     connectorId,
@@ -382,6 +382,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
           <p className="text-muted-foreground mt-1 text-xs">
             {connectorsError.message}
           </p>
+          {/* oxlint-disable-next-line typescript/no-misused-promises -- TanStack Query tracks refetch state and errors; this UI event deliberately initiates refresh without awaiting a DOM return value. */}
           <Button onClick={() => refetchConnectors()} variant="outline">
             Retry
           </Button>

@@ -90,6 +90,7 @@ const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
       output: model.pricing?.completion,
       web_search: model.pricing?.web_search,
     },
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
     tags: tags.length > 0 ? (tags as AiGatewayModel["tags"]) : undefined,
     type,
   };
@@ -165,7 +166,9 @@ export class OpenRouterGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
       const body = await response.json();
+      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
       const models = (body.data ?? []) as OpenRouterModelResponse[];
       const result = models.map((model) => toAiGatewayModel(model));
 

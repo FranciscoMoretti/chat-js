@@ -46,12 +46,16 @@ describe("device login page", () => {
         }
       | undefined;
     mocks.transferUser.mockImplementation(({ fetchOptions: options }) => {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This device-login-page fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       fetchOptions = options;
       return transfer.promise;
     });
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<DeviceLoginPage />);
     });
 
@@ -62,7 +66,9 @@ describe("device login page", () => {
     );
     expect(retryButton).toBeDefined();
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This device-login-page fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       retryButton?.props.onClick();
     });
     expect(
@@ -71,6 +77,7 @@ describe("device login page", () => {
       )
     ).toHaveLength(1);
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
       fetchOptions?.onError?.();
     });

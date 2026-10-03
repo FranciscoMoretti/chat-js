@@ -15,7 +15,7 @@ export const KeyboardShortcuts = () => {
       if (e.shiftKey && e.key === "O" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpenMobile(false);
-        window.dispatchEvent(new Event("chatjs:new-chat"));
+        globalThis.dispatchEvent(new Event("chatjs:new-chat"));
         router.push("/");
       }
     };
@@ -30,6 +30,7 @@ export const KeyboardShortcuts = () => {
 
 // Helper function to get platform-specific shortcut text
 export const getNewChatShortcutText = () => {
+  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   if (typeof window === "undefined") {
     return "Ctrl+Shift+O";
   }

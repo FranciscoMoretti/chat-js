@@ -95,7 +95,7 @@ export const McpConnectDialog = ({
             return;
           }
           setIsRedirecting(true);
-          window.location.href = url.href;
+          globalThis.location.href = url.href;
         },
       }
     );

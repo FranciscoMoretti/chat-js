@@ -6,6 +6,7 @@ import path from "node:path";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 import { planInstallation } from "./installation-plan";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = path;
 const roots: string[] = [];
 afterEach(async () => {
@@ -66,6 +67,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       planInstallation(root, { features: [], tools: [] })
     ).rejects.toThrow("requires installed tools: readDocument");
@@ -78,6 +80,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       "createTextDocument"
     );
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     server.stop(true);
   }
 });
@@ -119,6 +122,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     port: 0,
   });
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       planInstallation(root, {
         features: [],
@@ -142,6 +146,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     });
     expect(reinstall.expected).toEqual([definition("first")]);
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     server.stop(true);
   }
 });
@@ -180,6 +185,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
   });
   const source = `http://127.0.0.1:${server.port}`;
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       planInstallation(root, {
         features: [`${source}/langfuse.json`],
@@ -194,6 +200,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
       "langfuse",
       "mcp",
     ]);
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       planInstallation(root, {
         features: [`${source}/mcp.json`],
@@ -207,12 +214,14 @@ test("validates feature dependencies and exclusive storage slots before writing"
       join(dir, "chatjs.json"),
       JSON.stringify({ contractVersion: 1, id: "mcp", kind: "feature" })
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       planInstallation(root, {
         features: [`${source}/langfuse.json`],
         tools: [],
       })
     ).resolves.toMatchObject({ features: [{ id: "langfuse" }] });
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       planInstallation(root, {
         features: [],
@@ -224,6 +233,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
       await Bun.file(join(root, "features/installed-routers.ts")).exists()
     ).toBe(false);
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     server.stop(true);
   }
 });

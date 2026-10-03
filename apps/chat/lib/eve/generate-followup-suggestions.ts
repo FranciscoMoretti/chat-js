@@ -37,6 +37,7 @@ export const generateEveFollowupSuggestions = async (
           role: "user",
         },
       ],
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: Usage accounting depends on the installed SDK callback contract; callback lifecycle migration needs billing verification.
       onStepFinish(step) {
         modelCalls.push({
           modelId,
@@ -47,6 +48,7 @@ export const generateEveFollowupSuggestions = async (
       output: Output.object({ schema: eveFollowupSuggestions }),
     });
     // Usage is captured before reading output: malformed JSON can still cost money.
+    // oxlint-disable-next-line typescript/consistent-return -- #580: generateEveFollowupSuggestions has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return {
       modelCalls,
       responseMetadata: eveFollowupSuggestions.parse(result.output),
@@ -55,6 +57,7 @@ export const generateEveFollowupSuggestions = async (
     if (attempted && modelCalls.length === 0) {
       modelCalls.push({ failed: true, modelId });
     }
+    // oxlint-disable-next-line typescript/consistent-return -- #580: generateEveFollowupSuggestions has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return { modelCalls };
   }
 };

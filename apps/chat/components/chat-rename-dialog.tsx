@@ -62,12 +62,13 @@ export const ChatRenameDialog = ({
         </DialogHeader>
         <div className="py-4">
           <Input
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening Rename Chat intentionally focuses the title field for keyboard editing.
             autoFocus
             maxLength={255}
             onChange={(e) => setChatTitle(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handleSubmit();
+                void handleSubmit();
               } else if (e.key === "Escape") {
                 handleOpenChange(false);
               }
@@ -80,7 +81,11 @@ export const ChatRenameDialog = ({
           <Button onClick={() => handleOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button disabled={isDisabled} onClick={handleSubmit}>
+          <Button
+            disabled={isDisabled}
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Rename submission catches failures and reports them while owning dialog pending state.
+            onClick={handleSubmit}
+          >
             Save
           </Button>
         </DialogFooter>

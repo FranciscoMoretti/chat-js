@@ -252,8 +252,8 @@ export const configDescriptionSchema = z.object({
   }),
   organization: z.object({
     contact: z.object({
-      legalEmail: z.string().email(),
-      privacyEmail: z.string().email(),
+      legalEmail: z.email(),
+      privacyEmail: z.email(),
     }),
     name: z.string(),
   }),
@@ -304,8 +304,8 @@ export const configSchema = z.object({
   organization: z
     .object({
       contact: z.object({
-        legalEmail: z.string().email(),
-        privacyEmail: z.string().email(),
+        legalEmail: z.email(),
+        privacyEmail: z.email(),
       }),
       name: z.string(),
     })
@@ -438,9 +438,10 @@ const mergeToolsConfig = <T extends Record<string, unknown>>(
       defVal !== null &&
       typeof defVal === "object" &&
       !Array.isArray(defVal)
-        ? { ...defVal, ...(val as object) }
+        ? { ...defVal, ...val }
         : val;
   }
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
   return result as T;
 };
 
@@ -456,10 +457,12 @@ export const applyDefaults = (input: ConfigInput): Config => {
     ...aiInput,
     tools: mergeToolsConfig(
       gatewayDefaults.tools,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
       aiInput?.tools as Record<string, unknown> | undefined
     ),
     workflows: {
       ...gatewayDefaults.workflows,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
       ...(aiInput?.workflows as Record<string, unknown> | undefined),
     },
   };

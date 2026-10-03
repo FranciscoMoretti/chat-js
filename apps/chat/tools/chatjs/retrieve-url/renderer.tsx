@@ -55,7 +55,9 @@ const getItemProperty = <T,>(
   defaultValue: T
 ): T => {
   if (item && typeof item === "object" && property in item) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
     const value = (item as Record<string, unknown>)[property];
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
     return (value as T) ?? defaultValue;
   }
   return defaultValue;
@@ -128,6 +130,7 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
   );
 };
 
+// oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const getFirstItem = (result: unknown): unknown => {
   if (
     result &&
@@ -145,11 +148,13 @@ const getErrorMessage = (
 ): string | null => {
   const topLevelError =
     result && typeof result === "object" && "error" in result
-      ? (result.error as string)
+      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
+        (result.error as string)
       : undefined;
   const firstItemError =
     firstItem && typeof firstItem === "object" && "error" in firstItem
-      ? (firstItem.error as string)
+      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
+        (firstItem.error as string)
       : undefined;
 
   return topLevelError ?? firstItemError ?? null;

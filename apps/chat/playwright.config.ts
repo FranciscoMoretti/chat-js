@@ -9,6 +9,7 @@ config({
   path: ".env.local",
 });
 /* Use process.env.PORT by default and fallback to port 3000 */
+// oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
 const PORT = process.env.PORT || 3000;
 /**
  * Set webServer.url and use.baseURL with the location

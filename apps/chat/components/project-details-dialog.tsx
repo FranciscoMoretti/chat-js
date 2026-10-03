@@ -147,13 +147,14 @@ export const ProjectDetailsDialog = ({
             onIconChange={setIcon}
           />
           <Input
+            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening the project editor intentionally starts keyboard entry in the project name field.
             autoFocus
             className="flex-1"
             maxLength={255}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !isDisabled) {
-                handleSubmit();
+                void handleSubmit();
               } else if (e.key === "Escape") {
                 handleOpenChange(false);
               }
@@ -167,7 +168,11 @@ export const ProjectDetailsDialog = ({
           <Button onClick={() => handleOpenChange(false)} variant="outline">
             Cancel
           </Button>
-          <Button disabled={isDisabled} onClick={handleSubmit}>
+          <Button
+            disabled={isDisabled}
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Project submission owns dialog state and failure feedback; the button only triggers that lifecycle.
+            onClick={handleSubmit}
+          >
             {buttonText}
           </Button>
         </DialogFooter>

@@ -123,6 +123,7 @@ export const eveMessageDelivery = {
     ) {
       return;
     }
+    // oxlint-disable-next-line typescript/consistent-return -- #580: eveMessageDelivery has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return write(storage, sessionId, {
       ...current,
       operationId: pending.operationId,

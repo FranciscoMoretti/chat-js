@@ -45,6 +45,7 @@ const ChatLayoutDynamic = async ({
 
   const default_chat_model = config.ai.workflows.chat;
   let defaultModel: AppModelId =
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The model cookie is checked against available model IDs before use; catalog branding is not preserved by cookie-string and includes APIs.
     (cookieModel as AppModelId) ?? default_chat_model;
 
   if (cookieModel) {
@@ -54,7 +55,9 @@ const ChatLayoutDynamic = async ({
     } else if (isAnonymous) {
       const isModelAvailable = (
         ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-      ).includes(cookieModel as AppModelId);
+      )
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The model cookie is checked against available model IDs before use; catalog branding is not preserved by cookie-string and includes APIs.
+        .includes(cookieModel as AppModelId);
       if (!isModelAvailable) {
         defaultModel = default_chat_model;
       }
@@ -72,8 +75,12 @@ const ChatLayoutDynamic = async ({
   if (session?.user?.id) {
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
-    queryClient.prefetchQuery(trpc.settings.getModelPreferences.queryOptions());
-    queryClient.prefetchQuery(trpc.project.list.queryOptions());
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
+    void queryClient.prefetchQuery(
+      trpc.settings.getModelPreferences.queryOptions()
+    );
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
+    void queryClient.prefetchQuery(trpc.project.list.queryOptions());
   }
 
   return (

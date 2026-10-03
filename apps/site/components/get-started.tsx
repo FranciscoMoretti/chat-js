@@ -15,7 +15,7 @@ export const GetStarted = () => {
       await navigator.clipboard.writeText(command);
       setCopied(true);
 
-      window.setTimeout(() => {
+      globalThis.setTimeout(() => {
         setCopied(false);
       }, 2000);
     } catch {
@@ -61,7 +61,9 @@ export const GetStarted = () => {
               <button
                 aria-label="Copy command"
                 className="text-foreground/75 hover:bg-secondary hover:text-foreground ml-3 rounded-md p-1.5 transition-colors"
-                onClick={handleCopy}
+                onClick={() => {
+                  void handleCopy();
+                }}
                 type="button"
               >
                 <span className="flex items-center gap-1.5">

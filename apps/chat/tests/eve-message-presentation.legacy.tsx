@@ -126,7 +126,7 @@ export const LegacyUserMessageReference = ({
             className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"
             data-testid="legacy-message-content"
             onClick={(event) => {
-              const selection = window.getSelection();
+              const selection = globalThis.getSelection();
               if (
                 selection?.toString() &&
                 event.currentTarget.contains(selection.anchorNode)

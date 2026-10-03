@@ -8,7 +8,7 @@ import { isValidatedToolRenderer } from "./define-tool-renderer";
 import type { InstalledTools } from "./installed-tools";
 
 export type InstalledToolName = keyof InstalledTools;
-export type InstalledToolType = `tool-${InstalledToolName & string}`;
+export type InstalledToolType = `tool-${InstalledToolName}`;
 export type InstalledToolUIPart = ToolUIPart<InstalledTools>;
 
 export type InstalledToolPart<T extends InstalledToolType> = Extract<
@@ -39,6 +39,7 @@ export const getEveInstalledToolRenderer = (type: string) => {
     return;
   }
   const renderer = toolRendererRegistry[type];
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveInstalledToolRenderer has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return isValidatedToolRenderer(renderer) ? renderer : undefined;
 };
 

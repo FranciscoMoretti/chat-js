@@ -31,6 +31,7 @@ const mockModelsFetch = () => {
 };
 
 const getFetchCall = (fetchMock: ReturnType<typeof mockModelsFetch>) =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
   fetchMock.mock.calls[0] as unknown as [
     string,
     {

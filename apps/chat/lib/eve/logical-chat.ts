@@ -83,8 +83,8 @@ const latestMessageTime = (
 export class LogicalChat {
   public readonly commands = new LogicalCommands();
   private branches: LogicalBranch[] = [];
-  private agents = new Map<string, NativeChatAgent>();
-  private listeners = new Set<() => void>();
+  private readonly agents = new Map<string, NativeChatAgent>();
+  private readonly listeners = new Set<() => void>();
   private selected: string;
   private cursor: string | null = null;
   private follow = true;

@@ -11,7 +11,7 @@ export type ToolOutput =
 const jsonOutput: z.ZodType<ToolOutput> = z.lazy(() =>
   z.union([
     z.string(),
-    z.number().finite(),
+    z.number(),
     z.boolean(),
     z.null(),
     z.array(jsonOutput),
@@ -32,7 +32,7 @@ export const toolOutputSchema = z.discriminatedUnion("status", [
   }),
 ]);
 const usage = z.object({
-  costUsd: z.number().finite().nonnegative().optional(),
+  costUsd: z.number().nonnegative().optional(),
 });
 export const toolResultSchema = z.intersection(
   toolOutputSchema,

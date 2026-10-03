@@ -111,13 +111,17 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
     }
     const range = document.createRange();
     range.selectNodeContents(node);
-    const selection = window.getSelection();
+    const selection = globalThis.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
-    (node.closest("button") as HTMLButtonElement).click();
+    const button = node.closest("button");
+    if (!button) {
+      throw new Error("Missing message content button");
+    }
+    button.click();
   });
   await expect(editable.getByTestId("inline-editor")).toHaveCount(0);
-  await page.evaluate(() => window.getSelection()?.removeAllRanges());
+  await page.evaluate(() => globalThis.getSelection()?.removeAllRanges());
   await firstUser.locator('button[data-testid="message-content"]').click();
   await expect(editable.getByTestId("inline-editor")).toBeVisible();
   await expect(

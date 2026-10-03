@@ -212,6 +212,8 @@ const AttachmentItem = ({
             </Button>
             <Button
               className="size-7"
+
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Attachment preview owns asynchronous loading and fallback display; preserve its event cancellation and preview lifecycle.
               onClick={async (e) => {
                 e.stopPropagation();
                 /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */

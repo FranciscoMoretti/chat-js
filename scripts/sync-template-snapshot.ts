@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
-const { join } = path;
+const join = (...segments: string[]) => path.join(...segments);
 
 export const SNAPSHOT_CONCURRENCY = 32;
 
@@ -73,7 +73,7 @@ const collectSnapshotWithLimiter = async (
       const absolute = join(dir, entry.name);
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
-        return collectSnapshotWithLimiter(absolute, rel, limiter);
+        return await collectSnapshotWithLimiter(absolute, rel, limiter);
       }
       if (!entry.isFile()) {
         return new Map<string, string>();

@@ -19,7 +19,11 @@ export const EveForkRecovery = ({
       {fork.family.isError && (
         <p className="text-sm" role="alert">
           Versions could not be loaded.{" "}
-          <Button onClick={() => fork.family.refetch()} variant="ghost">
+          <Button
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Fork recovery and family refetch own retry and error state in the fork hook.
+            onClick={() => fork.family.refetch()}
+            variant="ghost"
+          >
             Retry
           </Button>
         </p>
@@ -37,7 +41,12 @@ export const EveForkRecovery = ({
               <p className="whitespace-pre-wrap">
                 {eveMessageTitle(fork.pending.message)}
               </p>
-              <Button disabled={fork.busy} onClick={handleRetry} size="sm">
+              <Button
+                disabled={fork.busy}
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Fork recovery and family refetch own retry and error state in the fork hook.
+                onClick={handleRetry}
+                size="sm"
+              >
                 {"modelIds" in fork.pending
                   ? "Recover comparison"
                   : "Recover version"}

@@ -54,6 +54,7 @@ export const startLocalEveGuestCleanup = () => {
     // without adding another timer or overlapping an in-flight sweep.
     schedulerGlobal.chatjsEveGuestCleanup.run = run;
     schedulerGlobal.chatjsEveGuestCleanup.start();
+    // oxlint-disable-next-line typescript/consistent-return -- #580: startLocalEveGuestCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return schedulerGlobal.chatjsEveGuestCleanup.stop;
   }
   let stopped = true;
@@ -91,10 +92,12 @@ export const startLocalEveGuestCleanup = () => {
     if (stopped || running || timer) {
       return;
     }
+    // oxlint-disable-next-line typescript/no-misused-promises -- #585: The scheduled cleanup tick owns rescheduling and its failure boundary; awaiting it from a timer is not possible.
     timer = setTimeout(tick, CLEANUP_INTERVAL_MS);
     timer.unref();
   };
   schedulerGlobal.chatjsEveGuestCleanup = scheduler;
   scheduler.start();
+  // oxlint-disable-next-line typescript/consistent-return -- #580: startLocalEveGuestCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return scheduler.stop;
 };

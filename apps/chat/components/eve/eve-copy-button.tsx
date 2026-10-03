@@ -42,6 +42,7 @@ export const EveCopyButton = ({
     setFailure("");
     let input = recovery;
     try {
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Preserve the existing lazy initialization or absent-value guard; replacing it with coalescing changes the control-flow form.
       if (!input) {
         input = preparePendingEveCopy(
           sessionStorage,
@@ -53,7 +54,7 @@ export const EveCopyButton = ({
       const result = await requestEveCopy(input);
       // oxlint-disable-next-line eslint/no-use-before-define -- Storage cleanup is kept with the successful copy transition.
       forgetConfirmedRequest(ownerId, input);
-      window.location.assign(`/chat/${result.id}`);
+      globalThis.location.assign(`/chat/${result.id}`);
     } catch (error) {
       // oxlint-disable-next-line eslint/no-use-before-define -- Failure handling is shared by retry and initial copy.
       showFailure(error, input, ownerId);
@@ -116,6 +117,8 @@ export const EveCopyButton = ({
           disabled={session.isPending}
           isPending={busy}
           label={label}
+
+          // oxlint-disable-next-line typescript/no-misused-promises -- #585: Copy recovery owns durable request identity, retry state, and failure feedback.
           onClick={save}
         />
       )}

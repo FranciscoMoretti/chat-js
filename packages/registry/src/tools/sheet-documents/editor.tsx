@@ -39,6 +39,7 @@ const PureSpreadsheetEditor = ({
     }
     const result = parse<string[]>(content, { skipEmptyLines: true });
 
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Pad an independent row so the parsed CSV data remains unchanged.
     const paddedData = result.data.map((row) => {
       const paddedRow = [...row];
       while (paddedRow.length < MIN_COLS) {

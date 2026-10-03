@@ -8,7 +8,7 @@ import type * as React from "react";
 import { isElectronRenderer } from "@/lib/electron-auth";
 
 type InternalLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
-  href: React.ComponentProps<typeof Link>["href"] | string;
+  href: string | Exclude<React.ComponentProps<typeof Link>["href"], string>;
   onNavigate?: () => void;
 };
 
@@ -26,6 +26,7 @@ export const InternalLink = ({
     onNavigate?.();
     const targetHref = event.currentTarget.getAttribute("href");
     if (targetHref) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This wrapper accepts dynamic application URLs beyond Next generated literal routes; narrowing its public href contract requires a navigation API decision.
       router.push(targetHref as Route);
     }
   };
@@ -66,6 +67,8 @@ export const InternalLink = ({
   return (
     <Link
       {...props}
+
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This wrapper accepts dynamic application URLs beyond Next generated literal routes; narrowing its public href contract requires a navigation API decision.
       href={href as Route}
       onAuxClick={handleAuxClick}
       onClick={handleClick}

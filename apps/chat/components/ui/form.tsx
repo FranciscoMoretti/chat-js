@@ -24,6 +24,7 @@ type FormFieldContextValue<
 };
 
 const FormFieldContext = React.createContext<FormFieldContextValue>(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
   {} as FormFieldContextValue
 );
 
@@ -50,6 +51,7 @@ type FormItemContextValue = {
 };
 
 const FormItemContext = React.createContext<FormItemContextValue>(
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
   {} as FormItemContextValue
 );
 
@@ -115,7 +117,7 @@ const FormControl = ({ ...props }: React.ComponentProps<typeof Slot>) => {
   return (
     <Slot
       aria-describedby={
-        error ? `${formDescriptionId} ${formMessageId}` : `${formDescriptionId}`
+        error ? `${formDescriptionId} ${formMessageId}` : formDescriptionId
       }
       aria-invalid={Boolean(error)}
       data-slot="form-control"
@@ -143,7 +145,7 @@ const FormDescription = ({
 
 const FormMessage = ({ className, ...props }: React.ComponentProps<"p">) => {
   const { error, formMessageId } = useFormField();
-  const body = error ? String(error?.message ?? "") : props.children;
+  const body = error ? (error?.message ?? "") : props.children;
 
   if (!body) {
     return null;

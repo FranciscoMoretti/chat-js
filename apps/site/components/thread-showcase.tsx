@@ -92,7 +92,7 @@ export const ThreadInstallCommand = () => {
     try {
       await navigator.clipboard.writeText(INSTALL_COMMAND);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      globalThis.setTimeout(() => setCopied(false), 1600);
     } catch {
       setCopied(false);
     }
@@ -108,7 +108,9 @@ export const ThreadInstallCommand = () => {
         <button
           aria-label="Copy installation command"
           className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center transition-colors"
-          onClick={copyCommand}
+          onClick={() => {
+            void copyCommand();
+          }}
           type="button"
         >
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
@@ -148,7 +150,8 @@ const Conversation = ({
   useEffect(() => {
     const element = transcript.current;
     if (!element) {
-      return;
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
+      return undefined;
     }
     const observer = new ResizeObserver(() => {
       if (followTranscript.current) {
@@ -250,8 +253,8 @@ const Conversation = ({
                 <button
                   className={styles.branchButton}
                   disabled={chat.tree.activeRuns.length >= MAX_ACTIVE_RUNS}
-                  onClick={async () => {
-                    await onBranch(message.id);
+                  onClick={() => {
+                    void onBranch(message.id);
                   }}
                   type="button"
                 >
@@ -296,9 +299,9 @@ const Conversation = ({
 
       <form
         className="border-border border-t p-3"
-        onSubmit={async (event) => {
+        onSubmit={(event) => {
           event.preventDefault();
-          await onSend();
+          void onSend();
         }}
       >
         <p className={styles.composerContext}>
@@ -343,7 +346,9 @@ const Conversation = ({
                 disabled={
                   chat.status !== "submitted" && chat.status !== "streaming"
                 }
-                onClick={() => chat.stop()}
+                onClick={() => {
+                  void chat.stop();
+                }}
                 title="Stop selected response"
                 type="button"
               >
@@ -353,7 +358,9 @@ const Conversation = ({
                 aria-label="Stop all responses"
                 className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center disabled:opacity-30"
                 disabled={chat.tree.activeRuns.length === 0}
-                onClick={() => chat.tree.stopAll()}
+                onClick={() => {
+                  void chat.tree.stopAll();
+                }}
                 title="Stop all responses"
                 type="button"
               >
@@ -402,7 +409,8 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }) => {
   useEffect(() => {
     const viewport = canvas.current;
     if (!viewport) {
-      return;
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
+      return undefined;
     }
     const observer = new ResizeObserver(() =>
       setViewportSize({
@@ -647,7 +655,9 @@ const PlaygroundSession = () => {
         <button
           className={styles.demoButton}
           disabled={chat.tree.activeRuns.length + 3 > MAX_ACTIVE_RUNS}
-          onClick={() => sendDraft("How should we launch this?", 3)}
+          onClick={() => {
+            void sendDraft("How should we launch this?", 3);
+          }}
           type="button"
         >
           <Play fill="currentColor" size={13} /> Run 3 replies

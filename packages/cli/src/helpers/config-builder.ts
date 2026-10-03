@@ -35,6 +35,7 @@ const extractDescriptions = (
     const { shape } = schema;
     for (const [key, propSchema] of Object.entries(shape)) {
       const path = prefix ? `${prefix}.${key}` : key;
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Configuration traversal supports heterogeneous Zod schemas and nested values; a stricter schema visitor would alter generated configuration support.
       extractDescriptions(propSchema as z.ZodType, path, result);
     }
   }
@@ -102,6 +103,7 @@ const formatValue = (value: unknown, indent: number): string => {
       .join(",\n")},\n${spaces}}`;
   }
 
+  // oxlint-disable-next-line typescript/no-base-to-string -- Diagnostic formatting intentionally accepts arbitrary third-party values; changing their representation requires an error-output contract decision.
   return String(value);
 };
 
@@ -125,6 +127,7 @@ const generateConfig = (
         !Array.isArray(value)
       ) {
         const nested = generateConfig(
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Configuration traversal supports heterogeneous Zod schemas and nested values; a stricter schema visitor would alter generated configuration support.
           value as Record<string, unknown>,
           indent + 1,
           path

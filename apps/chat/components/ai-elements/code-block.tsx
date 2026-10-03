@@ -150,6 +150,7 @@ export const CodeBlockCopyButton = ({
   const { code } = useContext(CodeBlockContext);
 
   const copyToClipboard = async () => {
+    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
     if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
       onError?.(new Error("Clipboard API not available"));
       return;
@@ -161,7 +162,7 @@ export const CodeBlockCopyButton = ({
       onCopy?.();
       setTimeout(() => setIsCopied(false), timeout);
     } catch (error) {
-      onError?.(error as Error);
+      onError?.(error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -170,6 +171,8 @@ export const CodeBlockCopyButton = ({
   return (
     <Button
       className={cn("shrink-0", className)}
+
+      // oxlint-disable-next-line typescript/no-misused-promises -- #585: The clipboard handler catches failures and invokes onError; the click does not consume a return value.
       onClick={copyToClipboard}
       size="icon"
       variant="ghost"

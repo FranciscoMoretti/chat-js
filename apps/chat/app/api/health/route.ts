@@ -23,6 +23,7 @@ export const GET = async () => {
           cache: "no-store",
           redirect: "error",
           signal: AbortSignal.timeout(4000),
+          // oxlint-disable-next-line promise/always-return -- This readiness branch validates or throws; Promise.all only needs its completion, not a result value.
         }).then(async (response) => {
           if (!response.ok) {
             throw new Error("Eve unavailable");

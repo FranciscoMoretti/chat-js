@@ -18,6 +18,7 @@ test("video tool streaming, loading, player, and error states", async () => {
     "* { animation:none !important;transition:none !important; }";
   document.head.append(style);
   const root = createRoot(container);
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() =>
     root.render(
       <>
@@ -78,6 +79,7 @@ test("video tool streaming, loading, player, and error states", async () => {
     expect(container.textContent).toContain("Provider failed");
     await takeSnapshot("video-tool-states");
   } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
     await act(() => root.unmount());
     container.remove();
     style.remove();

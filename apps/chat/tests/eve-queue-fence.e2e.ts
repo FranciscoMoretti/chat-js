@@ -48,7 +48,9 @@ function envelope(body: unknown) {
   };
 }
 async function job(body: unknown) {
-  const [row] = await query`select id::text from graphile_worker.add_job(
+  const [row] = await query<
+    { id: string }[]
+  >`select id::text from graphile_worker.add_job(
     ${task}, ${query.json(envelope(body))}::json, run_at := now() + interval '1 day')`;
   ids.push(row.id);
   return row.id;
@@ -78,8 +80,9 @@ test("workers can release locks after fencing but cannot replace or move a prote
   await query`update graphile_worker._private_jobs set locked_at = now(), locked_by = 'fixture-only' where id::text = ${id}`;
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
   await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null, payload = payload where id::text = ${id}`;
-  const [stored] =
-    await query`select payload::text as payload from graphile_worker._private_jobs where id::text = ${id}`;
+  const [stored] = await query<
+    { payload: string }[]
+  >`select payload::text as payload from graphile_worker._private_jobs where id::text = ${id}`;
   // JSONB equality would discard this duplicate field and mistake changed bytes
   // for unchanged bookkeeping. The protected envelope must remain untouched.
   const duplicateField = `${stored.payload.trimEnd().slice(0, -1)},"attempt":1}`;

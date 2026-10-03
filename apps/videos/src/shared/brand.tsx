@@ -1,12 +1,12 @@
 import { loadFont } from "@remotion/fonts";
 import { Img, staticFile } from "remotion";
 
-loadFont({
+void loadFont({
   family: "Geist",
   url: staticFile("brand/geist-latin.woff2"),
   weight: "100 900",
 });
-loadFont({
+void loadFont({
   family: "Geist Mono",
   url: staticFile("brand/geist-mono-latin.woff2"),
   weight: "100 900",

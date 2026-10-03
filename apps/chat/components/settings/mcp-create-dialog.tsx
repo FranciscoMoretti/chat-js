@@ -58,6 +58,7 @@ const mcpConnectorFormSchema = z.object({
   url: z
     .string()
     .min(1, { message: "URL is required" })
+    // oxlint-disable-next-line typescript/no-deprecated -- Keep the current validation order and error messages; replacing this chained API would change the form validation contract.
     .url({ message: "Please enter a valid URL" }),
 });
 
@@ -111,7 +112,7 @@ export const McpCreateDialog = ({
         toast.error(err.message || "Failed to add connector");
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey });
+        void queryClient.invalidateQueries({ queryKey });
       },
     })
   );
@@ -168,6 +169,7 @@ export const McpCreateDialog = ({
         <Form {...form}>
           <form
             className="space-y-4"
+            // oxlint-disable-next-line typescript/no-misused-promises -- React Hook Form owns submission validation and completion; the DOM event dispatcher does not consume the returned promise.
             onSubmit={form.handleSubmit(handleSubmit)}
           >
             <FormField

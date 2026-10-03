@@ -19,7 +19,7 @@ export const Favicon = ({
     {...props}
     alt={`Favicon for ${url}`}
     onError={(e) => {
-      const target = e.target as HTMLImageElement;
+      const target = e.currentTarget;
       target.style.display = "none";
       target.nextElementSibling?.classList.remove("hidden");
     }}

@@ -102,6 +102,7 @@ export const searchToolItems = [
   dependencies: [
     "ai",
     "zod",
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- These dependency names come from the registry package catalog; the indexed access preserves their pinned versions.
     `${dependency}@${registryPackage.devDependencies[dependency as "@tavily/core" | "@mendable/firecrawl-js"]}`,
   ],
   description: `Use ${id} for chat and deep research`,

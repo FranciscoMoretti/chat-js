@@ -43,7 +43,7 @@ export const getStorageEnvironmentRequirements = (
       variable.readBy === "files-sdk" &&
       !(
         optionName &&
-        variable.secret === false &&
+        !variable.secret &&
         adapterOptions[optionName] !== undefined
       )
     );

@@ -5,15 +5,19 @@ import path from "node:path";
 
 // Exercise the actual workflow function with fake external services. No credentials,
 // npm publication, GitHub writes, or changes to the checkout are involved.
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- This fixture reads the repository-owned GitHub workflow shape and exercises the extracted publish function.
 const workflow = Bun.YAML.parse(
   await Bun.file(
     new URL("../.github/workflows/release.yml", import.meta.url)
   ).text()
-);
+) as { jobs: { release: { steps: { name?: string; run: string }[] } } };
 const step = workflow.jobs.release.steps.find(
   (candidate: { name?: string }) =>
     candidate.name === "Publish first-time packages"
 );
+if (!step) {
+  throw new Error("Missing publish fallback workflow step");
+}
 const fallback = step.run.slice(step.run.indexOf("publish_if_missing()"));
 
 const services = `

@@ -142,6 +142,7 @@ const serializeError = (
     const e = err as { message: unknown; name?: unknown };
     return {
       message: String(e.message),
+      // oxlint-disable-next-line typescript/no-base-to-string -- Diagnostic formatting intentionally accepts arbitrary third-party values; changing their representation requires an error-output contract decision.
       name: e.name ? String(e.name) : undefined,
     };
   }
@@ -152,7 +153,8 @@ const serializeError = (
 const resolveError = async (error: unknown): Promise<unknown> => {
   if (error && typeof error === "object" && "then" in error) {
     try {
-      return await (error as Promise<unknown>);
+      // oxlint-disable-next-line promise/no-promise-in-callback -- Assimilate an arbitrary SDK thenable so a rejected error promise is caught and inspected below.
+      return await Promise.resolve(error);
     } catch (resolvedError) {
       return resolvedError;
     }
@@ -161,6 +163,7 @@ const resolveError = async (error: unknown): Promise<unknown> => {
 };
 
 const getErrorDebugInfo = (err: unknown) => ({
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Error inspection accepts arbitrary SDK failure objects; retain optional diagnostic extraction without narrowing the supported error shapes.
   errorConstructor: (err as { constructor?: { name?: string } })?.constructor
     ?.name,
   errorKeys: err && typeof err === "object" ? Object.keys(err) : [],

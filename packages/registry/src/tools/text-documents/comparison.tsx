@@ -50,6 +50,7 @@ export const EveDocumentComparison = ({
       {previous.isError && (
         <div className="space-y-2" role="alert">
           <p>The previous version could not be loaded.</p>
+          {/* oxlint-disable-next-line typescript/no-misused-promises -- TanStack Query tracks refetch state and errors; this UI event deliberately initiates refresh without awaiting a DOM return value. */}
           <Button onClick={() => previous.refetch()} variant="outline">
             Retry comparison
           </Button>

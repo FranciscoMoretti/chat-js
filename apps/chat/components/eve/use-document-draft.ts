@@ -177,7 +177,9 @@ export const useDocumentDraft = ({
     if (!(enabled && ready && draft) || failure || isPending) {
       return;
     }
+    // oxlint-disable-next-line typescript/no-misused-promises -- #585: Autosave owns pending state and retryable failures; this timer only schedules the existing save lifecycle.
     const timer = setTimeout(() => save(), 2000);
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return () => clearTimeout(timer);
   }, [enabled, ready, draft, failure, isPending, save]);
 

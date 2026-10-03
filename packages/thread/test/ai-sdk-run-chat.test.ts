@@ -43,7 +43,8 @@ const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
     throw new Error("Timed out waiting for request");
   }
   await Bun.sleep(1);
-  return waitFor(predicate, attemptsRemaining - 1);
+  // oxlint-disable-next-line typescript/no-confusing-void-expression -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
+  return await waitFor(predicate, attemptsRemaining - 1);
 };
 
 describe("ThreadRunChat", () => {

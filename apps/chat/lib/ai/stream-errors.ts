@@ -85,7 +85,8 @@ export const getStreamErrorToastContent = (
   const rawResolved =
     (rawMessage.length <= 1 || genericErrorMessages.has(rawMessage)) && rawCause
       ? rawCause
-      : rawMessage || rawCause || FALLBACK_STREAM_ERROR_MESSAGE;
+      : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
+        rawMessage || rawCause || FALLBACK_STREAM_ERROR_MESSAGE;
 
   const message = mapKnownStreamErrorMessage(rawResolved);
 

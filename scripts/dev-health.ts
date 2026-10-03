@@ -9,8 +9,13 @@ export const checkHealth = async (origin: string) => {
       if (!response.ok) {
         throw new Error(`Readiness returned HTTP ${response.status}`);
       }
-      const body = await response.json();
-      if (body.status !== "ready") {
+      const body: unknown = await response.json();
+      if (
+        typeof body !== "object" ||
+        body === null ||
+        !("status" in body) ||
+        body.status !== "ready"
+      ) {
         throw new Error("Invalid readiness response");
       }
     })(),

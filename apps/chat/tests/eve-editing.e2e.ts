@@ -132,6 +132,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     await page.getByRole("button", { exact: true, name: "Retry" }).click();
     const regeneration = await regenerated;
     expect(regeneration.ok()).toBe(true);
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the actual regeneration request payload; this assertion verifies the selected model survives editing.
     expect(regeneration.request().postDataJSON().modelId).toBe(sourceModelId);
     await expect(page).not.toHaveURL(
       new RegExp(`/chat/${accepted?.id}$`, "u"),
@@ -248,7 +249,11 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
               const response = await page.request
                 .delete(url, { headers, timeout: 30_000 })
                 .catch(() => null);
-              return response?.status() === 200 ? response.json() : null;
+              if (response?.status() !== 200) {
+                return null;
+              }
+              const responseBody: unknown = await response.json();
+              return responseBody;
             },
             { intervals: [1000, 2000, 5000], timeout: 90_000 }
           )

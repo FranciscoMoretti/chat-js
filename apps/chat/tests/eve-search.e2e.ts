@@ -29,7 +29,8 @@ test("native search retains sources, progress and billing across reload", async 
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message:

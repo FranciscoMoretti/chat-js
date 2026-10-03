@@ -38,7 +38,7 @@ const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   if (!ownerId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-  return next({ ctx: { eveOwnerId: ownerId } });
+  return await next({ ctx: { eveOwnerId: ownerId } });
 });
 
 export const eveRouter = createTRPCRouter({
@@ -172,7 +172,7 @@ export const eveRouter = createTRPCRouter({
         cursor: z
           .object({
             id: z.uuid(),
-            rank: z.number().finite().nonnegative(),
+            rank: z.number().nonnegative(),
             updatedAt: z.iso.datetime(),
           })
           .nullish(),

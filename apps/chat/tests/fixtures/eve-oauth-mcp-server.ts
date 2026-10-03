@@ -13,7 +13,7 @@ const registrationInput = z.object({ redirect_uris: z.array(z.url()).min(1) });
 const rpcInput = z.object({
   id: z.union([z.string(), z.number()]).optional(),
   method: z.string(),
-  params: z.object({ name: z.string().optional() }).passthrough().optional(),
+  params: z.object({ name: z.string().optional() }).loose().optional(),
 });
 
 const eveOAuthMcpTokenResultMarker = "EVE_OAUTH_MCP_TOKEN";
@@ -334,6 +334,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     }
   }
 
+  // oxlint-disable-next-line typescript/no-misused-promises -- The async fixture route handles failures internally and writes an HTTP response; Node intentionally ignores the handler return value.
   const server = createServer(route);
 
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));

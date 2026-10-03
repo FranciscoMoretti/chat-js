@@ -24,7 +24,9 @@ export const run = async (
         child.kill(value);
       }
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ESRCH") {
+      if (
+        !(error instanceof Error && "code" in error && error.code === "ESRCH")
+      ) {
         reject(error);
       }
     }

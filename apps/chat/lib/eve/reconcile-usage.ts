@@ -122,10 +122,7 @@ export const reconcileEveUsage = async (
       unresolved = true;
     }
   }
-  if (
-    (await reconcileEveSubagentUsage(ownerId, sessionId, replayUnpriced)) ===
-    false
-  ) {
+  if (!(await reconcileEveSubagentUsage(ownerId, sessionId, replayUnpriced))) {
     unresolved = true;
   }
   if (latestActivity) {
@@ -230,6 +227,7 @@ export const reconcileEveOwnerUsage = async (
 ) => {
   await recoverEveCreations(ownerId);
   if (resolveWorkflowWorld(env) !== "vercel") {
+    // oxlint-disable-next-line typescript/no-confusing-void-expression -- #582: Returning the awaited operation preserves early termination and propagation of its asynchronous failure.
     return await reconcileAllOwnerUsage(ownerId);
   }
   // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:

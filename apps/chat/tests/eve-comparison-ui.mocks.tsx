@@ -9,6 +9,7 @@ import { firstModel, secondModel } from "./eve-comparison-data.fixture";
 
 const fixtureModels = models
   .filter((model) => model.id === firstModel || model.id === secondModel)
+  // oxlint-disable-next-line oxc/no-map-spread -- #541: Override fixture model IDs without mutating the shared model catalog.
   .map((model) => ({
     ...model,
     apiModelId: model.id,
@@ -40,9 +41,9 @@ export const InternalLink = ({
   href: string;
 }) => <a href={href}>{children}</a>;
 export const useRouter = () => ({
-  push: (href: string) => window.location.assign(href),
+  push: (href: string) => globalThis.location.assign(href),
 });
-export const usePathname = () => window.location.pathname;
+export const usePathname = () => globalThis.location.pathname;
 export const EveConversation = ({
   header,
   sessionId,

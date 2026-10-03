@@ -127,6 +127,7 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       },
       { sandboxNames: [childName], snapshotNames: [childStateSnapshotName] },
     ]);
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Read the native snapshot manifest unchanged so the test verifies its persisted name and shape.
     expect(JSON.parse(await readFile(manifest, "utf-8")).snapshotName).toBe(
       snapshotName
     );
@@ -208,6 +209,7 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     if (typeof checkpoint?.snapshotName !== "string") {
       throw new TypeError("EVE did not return a fork snapshot identity.");
     }
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Read the native snapshot manifest unchanged so the test verifies its persisted name and shape.
     const manifest = JSON.parse(
       await readFile(
         path.join(

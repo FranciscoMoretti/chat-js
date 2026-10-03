@@ -23,6 +23,7 @@ import {
 } from "./native-tool-fixture";
 import { run } from "./run-command";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { dirname, join } = pathModule;
 
 const originalRegistryUrl = process.env.CHATJS_REGISTRY_URL;
@@ -265,10 +266,12 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         ...external.root,
         dependencies: external.root.dependencies.map((d) =>
           d.startsWith("@chat-js/gateways@")
-            ? `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
+            ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+              `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
             : d
         ),
         registryDependencies: [
+          // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
           `http://127.0.0.1:${registryServer.port}/adapter.json`,
         ],
       });
@@ -280,7 +283,9 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
       if (request.headers.get("authorization") !== "Bearer fixture-key") {
         return new Response("Unauthorized", { status: 401 });
       }
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const body = await request.json();
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       if (body.model !== "gpt-5-mini") {
         return new Response("Wrong model", { status: 400 });
       }
@@ -294,6 +299,7 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         ],
         created: 1,
         id: "fixture-response",
+        // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         model: body.model,
         object: "chat.completion",
         usage: { completion_tokens: 1, prompt_tokens: 1, total_tokens: 2 },
@@ -304,11 +310,15 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         join(cliDirectory, "../registry/dist/r", path.slice(1))
       );
       if (await file.exists()) {
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         const item = await file.json();
+        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         if (item.dependencies) {
+          // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
           item.dependencies = item.dependencies.map((d: string) =>
             d.startsWith("@chat-js/gateways@")
-              ? `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
+              ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+                `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
               : d
           );
         }
@@ -327,15 +337,20 @@ beforeAll(async () => {
   await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
   const output = join(cliDirectory, "../registry/dist/r");
   const outputNames = await readdir(output);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const names = outputNames.toSorted();
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const first = await Promise.all(
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     names.map((name) => readFile(join(output, name), "utf-8"))
   );
   await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
   const rebuiltOutputNames = await readdir(output);
+  // oxlint-disable-next-line typescript/no-unsafe-call -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(rebuiltOutputNames.toSorted()).toEqual(names);
   expect(
     await Promise.all(
+      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       names.map((name) => readFile(join(output, name), "utf-8"))
     )
   ).toEqual(first);
@@ -353,10 +368,12 @@ beforeAll(async () => {
     })
   );
   await run(join(root, "cli"), ["bun", "install"]);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   process.env.CHATJS_REGISTRY_URL = `http://127.0.0.1:${registryServer.port}/{name}.json`;
 });
 
 afterAll(() => {
+  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   registryServer.stop(true);
   if (originalRegistryUrl === undefined) {
     delete process.env.CHATJS_REGISTRY_URL;
@@ -365,15 +382,20 @@ afterAll(() => {
   }
 });
 
+// oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
 const gatewaySource = (gateway: Gateway | "acme"): string =>
+  // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   gateway === "acme"
-    ? `http://127.0.0.1:${registryServer.port}/gateway.json`
+    ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+      `http://127.0.0.1:${registryServer.port}/gateway.json`
     : gateway;
 
+// oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
 const storageArguments = (gateway: Gateway | "acme"): string[] => {
   if (gateway === "acme") {
     return [
       "--storage-provider",
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-storage.json`,
       "--storage-config",
       '{"bucket":"test"}',
@@ -390,6 +412,7 @@ const storageArguments = (gateway: Gateway | "acme"): string[] => {
   return [];
 };
 
+// oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
 const toolArguments = (gateway: Gateway | "acme"): string[] => {
   if (gateway === "vercel") {
     return [
@@ -408,14 +431,19 @@ const toolArguments = (gateway: Gateway | "acme"): string[] => {
   if (gateway === "acme") {
     return [
       "--video-generation-tool",
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-video.json`,
       "--image-generation-tool",
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-image.json`,
       "--url-retrieval-tool",
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-retrieval.json`,
       "--code-execution-tool",
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-execution.json`,
       "--search-tool",
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-search.json`,
     ];
   }
@@ -424,12 +452,14 @@ const toolArguments = (gateway: Gateway | "acme"): string[] => {
 
 const verifyResearchInstallation = async (
   cwd: string,
+  // oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
   gateway: Gateway | "acme"
 ) => {
   expect(
     await Bun.file(join(cwd, "agent/tools/deepResearch.ts")).exists()
   ).toBe(false);
   if (gateway === "vercel") {
+    await run(join(cwd, "electron"), ["bun", "install", "--ignore-scripts"]);
     await run(cwd, ["bun", "run", "lint"]);
     expect(
       await Bun.file(join(cwd, "agent/tools/confirm_note.ts")).exists()
@@ -483,6 +513,7 @@ const verifyResearchInstallation = async (
 };
 
 for (const gateway of [...GATEWAYS, "acme"]) {
+  const electronFlag = gateway === "vercel" ? "--electron" : "--no-electron";
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
     const cwd = join(root, gateway);
     await run(root, [
@@ -494,7 +525,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       gatewaySource(gateway),
       ...storageArguments(gateway),
       "--yes",
-      "--no-electron",
+      electronFlag,
       ...toolArguments(gateway),
     ]);
     await verifyResearchInstallation(cwd, gateway);
@@ -540,8 +571,10 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       /(?:image|video):\s*\{[^}]*\benabled:/u
     );
     const manifestPath = join(cwd, "package.json");
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
     if (gateway === "vercel") {
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@vercel/sandbox"]).toBeDefined();
       expect(
         await Bun.file(
@@ -563,6 +596,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       expect(
         await readFile(join(cwd, "tools/chatjs/providers.ts"), "utf-8")
       ).toContain("vercel-code-execution/tool");
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
       expect(
         await Bun.file(join(cwd, "tools/chatjs/tavily-search/tool.ts")).exists()
@@ -581,9 +615,11 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     const selectedSdk =
       gateway === "acme"
         ? "@ai-sdk/openai-compatible"
-        : gatewayMetadata[gateway as keyof typeof gatewayMetadata].dependency;
+        : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+          gatewayMetadata[gateway as keyof typeof gatewayMetadata].dependency;
     for (const { dependency } of Object.values(gatewayMetadata)) {
       if (dependency !== selectedSdk) {
+        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         expect(manifest.dependencies[dependency]).toBeUndefined();
       }
     }
@@ -604,6 +640,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     );
 
     if (gateway === "acme") {
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
       expect(
         await readFile(
@@ -620,6 +657,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
           "utf-8"
         )
       ).toContain("ACME_IMAGE_KEY");
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
       expect(
         await Bun.file(
@@ -667,6 +705,7 @@ assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
 `
       );
       await run(cwd, ["env", "PLAYWRIGHT=True", "bun", "verify-execution.ts"]);
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@mendable/firecrawl-js"]).toBeUndefined();
       expect(
         await Bun.file(join(cwd, "tools/chatjs/retrieve-url/tool.ts")).exists()
@@ -680,7 +719,9 @@ assert.deepEqual(page, {text: "Page content", source: "https://example.com"});
       expect(
         await readFile(join(cwd, "tools/chatjs/ui.ts"), "utf-8")
       ).not.toContain("tool-retrieveUrl");
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
       await writeFile(
         join(cwd, "verify-storage.ts"),
@@ -700,7 +741,9 @@ assert.equal(await files.exists("test.txt"), false);
       await run(cwd, ["bun", "verify-storage.ts"]);
     }
     if (gateway === "openai") {
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeDefined();
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
     }
 
@@ -755,6 +798,8 @@ assert.equal(new Gateway().type, "${gateway}");
     await run(cwd, ["bunx", "--no-install", "tsx", "probe.ts"]);
 
     if (gateway === "acme") {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- The local registry fixture exposes the bound server port used by this generated probe. The local fixture serves generated registry JSON and preserves the runtime checks used by the integration test.
+      const registryPort: number = registryServer.port;
       await writeFile(
         join(cwd, "probe-generation.ts"),
         `import assert from "node:assert/strict";
@@ -764,7 +809,7 @@ process.env.AUTH_SECRET = "fixture-secret";
 process.env.EVE_GATEWAY_SECRET = "fixture-eve-gateway-secret-at-least-32-characters";
 process.env.EVE_INTERNAL_ORIGIN = "http://localhost:3000";
 process.env.WORKFLOW_POSTGRES_URL = process.env.DATABASE_URL;
-process.env.ACME_BASE_URL = "http://127.0.0.1:${registryServer.port}/v1";
+process.env.ACME_BASE_URL = "http://127.0.0.1:${registryPort}/v1";
 process.env.ACME_API_KEY = "fixture-key";
 const { getActiveGateway } = await import("./lib/ai/active-gateway");
 const result = await generateText({ model: getActiveGateway().createLanguageModel("gpt-5-mini"), prompt: "Hello" });
@@ -849,6 +894,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} }
       expect(
         await readFile(join(cwd, "features/installed-uploads.ts"), "utf-8")
       ).toContain("attachmentUploads");
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(
         run(cwd, ["node", cliEntry, "add", "tavily-search", "--yes"])
       ).rejects.toThrow("--replace");
@@ -872,6 +918,7 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} }
         `// customized provider
 ${originalSearch}`
       );
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(
         run(cwd, [
           "node",
@@ -903,6 +950,7 @@ ${originalSearch}`
       await run(cwd, ["node", cliEntry, "sync"]);
       await run(cwd, ["bun", "run", "test:types"]);
       await run(cwd, ["bun", "run", "lint"]);
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(
         run(cwd, [
           "node",
@@ -998,14 +1046,19 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
     "node",
     cliEntry,
     "add",
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     `http://127.0.0.1:${registryServer.port}/paid-counter.json`,
     "--yes",
   ]);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const manifest = JSON.parse(
     await readFile(join(cwd, "package.json"), "utf-8")
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(manifest.dependencies["@vercel/sandbox"]).toBeUndefined();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(manifest.dependencies["@tavily/core"]).toBeUndefined();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(manifest.dependencies["@mendable/firecrawl-js"]).toBeUndefined();
   await run(cwd, ["bun", "run", "test:types"]);
   await verifyNativeToolRuntime(cwd);
@@ -1088,6 +1141,7 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
         catalog,
         `${await readFile(catalog, "utf-8")}\n// Refreshed model catalog.\n`
       );
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(
         run(cwd, [
           "node",

@@ -173,6 +173,7 @@ export const NewEveConversation = ({
   const composer = (
     <>
       <EveComposer
+        // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the new-conversation typing workflow; changing initial page focus requires accessibility and UX review.
         autoFocus
         status={busy ? "submitted" : "ready"}
         disabled={busy}
@@ -194,6 +195,8 @@ export const NewEveConversation = ({
             setDraft(value);
           }
         }}
+
+        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Submission owns creation admission and retained recovery state; the composer delegates that lifecycle.
         onSubmit={submit}
         onToolChange={setSelectedTool}
         readOnly={retained}

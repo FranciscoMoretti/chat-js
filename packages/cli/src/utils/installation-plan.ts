@@ -58,11 +58,13 @@ export const planInstallation = async (
     const pending = items.get(source) ?? readItem(source, cwd);
     items.set(source, pending);
     const item = await pending;
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     validateRequestedKind(source, kind, item.meta?.chatjs?.kind);
     if (sources.has(source)) {
       return;
     }
     sources.add(source);
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     switch (item.meta?.chatjs?.kind) {
       case "feature": {
         const definition = featureDefinitionSchema.parse(item.meta.chatjs);
@@ -140,6 +142,7 @@ export const planInstallation = async (
     const next = [...expected.values()].find(
       (item) =>
         item.id !== previous.id &&
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
         ((item.slot && item.slot === previous.slot) ||
           (item.documentKind && item.documentKind === previous.documentKind))
     );

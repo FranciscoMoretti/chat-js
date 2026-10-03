@@ -76,7 +76,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   private async initializeOAuth() {
     if (this.initializationPromise) {
-      return this.initializationPromise;
+      await this.initializationPromise;
+      return;
     }
 
     if (this.initialized) {
@@ -174,6 +175,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     if (authData?.clientInfo) {
       // Security: if redirect URI changed and no tokens yet, invalidate
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Stored OAuth client and token JSON follows the MCP SDK contract; stricter database decoding requires a migration policy for existing records.
       const clientInfo = authData.clientInfo as OAuthClientInformationFull;
       if (
         !authData.tokens &&
@@ -194,6 +196,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         this.currentOAuthState = "";
         this.config.state = undefined;
         await this.initializeOAuth();
+        // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
         return;
       }
       return clientInfo;
@@ -228,6 +231,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   public async tokens(): Promise<OAuthTokens | undefined> {
     const authData = await this.getAuthData();
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Stored OAuth client and token JSON follows the MCP SDK contract; stricter database decoding requires a migration policy for existing records.
     return authData?.tokens as OAuthTokens | undefined;
   }
 

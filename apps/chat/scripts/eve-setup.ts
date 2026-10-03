@@ -97,6 +97,7 @@ const run = async () => {
   }
 };
 
+// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
 void (async () => {
   try {
     await run();

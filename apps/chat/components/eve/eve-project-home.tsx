@@ -100,7 +100,11 @@ export const EveProjectHome = ({
             {project.isError && (
               <div role="alert">
                 <p>Could not refresh this project.</p>
-                <Button onClick={() => project.refetch()} variant="outline">
+                <Button
+                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns project refresh error and pending state.
+                  onClick={() => project.refetch()}
+                  variant="outline"
+                >
                   Retry project
                 </Button>
               </div>

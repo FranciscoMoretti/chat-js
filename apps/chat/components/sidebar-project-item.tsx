@@ -61,7 +61,10 @@ export const SidebarProjectItem = ({
           prefetch={false}
         >
           <ProjectIcon
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted project icon/color strings follow the project editor schema; introducing branded database values requires a storage contract migration.
             color={project.iconColor as ProjectColorName}
+
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted project icon/color strings follow the project editor schema; introducing branded database values requires a storage contract migration.
             icon={project.icon as ProjectIconName}
             size={16}
           />
@@ -88,7 +91,10 @@ export const SidebarProjectItem = ({
       </DropdownMenu>
 
       <ProjectDetailsDialog
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted project icon/color strings follow the project editor schema; introducing branded database values requires a storage contract migration.
         initialColor={project.iconColor as ProjectColorName}
+
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted project icon/color strings follow the project editor schema; introducing branded database values requires a storage contract migration.
         initialIcon={project.icon as ProjectIconName}
         initialName={project.name}
         isLoading={isPending}

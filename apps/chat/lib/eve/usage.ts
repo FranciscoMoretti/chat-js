@@ -36,10 +36,11 @@ export const ingestEveUsage = async (
         sessionId: billingSession,
         turnId: attribution?.turnId ?? event.data.turnId,
       });
-      if (!call.failed && priced === false) {
+      if (!call.failed && !priced) {
         completedCallsPriced = false;
       }
     }
+    // oxlint-disable-next-line typescript/consistent-return -- #580: ingestEveUsage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return completedCallsPriced;
   }
   if (
@@ -51,6 +52,7 @@ export const ingestEveUsage = async (
       return;
     }
     const recordedCost = result.success ? result.data.usage.costUsd : undefined;
+    // oxlint-disable-next-line typescript/consistent-return -- #580: ingestEveUsage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return await recordEveUsage({
       costUsd: event.data.status === "rejected" ? 0 : recordedCost,
       eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
@@ -79,5 +81,6 @@ export const ingestEveUsage = async (
   });
   // A failed step has no completed-call usage receipt. Keep its evidence without
   // reporting a missing completed charge (the same policy used for failed hook calls).
+  // oxlint-disable-next-line typescript/consistent-return -- #580: ingestEveUsage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return event.type === "step.failed" ? undefined : priced;
 };

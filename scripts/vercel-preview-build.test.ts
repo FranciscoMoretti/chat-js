@@ -92,6 +92,7 @@ it.each(["production", "development"])(
 
 it("rejects invalid configuration before opening a connection or invoking a command", async () => {
   const test = harness();
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(
     runMaintainerBuild(
       { ...preview, CHATJS_PREVIEW_PARENT_HOST: "EP-CHILD.EU.NEON.TECH" },
@@ -115,10 +116,13 @@ it.each([
     // Also fail cleanup to prove it cannot hide an earlier failure.
     const test = harness(step, step === "db:migrate");
     const failure = await runMaintainerBuild(preview, test.operations).catch(
-      (error: Error) => error
+      (error: unknown) => error
     );
     expect(failure).toBeInstanceOf(Error);
-    expect(failure?.message).toBe(
+    if (!(failure instanceof Error)) {
+      throw new Error("Expected a build failure");
+    }
+    expect(failure.message).toBe(
       `Maintainer build failed during ${phase} (53000).`
     );
     expect(failure?.cause).toBeUndefined();
@@ -151,6 +155,7 @@ it.each([
   [preview.DATABASE_URL, ""],
 ])("only includes safe error codes: %s", async (code, suffix) => {
   const test = harness("SELECT 1", false, code);
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(runMaintainerBuild(preview, test.operations)).rejects.toThrow(
     `Maintainer build failed during connection${suffix}.`
   );

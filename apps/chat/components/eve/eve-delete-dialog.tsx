@@ -79,8 +79,11 @@ export const EveDeleteDialog = ({
     <>
       {/* oxlint-disable-next-line eslint/no-use-before-define -- The controller stays above the reusable presentational view. */}
       <EveDeleteDialogView
+        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Deletion requests own confirmation phases and errors; the view delegates that asynchronous state machine.
         onCheck={() => request("GET")}
         onClose={onClose}
+
+        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Deletion requests own confirmation phases and errors; the view delegates that asynchronous state machine.
         onDelete={() => request("DELETE")}
         phase={phase}
         title={conversation.title}

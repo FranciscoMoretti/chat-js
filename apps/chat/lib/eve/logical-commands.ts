@@ -12,8 +12,8 @@ const idle: CommandState = {
 
 /** Command locks belong to the execution session, never the selected view. */
 export class LogicalCommands {
-  private states = new Map<string, CommandState>();
-  private listeners = new Set<() => void>();
+  private readonly states = new Map<string, CommandState>();
+  private readonly listeners = new Set<() => void>();
   public get = (id: string) => this.states.get(id) ?? idle;
   public subscribe = (listener: () => void) => {
     this.listeners.add(listener);

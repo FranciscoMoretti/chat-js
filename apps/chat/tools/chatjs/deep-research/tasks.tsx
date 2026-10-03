@@ -54,6 +54,7 @@ export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
     {updates.map((update, index) => (
       <StepWrapper
         isLast={index === updates.length - 1}
+        // oxlint-disable-next-line react/no-array-index-key -- #551: A tool emits multiple progress updates; preserve positional identity until updates carry their own IDs.
         key={`${update.toolCallId}-${index}`}
         update={update}
       >

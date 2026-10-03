@@ -47,6 +47,7 @@ beforeEach(() => {
 
 it("retains paid usage when structured output cannot be read", async () => {
   mocks.generate.mockImplementation(({ onStepFinish }) => {
+    // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This generate-followup-suggestions fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     onStepFinish(evidence);
     return {
       get output() {
@@ -66,6 +67,7 @@ it("retains paid usage when structured output cannot be read", async () => {
 
 it("returns valid suggestions and records the configured auxiliary model", async () => {
   mocks.generate.mockImplementation(({ onStepFinish }) => {
+    // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This generate-followup-suggestions fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     onStepFinish(evidence);
     return { output: { suggestions } };
   });

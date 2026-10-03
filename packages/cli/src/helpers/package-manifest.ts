@@ -67,7 +67,7 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
     "tsx lib/db/migrate.ts --deployment && eve build && next build";
   scripts.prod =
     "tsx scripts/check-env.ts && tsx lib/db/migrate.ts && eve build && next build && next start";
-  scripts.lint = "ultracite check";
+  scripts.lint = "next typegen . && ultracite check";
   scripts.format = "oxfmt --write .";
   scripts["check-env"] = "tsx scripts/check-env.ts";
   scripts["db:connect"] = "tsx scripts/check-db.ts";

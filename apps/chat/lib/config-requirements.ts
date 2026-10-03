@@ -42,6 +42,7 @@ export const formatRequirementDescription = (
   if (requirement.description && keys && !groupsAlreadyListed) {
     return `${requirement.description} (${keys})`;
   }
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   return requirement.description || keys;
 };
 

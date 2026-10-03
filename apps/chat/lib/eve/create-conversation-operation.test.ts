@@ -54,11 +54,13 @@ beforeEach(() => {
   mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
   mocks.reserve.mockImplementation(
     async (_owner, operationId, _title, dispatch) => ({
+      // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       sessionId: await dispatch(operationId),
     })
   );
   mocks.request.mockImplementation((_owner, path) =>
     Promise.resolve(
+      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       path.startsWith("/eve/chat/v1/operation/")
         ? Response.json({ code: "eve_operation_not_found" }, { status: 404 })
         : Response.json({ sessionId: "child" })
@@ -70,15 +72,18 @@ it("does not allocate a native child before the initial checkpoint is ready", as
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(409);
   expect(await response.json()).not.toHaveProperty("creationRejected");
+  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.request.mock.calls.map((call) => call[1])).toEqual([
     `/eve/chat/v1/operation/${input.operationId}`,
   ]);
   mocks.readiness.mockResolvedValue(undefined);
   const retry = await createEveConversationOperation("owner", input);
   expect(await retry.json()).toEqual({ sessionId: "child" });
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
     input.operationId
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
     '"beforeTurnId":"turn_0"'
   );
@@ -116,7 +121,9 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
     "turn_0",
     checkpointId
   );
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const body = JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(body.fork).toEqual({
     beforeTurnId: "turn_0",
     checkpointId,
@@ -131,8 +138,10 @@ it("persists fork intent without forwarding ChatJS metadata to Eve", async () =>
   } satisfies Parameters<typeof createEveConversationOperation>[1];
   const response = await createEveConversationOperation("owner", regeneration);
   expect(response.status).toBe(200);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].forkKind).toBe("regenerate");
   expect(
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body)
   ).not.toHaveProperty("forkKind");
 });
@@ -160,6 +169,7 @@ it("dispatches imported forks by message identity without requiring an execution
   );
   expect(resolvedResult4.status).toBe(200);
   expect(mocks.readiness).not.toHaveBeenCalled();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-argument -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body).fork).toEqual({
     beforeMessageId: "seed_message_2",
     sessionId: "source",
@@ -183,12 +193,14 @@ it("forwards selected tools on creation and includes them in the reservation ide
     selectedTool: "webSearch",
   });
   expect(mocks.request.mock.calls.at(-1)?.[4]).toBe("webSearch");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const originalHash = mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash;
   expect(originalHash).toBeTypeOf("string");
   await createEveConversationOperation("owner", {
     ...input,
     selectedTool: "deepResearch",
   });
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash).not.toBe(
     originalHash
   );
@@ -197,6 +209,7 @@ it("forwards selected tools on creation and includes them in the reservation ide
 it("persists a compact fallback title before native creation", async () => {
   await createEveConversationOperation("owner", input);
 
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialTitle).toBe(
     "Fallback: compare"
   );
@@ -207,6 +220,7 @@ it("journals the complete creation command before dispatch so another tab can re
     typeof createEveConversationOperation
   >[1];
   await createEveConversationOperation("owner", command);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialRequest).toEqual(command);
 });
 
@@ -231,6 +245,7 @@ it("preserves creation identity when billing recovery is busy", async () => {
   const response = await createEveConversationOperation("owner", input);
   expect(response.status).toBe(503);
   expect(response.headers.get("Retry-After")).toBe("2");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const body = await response.json();
   expect(body).toMatchObject({
     code: "usage_reconciliation_busy",

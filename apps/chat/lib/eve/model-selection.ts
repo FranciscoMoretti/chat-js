@@ -40,10 +40,11 @@ export const getEveModelDefinition = (
   return {
     ...model,
     // The active gateway catalog above validates this ID at the runtime boundary.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The selected installed gateway determines valid model IDs at runtime; a generic gateway redesign is needed to encode that relationship.
     apiModelId: model.id as Parameters<
       InstalledGateway["createLanguageModel"]
     >[0],
-    reasoning: Boolean(model.reasoning) && id.endsWith("-reasoning"),
+    reasoning: model.reasoning && id.endsWith("-reasoning"),
   };
 };
 

@@ -48,7 +48,7 @@ export const withRegistryTransport = <T>(
   };
   const result = (async (): Promise<T> => {
     await pending;
-    return run();
+    return await run();
   })();
   pending = (async (): Promise<void> => {
     try {

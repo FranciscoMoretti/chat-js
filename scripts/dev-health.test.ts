@@ -3,9 +3,10 @@ import { afterEach, expect, test } from "bun:test";
 import { checkHealth } from "./dev-health";
 
 const servers: ReturnType<typeof Bun.serve>[] = [];
-afterEach(() => {
+afterEach(async () => {
   for (const server of servers.splice(0)) {
-    server.stop(true);
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish stopping each test server before the next test starts.
+    await server.stop(true);
   }
 });
 const fixture = (
@@ -26,12 +27,14 @@ const fixture = (
 };
 
 test("requires the app health endpoint and a working unauthenticated auth route", async () => {
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(
     checkHealth(fixture(() => Response.json(null)))
   ).resolves.toBeUndefined();
 });
 
 test("rejects healthy infrastructure when dynamic auth routing returns a 404", async () => {
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(
     checkHealth(fixture(() => new Response("Not found", { status: 404 })))
   ).rejects.toThrow("Authentication route returned HTTP 404");
@@ -43,12 +46,13 @@ test("rejects HTML, redirects and unexpected sessions instead of reporting ready
     () => Response.redirect("http://127.0.0.1/login"),
     () => Response.json({ user: { id: "unexpected" } }),
   ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    // oxlint-disable-next-line eslint/no-await-in-loop, typescript/await-thenable, typescript/no-confusing-void-expression -- Await each Bun promise matcher before reusing the fixture; matcher declarations expose a void return.
     await expect(checkHealth(fixture(auth))).rejects.toThrow();
   }
 });
 
 test("still rejects unavailable infrastructure even when authentication routing works", async () => {
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(
     checkHealth(
       fixture(

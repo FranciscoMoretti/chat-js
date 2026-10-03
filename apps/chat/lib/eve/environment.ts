@@ -5,7 +5,8 @@ type Environment = Record<string, string | undefined>;
 export const resolveWorkflowDatabaseUrl = (source: Environment) =>
   resolveWorkflowWorld(source) === "vercel"
     ? undefined
-    : source.WORKFLOW_POSTGRES_URL || source.DATABASE_URL;
+    : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
+      source.WORKFLOW_POSTGRES_URL || source.DATABASE_URL;
 
 /** Strip app/test URL paths only after checking the scheme and credentials.
  * Preserve invalid input so runtime and CLI schema validation can reject it. */
@@ -28,10 +29,13 @@ const applicationOrigin = (value: string | undefined) => {
 export const resolveEveEnvironment = (source: Environment) => ({
   EVE_GATEWAY_SECRET: source.EVE_GATEWAY_SECRET,
   EVE_INTERNAL_ORIGIN:
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
     source.EVE_INTERNAL_ORIGIN ||
     (source.VERCEL_URL
       ? `https://${source.VERCEL_URL}`
-      : applicationOrigin(source.APP_URL || source.PLAYWRIGHT_TEST_BASE_URL) ||
+      : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
+        applicationOrigin(source.APP_URL || source.PLAYWRIGHT_TEST_BASE_URL) ||
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
         `http://localhost:${source.PORT || "3000"}`),
   WORKFLOW_POSTGRES_URL: resolveWorkflowDatabaseUrl(source),
 });

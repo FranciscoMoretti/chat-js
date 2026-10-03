@@ -434,8 +434,9 @@ test("separate idle captures retain manual edits even when transcript head is un
     child: "late",
     owner,
   });
-  const rows =
-    await sql`select documents from branch where id in ('early','late') order by id`;
+  const rows = await sql<
+    { documents: Record<string, string> }[]
+  >`select documents from branch where id in ('early','late') order by id`;
   expect(rows.map((row) => row.documents)).toEqual([
     { doc: "revision-1" },
     { doc: "revision-2" },

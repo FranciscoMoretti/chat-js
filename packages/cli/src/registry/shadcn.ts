@@ -33,15 +33,18 @@ export const itemAddress = (
   return source;
 };
 export const readItem = async (source: string, cwd: string) => {
-  const [item] = await withRegistryTransport(async () =>
-    getRegistryItems([source], { config: await registryConfig(cwd) })
+  const [item] = await withRegistryTransport(
+    async () =>
+      await getRegistryItems([source], { config: await registryConfig(cwd) })
   );
   return registryItemSchema.parse(item);
 };
 export const listTools = async (cwd: string) => {
-  const catalog = await withRegistryTransport(async () =>
-    getRegistry("@chatjs", { config: await registryConfig(cwd) })
+  const catalog = await withRegistryTransport(
+    async () =>
+      await getRegistry("@chatjs", { config: await registryConfig(cwd) })
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
   return catalog.items.filter((item) => item.meta?.chatjs?.kind === "tool");
 };
 export const installItems = async (
@@ -49,12 +52,13 @@ export const installItems = async (
   cwd: string,
   overwrite = false
 ): Promise<void> => {
-  await withRegistryTransport(async () =>
-    addRegistryItems(sources, {
-      config: await registryConfig(cwd),
-      cwd,
-      overwrite,
-      silent: true,
-    })
+  await withRegistryTransport(
+    async () =>
+      await addRegistryItems(sources, {
+        config: await registryConfig(cwd),
+        cwd,
+        overwrite,
+        silent: true,
+      })
   );
 };

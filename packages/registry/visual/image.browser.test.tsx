@@ -28,6 +28,7 @@ test("image tool loading, success, and unavailable states", async () => {
   ctx.fillStyle = "#2563eb";
   ctx.fillRect(0, 0, 300, 256);
   const imageUrl = canvas.toDataURL();
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() =>
     root.render(
       <>
@@ -77,6 +78,7 @@ test("image tool loading, success, and unavailable states", async () => {
     if (!button) {
       throw new Error("Image button missing");
     }
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
     await act(() => button.focus());
     const actions = container.querySelector<HTMLElement>(
       String.raw`.group-focus-within\:opacity-100`
@@ -87,6 +89,7 @@ test("image tool loading, success, and unavailable states", async () => {
     await expect.poll(() => getComputedStyle(actions).opacity).toBe("1");
     await takeSnapshot("image-tool-states");
   } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
     await act(() => root.unmount());
     container.remove();
     style.remove();

@@ -49,6 +49,7 @@ it("sends protocol requests directly to the named chat worker", async () => {
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
   vi.stubGlobal("fetch", fetcher);
   await eveRequest("owner", "/eve/chat/v1/operation/recovery?kind=seed");
+  // oxlint-disable-next-line typescript/no-base-to-string -- #581: This controlled fixture models the mocked boundary explicitly; changing its widening or coercion requires preserving the exercised failure scenario.
   expect(String(fetcher.mock.calls[0]?.[0])).toBe(
     "https://preview.example.com/eve/chat/v1/operation/recovery?kind=seed"
   );
@@ -65,6 +66,7 @@ it("routes the real SDK directly to the named chat worker", async () => {
     );
   vi.stubGlobal("fetch", fetcher);
   await new Client(getEveConnectionOptions("owner")).health();
+  // oxlint-disable-next-line typescript/no-base-to-string -- #581: This controlled fixture models the mocked boundary explicitly; changing its widening or coercion requires preserving the exercised failure scenario.
   expect(String(fetcher.mock.calls[0]?.[0])).toBe(
     "https://preview.example.com/eve/chat/v1/health"
   );

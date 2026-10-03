@@ -383,6 +383,7 @@ const writeConfiguration = async (
   const configSpinner = spinner("Writing configuration...").start();
   try {
     const packageJsonPath = path.join(project.targetDir, "package.json");
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Commander supplies an open option object that is immediately checked by the create-options schema.
     const packageJson = JSON.parse(
       await readFile(packageJsonPath, "utf-8")
     ) as {
@@ -634,6 +635,7 @@ export const create = new Command()
   .action(async (directory, opts) => {
     try {
       await createProject(
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Commander supplies an open option object that is immediately checked by the create-options schema.
         createOptionsSchema.parse({ target: directory, ...opts })
       );
     } catch (error) {

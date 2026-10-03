@@ -123,6 +123,7 @@ const deferred = <T,>() => {
 };
 
 const flushEffects = async () => {
+  // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
   await act(async () => {
     await Promise.resolve();
   });
@@ -139,14 +140,18 @@ describe("useEveFork", () => {
   it("opens an inline edit with the original response model and tool", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage(), undefined, {
           events: [],
@@ -162,6 +167,7 @@ describe("useEveFork", () => {
       );
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -181,9 +187,12 @@ describe("useEveFork", () => {
     );
     vi.stubGlobal("sessionStorage", pendingStorage);
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
@@ -195,6 +204,7 @@ describe("useEveFork", () => {
       });
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -217,14 +227,18 @@ describe("useEveFork", () => {
       new CreationRejectedError("Source is no longer available.")
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).retry();
       });
@@ -234,6 +248,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -244,17 +259,22 @@ describe("useEveFork", () => {
       new CreationRejectedError("Source is no longer available.")
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
@@ -263,6 +283,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).locked).toBe(false);
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -270,18 +291,24 @@ describe("useEveFork", () => {
   it("does not replace an open inline edit with another message action", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => required(fork).setDraft("Keep this edit draft."));
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin({
           ...userMessage(),
@@ -293,6 +320,7 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).draft).toBe("Keep this edit draft.");
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -313,17 +341,22 @@ describe("useEveFork", () => {
         };
       }
     );
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
@@ -346,6 +379,7 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -356,20 +390,26 @@ describe("useEveFork", () => {
       new Error("Creation is unconfirmed.")
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(userMessage());
       });
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).submit();
       });
@@ -377,6 +417,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeDefined();
       expect(mocks.resolveCreationRequest).toHaveBeenCalledTimes(1);
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -395,15 +436,19 @@ describe("useEveFork", () => {
       }
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
       let request: Promise<void> | undefined;
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => {
         request = required(fork).compare(
           "Compare this request",
@@ -425,6 +470,7 @@ describe("useEveFork", () => {
       ).toContain(operation?.operationId);
 
       delayed.resolve("11111111-1111-4111-8111-111111111115");
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await request;
       });
@@ -435,6 +481,7 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -446,14 +493,18 @@ describe("useEveFork", () => {
       new Error("Comparison is unconfirmed.")
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).compare(
           "Keep the operation",
@@ -468,12 +519,14 @@ describe("useEveFork", () => {
         id: "11111111-1111-4111-8111-111111111116",
         sessionId: "session",
       });
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).retry();
       });
 
       expect(mocks.resolveCreationRequest.mock.calls[1]?.[2]).toEqual(original);
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -488,12 +541,16 @@ describe("useEveFork", () => {
     };
     mocks.restoreAttachments.mockResolvedValueOnce([attachment]);
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(
           userMessage([
@@ -514,6 +571,7 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).locked).toBe(false);
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });
@@ -525,14 +583,18 @@ describe("useEveFork", () => {
       new Error("Unable to restore attachment.")
     );
     let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     let renderer: ReturnType<typeof create> | undefined;
 
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       renderer = create(<ForkProbe onValue={(value) => (fork = value)} />);
     });
     await flushEffects();
 
     try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin(
           userMessage([
@@ -554,6 +616,7 @@ describe("useEveFork", () => {
         messageId: "seed_message_0",
       });
     } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       act(() => renderer?.unmount());
     }
   });

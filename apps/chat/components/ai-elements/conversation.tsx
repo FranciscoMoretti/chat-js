@@ -78,7 +78,7 @@ export const ConversationScrollButton = ({
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   const handleScrollToBottom = useCallback(() => {
-    scrollToBottom();
+    void scrollToBottom();
   }, [scrollToBottom]);
 
   return (

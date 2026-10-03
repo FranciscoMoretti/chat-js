@@ -64,10 +64,12 @@ test("saved-code results display interactive and PNG charts with text fallback",
     "",
   ];
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <div className="grid grid-cols-2 gap-6">
           {charts.map((chart, index) => (
+            // oxlint-disable-next-line react/no-array-index-key -- #551: These fixed visual fixture cases are rendered once and never reordered.
             <section key={index}>
               <EveDocumentRunResult
                 part={{
@@ -102,6 +104,7 @@ test("saved-code results display interactive and PNG charts with text fallback",
     await image.decode();
     await takeSnapshot("saved-code-charts");
   } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   }
@@ -114,6 +117,7 @@ test("failed research keeps validated progress alongside its error", async () =>
   document.body.append(container);
   const root = createRoot(container);
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <EveToolResult
@@ -143,6 +147,7 @@ test("failed research keeps validated progress alongside its error", async () =>
     expect(container.textContent).not.toContain("Untrusted update");
     await takeSnapshot("failed-research-progress");
   } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   }
@@ -159,6 +164,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
     revisionId: "663ccf42-10c9-453f-b9da-ebf684a6da97",
   };
   try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <div className="grid gap-6">
@@ -205,6 +211,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
     );
     await takeSnapshot("installed-saved-code-transcript");
   } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   }

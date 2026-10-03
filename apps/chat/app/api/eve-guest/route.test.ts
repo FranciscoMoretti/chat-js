@@ -55,14 +55,19 @@ test("creates a native session without application state, returning only its sco
   expect(response.status).toBe(200);
   expect(response.headers.get("set-cookie")).toBeNull();
   expect(response.headers.get("cache-control")).toBe("no-store");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const body = await response.json();
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(readGuestCredential(body.credential)).toMatchObject({
     modelId: "guest-model",
+    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     sessionId: body.sessionId,
   });
   const [[, init]] = mocks.fetch.mock.calls;
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const creation = readGuestCredential(init.headers.authorization.slice(7));
   expect(creation?.sessionId).toBeUndefined();
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(creation?.ownerId).toBe(readGuestCredential(body.credential)?.ownerId);
 });
 
@@ -94,6 +99,7 @@ test("protected custom-domain bootstrap uses this deployment rather than a separ
   expect(String(url)).toBe(
     "https://deployment.vercel.app/eve/guest/v1/session"
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(init.headers["x-vercel-protection-bypass"]).toBe(
     "deployment-bypass-test"
   );
@@ -103,6 +109,7 @@ test("non-Vercel guest bootstrap stays on the application origin without leaking
   await POST(request({ modelId: "guest-model" }));
   const [[url, init]] = mocks.fetch.mock.calls;
   expect(String(url)).toBe("https://chat.example/eve/guest/v1/session");
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(init.headers["x-vercel-protection-bypass"]).toBeUndefined();
 });
 

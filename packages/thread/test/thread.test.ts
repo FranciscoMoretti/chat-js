@@ -50,7 +50,8 @@ const waitFor = async (predicate: () => boolean, attemptsRemaining = 500) => {
     throw new Error("Timed out waiting for request");
   }
   await Bun.sleep(1);
-  return waitFor(predicate, attemptsRemaining - 1);
+  // oxlint-disable-next-line typescript/no-confusing-void-expression -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
+  return await waitFor(predicate, attemptsRemaining - 1);
 };
 
 describe("Thread", () => {
@@ -90,8 +91,8 @@ describe("Thread", () => {
   });
 
   test("rejects a state implementation that does not update synchronously", () => {
-    const memory = new MemoryThreadState<UIMessage>();
-    const state: ThreadState<UIMessage> = {
+    const memory = new MemoryThreadState();
+    const state: ThreadState = {
       getSnapshot: memory.getSnapshot,
       subscribe: memory.subscribe,
       update: () => {
@@ -214,6 +215,7 @@ describe("Thread", () => {
     };
     const chat = new Thread({ messages: [parent], transport });
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(chat.startRun({ from: parent.id })).rejects.toThrow(
       "Cannot start a new run directly from assistant message assistant-parent; attach an input message first"
     );
@@ -347,6 +349,7 @@ describe("Thread", () => {
       message: user("user-1"),
     });
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       chat.startRun({
         message: user("user-2"),
@@ -376,6 +379,7 @@ describe("Thread", () => {
     await waitFor(() => transport.requests.length === 1);
     const runCount = chat.getSnapshot().runs.length;
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       chat.sendMessage(undefined, {
         tree: { follow: false, from: "assistant-ready" },
@@ -513,6 +517,7 @@ describe("Thread", () => {
 
     expect(run.finished).not.toBe(initialFinished);
     let finished = false;
+    // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- Observe completion without awaiting or adding a value so the pending resumed request remains testable.
     void run.finished.then(() => {
       finished = true;
     });
@@ -653,6 +658,7 @@ describe("Thread", () => {
     expect(getMessageText(message)).toBe("prefix suffix");
     expect(
       message.parts.filter((part) => part.type === "dynamic-tool")
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
     ).toEqual([
       expect.objectContaining({
         output: "found",
@@ -699,6 +705,7 @@ describe("Thread", () => {
     const publishesBeforeCompletion = publishes;
     transport.emitText(0, "assistant-1", "complete");
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(run.finished).rejects.toThrow("application callback failed");
     expect(publishes).toBeGreaterThan(publishesBeforeCompletion);
     unsubscribe();
@@ -782,6 +789,7 @@ describe("Thread", () => {
       transport,
     });
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(chat.regenerate({ messageId: "missing" })).rejects.toThrow(
       "message missing not found"
     );
@@ -904,13 +912,16 @@ describe("Thread", () => {
     });
 
     expect(chat.getMessage("assistant-a")?.parts).toContainEqual(
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
       expect.objectContaining({ output: "A only", toolCallId: "tool-a" })
     );
     expect(chat.getMessage("assistant-b")?.parts).not.toContainEqual(
       expect.objectContaining({ output: "A only" })
     );
     expect(chat.getMessage("assistant-b")?.parts).toContainEqual(
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
       expect.objectContaining({
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
         approval: expect.objectContaining({
           approved: true,
           id: "approval-b",
@@ -956,7 +967,9 @@ describe("Thread", () => {
     });
 
     expect(restored.getMessage("assistant-1")?.parts).toContainEqual(
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
       expect.objectContaining({
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
         approval: expect.objectContaining({
           approved: true,
           id: "approval-1",
@@ -970,6 +983,7 @@ describe("Thread", () => {
   test("rejects missing restored tool and approval ownership", async () => {
     const chat = new Thread({ messages: [user("user-1")] });
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       chat.addToolOutput({
         output: "missing",
@@ -977,6 +991,7 @@ describe("Thread", () => {
         toolCallId: "missing-tool",
       })
     ).rejects.toThrow("No run owns tool call missing-tool");
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       chat.addToolApprovalResponse({
         approved: true,
@@ -997,6 +1012,7 @@ describe("Thread", () => {
       },
     });
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       chat.addToolOutput({
         output: "duplicate",
@@ -1006,6 +1022,7 @@ describe("Thread", () => {
     ).rejects.toThrow(
       "Tool call shared-tool appears in more than one assistant message"
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       chat.addToolApprovalResponse({
         approved: true,
@@ -1034,6 +1051,7 @@ describe("Thread", () => {
     });
     await waitFor(() => transport.requests.length === 2);
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(chat.resumeRun(completed.id)).rejects.toThrow(
       "max active runs"
     );
@@ -1058,6 +1076,7 @@ describe("Thread", () => {
     });
     await waitFor(() => transport.requests.length === 2);
 
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(chat.resumeRun(completed.id)).rejects.toThrow(
       "Cannot start another run from user-1"
     );

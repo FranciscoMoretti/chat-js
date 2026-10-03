@@ -33,17 +33,20 @@ const resolveFork = async (
   }
   const source = await getEveConversation(ownerId, input.conversationId);
   if (!source?.sessionId || source.state !== "bound") {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return Response.json(
       { creationRejected: true, error: "Source conversation not found." },
       { status: 404 }
     );
   }
   if (input.beforeMessageId) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return {
       beforeMessageId: input.beforeMessageId,
       sessionId: source.sessionId,
     };
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     beforeTurnId: input.beforeTurnId,
     sessionId: source.sessionId,

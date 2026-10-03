@@ -44,6 +44,7 @@ export const PROJECT_COLORS = [
 export type ProjectColorName = (typeof PROJECT_COLORS)[number]["name"];
 
 // For zod enum validation
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The nonempty project color catalog is mapped into a tuple needed by schema construction; Array.map loses that tuple guarantee.
 export const PROJECT_COLOR_NAMES = PROJECT_COLORS.map(
   (c) => c.name
 ) as unknown as readonly [ProjectColorName, ...ProjectColorName[]];

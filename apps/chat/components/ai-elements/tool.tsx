@@ -134,6 +134,7 @@ export const ToolOutput = ({
     return null;
   }
 
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Tool output accepts caller-provided renderable content; replacing the rendering assertion requires defining the supported output-value contract.
   let Output = <div>{output as ReactNode}</div>;
 
   if (

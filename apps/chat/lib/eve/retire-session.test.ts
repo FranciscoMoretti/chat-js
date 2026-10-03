@@ -87,6 +87,7 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
     events: [{ type: "step.completed" }, { type: "session.completed" }],
   });
   mocks.usage.mockImplementation((_owner, _session, event) =>
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This retire-session fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     Promise.resolve(event.type === "step.completed" ? false : undefined)
   );
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(

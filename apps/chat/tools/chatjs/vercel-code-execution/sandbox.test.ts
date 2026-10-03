@@ -27,6 +27,7 @@ const jwt = (payload: unknown) =>
 
 beforeEach(() => {
   vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   for (const key of Object.keys(envMock) as (keyof typeof envMock)[]) {
     envMock[key] = undefined;
   }
@@ -208,6 +209,7 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
   const pending = cleanupSandbox({ delete: remove, stop }, log, "fixture");
   let settled = false;
+  // oxlint-disable-next-line promise/prefer-await-to-then -- Observe cleanup settlement while keeping the stop confirmation pending for assertions.
   const observed = pending.finally(() => {
     settled = true;
   });
@@ -215,6 +217,7 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   await Promise.resolve();
   expect(settled).toBe(false);
   expect(stop).toHaveBeenCalledWith({
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     signal: expect.any(AbortSignal),
   });
   gate.reject(new Error("stop unavailable"));
@@ -223,6 +226,7 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
   expect(log.warn).toHaveBeenCalledOnce();
   expect(remove).toHaveBeenCalledWith({
     deleteOrphanSnapshots: true,
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     signal: expect.any(AbortSignal),
   });
 });
@@ -265,6 +269,7 @@ describe("codeSandboxCleanupCapability", () => {
     });
     const stop = vi.fn(() => Promise.resolve());
     const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     const sandbox = Object.create(Sandbox.prototype, {
       delete: { value: remove },
       name: { value: "owned" },
@@ -306,6 +311,7 @@ describe("codeSandboxCleanupCapability", () => {
     });
     const stop = vi.fn(() => Promise.resolve());
     const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     const sandbox = Object.create(Sandbox.prototype, {
       delete: { value: remove },
       name: { value: identity.name },

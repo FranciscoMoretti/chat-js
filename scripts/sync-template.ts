@@ -12,7 +12,9 @@ import {
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 import { collectSnapshot } from "./sync-template-snapshot";
 
-const { join, relative, resolve } = path;
+const join = (...segments: string[]) => path.join(...segments);
+const relative = (from: string, to: string) => path.relative(from, to);
+const resolve = (...segments: string[]) => path.resolve(...segments);
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
 const rootPackageJsonPath = join(rootDir, "package.json");
@@ -105,10 +107,12 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
   });
 
   // Stamp the template with the monorepo-controlled Bun version at build time.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- These repository-owned package manifests use the packageManager string contract; retain all unrelated JSON fields.
   const rootPackageJson = JSON.parse(
     await readFile(rootPackageJsonPath, "utf-8")
   ) as { packageManager?: string };
   const packageJsonPath = join(destination, "package.json");
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The generated template manifest retains arbitrary package fields while stamping the known packageManager field.
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
     packageManager?: string;
   };
@@ -119,10 +123,13 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
 const applyElectronTemplateTransforms = async (
   destination: string
 ): Promise<void> => {
-  // The tsconfig.json transform rewrites the monorepo-specific @/ alias to a single-app path.
+  // Rewrite the monorepo alias and ambient declaration paths for the single-app layout.
   const tsconfigPath = join(destination, "tsconfig.json");
   let tsconfig = await readFile(tsconfigPath, "utf-8");
   tsconfig = tsconfig.replace(/"\.\.\/chat\/\*"/u, '"../*"');
+  tsconfig = tsconfig
+    .replace('"../chat/next-env.d.ts"', '"../next-env.d.ts"')
+    .replace('"../chat/electron.d.ts"', '"../electron.d.ts"');
   await writeFile(tsconfigPath, tsconfig);
 
   // The package.json transform replaces the hardcoded package name and repository.

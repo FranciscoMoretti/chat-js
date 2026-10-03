@@ -80,6 +80,7 @@ export class RecursiveCharacterTextSplitter
     }
     const finalChunks: string[] = [];
     const separator = this.findBestSeparator(text);
+    // oxlint-disable-next-line typescript/no-misused-spread -- #586: This transformation intentionally iterates Unicode code points; changing to graphemes or UTF-16 units would alter its existing text contract.
     const splits = separator ? text.split(separator) : [...text];
     if (separator === " ") {
       const optimized = this.handleSpaceSeparatorOptimization(text, splits);

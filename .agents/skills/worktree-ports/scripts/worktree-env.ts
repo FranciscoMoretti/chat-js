@@ -60,7 +60,7 @@ const child = (() => {
       stdout: "inherit",
     });
   } catch (error) {
-    fail(
+    return fail(
       `Failed to start "${args[0]}": ${error instanceof Error ? error.message : String(error)}`
     );
   }

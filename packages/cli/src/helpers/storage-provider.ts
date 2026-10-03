@@ -37,8 +37,8 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
 `
   );
   const examplePath = path.join(destination, ".env.example");
-  let env = await readFile(examplePath, "utf-8").catch((error) => {
-    if (error.code === "ENOENT") {
+  let env = await readFile(examplePath, "utf-8").catch((error: unknown) => {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return "";
     }
     throw error;

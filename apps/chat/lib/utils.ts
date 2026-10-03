@@ -16,7 +16,9 @@ export const fetchWithErrorHandlers = async (
     const response = await fetch(input, init);
 
     if (!response.ok) {
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: The fetch wrapper consumes the application error-code envelope; introducing runtime envelope validation requires choosing fallback error behavior for malformed responses.
       const { code, cause } = await response.json();
+      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-type-assertion -- #594: The fetch wrapper consumes the application error-code envelope; introducing runtime envelope validation requires choosing fallback error behavior for malformed responses. #599: The fetch wrapper consumes the application error-code envelope; introducing runtime envelope validation requires choosing fallback error behavior for malformed responses.
       throw new ChatSDKError(code as ErrorCode, cause);
     }
 
@@ -33,6 +35,7 @@ export const fetchWithErrorHandlers = async (
 export const generateUUID = (): string => uuidv7();
 
 export const getLanguageFromFileName = (fileName: string): string => {
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const extension = fileName.split(".").pop()?.toLowerCase() || "";
 
   const extensionToLanguage: Record<string, string> = {

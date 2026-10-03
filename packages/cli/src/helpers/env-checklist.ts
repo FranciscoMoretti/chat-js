@@ -54,15 +54,13 @@ const requirementToEntries = (
 
   return requirement.options.map((group) => {
     const description = group
-      .map((v) => {
-        const varName = String(v);
-        return envDescriptions.get(varName) ?? varName;
-      })
+      .map((v) => envDescriptions.get(v) ?? v)
       .join(", ");
 
     return {
       description:
         description ||
+        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
         requirement.description ||
         "Required environment variable",
       oneOfGroup,
@@ -136,6 +134,7 @@ const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
 const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const authItems: EnvVarEntry[] = [];
 
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Keys come from the closed auth-provider requirements catalog; this cast retains that mapped key union.
   for (const provider of Object.keys(authEnvRequirements) as AuthProvider[]) {
     if (input.auth[provider]) {
       authItems.push(...requirementToEntries(authEnvRequirements[provider]));

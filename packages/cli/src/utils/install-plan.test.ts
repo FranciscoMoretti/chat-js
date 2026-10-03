@@ -68,6 +68,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await installPlan(root, first, {}, async () => {
       await syncTools(root, { expected: first.expected });
     });
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       planInstallation(root, { features: [], tools: [source("second")] })
     ).rejects.toThrow("--replace");
@@ -81,6 +82,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
       old,
       "// my implementation\nexport const executeCode = {};\n"
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       installPlan(root, plan, {}, async () => {
         await syncTools(root);
@@ -102,6 +104,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
       await readFile(path.join(root, "tools/chatjs/extra/tool.ts"), "utf-8")
     ).toContain("extra");
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);
@@ -135,6 +138,7 @@ test("unmodified replacement works without overwrite and failed registration res
     const oldRegistrations = await Promise.all(
       toolRegistrationTargets.map((target) => registrationContents(target))
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       installPlan(
         root,
@@ -170,6 +174,7 @@ test("unmodified replacement works without overwrite and failed registration res
     const tools = await syncTools(root, { checkOnly: true });
     expect(tools.map((tool) => tool.id)).toEqual(["second"]);
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);
@@ -193,13 +198,16 @@ test("native shadcn source can be composed without overwriting or blessing user 
       await syncTools(root);
     });
     expect(await readFile(file, "utf-8")).toContain("native user edit");
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const receipt = JSON.parse(
       await readFile(path.join(root, ".chatjs/installed-source.json"), "utf-8")
     );
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
     const tools = await syncTools(root, { checkOnly: true });
     expect(tools.map((tool) => tool.id)).toEqual(["first"]);
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);
@@ -281,6 +289,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
     );
     expect(await readFile(receiptFile, "utf-8")).toBe(baseline);
     let registered = false;
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       installPlan(
         root,
@@ -295,6 +304,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
     expect(registered).toBe(false);
     expect(await readFile(file, "utf-8")).toContain("user storage notes");
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);
@@ -365,6 +375,7 @@ test("provider installation refuses inferred native dependency destinations befo
       { replace: true }
     );
     let registered = false;
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       installPlan(root, plan, {}, () => {
         registered = true;
@@ -385,10 +396,12 @@ test("provider installation refuses inferred native dependency destinations befo
       "utf-8"
     );
     expect(receipt).not.toContain("components/ui/fixture.tsx");
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       installPlan(root, native, { overwrite: true }, () => Promise.resolve())
     ).rejects.toThrow("No source was installed");
   } finally {
+    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);

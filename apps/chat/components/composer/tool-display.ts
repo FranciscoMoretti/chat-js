@@ -8,5 +8,6 @@ export const getToolDisplay = (tool: UiToolName) => {
   if (!installedToolNames.has(tool)) {
     return;
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getToolDisplay has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return composerTools[tool] ?? { icon: Wrench, name: tool, shortName: tool };
 };

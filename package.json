@@ -4,7 +4,8 @@
   "license": "Apache-2.0",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "prototypes/*"
   ],
   "scripts": {
     "worktree-env": "bun .agents/skills/worktree-ports/scripts/worktree-env.ts",
@@ -19,7 +20,7 @@
     "fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
     "test:e2e": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test:e2e --filter=@chatjs/chat",
     "format": "oxfmt --write .",
-    "lint": "ultracite check . && bun run --filter=@chatjs/docs docs:doctor && bun demo:check",
+    "lint": "bun lint:prepare && ultracite check . && bun run --filter=@chatjs/docs docs:doctor && bun demo:check",
     "clean:modules": "find . -name node_modules -type d -prune -exec rm -rf {} +",
     "test": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts ./scripts/dev-health.test.ts ./scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test",
     "test:unit": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts ./scripts/dev-health.test.ts ./scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts && turbo run test:unit",
@@ -44,7 +45,8 @@
     "build:electron": "turbo run electron:build --filter=@chat-js/electron",
     "dist:electron": "turbo run electron:make --filter=@chat-js/electron",
     "test:visual:site": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env site -- bun apps/site/tests/thread-playground.visual.ts",
-    "lint:fix": "oxlint --fix .",
+    "lint:fix": "bun lint:prepare && oxlint --fix .",
+    "lint:prepare": "turbo run build --filter=@chat-js/gateways --filter=@chat-js/thread && bun run --cwd apps/chat next typegen . && bun run --cwd apps/site next typegen .",
     "dev:eve": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env eve -- bun --filter @chatjs/chat eve:start",
     "eve:test-package": "bun scripts/test-eve-package.ts",
     "build:eve": "dotenv -e .env.worktree.local -e .env.local -- bun --filter @chatjs/chat eve:build",
@@ -59,11 +61,14 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
     "@changesets/cli": "^2.29.8",
+    "@types/bun": "^1.3.12",
+    "@types/node": "22.8.6",
     "@uiverify/vitest": "^1.2.1",
     "@vitest/browser-playwright": "^4.1.11",
     "dotenv-cli": "^8.0.0",
     "oxfmt": "0.67.0",
     "oxlint": "1.82.0",
+    "oxlint-tsgolint": "7.0.2001",
     "playwright": "^1.59.1",
     "turbo": "2.10.12",
     "uiverify": "^1.4.2",

@@ -191,9 +191,11 @@ export const EveRuntimeProvider = ({
   const [registry] = useState(() => new Map<string, Runtime>());
   const open = useCallback(
     async (request: OpenRequest, navigate = true) => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 fetch API supported by the repository lockfile and fresh scaffolds; migrating to query() requires a coordinated dependency upgrade.
       const identity = await queryClient.fetchQuery(
         trpc.eve.get.queryOptions({ id: request.id })
       );
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 fetch API supported by the repository lockfile and fresh scaffolds; migrating to query() requires a coordinated dependency upgrade.
       const family = await queryClient.fetchQuery({
         ...trpc.eve.branches.queryOptions({ id: identity.chatId }),
         staleTime: 0,
@@ -215,10 +217,13 @@ export const EveRuntimeProvider = ({
       };
       registry.set(identity.chatId, runtime);
       setRuntimes([...registry.values()]);
-      if (navigate && window.location.pathname !== `/chat/${identity.chatId}`) {
-        window.history.pushState(null, "", `/chat/${identity.chatId}`);
-      } else if (window.location.pathname !== `/chat/${identity.chatId}`) {
-        window.history.replaceState(null, "", `/chat/${identity.chatId}`);
+      if (
+        navigate &&
+        globalThis.location.pathname !== `/chat/${identity.chatId}`
+      ) {
+        globalThis.history.pushState(null, "", `/chat/${identity.chatId}`);
+      } else if (globalThis.location.pathname !== `/chat/${identity.chatId}`) {
+        globalThis.history.replaceState(null, "", `/chat/${identity.chatId}`);
       }
     },
     [queryClient, trpc, registry]
@@ -261,9 +266,10 @@ export const EveRuntimeRoute = ({
   const open = useEveRuntime();
   const [failure, setFailure] = useState<string>();
   useEffect(() => {
-    // oxlint-disable-next-line promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- An effect schedules asynchronous route registration.
-    void open({ chatId, id, ownerId, sessionId, title }, false).catch((error) =>
-      setFailure(String(error))
+    // oxlint-disable-next-line promise/prefer-await-to-then -- An effect schedules asynchronous route registration.
+    void open({ chatId, id, ownerId, sessionId, title }, false).catch(
+      // oxlint-disable-next-line promise/prefer-await-to-callbacks -- The effect schedules route registration and reports failures asynchronously.
+      (error: unknown) => setFailure(String(error))
     );
   }, [open, id, sessionId, ownerId, chatId, title]);
   return failure ? (

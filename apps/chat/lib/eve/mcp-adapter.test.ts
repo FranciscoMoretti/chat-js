@@ -27,6 +27,7 @@ describe("Eve tool contract", () => {
           description: "Protected",
           execute: () => "done",
           inputSchema: z.object({}),
+          // oxlint-disable-next-line typescript/no-deprecated -- #583: This test verifies compatibility with approval metadata on legacy tool definitions.
           needsApproval: true,
         })
       )

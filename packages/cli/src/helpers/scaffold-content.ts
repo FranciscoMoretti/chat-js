@@ -125,7 +125,9 @@ const REFERENCE_VISUAL_PROJECT =
 
 export const normalizeScaffoldContent = async (destination: string) => {
   const packagePath = path.join(destination, "package.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   for (const name of Object.keys(manifest.dependencies ?? {})) {
     if (
       (name.startsWith("@lexical/") && name !== "@lexical/react") ||
@@ -139,9 +141,11 @@ export const normalizeScaffoldContent = async (destination: string) => {
         "echarts-for-react",
       ].includes(name)
     ) {
+      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
       Reflect.deleteProperty(manifest.dependencies, name);
     }
   }
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.devDependencies?.["@types/papaparse"];
   for (const dependency of [
     "@electric-sql/pglite",
@@ -150,6 +154,7 @@ export const normalizeScaffoldContent = async (destination: string) => {
     "evalite",
     "better-sqlite3",
   ]) {
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
     delete manifest.devDependencies?.[dependency];
   }
   for (const script of [
@@ -158,14 +163,19 @@ export const normalizeScaffoldContent = async (destination: string) => {
     "test:research:native",
     "test:tools:live",
   ]) {
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
     delete manifest.scripts?.[script];
   }
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.overrides?.evalite;
   await writeFile(packagePath, `${JSON.stringify(manifest, null, 2)}\n`);
 
   const tsconfigPath = path.join(destination, "tsconfig.json");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf-8"));
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete tsconfig.compilerOptions.paths["@eve-test/*"];
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete tsconfig.compilerOptions.paths["@world-postgres-test/*"];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 
@@ -178,9 +188,16 @@ export const normalizeScaffoldContent = async (destination: string) => {
 
   const lintPath = path.join(destination, "oxlint.config.ts");
   const lint = await readFile(lintPath, "utf-8");
+  // The copied app config becomes the project root, where Oxlint permits typeAware.
+  const standaloneLint = lint.includes("options: { typeAware: true }")
+    ? lint
+    : lint.replace(
+        "  overrides: [",
+        "  options: { typeAware: true },\n  overrides: ["
+      );
   await writeFile(
     lintPath,
-    lint.replace(
+    standaloneLint.replace(
       '        "tests/eve-fixture/agent/tools/confirm_note.ts",\n',
       ""
     )

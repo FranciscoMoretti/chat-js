@@ -117,6 +117,7 @@ const parseExecutionOutput = async (execResult: {
   );
   let execInfo: JsExecInfo;
   try {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
     execInfo = JSON.parse(execInfoRaw) as JsExecInfo;
   } catch {
     return {

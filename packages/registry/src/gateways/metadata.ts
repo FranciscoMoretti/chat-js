@@ -48,6 +48,7 @@ const gatewayMetadataEntries = [
 
 type GatewayMetadataEntries = typeof gatewayMetadataEntries;
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Typed registry entries establish key/value correspondence that Object.fromEntries does not retain in its return type.
 export const gatewayMetadata = Object.fromEntries(gatewayMetadataEntries) as {
   [Entry in GatewayMetadataEntries[number] as Entry[0]]: Entry[1];
 };

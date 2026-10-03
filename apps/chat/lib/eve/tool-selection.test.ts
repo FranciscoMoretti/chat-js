@@ -188,7 +188,7 @@ it("restores the selected capability from Eve serialized context before a resume
     return serializeContext(original);
   });
   expect(saved["chatjs.turn-tool"]).toBe("createTextDocument");
-  // oxlint-disable-next-line unicorn/prefer-structured-clone -- Exercise the JSON wire representation; structuredClone preserves values JSON drops.
+  // oxlint-disable-next-line unicorn/prefer-structured-clone, typescript/no-unsafe-argument -- Exercise the JSON wire representation; structuredClone preserves values JSON drops. #594: This tool-selection fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const resumed = await deserializeContext(JSON.parse(JSON.stringify(saved)));
   await contextStorage.run(resumed, async () => {
     expect(

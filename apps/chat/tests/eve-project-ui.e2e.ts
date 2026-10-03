@@ -342,7 +342,11 @@ test("project UI edits instructions, creates a native conversation and lists it 
                 const response = await page.request
                   .delete(url, { headers: { origin }, timeout: 30_000 })
                   .catch(() => null);
-                return response?.status() === 200 ? response.json() : null;
+                if (response?.status() !== 200) {
+                  return null;
+                }
+                const responseBody: unknown = await response.json();
+                return responseBody;
               },
               { intervals: [1000, 2000, 5000], timeout: 90_000 }
             )

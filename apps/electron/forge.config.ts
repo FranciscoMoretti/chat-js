@@ -22,7 +22,10 @@ const appRoot = __dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
-const runBunScript = (script: string, env: NodeJS.ProcessEnv = {}): void => {
+const runBunScript = (
+  script: string,
+  env: Partial<NodeJS.ProcessEnv> = {}
+): void => {
   const result = spawnSync("bun", ["run", script], {
     env: { ...process.env, ...env },
     stdio: "inherit",
@@ -54,17 +57,39 @@ const loadBranding = (): Branding => {
     );
   }
 
-  const branding = JSON.parse(
-    readFileSync(brandingPath, "utf-8")
-  ) as Partial<Branding>;
+  const branding: unknown = JSON.parse(readFileSync(brandingPath, "utf-8"));
 
-  if (!branding.appName || !branding.appPrefix || !branding.appUrl) {
+  if (
+    typeof branding !== "object" ||
+    branding === null ||
+    !("appName" in branding) ||
+    typeof branding.appName !== "string" ||
+    !branding.appName ||
+    !("appPrefix" in branding) ||
+    typeof branding.appPrefix !== "string" ||
+    !branding.appPrefix ||
+    !("appUrl" in branding) ||
+    typeof branding.appUrl !== "string" ||
+    !branding.appUrl
+  ) {
     throw new Error(
       `Electron branding file ${brandingPath} is invalid. Expected appName, appPrefix, and appUrl.`
     );
   }
 
-  return branding as Branding;
+  return {
+    appName: branding.appName,
+    appPrefix: branding.appPrefix,
+    appUrl: branding.appUrl,
+    orgEmail:
+      "orgEmail" in branding && typeof branding.orgEmail === "string"
+        ? branding.orgEmail
+        : undefined,
+    orgName:
+      "orgName" in branding && typeof branding.orgName === "string"
+        ? branding.orgName
+        : undefined,
+  };
 };
 
 const createForgeConfig = (): ForgeConfig => {
@@ -73,13 +98,16 @@ const createForgeConfig = (): ForgeConfig => {
 
   return {
     hooks: {
-      generateAssets: () => {
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      generateAssets: async () => {
         ensurePrebuild();
       },
-      prePackage: () => {
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      prePackage: async () => {
         runBunScript("build", { NODE_ENV: "production" });
       },
-      preStart: () => {
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      preStart: async () => {
         runBunScript("build", { NODE_ENV: "development" });
       },
     },

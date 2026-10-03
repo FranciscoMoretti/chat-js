@@ -139,13 +139,14 @@ export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
 
 export const sharedEveMessages = (events: readonly MessageStreamEvent[]) => {
   const reducer = defaultMessageReducer();
-  const reduceEvent = reducer.reduce;
+  const reduceEvent = reducer.reduce.bind(reducer);
   // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
   const state = events.reduce(
     (current, event) => reduceEvent(current, event),
     reducer.initial()
   );
   const models = responseModelReferences(events);
+  // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate materialized transcript messages without mutating the reducer state.
   return state.messages.map((message) => {
     let modelId: string | undefined;
     if (message.role === "assistant") {

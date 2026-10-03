@@ -66,6 +66,7 @@ const SearchResults = ({
     history.data?.pages
       .flatMap((page) => page.items)
       .filter((item) => item.state === "bound")
+      // oxlint-disable-next-line oxc/no-map-spread -- #541: Normalize conversation IDs without mutating cached search result records.
       .map((item) => ({
         ...item,
         conversationId: item.conversationId ?? item.id,
@@ -106,9 +107,13 @@ const SearchResults = ({
       items={distinct}
       isSearch={isSearch}
       onSelect={onSelect}
+
+      // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns search retry and pagination errors and loading state.
       onRetry={() => active.refetch()}
-      hasMore={!waiting && !failed && Boolean(active.hasNextPage)}
+      hasMore={!waiting && !failed && active.hasNextPage}
       loadingMore={active.isFetchingNextPage}
+
+      // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns search retry and pagination errors and loading state.
       onLoadMore={() => active.fetchNextPage()}
       disableLoadMore={active.isFetching || changingQuery}
     />

@@ -292,10 +292,13 @@ export const PromptInputSpeechButton = ({
 
   useEffect(() => {
     if (
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
       typeof window !== "undefined" &&
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Speech recognition constructors are declared on the browser Window augmentation.
       ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
     ) {
       const SpeechRecognition =
+        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Speech recognition constructors are declared on the browser Window augmentation.
         window.SpeechRecognition || window.webkitSpeechRecognition;
       const speechRecognition = new SpeechRecognition();
 

@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { dirname, join, resolve } = path;
 
 const smokeTimeout = 180_000;
@@ -125,16 +126,18 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
         join(installedPackage, "dist/react.js"),
         "utf-8"
       );
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const packageMetadata = await Bun.file(
         join(installedPackage, "package.json")
       ).json();
-      const indexChunk = indexSource.match(
-        /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u
+      const indexChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
+        indexSource
       )?.groups?.chunk;
-      const reactChunk = reactSource.match(
-        /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u
+      const reactChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
+        reactSource
       )?.groups?.chunk;
 
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(packageMetadata.peerDependenciesMeta).toEqual({
         react: { optional: true },
       });

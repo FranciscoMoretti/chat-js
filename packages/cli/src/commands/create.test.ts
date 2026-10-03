@@ -88,12 +88,15 @@ it.each([false, true])(
 
 it("rejects retired installer flags explicitly", async () => {
   create.exitOverride();
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(
     create.parseAsync(["--no-install"], { from: "user" })
   ).rejects.toThrow("unknown option");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(
     create.parseAsync(["--package-manager"], { from: "user" })
   ).rejects.toThrow("unknown option");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(
     create.parseAsync(["--registry"], { from: "user" })
   ).rejects.toThrow("unknown option");

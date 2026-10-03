@@ -85,7 +85,9 @@ const SidebarProvider = ({
 
       // This sets the cookie to keep the sidebar state.
       // Prefer Cookie Store API when available
+      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: The optional Cookie Store API is narrowed through the browser Window interface.
       if ("cookieStore" in window) {
+        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: The optional Cookie Store API is narrowed through the browser Window interface.
         void window.cookieStore.set({
           expires: Date.now() + SIDEBAR_COOKIE_MAX_AGE * 1000,
           name: SIDEBAR_COOKIE_NAME,
@@ -121,8 +123,8 @@ const SidebarProvider = ({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    globalThis.addEventListener("keydown", handleKeyDown);
+    return () => globalThis.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
@@ -205,7 +207,10 @@ const Sidebar = ({
           data-sidebar="sidebar"
           data-slot="sidebar"
           side={side}
+
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Custom CSS properties are passed through React style objects; a typed custom-property interface requires a shared styling API decision.
           style={
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preserve the existing CSS custom-property or DOM event-target contract; stronger narrowing requires an interface-specific migration.
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
             } as React.CSSProperties
@@ -634,7 +639,10 @@ const SidebarMenuSkeleton = ({
       <Skeleton
         className="h-4 max-w-(--skeleton-width) flex-1"
         data-sidebar="menu-skeleton-text"
+
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Custom CSS properties are passed through React style objects; a typed custom-property interface requires a shared styling API decision.
         style={
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preserve the existing CSS custom-property or DOM event-target contract; stronger narrowing requires an interface-specific migration.
           {
             "--skeleton-width": width,
           } as React.CSSProperties

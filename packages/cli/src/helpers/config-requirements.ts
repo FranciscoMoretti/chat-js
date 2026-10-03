@@ -25,6 +25,7 @@ export const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
 export const coreFeatureEnvRequirements: Partial<
   Record<CoreFeatureKey, EnvRequirement[]>
 > = {
+  // oxlint-disable-next-line oxc/no-map-spread -- #541: Customize CLI descriptions without modifying the registry definition shared by other consumers.
   mcp: (mcpDefinition.envRequirements ?? []).map((requirement) => ({
     ...requirement,
     description:

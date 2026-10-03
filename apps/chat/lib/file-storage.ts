@@ -26,6 +26,7 @@ const getFiles = (): Files => {
 
 const sanitizeFilename = (filename: string): string => {
   const basename = filename.split(PATH_SEPARATOR).at(-1) ?? "";
+  // oxlint-disable-next-line typescript/no-misused-spread -- #586: This transformation intentionally iterates Unicode code points; changing to graphemes or UTF-16 units would alter its existing text contract.
   const withoutControlCharacters = [...basename]
     .filter((character) => {
       const code = character.codePointAt(0) ?? 0;
@@ -123,13 +124,13 @@ export const downloadFile = async (
   key: string,
   range?: { start: number; end?: number }
 ) =>
-  getFiles().download(
+  await getFiles().download(
     await storageKeyForFile(key),
     range ? { range } : undefined
   );
 
 export const getFileMetadata = async (key: string) =>
-  getFiles().head(await storageKeyForFile(key));
+  await getFiles().head(await storageKeyForFile(key));
 
 export const storageSupportsRange = (): boolean =>
   getFiles().capabilities.rangeRead;

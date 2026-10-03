@@ -21,6 +21,7 @@ test("declared EVE generics preserve schema and output types across overloads", 
   });
   const streamed = defineTool({
     description: "Stream",
+    // oxlint-disable-next-line typescript/require-await -- This fixture exercises the async-generator overload and its inferred streamed output type.
     async *execute({ count }) {
       yield { count };
     },

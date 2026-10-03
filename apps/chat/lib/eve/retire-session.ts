@@ -88,5 +88,6 @@ export const retireEveFamilyForDeletion = async (
   await retireEveNativeSessions(databaseUrl, sessionIds, async (sessionId) => {
     await retireEveSessionForDeletion(ownerId, sessionId);
   });
+  // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return family;
 };

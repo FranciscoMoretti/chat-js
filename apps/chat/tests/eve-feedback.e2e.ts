@@ -133,7 +133,7 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       await mutationStarted.promise;
       await page.clock.setFixedTime(new Date(Date.now() + 120_000));
       await page.evaluate(() =>
-        window.dispatchEvent(new Event("visibilitychange"))
+        globalThis.dispatchEvent(new Event("visibilitychange"))
       );
       await staleReadStarted.promise;
       resumeMutation.resolve(undefined);

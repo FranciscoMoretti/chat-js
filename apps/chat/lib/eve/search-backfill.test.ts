@@ -49,8 +49,10 @@ it("recovers every restored entry and the latest message, and can retry after a 
   await backfillEveSearchConversation("owner", "branch", "session");
   expect(mocks.index).toHaveBeenCalledTimes(4);
   expect(
+    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This search-backfill fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This search-backfill fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     mocks.index.mock.calls.slice(0, 3).map((call) => call[2].length)
   ).toEqual([100, 100, 100]);
+  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This search-backfill fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.index.mock.calls.flatMap((call) => call[2])).toEqual([
     ...Array.from({ length: 300 }, (_, index) => ({
       key: `seed:${index}`,

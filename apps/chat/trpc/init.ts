@@ -52,6 +52,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
       data: {
         ...shape.data,
         zodError:
+          // oxlint-disable-next-line typescript/no-deprecated -- #583: The tRPC error payload exposes flat fieldErrors; treeifyError would change the client-visible error contract.
           error.cause instanceof ZodError ? error.cause.flatten() : null,
       },
     };

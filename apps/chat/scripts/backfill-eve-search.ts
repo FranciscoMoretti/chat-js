@@ -52,8 +52,10 @@ const main = async () => {
     cursor = batch.at(-1)?.id;
     console.info(`Search backfill: ${indexed} indexed, ${failed} failed.`);
   }
+  // oxlint-disable-next-line unicorn/no-process-exit -- #571: The one-shot backfill terminates with its aggregate result while the shared database pool remains open.
   process.exit(failed ? 1 : 0);
 };
+// oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
 void (async () => {
   try {
     await main();

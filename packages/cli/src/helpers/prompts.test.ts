@@ -36,6 +36,7 @@ it("uses external defaults and every environment group with --yes", async () => 
     gatewayRequirements: definition.envRequirements,
   });
   expect(entries.map((entry) => entry.vars)).toEqual(
+    // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
     expect.arrayContaining(["FIRST", "SECOND", "ALTERNATE"])
   );
   expect(() => collectEnvChecklist(input)).not.toThrow();

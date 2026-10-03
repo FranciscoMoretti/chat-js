@@ -69,6 +69,7 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     .mockResolvedValueOnce({ complete: true, topics: [] })
     .mockResolvedValueOnce({ content: "# Both findings", title: "Report" });
   const outputs = await Array.fromAsync(executeEveResearch({}, context));
+  // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls.map(([name]) => name)).toEqual([
     "researchPlanner",
     "researchPlanner",
@@ -80,8 +81,11 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     "researchPlanner",
     "researchWriter",
   ]);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls[4][1].message).toContain("First findings");
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls[7][1].message).toContain("Follow-up findings");
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls[8][1].message).toContain(
     "First findings\nFollow-up findings"
   );
@@ -127,9 +131,11 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
 });
 
 it("returns clarification without starting research or saving a document", async () => {
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const prepared = await mocks.prepare();
   mocks.prepare.mockResolvedValue({
     ...prepared,
+    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     config: { ...prepared.config, allow_clarification: true },
   });
   agent.mockResolvedValue({
@@ -153,6 +159,7 @@ it("runs topics sequentially and stops before new work or saving after cancellat
     .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
     .mockImplementationOnce(() => {
       controller.abort(new Error("Cancelled"));
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
       return Promise.reject(controller.signal.reason);
     });
   await expect(
@@ -190,6 +197,7 @@ it("rejects oversized topic batches before starting researchers", async () => {
     Array.fromAsync(executeEveResearch({}, context))
   ).rejects.toThrow();
   expect(agent).toHaveBeenCalledTimes(2);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(agent.mock.calls[1][1].outputSchema.properties.topics.maxItems).toBe(
     2
   );

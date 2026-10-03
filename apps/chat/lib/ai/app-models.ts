@@ -21,13 +21,16 @@ const DISABLED_MODELS = new Set(config.ai.disabledModels);
 const PROVIDER_ORDER = config.ai.providerOrder;
 
 const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
   models
     .flatMap((model) => {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
       const modelId = model.id as ModelId;
       // If the model supports reasoning, return two variants:
       // - Non-reasoning (original id, reasoning=false)
       // - Reasoning (id with -reasoning suffix, reasoning=true)
-      if (model.reasoning === true) {
+      if (model.reasoning) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
         const reasoningId = `${modelId}-reasoning` as AppModelId;
 
         return [
@@ -63,7 +66,7 @@ const buildChatModels = (
   appModels: AppModelDefinition[]
 ): AppModelDefinition[] =>
   appModels
-    .filter((model) => model.output.text === true)
+    .filter((model) => model.output.text)
     .toSorted((a, b) => {
       const aProviderIndex = PROVIDER_ORDER.indexOf(a.owned_by);
       const bProviderIndex = PROVIDER_ORDER.indexOf(b.owned_by);

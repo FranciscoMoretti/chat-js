@@ -71,7 +71,7 @@ export const readProviderId = async (
   const name = kind === "gateway" ? "gatewayType" : "storageId";
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
-    .flatMap((statement) => [...statement.declarationList.declarations])
+    .flatMap((statement) => statement.declarationList.declarations)
     .find((item) => item.name.getText(parsed) === name);
   if (!source.trim()) {
     return;
@@ -82,6 +82,7 @@ export const readProviderId = async (
       `Cannot determine the installed ${kind} in ${file}. Use a literal ${name} before automatic replacement, or integrate the provider manually.`
     );
   }
+  // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return value.text;
 };
 
@@ -104,7 +105,7 @@ export const gatewayConfigEdit = async (
     // Mutable bindings may no longer refer to their initializer at runtime.
     // oxlint-disable-next-line eslint/no-bitwise -- TypeScript represents declaration modifiers as a bitmask.
     .filter((statement) => statement.declarationList.flags & ts.NodeFlags.Const)
-    .flatMap((statement) => [...statement.declarationList.declarations]);
+    .flatMap((statement) => statement.declarationList.declarations);
   const seen = new Set<string>();
   const resolve = (input: ts.Expression): ts.Expression | undefined => {
     const value = unwrap(input);
@@ -112,6 +113,7 @@ export const gatewayConfigEdit = async (
       return value;
     }
     if (seen.has(value.text)) {
+      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
       return;
     }
     seen.add(value.text);
@@ -126,6 +128,7 @@ export const gatewayConfigEdit = async (
     };
     visit(parsed);
     if (references !== 2) {
+      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
       return;
     }
     const initializer = declarations.find(

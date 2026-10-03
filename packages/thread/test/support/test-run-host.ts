@@ -13,7 +13,7 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
   public readonly messageMetadataSchema = undefined;
   public readonly generateMessageId = generateMessageId;
   public readonly spec: ThreadRunSpec;
-  public readonly tree: MessageTree<UIMessage>;
+  public readonly tree: MessageTree;
   public onData: ThreadRunHost<UIMessage>["onData"];
   public onError: ThreadRunHost<UIMessage>["onError"];
   public onFinish: ThreadRunHost<UIMessage>["onFinish"];

@@ -2,6 +2,11 @@ import { execFileSync } from "node:child_process";
 
 import { expect, test } from "@playwright/test";
 import { serialize } from "superjson";
+import { z } from "zod";
+
+const searchBatchSchema = z.object({
+  "0": z.object({ json: z.object({ search: z.string() }) }),
+});
 
 test("search states", async ({ page }, testInfo) => {
   const script = execFileSync(
@@ -49,8 +54,10 @@ test("debounces requests, hides obsolete results, and navigates to the matching 
   const searches: string[] = [];
   const delayed = Promise.withResolvers<boolean>();
   await page.route("**/api/trpc/eve.search*", async (route) => {
-    const input = JSON.parse(
-      new URL(route.request().url()).searchParams.get("input") ?? "{}"
+    const input = searchBatchSchema.parse(
+      JSON.parse(
+        new URL(route.request().url()).searchParams.get("input") ?? "{}"
+      )
     );
     const { search } = input["0"].json;
     searches.push(search);
@@ -123,16 +130,18 @@ test("does not publish a response for text superseded during the debounce window
   });
   page.on("requestfailed", (request) => {
     if (request.url().includes("/api/trpc/eve.search")) {
-      const input = JSON.parse(
-        new URL(request.url()).searchParams.get("input") ?? "{}"
+      const input = searchBatchSchema.parse(
+        JSON.parse(new URL(request.url()).searchParams.get("input") ?? "{}")
       );
       aborted.push(input["0"].json.search);
     }
   });
   const intermediate = Promise.withResolvers<boolean>();
   await page.route("**/api/trpc/eve.search*", async (route) => {
-    const input = JSON.parse(
-      new URL(route.request().url()).searchParams.get("input") ?? "{}"
+    const input = searchBatchSchema.parse(
+      JSON.parse(
+        new URL(route.request().url()).searchParams.get("input") ?? "{}"
+      )
     );
     const { search } = input["0"].json;
     requests.push(search);
@@ -220,6 +229,7 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
       if (!Array.isArray(data)) {
         throw new TypeError("Expected a tRPC batch response");
       }
+      const batchResults: readonly unknown[] = data;
       await recent.promise;
       await route.fulfill({
         json: procedures.map((procedure, procedureIndex) =>
@@ -238,7 +248,7 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
                   }),
                 },
               }
-            : data[procedureIndex]
+            : batchResults[procedureIndex]
         ),
         response,
       });
@@ -282,7 +292,8 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
     const response = await fetch(
       `/api/trpc/project.list,eve.list?batch=1&input=${input}`
     );
-    return await response.json();
+    const responseBody: unknown = await response.json();
+    return responseBody;
   });
   expect(batch).toMatchObject([
     { result: { data: { json: expect.any(Array) } } },

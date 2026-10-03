@@ -26,7 +26,10 @@ export const trpcClient = createTRPCClient<AppRouter>({
       fetch(input, init) {
         const url = new URL(input instanceof Request ? input.url : input);
         if (url.pathname === "/api/trpc/eve.saveDocument") {
-          const body = JSON.parse(String(init?.body));
+          if (typeof init?.body !== "string") {
+            throw new TypeError("Expected a JSON document batch body");
+          }
+          const body = z.array(z.unknown()).parse(JSON.parse(init.body));
           const saved = z
             .object({
               conversationId: z.literal(conversationId),

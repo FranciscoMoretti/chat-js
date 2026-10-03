@@ -7,6 +7,7 @@ import { builtInGateways } from "../../../registry/src/gateways/catalog";
 import { configureGatewayProvider } from "./gateway-provider";
 import { scaffoldFromTemplate } from "./scaffold";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = pathModule;
 
 it("wires selected defaults and snapshot identity without managing dependencies", async () => {
@@ -53,6 +54,7 @@ it("wires selected defaults and snapshot identity without managing dependencies"
     );
     await rm(target);
     await symlink(join(cwd, "package.json"), target);
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
       configureGatewayProvider(cwd, {
         definition: builtInGateways[0].meta.chatjs,

@@ -29,13 +29,14 @@ export const useAutoFocus = ({
 
     let fallbackTimeout: number | null = null;
 
-    const raf = window.requestAnimationFrame(() => {
+    const raf = globalThis.requestAnimationFrame(() => {
       const active = document.activeElement;
       const isUserTypingElsewhere = isTypingSurface(active);
 
       if (!isUserTypingElsewhere) {
         editor.focus();
         // Minimal fallback for hydration/layout races where focus is stolen.
+        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Use the browser timer overload because the focus cleanup stores a numeric timeout ID.
         fallbackTimeout = window.setTimeout(() => {
           const currentActive = document.activeElement;
           const canSafelyStealFocus = !isTypingSurface(currentActive);
@@ -47,10 +48,11 @@ export const useAutoFocus = ({
       }
     });
 
+    // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return () => {
-      window.cancelAnimationFrame(raf);
+      globalThis.cancelAnimationFrame(raf);
       if (fallbackTimeout !== null) {
-        window.clearTimeout(fallbackTimeout);
+        globalThis.clearTimeout(fallbackTimeout);
       }
     };
   }, [autoFocus, editor]);

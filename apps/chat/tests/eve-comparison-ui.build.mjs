@@ -7,6 +7,7 @@ const replacedModule =
   /\/(?<module>chat-models-provider|session-provider|eve-artifact-layout|eve-conversation|chat-welcome-view|internal-link|features\/mcp\/composer)\.tsx$/u;
 
 const mocks = `${process.cwd()}/tests/eve-comparison-ui.mocks.tsx`;
+/** @type {Record<string, string>} */
 const replacements = {
   "chat-models-provider.tsx": "useChatModels",
   "chat-welcome-view.tsx": "ChatWelcomeView",
@@ -70,6 +71,6 @@ const result = await build({
   target: "browser",
 });
 if (!result.success) {
-  throw new Error(String(result.logs));
+  throw new Error(result.logs.map((entry) => entry.message).join("\n"));
 }
 process.stdout.write(await result.outputs[0].text());

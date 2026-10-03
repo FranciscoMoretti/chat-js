@@ -22,7 +22,7 @@ export const NewChatButton = () => {
         href="/"
         onNavigate={() => {
           setOpenMobile(false);
-          window.dispatchEvent(new Event("chatjs:new-chat"));
+          globalThis.dispatchEvent(new Event("chatjs:new-chat"));
         }}
       >
         <Plus aria-label="New Chat" size={16} />

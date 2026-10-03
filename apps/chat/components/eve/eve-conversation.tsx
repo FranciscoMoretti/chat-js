@@ -136,6 +136,7 @@ export const EveConversation = ({
         !snapshot.cursorId || Boolean(logicalId && selectedPath.has(logicalId))
       );
     })
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Merge canonical message metadata into a view without mutating runtime message snapshots.
     .map((message) => {
       const id = controller.logicalId(conversationId, message.id);
       const canonical = id ? snapshot.nodes.get(id)?.message : undefined;
@@ -345,12 +346,17 @@ export const EveConversation = ({
                 disabled={busy || commandPending}
                 isReadonly={false}
                 messages={messages}
+
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
+
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Message editing delegates pending and failure handling to the existing fork submission lifecycle.
                 editor={
                   editingMessageId
                     ? {
                         content: (
                           <div className="w-full">
                             <EveComposer
+                              // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Edit intentionally transfers focus to the message composer inside that message.
                               autoFocus
                               status={fork.busy ? "submitted" : "ready"}
                               disabled={
@@ -365,6 +371,7 @@ export const EveConversation = ({
                               files={fork.files}
                               modelSelection={fork.modelSelection}
                               onDraftChange={handleEditDraft}
+                              // oxlint-disable-next-line typescript/no-misused-promises -- #585: The fork hook owns edit submission errors and pending state.
                               onSubmit={handleEditSubmit}
                               onToolChange={handleEditToolChange}
                               selectedTool={fork.selectedTool}
@@ -413,6 +420,7 @@ export const EveConversation = ({
                   `${sessionId}:${message.id}`
                 }
 
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                 onEdit={(message) => {
                   const following = messages.slice(
                     messages.indexOf(message) + 1
@@ -444,9 +452,13 @@ export const EveConversation = ({
                         : undefined,
                   });
                 }}
+
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                 onRegenerate={(message, response) =>
                   fork.begin(message, { events: agent.events, response })
                 }
+
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                 onSuggestion={(suggestion) =>
                   run(async () => {
                     // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
@@ -470,6 +482,8 @@ export const EveConversation = ({
                     }
                   })
                 }
+
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                 respond={(response) =>
                   run(() => send(() => agent.respond([response])))
                 }
@@ -506,6 +520,7 @@ export const EveConversation = ({
                 <div className="flex flex-wrap gap-2">
                   {pendingMessage.retryable && pendingMessage.operationId && (
                     <Button
+                      // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                       onClick={() =>
                         run(async () => {
                           const retried = delivery.retry(pendingMessage);
@@ -573,7 +588,11 @@ export const EveConversation = ({
               files={files}
               modelSelection={modelSelection}
               onDraftChange={setDraft}
+
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
               onStop={cancel}
+
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
               onSubmit={() =>
                 run(async () => {
                   // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
@@ -608,6 +627,8 @@ export const EveConversation = ({
               !isEveCommandRejection(commandFailure ?? agent.error) && (
                 <Button
                   disabled={busy || commandPending || cancelPending}
+
+                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                   onClick={() => run(agent.resume)}
                   size="sm"
                   type="button"

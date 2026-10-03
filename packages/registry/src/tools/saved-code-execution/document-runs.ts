@@ -3,6 +3,7 @@ import type { EveMessage } from "eve/client";
 import { documentExecutionInput } from "./schemas";
 
 /** Project the latest execution of this revision from the native transcript. */
+// oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 export const latestDocumentRun = (
   messages: readonly EveMessage[],
   documentId: string,

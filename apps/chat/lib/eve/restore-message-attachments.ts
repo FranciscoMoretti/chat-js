@@ -68,9 +68,10 @@ export const restoreMessageAttachments = async (
     .attach(conversation.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const reducer = defaultMessageReducer();
+  const reduceEvent = reducer.reduce.bind(reducer);
   // oxlint-disable-next-line unicorn/no-array-reduce -- Project trusted native history with EVE's reducer.
   const { messages } = snapshot.events.reduce(
-    reducer.reduce,
+    (state, event) => reduceEvent(state, event),
     reducer.initial()
   );
   const message = messages.find(

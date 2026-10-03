@@ -111,12 +111,12 @@ it.each([
 
 it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
   const original = new ContextContainer();
-  const saved = await contextStorage.run(original, () => {
+  const saved = contextStorage.run(original, () => {
     eveTurnTool.update(() => "webSearch");
     return serializeContext(original);
   });
   const resumed = await deserializeContext(saved);
-  await contextStorage.run(resumed, () => {
+  contextStorage.run(resumed, () => {
     const { session } = testToolContext({
       session: {
         auth: {

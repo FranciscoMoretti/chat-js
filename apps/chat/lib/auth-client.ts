@@ -28,6 +28,7 @@ type ElectronAuthClientExtension = {
   ensureElectronRedirect: () => ReturnType<typeof setInterval>;
 };
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The Electron adapter bridges installed Better Auth plugin and client types; changing it requires coordinated authentication API verification.
 const electronAuthPlugin = electronProxyClient({
   callbackPath: ELECTRON_AUTH_CALLBACK_PATH,
   clientID: ELECTRON_AUTH_CLIENT_ID,
@@ -47,6 +48,7 @@ const authClientBase = createAuthClient({
   ],
 });
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The Electron adapter bridges installed Better Auth plugin and client types; changing it requires coordinated authentication API verification.
 const authClient = authClientBase as typeof authClientBase &
   ElectronAuthClientExtension;
 

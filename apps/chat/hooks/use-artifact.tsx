@@ -65,6 +65,7 @@ export const ArtifactProvider = ({ children }: { children: ReactNode }) => {
     (documentId: string, metadata: ArtifactMetadata | MetadataUpdater) => {
       setMetadataStore((current) => ({
         ...current,
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: Artifact metadata intentionally varies with document kind; narrowing it requires a discriminated metadata/store API migration.
         [documentId]:
           typeof metadata === "function"
             ? metadata(current[documentId] ?? null)

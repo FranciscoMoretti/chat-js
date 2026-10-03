@@ -42,7 +42,7 @@ export const UserMessageView = ({
               if (editDisabled) {
                 return;
               }
-              const selection = window.getSelection();
+              const selection = globalThis.getSelection();
               if (
                 selection?.toString() &&
                 event.currentTarget.contains(selection.anchorNode)

@@ -56,6 +56,7 @@ export class VercelGateway
   }
 
   private getApiKey(): string | undefined {
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
     return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
   }
 
@@ -86,7 +87,7 @@ export class VercelGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      const bodyRaw = await response.json();
+      const bodyRaw: unknown = await response.json();
       const body = aiGatewayModelsEnvelopeSchema.parse(bodyRaw);
       const unsupportedTypes = new Set<string>();
       const models: AiGatewayModel[] = [];

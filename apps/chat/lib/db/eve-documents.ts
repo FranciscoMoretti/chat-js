@@ -474,6 +474,7 @@ const inheritImportedDocumentCheckpoints = async (
   }
   const copied = await tx
     .insert(eveImportedDocumentCheckpoint)
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
     .values(headers.map((header) => ({ ...header, conversationId })))
     .onConflictDoNothing()
     .returning({ messageIndex: eveImportedDocumentCheckpoint.messageIndex });
@@ -496,6 +497,7 @@ const inheritImportedDocumentCheckpoints = async (
   if (entries.length > 0) {
     await tx
       .insert(eveImportedDocumentCheckpointEntry)
+      // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
       .values(entries.map((entry) => ({ ...entry, conversationId })));
   }
 };
@@ -608,6 +610,7 @@ const inheritDocumentCheckpoints = async (
       if (entries.length > 0) {
         await tx
           .insert(eveDocumentCheckpointEntry)
+          // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
           .values(entries.map((entry) => ({ ...entry, conversationId })));
       }
     }
@@ -819,6 +822,7 @@ export const captureEveDocumentCheckpoint = async (
   turnIndex: number
 ) => {
   z.number().int().nonnegative().parse(turnIndex);
+  // oxlint-disable-next-line typescript/no-confusing-void-expression -- #582: Returning the awaited operation preserves early termination and propagation of its asynchronous failure.
   return await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
@@ -856,6 +860,7 @@ export const captureEveDocumentCheckpoint = async (
     if (heads.length > 0) {
       await tx
         .insert(eveDocumentCheckpointEntry)
+        // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
         .values(heads.map((head) => ({ ...head, turnIndex })));
     }
   });
@@ -924,6 +929,7 @@ export const captureEveNamedDocumentCheckpoint = async (
     if (heads.length > 0) {
       await tx
         .insert(eveNamedDocumentCheckpointEntry)
+        // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
         .values(heads.map((head) => ({ ...head, checkpointId })));
     }
   });
@@ -964,6 +970,7 @@ export const getEveDocumentRevision = async (
   if (!selected) {
     return;
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDocumentRevision has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };
 
@@ -1019,6 +1026,7 @@ export const getAccessibleEveDocument = async (
   ) {
     return;
   }
+  // oxlint-disable-next-line typescript/consistent-return -- #580: getAccessibleEveDocument has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     canEdit: current.ownerId === viewerId,
     history,

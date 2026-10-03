@@ -33,7 +33,8 @@ export const databaseConnection = (
 ) => {
   const url =
     purpose === "migration"
-      ? environment.DATABASE_MIGRATION_URL || environment.DATABASE_URL
+      ? // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
+        environment.DATABASE_MIGRATION_URL || environment.DATABASE_URL
       : environment.DATABASE_URL;
   if (!url) {
     throw new Error(

@@ -63,9 +63,11 @@ const prepareAdd = async (
   assertSupportedFeatureInstallation(plan.features);
   // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
   const gatewayItem = plan.items.find(
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     (item) => item.meta?.chatjs?.kind === "gateway"
   );
   const storageItem = plan.items.find(
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
     (item) => item.meta?.chatjs?.kind === "storage"
   );
   const selectedGateway =
@@ -147,86 +149,97 @@ export const add = new Command("add")
   .option("--storage-provider <item>", "install or replace file storage")
   .option("--storage-config <json>", "non-secret storage adapter options")
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
-  .action(async (items: string[], options) => {
-    try {
-      const cwd = path.resolve(options.cwd);
-      await access(path.join(cwd, "chat.config.ts"));
-      const setup = await prepareAdd(cwd, items, options);
-      const {
-        plan,
-        selectedGateway,
-        selectedStorage,
-        gatewayChange,
-        configEdit,
-        keepStorageOptions,
-      } = setup;
-      for (const { previous, next } of plan.replacements) {
-        log.info(
-          `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
-        );
+  .action(
+    async (
+      items: string[],
+      options: Parameters<typeof prepareAdd>[2] & {
+        cwd: string;
+        yes: boolean;
+        overwrite: boolean;
       }
-      for (const { kind, previous, next } of plan.providerChanges) {
-        if (previous && previous !== next) {
+    ) => {
+      try {
+        const cwd = path.resolve(options.cwd);
+        await access(path.join(cwd, "chat.config.ts"));
+        const setup = await prepareAdd(cwd, items, options);
+        const {
+          plan,
+          selectedGateway,
+          selectedStorage,
+          gatewayChange,
+          configEdit,
+          keepStorageOptions,
+        } = setup;
+        for (const { previous, next } of plan.replacements) {
           log.info(
-            `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
+            `Replace ${previous.slot ?? previous.documentKind}: ${previous.id} → ${next.id}. Retire only ${previous.id}'s source; retain unrelated installations and editable UI order.`
           );
         }
-      }
-      if (gatewayChange) {
-        log.info(
-          "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
-        );
-      }
-      if (!options.yes) {
-        const answer = await confirm({
-          message: `Install ${plan.sources.join(", ")}?`,
-        });
-        if (isCancel(answer) || !answer) {
-          return;
+        for (const { kind, previous, next } of plan.providerChanges) {
+          if (previous && previous !== next) {
+            log.info(
+              `Replace ${kind}: ${previous} → ${next}. Update provider source and environment requirements.`
+            );
+          }
         }
-      }
-      await installPlan(
-        cwd,
-        plan,
-        {
-          managedTargets: [
-            ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
-            ...(selectedStorage && !keepStorageOptions
-              ? ["lib/storage-options.ts", ".env.example"]
-              : []),
-          ],
-          overwrite: options.overwrite,
-          rollbackTargets: [
-            ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
-            ...(configEdit ? ["chat.config.ts"] : []),
-            ...(selectedGateway || selectedStorage ? [".env.example"] : []),
-          ],
-        },
-        async () => {
-          if (selectedGateway) {
-            await configureGatewayProvider(cwd, selectedGateway);
-          }
-          if (selectedStorage && !keepStorageOptions) {
-            await configureStorageProvider(cwd, selectedStorage);
-          }
-          if (configEdit) {
-            await writeFile(path.join(cwd, "chat.config.ts"), configEdit);
-          }
-          await syncTools(cwd, { expected: plan.expected });
-          await syncFeatures(cwd, {
-            addUi: plan.features.map((feature) => feature.id),
-            expectedMcp: plan.features.some((feature) => feature.id === "mcp"),
-            expectedUploads: plan.features.some(
-              (feature) => feature.id === "attachment-uploads"
-            ),
+        if (gatewayChange) {
+          log.info(
+            "Preserving model IDs and other runtime configuration in chat.config.ts. Review model IDs for the new gateway, then run setup/fetch:models."
+          );
+        }
+        if (!options.yes) {
+          const answer = await confirm({
+            message: `Install ${plan.sources.join(", ")}?`,
           });
+          if (isCancel(answer) || !answer) {
+            return;
+          }
         }
-      );
-      printSetupRequirements(setup);
-      log.success(
-        "Installed and registered. Review .env.local, then run setup."
-      );
-    } catch (error) {
-      handleError(error);
+        await installPlan(
+          cwd,
+          plan,
+          {
+            managedTargets: [
+              ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
+              ...(selectedStorage && !keepStorageOptions
+                ? ["lib/storage-options.ts", ".env.example"]
+                : []),
+            ],
+            overwrite: options.overwrite,
+            rollbackTargets: [
+              ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
+              ...(configEdit ? ["chat.config.ts"] : []),
+              ...(selectedGateway || selectedStorage ? [".env.example"] : []),
+            ],
+          },
+          async () => {
+            if (selectedGateway) {
+              await configureGatewayProvider(cwd, selectedGateway);
+            }
+            if (selectedStorage && !keepStorageOptions) {
+              await configureStorageProvider(cwd, selectedStorage);
+            }
+            if (configEdit) {
+              await writeFile(path.join(cwd, "chat.config.ts"), configEdit);
+            }
+            await syncTools(cwd, { expected: plan.expected });
+            await syncFeatures(cwd, {
+              addUi: plan.features.map((feature) => feature.id),
+              expectedMcp: plan.features.some(
+                (feature) => feature.id === "mcp"
+              ),
+              expectedUploads: plan.features.some(
+                (feature) => feature.id === "attachment-uploads"
+              ),
+            });
+          }
+        );
+        printSetupRequirements(setup);
+        log.success(
+          "Installed and registered. Review .env.local, then run setup."
+        );
+      } catch (error) {
+        handleError(error);
+      }
     }
-  });
+  );

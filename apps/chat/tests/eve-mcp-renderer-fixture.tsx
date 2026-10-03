@@ -22,6 +22,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     },
     state: "output-available",
   },
+  // oxlint-disable-next-line oxc/no-map-spread -- #541: Each output case needs an independent copy of the shared tool-result fixture.
   ...[false, 0, true, null, ""].map((output, index) => ({
     ...common,
     output: {

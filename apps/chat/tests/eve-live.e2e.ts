@@ -43,6 +43,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   expect(
     created.ok(),
     JSON.stringify({
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
       request: created.request().postDataJSON(),
       status: created.status(),
     })
@@ -188,12 +189,14 @@ test("the composer selects models for initial and subsequent durable turns", asy
   const creation = page.waitForResponse("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   const created = await creation;
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   expect(created.request().postDataJSON().modelId).toBe(
     "openai/gpt-4.1-mini-fast"
   );
   expect(
     created.ok(),
     JSON.stringify({
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
       request: created.request().postDataJSON(),
       status: created.status(),
     })
@@ -338,6 +341,7 @@ test("a definitive model rejection unlocks the composer and releases the operati
     .fill("Retain my draft");
   const firstRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   const first = (await firstRequest).postDataJSON();
   await expect(
     page.getByRole("alert").filter({ hasText: "This model is not available" })
@@ -352,7 +356,10 @@ test("a definitive model rejection unlocks the composer and releases the operati
   ).toHaveText("Retain my draft");
   const secondRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   const second = (await secondRequest).postDataJSON();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   expect(second.operationId).not.toBe(first.operationId);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   expect(second.modelId).toBe("openai/gpt-4.1-mini-fast");
 });

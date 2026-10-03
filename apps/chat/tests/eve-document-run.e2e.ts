@@ -73,7 +73,8 @@ test("artifact Run executes saved source, retains output across reload and shari
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      return { body: await response.json(), ok: response.ok };
+      const body: unknown = await response.json();
+      return { body, ok: response.ok };
     },
     {
       message:

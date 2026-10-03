@@ -6,7 +6,7 @@ import type {
   ListPromptsResult,
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Tool, ToolSet } from "ai";
+import type { Tool } from "ai";
 
 import { McpOAuthClientProvider } from "@/lib/ai/mcp/mcp-oauth-provider";
 import { OAuthAuthorizationRequiredError } from "@/lib/ai/mcp/oauth-authorization-required-error";
@@ -205,6 +205,7 @@ export class MCPClient {
           { authUrl: error.authorizationUrl.toString(), connectorId: this.id },
           "OAuth authorization required"
         );
+        // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
         return;
       }
 
@@ -304,7 +305,7 @@ export class MCPClient {
       throw new Error("Client not connected");
     }
     try {
-      return (await client.tools(...args)) as ToolSet as Record<string, Tool>;
+      return await client.tools(...args);
     } catch (error) {
       await this.handlePotentialAuthError(error, client);
       throw error;

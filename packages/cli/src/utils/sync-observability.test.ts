@@ -87,6 +87,7 @@ for (const item of observabilityItems) {
   test(`shadcn installs ${item.name} independently into an omitted scaffold`, async () => {
     const root = await fixture();
     await scaffoldFromTemplate(root);
+    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
       await readFile(path.join(root, "package.json"), "utf-8")
     );
@@ -97,6 +98,7 @@ for (const item of observabilityItems) {
       "langfuse",
       "langfuse-vercel",
     ]) {
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.dependencies[dependency]).toBeUndefined();
     }
     const descriptors = await Promise.all(
@@ -125,6 +127,7 @@ for (const item of observabilityItems) {
         root
       );
       await syncFeatures(root);
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const installedManifest = JSON.parse(
         await readFile(path.join(root, "package.json"), "utf-8")
       );
@@ -134,6 +137,7 @@ for (const item of observabilityItems) {
           versionSeparator > 0
             ? dependency.slice(0, versionSeparator)
             : dependency;
+        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         expect(installedManifest.dependencies[name]).toBeDefined();
       }
       const registration = await readFile(
@@ -147,6 +151,7 @@ for (const item of observabilityItems) {
         expect(registration).not.toContain(`"${feature.name}"`);
       }
       await rm(path.join(root, files[0].target.replace(/^~\//u, "")));
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
       await expect(syncFeatures(root)).rejects.toThrow(
         "installation is incomplete"
       );
@@ -154,6 +159,7 @@ for (const item of observabilityItems) {
         await readFile(path.join(root, "features/installed.ts"), "utf-8")
       ).toBe(registration);
     } finally {
+      // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
       server.stop(true);
     }
   }, 30_000);
@@ -170,11 +176,13 @@ for (const item of observabilityItems) {
     );
     const descriptor = path.join(root, `features/${item.name}/chatjs.json`);
     await rm(descriptor);
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncFeatures(root)).rejects.toThrow("missing its descriptor");
     await writeFile(
       descriptor,
       JSON.stringify({ ...item.meta.chatjs, id: "mcp" })
     );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncFeatures(root)).rejects.toThrow(
       "id must match its directory"
     );

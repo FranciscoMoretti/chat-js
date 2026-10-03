@@ -125,6 +125,7 @@ test("two cheap native responses bind, render, and preserve an unsent draft whil
       .click();
     const regeneration = await regenerationResponse;
     expect(regeneration.ok()).toBe(true);
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the actual regeneration wire payload directly; this assertion verifies the fork-kind contract.
     expect(regeneration.request().postDataJSON().forkKind).toBe("regenerate");
     const retry = conversationBinding.parse(await regeneration.json());
     await expect(page).toHaveURL(new URL(`/chat/${retry.id}`, page.url()).href);

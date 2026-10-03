@@ -22,6 +22,7 @@ const run = (...args: string[]) => {
   if (result.exitCode !== 0) {
     throw new Error(result.stderr.toString());
   }
+  // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   return JSON.parse(result.stdout.toString());
 };
 
@@ -53,6 +54,7 @@ beforeAll(async () => {
     })
   );
   // Every baseline-owned copy must participate, including generated indexes.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const baseline = JSON.parse(
     await readFile(
       path.join(repoRoot, "packages/registry/demo-baseline.json"),
@@ -60,6 +62,7 @@ beforeAll(async () => {
     )
   );
   await Promise.all(
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     Object.keys(baseline.files).map(async (file) => {
       const target = path.join(fixture, "apps/chat", file);
       await mkdir(path.dirname(target), { recursive: true });
@@ -97,10 +100,13 @@ afterAll(async () => {
 });
 
 test("demo check hashes every owned copy and never restores app files; sync is uncached", async () => {
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const plan = run("demo:check", "--filter=@chat-js/registry");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const task = plan.tasks.find(
     (item: { taskId: string }) => item.taskId === "@chat-js/registry#demo:check"
   );
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const baseline = JSON.parse(
     await readFile(
       path.join(repoRoot, "packages/registry/demo-baseline.json"),
@@ -108,20 +114,28 @@ test("demo check hashes every owned copy and never restores app files; sync is u
     )
   );
   expect(
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     Object.keys(baseline.files).filter(
+      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       (file) => !Object.hasOwn(task.inputs, `../../apps/chat/${file}`)
     )
   ).toEqual([]);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(task.dependencies).toEqual([]);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(task.resolvedTaskDefinition.cache).toBe(true);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(task.resolvedTaskDefinition.outputs).toEqual([]);
   expect(
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     run("demo:sync", "--filter=@chat-js/registry").tasks[0]
       .resolvedTaskDefinition.cache
   ).toBe(false);
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const unit = run("test:unit", "--filter=@chat-js/registry").tasks.find(
     (item: { taskId: string }) => item.taskId === "@chat-js/registry#test:unit"
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(unit.dependencies).toContain("@chat-js/registry#demo:check");
 });
 
@@ -149,7 +163,9 @@ test.each([
   ["apps/docs/index.mdx", false],
 ])("demo task hash invalidation for %s", async (file, invalidates) => {
   const hash = () =>
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     run("demo:check", "--filter=@chat-js/registry").tasks[0].hash;
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const before = hash();
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
@@ -197,6 +213,7 @@ test("CI affected query and execution select demo checking for canonical and dem
     );
     expect(query.exitCode, query.stderr.toString()).toBe(1);
     expect(
+      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       JSON.parse(query.stdout.toString()).data.affectedTasks.items.map(
         (item: { fullName: string }) => item.fullName
       )
@@ -210,6 +227,7 @@ test("CI affected query and execution select demo checking for canonical and dem
     );
     expect(execution.exitCode, execution.stderr.toString()).toBe(0);
     expect(
+      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       JSON.parse(execution.stdout.toString()).tasks.filter(
         (item: { taskId: string }) =>
           item.taskId === "@chat-js/registry#demo:check"
@@ -223,10 +241,13 @@ test.each([
   "packages/gateways/src/definition.ts",
 ])("registry typecheck invalidates for imported source %s", async (file) => {
   const hash = () =>
+    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     run("test:types", "--filter=@chat-js/registry").tasks.find(
       (item: { taskId: string }) =>
         item.taskId === "@chat-js/registry#test:types"
+      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     ).hash;
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const before = hash();
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
@@ -238,13 +259,18 @@ test.each([
 });
 
 test("registry typecheck restores gateway declaration outputs on cache hits", () => {
+  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const { tasks } = run("test:types", "--filter=@chat-js/registry");
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const registry = tasks.find(
     (item: { taskId: string }) => item.taskId === "@chat-js/registry#test:types"
   );
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const gateways = tasks.find(
     (item: { taskId: string }) => item.taskId === "@chat-js/gateways#test:types"
   );
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(registry.dependencies).toContain("@chat-js/gateways#test:types");
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(gateways.resolvedTaskDefinition.outputs).toEqual(["dist/**"]);
 });

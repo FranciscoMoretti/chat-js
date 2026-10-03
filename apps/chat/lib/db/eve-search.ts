@@ -46,6 +46,7 @@ export const writeEveSearchText = async (
       .values(
         chunks
           .slice(index, index + 100)
+          // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records.
           .map((entry) => ({ ...entry, conversationId, ownerId }))
       )
       .onConflictDoUpdate({
@@ -202,6 +203,7 @@ export const searchEveConversations = async (
   `);
   const page = items
     .slice(0, 20)
+    // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records.
     .map(({ highlightQuery, highlightWords, ...item }) => ({
       ...item,
       excerpt: highlightSearchExcerpt(

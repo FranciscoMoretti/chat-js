@@ -5,6 +5,7 @@ export const APP_SCHEME = config.appPrefix;
 const DEFAULT_DEV_APP_URL = "http://localhost:3000";
 
 export const APP_URL =
+  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- An empty environment variable should select the default development URL.
   process.env.ELECTRON_APP_URL ||
   (process.env.NODE_ENV === "production" ? config.appUrl : DEFAULT_DEV_APP_URL);
 

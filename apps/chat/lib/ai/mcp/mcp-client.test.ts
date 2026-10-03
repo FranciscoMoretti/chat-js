@@ -42,6 +42,7 @@ it("connects, discovers and closes without web cache dependencies", async () => 
   expect(mocks.close).toHaveBeenCalledOnce();
   expect(mocks.create).toHaveBeenCalledWith(
     expect.objectContaining({
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       transport: expect.objectContaining({
         headers: { Authorization: "test" },
         type: "http",
@@ -123,6 +124,7 @@ it("OAuth secrets go to the provider and never the resource transport", async ()
   await client.connect();
   expect(mocks.provider).toHaveBeenCalledWith(
     expect.objectContaining({
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       clientMetadata: expect.objectContaining({
         token_endpoint_auth_method: "client_secret_basic",
       }),
@@ -132,6 +134,7 @@ it("OAuth secrets go to the provider and never the resource transport", async ()
   );
   expect(mocks.create).toHaveBeenCalledWith(
     expect.objectContaining({
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       transport: expect.objectContaining({ headers: undefined }),
     })
   );
@@ -163,10 +166,13 @@ it("connection initialization always receives a cancellation signal", async () =
     url: "https://mcp.test",
   });
   await client.connect();
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const signal = mocks.create.mock.calls[0]?.[0].initializationOptions.signal;
   expect(signal).toBeInstanceOf(AbortSignal);
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(signal.aborted).toBe(false);
   await client.close();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(signal.aborted).toBe(true);
 });
 
@@ -187,6 +193,7 @@ it("callers cancel their shared connection waits independently", async () => {
   firstAbort.abort(new Error("first cancelled"));
   await expect(first).rejects.toThrow("first cancelled");
   expect(
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     mocks.create.mock.calls[0][0].initializationOptions.signal.aborted
   ).toBe(false);
   gate.resolve(undefined);
@@ -259,6 +266,7 @@ it("a retired provider's late OAuth redirect cannot authorise or close its repla
   mocks.create.mockImplementationOnce(async () => {
     const [[providerConfig]] = mocks.provider.mock.calls;
     await gate.promise;
+    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     await providerConfig.onRedirectToAuthorization(
       new URL("https://auth.test?state=retired")
     );
@@ -272,7 +280,9 @@ it("a retired provider's late OAuth redirect cannot authorise or close its repla
   const rejected = expect(first).rejects.toThrow("closed");
   await client.close();
   await client.connect();
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.create.mock.calls[0][0].transport.authProvider).not.toBe(
+    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     mocks.create.mock.calls[1][0].transport.authProvider
   );
   gate.resolve(undefined);

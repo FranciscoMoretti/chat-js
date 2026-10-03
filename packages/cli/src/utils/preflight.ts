@@ -19,8 +19,12 @@ export const preflight = async (cwd: string, targets: string[]) => {
     for (const [index, part] of parts.entries()) {
       current = path.join(current, part);
       // oxlint-disable-next-line no-await-in-loop -- Validate each parent before traversing its child; never follow an unchecked symlink.
-      const entry = await lstat(current).catch((error) => {
-        if (error.code === "ENOENT") {
+      const entry = await lstat(current).catch((error: unknown) => {
+        if (
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ) {
           return null;
         }
         throw error;

@@ -5,6 +5,7 @@ import path from "node:path";
 
 import { resolvePackageDirectory } from "./resolve-package-directory";
 
+// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = path;
 
 it("resolves a non-hoisted package from the workspace that declares it", async () => {

@@ -24,7 +24,9 @@ afterAll(async () => {
 });
 
 async function job(body: unknown) {
-  const [row] = await query`select id::text from graphile_worker.add_job(
+  const [row] = await query<
+    { id: string }[]
+  >`select id::text from graphile_worker.add_job(
     ${taskIdentifier},
     ${query.json({
       attempt: 1,

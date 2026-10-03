@@ -115,13 +115,16 @@ export const GuestConversationView = ({
             This chat has expired. Start a new chat to continue.
             <Button
               variant="link"
-              onClick={() => window.dispatchEvent(new Event("chatjs:new-chat"))}
+              onClick={() =>
+                globalThis.dispatchEvent(new Event("chatjs:new-chat"))
+              }
             >
               New chat
             </Button>
           </output>
         )}
         <EveComposer
+          // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve guest conversation initial focus; changing navigation focus requires an accessibility and UX decision.
           autoFocus
           files={files}
           selectedTool={selectedTool}
@@ -225,7 +228,9 @@ const GuestConversation = ({ binding }: { binding: Binding }) => {
   );
   const failure =
     commandError ||
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value.
     agent.error?.message ||
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
     (latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined);
   return (
     <GuestConversationView
@@ -307,10 +312,10 @@ export const DisposableGuestChat = () => {
         reset();
       }
     };
-    window.addEventListener("chatjs:new-chat", reset);
+    globalThis.addEventListener("chatjs:new-chat", reset);
     window.addEventListener("pageshow", restore);
     return () => {
-      window.removeEventListener("chatjs:new-chat", reset);
+      globalThis.removeEventListener("chatjs:new-chat", reset);
       window.removeEventListener("pageshow", restore);
     };
   }, [binding]);
@@ -329,6 +334,7 @@ export const DisposableGuestChat = () => {
                 </p>
               )}
               <EveComposer
+                // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the guest welcome typing workflow; changing initial page focus requires accessibility and UX review.
                 autoFocus
                 status={busy ? "submitted" : "ready"}
                 disabled={busy || !modelId}

@@ -126,9 +126,12 @@ beforeEach(() => {
           ? Response.json({ sessionId: saved.sessionId })
           : Response.json({ code: "eve_operation_not_found" }, { status: 404 });
       }
+      if (typeof init?.body !== "string") {
+        throw new TypeError("Expected a JSON copy request body");
+      }
       const body = z
         .strictObject({ operationId: z.uuid(), seed: z.literal(true) })
-        .parse(JSON.parse(String(init?.body)));
+        .parse(JSON.parse(init.body));
       const seed = await resolveAcceptedEveCopySeed(owner, body.operationId);
       const native = { seed, sessionId: crypto.randomUUID() };
       mocks.native.set(`${owner}/${body.operationId}`, native);
@@ -315,10 +318,12 @@ test("a lost native reply recovers without reopening or reading a revoked source
     throw new Error("Missing native fixture");
   }
   mocks.request.mockImplementation(async (...args) => {
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-assignment -- Wrap the captured native request mock without narrowing its overloads so the scenario can alter only the session reply.
     const response = await original(...args);
     if (args[1] === "/eve/chat/v1/session") {
       throw new Error("Lost native reply");
     }
+    // oxlint-disable-next-line typescript/no-unsafe-return -- Wrap the captured native request mock without narrowing its overloads so the scenario can alter only the session reply.
     return response;
   });
   await expect(
