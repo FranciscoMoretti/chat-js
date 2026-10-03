@@ -4,9 +4,9 @@ import { test, vi } from "vitest";
 import {
   barChart,
   pngBase64,
-  resizeCharts,
   seriesChart,
-  settleChart,
+  chartDrawn,
+  settleCharts,
 } from "../_shared/charts";
 import { captureChatStory } from "../_shared/visual";
 import type { ChatState } from "../_shared/visual";
@@ -33,8 +33,8 @@ const output = (
   message: string,
   settle?: ChatState["settle"]
 ): ChatState => ({
+  beforeCapture: settleCharts,
   label,
-  perViewport: resizeCharts,
   settle,
   ui: (
     <SavedCodeRenderer
@@ -71,9 +71,9 @@ test("saved-code-execution renders every state in the chat", () =>
       "Line chart output",
       seriesChart("line", "Weekly signups"),
       "Rendered 1 chart.",
-      settleChart
+      chartDrawn
     ),
-    output("Bar chart output", barChart, "Rendered 1 chart.", settleChart),
+    output("Bar chart output", barChart, "Rendered 1 chart.", chartDrawn),
     output(
       "Image output",
       { base64: pngBase64, format: "png" },

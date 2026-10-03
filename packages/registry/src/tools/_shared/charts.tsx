@@ -1,10 +1,14 @@
-import { getInstanceByDom } from "echarts";
 import type * as EChartsForReact from "echarts-for-react/lib/index";
-import type { EChartsReactProps } from "echarts-for-react/lib/types";
+import type {
+  EChartsInstance,
+  EChartsReactProps,
+} from "echarts-for-react/lib/types";
 import { expect } from "vitest";
 
-import { chartsFinished } from "./charts-finished";
 import { makeCanvasDataUri, settleAnimations } from "./visual";
+
+// The chart echarts-for-react settled on for each element, via `onChartReady`.
+const readyCharts = new WeakMap<HTMLElement, EChartsInstance>();
 
 /**
  * `vi.mock("echarts-for-react/lib/index", svgECharts)` for stories that render
@@ -22,6 +26,10 @@ export const svgECharts = async (
   const Wrapped = (props: EChartsReactProps) => (
     <Real
       {...props}
+      onChartReady={(chart) => {
+        readyCharts.set(chart.getDom(), chart);
+        props.onChartReady?.(chart);
+      }}
       opts={{ ...props.opts, renderer: "svg" }}
       option={{ ...props.option, animation: false }}
     />
@@ -67,48 +75,37 @@ export const pngBase64 =
     ctx.fillRect(400, 90, 140, 110);
   }).split(",")[1] ?? "";
 
-type Chart = NonNullable<ReturnType<typeof getInstanceByDom>>;
-
-// Kept per section because the instance id attribute that finds a chart is
-// stripped once it has settled.
-const settledCharts = new WeakMap<HTMLElement, Chart[]>();
-
-/**
- * Wait for the chart to paint and finish animating, then strip echarts'
- * per-instance id (`ec_<counter>`), the one attribute that varies run to run,
- * so the archive is byte-stable.
- */
-export const settleChart = async (section: HTMLElement) => {
-  await expect
-    .poll(() => section.querySelectorAll("svg").length)
-    .toBeGreaterThanOrEqual(1);
-  await settleAnimations();
-  await expect.poll(() => chartsFinished(section)).toBe(true);
-  const charts: Chart[] = [];
-  for (const el of section.querySelectorAll<HTMLElement>(
-    "[_echarts_instance_]"
-  )) {
-    const chart = getInstanceByDom(el);
-    if (chart) {
-      charts.push(chart);
-    }
-    el.removeAttribute("_echarts_instance_");
-  }
-  settledCharts.set(section, charts);
-};
+/** Settle for a state that shows a chart: wait until echarts has drawn it. */
+export const chartDrawn = (section: HTMLElement) =>
+  expect
+    .poll(() => section.querySelector(".echarts-for-react svg"))
+    .not.toBeNull();
 
 /**
- * Re-lay out settled charts at the width being captured. echarts sizes the SVG
- * once and only follows its container asynchronously, so without this the
- * mobile capture keeps the desktop-width chart, clipped. The width is passed
- * explicitly because a bare `resize()` keeps the size the chart was created at.
+ * Bring every chart in the section to its final frame at the current width;
+ * run it before each capture. echarts-for-react builds the chart
+ * asynchronously and fixes its width at creation, so wait for it and resize
+ * it to its container. Its instance id (`ec_<counter>`), the one attribute
+ * that varies run to run, is stripped so the archive is byte-stable.
  */
-export const resizeCharts = async (section: HTMLElement) => {
-  const charts = settledCharts.get(section) ?? [];
+export const settleCharts = async (section: HTMLElement) => {
+  const elements = [
+    ...section.querySelectorAll<HTMLElement>(".echarts-for-react"),
+  ];
+  const ready = () =>
+    elements.flatMap((el) => {
+      const chart = readyCharts.get(el);
+      return chart ? [chart] : [];
+    });
+  await expect.poll(() => ready().length).toBe(elements.length);
+  const charts = ready();
   for (const chart of charts) {
-    chart.resize({ width: chart.getDom().clientWidth });
+    const el = chart.getDom();
+    el.removeAttribute("_echarts_instance_");
+    chart.resize({ width: el.clientWidth });
     chart.getZr().refreshImmediately();
   }
+  await settleAnimations();
   await expect
     .poll(() => charts.every((chart) => chart.getZr().animation.isFinished()))
     .toBe(true);

@@ -16,7 +16,7 @@
         "oxlint-tsgolint": "7.0.2001",
         "playwright": "^1.59.1",
         "turbo": "2.10.12",
-        "uiverify": "^1.6.0",
+        "uiverify": "^1.7.0",
         "ultracite": "7.11.1",
         "vitest": "^4.1.11",
       },
@@ -4264,7 +4264,7 @@
 
     "uint8array-extras": ["uint8array-extras@1.5.0", "", {}, "sha512-rvKSBiC5zqCCiDZ9kAOszZcDvdAHwwIKJG33Ykj43OKcWsnmcBRL09YTU4nOeHZ8Y2a7l1MgTd08SBe9A8Qj6A=="],
 
-    "uiverify": ["uiverify@1.6.0", "", { "bin": { "uiverify": "dist/uiverify.js" } }, "sha512-kUOcxevKfaaRb/drTH2diiAePe6YxTfn5XcF0Vq+TJgPuHaWzuUv4bOFFhPn7firYKuGZEefwpOvmAKkzEHF4g=="],
+    "uiverify": ["uiverify@1.7.0", "", { "bin": { "uiverify": "dist/uiverify.js" } }, "sha512-8jOHqmLlA/0pjCV4IaequOYY9o1D9l4lM1rKBXdySQvfTBY1wsBqsEIEHQtHBj8no9uE23H//G1eAu8KfQljww=="],
 
     "ulid": ["ulid@3.0.2", "", { "bin": { "ulid": "dist/cli.js" } }, "sha512-yu26mwteFYzBAot7KVMqFGCVpsF6g8wXfJzQUHvu1no3+rRRSFcSV2nKeYvNPLD2J4b08jYBDhHUjeH0ygIl9w=="],
 

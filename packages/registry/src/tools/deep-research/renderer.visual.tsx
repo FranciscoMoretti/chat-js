@@ -146,8 +146,8 @@ test("deep-research renders every state in the chat", () =>
       ),
     },
     {
+      beforeCapture: pinStepColumns,
       label: "Report written, steps expanded",
-      perViewport: pinStepColumns,
       settle: async (section) => {
         const toggle = section.querySelector("button");
         if (!toggle) {

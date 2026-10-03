@@ -5,9 +5,9 @@ import { page } from "vitest/browser";
 import {
   barChart,
   pngBase64,
-  resizeCharts,
   seriesChart,
-  settleChart as settleChartOutput,
+  chartDrawn,
+  settleCharts,
 } from "../_shared/charts";
 import { captureChatStory } from "../_shared/visual";
 import type { ChatState } from "../_shared/visual";
@@ -38,7 +38,7 @@ const waitForCodeEditor = (section: HTMLElement) =>
 
 const settleChart = async (section: HTMLElement) => {
   await waitForCodeEditor(section);
-  await settleChartOutput(section);
+  await chartDrawn(section);
 };
 
 const outputState = (
@@ -47,8 +47,8 @@ const outputState = (
   settle: (section: HTMLElement) => Promise<void>,
   toolCallId: string
 ): ChatState => ({
+  beforeCapture: settleCharts,
   label,
-  perViewport: resizeCharts,
   settle,
   ui: (
     <CodeExecution

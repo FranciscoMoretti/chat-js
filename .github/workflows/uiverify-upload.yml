@@ -1,0 +1,84 @@
+name: UI Verify Upload
+
+# Uploads the capture of a fork's pull request, which gets no secrets. Runs from
+# main with secrets after "UI Verify Docs" or "UI Verify Registry" finishes on a
+# fork's pull request, and never runs code from the pull request: no checkout
+# of its files, no install, no npx inside its tree. Values the pull request
+# controls reach the shell only through env.
+on:
+  workflow_run:
+    workflows: [UI Verify Docs, UI Verify Registry]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+jobs:
+  upload:
+    if: >
+      github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.head_repository.full_name != github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uiverify-archive
+          path: ${{ runner.temp }}/archive
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Find the pull request
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_OWNER: ${{ github.event.workflow_run.head_repository.owner.login }}
+        run: |
+          set -euo pipefail
+          # workflow_run lists no pull requests for a fork, so look it up by its head.
+          pr=$(gh api "repos/$REPO/pulls?state=open&head=$HEAD_OWNER:$HEAD_BRANCH" --jq '.[0].number // empty')
+          {
+            echo "pr=$pr"
+            echo "branch<<__EOF__"
+            echo "$HEAD_OWNER:$HEAD_BRANCH" # a fork's "main" must not look like this repo's
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Fetch the commit's history (objects only, no checkout)
+        if: steps.meta.outputs.pr != ''
+        env:
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/repo"
+          cd "$RUNNER_TEMP/repo"
+          git remote add origin "https://github.com/$REPO"
+          git fetch -q --filter=blob:none --no-tags origin "$HEAD_SHA"
+          git update-ref HEAD "$HEAD_SHA"
+
+      # Each suite uploads to its own project. Docs renders every page: its test
+      # loads the built pages in an iframe, so the module graph `--only-changed`
+      # reads cannot see a page edit.
+      - name: Upload to UI Verify
+        if: steps.meta.outputs.pr != ''
+        env:
+          UIVERIFY_API_KEY: ${{ github.event.workflow_run.name == 'UI Verify Docs' && secrets.UIVERIFY_DOCS_API_KEY || secrets.UIVERIFY_REGISTRY_API_KEY }}
+          ONLY_CHANGED: ${{ github.event.workflow_run.name != 'UI Verify Docs' && '--only-changed' || '' }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+          BRANCH: ${{ steps.meta.outputs.branch }}
+          PR_NUMBER: ${{ steps.meta.outputs.pr }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/clean" && cd "$RUNNER_TEMP/clean"
+          npx -y uiverify@1.7.0 upload \
+            --static-dir "$RUNNER_TEMP/archive" \
+            --working-directory "$RUNNER_TEMP/repo" \
+            $ONLY_CHANGED --exit-zero-on-changes

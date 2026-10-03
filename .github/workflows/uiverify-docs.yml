@@ -29,10 +29,6 @@ jobs:
     name: uiverify-docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Fork and Dependabot PRs get no repository secrets: capture still runs, the
-    # upload is skipped.
-    env:
-      HAS_UIVERIFY_KEY: ${{ secrets.UIVERIFY_DOCS_API_KEY != '' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -54,8 +50,11 @@ jobs:
         run: node_modules/.bin/playwright install --with-deps chromium
       - name: Capture docs
         run: bun run test:visual:docs
+      # Pushes and pull requests from this repo's branches upload here, with the
+      # key. A fork's pull request gets no secrets, so it saves the capture and
+      # uiverify-upload.yml uploads it.
       - name: Upload UI Verify build
-        if: env.HAS_UIVERIFY_KEY == 'true'
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           UIVERIFY_API_KEY: ${{ secrets.UIVERIFY_DOCS_API_KEY }}
         # Merged UI becomes the baseline; PR builds still require review.
@@ -65,3 +64,11 @@ jobs:
           else
             bun run uiverify:upload:docs
           fi
+      - name: Save the capture
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uiverify-archive
+          path: apps/docs/uiverify-archive/
+          if-no-files-found: error
+          retention-days: 7
