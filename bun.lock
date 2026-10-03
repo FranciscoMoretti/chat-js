@@ -16,7 +16,7 @@
         "oxlint-tsgolint": "7.0.2001",
         "playwright": "^1.59.1",
         "turbo": "2.10.12",
-        "uiverify": "^1.4.2",
+        "uiverify": "^1.7.0",
         "ultracite": "7.11.1",
         "vitest": "^4.1.11",
       },
@@ -320,6 +320,7 @@
         "@mendable/firecrawl-js": "1.29.1",
         "@modelcontextprotocol/sdk": "^1.24.3",
         "@openrouter/ai-sdk-provider": "3.0.0",
+        "@tailwindcss/typography": "^0.5.19",
         "@tanstack/react-query": "^5.80.3",
         "@tavily/core": "^0.3.3",
         "@trpc/server": "^11.1.2",
@@ -346,6 +347,7 @@
         "echarts-for-react": "^3.0.2",
         "eve": "npm:@chat-js/eve@0.61.0-chatjs.0",
         "files-sdk": "2.1.0",
+        "geist": "^1.7.2",
         "guarded-fetch": "^0.1.4",
         "langfuse-vercel": "^3.37.0",
         "lexical": "^0.32.1",
@@ -2752,6 +2754,8 @@
 
     "gar": ["gar@1.0.4", "", {}, "sha512-w4n9cPWyP7aHxKxYHFQMegj7WIAsL/YX/C4Bs5Rr8s1H9M1rNtRWRsw+ovYMkXDQ5S4ZbYHsHAPmevPjPgw44w=="],
 
+    "geist": ["geist@1.7.2", "", { "peerDependencies": { "next": ">=13.2.0" } }, "sha512-Gu5lDFa3pLRyoBlBPf0QIFHVdWAnpco7fS1bJm41jyLPFoguBgiubseUN2oLXMgqZ7uxAxDoXcHMhCY/fOTTgg=="],
+
     "generate-function": ["generate-function@2.3.1", "", { "dependencies": { "is-property": "^1.0.2" } }, "sha512-eeB5GfMNeevm/GRYq20ShmsaGcmI81kIX2K9XQx5miC8KdHaC6Jm0qQ8ZNeGOi7wYB8OsdxKs+Y2oVuTFuVwKQ=="],
 
     "generate-object-property": ["generate-object-property@1.2.0", "", { "dependencies": { "is-property": "^1.0.0" } }, "sha512-TuOwZWgJ2VAMEGJvAyPWvpqxSANF0LDpmyHauMjFYzaACvn+QTT/AZomvPCzVBV7yDN3OmwHQ5OvHaeLKre3JQ=="],
@@ -4260,7 +4264,7 @@
 
     "uint8array-extras": ["uint8array-extras@1.5.0", "", {}, "sha512-rvKSBiC5zqCCiDZ9kAOszZcDvdAHwwIKJG33Ykj43OKcWsnmcBRL09YTU4nOeHZ8Y2a7l1MgTd08SBe9A8Qj6A=="],
 
-    "uiverify": ["uiverify@1.4.2", "", { "bin": { "uiverify": "dist/uiverify.js" } }, "sha512-JivJj9pdnu+oiyCRpHfjUUeOwPGK6H5usvT8tC8Zn32PqzR3WPvu4XoKX3etrQeAH4gfUi5VS3AqcNLQCXIHgQ=="],
+    "uiverify": ["uiverify@1.7.0", "", { "bin": { "uiverify": "dist/uiverify.js" } }, "sha512-8jOHqmLlA/0pjCV4IaequOYY9o1D9l4lM1rKBXdySQvfTBY1wsBqsEIEHQtHBj8no9uE23H//G1eAu8KfQljww=="],
 
     "ulid": ["ulid@3.0.2", "", { "bin": { "ulid": "dist/cli.js" } }, "sha512-yu26mwteFYzBAot7KVMqFGCVpsF6g8wXfJzQUHvu1no3+rRRSFcSV2nKeYvNPLD2J4b08jYBDhHUjeH0ygIl9w=="],
 

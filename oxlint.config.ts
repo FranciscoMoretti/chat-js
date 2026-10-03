@@ -20,9 +20,14 @@ export default defineConfig({
   options: { typeAware: true },
   overrides: [
     // #533: The Forge launcher is CommonJS; Electron declarations augment the global Window namespace.
+    // The registry visual harness declares ambient asset modules, which must stay a script.
     // This zero-offset rule does not honor source disable directives.
     {
-      files: ["apps/electron/scripts/run-forge.cjs", "apps/chat/electron.d.ts"],
+      files: [
+        "apps/electron/scripts/run-forge.cjs",
+        "apps/chat/electron.d.ts",
+        "packages/registry/src/tools/_shared/assets.d.ts",
+      ],
       rules: { "import/unambiguous": "off" },
     },
     {
