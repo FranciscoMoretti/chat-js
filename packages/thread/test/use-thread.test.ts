@@ -1,9 +1,9 @@
-import { describe, expect, mock, test } from "bun:test";
+import { afterAll, afterEach, describe, expect, mock, test } from "bun:test";
 
 import type { UIMessage } from "ai";
-import { createElement } from "react";
-import { act, create } from "react-test-renderer";
-import type { ReactTestRenderer } from "react-test-renderer";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { getMessageText } from "../src/message-utils";
@@ -15,23 +15,50 @@ import { Thread } from "../src/thread";
 import { MemoryThreadState } from "../src/thread-state";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { useThread } from "../src/use-thread";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { UseThreadHelpers, UseThreadOptions } from "../src/use-thread";
 /* oxlint-enable import/no-relative-parent-imports */
 import { ControlledTransport } from "./support/hook-controlled-transport";
-import { RejectingTransport } from "./support/rejecting-transport";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+import { createHookDom } from "./support/hook-dom";
+import { RejectingTransport } from "./support/rejecting-transport";
 import { ResumeTransport } from "./support/resume-transport";
-/* oxlint-enable import/max-dependencies */
 import { StateBackedThread } from "./support/state-backed-thread";
+/* oxlint-enable import/max-dependencies */
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 
-globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+// Install the DOM before loading the hook so its isomorphic effect uses the
+// browser commit lifecycle. Restore globals after this suite, including act.
+const dom = createHookDom();
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+const { useThread } = await import("../src/use-thread");
+/* oxlint-enable import/no-relative-parent-imports */
+const roots = new Set<Root>();
+
+// Use React's asynchronous act path even for synchronous actions. The microtask
+// boundary lets act flush effects and any updates scheduled by the commit.
+const commit = async (action: () => void): Promise<void> => {
+  await act(async (): Promise<void> => {
+    action();
+    await Promise.resolve();
+  });
+};
+
+afterEach(async (): Promise<void> => {
+  await commit((): void => {
+    for (const root of roots) {
+      root.unmount();
+    }
+    roots.clear();
+  });
+  globalThis.document.body.replaceChildren();
+});
+
+afterAll(async (): Promise<void> => {
+  await dom.close();
+});
 
 const user = (id: string): UIMessage => ({
   id,
@@ -68,13 +95,15 @@ const HookHarness = ({
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const renderUseThread = (
+const renderUseThread = async (
   initialOptions: UseThreadOptions,
   onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void
 ) => {
   let current: UseThreadHelpers | undefined;
-  // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-  let renderer: ReactTestRenderer | undefined;
+  const container = globalThis.document.createElement("div");
+  globalThis.document.body.append(container);
+  const renderer = createRoot(container);
+  roots.add(renderer);
   const render = (options: UseThreadOptions) =>
     createElement(HookHarness, {
       onCommit,
@@ -84,10 +113,8 @@ const renderUseThread = (
       options,
     });
 
-  // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-  act((): void => {
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-    renderer = create(render(initialOptions));
+  await commit((): void => {
+    renderer.render(render(initialOptions));
   });
 
   return {
@@ -97,16 +124,16 @@ const renderUseThread = (
       }
       return current;
     },
-    unmount(): void {
-      // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-      act(() => {
-        renderer?.unmount();
+    async unmount(): Promise<void> {
+      await commit((): void => {
+        renderer.unmount();
       });
+      roots.delete(renderer);
+      container.remove();
     },
-    update(options: UseThreadOptions): void {
-      // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-      act(() => {
-        renderer?.update(render(options));
+    async update(options: UseThreadOptions): Promise<void> {
+      await commit((): void => {
+        renderer.render(render(options));
       });
     },
   };
@@ -131,6 +158,24 @@ const waitFor = async (
 };
 /* oxlint-enable eslint/no-magic-numbers */
 
+const trackSubscriptions = (
+  thread: Readonly<Pick<Thread, "subscribe">>
+): Set<() => void> => {
+  const listeners = new Set<() => void>();
+  const { subscribe } = thread;
+  Object.defineProperty(thread, "subscribe", {
+    value: (listener: () => void): (() => void) => {
+      listeners.add(listener);
+      const unsubscribe = subscribe(listener);
+      return (): void => {
+        listeners.delete(listener);
+        unsubscribe();
+      };
+    },
+  });
+  return listeners;
+};
+
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
@@ -143,14 +188,13 @@ describe("useThread", (): void => {
     });
     const transport = new ControlledTransport();
     const thread = new StateBackedThread(state, transport);
-    const hook = renderUseThread({ thread });
+    const hook = await renderUseThread({ thread });
 
     expect(hook.current.messages.map(({ id }): string => id)).toEqual([
       "user-1",
     ]);
 
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-    act((): void => {
+    await commit((): void => {
       thread.addMessage(user("user-2"), "user-1");
       thread.setCursor("user-2");
     });
@@ -161,12 +205,10 @@ describe("useThread", (): void => {
     ]);
 
     let send: Promise<void> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       send = hook.current.sendMessage({ text: "user-3" });
       await waitFor((): boolean => transport.requests.length === 1);
     });
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
@@ -192,12 +234,12 @@ describe("useThread", (): void => {
       throw new Error("Expected a response message");
     }
     expect(getMessageText(response)).toBe("reply");
-    hook.unmount();
+    await hook.unmount();
   });
 
-  test("forwards setters called by an initial commit ref", (): void => {
+  test("forwards setters called by an initial commit ref", async (): Promise<void> => {
     let isFirstCommit = true;
-    const hook = renderUseThread(
+    const hook = await renderUseThread(
       { messages: [user("user-a")] },
       (setMessages): void => {
         if (isFirstCommit) {
@@ -210,7 +252,7 @@ describe("useThread", (): void => {
     expect(hook.current.messages.map(({ id }): string => id)).toEqual([
       "user-b",
     ]);
-    hook.unmount();
+    await hook.unmount();
   });
   test("uses current callbacks without replacing the chat transport", async (): Promise<void> => {
     const firstTransport = new RejectingTransport();
@@ -221,18 +263,17 @@ describe("useThread", (): void => {
     const secondError = mock((): void => {
       /* Ignore transport errors while checking callback replacement. */
     });
-    const hook = renderUseThread({
+    const hook = await renderUseThread({
       id: "thread-1",
       onError: firstError,
       transport: firstTransport,
     });
 
-    hook.update({
+    await hook.update({
       id: "thread-1",
       onError: secondError,
       transport: secondTransport,
     });
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await hook.current.sendMessage({ text: "first request" });
     });
@@ -242,7 +283,7 @@ describe("useThread", (): void => {
     expect(firstError).not.toHaveBeenCalled();
     expect(secondError).toHaveBeenCalledTimes(1);
 
-    hook.update({
+    await hook.update({
       id: "thread-2",
       messages: [user("user-2")],
       onError: secondError,
@@ -252,39 +293,52 @@ describe("useThread", (): void => {
     expect(hook.current.messages.map(({ id }): string => id)).toEqual([
       "user-2",
     ]);
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await hook.current.sendMessage({ text: "second request" });
     });
 
     expect(secondTransport.requests).toBe(1);
-    hook.unmount();
+    await hook.unmount();
   });
 
-  test("resubscribes when the supplied thread changes", (): void => {
+  test("resubscribes when the supplied thread changes", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
-    const hook = renderUseThread({ thread: first });
+    const firstListeners = trackSubscriptions(first);
+    const secondListeners = trackSubscriptions(second);
+    const hook = await renderUseThread({ thread: first });
 
+    expect(firstListeners.size).toBeGreaterThan(0);
+    expect(secondListeners.size).toBe(0);
     expect(hook.current.messages.map(({ id }): string => id)).toEqual([
       "user-a",
     ]);
-    hook.update({ thread: second });
+    await hook.update({ thread: second });
+    expect(firstListeners.size).toBe(0);
+    expect(secondListeners.size).toBeGreaterThan(0);
     expect(hook.current.messages.map(({ id }): string => id)).toEqual([
       "user-b",
     ]);
-    hook.unmount();
+    await commit((): void => {
+      first.setMessages([user("old-thread-update")]);
+      second.setMessages([user("new-thread-update")]);
+    });
+    expect(hook.current.messages.map(({ id }): string => id)).toEqual([
+      "new-thread-update",
+    ]);
+    await hook.unmount();
+    expect(firstListeners.size).toBe(0);
+    expect(secondListeners.size).toBe(0);
   });
 
-  test("forwards a retained setter to the replacement supplied thread", (): void => {
+  test("forwards a retained setter to the replacement supplied thread", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
-    const hook = renderUseThread({ thread: first });
+    const hook = await renderUseThread({ thread: first });
     const { setMessages } = hook.current;
 
-    hook.update({ thread: second });
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-    act((): void => {
+    await hook.update({ thread: second });
+    await commit((): void => {
       setMessages([user("user-c")]);
     });
 
@@ -294,7 +348,7 @@ describe("useThread", (): void => {
     expect(hook.current.messages.map(({ id }): string => id)).toEqual([
       "user-c",
     ]);
-    hook.unmount();
+    await hook.unmount();
   });
 
   test("automatically resumes the supplied thread", async (): Promise<void> => {
@@ -303,15 +357,14 @@ describe("useThread", (): void => {
       messages: [user("user-1"), assistant("assistant-1")],
       transport,
     });
-    const hook = renderUseThread({ resume: true, thread });
+    const hook = await renderUseThread({ resume: true, thread });
 
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
 
     expect(transport.reconnects).toBe(1);
-    hook.unmount();
+    await hook.unmount();
   });
 
   test("resumes a replacement supplied thread while resume remains enabled", async (): Promise<void> => {
@@ -325,14 +378,12 @@ describe("useThread", (): void => {
       messages: [user("user-2"), assistant("assistant-2")],
       transport: secondTransport,
     });
-    const hook = renderUseThread({ resume: true, thread: first });
+    const hook = await renderUseThread({ resume: true, thread: first });
 
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
-    hook.update({ resume: true, thread: second });
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
+    await hook.update({ resume: true, thread: second });
     await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
@@ -343,26 +394,24 @@ describe("useThread", (): void => {
       "user-2",
       "assistant-2",
     ]);
-    hook.unmount();
+    await hook.unmount();
   });
 
   test("keeps status immediate while throttling message snapshots", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const hook = renderUseThread({
+    const hook = await renderUseThread({
       experimental_throttle: 100,
       messages: [user("user-1")],
       transport,
     });
 
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
-    act((): void => {
+    await commit((): void => {
       hook.current.tree.setCursor("user-1");
     });
 
     let run:
       | Awaited<ReturnType<UseThreadHelpers["tree"]["startRun"]>>
       | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       run = await hook.current.tree.startRun({ from: "user-1" });
       await waitFor((): boolean => transport.requests.length === 1);
@@ -370,7 +419,6 @@ describe("useThread", (): void => {
     expect(hook.current.status).toBe("submitted");
     expect(hook.current.tree.status).toBe("submitted");
 
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
@@ -387,7 +435,6 @@ describe("useThread", (): void => {
       "user-1",
     ]);
 
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await Bun.sleep(110);
     });
@@ -398,13 +445,45 @@ describe("useThread", (): void => {
       )
     ).toBe("streaming");
 
-    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       transport.finish(0);
       await run?.finished;
     });
     expect(hook.current.status).toBe("ready");
-    hook.unmount();
+    await hook.unmount();
+  });
+  test("cancels pending throttled notifications on unmount", async (): Promise<void> => {
+    const thread = new Thread({ messages: [user("user-a")] });
+    const listeners = trackSubscriptions(thread);
+    const getSnapshot = mock(thread.getSnapshot);
+    thread.getSnapshot = getSnapshot;
+    const hook = await renderUseThread({ experimental_throttle: 100, thread });
+
+    await commit((): void => {
+      thread.setMessages([user("user-b")]);
+    });
+    expect(hook.current.messages.map(({ id }): string => id)).toEqual([
+      "user-b",
+    ]);
+    await commit((): void => {
+      thread.setMessages([user("user-c")]);
+    });
+    expect(hook.current.messages.map(({ id }): string => id)).toEqual([
+      "user-b",
+    ]);
+    await hook.unmount();
+    expect(listeners.size).toBe(0);
+    getSnapshot.mockClear();
+
+    await act(async (): Promise<void> => {
+      thread.setMessages([user("after-unmount")]);
+      await Bun.sleep(110);
+    });
+    // A leaked throttle timer would read the snapshot even after unsubscribing.
+    expect(getSnapshot).not.toHaveBeenCalled();
+    expect(hook.current.messages.map(({ id }): string => id)).toEqual([
+      "user-b",
+    ]);
   });
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
