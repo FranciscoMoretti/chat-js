@@ -246,9 +246,12 @@ test("composer connector controls persist and fence native tool execution", asyn
       });
     await toggle.click();
     await expect
-      .poll(async () =>
-        (await discover()).some((tool) => tool.name === `${nameId}__read_token`)
-      )
+      .poll(async () => {
+        const discoveredTools = await discover();
+        return discoveredTools.some(
+          (tool) => tool.name === `${nameId}__read_token`
+        );
+      })
       .toBe(true);
     await page.getByRole("menuitem", { name: "Manage connectors" }).click();
     await expect(page).toHaveURL(

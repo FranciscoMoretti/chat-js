@@ -6,7 +6,6 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { createHash, randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -311,9 +310,8 @@ test("cannot accept or expose a native seed before file and document receipts co
   expect(await resolveAcceptedEveCopySeed(ownerId, id)).toEqual(
     f.input.plan.seed
   );
-  expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.copy.plan
-  ).toBeNull();
+  const unplanned = await getEveCopyOperation(ownerId, f.input.operationId);
+  expect(unplanned?.copy.plan).toBeNull();
 });
 /* oxlint-enable id-length, max-statements, typescript/promise-function-async */
 
@@ -375,10 +373,8 @@ test("accepted copies recover after source revocation and a lost native reply, t
       return Promise.reject(new Error("Lost native response"));
     })
   ).rejects.toThrow("Lost native");
-  expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.conversation
-      .state
-  ).toBe("uncertain");
+  const uncertain = await getEveCopyOperation(ownerId, f.input.operationId);
+  expect(uncertain?.conversation.state).toBe("uncertain");
   expect(
     await resolveAcceptedEveCopySeed(ownerId, f.saved.conversation.id)
   ).toEqual(f.input.plan.seed);
@@ -399,9 +395,12 @@ test("accepted copies recover after source revocation and a lost native reply, t
     f.saved.conversation.id,
     f.saved.conversation.id,
   ]);
-  expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.copy
-  ).toMatchObject({ phase: "bound", plan: null, seed: null });
+  const journal = await getEveCopyOperation(ownerId, f.input.operationId);
+  expect(journal?.copy).toMatchObject({
+    phase: "bound",
+    plan: null,
+    seed: null,
+  });
   await expect(
     rejectUnacceptedEveCopy(ownerId, f.saved.conversation.id)
   ).rejects.toThrow("Accepted copies");

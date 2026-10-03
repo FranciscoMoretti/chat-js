@@ -11,28 +11,27 @@ interface UsageInfo {
   outputTokens?: number;
 }
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers --
  * jsdoc/require-param (#534): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): calculateLLMCost uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): calculateLLMCost accepts usage: UsageInfo; pricing: { input: string; output: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
  * Calculate LLM cost in CENTS from AI SDK usage data and model pricing.
  * Pricing is per-token in dollars (e.g., "0.00000006" = $0.06 per million tokens).
  */
 const calculateLLMCost = (
-  usage: UsageInfo,
+  usage: Readonly<UsageInfo>,
   pricing: {
-    input: string;
-    output: string;
+    readonly input: string;
+    readonly output: string;
   }
 ): number => {
   const inputCost = (usage.inputTokens ?? 0) * Number(pricing.input);
   const outputCost = (usage.outputTokens ?? 0) * Number(pricing.output);
   return (inputCost + outputCost) * 100;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
 interface LLMCostEntry {
   modelId: AppModelId;
   source: string;
@@ -52,8 +51,7 @@ interface ImageCostEntry {
   usage: UsageInfo;
 }
 type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
-/* oxlint-disable id-length, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * id-length (#506): CostAccumulator uses e; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/models" dependency within this package instead of introducing an alias or barrel API.
  * jsdoc/require-param (#534): CostAccumulator's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): CostAccumulator's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -126,12 +124,14 @@ class CostAccumulator {
       return Math.ceil(total);
     }
     // Batch model definition lookups (dedupe by modelId)
-    const uniqueModelIds = [...new Set(llmEntries.map((e) => e.modelId))];
+    const uniqueModelIds = [
+      ...new Set(llmEntries.map((entry) => entry.modelId)),
+    ];
     const modelDefinitions = await Promise.all(
       uniqueModelIds.map((id) => getAppModelDefinition(id).catch(() => null))
     );
     const modelById = new Map<AppModelId, AppModelDefinition | null>(
-      uniqueModelIds.map((id, i) => [id, modelDefinitions[i]])
+      uniqueModelIds.map((id, modelIndex) => [id, modelDefinitions[modelIndex]])
     );
     // Sum LLM costs (unrounded) then ceil at the end
     for (const entry of llmEntries) {
@@ -156,6 +156,6 @@ class CostAccumulator {
     return this.entries.length > 0;
   }
 }
-/* oxlint-enable id-length, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 export { CostAccumulator };
 export type { UsageInfo };
