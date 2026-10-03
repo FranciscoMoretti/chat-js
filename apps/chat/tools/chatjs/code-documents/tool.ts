@@ -9,9 +9,8 @@ import { executeEveDocumentTool } from "@/lib/eve/document-tools";
 
 import { codeGuidelines } from "./guidelines";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const createCodeDocument = defineTool({
+const createCodeDocument = defineTool({
   description: `Create a new code document in this conversation. Supply the complete content and a descriptive title. ${codeGuidelines}`,
   execute: async (input, context) =>
     eveDocumentWriteResult.parse(
@@ -21,11 +20,9 @@ export const createCodeDocument = defineTool({
   outputSchema: eveDocumentWriteResult,
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const editCodeDocument = defineTool({
+const editCodeDocument = defineTool({
   description: `Edit an existing code document in this conversation. Read the document first and supply its revision ID. Supply the complete replacement content. ${codeGuidelines}`,
   execute: async (input, context) =>
     eveDocumentWriteResult.parse(
@@ -35,4 +32,4 @@ export const editCodeDocument = defineTool({
   outputSchema: eveDocumentWriteResult,
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
+export { createCodeDocument, editCodeDocument };

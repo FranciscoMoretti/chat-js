@@ -20,25 +20,20 @@ import { generatedRegistrationSource } from "../utils/generated-registration-sou
 import { preflight } from "../utils/preflight";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
+const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
   (item) => item.meta.chatjs.id !== "memory"
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const parseStorageOptions = (value: string): Record<string, unknown> => {
+const parseStorageOptions = (value: string): Record<string, unknown> => {
   try {
     return z.record(z.string(), z.unknown()).parse(JSON.parse(value));
   } catch {
     throw new Error("Storage config must be a valid JSON object.");
   }
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
@@ -46,7 +41,7 @@ export const parseStorageOptions = (value: string): Record<string, unknown> => {
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Configure the installed source without evaluating it or editing dependencies. */
-export const configureStorageProvider = async (
+const configureStorageProvider = async (
   destination: string,
   selection: StorageSelection
 ): Promise<void> => {
@@ -99,4 +94,8 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
+export {
+  configureStorageProvider,
+  INSTALLABLE_STORAGE_PROVIDERS,
+  parseStorageOptions,
+};

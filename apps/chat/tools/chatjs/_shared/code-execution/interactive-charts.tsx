@@ -3,13 +3,9 @@ import React from "react";
 
 import { Card } from "@/components/ui/card";
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-export type { BaseChart } from "./interactive-chart-impl";
-/* oxlint-enable import/exports-last */
-
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
+/* oxlint-disable react/only-export-components -- #623: ChartSkeleton is the existing local loading fallback for this dynamic default chart entrypoint; the loader module is not a standalone Fast Refresh component boundary. */
 const ChartSkeleton = () => (
   <Card className="border-border bg-card overflow-hidden">
     <div className="flex h-[400px] items-center justify-center p-6">
@@ -17,12 +13,12 @@ const ChartSkeleton = () => (
     </div>
   </Card>
 );
-
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 
-/* oxlint-disable import/no-default-export -- The framework or tool loader consumes this default export by convention. */
-/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
+/* oxlint-enable typescript/explicit-function-return-type */
+
+export type { BaseChart } from "./interactive-chart-impl";
+/* oxlint-disable import/no-default-export, react/only-export-components -- #623: The chart loader and dynamic import consume this existing default chart entrypoint; preserving that contract retains its established Fast Refresh exception. */
 export default dynamic(
   async () => {
     const { default: InteractiveChart } =
@@ -34,5 +30,4 @@ export default dynamic(
     ssr: false,
   }
 );
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable import/no-default-export */
+/* oxlint-enable import/no-default-export, react/only-export-components */

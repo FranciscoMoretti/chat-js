@@ -1,13 +1,10 @@
-export interface MigrationIdentity {
+interface MigrationIdentity {
   createdAt: number;
   hash: string;
 }
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): KNOWN_CHATJS_TABLE_NAMES stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /** Tables from the EVE-only baseline plus every retired ChatJS table. */
-export const KNOWN_CHATJS_TABLE_NAMES = [
+const KNOWN_CHATJS_TABLE_NAMES = [
   "account",
   "EveChat",
   "EveChatProject",
@@ -49,15 +46,11 @@ export const KNOWN_CHATJS_TABLE_NAMES = [
   "Suggestion",
   "Vote",
 ] as const;
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): getMigrationHistoryProblem stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): getMigrationHistoryProblem uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): getMigrationHistoryProblem accepts { applied, available, hasChatJsTables, }: { applied: MigrationIdentity[]; available: ; recorded; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): getMigrationHistoryProblem preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const getMigrationHistoryProblem = ({
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null -- no-magic-numbers (#517): getMigrationHistoryProblem uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): getMigrationHistoryProblem accepts { applied, available, hasChatJsTables, }: { applied: MigrationIdentity[]; available:; recorded; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): getMigrationHistoryProblem preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const getMigrationHistoryProblem = ({
   applied,
   available,
   hasChatJsTables,
@@ -85,4 +78,6 @@ export const getMigrationHistoryProblem = ({
     ? null
     : "This database uses a migration history from before the EVE-only baseline.";
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+export { getMigrationHistoryProblem, KNOWN_CHATJS_TABLE_NAMES };
+export type { MigrationIdentity };

@@ -13,13 +13,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-/* oxlint-disable import/group-exports -- ArtifactProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type ArtifactProps = HTMLAttributes<HTMLDivElement>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types -- Artifact: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactProps). */
+type ArtifactProps = HTMLAttributes<HTMLDivElement>;
 
-export const Artifact = ({
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Artifact: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactProps). */
+
+const Artifact = ({
   className,
   ...props
 }: ArtifactProps): React.JSX.Element => (
@@ -31,15 +30,13 @@ export const Artifact = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ArtifactHeaderProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ArtifactHeaderProps = HTMLAttributes<HTMLDivElement>;
 
-export type ArtifactHeaderProps = HTMLAttributes<HTMLDivElement>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactHeader: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactHeaderProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactHeaderProps). */
 
-export const ArtifactHeader = ({
+const ArtifactHeader = ({
   className,
   ...props
 }: ArtifactHeaderProps): React.JSX.Element => (
@@ -51,15 +48,13 @@ export const ArtifactHeader = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ArtifactCloseProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ArtifactCloseProps = ComponentProps<typeof Button>;
 
-export type ArtifactCloseProps = ComponentProps<typeof Button>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactClose: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const ArtifactClose = ({
+const ArtifactClose = ({
   className,
   children,
   size = "sm",
@@ -80,15 +75,13 @@ export const ArtifactClose = ({
     <span className="sr-only">Close</span>
   </Button>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ArtifactTitleProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
 
-export type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactTitle: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactTitleProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactTitleProps). */
 
-export const ArtifactTitle = ({
+const ArtifactTitle = ({
   className,
   ...props
 }: ArtifactTitleProps): React.JSX.Element => (
@@ -97,47 +90,41 @@ export const ArtifactTitle = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ArtifactDescriptionProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ArtifactDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
 
-export type ArtifactDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactDescription: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactDescriptionProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactDescriptionProps). */
 
-export const ArtifactDescription = ({
+const ArtifactDescription = ({
   className,
   ...props
 }: ArtifactDescriptionProps): React.JSX.Element => (
   <p className={cn("text-muted-foreground text-sm", className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ArtifactActionsProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ArtifactActionsProps = HTMLAttributes<HTMLDivElement>;
 
-export type ArtifactActionsProps = HTMLAttributes<HTMLDivElement>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactActions: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactActionsProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactActions: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactActionsProps). */
 
-export const ArtifactActions = ({
+const ArtifactActions = ({
   className,
   ...props
 }: ArtifactActionsProps): React.JSX.Element => (
   <div className={cn("flex items-center gap-1", className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ArtifactActionProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type ArtifactActionProps = ComponentProps<typeof Button> & {
+type ArtifactActionProps = ComponentProps<typeof Button> & {
   tooltip?: string;
   label?: string;
   icon?: LucideIcon;
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ArtifactAction: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
 
-export const ArtifactAction = ({
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ArtifactAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
+
+const ArtifactAction = ({
   tooltip,
   label,
   icon: Icon,
@@ -179,18 +166,36 @@ export const ArtifactAction = ({
 
   return button;
 };
-/* oxlint-enable import/group-exports, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports -- ArtifactContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ArtifactContentProps = HTMLAttributes<HTMLDivElement>;
 
-export type ArtifactContentProps = HTMLAttributes<HTMLDivElement>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactContentProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ArtifactContentProps). */
 
-export const ArtifactContent = ({
+const ArtifactContent = ({
   className,
   ...props
 }: ArtifactContentProps): React.JSX.Element => (
   <div className={cn("flex-1 overflow-auto p-4", className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+export {
+  Artifact,
+  ArtifactAction,
+  ArtifactActions,
+  ArtifactClose,
+  ArtifactContent,
+  ArtifactDescription,
+  ArtifactHeader,
+  ArtifactTitle,
+};
+export type {
+  ArtifactActionProps,
+  ArtifactActionsProps,
+  ArtifactCloseProps,
+  ArtifactContentProps,
+  ArtifactDescriptionProps,
+  ArtifactHeaderProps,
+  ArtifactProps,
+  ArtifactTitleProps,
+};

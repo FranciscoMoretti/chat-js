@@ -25,13 +25,11 @@ const badgeVariants = cva(
     },
   }
 );
-/* oxlint-disable import/exports-last -- BadgeProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together;  */
 
-export interface BadgeProps
+interface BadgeProps
   extends
     React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Badge: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }: BadgeProps). */
 
@@ -43,7 +41,8 @@ const Badge = ({
   <div className={cn(badgeVariants({ variant }), className)} {...props} />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/only-export-components -- badge.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
+/* oxlint-disable react/only-export-components -- #620: Consumers import Badge, badgeVariants from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { Badge, badgeVariants };
 /* oxlint-enable react/only-export-components */
+export type { BadgeProps };

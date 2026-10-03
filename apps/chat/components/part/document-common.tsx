@@ -4,18 +4,18 @@ import React, { memo } from "react";
 import { useDocumentConversation } from "@/components/eve/eve-document-context";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-/* oxlint-disable id-length, import/exports-last, import/group-exports, react/only-export-components -- hasProp: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
+/* oxlint-disable id-length -- hasProp: id-length: retain conventional event, index, and generic identifiers in this existing callback contract */
 
-export const hasProp = <T extends string>(
+const hasProp = <T extends string>(
   obj: unknown,
   prop: T
 ): obj is Record<T, unknown> =>
   typeof obj === "object" && obj !== null && prop in obj;
-/* oxlint-enable id-length, import/exports-last, import/group-exports, react/only-export-components */
+/* oxlint-enable id-length */
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, react/only-export-components -- isArtifactToolResult: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
+/* oxlint-disable id-length -- isArtifactToolResult: id-length: retain conventional event, index, and generic identifiers in this existing callback contract */
 
-export const isArtifactToolResult = (
+const isArtifactToolResult = (
   o: unknown
 ): o is { id: string; title: string; kind: ArtifactKind } =>
   hasProp(o, "id") &&
@@ -24,7 +24,7 @@ export const isArtifactToolResult = (
   typeof o.title === "string" &&
   hasProp(o, "kind") &&
   typeof o.kind === "string";
-/* oxlint-enable id-length, import/exports-last, import/group-exports, react/only-export-components */
+/* oxlint-enable id-length */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- getActionText: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -113,10 +113,8 @@ const PureDocumentToolResult = ({
   );
 };
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable import/exports-last, import/group-exports -- DocumentToolResult: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export const DocumentToolResult = memo(PureDocumentToolResult);
-/* oxlint-enable import/exports-last, import/group-exports */
+const DocumentToolResult = memo(PureDocumentToolResult);
 
 interface DocumentToolCallProps {
   args: { title?: string };
@@ -168,7 +166,8 @@ const PureDocumentToolCall = ({
   );
 };
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable import/group-exports -- DocumentToolCall: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export const DocumentToolCall = memo(PureDocumentToolCall, () => true);
-/* oxlint-enable import/group-exports */
+const DocumentToolCall = memo(PureDocumentToolCall, () => true);
+/* oxlint-disable react/only-export-components -- #620: Consumers import DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
+export { DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult };
+/* oxlint-enable react/only-export-components */

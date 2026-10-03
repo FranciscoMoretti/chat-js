@@ -53,37 +53,31 @@ const decrypt = (encrypted: string): string => {
   return decipher.update(dataB64, "base64", "utf-8") + decipher.final("utf-8");
 };
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): encryptedText stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /**
  * Custom Drizzle type for encrypted text fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
  */
-export const encryptedText = customType<{ driverData: string; data: string }>({
+const encryptedText = customType<{ driverData: string; data: string }>({
   dataType: (): string => "text",
   fromDriver: (value): string => decrypt(value),
   toDriver: (value): string => encrypt(value),
 });
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * id-length (#506): encryptedJson uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): encryptedJson stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-returns (#535): encryptedJson's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable id-length, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- id-length (#506): encryptedJson uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+jsdoc/require-returns (#535): encryptedJson's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /**
  * Custom Drizzle type for encrypted JSON fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
  * Stores JSON as encrypted text in the database.
  */
-export const encryptedJson = <T>() =>
+const encryptedJson = <T>() =>
   customType<{ driverData: string; data: T }>({
     dataType: (): string => "text",
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Encrypted JSON columns are typed by their Drizzle declaration; adding per-column runtime schemas requires a database serialization contract migration.
     fromDriver: (value) => JSON.parse(decrypt(value)) as T,
     toDriver: (value): string => encrypt(JSON.stringify(value)),
   });
-/* oxlint-enable id-length, import/group-exports, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable id-length, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+export { encryptedJson, encryptedText };

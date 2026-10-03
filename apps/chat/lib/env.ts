@@ -4,11 +4,8 @@ import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
 import { clientEnvSchema, serverEnvSchema } from "./env-schema";
 import { resolveEveEnvironment } from "./eve/environment";
 
-/* oxlint-disable import/group-exports, node/no-process-env --
- * import/group-exports (#523): env stays exported at its declaration so its public contract is visible beside its implementation.
- * node/no-process-env (#537): env reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
-export const env = createEnv({
+/* oxlint-disable node/no-process-env -- node/no-process-env (#537): env reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
+const env = createEnv({
   client: clientEnvSchema,
   experimental__runtimeEnv: {
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
@@ -21,14 +18,12 @@ export const env = createEnv({
   },
   server: serverEnvSchema,
 });
-/* oxlint-enable import/group-exports, node/no-process-env */
+/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable import/group-exports, node/no-process-env --
- * import/group-exports (#523): gatewayEnv stays exported at its declaration so its public contract is visible beside its implementation.
- * node/no-process-env (#537): gatewayEnv reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
+/* oxlint-disable node/no-process-env -- node/no-process-env (#537): gatewayEnv reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
 // Registry gateways declare their environment independently of the app schema.
-export const gatewayEnv = Object.fromEntries(
+const gatewayEnv = Object.fromEntries(
   gatewayEnvVariables.map((name) => [name, process.env[name]])
 );
-/* oxlint-enable import/group-exports, node/no-process-env */
+/* oxlint-enable node/no-process-env */
+export { env, gatewayEnv };

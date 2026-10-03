@@ -21,32 +21,29 @@ import {
 import { cn } from "@/lib/utils";
 
 import { CodeBlock } from "./code-block";
-/* oxlint-disable import/group-exports -- ToolProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type ToolProps = ComponentProps<typeof Collapsible>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types -- Tool: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolProps). */
+type ToolProps = ComponentProps<typeof Collapsible>;
 
-export const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Tool: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolProps). */
+
+const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
   <Collapsible
     className={cn("not-prose mb-4 w-full rounded-md border", className)}
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ToolHeaderProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export interface ToolHeaderProps {
+interface ToolHeaderProps {
   title?: string;
   type: ToolUIPart["type"];
   state: ToolUIPart["state"];
   className?: string;
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- getStatusBadge: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
-export const getStatusBadge = (status: ToolUIPart["state"]) => {
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
+
+const getStatusBadge = (status: ToolUIPart["state"]) => {
   const labels: Record<ToolUIPart["state"], string> = {
     "approval-requested": "Awaiting Approval",
     "approval-responded": "Responded",
@@ -74,11 +71,11 @@ export const getStatusBadge = (status: ToolUIPart["state"]) => {
     </Badge>
   );
 };
-/* oxlint-enable import/group-exports, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolHeader: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolHeader: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const ToolHeader = ({
+const ToolHeader = ({
   className,
   title,
   type,
@@ -102,15 +99,13 @@ export const ToolHeader = ({
     <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
-/* oxlint-enable import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ToolContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 
-export type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolContentProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolContentProps). */
 
-export const ToolContent = ({
+const ToolContent = ({
   className,
   ...props
 }: ToolContentProps): React.JSX.Element => (
@@ -122,17 +117,15 @@ export const ToolContent = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- ToolInputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type ToolInputProps = ComponentProps<"div"> & {
+type ToolInputProps = ComponentProps<"div"> & {
   input: ToolUIPart["input"];
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ToolInput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, input, ...props }: ToolInputProps); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const ToolInput = ({
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ToolInput: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, input, ...props }: ToolInputProps); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+const ToolInput = ({
   className,
   input,
   ...props
@@ -146,18 +139,16 @@ export const ToolInput = ({
     </div>
   </div>
 );
-/* oxlint-enable import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- ToolOutputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type ToolOutputProps = ComponentProps<"div"> & {
+type ToolOutputProps = ComponentProps<"div"> & {
   output: ToolUIPart["output"];
   errorText: ToolUIPart["errorText"];
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolOutput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including errorText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const ToolOutput = ({
+/* oxlint-disable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolOutput: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including errorText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+const ToolOutput = ({
   className,
   output,
   errorText,
@@ -201,4 +192,14 @@ export const ToolOutput = ({
     </div>
   );
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-disable react/only-export-components -- #620: Consumers import getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
+export { getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput };
+/* oxlint-enable react/only-export-components */
+export type {
+  ToolContentProps,
+  ToolHeaderProps,
+  ToolInputProps,
+  ToolOutputProps,
+  ToolProps,
+};

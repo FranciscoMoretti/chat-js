@@ -70,9 +70,9 @@ const handleDownload = async (
   }
 };
 /* oxlint-enable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable id-length, import/group-exports, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- ImageActions: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
+/* oxlint-disable id-length, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- ImageActions: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
-export const ImageActions = ({
+const ImageActions = ({
   className,
   imageUrl,
 }: {
@@ -108,11 +108,11 @@ export const ImageActions = ({
     </Button>
   </div>
 );
-/* oxlint-enable id-length, import/group-exports, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ImageModal: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
-export const ImageModal = ({
+const ImageModal = ({
   isOpen,
   onClose,
   imageUrl,
@@ -173,4 +173,5 @@ export const ImageModal = ({
     </Dialog>
   );
 };
-/* oxlint-enable import/group-exports, max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+export { ImageActions, ImageModal };

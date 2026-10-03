@@ -4,15 +4,13 @@
 import type { AppModelDefinition, AppModelId } from "../ai/app-models";
 import { getAppModelDefinition } from "../ai/app-models";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/exports-last --
- * import/exports-last (#522): UsageInfo is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- */
+
 /** Minimal usage info needed for cost calculation */
-export interface UsageInfo {
+interface UsageInfo {
   inputTokens?: number;
   outputTokens?: number;
 }
-/* oxlint-enable import/exports-last */
+
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -72,7 +70,7 @@ type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
  * Accumulates costs from multiple LLM and external API calls.
  * Pass through call chain, collect at request end.
  */
-export class CostAccumulator {
+class CostAccumulator {
   private readonly entries: CostEntry[] = [];
   /** Add LLM cost from generateText/streamText usage */
   public addLLMCost(
@@ -159,3 +157,5 @@ export class CostAccumulator {
   }
 }
 /* oxlint-enable id-length, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+export { CostAccumulator };
+export type { UsageInfo };

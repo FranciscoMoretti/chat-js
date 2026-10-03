@@ -1,10 +1,6 @@
 import type { EveForkKind } from "./contracts";
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): EveResponseGroupLineageConversation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): EveResponseGroupLineageConversation stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export interface EveResponseGroupLineageConversation {
+interface EveResponseGroupLineageConversation {
   createdAt: Date;
   forkKind: EveForkKind | null;
   forkMessageId: string | null;
@@ -14,20 +10,14 @@ export interface EveResponseGroupLineageConversation {
   parentConversationId: string | null;
   sessionId: string;
 }
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): EveResponseGroupLineage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): EveResponseGroupLineage stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export interface EveResponseGroupLineage {
+interface EveResponseGroupLineage {
   groupId: string;
   replacements: ReadonlyMap<
     string,
     { conversationId: string; sessionId: string }
   >;
 }
-/* oxlint-enable import/exports-last, import/group-exports */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/explicit-function-return-type (#560): Keep localTurnBoundary's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -71,7 +61,7 @@ const laterConversation = (
  */
 /** Resolve comparison ownership without treating edits or later turns as cards. */
 // oxlint-disable-next-line eslint/complexity -- Candidate discovery, lineage validation, and retry selection form one fail-closed projection.
-export const resolveEveResponseGroupLineage = (
+const resolveEveResponseGroupLineage = (
   selectedConversationId: string,
   conversations: readonly EveResponseGroupLineageConversation[],
   groups: readonly { candidateOperationIds: readonly string[]; id: string }[]
@@ -179,3 +169,5 @@ export const resolveEveResponseGroupLineage = (
   return { groupId: group.id, replacements };
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+export { resolveEveResponseGroupLineage };
+export type { EveResponseGroupLineage, EveResponseGroupLineageConversation };

@@ -100,13 +100,10 @@ const sharedTool = (
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements */
 
-/* oxlint-disable import/group-exports, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): sharedEvePart stays exported at its declaration so its public contract is visible beside its implementation.
- * max-statements (#512): sharedEvePart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): sharedEvePart accepts part: EveMessagePart; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): sharedEvePart intentionally keeps the existing falsy-value behavior of request.options?.length; answer; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-statements (#512): sharedEvePart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/prefer-readonly-parameter-types (#565): sharedEvePart accepts part: EveMessagePart; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): sharedEvePart intentionally keeps the existing falsy-value behavior of request.options?.length; answer; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
   if (part.type === "text" || part.type === "reasoning") {
     return [{ state: part.state, text: part.text, type: part.type }];
   }
@@ -149,18 +146,15 @@ export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
   // Connection challenges can contain owner-only authorization URLs and codes.
   return [{ text: "An account connection was requested.", type: "text" }];
 };
-/* oxlint-enable import/group-exports, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, init-declarations, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/group-exports (#523): sharedEveMessages stays exported at its declaration so its public contract is visible beside its implementation.
- * init-declarations (#507): sharedEveMessages assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * typescript/explicit-function-return-type (#560): Keep sharedEveMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep sharedEveMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): sharedEveMessages accepts events: readonly MessageStreamEvent[]; current; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): sharedEveMessages intentionally keeps the existing falsy-value behavior of message.metadata?.turnId; modelId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): sharedEveMessages preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const sharedEveMessages = (events: readonly MessageStreamEvent[]) => {
+/* oxlint-disable init-declarations, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- init-declarations (#507): sharedEveMessages assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+typescript/explicit-function-return-type (#560): Keep sharedEveMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep sharedEveMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): sharedEveMessages accepts events: readonly MessageStreamEvent[]; current; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): sharedEveMessages intentionally keeps the existing falsy-value behavior of message.metadata?.turnId; modelId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/no-null (#570): sharedEveMessages preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const sharedEveMessages = (events: readonly MessageStreamEvent[]) => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
   // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
@@ -190,4 +184,5 @@ export const sharedEveMessages = (events: readonly MessageStreamEvent[]) => {
     };
   });
 };
-/* oxlint-enable import/group-exports, init-declarations, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+export { sharedEveMessages, sharedEvePart };

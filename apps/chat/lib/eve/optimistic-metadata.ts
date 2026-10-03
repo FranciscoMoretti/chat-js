@@ -17,20 +17,17 @@ type History = InfiniteData<Awaited<ReturnType<typeof listEveConversations>>>;
 type Metadata = { title: string; isPinned: boolean };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): pendingEveMetadataMutations is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): pendingEveMetadataMutations stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): pendingEveMetadataMutations accepts cache: QueryClient; mutation; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/prefer-readonly-parameter-types (#565): pendingEveMetadataMutations accepts cache: QueryClient; mutation; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Background title refreshes defer to the last metadata mutation's reconciliation. */
-export const pendingEveMetadataMutations = (cache: QueryClient): number =>
+const pendingEveMetadataMutations = (cache: QueryClient): number =>
   cache.isMutating({
     predicate: (mutation): boolean =>
       mutation.options.meta?.eveMetadata === true,
   });
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable id-length, no-undefined, typescript/prefer-readonly-parameter-types --
  * id-length (#506): rollbackFields uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
@@ -52,16 +49,13 @@ const rollbackFields = <T extends Metadata>(
 });
 /* oxlint-enable id-length, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): optimisticEveMetadata stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): optimisticEveMetadata skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/explicit-function-return-type (#560): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): optimisticEveMetadata accepts cache: QueryClient; page; item; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const optimisticEveMetadata = async (
+/* oxlint-disable max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-continue (#515): optimisticEveMetadata skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+typescript/explicit-function-return-type (#560): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): optimisticEveMetadata accepts cache: QueryClient; page; item; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const optimisticEveMetadata = async (
   cache: QueryClient,
   listKey: QueryKey,
   detailKey: QueryKey,
@@ -128,4 +122,5 @@ export const optimisticEveMetadata = async (
     }
   };
 };
-/* oxlint-enable import/group-exports, max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+export { optimisticEveMetadata, pendingEveMetadataMutations };

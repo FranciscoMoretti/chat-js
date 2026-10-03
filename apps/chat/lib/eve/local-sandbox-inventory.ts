@@ -7,40 +7,34 @@ import nodePath from "node:path";
 import { z } from "zod";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/group-exports, no-magic-numbers --
- * import/group-exports (#523): localEveSandboxOwnerSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): localEveSandboxOwnerSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export const localEveSandboxOwnerSchema = z.strictObject({
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): localEveSandboxOwnerSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const localEveSandboxOwnerSchema = z.strictObject({
   backendName: z.literal("microsandbox"),
   sessionId: z.string().min(1),
   sessionKey: z.string().min(1),
   version: z.literal(1),
   writeAheadResources: z.literal(true).optional(),
 });
-/* oxlint-enable import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable id-length, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * id-length (#506): readLocalEveSandboxInventory uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): readLocalEveSandboxInventory stays exported at its declaration so its public contract is visible beside its implementation.
- * init-declarations (#507): readLocalEveSandboxInventory assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): readLocalEveSandboxInventory skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): readLocalEveSandboxInventory uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readLocalEveSandboxInventory accepts sessionIds: string[]; entry; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable id-length, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- id-length (#506): readLocalEveSandboxInventory uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+init-declarations (#507): readLocalEveSandboxInventory assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+jsdoc/require-param (#534): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-continue (#515): readLocalEveSandboxInventory skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): readLocalEveSandboxInventory uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): readLocalEveSandboxInventory accepts sessionIds: string[]; entry; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
  * coverage. Only explicit owner records establish resource ownership.
  */
-export const readLocalEveSandboxInventory = async (
+const readLocalEveSandboxInventory = async (
   appRoot: string,
   sessionIds: string[]
 ) => {
@@ -129,4 +123,5 @@ export const readLocalEveSandboxInventory = async (
   }
   return { owned, unattributedDirectories };
 };
-/* oxlint-enable id-length, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+export { localEveSandboxOwnerSchema, readLocalEveSandboxInventory };

@@ -10,12 +10,7 @@ import { draftAttachment } from "./draft";
 import { eveToolMetadata } from "./message-tool-selection";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): EVE_MESSAGE_OPERATION_HEADER is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): EVE_MESSAGE_OPERATION_HEADER stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
-/* oxlint-enable import/exports-last, import/group-exports */
+const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 
 const pendingMessage = z.object({
   attachments: z.array(draftAttachment).default([]),
@@ -31,20 +26,12 @@ const deliveryMetadata = z.object({
   chatjs: z.object({ operationId: z.uuid() }),
 });
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): PendingEveMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): PendingEveMessage stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type PendingEveMessage = z.infer<typeof pendingMessage>;
-/* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): ActivePendingEveMessage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): ActivePendingEveMessage stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type ActivePendingEveMessage = PendingEveMessage & {
+type PendingEveMessage = z.infer<typeof pendingMessage>;
+
+type ActivePendingEveMessage = PendingEveMessage & {
   operationId: string;
 };
-/* oxlint-enable import/exports-last, import/group-exports */
+
 type NewPendingEveMessage = Omit<
   PendingEveMessage,
   "operationId" | "rejection"
@@ -91,17 +78,14 @@ const read = (storage: DeliveryStorage, sessionId: string) => {
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): eveMessageDelivery stays exported at its declaration so its public contract is visible beside its implementation.
- * max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): eveMessageDelivery uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): eveMessageDelivery accepts pending: PendingEveMessage; event: MessageStreamEvent; input: NewPendingEveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-undefined (#519): eveMessageDelivery uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): eveMessageDelivery accepts pending: PendingEveMessage; event: MessageStreamEvent; input: NewPendingEveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
-export const eveMessageDelivery = {
+const eveMessageDelivery = {
   acknowledge: (
     storage: DeliveryStorage,
     sessionId: string,
@@ -171,17 +155,14 @@ export const eveMessageDelivery = {
     });
   },
 };
-/* oxlint-enable import/group-exports, max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): eveMessageDeliveryMetadata stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /** The proxy owns this metadata so caller input cannot forge an acknowledgement. */
-export const eveMessageDeliveryMetadata = (
+const eveMessageDeliveryMetadata = (
   operationId: string,
   selectedTool: UiToolName | null | undefined
 ) => ({
@@ -190,17 +171,21 @@ export const eveMessageDeliveryMetadata = (
     operationId: z.uuid().parse(operationId),
   },
 });
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveMessageOperationId stays exported at its declaration so its public contract is visible beside its implementation.
- * no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): eveMessageOperationId accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveMessageOperationId = (event: MessageStreamEvent) =>
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): eveMessageOperationId accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveMessageOperationId = (event: MessageStreamEvent) =>
   event.type === "message.received"
     ? deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
     : undefined;
-/* oxlint-enable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+export {
+  EVE_MESSAGE_OPERATION_HEADER,
+  eveMessageDelivery,
+  eveMessageDeliveryMetadata,
+  eveMessageOperationId,
+};
+export type { ActivePendingEveMessage, PendingEveMessage };

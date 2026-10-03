@@ -7,18 +7,12 @@ import { v7 as uuidv7 } from "uuid";
 import { ChatSDKError } from "./ai/errors";
 import type { ErrorCode } from "./ai/errors";
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): cn stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): cn accepts ...inputs: ClassValue[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const cn = (...inputs: ClassValue[]): string => twMerge(clsx(inputs));
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): cn accepts ...inputs: ClassValue[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const cn = (...inputs: ClassValue[]): string => twMerge(clsx(inputs));
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): fetchWithErrorHandlers stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): fetchWithErrorHandlers accepts ...[input, init]: Parameters<typeof fetch>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const fetchWithErrorHandlers = async (
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): fetchWithErrorHandlers accepts ...[input, init]: Parameters<typeof fetch>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const fetchWithErrorHandlers = async (
   ...[input, init]: Parameters<typeof fetch>
 ): Promise<Response> => {
   try {
@@ -40,21 +34,14 @@ export const fetchWithErrorHandlers = async (
     throw error;
   }
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): generateUUID stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const generateUUID = (): string => uuidv7();
-/* oxlint-enable import/group-exports */
+const generateUUID = (): string => uuidv7();
 
-/* oxlint-disable id-length, import/group-exports, max-lines-per-function, typescript/strict-boolean-expressions --
- * id-length (#506): getLanguageFromFileName uses R; c; h; r as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): getLanguageFromFileName stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): getLanguageFromFileName keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/strict-boolean-expressions (#610): getLanguageFromFileName intentionally keeps the existing falsy-value behavior of fileName.split(".").pop()?.toLowerCase(); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const getLanguageFromFileName = (fileName: string): string => {
+/* oxlint-disable id-length, max-lines-per-function, typescript/strict-boolean-expressions -- id-length (#506): getLanguageFromFileName uses R; c; h; r as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+max-lines-per-function (#510): getLanguageFromFileName keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/strict-boolean-expressions (#610): getLanguageFromFileName intentionally keeps the existing falsy-value behavior of fileName.split(".").pop()?.toLowerCase(); distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const getLanguageFromFileName = (fileName: string): string => {
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const extension = fileName.split(".").pop()?.toLowerCase() || "";
 
@@ -107,15 +94,10 @@ export const getLanguageFromFileName = (fileName: string): string => {
   // Default to Python.
   return extensionToLanguage[extension] || "python";
 };
-/* oxlint-enable id-length, import/group-exports, max-lines-per-function, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-lines-per-function, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): getTextContentFromModelMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): getTextContentFromModelMessage accepts message: ModelMessage; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const getTextContentFromModelMessage = (
-  message: ModelMessage
-): string => {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): getTextContentFromModelMessage accepts message: ModelMessage; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const getTextContentFromModelMessage = (message: ModelMessage): string => {
   const { content } = message;
 
   if (typeof content === "string") {
@@ -131,4 +113,11 @@ export const getTextContentFromModelMessage = (
     })
     .join("\n");
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+export {
+  cn,
+  fetchWithErrorHandlers,
+  generateUUID,
+  getLanguageFromFileName,
+  getTextContentFromModelMessage,
+};

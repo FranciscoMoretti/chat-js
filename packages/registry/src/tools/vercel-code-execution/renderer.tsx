@@ -8,12 +8,10 @@ import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-e
 
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-export type CodeExecutionTool = ToolRendererProps<
+type CodeExecutionTool = ToolRendererProps<
   typeof codeExecutionInput,
   typeof codeExecutionResult
 >["tool"];
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -50,7 +48,7 @@ const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
 /* oxlint-enable react/only-export-components */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-export const CodeExecution = defineToolRenderer({
+const CodeExecution = defineToolRenderer({
   inputSchema: codeExecutionInput,
   outputSchema: codeExecutionResult,
   render: CodeExecutionView,
@@ -62,3 +60,5 @@ export const CodeExecution = defineToolRenderer({
   }),
 });
 /* oxlint-enable eslint/no-undefined */
+export { CodeExecution };
+export type { CodeExecutionTool };

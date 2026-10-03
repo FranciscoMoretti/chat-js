@@ -95,15 +95,13 @@ const ResponseStatus = ({
 
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable import/exports-last -- ThreadInstallCommand: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- ThreadInstallCommand: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/no-multi-comp -- ThreadInstallCommand: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/no-magic-numbers -- ThreadInstallCommand: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 
 /* oxlint-disable react/jsx-max-depth -- ThreadInstallCommand: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ThreadInstallCommand: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
-export const ThreadInstallCommand = (): React.JSX.Element => {
+const ThreadInstallCommand = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
   const copyCommand = async (): Promise<void> => {
@@ -149,8 +147,6 @@ export const ThreadInstallCommand = (): React.JSX.Element => {
 
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable react/no-multi-comp -- Conversation: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/max-lines-per-function -- Conversation: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
@@ -814,13 +810,12 @@ const PlaygroundSession = (): React.JSX.Element => {
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/group-exports -- ThreadPlayground: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/no-multi-comp -- ThreadPlayground: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/no-magic-numbers -- ThreadPlayground: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ThreadPlayground: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
 /* oxlint-disable react/jsx-max-depth -- ThreadPlayground: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-export const ThreadPlayground = (): React.JSX.Element => {
+const ThreadPlayground = (): React.JSX.Element => {
   const [session, setSession] = useState(0);
   return (
     <div>
@@ -844,17 +839,15 @@ export const ThreadPlayground = (): React.JSX.Element => {
 
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- ThreadShowcase: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/no-multi-comp -- ThreadShowcase: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-export const ThreadShowcase = (): React.JSX.Element => (
+const ThreadShowcase = (): React.JSX.Element => (
   <>
     <ThreadPlayground />
     <ThreadInstallCommand />
   </>
 );
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable max-lines -- ThreadShowcase: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */
+export { ThreadInstallCommand, ThreadPlayground, ThreadShowcase };

@@ -3,21 +3,15 @@ import { generateUUID } from "@/lib/utils";
 
 import { deduplicateByDomainAndUrl } from "./search-utils";
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
- * import/group-exports (#523): SearchQuery stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-export type SearchQuery = {
+/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+type SearchQuery = {
   maxResults: number;
   query: string;
 };
-/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
+/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
- * import/group-exports (#523): MultiQuerySearchResult stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/consistent-type-definitions (#559): MultiQuerySearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-export type MultiQuerySearchResult = {
+/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): MultiQuerySearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+type MultiQuerySearchResult = {
   query: SearchQuery;
   results: {
     url: string;
@@ -25,17 +19,14 @@ export type MultiQuerySearchResult = {
     content: string;
   }[];
 };
-/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
+/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
- * import/group-exports (#523): MultiQuerySearchResponse stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/consistent-type-definitions (#559): MultiQuerySearchResponse preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-export type MultiQuerySearchResponse = {
+/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): MultiQuerySearchResponse preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+type MultiQuerySearchResponse = {
   error?: string;
   searches: MultiQuerySearchResult[];
 };
-/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
+/* oxlint-enable typescript/consistent-type-definitions */
 
 /* oxlint-disable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
  * id-length (#506): multiQueryWebSearchStep uses q as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
@@ -43,7 +34,7 @@ export type MultiQuerySearchResponse = {
  * max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): multiQueryWebSearchStep accepts { queries, search, dataStream, toolCallId, }: { queries: SearchQuery[]; search: ( qu; query: SearchQuery; q; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-export const multiQueryWebSearchStep = async ({
+const multiQueryWebSearchStep = async ({
   queries,
   search,
   dataStream,
@@ -136,3 +127,5 @@ export const multiQueryWebSearchStep = async ({
   }
 };
 /* oxlint-enable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
+export { multiQueryWebSearchStep };
+export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };

@@ -4,24 +4,18 @@ import type { ImageModel, LanguageModel } from "ai";
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): ToolProgressWriter stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): ToolProgressWriter accepts part: { data: ResearchUpdate; id?: string; type: "data-researchUpdate"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): ToolProgressWriter accepts part: { data: ResearchUpdate; id?: string; type: "data-researchUpdate"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Progress events understood by installed search tools without depending on ChatMessage. */
-export interface ToolProgressWriter {
+interface ToolProgressWriter {
   write: (part: {
     data: ResearchUpdate;
     id?: string;
     type: "data-researchUpdate";
   }) => void;
 }
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): ToolModelProvider stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export interface ToolModelProvider {
+interface ToolModelProvider {
   createImageModel: (modelId: string) => ImageModel;
   createLanguageModel: (modelId: string) => LanguageModel;
   createVideoModel: (modelId: string) => Experimental_VideoModelV4;
@@ -31,4 +25,4 @@ export interface ToolModelProvider {
     output: { image: boolean; video: boolean };
   }>;
 }
-/* oxlint-enable import/group-exports */
+export type { ToolModelProvider, ToolProgressWriter };

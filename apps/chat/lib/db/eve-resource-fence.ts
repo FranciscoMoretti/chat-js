@@ -93,28 +93,22 @@ do $$ declare table_name text; begin
 end $$;
 `;
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): installEvePostgresResourceFence stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): installEvePostgresResourceFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const installEvePostgresResourceFence = async (
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): installEvePostgresResourceFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const installEvePostgresResourceFence = async (
   connection: Sql
 ): Promise<void> => {
   await connection.begin("isolation level read committed", async (query) => {
     await query.unsafe(installSql);
   });
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): fenceEvePostgresResourcesInTransaction stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): fenceEvePostgresResourcesInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-statements (#512): fenceEvePostgresResourcesInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): fenceEvePostgresResourcesInTransaction uses 1, 10_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResourcesInTransaction accepts query: TransactionSql; input: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): fenceEvePostgresResourcesInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-statements (#512): fenceEvePostgresResourcesInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): fenceEvePostgresResourcesInTransaction uses 1, 10_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResourcesInTransaction accepts query: TransactionSql; input: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Shares the caller's READ COMMITTED transaction with inventory coordination. */
-export const fenceEvePostgresResourcesInTransaction = async (
+const fenceEvePostgresResourcesInTransaction = async (
   query: TransactionSql,
   input: {
     runIds: string[];
@@ -162,19 +156,16 @@ export const fenceEvePostgresResourcesInTransaction = async (
     }
   }
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): fenceEvePostgresResources stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): fenceEvePostgresResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResources accepts connection: Sql; input: { runIds: string[]; streamIds: string[]; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): fenceEvePostgresResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResources accepts connection: Sql; input: { runIds: string[]; streamIds: string[]; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Internal provider primitive: caller authorizes and inventories these resources.
  * Blocks future payload writes, including run recreation and linked descendants.
  * Does not fence queues or erase data, and is not a complete deletion receipt.
  */
-export const fenceEvePostgresResources = async (
+const fenceEvePostgresResources = async (
   connection: Sql,
   input: {
     runIds: string[];
@@ -185,4 +176,9 @@ export const fenceEvePostgresResources = async (
     await fenceEvePostgresResourcesInTransaction(query, input);
   });
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types */
+export {
+  fenceEvePostgresResources,
+  fenceEvePostgresResourcesInTransaction,
+  installEvePostgresResourceFence,
+};

@@ -14,40 +14,23 @@ import { eveDocumentOperations } from "./document-contracts";
 import { selectedEveTools } from "./selected-tools";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, unicorn/no-null --
- * import/group-exports (#523): eveTurnTool stays exported at its declaration so its public contract is visible beside its implementation.
- * unicorn/no-null (#570): eveTurnTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable unicorn/no-null -- unicorn/no-null (#570): eveTurnTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 // Set only by turn.started. Approval/reconnect authentication must not change it.
-export const eveTurnTool = defineState<UiToolName | null>(
+const eveTurnTool = defineState<UiToolName | null>(
   "chatjs.turn-tool",
   () => null
 );
-/* oxlint-enable import/group-exports, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): eveTurnGuest stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const eveTurnGuest = defineState<boolean>(
-  "chatjs.turn-guest",
-  () => false
-);
-/* oxlint-enable import/group-exports */
+const eveTurnGuest = defineState<boolean>("chatjs.turn-guest", () => false);
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): eveToolAllowed stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const eveToolAllowed = (name: string): boolean =>
+const eveToolAllowed = (name: string): boolean =>
   !eveTurnGuest.get() ||
   ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some((tool) => tool === name);
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveInstalledToolEnabled stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): eveInstalledToolEnabled uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): eveInstalledToolEnabled accepts [key]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveInstalledToolEnabled = (name: string): boolean => {
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): eveInstalledToolEnabled uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): eveInstalledToolEnabled accepts [key]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveInstalledToolEnabled = (name: string): boolean => {
   const operation = Object.entries(eveDocumentOperations).find(
     ([key]) => key === name
   )?.[1];
@@ -65,13 +48,10 @@ export const eveInstalledToolEnabled = (name: string): boolean => {
   }
   return true;
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, import/group-exports --
- * id-length (#506): filterEveTools uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): filterEveTools stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const filterEveTools = <T extends object>(tools: T): Partial<T> => {
+/* oxlint-disable id-length -- id-length (#506): filterEveTools uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
+const filterEveTools = <T extends object>(tools: T): Partial<T> => {
   const selected = selectedEveTools(eveTurnTool.get());
   const available: Partial<T> = { ...tools };
   for (const name in available) {
@@ -86,4 +66,11 @@ export const filterEveTools = <T extends object>(tools: T): Partial<T> => {
   }
   return available;
 };
-/* oxlint-enable id-length, import/group-exports */
+/* oxlint-enable id-length */
+export {
+  eveInstalledToolEnabled,
+  eveToolAllowed,
+  eveTurnGuest,
+  eveTurnTool,
+  filterEveTools,
+};

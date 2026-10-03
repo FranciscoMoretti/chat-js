@@ -11,10 +11,8 @@ const mcpCacheTags = {
   discovery: (connectorId: string): string => `mcp-discovery-${connectorId}`,
 } as const;
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 // Types for cached results
-export interface ConnectionStatusResult {
+interface ConnectionStatusResult {
   error?: string;
   needsAuth: boolean;
   status:
@@ -24,12 +22,8 @@ export interface ConnectionStatusResult {
     | "authorizing"
     | "incompatible";
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export interface DiscoveryResult {
+interface DiscoveryResult {
   prompts: {
     name: string;
     description: string | null;
@@ -47,8 +41,6 @@ export interface DiscoveryResult {
   }[];
   tools: { name: string; description: string | null }[];
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
@@ -66,9 +58,7 @@ class UncachedConnectionStatusError extends Error {
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const createCachedConnectionStatus = (
+const createCachedConnectionStatus = (
   connectorId: string,
   fetcher: () => Promise<ConnectionStatusResult>
 ): (() => Promise<ConnectionStatusResult>) => {
@@ -100,11 +90,7 @@ export const createCachedConnectionStatus = (
     }
   };
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -112,7 +98,7 @@ export const createCachedConnectionStatus = (
  * Create a cached discovery fetcher for a specific connector.
  * Cache duration: 5 minutes (tools/resources/prompts rarely change)
  */
-export const createCachedDiscovery = (
+const createCachedDiscovery = (
   connectorId: string,
   fetcher: () => Promise<DiscoveryResult>
 ): (() => Promise<DiscoveryResult>) =>
@@ -130,8 +116,6 @@ export const createCachedDiscovery = (
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /**
@@ -155,14 +139,18 @@ const invalidateDiscovery = (connectorId: string): void => {
 };
 /* oxlint-enable jsdoc/require-param */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /**
  * Invalidate all MCP caches for a connector.
  */
-export const invalidateAllMcpCaches = (connectorId: string): void => {
+const invalidateAllMcpCaches = (connectorId: string): void => {
   invalidateConnectionStatus(connectorId);
   invalidateDiscovery(connectorId);
 };
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable import/group-exports */
+export {
+  createCachedConnectionStatus,
+  createCachedDiscovery,
+  invalidateAllMcpCaches,
+};
+export type { ConnectionStatusResult, DiscoveryResult };

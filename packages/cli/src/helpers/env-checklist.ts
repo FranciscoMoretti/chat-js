@@ -24,9 +24,8 @@ type EnvRequirementLike = {
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-export type EnvVarEntry = {
+type EnvVarEntry = {
   /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
   vars: string;
   /** Human-readable description derived from the Zod schema */
@@ -35,7 +34,6 @@ export type EnvVarEntry = {
   oneOfGroup?: string;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/exports-last */
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
 
@@ -183,9 +181,7 @@ const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const collectEnvChecklist = (
-  input: EnvChecklistInput
-): EnvVarEntry[] => {
+const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
   const entries: EnvVarEntry[] = [
     {
       description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
@@ -207,3 +203,5 @@ export const collectEnvChecklist = (
   ];
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
+export { collectEnvChecklist };
+export type { EnvVarEntry };

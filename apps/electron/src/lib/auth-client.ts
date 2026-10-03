@@ -42,8 +42,7 @@ const electronAuthStorage =
   process.env.NODE_ENV === "production" ? storage() : memoryStorage();
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable import/group-exports -- authClient: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export const authClient = createAuthClient({
+const authClient = createAuthClient({
   baseURL: APP_URL,
   plugins: [
     electronClient({
@@ -59,10 +58,9 @@ export const authClient = createAuthClient({
     }),
   ],
 });
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ElectronAuthClient: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-export type ElectronAuthClient = typeof authClient & {
+type ElectronAuthClient = typeof authClient & {
   authenticate: (data: { token: string }) => Promise<unknown>;
   getCookie: () => string;
   getSession: () => Promise<{ data?: { user?: unknown } | null }>;
@@ -75,6 +73,6 @@ export type ElectronAuthClient = typeof authClient & {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- electronAuthClient: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export const electronAuthClient: ElectronAuthClient = authClient;
-/* oxlint-enable import/group-exports */
+const electronAuthClient: ElectronAuthClient = authClient;
+export { authClient, electronAuthClient };
+export type { ElectronAuthClient };

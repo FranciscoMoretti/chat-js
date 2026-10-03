@@ -13,14 +13,11 @@ import {
 } from "./schema";
 import type { User, UserModelPreference } from "./schema";
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): createProject stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): createProject accepts { id, userId, name, instructions = "", icon, iconColor, }: { id: string; userId: str; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): createProject intentionally keeps the existing falsy-value behavior of icon; iconColor; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const createProject = ({
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- typescript/explicit-function-return-type (#560): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): createProject accepts { id, userId, name, instructions = "", icon, iconColor, }: { id: string; userId: str; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): createProject intentionally keeps the existing falsy-value behavior of icon; iconColor; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const createProject = ({
   id,
   userId,
   name,
@@ -45,44 +42,35 @@ export const createProject = ({
     updatedAt: new Date(),
     userId,
   });
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): getProjectsByUserId stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep getProjectsByUserId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getProjectsByUserId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): getProjectsByUserId accepts { userId }: { userId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const getProjectsByUserId = ({ userId }: { userId: string }) =>
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep getProjectsByUserId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getProjectsByUserId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): getProjectsByUserId accepts { userId }: { userId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const getProjectsByUserId = ({ userId }: { userId: string }) =>
   db
     .select()
     .from(project)
     .where(eq(project.userId, userId))
     .orderBy(desc(project.updatedAt));
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): getProjectById stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep getProjectById's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getProjectById's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): getProjectById accepts { id }: { id: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const getProjectById = async ({ id }: { id: string }) => {
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep getProjectById's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getProjectById's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): getProjectById accepts { id }: { id: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const getProjectById = async ({ id }: { id: string }) => {
   const [selectedProject] = await db
     .select()
     .from(project)
     .where(eq(project.id, id));
   return selectedProject;
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): updateProject stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep updateProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep updateProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): updateProject accepts { id, updates, }: { id: string; updates: Partial<{ name: string; instructions: strin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const updateProject = ({
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep updateProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep updateProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): updateProject accepts { id, updates, }: { id: string; updates: Partial<{ name: string; instructions: strin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const updateProject = ({
   id,
   updates,
 }: {
@@ -98,24 +86,18 @@ export const updateProject = ({
     .update(project)
     .set({ ...updates, updatedAt: new Date() })
     .where(eq(project.id, id));
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): deleteProject stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep deleteProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep deleteProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): deleteProject accepts { id }: { id: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const deleteProject = ({ id }: { id: string }) =>
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep deleteProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep deleteProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): deleteProject accepts { id }: { id: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const deleteProject = ({ id }: { id: string }) =>
   db.delete(project).where(eq(project.id, id));
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): getUserById stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): getUserById uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): getUserById accepts { userId, }: { userId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const getUserById = async ({
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): getUserById uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): getUserById accepts { userId, }: { userId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const getUserById = async ({
   userId,
 }: {
   userId: string;
@@ -127,14 +109,11 @@ export const getUserById = async ({
     .limit(1);
   return users[0];
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * import/group-exports (#523): getUserModelPreferences stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): getUserModelPreferences accepts { userId, }: { userId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): getUserModelPreferences preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
-export const getUserModelPreferences = ({
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- typescript/prefer-readonly-parameter-types (#565): getUserModelPreferences accepts { userId, }: { userId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): getUserModelPreferences preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+const getUserModelPreferences = ({
   userId,
 }: {
   userId: string;
@@ -143,13 +122,10 @@ export const getUserModelPreferences = ({
     .select()
     .from(userModelPreference)
     .where(eq(userModelPreference.userId, userId));
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): upsertUserModelPreference stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): upsertUserModelPreference accepts { userId, modelId, enabled, }: { userId: string; modelId: string; enabled: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const upsertUserModelPreference = async ({
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): upsertUserModelPreference accepts { userId, modelId, enabled, }: { userId: string; modelId: string; enabled: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const upsertUserModelPreference = async ({
   userId,
   modelId,
   enabled,
@@ -172,17 +148,14 @@ export const upsertUserModelPreference = async ({
       target: [userModelPreference.userId, userModelPreference.modelId],
     });
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): getEveMessageVotes stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): getEveMessageVotes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getEveMessageVotes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): getEveMessageVotes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): getEveMessageVotes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /** Feedback is owner-only, including when a conversation is publicly shared. */
-export const getEveMessageVotes = (ownerId: string, conversationId: string) =>
+const getEveMessageVotes = (ownerId: string, conversationId: string) =>
   db
     .select({ isUpvoted: eveVote.isUpvoted, messageId: eveVote.messageId })
     .from(eveVote)
@@ -194,22 +167,19 @@ export const getEveMessageVotes = (ownerId: string, conversationId: string) =>
         eq(eveConversation.state, "bound")
       )
     );
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/group-exports (#523): saveEveMessageVote stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): saveEveMessageVote's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): saveEveMessageVote's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-params (#511): saveEveMessageVote keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep saveEveMessageVote's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep saveEveMessageVote's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): saveEveMessageVote accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): saveEveMessageVote preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): saveEveMessageVote intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): saveEveMessageVote preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): saveEveMessageVote's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): saveEveMessageVote's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-params (#511): saveEveMessageVote keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/explicit-function-return-type (#560): Keep saveEveMessageVote's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep saveEveMessageVote's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): saveEveMessageVote accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): saveEveMessageVote preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+typescript/strict-boolean-expressions (#610): saveEveMessageVote intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/no-null (#570): saveEveMessageVote preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** Call only after validating the message against the native Eve snapshot. */
-export const saveEveMessageVote = (
+const saveEveMessageVote = (
   ownerId: string,
   conversationId: string,
   messageId: string,
@@ -245,21 +215,18 @@ export const saveEveMessageVote = (
       });
     return saved;
   });
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
- * import/group-exports (#523): assignEveConversationProject stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep assignEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep assignEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): assignEveConversationProject accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): assignEveConversationProject preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): assignEveConversationProject intentionally keeps the existing falsy-value behavior of logicalChat; target; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): assignEveConversationProject preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const assignEveConversationProject = (
+/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- max-lines-per-function (#510): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/explicit-function-return-type (#560): Keep assignEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep assignEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): assignEveConversationProject accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): assignEveConversationProject preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+typescript/strict-boolean-expressions (#610): assignEveConversationProject intentionally keeps the existing falsy-value behavior of logicalChat; target; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/max-nested-calls (#568): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+unicorn/no-null (#570): assignEveConversationProject preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const assignEveConversationProject = (
   ownerId: string,
   routeId: string,
   projectId: string | null
@@ -321,4 +288,17 @@ export const assignEveConversationProject = (
       .where(eq(eveChat.id, logicalChat.id));
     return { conversationId: routeId, projectId };
   });
-/* oxlint-enable import/group-exports, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+export {
+  assignEveConversationProject,
+  createProject,
+  deleteProject,
+  getEveMessageVotes,
+  getProjectById,
+  getProjectsByUserId,
+  getUserById,
+  getUserModelPreferences,
+  saveEveMessageVote,
+  updateProject,
+  upsertUserModelPreference,
+};

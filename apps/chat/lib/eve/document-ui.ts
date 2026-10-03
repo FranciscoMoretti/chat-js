@@ -3,11 +3,8 @@ import type { ComponentType } from "react";
 
 import type { DocumentAssistantRequest } from "./document-contracts";
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
- * import/group-exports (#523): DocumentBodyProps stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/consistent-type-definitions (#559): DocumentBodyProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-export type DocumentBodyProps = {
+/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): DocumentBodyProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+type DocumentBodyProps = {
   inline?: boolean;
   title: string;
   editorProps: {
@@ -26,31 +23,22 @@ export type DocumentBodyProps = {
     version: number;
   };
 };
-/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
+/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions --
- * import/group-exports (#523): DocumentUi stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/consistent-type-definitions (#559): DocumentUi preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-export type DocumentUi = {
+/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): DocumentUi preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+type DocumentUi = {
   Body: ComponentType<DocumentBodyProps>;
   copyContent?: (content: string) => string;
 };
-/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): DocumentUiRegistry stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type DocumentUiRegistry = Partial<
+/* oxlint-enable typescript/consistent-type-definitions */
+
+type DocumentUiRegistry = Partial<
   Record<"text" | "code" | "sheet", DocumentUi>
 >;
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, typescript/consistent-type-definitions, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): DocumentRunProps stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/consistent-type-definitions (#559): DocumentRunProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- * typescript/prefer-readonly-parameter-types (#565): DocumentRunProps accepts request: DocumentAssistantRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export type DocumentRunProps = {
+/* oxlint-disable typescript/consistent-type-definitions, typescript/prefer-readonly-parameter-types -- typescript/consistent-type-definitions (#559): DocumentRunProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+typescript/prefer-readonly-parameter-types (#565): DocumentRunProps accepts request: DocumentAssistantRequest; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+type DocumentRunProps = {
   buttonOnly?: boolean;
   resultOnly?: boolean;
   documentId: string;
@@ -61,4 +49,10 @@ export type DocumentRunProps = {
   disabled: boolean;
   onAction?: (request: DocumentAssistantRequest) => Promise<void>;
 };
-/* oxlint-enable import/group-exports, typescript/consistent-type-definitions, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/consistent-type-definitions, typescript/prefer-readonly-parameter-types */
+export type {
+  DocumentBodyProps,
+  DocumentRunProps,
+  DocumentUi,
+  DocumentUiRegistry,
+};

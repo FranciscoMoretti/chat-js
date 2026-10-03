@@ -4,8 +4,7 @@ import type { RegistryItem } from "shadcn/schema";
 import { toolDefinitionSchema } from "../../metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const researchAgentFiles = [
+const researchAgentFiles = [
   "agent/tools/deepResearch.ts",
   "agent/subagents/researchPlanner/agent.ts",
   "agent/subagents/researchPlanner/hooks/billing.ts",
@@ -17,11 +16,9 @@ export const researchAgentFiles = [
   "agent/subagents/researcher/tools/webSearch.ts",
   "agent/subagents/researcher/hooks/billing.ts",
 ];
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-export const researchAgentDirectories = [
+const researchAgentDirectories = [
   ...new Set(
     researchAgentFiles
       .filter((file) => file.startsWith("agent/subagents/"))
@@ -29,10 +26,8 @@ export const researchAgentDirectories = [
   ),
 ];
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const researchItem: RegistryItem = {
+const researchItem: RegistryItem = {
   description:
     "Native EVE research workflow, subagents, prompts, and progress UI",
   files: [
@@ -88,4 +83,4 @@ export const researchItem: RegistryItem = {
   registryDependencies: ["@chatjs/text-documents"],
   type: "registry:item",
 };
-/* oxlint-enable import/group-exports */
+export { researchAgentDirectories, researchAgentFiles, researchItem };

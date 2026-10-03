@@ -8,11 +8,8 @@ import { frontendToolsSchema } from "../ai/types";
 import { eveMessageInput } from "./message-input";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, no-magic-numbers --
- * import/group-exports (#523): eveForkInput stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): eveForkInput uses 64 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export const eveForkInput = z.union([
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): eveForkInput uses 64 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const eveForkInput = z.union([
   z
     .object({
       conversationId: z.uuid(),
@@ -35,31 +32,18 @@ export const eveForkInput = z.union([
     })
     .strict(),
 ]);
-/* oxlint-enable import/group-exports, no-magic-numbers */
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): EveForkInput stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type EveForkInput = z.infer<typeof eveForkInput>;
-/* oxlint-enable import/group-exports */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): eveForkKind stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const eveForkKind = z.enum(["edit", "regenerate", "comparison"]);
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): EveForkKind stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type EveForkKind = z.infer<typeof eveForkKind>;
-/* oxlint-enable import/group-exports */
+type EveForkInput = z.infer<typeof eveForkInput>;
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): createConversationInput stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): createConversationInput uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): createConversationInput accepts input; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): createConversationInput intentionally keeps the existing falsy-value behavior of input.projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const createConversationInput = z
+const eveForkKind = z.enum(["edit", "regenerate", "comparison"]);
+
+type EveForkKind = z.infer<typeof eveForkKind>;
+
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): createConversationInput uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): createConversationInput accepts input; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): createConversationInput intentionally keeps the existing falsy-value behavior of input.projectId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const createConversationInput = z
   .object({
     operationId: z.uuid(),
     modelId: z.string().min(1).max(200).optional(),
@@ -76,13 +60,17 @@ export const createConversationInput = z
   .refine((input) => !input.forkKind || input.fork, {
     message: "Fork intent requires a source conversation.",
   });
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable import/group-exports, no-magic-numbers --
- * import/group-exports (#523): conversationBinding stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): conversationBinding uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export const conversationBinding = z.object({
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): conversationBinding uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const conversationBinding = z.object({
   id: z.uuid(),
   sessionId: z.string().min(1),
 });
-/* oxlint-enable import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
+export {
+  conversationBinding,
+  createConversationInput,
+  eveForkInput,
+  eveForkKind,
+};
+export type { EveForkInput, EveForkKind };

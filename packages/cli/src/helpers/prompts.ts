@@ -139,8 +139,7 @@ const toSelectionRecord = <T extends string>(
   ) as Record<T, boolean>;
 /* oxlint-enable eslint/id-length */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const promptProjectName = async (
+const promptProjectName = async (
   targetArg: string | undefined,
   skipPrompt: boolean
 ): Promise<string> => {
@@ -163,13 +162,11 @@ export const promptProjectName = async (
 
   return toKebabCase(name) || "my-chat-app";
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
+const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (skipPrompt) {
     return "vercel";
   }
@@ -207,9 +204,7 @@ export const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
@@ -218,7 +213,7 @@ export const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptStorage = async (
+const promptStorage = async (
   skipPrompt: boolean,
   explicitProvider?: string,
   explicitOptions?: string,
@@ -318,12 +313,10 @@ export const promptStorage = async (
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const promptCoreFeatures = async (
+const promptCoreFeatures = async (
   skipPrompt: boolean,
   gateway: GatewayDefinition,
   mcp?: boolean
@@ -374,10 +367,8 @@ export const promptCoreFeatures = async (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const promptDocumentTypes = async (
+const promptDocumentTypes = async (
   skipPrompt: boolean,
   documentsEnabled: boolean
 ): Promise<Record<DocumentTypeKey, boolean>> => {
@@ -411,14 +402,12 @@ export const promptDocumentTypes = async (
 
   return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected as DocumentTypeKey[]);
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptAssistantTools = async (
+const promptAssistantTools = async (
   registryItems: RegistryIndexItem[],
   skipPrompt: boolean
 ): Promise<{
@@ -495,13 +484,11 @@ export const promptAssistantTools = async (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-export const promptAuth = async (
+const promptAuth = async (
   skipPrompt: boolean
 ): Promise<Record<AuthProvider, boolean>> => {
   if (skipPrompt) {
@@ -537,10 +524,8 @@ export const promptAuth = async (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const promptElectron = async (
+const promptElectron = async (
   skipPrompt: boolean,
   explicitChoice?: boolean
 ): Promise<boolean> => {
@@ -560,15 +545,11 @@ export const promptElectron = async (
 
   return wantsElectron;
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptSearchTool = async (
-  skipPrompt: boolean
-): Promise<string> => {
+const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "tavily-search";
   }
@@ -602,13 +583,11 @@ export const promptSearchTool = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptCodeExecutionTool = async (
+const promptCodeExecutionTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
   if (skipPrompt) {
@@ -639,15 +618,11 @@ export const promptCodeExecutionTool = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptUrlRetrievalTool = async (
-  skipPrompt: boolean
-): Promise<string> => {
+const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "retrieve-url";
   }
@@ -676,13 +651,11 @@ export const promptUrlRetrievalTool = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptImageGenerationTool = async (
+const promptImageGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
   if (skipPrompt) {
@@ -713,13 +686,11 @@ export const promptImageGenerationTool = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const promptVideoGenerationTool = async (
+const promptVideoGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
   if (skipPrompt) {
@@ -750,12 +721,10 @@ export const promptVideoGenerationTool = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // One optional group; new applications never enable telemetry by default.
-export const promptObservability = async (yes: boolean): Promise<string[]> => {
+const promptObservability = async (yes: boolean): Promise<string[]> => {
   if (yes) {
     return [];
   }
@@ -777,6 +746,21 @@ export const promptObservability = async (yes: boolean): Promise<string[]> => {
   return result;
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+export {
+  promptAssistantTools,
+  promptAuth,
+  promptCodeExecutionTool,
+  promptCoreFeatures,
+  promptDocumentTypes,
+  promptElectron,
+  promptGateway,
+  promptImageGenerationTool,
+  promptObservability,
+  promptProjectName,
+  promptSearchTool,
+  promptStorage,
+  promptUrlRetrievalTool,
+  promptVideoGenerationTool,
+};

@@ -8,41 +8,27 @@ import type { gatewayType } from "../gateway-model-defaults";
 import type { generatedForGateway, models } from "../models.generated";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): InstalledGateway is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): InstalledGateway stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type InstalledGateway = InstanceType<typeof Gateway>;
-/* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): GatewayType is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): GatewayType stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type GatewayType = typeof gatewayType;
-/* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers --
- * import/exports-last (#522): GatewayProvider is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): GatewayProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): GatewayProvider uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export type GatewayProvider = GatewayProviderBase<
+type InstalledGateway = InstanceType<typeof Gateway>;
+
+type GatewayType = typeof gatewayType;
+
+/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
+no-magic-numbers (#517): GatewayProvider uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+type GatewayProvider = GatewayProviderBase<
   GatewayType,
   Parameters<InstalledGateway["createLanguageModel"]>[0],
   Parameters<InstalledGateway["createImageModel"]>[0],
   Parameters<InstalledGateway["createVideoModel"]>[0]
 >;
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers --
- * import/exports-last (#522): GatewayModelIdMap is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): GatewayModelIdMap stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): GatewayModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export type GatewayModelIdMap = Record<
+/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
+no-magic-numbers (#517): GatewayModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+type GatewayModelIdMap = Record<
   GatewayType,
   Parameters<InstalledGateway["createLanguageModel"]>[0]
 >;
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable id-length --
  * id-length (#506): TupleIncludes uses T; E; H; R as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
@@ -75,24 +61,26 @@ type MultimodalImageModel =
     : never;
 /* oxlint-enable id-length */
 
-/* oxlint-disable id-length, import/group-exports, no-magic-numbers --
- * id-length (#506): GatewayImageModelIdMap uses K as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): GatewayImageModelIdMap stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): GatewayImageModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export type GatewayImageModelIdMap = {
+/* oxlint-disable id-length, no-magic-numbers -- id-length (#506): GatewayImageModelIdMap uses K as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+no-magic-numbers (#517): GatewayImageModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+type GatewayImageModelIdMap = {
   [K in GatewayType]:
     | Parameters<InstalledGateway["createImageModel"]>[0]
     | (K extends typeof generatedForGateway ? MultimodalImageModel : never);
 };
-/* oxlint-enable id-length, import/group-exports, no-magic-numbers */
+/* oxlint-enable id-length, no-magic-numbers */
 
-/* oxlint-disable import/group-exports, no-magic-numbers --
- * import/group-exports (#523): GatewayVideoModelIdMap stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): GatewayVideoModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export type GatewayVideoModelIdMap = Record<
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): GatewayVideoModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+type GatewayVideoModelIdMap = Record<
   GatewayType,
   Parameters<InstalledGateway["createVideoModel"]>[0]
 >;
-/* oxlint-enable import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
+export type {
+  GatewayImageModelIdMap,
+  GatewayModelIdMap,
+  GatewayProvider,
+  GatewayType,
+  GatewayVideoModelIdMap,
+  InstalledGateway,
+};

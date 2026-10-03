@@ -1,6 +1,5 @@
-/* oxlint-disable import/exports-last -- checkHealth: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable eslint/no-magic-numbers -- checkHealth: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-export const checkHealth = async (origin: string): Promise<void> => {
+const checkHealth = async (origin: string): Promise<void> => {
   const signal = AbortSignal.timeout(6000);
   await Promise.all([
     (async (): Promise<void> => {
@@ -40,7 +39,6 @@ export const checkHealth = async (origin: string): Promise<void> => {
   ]);
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable node/no-process-env -- dev-health.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 /* oxlint-disable eslint/no-console -- dev-health.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
@@ -62,3 +60,4 @@ if (import.meta.main) {
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable node/no-process-env */
+export { checkHealth };

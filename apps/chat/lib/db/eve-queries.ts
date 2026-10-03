@@ -42,14 +42,11 @@ const visibleConversation = inArray(eveConversation.state, [
   "uncertain",
 ]);
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/exports-last (#522): getBoundEveConversationForSession is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): getBoundEveConversationForSession stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): getBoundEveConversationForSession uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep getBoundEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getBoundEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const getBoundEveConversationForSession = async (
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- moving it below executable initialization can obscure ordering and API ownership.
+no-magic-numbers (#517): getBoundEveConversationForSession uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep getBoundEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getBoundEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const getBoundEveConversationForSession = async (
   ownerId: string,
   sessionId: string
 ) => {
@@ -66,19 +63,16 @@ export const getBoundEveConversationForSession = async (
     .limit(1);
   return rows[0];
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): readEveSessionMapping is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): readEveSessionMapping stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): readEveSessionMapping's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): readEveSessionMapping's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep readEveSessionMapping's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readEveSessionMapping's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readEveSessionMapping accepts identity: { reservationId: string } | { sessionId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): readEveSessionMapping's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): readEveSessionMapping's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep readEveSessionMapping's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep readEveSessionMapping's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): readEveSessionMapping accepts identity: { reservationId: string } | { sessionId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Internal mapping lookup includes tombstones so deletion cannot look like pending delivery. */
-export const readEveSessionMapping = async (
+const readEveSessionMapping = async (
   identity: { reservationId: string } | { sessionId: string }
 ) => {
   const [row] = await db
@@ -97,32 +91,25 @@ export const readEveSessionMapping = async (
     );
   return row;
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): ownsEveSession is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): ownsEveSession stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const ownsEveSession = async (
+const ownsEveSession = async (
   ownerId: string,
   sessionId: string
 ): Promise<boolean> =>
   Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
-/* oxlint-enable import/exports-last, import/group-exports */
-/* oxlint-disable import/exports-last, import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
- * import/exports-last (#522): listEveConversations is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): listEveConversations stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): listEveConversations uses 51, 0, 50, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): listEveConversations uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep listEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep listEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): listEveConversations intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): listEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const listEveConversations = async (
+
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
+max-lines-per-function (#510): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): listEveConversations uses 51, 0, 50, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): listEveConversations uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep listEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep listEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): listEveConversations intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/max-nested-calls (#568): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+unicorn/no-null (#570): listEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const listEveConversations = async (
   ownerId: string,
   input?: EveHistoryInput
 ) => {
@@ -216,17 +203,14 @@ export const listEveConversations = async (
         : null,
   };
 };
-/* oxlint-enable import/exports-last, import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): getEveConversation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): getEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): getEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): getEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep getEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): getEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const getEveConversation = async (ownerId: string, id: string) => {
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+no-magic-numbers (#517): getEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): getEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep getEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): getEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const getEveConversation = async (ownerId: string, id: string) => {
   const [row] = await db
     .select({
       chat: {
@@ -266,25 +250,19 @@ export const getEveConversation = async (ownerId: string, id: string) => {
       }
     : undefined;
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): getEveChatPageConversation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): getEveChatPageConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): getEveChatPageConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getEveChatPageConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-statements (#512): getEveChatPageConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): getEveChatPageConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): getEveChatPageConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep getEveChatPageConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveChatPageConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): getEveChatPageConversation intentionally keeps the existing falsy-value behavior of logical; logical.activeConversationId; member; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): getEveChatPageConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): getEveChatPageConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-statements (#512): getEveChatPageConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): getEveChatPageConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): getEveChatPageConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep getEveChatPageConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveChatPageConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): getEveChatPageConversation intentionally keeps the existing falsy-value behavior of logical; logical.activeConversationId; member; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Resolve either a logical chat route or an exact private session route. */
-export const getEveChatPageConversation = async (
-  ownerId: string,
-  routeId: string
-) => {
+const getEveChatPageConversation = async (ownerId: string, routeId: string) => {
   const exact = await getEveConversation(ownerId, routeId);
   if (exact) {
     return exact;
@@ -325,17 +303,14 @@ export const getEveChatPageConversation = async (
     .limit(1);
   return member ? await getEveConversation(ownerId, member.id) : undefined;
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls --
- * import/exports-last (#522): getEveChatIdentity is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): getEveChatIdentity stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): getEveChatIdentity uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep getEveChatIdentity's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveChatIdentity's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/max-nested-calls (#568): getEveChatIdentity keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
+no-magic-numbers (#517): getEveChatIdentity uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep getEveChatIdentity's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveChatIdentity's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+unicorn/max-nested-calls (#568): getEveChatIdentity keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+const getEveChatIdentity = async (ownerId: string, routeId: string) => {
   const [identity] = await db
     .select({
       chatId: eveChat.id,
@@ -370,13 +345,10 @@ export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
     .limit(1);
   return identity;
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
-/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): CreationConflictError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): CreationConflictError stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): CreationConflictError accepts options?: ErrorOptions & { code?: "creation_conflict" | "creation_in_progress"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export class CreationConflictError extends Error {
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/prefer-readonly-parameter-types (#565): CreationConflictError accepts options?: ErrorOptions & { code?: "creation_conflict" | "creation_in_progress"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+class CreationConflictError extends Error {
   public readonly code: "creation_conflict" | "creation_in_progress";
   public constructor(
     message?: string,
@@ -389,7 +361,7 @@ export class CreationConflictError extends Error {
     this.name = "CreationConflictError";
   }
 }
-/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const assertCreationAvailable = (
   state: typeof eveConversation.$inferSelect.state
@@ -415,13 +387,10 @@ const boundConversation = (
     : undefined;
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/exports-last (#522): getEveCreation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): getEveCreation stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep getEveCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const getEveCreation = async (ownerId: string, operationId: string) => {
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/explicit-function-return-type (#560): Keep getEveCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const getEveCreation = async (ownerId: string, operationId: string) => {
   const [row] = await db
     .select()
     .from(eveConversation)
@@ -433,20 +402,17 @@ export const getEveCreation = async (ownerId: string, operationId: string) => {
     );
   return row;
 };
-/* oxlint-enable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): CreationProjectNotFoundError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): CreationProjectNotFoundError stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): CreationProjectNotFoundError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export class CreationProjectNotFoundError extends Error {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/prefer-readonly-parameter-types (#565): CreationProjectNotFoundError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+class CreationProjectNotFoundError extends Error {
   public constructor(message?: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "CreationProjectNotFoundError";
   }
 }
-/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): assertResponseGroupCandidateAvailable uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -712,24 +678,18 @@ const reserveEveConversation = async (
   });
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
- * import/exports-last (#522): beginEveConversationDeletion is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): beginEveConversationDeletion stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep beginEveConversationDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep beginEveConversationDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): beginEveConversationDeletion accepts tx; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): beginEveConversationDeletion intentionally keeps the existing falsy-value behavior of source; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/max-nested-calls (#568): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/explicit-function-return-type (#560): Keep beginEveConversationDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep beginEveConversationDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): beginEveConversationDeletion accepts tx; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): beginEveConversationDeletion intentionally keeps the existing falsy-value behavior of source; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/max-nested-calls (#568): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /** Fence one conversation family; retirement and physical purge must finish separately. */
-export const beginEveConversationDeletion = async (
-  ownerId: string,
-  id: string
-) =>
+const beginEveConversationDeletion = async (ownerId: string, id: string) =>
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -802,7 +762,7 @@ export const beginEveConversationDeletion = async (
       rootId: source.chatId,
     };
   });
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): matchesEveFork preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -904,22 +864,19 @@ const bindConversationSession = async (
 };
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/group-exports (#523): createEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep createEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep createEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): createEveConversation accepts { initialModelId, initialRequest, initialContentHash, initialTitle = message, fo; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): createEveConversation intentionally keeps the existing falsy-value behavior of initialProjectId; reservation; existing; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): createEveConversation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-params (#511): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/explicit-function-return-type (#560): Keep createEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep createEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): createEveConversation accepts { initialModelId, initialRequest, initialContentHash, initialTitle = message, fo; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): createEveConversation intentionally keeps the existing falsy-value behavior of initialProjectId; reservation; existing; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/no-null (#570): createEveConversation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
-export const createEveConversation = async (
+const createEveConversation = async (
   ownerId: string,
   operationId: string,
   message: string,
@@ -1067,14 +1024,11 @@ export const createEveConversation = async (
     throw error;
   }
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): listEveOwnerBindings stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep listEveOwnerBindings's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep listEveOwnerBindings's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const listEveOwnerBindings = async (ownerId: string) =>
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep listEveOwnerBindings's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep listEveOwnerBindings's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const listEveOwnerBindings = async (ownerId: string) =>
   await db
     .select({
       sessionId: eveConversation.sessionId,
@@ -1088,17 +1042,14 @@ export const listEveOwnerBindings = async (ownerId: string) =>
         ne(eveConversation.state, "deleted")
       )
     );
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): updateEveConversationMetadata stays exported at its declaration so its public contract is visible beside its implementation.
- * no-undefined (#519): updateEveConversationMetadata uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep updateEveConversationMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep updateEveConversationMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): updateEveConversationMetadata accepts updates: { title?: string; isPinned?: boolean; visibility?: "private" | "public"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): updateEveConversationMetadata intentionally keeps the existing falsy-value behavior of updates.title; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const updateEveConversationMetadata = async (
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-undefined (#519): updateEveConversationMetadata uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep updateEveConversationMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep updateEveConversationMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): updateEveConversationMetadata accepts updates: { title?: string; isPinned?: boolean; visibility?: "private" | "public"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): updateEveConversationMetadata intentionally keeps the existing falsy-value behavior of updates.title; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const updateEveConversationMetadata = async (
   ownerId: string,
   id: string,
   updates: {
@@ -1144,13 +1095,10 @@ export const updateEveConversationMetadata = async (
     .returning({ id: eveChat.id });
   return row;
 };
-/* oxlint-enable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, no-magic-numbers --
- * import/group-exports (#523): isEveRootTitlePending stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): isEveRootTitlePending uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export const isEveRootTitlePending = async (
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): isEveRootTitlePending uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const isEveRootTitlePending = async (
   ownerId: string,
   conversationId: string,
   fallbackTitle: string
@@ -1176,13 +1124,10 @@ export const isEveRootTitlePending = async (
     .limit(1);
   return Boolean(row);
 };
-/* oxlint-enable import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/group-exports, max-params --
- * import/group-exports (#523): replaceEveRootFallbackTitle stays exported at its declaration so its public contract is visible beside its implementation.
- * max-params (#511): replaceEveRootFallbackTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-export const replaceEveRootFallbackTitle = async (
+/* oxlint-disable max-params -- max-params (#511): replaceEveRootFallbackTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+const replaceEveRootFallbackTitle = async (
   ownerId: string,
   conversationId: string,
   fallbackTitle: string,
@@ -1205,12 +1150,9 @@ export const replaceEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
-/* oxlint-enable import/group-exports, max-params */
+/* oxlint-enable max-params */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): settleEveRootFallbackTitle stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const settleEveRootFallbackTitle = async (
+const settleEveRootFallbackTitle = async (
   ownerId: string,
   conversationId: string,
   fallbackTitle: string
@@ -1232,13 +1174,9 @@ export const settleEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): recordEveConversationActivity stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): recordEveConversationActivity accepts at: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const recordEveConversationActivity = async (
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): recordEveConversationActivity accepts at: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const recordEveConversationActivity = async (
   ownerId: string,
   sessionId: string,
   at: Date
@@ -1258,17 +1196,14 @@ export const recordEveConversationActivity = async (
       )
     );
 };
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): getPublicEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): getPublicEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): getPublicEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep getPublicEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getPublicEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): getPublicEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const getPublicEveConversation = async (id: string) => {
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): getPublicEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): getPublicEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep getPublicEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getPublicEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): getPublicEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const getPublicEveConversation = async (id: string) => {
   const [row] = await db
     .select({ chat: { title: eveChat.title }, conversation: eveConversation })
     .from(eveConversation)
@@ -1289,14 +1224,11 @@ export const getPublicEveConversation = async (id: string) => {
     .limit(1);
   return row ? { ...row.conversation, title: row.chat.title } : undefined;
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): listEveConversationBranches stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep listEveConversationBranches's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep listEveConversationBranches's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const listEveConversationBranches = async (
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep listEveConversationBranches's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep listEveConversationBranches's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const listEveConversationBranches = async (
   ownerId: string,
   conversationId: string
 ) => {
@@ -1346,18 +1278,15 @@ export const listEveConversationBranches = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: listEveConversationBranches has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { branches, chatId: conversation.chatId, rootId };
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): getDeletingEveConversationForSession stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): getDeletingEveConversationForSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getDeletingEveConversationForSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): getDeletingEveConversationForSession uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep getDeletingEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getDeletingEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): getDeletingEveConversationForSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): getDeletingEveConversationForSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+no-magic-numbers (#517): getDeletingEveConversationForSession uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep getDeletingEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getDeletingEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /** Internal cleanup only; does not grant browser or conversation access. */
-export const getDeletingEveConversationForSession = async (
+const getDeletingEveConversationForSession = async (
   ownerId: string,
   sessionId: string
 ) => {
@@ -1374,19 +1303,13 @@ export const getDeletingEveConversationForSession = async (
     .limit(1);
   return row;
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls, unicorn/no-null --
- * import/group-exports (#523): getEveConversationProject stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep getEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/max-nested-calls (#568): getEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): getEveConversationProject preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const getEveConversationProject = async (
-  ownerId: string,
-  routeId: string
-) => {
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls, unicorn/no-null -- typescript/explicit-function-return-type (#560): Keep getEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+unicorn/max-nested-calls (#568): getEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+unicorn/no-null (#570): getEveConversationProject preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const getEveConversationProject = async (ownerId: string, routeId: string) => {
   const [assigned] = await db
     .select({
       id: project.id,
@@ -1424,18 +1347,15 @@ export const getEveConversationProject = async (
     );
   return assigned ?? null;
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls --
- * import/group-exports (#523): listPendingEveCreations stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): listPendingEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): listPendingEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep listPendingEveCreations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep listPendingEveCreations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/max-nested-calls (#568): listPendingEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls -- jsdoc/require-param (#534): listPendingEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): listPendingEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep listPendingEveCreations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep listPendingEveCreations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+unicorn/max-nested-calls (#568): listPendingEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /** Only interrupted message commands are replayable here; copies and deletion have separate journals. */
-export const listPendingEveCreations = async (ownerId: string) =>
+const listPendingEveCreations = async (ownerId: string) =>
   await db
     .select()
     .from(eveConversation)
@@ -1449,19 +1369,16 @@ export const listPendingEveCreations = async (ownerId: string) =>
         )
       )
     );
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * import/group-exports (#523): bindAcceptedEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): bindAcceptedEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): bindAcceptedEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep bindAcceptedEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep bindAcceptedEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): bindAcceptedEveConversation accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): bindAcceptedEveConversation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- jsdoc/require-param (#534): bindAcceptedEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): bindAcceptedEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep bindAcceptedEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep bindAcceptedEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): bindAcceptedEveConversation accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): bindAcceptedEveConversation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /** Caller must verify a native operation receipt for this reservation and exact session. */
-export const bindAcceptedEveConversation = async (
+const bindAcceptedEveConversation = async (
   ownerId: string,
   reservationId: string,
   sessionId: string
@@ -1469,6 +1386,32 @@ export const bindAcceptedEveConversation = async (
   await db.transaction((tx) =>
     bindConversationSession(tx, ownerId, reservationId, sessionId)
   );
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-queries.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+export {
+  beginEveConversationDeletion,
+  bindAcceptedEveConversation,
+  createEveConversation,
+  CreationConflictError,
+  CreationProjectNotFoundError,
+  getBoundEveConversationForSession,
+  getDeletingEveConversationForSession,
+  getEveChatIdentity,
+  getEveChatPageConversation,
+  getEveConversation,
+  getEveConversationProject,
+  getEveCreation,
+  getPublicEveConversation,
+  isEveRootTitlePending,
+  listEveConversationBranches,
+  listEveConversations,
+  listEveOwnerBindings,
+  listPendingEveCreations,
+  ownsEveSession,
+  readEveSessionMapping,
+  recordEveConversationActivity,
+  replaceEveRootFallbackTitle,
+  settleEveRootFallbackTitle,
+  updateEveConversationMetadata,
+};
