@@ -45,7 +45,7 @@ import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const CustomConnectorRow = ({
@@ -191,8 +191,8 @@ const CustomConnectorRow = ({
             {needsOAuth ? (
               <>
                 <DropdownMenuItem
-                  onClick={(e): void => {
-                    e.preventDefault();
+                  onClick={(event): void => {
+                    event.preventDefault();
                     onConnect();
                   }}
                 >
@@ -216,7 +216,7 @@ const CustomConnectorRow = ({
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
+
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/jsx-max-depth */
@@ -256,7 +256,6 @@ const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
@@ -304,7 +303,11 @@ export const ConnectorsSettings = () => {
     ) {
       return null;
     }
-    return connectors.find((c): boolean => c.id === qs.connectorId) ?? null;
+    return (
+      connectors.find(
+        (connector): boolean => connector.id === qs.connectorId
+      ) ?? null
+    );
   }, [connectOpen, qs.connectorId, connectors]);
 
   const queryKey = trpc.mcp.list.queryKey();
@@ -326,7 +329,7 @@ export const ConnectorsSettings = () => {
           if (!old) {
             return old;
           }
-          return old.filter((c): boolean => c.id !== data.id);
+          return old.filter((connector): boolean => connector.id !== data.id);
         });
         return { prev };
       },
@@ -420,8 +423,11 @@ export const ConnectorsSettings = () => {
     return (
       <SettingsPageContent className="gap-4">
         <div className="animate-pulse space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div className="bg-muted/50 h-20 rounded-lg" key={i} />
+          {[1, 2, 3].map((placeholderIndex) => (
+            <div
+              className="bg-muted/50 h-20 rounded-lg"
+              key={placeholderIndex}
+            />
           ))}
         </div>
       </SettingsPageContent>
@@ -452,10 +458,10 @@ export const ConnectorsSettings = () => {
   }
 
   const customConnectors = (connectors ?? []).filter(
-    (c): boolean => c.userId !== null
+    (connector): boolean => connector.userId !== null
   );
   const globalConnectors = (connectors ?? []).filter(
-    (c): boolean => c.userId === null
+    (connector): boolean => connector.userId === null
   );
 
   return (
@@ -528,7 +534,6 @@ export const ConnectorsSettings = () => {
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */

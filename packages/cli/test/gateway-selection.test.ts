@@ -85,7 +85,6 @@ const executionDefinition = {
 const external = externalGatewayFixture();
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -292,11 +291,11 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
     if (path === "/gateway.json") {
       return Response.json({
         ...external.root,
-        dependencies: external.root.dependencies.map((d) =>
-          d.startsWith("@chat-js/gateways@")
+        dependencies: external.root.dependencies.map((dependency) =>
+          dependency.startsWith("@chat-js/gateways@")
             ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
               `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
-            : d
+            : dependency
         ),
         registryDependencies: [
           // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -343,11 +342,11 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         if (item.dependencies) {
           // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-          item.dependencies = item.dependencies.map((d: string) =>
-            d.startsWith("@chat-js/gateways@")
+          item.dependencies = item.dependencies.map((dependency: string) =>
+            dependency.startsWith("@chat-js/gateways@")
               ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
                 `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
-              : d
+              : dependency
           );
         }
         return Response.json(item);
@@ -361,7 +360,6 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 

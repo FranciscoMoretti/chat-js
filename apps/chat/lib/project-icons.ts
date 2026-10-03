@@ -43,23 +43,22 @@ const PROJECT_COLORS = [
 
 type ProjectColorName = (typeof PROJECT_COLORS)[number]["name"];
 
-/* oxlint-disable id-length -- id-length (#506): PROJECT_COLOR_NAMES uses c as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 // For zod enum validation
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The nonempty project color catalog is mapped into a tuple needed by schema construction; Array.map loses that tuple guarantee.
 const PROJECT_COLOR_NAMES = PROJECT_COLORS.map(
-  (c) => c.name
+  (color) => color.name
 ) as unknown as readonly [ProjectColorName, ...ProjectColorName[]];
-/* oxlint-enable id-length */
 
 const DEFAULT_PROJECT_ICON: ProjectIconName = "folder";
 
 const DEFAULT_PROJECT_COLOR: ProjectColorName = "gray";
 
-/* oxlint-disable id-length, no-magic-numbers -- id-length (#506): getColorValue uses c as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers --
 no-magic-numbers (#517): getColorValue uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const getColorValue = (name: ProjectColorName): string =>
-  PROJECT_COLORS.find((c) => c.name === name)?.value ?? PROJECT_COLORS[0].value;
-/* oxlint-enable id-length, no-magic-numbers */
+  PROJECT_COLORS.find((color) => color.name === name)?.value ??
+  PROJECT_COLORS[0].value;
+/* oxlint-enable no-magic-numbers */
 export {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,

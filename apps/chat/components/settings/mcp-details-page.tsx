@@ -114,7 +114,7 @@ const DetailsSection = ({
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react-perf/jsx-no-new-array-as-prop -- This prop derives its entries from the current render; memoization would add an unproven identity contract. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const DiscoveryContent = ({
@@ -195,22 +195,25 @@ const DiscoveryContent = ({
         <div className="space-y-4">
           <DetailsSection
             icon={<Wrench className="size-4" />}
-            items={discovery.tools.map((t) => ({ key: t.name, name: t.name }))}
+            items={discovery.tools.map((tool) => ({
+              key: tool.name,
+              name: tool.name,
+            }))}
             title="Tools"
           />
           <DetailsSection
             icon={<FileText className="size-4" />}
-            items={discovery.resources.map((r) => ({
-              key: r.uri,
-              name: r.name,
+            items={discovery.resources.map((resource) => ({
+              key: resource.uri,
+              name: resource.name,
             }))}
             title="Resources"
           />
           <DetailsSection
             icon={<BookText className="size-4" />}
-            items={discovery.prompts.map((p) => ({
-              key: p.name,
-              name: p.name,
+            items={discovery.prompts.map((prompt) => ({
+              key: prompt.name,
+              name: prompt.name,
             }))}
             title="Prompts"
           />
@@ -223,7 +226,7 @@ const DiscoveryContent = ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/id-length */
+
 /* oxlint-enable react-perf/jsx-no-new-array-as-prop */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
@@ -238,7 +241,7 @@ const DiscoveryContent = ({
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -264,7 +267,10 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   } = useQuery(trpc.mcp.list.queryOptions());
 
   const connector = useMemo(
-    () => connectors?.find((c): boolean => c.id === connectorId) ?? null,
+    () =>
+      connectors?.find(
+        (candidateConnector): boolean => candidateConnector.id === connectorId
+      ) ?? null,
     [connectors, connectorId]
   );
 
@@ -287,8 +293,10 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
           if (!old) {
             return old;
           }
-          return old.map((c) =>
-            c.id === newData.id ? { ...c, enabled: newData.enabled } : c
+          return old.map((candidateConnector) =>
+            candidateConnector.id === newData.id
+              ? { ...candidateConnector, enabled: newData.enabled }
+              : candidateConnector
           );
         });
         return { prev };
@@ -316,7 +324,9 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
           if (!old) {
             return old;
           }
-          return old.filter((c): boolean => c.id !== data.id);
+          return old.filter(
+            (candidateConnector): boolean => candidateConnector.id !== data.id
+          );
         });
         return { prev };
       },
@@ -415,8 +425,11 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     return (
       <SettingsPageContent className="gap-4">
         <div className="animate-pulse space-y-3">
-          {[1, 2].map((i) => (
-            <div className="bg-muted/50 h-20 rounded-lg" key={i} />
+          {[1, 2].map((placeholderIndex) => (
+            <div
+              className="bg-muted/50 h-20 rounded-lg"
+              key={placeholderIndex}
+            />
           ))}
         </div>
       </SettingsPageContent>
@@ -542,7 +555,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/id-length */
+
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */

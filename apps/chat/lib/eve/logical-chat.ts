@@ -98,7 +98,7 @@ const latestMessageTime = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- id-length (#506): LogicalChat uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
 moving it below executable initialization can obscure ordering and API ownership.
 init-declarations (#507): LogicalChat assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): LogicalChat keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -162,10 +162,12 @@ class LogicalChat {
 
   public setBranches(branches: readonly LogicalBranch[]): void {
     this.branches = branches.toSorted(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() ||
-        (a.responseGroupIndex ?? 0) - (b.responseGroupIndex ?? 0) ||
-        a.id.localeCompare(b.id)
+      (leftBranch, rightBranch) =>
+        new Date(leftBranch.createdAt).getTime() -
+          new Date(rightBranch.createdAt).getTime() ||
+        (leftBranch.responseGroupIndex ?? 0) -
+          (rightBranch.responseGroupIndex ?? 0) ||
+        leftBranch.id.localeCompare(rightBranch.id)
     );
     this.publish();
   }
@@ -358,7 +360,7 @@ class LogicalChat {
     }
   }
 }
-/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): sourcePrefix keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

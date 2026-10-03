@@ -35,7 +35,6 @@ const { join } = pathModule;
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("storage registry integration", () => {
   it("resolves every built-in provider ID to its published item name", () => {
@@ -55,7 +54,7 @@ describe("storage registry integration", () => {
     );
     expect(
       getStorageEnvironmentRequirements("vercel-blob")[0]?.options.map(
-        (option) => option.map((v) => v.key)
+        (option) => option.map((provider) => provider.key)
       )
     ).toEqual([
       ["BLOB_READ_WRITE_TOKEN"],
@@ -130,7 +129,6 @@ describe("storage registry integration", () => {
   });
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

@@ -283,8 +283,7 @@ async function fixture() {
 }
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * id-length (#506): test("saves a complete independent copy, including inline bytes and files only in old uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-lines-per-function (#510): test("saves a complete independent copy, including inline bytes and files only in old keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("saves a complete independent copy, including inline bytes and files only in old keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("saves a complete independent copy, including inline bytes and files only in old uses 2, -1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -292,13 +291,16 @@ async function fixture() {
  * unicorn/no-null (#570): test("saves a complete independent copy, including inline bytes and files only in old preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("saves a complete independent copy, including inline bytes and files only in old document revisions", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   const bound = await saveEveCopyOperation(
     ownerId,
-    f.input,
+    fixtureData.input,
     "https://chatjs.example"
   );
-  const operation = await getEveCopyOperation(ownerId, f.input.operationId);
+  const operation = await getEveCopyOperation(
+    ownerId,
+    fixtureData.input.operationId
+  );
   expect(operation?.copy).toMatchObject({
     phase: "bound",
     plan: null,
@@ -309,10 +311,10 @@ test("saves a complete independent copy, including inline bytes and files only i
   expect(native?.seed.attachments).toBe("channel");
   const serialized = JSON.stringify(native?.seed);
   for (const privateValue of [
-    f.source.sessionId,
-    f.documentId,
-    f.head,
-    f.key,
+    fixtureData.source.sessionId,
+    fixtureData.documentId,
+    fixtureData.head,
+    fixtureData.key,
     "private-message",
     "private-call",
     "private-token",
@@ -343,16 +345,15 @@ test("saves a complete independent copy, including inline bytes and files only i
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(mocks.request.mock.calls.at(-1)?.[3]).toBe(modelId);
 });
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * id-length (#506): test("a lost native reply recovers without reopening or reading a revoked source") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): test("a lost native reply recovers without reopening or reading a revoked source") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a lost native reply recovers without reopening or reading a revoked source") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("a lost native reply recovers without reopening or reading a revoked source") accepts ...args; call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("a lost native reply recovers without reopening or reading a revoked source", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   const original = mocks.request.getMockImplementation();
   if (!original) {
     throw new Error("Missing native fixture");
@@ -367,19 +368,22 @@ test("a lost native reply recovers without reopening or reading a revoked source
     return response;
   });
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Lost native reply");
-  const operation = await getEveCopyOperation(ownerId, f.input.operationId);
+  const operation = await getEveCopyOperation(
+    ownerId,
+    fixtureData.input.operationId
+  );
   expect(operation?.conversation.state).toBe("uncertain");
   await db
     .update(eveConversation)
     .set({ state: "deleting", visibility: "private" })
-    .where(eq(eveConversation.id, f.source.id));
-  mocks.files.delete(f.key);
+    .where(eq(eveConversation.id, fixtureData.source.id));
+  mocks.files.delete(fixtureData.key);
   mocks.source.mockRejectedValue(new Error("Source revoked"));
   const bound = await saveEveCopyOperation(
     ownerId,
-    f.input,
+    fixtureData.input,
     "https://chatjs.example"
   );
   expect(bound.sessionId).toBe(
@@ -393,34 +397,31 @@ test("a lost native reply recovers without reopening or reading a revoked source
     )
   ).toHaveLength(1);
 });
-/* oxlint-enable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length --
- * id-length (#506): test("unrelated private file references are denied before any bytes or destination re uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 test("unrelated private file references are denied before any bytes or destination resources are written", async () => {
-  const f = await fixture();
-  await db.delete(eveFileReference).where(eq(eveFileReference.key, f.key));
+  const fixtureData = await fixture();
+  await db
+    .delete(eveFileReference)
+    .where(eq(eveFileReference.key, fixtureData.key));
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Published copy file is unavailable");
   expect(mocks.download).not.toHaveBeenCalled();
   expect(mocks.upload).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
   expect(
-    await getEveCopyOperation(ownerId, f.input.operationId)
+    await getEveCopyOperation(ownerId, fixtureData.input.operationId)
   ).toBeUndefined();
 });
-/* oxlint-enable id-length */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * id-length (#506): test("uncertain storage writes retry persisted keys without taking another snapshot o uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): test("uncertain storage writes retry persisted keys without taking another snapshot o uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("uncertain storage writes retry persisted keys without taking another snapshot o accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("uncertain storage writes retry persisted keys without taking another snapshot o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("uncertain storage writes retry persisted keys without taking another snapshot or making a second copy", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
     (key: string, _name: string, file: Blob) => {
       mocks.files.set(key, file);
@@ -428,12 +429,15 @@ test("uncertain storage writes retry persisted keys without taking another snaps
     }
   );
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Lost storage reply");
-  const operation = await getEveCopyOperation(ownerId, f.input.operationId);
+  const operation = await getEveCopyOperation(
+    ownerId,
+    fixtureData.input.operationId
+  );
   const bound = await saveEveCopyOperation(
     ownerId,
-    f.input,
+    fixtureData.input,
     "https://chatjs.example"
   );
   expect(bound.id).toBe(operation?.conversation.id);
@@ -443,52 +447,50 @@ test("uncertain storage writes retry persisted keys without taking another snaps
   await expect(
     saveEveCopyOperation(
       ownerId,
-      { ...f.input, sourceConversationId: crypto.randomUUID() },
+      { ...fixtureData.input, sourceConversationId: crypto.randomUUID() },
       "https://chatjs.example"
     )
   ).rejects.toThrow("different source or model");
 });
-/* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable id-length, no-magic-numbers --
- * id-length (#506): test("an unavailable native lookup leaves acceptance recoverable and never blindly di uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("an unavailable native lookup leaves acceptance recoverable and never blindly di uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 test("an unavailable native lookup leaves acceptance recoverable and never blindly dispatches", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   mocks.request.mockResolvedValue(
     Response.json({ error: "Unavailable" }, { status: 503 })
   );
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Native copy lookup is unavailable");
   const copyOperationAfterLookupFailure = await getEveCopyOperation(
     ownerId,
-    f.input.operationId
+    fixtureData.input.operationId
   );
   expect(copyOperationAfterLookupFailure?.copy.phase).toBe("accepted");
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(mocks.native.size).toBe(0);
 });
-/* oxlint-enable id-length, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * id-length (#506): test("concurrent requests converge on the persisted allocation and one native copy") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): test("concurrent requests converge on the persisted allocation and one native copy") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("concurrent requests converge on the persisted allocation and one native copy") accepts attempt; call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("concurrent requests converge on the persisted allocation and one native copy") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("concurrent requests converge on the persisted allocation and one native copy", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   const attempts = await Promise.allSettled(
     Array.from({ length: 3 }, () =>
-      saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+      saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
     )
   );
   expect(attempts.some((attempt) => attempt.status === "fulfilled")).toBe(true);
   const bound = await saveEveCopyOperation(
     ownerId,
-    f.input,
+    fixtureData.input,
     "https://chatjs.example"
   );
   for (const attempt of attempts) {
@@ -504,10 +506,9 @@ test("concurrent requests converge on the persisted allocation and one native co
     )
   ).toHaveLength(1);
 });
-/* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * id-length (#506): test("revocation before acceptance purges only the rejected destination and keeps a r uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * max-statements (#512): test("revocation before acceptance purges only the rejected destination and keeps a r keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("revocation before acceptance purges only the rejected destination and keeps a r uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("revocation before acceptance purges only the rejected destination and keeps a r accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -515,7 +516,7 @@ test("concurrent requests converge on the persisted allocation and one native co
  * unicorn/no-null (#570): test("revocation before acceptance purges only the rejected destination and keeps a r preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("revocation before acceptance purges only the rejected destination and keeps a replay tombstone", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
     (key: string, _name: string, file: Blob) => {
       mocks.files.set(key, file);
@@ -523,40 +524,41 @@ test("revocation before acceptance purges only the rejected destination and keep
     }
   );
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Interrupted preparation");
   await db
     .update(eveConversation)
     .set({ visibility: "private" })
-    .where(eq(eveConversation.id, f.source.id));
+    .where(eq(eveConversation.id, fixtureData.source.id));
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Sharing was revoked");
-  expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
+  expect(
+    await getEveCreation(ownerId, fixtureData.input.operationId)
+  ).toMatchObject({
     creationKind: "copy",
     sessionId: null,
     state: "deleted",
   });
   expect(mocks.remove).toHaveBeenCalledTimes(1);
-  expect(mocks.files.has(f.key)).toBe(true);
+  expect(mocks.files.has(fixtureData.key)).toBe(true);
   expect(mocks.files.size).toBe(1);
   expect(mocks.request).not.toHaveBeenCalled();
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow();
   expect(mocks.source).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * id-length (#506): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-statements (#512): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("a lost cleanup reply leaves rejection discoverable and a retry finishes erasure", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   mocks.upload.mockImplementationOnce(
     (key: string, _name: string, file: Blob) => {
       mocks.files.set(key, file);
@@ -564,25 +566,27 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
     }
   );
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Interrupted preparation");
   await db
     .update(eveConversation)
     .set({ visibility: "private" })
-    .where(eq(eveConversation.id, f.source.id));
+    .where(eq(eveConversation.id, fixtureData.source.id));
   mocks.remove.mockRejectedValueOnce(new Error("Cleanup reply lost"));
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Cleanup reply lost");
   const copyOperationAfterLostCleanupReply = await getEveCopyOperation(
     ownerId,
-    f.input.operationId
+    fixtureData.input.operationId
   );
   expect(copyOperationAfterLostCleanupReply?.copy.phase).toBe("rejected");
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("copy was rejected");
-  expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
+  expect(
+    await getEveCreation(ownerId, fixtureData.input.operationId)
+  ).toMatchObject({
     creationKind: "copy",
     state: "deleted",
   });
@@ -590,62 +594,63 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
   expect(mocks.source).toHaveBeenCalledTimes(1);
   expect(mocks.files.size).toBe(1);
 });
-/* oxlint-enable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable id-length --
- * id-length (#506): test("deletion of an unwritten source file rejects preparation before another storage uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 test("deletion of an unwritten source file rejects preparation before another storage read", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   mocks.upload.mockRejectedValueOnce(new Error("Interrupted preparation"));
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Interrupted preparation");
   const reads = mocks.download.mock.calls.length;
-  mocks.files.delete(f.key);
+  mocks.files.delete(fixtureData.key);
   await db
     .update(eveConversation)
     .set({ state: "deleted", visibility: "private" })
-    .where(eq(eveConversation.id, f.source.id));
+    .where(eq(eveConversation.id, fixtureData.source.id));
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Sharing was revoked");
   expect(mocks.download).toHaveBeenCalledTimes(reads);
-  expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
+  expect(
+    await getEveCreation(ownerId, fixtureData.input.operationId)
+  ).toMatchObject({
     creationKind: "copy",
     state: "deleted",
   });
   expect(mocks.request).not.toHaveBeenCalled();
 });
-/* oxlint-enable id-length */
 
-/* oxlint-disable id-length, no-undefined --
- * id-length (#506): test("a definitive model rejection tombstones the operation but transient catalog fai uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-undefined --
  * no-undefined (#519): test("a definitive model rejection tombstones the operation but transient catalog fai uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
 test("a definitive model rejection tombstones the operation but transient catalog failures remain retryable", async () => {
-  const f = await fixture();
+  const fixtureData = await fixture();
   mocks.model.mockRejectedValueOnce(new Error("Catalog unavailable"));
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Catalog unavailable");
-  expect(await getEveCreation(ownerId, f.input.operationId)).toBeUndefined();
+  expect(
+    await getEveCreation(ownerId, fixtureData.input.operationId)
+  ).toBeUndefined();
   mocks.model.mockRejectedValueOnce(
     new EveModelUnavailableError("Model removed")
   );
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow("Model removed");
-  expect(await getEveCreation(ownerId, f.input.operationId)).toMatchObject({
+  expect(
+    await getEveCreation(ownerId, fixtureData.input.operationId)
+  ).toMatchObject({
     creationKind: "copy",
     state: "deleted",
   });
   mocks.model.mockResolvedValue(undefined);
   await expect(
-    saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
+    saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")
   ).rejects.toThrow();
   expect(mocks.source).not.toHaveBeenCalled();
 });
-/* oxlint-enable id-length, no-undefined */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable max-lines -- #509: This eve-save-copy.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

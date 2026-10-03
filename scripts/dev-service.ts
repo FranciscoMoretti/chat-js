@@ -42,7 +42,6 @@ const ctl = (...args: readonly string[]): string =>
     stdio: ["ignore", "pipe", "pipe"],
   });
 /* oxlint-enable node/no-sync */
-/* oxlint-disable eslint/id-length -- stop: The local index/OS/library binding retains its conventional API notation. */
 /* oxlint-disable eslint/no-magic-numbers -- stop: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const stop = async (): Promise<void> => {
   try {
@@ -50,7 +49,7 @@ const stop = async (): Promise<void> => {
   } catch {
     /* Not loaded. */
   }
-  for (let i = 0; i < 30; i += 1) {
+  for (let stopAttempt = 0; stopAttempt < 30; stopAttempt += 1) {
     try {
       ctl("print", `${target}/${label}`);
     } catch {
@@ -62,7 +61,6 @@ const stop = async (): Promise<void> => {
   throw new Error("Service is still stopping; retry shortly.");
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 const xml = (value: string): string =>
   value
     .replaceAll("&", "&amp;")

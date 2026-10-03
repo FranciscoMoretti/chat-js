@@ -224,7 +224,6 @@ const TechCard = ({
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechStack: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable react/jsx-max-depth -- TechStack: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable eslint/id-length -- TechStack: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TechStack: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const TechStack = (): React.JSX.Element => (
   <section className="bg-secondary relative overflow-hidden py-24 sm:py-32">
@@ -263,15 +262,14 @@ export const TechStack = (): React.JSX.Element => (
 
       {/* Tech grid — 5 columns desktop, 3 tablet, 2 mobile */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-        {TECHS.map((tech, i) => (
-          <TechCard index={i} key={tech.name} tech={tech} />
+        {TECHS.map((tech, technologyIndex) => (
+          <TechCard index={technologyIndex} key={tech.name} tech={tech} />
         ))}
       </div>
     </div>
   </section>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 

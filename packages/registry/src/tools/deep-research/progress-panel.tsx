@@ -23,7 +23,7 @@ const updateName = {
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
@@ -41,15 +41,18 @@ export const ResearchProgress = ({
   const lastUpdate = updates.length > 0 ? updates.at(-1) : null;
 
   const searchCount = React.useMemo(
-    (): number => updates.filter((u) => u.type === "web").length,
+    (): number => updates.filter((update) => update.type === "web").length,
     [updates]
   );
 
   const sourceCount = React.useMemo(
     (): number =>
       updates
-        .filter((u) => u.type === "web")
-        .reduce((acc, u): number => acc + (u.results?.length ?? 0), 0),
+        .filter((update) => update.type === "web")
+        .reduce(
+          (acc, update): number => acc + (update.results?.length ?? 0),
+          0
+        ),
     [updates]
   );
 
@@ -67,10 +70,10 @@ export const ResearchProgress = ({
   const timeSpent = React.useMemo((): number => {
     if (isComplete) {
       const progressUpdates = updates.filter(
-        (u) => u.type === "started" || u.type === "completed"
+        (update) => update.type === "started" || update.type === "completed"
       );
       const completedUpdate = progressUpdates.find(
-        (u) => u.type === "completed"
+        (update) => update.type === "completed"
       );
 
       return completedUpdate?.timestamp
@@ -137,7 +140,7 @@ export const ResearchProgress = ({
 
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable eslint/id-length */
+
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */

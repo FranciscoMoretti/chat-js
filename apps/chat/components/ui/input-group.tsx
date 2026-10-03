@@ -61,7 +61,7 @@ const inputGroupAddonVariants = cva(
     },
   }
 );
-/* oxlint-disable id-length, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupAddon: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupAddon: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
 const InputGroupAddon = ({
   className,
@@ -73,16 +73,16 @@ const InputGroupAddon = ({
     className={cn(inputGroupAddonVariants({ align }), className)}
     data-align={align}
     data-slot="input-group-addon"
-    onPointerDown={(e) => {
+    onPointerDown={(event) => {
       if (
-        e.button !== 0 ||
-        !(e.target instanceof Element) ||
-        e.target.closest("button, a, input, textarea, select")
+        event.button !== 0 ||
+        !(event.target instanceof Element) ||
+        event.target.closest("button, a, input, textarea, select")
       ) {
         return;
       }
-      e.preventDefault();
-      e.currentTarget.parentElement
+      event.preventDefault();
+      event.currentTarget.parentElement
         ?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
           "input, textarea"
         )
@@ -91,7 +91,7 @@ const InputGroupAddon = ({
     {...props}
   />
 );
-/* oxlint-enable id-length, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const inputGroupButtonVariants = cva(
   "flex items-center gap-2 text-sm shadow-none",

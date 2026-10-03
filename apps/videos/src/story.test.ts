@@ -3,7 +3,6 @@ import { describe, expect, it } from "bun:test";
 import { presentationAt, script, stateAt } from "./story";
 
 /* oxlint-disable eslint/no-magic-numbers -- Two-path story: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable eslint/id-length -- Two-path story: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 describe("Two-path story", () => {
   it("keeps the original while its alternative streams in the background", () => {
     expect(stateAt(20).selected).toBe("city");
@@ -37,9 +36,9 @@ describe("Two-path story", () => {
     expect(stateAt(44, content).editText).toBe("Explore Rome.");
   });
   it("is seekable without stale follow-ups", () => {
-    const a = stateAt(8);
+    const initialState = stateAt(8);
     stateAt(38);
-    expect(stateAt(8)).toEqual(a);
+    expect(stateAt(8)).toEqual(initialState);
   });
   it("holds for reading without accelerating the following actions", () => {
     expect(presentationAt(8.5).demoTime).toBe(10);
@@ -47,5 +46,4 @@ describe("Two-path story", () => {
     expect(presentationAt(12).demoTime).toBe(14);
   });
 });
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */

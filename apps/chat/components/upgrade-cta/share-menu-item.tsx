@@ -16,7 +16,7 @@ interface ShareMenuItemProps {
   children?: ReactNode;
   onShare: () => void;
 }
-/* oxlint-disable id-length, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ShareMenuItem: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onShare, children }: ShareMenuItemProps). */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ShareMenuItem: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onShare, children }: ShareMenuItemProps). */
 
 export const ShareMenuItem = ({ onShare, children }: ShareMenuItemProps) => {
   const { data: session } = useSession();
@@ -28,7 +28,7 @@ export const ShareMenuItem = ({ onShare, children }: ShareMenuItemProps) => {
         <PopoverTrigger asChild>
           <DropdownMenuItem
             className="cursor-pointer opacity-50"
-            onSelect={(e) => e.preventDefault()}
+            onSelect={(event) => event.preventDefault()}
           >
             <Share size={16} />
             <span>Share</span>
@@ -49,4 +49,4 @@ export const ShareMenuItem = ({ onShare, children }: ShareMenuItemProps) => {
     </DropdownMenuItem>
   );
 };
-/* oxlint-enable id-length, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

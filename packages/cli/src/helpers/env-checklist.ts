@@ -48,7 +48,6 @@ interface EnvChecklistInput {
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
@@ -67,7 +66,7 @@ const requirementToEntries = (
 
   return requirement.options.map((group) => {
     const description = group
-      .map((v) => envDescriptions.get(v) ?? v)
+      .map((variableName) => envDescriptions.get(variableName) ?? variableName)
       .join(", ");
 
     return {
@@ -83,13 +82,11 @@ const requirementToEntries = (
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const addRequirementEntries = (
   entries: EnvVarEntry[],
@@ -102,7 +99,9 @@ const addRequirementEntries = (
   const dedupeKey = JSON.stringify(
     requirement.options
       .map((group) => group.toSorted())
-      .toSorted((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
+      .toSorted((leftEntry, rightEntry) =>
+        JSON.stringify(leftEntry).localeCompare(JSON.stringify(rightEntry))
+      )
   );
   if (seen.has(dedupeKey)) {
     return;
@@ -112,7 +111,6 @@ const addRequirementEntries = (
   entries.push(...requirementToEntries(requirement));
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */

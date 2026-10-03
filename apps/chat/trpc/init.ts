@@ -42,8 +42,7 @@ const createTRPCContext = cache(async () => {
 
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * id-length (#506): t uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): t accepts { shape, error }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): t preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -54,7 +53,7 @@ type Context = Awaited<ReturnType<typeof createTRPCContext>>;
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
+const trpc = initTRPC.context<typeof createTRPCContext>().create({
   errorFormatter({ shape, error }) {
     return {
       ...shape,
@@ -68,14 +67,14 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   },
   transformer: superjson,
 });
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /**
  * Create a server-side caller.
  *
  * @see https://trpc.io/docs/server/server-side-calls
  */
-const { createCallerFactory } = t;
+const { createCallerFactory } = trpc;
 
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
@@ -89,7 +88,7 @@ const { createCallerFactory } = t;
  *
  * @see https://trpc.io/docs/router
  */
-const createTRPCRouter = t.router;
+const createTRPCRouter = trpc.router;
 
 /* oxlint-disable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types --
  * no-console (#514): timingMiddleware emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -103,10 +102,10 @@ const createTRPCRouter = t.router;
  * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
  * network latency that would occur in production but not in local development.
  */
-const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
+const timingMiddleware = trpc.middleware(async ({ next: runNext, path }) => {
   const start = Date.now();
 
-  if (t._config.isDev) {
+  if (trpc._config.isDev) {
     // Add an artificial delay in development.
     const waitMs = Math.floor(Math.random() * 400) + 100;
     await sleep(waitMs);
@@ -128,7 +127,7 @@ const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-const publicProcedure = t.procedure.use(timingMiddleware);
+const publicProcedure = trpc.procedure.use(timingMiddleware);
 
 /* oxlint-disable no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- no-console (#514): protectedProcedure emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
 typescript/prefer-readonly-parameter-types (#565): protectedProcedure accepts { ctx, next }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -141,7 +140,7 @@ typescript/promise-function-async (#606): protectedProcedure preserves the retur
  *
  * @see https://trpc.io/docs/procedures
  */
-const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+const protectedProcedure = trpc.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }

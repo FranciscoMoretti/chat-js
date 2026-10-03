@@ -239,8 +239,7 @@ const checkGatewaySnapshot = (): string | null => {
 };
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * id-length (#506): checkEnv uses e as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): checkEnv emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -302,7 +301,10 @@ const checkEnv = async (): Promise<void> => {
 
   if (errors.length > 0) {
     const message = errors
-      .map((e) => `  - ${e.feature}: ${e.missing.join(", ")}`)
+      .map(
+        (validationError) =>
+          `  - ${validationError.feature}: ${validationError.missing.join(", ")}`
+      )
       .join("\n");
 
     console.error(
@@ -318,7 +320,7 @@ const checkEnv = async (): Promise<void> => {
 
   console.log("✅ Environment validation passed");
 };
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-console, no-magic-numbers --
  * no-console (#514): try { await checkEnv(); } catch (error) { console.error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.

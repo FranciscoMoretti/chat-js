@@ -73,10 +73,9 @@ const ease = (x: number): number => {
 const textAt = (text: string, fraction: number): string =>
   text.slice(0, Math.floor(clamp(fraction) * text.length));
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/id-length -- editTextAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- editTextAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- editTextAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const editTextAt = (t: number, content: LaunchScript): string => {
+const editTextAt = (timeSeconds: number, content: LaunchScript): string => {
   let prefixLength = 0;
   while (
     prefixLength < content.prompt.length &&
@@ -87,29 +86,26 @@ const editTextAt = (t: number, content: LaunchScript): string => {
   }
   const editPrefix = content.porto.prompt.slice(0, prefixLength);
   const editSuffix = content.porto.prompt.slice(prefixLength);
-  return t < 42.6
+  return timeSeconds < 42.6
     ? content.prompt
-    : `${editPrefix}${textAt(editSuffix, (t - 42.6) / 1.1)}`;
+    : `${editPrefix}${textAt(editSuffix, (timeSeconds - 42.6) / 1.1)}`;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable eslint/id-length -- noteAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- noteAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-const noteAt = (t: number): string => {
+const noteAt = (timeSeconds: number): string => {
   let note = "";
-  if (t >= 22) {
+  if (timeSeconds >= 22) {
     note = "Both paths are yours to keep.";
-  } else if (t >= 12 && t < 18) {
+  } else if (timeSeconds >= 12 && timeSeconds < 18) {
     note = "One prompt. Two answers.";
-  } else if (t >= 19 && t < 22) {
+  } else if (timeSeconds >= 19 && timeSeconds < 22) {
     note = "Your original is here. The other reply keeps going.";
   }
   return note;
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable eslint/max-statements -- stateAt: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- stateAt: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
@@ -186,7 +182,6 @@ const captionBeats = [
 /* oxlint-disable typescript/explicit-module-boundary-types -- presentationAt: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- presentationAt: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- presentationAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable eslint/id-length -- presentationAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable unicorn/no-null -- presentationAt: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- presentationAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const presentationAt = (wallTime: number) => {
@@ -197,7 +192,8 @@ const presentationAt = (wallTime: number) => {
     (wallTime >= 26.5 ? 2 : 0) +
     (wallTime >= 34.5 ? 1.5 : 0);
   const beat = captionBeats.find(
-    (b): boolean => time >= b.start && time < b.end
+    (captionBeat): boolean =>
+      time >= captionBeat.start && time < captionBeat.end
   );
   if (!beat) {
     return { caption: null, demoTime: time, opacity: 0 };
@@ -212,7 +208,6 @@ const presentationAt = (wallTime: number) => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */

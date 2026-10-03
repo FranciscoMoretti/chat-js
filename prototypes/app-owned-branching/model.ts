@@ -167,7 +167,6 @@ const requireResources = async (
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- append: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- append: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- append: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- append: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- append: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const append = async (
@@ -183,36 +182,36 @@ const append = async (
   const parsed = message.parse(input.message);
   const { annotation, ...payload } = parsed;
   await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, input.owner, input.branch);
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
     await requireResources(
       tx,
       input.owner,
-      payload.parts.flatMap((p) => (p.type === "file" ? [p.object] : [])),
+      payload.parts.flatMap((messagePart) =>
+        messagePart.type === "file" ? [messagePart.object] : []
+      ),
       "file"
     );
-    if (b.barrier) {
+    if (ownedBranchRecord.barrier) {
       throw new Error("capture barrier");
     }
-    if (b.head !== input.expectedHead) {
+    if (ownedBranchRecord.head !== input.expectedHead) {
       throw new Error("stale head");
     }
-    await tx`insert into node (id,owner,previous,payload) values (${input.id},${input.owner},${b.head},${tx.json(payload)})`;
+    await tx`insert into node (id,owner,previous,payload) values (${input.id},${input.owner},${ownedBranchRecord.head},${tx.json(payload)})`;
     if (annotation) {
       await tx`insert into annotation (node,owner,payload) values (${input.id},${input.owner},${tx.json(annotation)})`;
     }
-    await tx`update branch set head=${input.id} where id=${b.id}`;
+    await tx`update branch set head=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- editDocument: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable eslint/max-params -- editDocument: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- editDocument: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- editDocument: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- editDocument: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- editDocument: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const editDocument = async (
@@ -222,17 +221,16 @@ const editDocument = async (
   revisions: Record<string, string>
 ) => {
   await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, owner, branch);
-    if (b.barrier) {
+    const ownedBranchRecord = await ownedBranch(tx, owner, branch);
+    if (ownedBranchRecord.barrier) {
       throw new Error("capture barrier");
     }
     await requireResources(tx, owner, Object.values(revisions), "document");
-    await tx`update branch set documents=${tx.json(revisions)} where id=${b.id}`;
+    await tx`update branch set documents=${tx.json(revisions)} where id=${ownedBranchRecord.id}`;
   });
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable typescript/explicit-module-boundary-types */
@@ -240,7 +238,6 @@ const editDocument = async (
 /* oxlint-disable typescript/explicit-module-boundary-types -- beginWriter: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable eslint/max-params -- beginWriter: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- beginWriter: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- beginWriter: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- beginWriter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- beginWriter: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const beginWriter = async (
@@ -251,8 +248,8 @@ const beginWriter = async (
   kind: string
 ) => {
   await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, owner, branch);
-    if (b.barrier) {
+    const ownedBranchRecord = await ownedBranch(tx, owner, branch);
+    if (ownedBranchRecord.barrier) {
       throw new Error("capture barrier");
     }
     await tx`insert into writer (id,branch,kind) values (${id},${branch},${kind})`;
@@ -260,7 +257,6 @@ const beginWriter = async (
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable typescript/explicit-module-boundary-types */
@@ -288,7 +284,6 @@ const endWriter = async (
 /* oxlint-disable eslint/max-statements -- reserve: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- reserve: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- reserve: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- reserve: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable eslint/no-magic-numbers -- reserve: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- reserve: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- reserve: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
@@ -299,7 +294,7 @@ const reserve = async (
   input: { owner: string; source: string; id: string; intent: string }
 ) => {
   await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, input.owner, input.source);
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.source);
     const [existing] = await tx<
       Checkpoint[]
     >`select * from checkpoint where id=${input.id}`;
@@ -313,23 +308,23 @@ const reserve = async (
       }
       return;
     }
-    if (b.barrier) {
+    if (ownedBranchRecord.barrier) {
       throw new Error("capture barrier");
     }
-    const active = await tx`select id from writer where branch=${b.id}`;
+    const active =
+      await tx`select id from writer where branch=${ownedBranchRecord.id}`;
     if (active.length > 0) {
       throw new Error("writers not drained");
     }
-    validatePrefix(await history(tx, input.owner, b.head));
+    validatePrefix(await history(tx, input.owner, ownedBranchRecord.head));
     await tx`insert into checkpoint (id,owner,source,intent,head,documents,sandbox,status)
-      values (${input.id},${input.owner},${b.id},${input.intent},${b.head},${tx.json(b.documents)},${b.sandbox},'pending')`;
-    await tx`update branch set barrier=${input.id} where id=${b.id}`;
+      values (${input.id},${input.owner},${ownedBranchRecord.id},${input.intent},${ownedBranchRecord.head},${tx.json(ownedBranchRecord.documents)},${ownedBranchRecord.sandbox},'pending')`;
+    await tx`update branch set barrier=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
@@ -344,7 +339,6 @@ interface SnapshotProvider {
 /* oxlint-disable typescript/explicit-module-boundary-types -- complete: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable eslint/max-params -- complete: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- complete: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- complete: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- complete: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- complete: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const complete = async (
@@ -354,37 +348,37 @@ const complete = async (
   id: string,
   afterRestore?: () => void
 ) => {
-  const [c] = await sql<
+  const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${id} and owner=${owner}`;
-  if (!c) {
+  if (!checkpoint) {
     throw new Error("not owned");
   }
-  if (c.status === "ready") {
+  if (checkpoint.status === "ready") {
     return;
   }
-  if (!c.source) {
+  if (!checkpoint.source) {
     throw new Error("source missing");
   }
-  const { source } = c;
+  const { source } = checkpoint;
   try {
-    await provider.capture(id, c.sandbox);
+    await provider.capture(id, checkpoint.sandbox);
     // Snapshot stops the original VM. Reopen parent before releasing admission.
     await provider.restore(id, `parent:${id}`);
     afterRestore?.();
     await sql.begin(async (tx) => {
-      const b = await ownedBranch(tx, owner, source);
+      const ownedBranchRecord = await ownedBranch(tx, owner, source);
       const [current] = await tx<
         Checkpoint[]
       >`select * from checkpoint where id=${id} for update`;
       if (current?.status === "ready") {
         return;
       }
-      if (b.barrier !== id) {
+      if (ownedBranchRecord.barrier !== id) {
         throw new Error("lost barrier");
       }
       await tx`update checkpoint set status='ready', error=null where id=${id}`;
-      await tx`update branch set sandbox=${`parent:${id}`}, barrier=null where id=${b.id}`;
+      await tx`update branch set sandbox=${`parent:${id}`}, barrier=null where id=${ownedBranchRecord.id}`;
     });
   } catch (error) {
     await sql`update checkpoint set status='failed', error=${String(error)} where id=${id} and status <> 'ready'`;
@@ -394,7 +388,6 @@ const complete = async (
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable typescript/explicit-module-boundary-types */
@@ -402,7 +395,6 @@ const complete = async (
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- fork: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- fork: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- fork: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable eslint/no-magic-numbers -- fork: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- fork: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- fork: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
@@ -411,10 +403,10 @@ const fork = async (
   provider: SnapshotProvider,
   input: { owner: string; checkpoint: string; child: string }
 ) => {
-  const [c] = await sql<
+  const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${input.checkpoint} and owner=${input.owner} and status='ready'`;
-  if (!c) {
+  if (!checkpoint) {
     throw new Error("checkpoint not ready or not owned");
   }
   await sql.begin(async (tx) => {
@@ -424,13 +416,13 @@ const fork = async (
     if (prior.length === 0 && branch.length > 0) {
       throw new Error("child already exists");
     }
-    await tx`insert into child_request (id,owner,checkpoint) values (${input.child},${input.owner},${c.id}) on conflict do nothing`;
+    await tx`insert into child_request (id,owner,checkpoint) values (${input.child},${input.owner},${checkpoint.id}) on conflict do nothing`;
     const [request] = await tx<
       { owner: string; checkpoint: string; deleted: boolean }[]
     >`select owner,checkpoint,deleted from child_request where id=${input.child} for update`;
     if (
       request?.owner !== input.owner ||
-      request.checkpoint !== c.id ||
+      request.checkpoint !== checkpoint.id ||
       request.deleted
     ) {
       throw new Error("conflicting child");
@@ -438,7 +430,7 @@ const fork = async (
   });
   // Deterministic child identity + provider replay protects the allocation gap.
   const sandbox = `child:${input.child}`;
-  await provider.restore(c.id, sandbox);
+  await provider.restore(checkpoint.id, sandbox);
   await sql.begin(async (tx) => {
     const [request] = await tx<
       { deleted: boolean }[]
@@ -447,9 +439,9 @@ const fork = async (
       throw new Error("child deleted");
     }
     await tx`insert into branch (id,owner,head,documents,sandbox)
-      values (${input.child},${input.owner},${c.head},${tx.json(c.documents)},${sandbox}) on conflict do nothing`;
-    const b = await ownedBranch(tx, input.owner, input.child);
-    if (b.owner !== input.owner) {
+      values (${input.child},${input.owner},${checkpoint.head},${tx.json(checkpoint.documents)},${sandbox}) on conflict do nothing`;
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.child);
+    if (ownedBranchRecord.owner !== input.owner) {
       throw new Error("conflicting child");
     }
   });
@@ -457,13 +449,11 @@ const fork = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- removeBranch: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- removeBranch: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- removeBranch: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable eslint/no-magic-numbers -- removeBranch: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- removeBranch: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- removeBranch: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
@@ -476,25 +466,24 @@ const fork = async (
 const removeBranch = async (sql: Sql, owner: string, branch: string) => {
   await sql.begin(async (tx) => {
     await tx`select id from child_request where id=${branch} for update`;
-    const b = await ownedBranch(tx, owner, branch);
-    const writers = await tx`select id from writer where branch=${b.id}`;
-    if (b.barrier || writers.length > 0) {
+    const ownedBranchRecord = await ownedBranch(tx, owner, branch);
+    const writers =
+      await tx`select id from writer where branch=${ownedBranchRecord.id}`;
+    if (ownedBranchRecord.barrier || writers.length > 0) {
       throw new Error("branch busy");
     }
-    await tx`update child_request set deleted=true where id=${b.id}`;
-    await tx`delete from branch where id=${b.id}`;
+    await tx`update child_request set deleted=true where id=${ownedBranchRecord.id}`;
+    await tx`delete from branch where id=${ownedBranchRecord.id}`;
   });
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- writeFile: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- writeFile: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/id-length -- writeFile: Short row/transaction bindings remain local to their database operation. */
 /* oxlint-disable eslint/no-magic-numbers -- writeFile: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- writeFile: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- writeFile: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
@@ -514,14 +503,14 @@ const writeFile = async (
   }
 ) => {
   await sql.begin(async (tx) => {
-    const b = await ownedBranch(tx, input.owner, input.branch);
+    const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
     const tokens =
-      await tx`select id from writer where id=${input.writer} and branch=${b.id}`;
-    if (b.barrier || tokens.length === 0) {
+      await tx`select id from writer where id=${input.writer} and branch=${ownedBranchRecord.id}`;
+    if (ownedBranchRecord.barrier || tokens.length === 0) {
       throw new Error("writer not admitted");
     }
     const updated =
-      await tx`update provider_vm set files=files || ${tx.json({ [input.path]: input.bytes })} where id=${b.sandbox} and not stopped returning id`;
+      await tx`update provider_vm set files=files || ${tx.json({ [input.path]: input.bytes })} where id=${ownedBranchRecord.sandbox} and not stopped returning id`;
     if (updated.length === 0) {
       throw new Error("VM stopped");
     }
@@ -530,7 +519,6 @@ const writeFile = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 

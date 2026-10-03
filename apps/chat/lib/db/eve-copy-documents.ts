@@ -16,8 +16,7 @@ import {
 } from "./schema";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * id-length (#506): snapshotCopyCheckpoints uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): snapshotCopyCheckpoints uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -138,13 +137,15 @@ const snapshotCopyCheckpoints = async (
       }
     }
     return {
-      heads: heads.toSorted((a, b) => a.documentId.localeCompare(b.documentId)),
+      heads: heads.toSorted((leftHead, rightHead) =>
+        leftHead.documentId.localeCompare(rightHead.documentId)
+      ),
       messageIndex: boundary.messageIndex,
     };
   });
   return checkpoints;
 };
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
  * jsdoc/require-param (#534): snapshotPublicEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

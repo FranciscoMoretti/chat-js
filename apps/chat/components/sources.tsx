@@ -112,7 +112,7 @@ const AllSourcesView = ({
 };
 /* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ShowSourcesButton = ({
   sources,
@@ -130,9 +130,9 @@ const ShowSourcesButton = ({
     <FaviconGroup
       className="mr-1.5"
       maxVisible={3}
-      sources={sources.map((s) => ({
-        title: s.title,
-        url: s.url,
+      sources={sources.map((source) => ({
+        title: source.title,
+        url: source.url,
       }))}
     />
     <span className="text-muted-foreground group-hover:text-foreground text-xs">
@@ -141,7 +141,7 @@ const ShowSourcesButton = ({
     <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
   </button>
 );
-/* oxlint-enable id-length, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Sources: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources }: { sources: SearchResultItem[] }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const Sources = ({ sources }: { sources: SearchResultItem[] }) => {

@@ -1,7 +1,7 @@
 import type React from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable id-length, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Favicon: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
+/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Favicon: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
 export const Favicon = ({
   url,
@@ -19,11 +19,11 @@ export const Favicon = ({
     width={16}
     {...props}
     alt={`Favicon for ${url}`}
-    onError={(e) => {
-      const target = e.currentTarget;
+    onError={(event) => {
+      const target = event.currentTarget;
       target.style.display = "none";
       target.nextElementSibling?.classList.remove("hidden");
     }}
   />
 );
-/* oxlint-enable id-length, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

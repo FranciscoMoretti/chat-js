@@ -103,7 +103,6 @@ const contributionBinding = (
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Plan both application-owned UI edits before writing any registrations.
 const planContribution = async (
@@ -207,14 +206,15 @@ const planContribution = async (
     edits.push({ start: last.end, text: "," });
   }
   let content = source;
-  for (const edit of edits.toSorted((a, b): number => b.start - a.start)) {
+  for (const edit of edits.toSorted(
+    (leftEdit, rightEdit): number => rightEdit.start - leftEdit.start
+  )) {
     content =
       content.slice(0, edit.start) + edit.text + content.slice(edit.start);
   }
   return { content, file };
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
@@ -419,7 +419,6 @@ const syncFeatures = async (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Only fresh scaffolds use defaults. Cloning and sync never call this function.
@@ -515,7 +514,9 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
       }
     }
     let content = source;
-    for (const edit of edits.toSorted((a, b): number => b.start - a.start)) {
+    for (const edit of edits.toSorted(
+      (leftEdit, rightEdit): number => rightEdit.start - leftEdit.start
+    )) {
       content =
         content.slice(0, edit.start) + edit.text + content.slice(edit.end);
     }
@@ -526,7 +527,6 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

@@ -28,8 +28,7 @@ type MultiQuerySearchResponse = {
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
- * id-length (#506): multiQueryWebSearchStep uses q as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): multiQueryWebSearchStep accepts { queries, search, dataStream, toolCallId, }: { queries: SearchQuery[]; search: ( qu; query: SearchQuery; q; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -53,7 +52,7 @@ const multiQueryWebSearchStep = async ({
     // Send initial annotation showing all queries being executed
     dataStream?.write({
       data: {
-        queries: queries.map((q) => q.query),
+        queries: queries.map((query) => query.query),
         status: "running",
         title: `Executing ${queries.length} searches`,
         toolCallId,
@@ -85,7 +84,7 @@ const multiQueryWebSearchStep = async ({
     );
     dataStream?.write({
       data: {
-        queries: queries.map((q) => q.query),
+        queries: queries.map((query) => query.query),
         // oxlint-disable-next-line oxc/no-map-spread -- #541: Tag search output without mutating the collected provider results.
         results: allResults.map((result) => ({
           ...result,
@@ -110,7 +109,7 @@ const multiQueryWebSearchStep = async ({
     // Send error annotation
     dataStream?.write({
       data: {
-        queries: queries.map((q) => q.query),
+        queries: queries.map((query) => query.query),
         status: "completed",
         title: `Executing ${queries.length} searches`,
         toolCallId,
@@ -126,6 +125,6 @@ const multiQueryWebSearchStep = async ({
     };
   }
 };
-/* oxlint-enable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
 export { multiQueryWebSearchStep };
 export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };

@@ -26,7 +26,7 @@ const toolName = () => z.custom<ToolName>();
 // =====================================================
 
 const gatewayModelId = <G extends GatewayType>() =>
-  z.custom<GatewayModelIdMap[G]>((v) => typeof v === "string");
+  z.custom<GatewayModelIdMap[G]>((value) => typeof value === "string");
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 /* oxlint-disable id-length, typescript/explicit-function-return-type --
@@ -34,7 +34,7 @@ const gatewayModelId = <G extends GatewayType>() =>
  * typescript/explicit-function-return-type (#560): Keep gatewayImageModelId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 const gatewayImageModelId = <G extends GatewayType>() =>
-  z.custom<GatewayImageModelIdMap[G]>((v) => typeof v === "string");
+  z.custom<GatewayImageModelIdMap[G]>((value) => typeof value === "string");
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 /* oxlint-disable id-length, typescript/explicit-function-return-type --
@@ -42,7 +42,7 @@ const gatewayImageModelId = <G extends GatewayType>() =>
  * typescript/explicit-function-return-type (#560): Keep gatewayVideoModelId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 const gatewayVideoModelId = <G extends GatewayType>() =>
-  z.custom<GatewayVideoModelIdMap[G]>((v) => typeof v === "string");
+  z.custom<GatewayVideoModelIdMap[G]>((value) => typeof value === "string");
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
@@ -81,7 +81,7 @@ const deepResearchToolConfigSchema = z.object({
  * typescript/explicit-function-return-type (#560): Keep createAiSchema's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/max-nested-calls (#568): createAiSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-const createAiSchema = <G extends GatewayType>(g: G) =>
+const createAiSchema = <G extends GatewayType>(gateway: G) =>
   z.object({
     anonymousModels: z
       .array(gatewayModelId<G>())
@@ -92,7 +92,7 @@ const createAiSchema = <G extends GatewayType>(g: G) =>
     disabledModels: z
       .array(gatewayModelId<G>())
       .describe("Models to hide from all users"),
-    gateway: z.literal(g),
+    gateway: z.literal(gateway),
     providerOrder: z
       .array(z.string())
       .describe("Provider sort order in model selector"),
