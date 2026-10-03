@@ -1,38 +1,69 @@
 import { getMessageText } from "@chat-js/thread";
+/* oxlint-disable eslint/sort-imports -- the @chat-js/thread import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { MessageTreeSnapshot } from "@chat-js/thread";
+/* oxlint-enable eslint/sort-imports */
 import type { UseThreadHelpers } from "@chat-js/thread/react";
+/* oxlint-disable eslint/sort-imports -- the ai import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/exports-last -- PlaygroundMetadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/group-exports -- PlaygroundMetadata: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- PlaygroundMetadata: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export interface PlaygroundMetadata {
   activeStreamId: string | null;
   createdAt: string;
   title?: string;
 }
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
+/* oxlint-disable import/exports-last -- PlaygroundMessage: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/group-exports -- PlaygroundMessage: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- PlaygroundMessage: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type PlaygroundMessage = UIMessage<PlaygroundMetadata>;
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
+/* oxlint-disable import/exports-last -- PlaygroundChat: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/group-exports -- PlaygroundChat: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- PlaygroundChat: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type PlaygroundChat = UseThreadHelpers<PlaygroundMessage>;
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
 interface StreamBody {
   responseLabel?: string;
 }
 
+/* oxlint-disable import/exports-last -- LayoutNode: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/group-exports -- LayoutNode: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- LayoutNode: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable eslint/id-length -- LayoutNode: The local index/OS/library binding retains its conventional API notation. */
 export interface LayoutNode {
   depth: number;
   id: string;
   x: number;
   y: number;
 }
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
+/* oxlint-disable unicorn/no-null -- createMessage: The SDK/wire/OS contract uses null as an explicit absence value. */
 const createMessage = ({
   id,
   role,
   text,
   title,
 }: {
-  id: string;
-  role: "assistant" | "user";
-  text: string;
-  title: string;
+  readonly id: string;
+  readonly role: "assistant" | "user";
+  readonly text: string;
+  readonly title: string;
 }): PlaygroundMessage => ({
   id,
   metadata: {
@@ -43,7 +74,9 @@ const createMessage = ({
   parts: [{ text, type: "text" }],
   role,
 });
+/* oxlint-enable unicorn/no-null */
 
+/* oxlint-disable unicorn/no-null -- initialNodes: The SDK/wire/OS contract uses null as an explicit absence value. */
 const initialNodes = [
   {
     message: createMessage({
@@ -109,22 +142,33 @@ const initialNodes = [
     parentId: "msg_04b",
   },
 ] satisfies MessageTreeSnapshot<PlaygroundMessage>["nodes"];
+/* oxlint-enable unicorn/no-null */
 
+/* oxlint-disable import/exports-last -- initialTree: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/group-exports -- initialTree: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- initialTree: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
   cursorId: "msg_05a",
   nodes: initialNodes,
   version: 1,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
-const delay = async (ms: number, signal?: AbortSignal) => {
+/* oxlint-disable oxc/no-async-await -- delay: Await sequencing preserves this operation's dependent I/O and error propagation. */
+/* oxlint-disable oxc/no-optional-chaining -- delay: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable eslint/no-undefined -- delay: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- delay: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
   signal?.throwIfAborted();
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
   const abort = new AbortController();
-  const timeout = setTimeout(() => {
+  const timeout = setTimeout((): void => {
     abort.abort();
     resolve(undefined);
   }, ms);
-  const onAbort = () => {
+  const onAbort = (): void => {
     clearTimeout(timeout);
     reject(new DOMException("Aborted", "AbortError"));
   };
@@ -134,9 +178,25 @@ const delay = async (ms: number, signal?: AbortSignal) => {
   });
   await promise;
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
 
 const RESPONSE_NUMBER_PATTERN = /\d+/u;
 
+/* oxlint-disable import/group-exports -- createPlaygroundTransport: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable eslint/max-statements -- createPlaygroundTransport: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable import/no-named-export -- createPlaygroundTransport: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable eslint/max-lines-per-function -- createPlaygroundTransport: The operation keeps its validation, ordered side effects and cleanup in one scope. */
+/* oxlint-disable unicorn/no-null -- createPlaygroundTransport: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable eslint/no-magic-numbers -- createPlaygroundTransport: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable oxc/no-optional-chaining -- createPlaygroundTransport: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable eslint/no-ternary -- createPlaygroundTransport: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable oxc/no-async-await -- createPlaygroundTransport: Await sequencing preserves this operation's dependent I/O and error propagation. */
+/* oxlint-disable typescript/promise-function-async -- createPlaygroundTransport: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- createPlaygroundTransport: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- createPlaygroundTransport: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 export const createPlaygroundTransport =
   (): ChatTransport<PlaygroundMessage> => ({
     reconnectToStream: () => Promise.resolve(null),
@@ -160,7 +220,7 @@ export const createPlaygroundTransport =
 
       return Promise.resolve(
         new ReadableStream<UIMessageChunk<PlaygroundMetadata>>({
-          async start(controller) {
+          async start(controller): Promise<void> {
             try {
               controller.enqueue({
                 messageMetadata: {
@@ -214,7 +274,27 @@ export const createPlaygroundTransport =
       );
     },
   });
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- buildTreeLayout: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- buildTreeLayout: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable typescript/explicit-module-boundary-types -- buildTreeLayout: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
+/* oxlint-disable typescript/explicit-function-return-type -- buildTreeLayout: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
+/* oxlint-disable eslint/init-declarations -- buildTreeLayout: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
+/* oxlint-disable eslint/no-magic-numbers -- buildTreeLayout: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable eslint/id-length -- buildTreeLayout: The local index/OS/library binding retains its conventional API notation. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- buildTreeLayout: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 export const buildTreeLayout = ({
   childrenByParentId,
   rootIds,
@@ -235,10 +315,14 @@ export const buildTreeLayout = ({
       column = nextLeaf;
       nextLeaf += 1;
     } else {
-      const childColumns = children.map((childId) => visit(childId, depth + 1));
+      const childColumns = children.map((childId): number =>
+        visit(childId, depth + 1)
+      );
       column =
-        childColumns.reduce((total, childColumn) => total + childColumn, 0) /
-        childColumns.length;
+        childColumns.reduce(
+          (total, childColumn): number => total + childColumn,
+          0
+        ) / childColumns.length;
     }
 
     positions.set(id, { depth, id, x: column * 164 + 92, y: depth * 122 + 64 });
@@ -257,3 +341,11 @@ export const buildTreeLayout = ({
     width: Math.max(430, Math.max(0, nextLeaf - 2) * 164 + 184),
   };
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-module-boundary-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

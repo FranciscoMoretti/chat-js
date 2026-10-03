@@ -1,7 +1,21 @@
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { readFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { createRequire } from "node:module";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import pathModule from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /** Resolve an installed package from the workspace that declares the dependency. */
 export const resolvePackageDirectory = async (
   packageName: string,
@@ -39,3 +53,9 @@ export const resolvePackageDirectory = async (
 
   throw new Error(`Could not locate the installed ${packageName} package.`);
 };
+/* oxlint-enable jsdoc/require-param */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable jsdoc/require-returns */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export */

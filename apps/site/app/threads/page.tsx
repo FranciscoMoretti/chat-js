@@ -12,19 +12,27 @@ import {
   Workflow,
 } from "lucide-react";
 import type { Metadata } from "next";
+import React from "react";
 
+/* oxlint-disable eslint/sort-imports -- the @/components/footer import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { Footer } from "@/components/footer";
+/* oxlint-enable eslint/sort-imports */
 import { Navbar } from "@/components/navbar";
+/* oxlint-disable eslint/sort-imports -- the @/components/thread-showcase import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   ThreadInstallCommand,
   ThreadPlayground,
 } from "@/components/thread-showcase";
+/* oxlint-enable eslint/sort-imports */
 import { siteConfig, siteLinks } from "@/lib/site-config";
 
 const THREADS_TITLE = "useThread — Branching Chats for AI SDK";
 const THREADS_DESCRIPTION =
   "Keep the useChat interface and add message trees, branch navigation, and concurrent AI SDK response streams.";
 
+/* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
+/* oxlint-disable import/no-named-export -- metadata: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.threads,
@@ -45,6 +53,9 @@ export const metadata: Metadata = {
     title: THREADS_TITLE,
   },
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable react/only-export-components */
+/* oxlint-enable import/exports-last */
 
 const compatibility = [
   "messages",
@@ -105,7 +116,13 @@ const architectureRows = [
   },
 ] as const;
 
-const ThreadsPage = () => (
+/* oxlint-disable eslint/max-lines-per-function -- ThreadsPage: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
+/* oxlint-disable react/jsx-no-literals -- ThreadsPage: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+/* oxlint-disable react/jsx-max-depth -- ThreadsPage: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
+/* oxlint-disable react/forbid-component-props -- ThreadsPage: className/style are the deliberate styling interface of these UI/layout primitives. */
+/* oxlint-disable eslint/no-magic-numbers -- ThreadsPage: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsPage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+const ThreadsPage = (): React.JSX.Element => (
   <div className="flex min-h-screen flex-col">
     <Navbar />
     <main className="flex-1">
@@ -348,5 +365,15 @@ const ThreadsPage = () => (
     <Footer />
   </div>
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable react/forbid-component-props */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable eslint/max-lines-per-function */
 
+/* oxlint-disable import/no-default-export -- page.tsx: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default ThreadsPage;
+/* oxlint-enable import/no-default-export */
+
+/* oxlint-disable max-lines -- page.tsx: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */

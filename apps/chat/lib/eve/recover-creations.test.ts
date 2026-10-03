@@ -24,12 +24,20 @@ beforeEach(() => {
     Response.json({ code: "creation_in_progress" }, { status: 409 })
   );
 });
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("waits for a concurrent binding without dispatching the operation again") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("waits for a concurrent binding without dispatching the operation again") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("waits for a concurrent binding without dispatching the operation again", async () => {
   mocks.read.mockResolvedValue({ sessionId: "native-session", state: "bound" });
   await expect(recoverEveCreations("owner")).resolves.toBeUndefined();
   expect(mocks.execute).toHaveBeenCalledTimes(1);
   expect(mocks.read).toHaveBeenCalledWith("owner", operationId);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("does not hide unrelated conflicts behind concurrent recovery") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("does not hide unrelated conflicts behind concurrent recovery", async () => {
   mocks.execute.mockResolvedValue(
     Response.json({ code: "creation_conflict" }, { status: 409 })
@@ -39,6 +47,12 @@ test("does not hide unrelated conflicts behind concurrent recovery", async () =>
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+ * no-magic-numbers (#517): test("keeps admission closed when the bounded wait cannot prove a binding") uses 8, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("keeps admission closed when the bounded wait cannot prove a binding") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/no-null (#570): test("keeps admission closed when the bounded wait cannot prove a binding") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("keeps admission closed when the bounded wait cannot prove a binding", async () => {
   mocks.read.mockResolvedValue({ sessionId: null, state: "uncertain" });
   await expect(recoverEveCreations("owner")).rejects.toThrow(
@@ -47,7 +61,12 @@ test("keeps admission closed when the bounded wait cannot prove a binding", asyn
   expect(mocks.read).toHaveBeenCalledTimes(8);
   expect(mocks.execute).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
 
+/* oxlint-disable oxc/no-async-await, unicorn/no-null --
+ * oxc/no-async-await (#540): test("never reconstructs an admitted command from historical columns") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/no-null (#570): test("never reconstructs an admitted command from historical columns") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("never reconstructs an admitted command from historical columns", async () => {
   mocks.pending.mockResolvedValue([
     {
@@ -62,3 +81,4 @@ test("never reconstructs an admitted command from historical columns", async () 
   );
   expect(mocks.execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await, unicorn/no-null */

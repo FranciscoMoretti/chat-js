@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -18,11 +22,22 @@ import {
   createConversationInput,
 } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash";
 const boundaryReply = /^boundary-ready\.?$/u;
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * max-lines-per-function (#510): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("copied document history survives source deletion and supports native editing") uses 240_000, 20_000, 60_000, 503, 1000, 2000, 4000, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("copied document history survives source deletion and supports native editing") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("copied document history survives source deletion and supports native editing") handles optional latest?.content; revisions.find((revision) => revision.id === latest?.parentRevisionId) ?.content; latest?.parentRevisionId; seed?.data.messages without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): test("copied document history survives source deletion and supports native editing") copies or separates ...forkInput; ...forkInput.fork while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test("copied document history survives source deletion and supports native editing") accepts { page, }; testInfo; route; event; revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("copied document history survives source deletion and supports native editing") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("copied document history survives source deletion and supports native editing", async ({
   page,
 }, testInfo) => {
@@ -309,3 +324,6 @@ test("copied document history survives source deletion and supports native editi
   });
   expect(changed.status()).toBe(409);
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+
+/* oxlint-disable max-lines -- #509: This eve-copy-documents-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

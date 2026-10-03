@@ -1,3 +1,5 @@
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
 import {
   Beaker,
   Book,
@@ -25,10 +27,12 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import React from "react";
 
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 import { getColorValue } from "@/lib/project-icons";
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 
 const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
   book: Book,
@@ -64,6 +68,7 @@ interface ProjectIconProps {
   icon: ProjectIconName;
   size?: number;
 }
+/* oxlint-disable import/no-named-export, import/prefer-default-export, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ProjectIcon: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
 
 export const ProjectIcon = ({
   icon,
@@ -82,3 +87,4 @@ export const ProjectIcon = ({
     />
   );
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

@@ -1,10 +1,15 @@
 import { ArrowUpRight } from "lucide-react";
+import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
 /* ── Platform logo icons ──────────────────────────────────────────── */
 
-const AppleLogo = ({ className }: { className?: string }) => (
+const AppleLogo = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -15,7 +20,12 @@ const AppleLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const WindowsLogo = ({ className }: { className?: string }) => (
+/* oxlint-disable react/no-multi-comp -- WindowsLogo: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
+const WindowsLogo = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -25,8 +35,14 @@ const WindowsLogo = ({ className }: { className?: string }) => (
     <path d="M3 12V6.75l6-1.32v6.48L3 12zm6.73-.07l8.27-.9V3.12l-8.27 1.24v7.57zM18 12.08l-8.27.9v7.57l8.27 1.24V12.08zM9 12.1l-6 .09v5.16l6 1.32V12.1z" />
   </svg>
 );
+/* oxlint-enable react/no-multi-comp */
 
-const LinuxLogo = ({ className }: { className?: string }) => (
+/* oxlint-disable react/no-multi-comp -- LinuxLogo: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
+const LinuxLogo = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -36,8 +52,14 @@ const LinuxLogo = ({ className }: { className?: string }) => (
     <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333a.506.506 0 00-.391-.135.544.544 0 00-.368.135c-.112.087-.132.204-.182.335a.87.87 0 00-.066.334v.02c.006.08.018.199.045.268-.145-.063-.324-.145-.497-.202a1.309 1.309 0 01-.076-.468v-.067c.006-.354.086-.7.223-.926.145-.325.355-.523.59-.658.21-.135.447-.202.717-.202z" />
   </svg>
 );
+/* oxlint-enable react/no-multi-comp */
 
-const BrowserFrame = ({ className }: { className?: string }) => (
+/* oxlint-disable react/no-multi-comp -- BrowserFrame: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
+const BrowserFrame = ({
+  className,
+}: {
+  readonly className?: string;
+}): React.JSX.Element => (
   <svg
     aria-hidden="true"
     className={className}
@@ -77,10 +99,19 @@ const BrowserFrame = ({ className }: { className?: string }) => (
     />
   </svg>
 );
+/* oxlint-enable react/no-multi-comp */
 
+/* oxlint-disable import/prefer-default-export -- Platforms: Consumers use this named API so adding another export will not require changing existing imports. */
+/* oxlint-disable react/no-multi-comp -- Platforms: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
+/* oxlint-disable import/no-named-export -- Platforms: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable eslint/max-lines-per-function -- Platforms: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
+/* oxlint-disable react/jsx-no-literals -- Platforms: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+/* oxlint-disable react/jsx-max-depth -- Platforms: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
+/* oxlint-disable react/forbid-component-props -- Platforms: className/style are the deliberate styling interface of these UI/layout primitives. */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Platforms: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* ── Main Component ───────────────────────────────────────────────── */
 
-export const Platforms = () => (
+export const Platforms = (): React.JSX.Element => (
   <section
     aria-labelledby="platforms-heading"
     className="relative overflow-hidden py-28 sm:py-36"
@@ -212,3 +243,11 @@ export const Platforms = () => (
     </div>
   </section>
 );
+/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable react/forbid-component-props */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable react/no-multi-comp */
+/* oxlint-enable import/prefer-default-export */

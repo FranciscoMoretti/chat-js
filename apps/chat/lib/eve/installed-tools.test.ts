@@ -1,13 +1,23 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/installed" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { ModelMessage } from "ai";
 import { expect, test, vi } from "vitest";
 
 import installed from "../../agent/tools/installed";
 import type { eveImageContext } from "./image-context";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 const state = vi.hoisted(() => ({
   update: vi.fn<(update: () => ReturnType<typeof eveImageContext>) => void>(),
 }));
 vi.mock("./tool-image-context", () => ({ eveToolImageContext: state }));
+/* oxlint-disable id-length, node/no-top-level-await, oxc/no-async-await --
+ * id-length (#506): definitions uses z as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * node/no-top-level-await (#539): definitions runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+ * oxc/no-async-await (#540): definitions sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 const definitions = await vi.hoisted(async () => {
   const { defineTool } = await import("eve/tools");
   const { z } = await import("zod");
@@ -15,14 +25,25 @@ const definitions = await vi.hoisted(async () => {
     customEcho: defineTool({
       approval: () => "user-approval",
       description: "Custom echo",
-      execute: ({ text }) => text,
+      execute: ({ text }): string => text,
       inputSchema: z.object({ text: z.string() }),
       toModelOutput: (text) => ({ type: "text" as const, value: text }),
     }),
   };
 });
+/* oxlint-enable id-length, node/no-top-level-await, oxc/no-async-await */
 vi.mock("../../tools/chatjs/tools", () => ({ tools: definitions }));
+/* oxlint-disable id-length, typescript/explicit-function-return-type --
+ * id-length (#506): vi.mock("./turn-tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("./turn-tools")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("./turn-tools", () => ({ filterEveTools: <T>(tools: T) => tools }));
+/* oxlint-enable id-length, typescript/explicit-function-return-type */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+ * no-magic-numbers (#517): test("installed and custom definitions retain their native policies and concrete defi uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("installed and custom definitions retain their native policies and concrete defi sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/no-null (#570): test("installed and custom definitions retain their native policies and concrete defi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("installed and custom definitions retain their native policies and concrete definitions", async () => {
   const resolve = installed.events["step.started"];
   if (!resolve) {
@@ -40,7 +61,16 @@ test("installed and custom definitions retain their native policies and concrete
   expect(Object.values(result)[0]).toBe(definitions.customEcho);
   expect(state.update).toHaveBeenCalledOnce();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, unicorn/no-null --
+ * max-lines-per-function (#510): test("steps retain only current image inputs, not the conversation history") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("steps retain only current image inputs, not the conversation history") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("steps retain only current image inputs, not the conversation history") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("steps retain only current image inputs, not the conversation history") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("steps retain only current image inputs, not the conversation history") handles optional state.update.mock.lastCall?.[0](); initial?.attachments; initial?.attachments[0].url; next?.attachments; next?.lastGeneratedImage?.imageUrl without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * unicorn/no-null (#570): test("steps retain only current image inputs, not the conversation history") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("steps retain only current image inputs, not the conversation history", async () => {
   const resolve = installed.events["step.started"];
   if (!resolve) {
@@ -108,3 +138,4 @@ test("steps retain only current image inputs, not the conversation history", asy
     lastGeneratedImage: next?.lastGeneratedImage,
   });
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, unicorn/no-null */

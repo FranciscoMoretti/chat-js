@@ -1,13 +1,19 @@
 import { expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { readFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { runInNewContext } from "node:vm";
+/* oxlint-enable import/no-nodejs-modules */
 
 import ts from "typescript";
 
+/* oxlint-disable node/no-top-level-await -- Module initialization must complete before dependent code consumes the prepared runtime or build artifact. */
 const source = await readFile(
   new URL("../../../../apps/chat/instrumentation.ts", import.meta.url),
   "utf-8"
 );
+/* oxlint-enable node/no-top-level-await */
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -15,9 +21,13 @@ const compiled = ts.transpileModule(source, {
   },
 }).outputText;
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
-    test(`core lifecycle survives optional instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async () => {
+    test(`core lifecycle survives optional instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async (): Promise<void> => {
       const events: string[] = [];
       const received: unknown[] = [];
       const failure = new Error("Missing credentials for langfuse");
@@ -42,7 +52,9 @@ for (const runtime of ["nodejs", "edge"]) {
             return { config: { appPrefix: "test" } };
           }
           if (name === "./lib/eve/local-guest-cleanup-scheduler") {
-            return { startLocalEveGuestCleanup: () => events.push("core") };
+            return {
+              startLocalEveGuestCleanup: (): number => events.push("core"),
+            };
           }
           throw new Error(`Unexpected import: ${name}`);
         },
@@ -62,3 +74,7 @@ for (const runtime of ["nodejs", "edge"]) {
     });
   }
 }
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/max-statements */

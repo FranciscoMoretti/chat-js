@@ -1,3 +1,6 @@
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const clarifyWithUserInstructions = ({
   messages,
   date,
@@ -42,7 +45,13 @@ For the verification message when no clarification is needed:
 - Briefly summarize the key aspects of what you understand from their request
 - Confirm that you will now begin the research process
 - Keep the message concise and professional`;
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const transformMessagesIntoResearchTopicPrompt = ({
   messages,
   date,
@@ -83,7 +92,13 @@ Guidelines:
 - For academic or scientific queries, prefer linking directly to the original paper or official journal publication rather than survey papers or secondary summaries.
 - For people, try linking directly to their LinkedIn profile, or their personal website if they have one.
 - If the query is in a specific language, prioritize sources published in that language.`;
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const leadResearcherPrompt = ({
   date,
   max_concurrent_research_units,
@@ -103,7 +118,13 @@ Return JSON with complete (boolean) and topics (array of strings).
 - Judge evidence coverage and reliability, not formatting. Findings may be raw or messy.
 - Match depth to the user's request. Detailed or comprehensive requests warrant more follow-up than broad overviews.
 - As research accumulates, require a stronger reason to request additional work. Finish when the findings adequately answer the brief. Do not repeat topics with minor rephrasing.`;
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const researchSystemPrompt = ({
   date,
   mcp_prompt,
@@ -147,7 +168,13 @@ You can use any of the tools provided to you to find resources that can help ans
 - You MUST conduct research using web search or a different tool before finishing! You cannot finish without conducting research first!
 - The caller needs your findings, not just your search activity. Always finish by calling final_output with the collected evidence; a separate agent will compress it and write the user-facing report.
 </Critical Reminders>`;
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const compressResearchSystemPrompt = ({
   date,
 }: {
@@ -189,11 +216,22 @@ The report should be structured like this:
 </Citation Rules>
 
 Critical Reminder: It is extremely important that any information that is even remotely relevant to the user's research topic is preserved verbatim (e.g. don't rewrite it, don't summarize it, don't paraphrase it).`;
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const compressResearchSimpleHumanMessage = `All above messages are about research conducted by an AI Researcher. Please clean up these findings.
 
 DO NOT summarize the information. I want the raw information returned, just in a cleaner format. Make sure all relevant information is preserved - you can rewrite findings verbatim.`;
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const finalReportGenerationPrompt = ({
   research_brief,
   date,
@@ -269,3 +307,7 @@ Format the report in clear markdown with proper structure and include source ref
   [2] Source Title: URL
 - Citations are extremely important. Make sure to include these, and pay a lot of attention to getting these right. Users will often use these citations to look into more information.
 </Citation Rules>`;
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

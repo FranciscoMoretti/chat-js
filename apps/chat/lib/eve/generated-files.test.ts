@@ -12,14 +12,20 @@ vi.mock("../db/eve-files", () => ({
   reserveEveGeneratedFile: mocks.reserve,
   writeEveGeneratedFile: mocks.write,
 }));
+
 vi.mock("../file-storage", () => ({
-  createFileId: () => "abcdefghijklmnopqrstuvwx.png",
+  createFileId: (): string => "abcdefghijklmnopqrstuvwx.png",
   uploadFileAtKey: mocks.upload,
 }));
+
 vi.mock("./conversation-scope", () => ({
   resolveEveConversationScope: mocks.resolve,
 }));
 
+/* oxlint-disable max-params, typescript/promise-function-async --
+ * max-params (#511): beforeEach keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.resolve.mockResolvedValue({
@@ -31,10 +37,20 @@ beforeEach(() => {
   );
   mocks.upload.mockResolvedValue({ url: "fixture-url" });
 });
+/* oxlint-enable max-params, typescript/promise-function-async */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+ * typescript/explicit-function-return-type (#560): Keep context's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): context accepts signal = new AbortController().signal; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 const context = (signal = new AbortController().signal) => ({
   abortSignal: signal,
   session: { auth: { initiator: { principalId: "owner" } }, id: "session" },
 });
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): test("reserves a recoverable key and enters the deletion lock before external upload" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("reserves a recoverable key and enters the deletion lock before external upload" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("reserves a recoverable key and enters the deletion lock before external upload", async () => {
   await expect(
     eveGeneratedFileUploader(context())("image.png", "bytes", "image/png")
@@ -51,6 +67,11 @@ test("reserves a recoverable key and enters the deletion lock before external up
     mocks.upload.mock.invocationCallOrder[0]
   );
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await, unicorn/max-nested-calls --
+ * oxc/no-async-await (#540): test("reservation failure and cancellation prevent external upload") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/max-nested-calls (#568): test("reservation failure and cancellation prevent external upload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 test("reservation failure and cancellation prevent external upload", async () => {
   mocks.reserve.mockRejectedValueOnce(new Error("deleting"));
   await expect(
@@ -62,3 +83,4 @@ test("reservation failure and cancellation prevent external upload", async () =>
   ).rejects.toThrow();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await, unicorn/max-nested-calls */

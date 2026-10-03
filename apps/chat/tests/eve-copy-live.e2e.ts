@@ -1,3 +1,8 @@
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+ * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
@@ -21,10 +26,24 @@ import { eveCopyInput } from "../lib/eve/copy-input";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { textPdf } from "./eve-attachment-fixtures";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash-lite";
 
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+ * init-declarations (#507): test("saves without generation, recovers after source revocation and reload, and cont assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-lines-per-function (#510): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("saves without generation, recovers after source revocation and reload, and cont uses 1000, 2000, 4000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test("saves without generation, recovers after source revocation and reload, and cont uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test("saves without generation, recovers after source revocation and reload, and cont sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("saves without generation, recovers after source revocation and reload, and cont handles optional event.data.message?.trim() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): test("saves without generation, recovers after source revocation and reload, and cont copies or separates ...prepareEveCopyTranscript(snapshot.events).seed; ...seed while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test("saves without generation, recovers after source revocation and reload, and cont accepts { page, browser, }; testInfo; route; event; tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("saves without generation, recovers after source revocation and reload, and cont preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * unicorn/no-null (#570): test("saves without generation, recovers after source revocation and reload, and cont preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test("saves without generation, recovers after source revocation and reload, and continues the native copy", async ({
   page,
   browser,
@@ -259,7 +278,19 @@ test("saves without generation, recovers after source revocation and reload, and
     )
   ).toBeVisible();
 });
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * init-declarations (#507): for (const attachment of [ { answer: "red", bytes: Buff assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-lines-per-function (#510): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): for (const attachment of [ { answer: "red", bytes: Buff uses 360_000, 120_000, 1000, 2000, 4000, 1, 0, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-ternary (#518): for (const attachment of [ { answer: "red", bytes: Buff derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): for (const attachment of [ { answer: "red", bytes: Buff sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): for (const attachment of [ { answer: "red", bytes: Buff handles optional event.data.message?.trim(); event.data.message?.trim().toLowerCase().replaceAll(".", ""); animation.effect?.getTiming().iterations; edited?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): for (const attachment of [ { answer: "red", bytes: Buff accepts { page, }; testInfo; route; event; image; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): for (const attachment of [ { answer: "red", bytes: Buff preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 for (const attachment of [
   {
     answer: "red",
@@ -550,3 +581,6 @@ for (const attachment of [
     expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
 }
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+
+/* oxlint-disable max-lines -- #509: This eve-copy-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

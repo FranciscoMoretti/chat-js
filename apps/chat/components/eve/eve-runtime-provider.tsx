@@ -1,13 +1,14 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
 import { usePathname } from "next/navigation";
-import {
+import React, {
   useCallback,
   useEffect,
-  useState,
   useMemo,
+  useState,
   useSyncExternalStore,
 } from "react";
 import type { ReactNode } from "react";
@@ -18,7 +19,9 @@ import { LogicalChat } from "@/lib/eve/logical-chat";
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-disable import/max-dependencies -- @/trpc/react import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { useTRPC } from "@/trpc/react";
+/* oxlint-enable import/max-dependencies */
 
 import { EveChatHeader } from "./eve-chat-header";
 import { EveConversation } from "./eve-conversation";
@@ -29,8 +32,10 @@ import {
   useEveRuntime,
 } from "./eve-logical-context";
 import type { OpenRequest } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
 
 type Runtime = OpenRequest & { chatId: string; controller: LogicalChat };
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- NativeObserver: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const NativeObserver = ({
   controller,
@@ -77,6 +82,8 @@ const NativeObserver = ({
   }, [agent, controller, conversationId]);
   return null;
 };
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-optional-chaining, react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- RuntimeSlot: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including identity.data?.title); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including branch); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including branch.sessionId). */
 
 const RuntimeSlot = ({
   runtime,
@@ -173,6 +180,8 @@ const RuntimeSlot = ({
     </>
   );
 };
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-optional-chaining, react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EveRuntimeProvider: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including existing?.controller); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including request: OpenRequest); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** Mounted in the layout: routes select a view; sessions belong to logical chats. */
 export const EveRuntimeProvider = ({
@@ -244,7 +253,7 @@ export const EveRuntimeProvider = ({
     <EveRuntimeContext.Provider value={open}>
       {runtimes
         .filter((runtime) => runtime.ownerId === ownerId)
-        .map((runtime) => (
+        .map((runtime): React.JSX.Element => (
           <RuntimeSlot
             key={`${runtime.ownerId}:${runtime.chatId}`}
             runtime={runtime}
@@ -255,6 +264,9 @@ export const EveRuntimeProvider = ({
     </EveRuntimeContext.Provider>
   );
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+
+/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- EveRuntimeRoute: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const EveRuntimeRoute = ({
   id,
@@ -272,7 +284,7 @@ export const EveRuntimeRoute = ({
       (error: unknown) => setFailure(String(error))
     );
   }, [open, id, sessionId, ownerId, chatId, title]);
-  return failure ? (
+  return typeof failure === "string" && failure !== "" ? (
     <p role="alert">{failure}</p>
   ) : (
     <div className="flex h-full items-center justify-center">
@@ -280,3 +292,4 @@ export const EveRuntimeRoute = ({
     </div>
   );
 };
+/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

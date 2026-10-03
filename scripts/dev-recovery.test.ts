@@ -2,22 +2,29 @@ import { expect, test } from "bun:test";
 
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
+/* oxlint-disable eslint/no-magic-numbers -- brief failed probes during compilation do not interrupt active requests: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("brief failed probes during compilation do not interrupt active requests", () => {
   expect(shouldRestartAfterReadinessFailures(3, 48_000, true)).toBe(false);
   expect(shouldRestartAfterReadinessFailures(7, 119_999, true)).toBe(false);
 });
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable eslint/no-magic-numbers -- sustained failure still recovers the runtime after multiple observations: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("sustained failure still recovers the runtime after multiple observations", () => {
   expect(shouldRestartAfterReadinessFailures(7, 120_000, true)).toBe(true);
   expect(shouldRestartAfterReadinessFailures(1, 300_000, true)).toBe(false);
   expect(shouldRestartAfterReadinessFailures(0, 300_000, true)).toBe(false);
 });
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable eslint/no-magic-numbers -- cold startup receives its full compilation grace period: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("cold startup receives its full compilation grace period", () => {
   expect(shouldRestartAfterReadinessFailures(10, 179_999, false)).toBe(false);
   expect(shouldRestartAfterReadinessFailures(10, 180_000, false)).toBe(true);
 });
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable eslint/no-magic-numbers -- repeated cold-start failures get a bounded longer chance to finish compilation: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("repeated cold-start failures get a bounded longer chance to finish compilation", () => {
   expect(shouldRestartAfterReadinessFailures(20, 180_000, false, 1)).toBe(
     false
@@ -31,3 +38,4 @@ test("repeated cold-start failures get a bounded longer chance to finish compila
   );
   expect(shouldRestartAfterReadinessFailures(8, 120_000, true, 100)).toBe(true);
 });
+/* oxlint-enable eslint/no-magic-numbers */

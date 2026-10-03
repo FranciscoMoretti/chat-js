@@ -1,7 +1,11 @@
 import { expect, it } from "bun:test";
 
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { run } from "../../test/run-command";
+/* oxlint-enable import/no-relative-parent-imports */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 it("reports command timeouts even when descendants keep the pipes open", async () => {
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(
@@ -20,3 +24,5 @@ setTimeout(() => {}, 30000);
     )
   ).rejects.toThrow("timed out after 250ms");
 });
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */

@@ -1,18 +1,24 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { useAnimate } from "motion/react";
-import { memo, useEffect } from "react";
+import React, { memo, useEffect } from "react";
 import type { CSSProperties, ElementType } from "react";
 
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
+/* oxlint-disable import/exports-last, import/no-named-export -- TextShimmerProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/no-named-export: existing callers import this public component, type, or hook by name. */
 
-export type TextShimmerProps = {
+export interface TextShimmerProps {
   children: string;
   as?: ElementType;
   className?: string;
   duration?: number;
   spread?: number;
-};
+}
+/* oxlint-enable import/exports-last, import/no-named-export */
+
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- ShimmerComponent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ShimmerComponent = ({
   children,
@@ -58,5 +64,9 @@ const ShimmerComponent = ({
     </Component>
   );
 };
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable import/no-named-export -- Shimmer: import/no-named-export: existing callers import this public component, type, or hook by name. */
 
 export const Shimmer = memo(ShimmerComponent);
+/* oxlint-enable import/no-named-export */

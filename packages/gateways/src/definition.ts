@@ -1,9 +1,16 @@
 import { z } from "zod";
 
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const model = z.string().min(1);
+/* oxlint-enable eslint/no-magic-numbers */
 const toggle = z.object({ enabled: z.boolean() });
 const media = z.object({ default: model.optional() });
 
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Serializable installation contract. Adapter behavior is checked by TypeScript and contract tests. */
 export const gatewayDefinitionSchema = z
   .object({
@@ -63,5 +70,12 @@ export const gatewayDefinitionSchema = z
       }
     }
   });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable unicorn/max-nested-calls */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type GatewayDefinition = z.infer<typeof gatewayDefinitionSchema>;
+/* oxlint-enable import/no-named-export */

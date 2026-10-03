@@ -1,11 +1,20 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { fileURLToPath } from "node:url";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
 const eveRoot = fileURLToPath(
   new URL("./", import.meta.resolve("eve/package.json"))
 );
+/* oxlint-disable max-lines-per-function, node/no-sync --
+ * max-lines-per-function (#510): it("installed native reader distinguishes missing, ready, malformed, and corrupt chec keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * node/no-sync (#538): it("installed native reader distinguishes missing, ready, malformed, and corrupt chec uses execFileSync( process.execPath, [ "--input-type=module", "-e", ` impor within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+ */
 it("installed native reader distinguishes missing, ready, malformed, and corrupt checkpoints", () => {
   const result = execFileSync(
     process.execPath,
@@ -77,3 +86,4 @@ it("installed native reader distinguishes missing, ready, malformed, and corrupt
   );
   expect(result).toBe("verified");
 });
+/* oxlint-enable max-lines-per-function, node/no-sync */

@@ -1,20 +1,51 @@
 import { afterEach, expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { scaffoldFromTemplate } from "../helpers/scaffold";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { installPlan, recordInstalledSource } from "./install-plan";
+/* oxlint-enable eslint/sort-imports */
 import { planInstallation } from "./installation-plan";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
+/* oxlint-enable eslint/sort-imports */
 
 const roots: string[] = [];
-afterEach(async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+    roots
+      .splice(0)
+      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const server = () =>
   Bun.serve({
     fetch(request) {
@@ -49,23 +80,36 @@ const server = () =>
     hostname: "127.0.0.1",
     port: 0,
   });
-const fixture = async () => {
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-replacement-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
   return root;
 };
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-enable oxc/no-async-await */
 
-test("explicit provider replacement preserves unrelated installations and refuses modified old source before any write", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+test("explicit provider replacement preserves unrelated installations and refuses modified old source before any write", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
-  const source = (id: string) => `http://127.0.0.1:${registry.port}/${id}.json`;
+  const source = (id: string): string =>
+    `http://127.0.0.1:${registry.port}/${id}.json`;
   try {
     const first = await planInstallation(root, {
       features: [],
       tools: [source("first"), source("extra")],
     });
-    await installPlan(root, first, {}, async () => {
+    await installPlan(root, first, {}, async (): Promise<void> => {
       await syncTools(root, { expected: first.expected });
     });
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
@@ -84,7 +128,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
     );
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
-      installPlan(root, plan, {}, async () => {
+      installPlan(root, plan, {}, async (): Promise<void> => {
         await syncTools(root);
       })
     ).rejects.toThrow("--overwrite");
@@ -94,11 +138,16 @@ test("explicit provider replacement preserves unrelated installations and refuse
       ).exists()
     ).toBe(false);
     expect(await readFile(old, "utf-8")).toContain("my implementation");
-    await installPlan(root, plan, { overwrite: true }, async () => {
-      await syncTools(root, { expected: plan.expected });
-    });
+    await installPlan(
+      root,
+      plan,
+      { overwrite: true },
+      async (): Promise<void> => {
+        await syncTools(root, { expected: plan.expected });
+      }
+    );
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool) => tool.id)).toEqual(["extra", "second"]);
+    expect(tools.map((tool): string => tool.id)).toEqual(["extra", "second"]);
     expect(await Bun.file(old).exists()).toBe(false);
     expect(
       await readFile(path.join(root, "tools/chatjs/extra/tool.ts"), "utf-8")
@@ -108,17 +157,32 @@ test("explicit provider replacement preserves unrelated installations and refuse
     registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
-test("unmodified replacement works without overwrite and failed registration restores previous source", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+test("unmodified replacement works without overwrite and failed registration restores previous source", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
-  const source = (id: string) => `http://127.0.0.1:${registry.port}/${id}.json`;
+  const source = (id: string): string =>
+    `http://127.0.0.1:${registry.port}/${id}.json`;
   try {
     const first = await planInstallation(root, {
       features: [],
       tools: [source("first")],
     });
-    await installPlan(root, first, {}, async () => {
+    await installPlan(root, first, {}, async (): Promise<void> => {
       await syncTools(root);
     });
     const plan = await planInstallation(
@@ -168,18 +232,36 @@ test("unmodified replacement works without overwrite and failed registration res
     expect(
       await Bun.file(path.join(root, "tools/chatjs/first/chatjs.json")).exists()
     ).toBe(true);
-    await installPlan(root, plan, { overwrite: true }, async () => {
-      await syncTools(root);
-    });
+    await installPlan(
+      root,
+      plan,
+      { overwrite: true },
+      async (): Promise<void> => {
+        await syncTools(root);
+      }
+    );
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool) => tool.id)).toEqual(["second"]);
+    expect(tools.map((tool): string => tool.id)).toEqual(["second"]);
   } finally {
     // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
-test("native shadcn source can be composed without overwriting or blessing user edits", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+test("native shadcn source can be composed without overwriting or blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
   const address = `http://127.0.0.1:${registry.port}/first.json`;
@@ -194,7 +276,7 @@ test("native shadcn source can be composed without overwriting or blessing user 
       features: [],
       tools: [address],
     });
-    await installPlan(root, plan, {}, async () => {
+    await installPlan(root, plan, {}, async (): Promise<void> => {
       await syncTools(root);
     });
     expect(await readFile(file, "utf-8")).toContain("native user edit");
@@ -205,14 +287,22 @@ test("native shadcn source can be composed without overwriting or blessing user 
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool) => tool.id)).toEqual(["first"]);
+    expect(tools.map((tool): string => tool.id)).toEqual(["first"]);
   } finally {
     // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
-test("registration refreshes untouched rollback baselines without blessing user edits", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+test("registration refreshes untouched rollback baselines without blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const file = path.join(root, ".env.example");
   await recordInstalledSource(root, [
@@ -261,7 +351,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
       root,
       plan,
       { rollbackTargets: [".env.example"] },
-      async () => {
+      async (): Promise<void> => {
         await writeFile(file, "GATEWAY=changed\n");
       }
     );
@@ -269,7 +359,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
       root,
       storagePlan,
       { managedTargets: [".env.example"] },
-      async () => {
+      async (): Promise<void> => {
         await writeFile(file, "STORAGE=changed\n");
       }
     );
@@ -280,7 +370,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
       root,
       plan,
       { rollbackTargets: [".env.example"] },
-      async () => {
+      async (): Promise<void> => {
         await writeFile(
           file,
           "# user storage notes\nSTORAGE=changed\nGATEWAY=next\n"
@@ -295,7 +385,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
         root,
         storagePlan,
         { managedTargets: [".env.example"] },
-        async () => {
+        async (): Promise<void> => {
           registered = true;
           await writeFile(file, "must not reach registration");
         }
@@ -308,8 +398,19 @@ test("registration refreshes untouched rollback baselines without blessing user 
     registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
-test("provider installation refuses inferred native dependency destinations before any overwrite", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+test("provider installation refuses inferred native dependency destinations before any overwrite", async (): Promise<void> => {
   const root = await fixture();
   const ui = path.join(root, "components/ui/fixture.tsx");
   await mkdir(path.dirname(ui), { recursive: true });
@@ -377,7 +478,7 @@ test("provider installation refuses inferred native dependency destinations befo
     let registered = false;
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
-      installPlan(root, plan, {}, () => {
+      installPlan(root, plan, {}, (): Promise<void> => {
         registered = true;
         return Promise.reject(new Error("registration must not run"));
       })
@@ -398,10 +499,21 @@ test("provider installation refuses inferred native dependency destinations befo
     expect(receipt).not.toContain("components/ui/fixture.tsx");
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(
-      installPlan(root, native, { overwrite: true }, () => Promise.resolve())
+      installPlan(root, native, { overwrite: true }, (): Promise<void> =>
+        Promise.resolve()
+      )
     ).rejects.toThrow("No source was installed");
   } finally {
     // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
     registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
+
+/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

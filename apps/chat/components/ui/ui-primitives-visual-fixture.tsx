@@ -1,4 +1,7 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
+import React from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +22,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
+/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals -- UiPrimitivesVisualFixture: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
 
-export const UiPrimitivesVisualFixture = () => (
+export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
   <main
     className="space-y-8 px-8 pt-8 pb-40"
     data-testid="ui-primitives-fixture"
@@ -83,3 +88,4 @@ export const UiPrimitivesVisualFixture = () => (
     </section>
   </main>
 );
+/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals */

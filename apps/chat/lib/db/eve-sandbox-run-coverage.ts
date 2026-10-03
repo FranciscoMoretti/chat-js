@@ -8,6 +8,19 @@ const coveredWorkflows = new Set([
   "workflow//eve@0.61.0//executeSleepTool",
 ]);
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+ * import/no-named-export (#527): Preserve the named classifyEveSandboxRuns API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): classifyEveSandboxRuns remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-param (#534): classifyEveSandboxRuns's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): classifyEveSandboxRuns's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): classifyEveSandboxRuns keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): classifyEveSandboxRuns keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-continue (#515): classifyEveSandboxRuns skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+ * no-magic-numbers (#517): classifyEveSandboxRuns uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * typescript/explicit-function-return-type (#560): Keep classifyEveSandboxRuns's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep classifyEveSandboxRuns's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): classifyEveSandboxRuns accepts runs: { id: string; workflowName: string; parentId: string | null; eveParentId: stri; run; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 /** Classification only; birth receipts, writer fences and local evidence are still required. */
 export const classifyEveSandboxRuns = (
   runs: {
@@ -62,3 +75,4 @@ export const classifyEveSandboxRuns = (
       .toSorted(),
   };
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

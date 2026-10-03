@@ -1,12 +1,21 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
 import type { z } from "zod";
 
 import { GetWeatherRenderer } from "./renderer";
 import type { weatherResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
+/* oxlint-disable id-length, no-magic-numbers --
+ * id-length (#506): weather uses _; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-magic-numbers (#517): weather uses 10, 11, 12, 13, 14, 15, 16, 17 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ */
 const weather: WeatherAtLocation = {
   current: { interval: 900, temperature_2m: 20, time: "2026-09-08T20:00" },
   current_units: { interval: "seconds", temperature_2m: "°C", time: "iso8601" },
@@ -29,7 +38,13 @@ const weather: WeatherAtLocation = {
   timezone_abbreviation: "UTC",
   utc_offset_seconds: 0,
 };
+/* oxlint-enable id-length, no-magic-numbers */
 
+/* oxlint-disable oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types --
+ * oxc/no-rest-spread-properties (#543): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 copies or separates ...weather; ...weather.current while preserving existing object ownership; mutating source objects is not equivalent.
+ * react-perf/jsx-no-new-object-as-prop (#558): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * typescript/prefer-readonly-parameter-types (#565): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 accepts hours; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test.each([
   ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]],
   ["2026-09-08T20:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]],
@@ -52,3 +67,4 @@ test.each([
   expect(html).not.toContain(">10AM</div>");
   expect(html).not.toContain(">11AM</div>");
 });
+/* oxlint-enable oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */

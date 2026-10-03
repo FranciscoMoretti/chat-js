@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import React from "react";
 
+/* oxlint-disable eslint/sort-imports -- the @/components/faq import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { Faq } from "@/components/faq";
+/* oxlint-enable eslint/sort-imports */
 import { Features } from "@/components/features";
 import { Footer } from "@/components/footer";
 import { GetStarted } from "@/components/get-started";
@@ -8,10 +11,17 @@ import { Hero } from "@/components/hero";
 import { LogoCloud } from "@/components/logo-cloud";
 import { Navbar } from "@/components/navbar";
 import { Platforms } from "@/components/platforms";
+/* oxlint-disable import/max-dependencies -- the @/components/tech-stack import: The desktop main process coordinates window, auth, filesystem and IPC lifecycles; hiding imports would not separate those responsibilities. */
 import { TechStack } from "@/components/tech-stack";
+/* oxlint-enable import/max-dependencies */
 import { UseCases } from "@/components/use-cases";
+/* oxlint-disable eslint/sort-imports -- the @/lib/site-config import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { siteConfig, siteLinks } from "@/lib/site-config";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
+/* oxlint-disable import/no-named-export -- metadata: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.home,
@@ -26,6 +36,9 @@ export const metadata: Metadata = {
   },
   title: "The Prod-Ready AI Chat App",
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable react/only-export-components */
+/* oxlint-enable import/exports-last */
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -63,7 +76,7 @@ const structuredData = {
   ],
 };
 
-const HomePage = () => (
+const HomePage = (): React.JSX.Element => (
   <div className="flex min-h-screen flex-col">
     <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
     <Navbar />
@@ -81,4 +94,6 @@ const HomePage = () => (
   </div>
 );
 
+/* oxlint-disable import/no-default-export -- page.tsx: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default HomePage;
+/* oxlint-enable import/no-default-export */

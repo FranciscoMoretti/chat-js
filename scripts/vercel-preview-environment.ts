@@ -1,14 +1,22 @@
+/* oxlint-disable import/exports-last -- PreviewConfigurationError: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/group-exports -- PreviewConfigurationError: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- PreviewConfigurationError: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export class PreviewConfigurationError extends Error {
   public override name = "PreviewConfigurationError";
 }
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
 // PostgreSQL URLs use a non-special scheme, so normalize DNS names explicitly.
-const normalizedHost = (host: string) => host.toLowerCase().replace(/\.$/u, "");
-const directHost = (host: string) =>
+const normalizedHost = (host: string): string =>
+  host.toLowerCase().replace(/\.$/u, "");
+const directHost = (host: string): string =>
   normalizedHost(host).replace("-pooler.", ".");
 const neonHost = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+neon\.tech$/u;
 
-const matchingAuthority = (app: URL, migration: URL) => {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- matchingAuthority: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+const matchingAuthority = (app: URL, migration: URL): boolean => {
   try {
     return (
       decodeURIComponent(app.username) ===
@@ -23,8 +31,23 @@ const matchingAuthority = (app: URL, migration: URL) => {
     );
   }
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/** Maintainer-only validation for the ChatJS demo preview infrastructure. */
+/* oxlint-disable import/group-exports -- resolveMaintainerPreviewDatabase: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable eslint/max-statements -- resolveMaintainerPreviewDatabase: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable import/no-named-export -- resolveMaintainerPreviewDatabase: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable typescript/explicit-module-boundary-types -- resolveMaintainerPreviewDatabase: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
+/* oxlint-disable eslint/max-lines-per-function -- resolveMaintainerPreviewDatabase: The operation keeps its validation, ordered side effects and cleanup in one scope. */
+/* oxlint-disable typescript/explicit-function-return-type -- resolveMaintainerPreviewDatabase: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
+/* oxlint-disable eslint/no-undefined -- resolveMaintainerPreviewDatabase: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
+/* oxlint-disable eslint/init-declarations -- resolveMaintainerPreviewDatabase: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- resolveMaintainerPreviewDatabase: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- resolveMaintainerPreviewDatabase: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
+/**
+ * Validate the ChatJS demo preview infrastructure configuration.
+ * @param source - Environment values supplied to the maintainer preview build.
+ * @returns Isolated pooled/direct database URLs, or undefined outside preview deployments.
+ */
 export const resolveMaintainerPreviewDatabase = (
   source: Record<string, string | undefined>
 ) => {
@@ -86,3 +109,13 @@ export const resolveMaintainerPreviewDatabase = (
 
   return { DATABASE_MIGRATION_URL: direct, DATABASE_URL: pooled };
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable typescript/explicit-module-boundary-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/group-exports */

@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ChatSDKError } from "./errors";
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): describe("ChatSDKError") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): describe("ChatSDKError") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 describe("ChatSDKError", () => {
   it("preserves chat error metadata and response details", async () => {
     const error = new ChatSDKError("not_found:chat", "missing chat");
@@ -48,3 +52,4 @@ describe("ChatSDKError", () => {
     errorSpy.mockRestore();
   });
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */

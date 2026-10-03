@@ -54,6 +54,14 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
   on graphile_worker._private_jobs for each row execute function workflow.eve_guard_queue();
 `;
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * import/no-named-export (#527): Preserve the named installEvePostgresQueueFence API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): installEvePostgresQueueFence remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-param (#534): installEvePostgresQueueFence's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * no-magic-numbers (#517): installEvePostgresQueueFence uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): installEvePostgresQueueFence sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): installEvePostgresQueueFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 /**
  * Explicit provider migration after installEvePostgresResourceFence.
  * Register the provider's configured task name (normally workflow_flows).
@@ -62,7 +70,7 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
 export const installEvePostgresQueueFence = async (
   connection: Sql,
   taskIdentifier: string
-) => {
+): Promise<void> => {
   z.string().min(1).parse(taskIdentifier);
   await connection.begin("isolation level read committed", async (query) => {
     await query`select 'workflow.eve_assert_writable(text[])'::regprocedure`;
@@ -70,3 +78,4 @@ export const installEvePostgresQueueFence = async (
     await query`insert into workflow.eve_queue_tasks(identifier) values (${taskIdentifier}) on conflict do nothing`;
   });
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */

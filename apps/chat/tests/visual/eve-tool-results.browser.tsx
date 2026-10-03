@@ -1,27 +1,41 @@
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
 import { takeSnapshot } from "@uiverify/vitest";
-import { act } from "react";
+import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, test, vi } from "vitest";
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
+/* oxlint-disable import/no-relative-parent-imports -- ../../../../packages/registry/visual/charts-finished import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
 
 import { chartsFinished } from "../../../../packages/registry/visual/charts-finished";
+/* oxlint-enable import/no-relative-parent-imports */
 
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
+
+/* oxlint-disable import/no-relative-parent-imports, typescript/promise-function-async -- eve-tool-results.browser route: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 vi.mock(
   "@/tools/chatjs/_shared/code-execution/interactive-charts",
   () =>
     import("../../tools/chatjs/_shared/code-execution/interactive-chart-impl")
 );
+/* oxlint-enable import/no-relative-parent-imports, typescript/promise-function-async */
+
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- eve-tool-results.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 // Report documents are outside this error-receipt fixture.
 vi.mock("@/components/eve/eve-document-tool", () => ({
   EveDocumentTool: () => null,
 }));
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+
+/* oxlint-disable typescript/explicit-function-return-type -- eve-tool-results.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: "dark" }) }));
+/* oxlint-enable typescript/explicit-function-return-type */
 
 const common = {
   input: {},
@@ -29,6 +43,7 @@ const common = {
   toolCallId: "fixture",
   type: "dynamic-tool",
 } as const;
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-tool-results.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including heading?.parentElement?.parentElement?.parentElement); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including chart). */
 
 test("saved-code results display interactive and PNG charts with text fallback", async () => {
   document.documentElement.classList.add("dark");
@@ -68,7 +83,7 @@ test("saved-code results display interactive and PNG charts with text fallback",
     await act(() =>
       root.render(
         <div className="grid grid-cols-2 gap-6">
-          {charts.map((chart, index) => (
+          {charts.map((chart, index): React.JSX.Element => (
             // oxlint-disable-next-line react/no-array-index-key -- #551: These fixed visual fixture cases are rendered once and never reordered.
             <section key={index}>
               <EveDocumentRunResult
@@ -109,6 +124,9 @@ test("saved-code results display interactive and PNG charts with text fallback",
     container.remove();
   }
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop -- eve-tool-results.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0.05); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including container.querySelector('[role="alert"]')?.textContent); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership. */
 
 test("failed research keeps validated progress alongside its error", async () => {
   document.documentElement.classList.add("dark");
@@ -152,6 +170,9 @@ test("failed research keeps validated progress alongside its error", async () =>
     container.remove();
   }
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop */
+
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop -- eve-tool-results.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including container.querySelector('[role="alert"]')?.textContent); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership. */
 
 test("installed saved-code transcript covers loading, completion and failure", async () => {
   document.documentElement.classList.add("dark");
@@ -216,3 +237,4 @@ test("installed saved-code transcript covers loading, completion and failure", a
     container.remove();
   }
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop */

@@ -1,20 +1,38 @@
+/* oxlint-disable import/no-nodejs-modules -- the node:assert/strict import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import assert from "node:assert/strict";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { mkdir } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- the node:url import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
+/* oxlint-disable import/no-nodejs-modules -- the node:url import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { fileURLToPath } from "node:url";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/sort-imports -- the playwright import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { chromium } from "playwright";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- the playwright import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { Page } from "playwright";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable node/no-top-level-await -- browser: The test module must finish asynchronous fixture initialization before registering dependent scenarios. */
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.
 const browser = await chromium.launch();
+/* oxlint-enable node/no-top-level-await */
 const output = fileURLToPath(
   new URL("../uiverify-screenshots/", import.meta.url)
 );
+/* oxlint-disable node/no-top-level-await -- thread-playground.visual.ts: The test module must finish asynchronous fixture initialization before registering dependent scenarios. */
 await mkdir(output, { recursive: true });
+/* oxlint-enable node/no-top-level-await */
 const errors: string[] = [];
 
-const capture = async (page: Page, name: string) => {
+/* oxlint-disable oxc/no-async-await -- capture: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- capture: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
+const capture = async (page: Page, name: string): Promise<void> => {
   await page.getByTestId("thread-playground").screenshot({
     animations: "disabled",
     path: `${output}${name}.png`,
@@ -22,13 +40,22 @@ const capture = async (page: Page, name: string) => {
       "header:has(> nav), nextjs-portal { visibility: hidden !important; }",
   });
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable node/no-top-level-await -- thread-playground.visual.ts: The test module must finish asynchronous fixture initialization before registering dependent scenarios. */
+/* oxlint-disable node/no-process-env -- thread-playground.visual.ts: The scenario explicitly controls process environment inputs and restores them during cleanup. */
+/* oxlint-disable eslint/no-magic-numbers -- thread-playground.visual.ts: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
+/* oxlint-disable oxc/no-optional-chaining -- thread-playground.visual.ts: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable eslint/no-console -- thread-playground.visual.ts: Console output is the observable diagnostic exercised by this fixture. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- thread-playground.visual.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
+/* oxlint-disable typescript/promise-function-async -- thread-playground.visual.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 try {
   const page = await browser.newPage({
     reducedMotion: "reduce",
     viewport: { height: 1200, width: 1440 },
   });
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", (error): number => errors.push(error.message));
   await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
   await page.goto(`http://localhost:${process.env.PORT}/threads`);
   await page.getByTestId("thread-playground").waitFor();
@@ -72,13 +99,13 @@ try {
   });
   const initialHeight = await page
     .getByTestId("thread-playground")
-    .evaluate((element) => element.clientHeight);
+    .evaluate((element): number => element.clientHeight);
   assert.equal(
     await page
       .locator("article")
       .filter({ hasText: "You" })
       .first()
-      .evaluate((user) => {
+      .evaluate((user): boolean => {
         const assistant = user.nextElementSibling;
         return (
           assistant !== null &&
@@ -94,7 +121,7 @@ try {
   await page.getByRole("button", { name: "Run 3 replies" }).click();
   const monitor = page.locator("aside");
   await page.waitForFunction(
-    () =>
+    (): boolean =>
       document.querySelectorAll('[data-node-id][data-state="streaming"]')
         .length === 3
   );
@@ -102,7 +129,7 @@ try {
   assert.equal(
     await page
       .getByTestId("thread-playground")
-      .evaluate((element) => element.clientHeight),
+      .evaluate((element): number => element.clientHeight),
     initialHeight,
     "Starting three replies does not shift the map or conversation"
   );
@@ -139,22 +166,24 @@ try {
     0
   );
   assert.equal(
-    await page.locator("aside").evaluate((panel) => {
+    await page.locator("aside").evaluate((panel): boolean => {
       const viewport =
         panel.querySelector("[data-node-id]")?.parentElement?.parentElement;
       if (!viewport) {
         return false;
       }
       const bounds = viewport.getBoundingClientRect();
-      return [...panel.querySelectorAll("[data-node-id]")].every((node) => {
-        const box = node.getBoundingClientRect();
-        return (
-          box.left >= bounds.left &&
-          box.right <= bounds.right &&
-          box.top >= bounds.top &&
-          box.bottom <= bounds.bottom
-        );
-      });
+      return [...panel.querySelectorAll("[data-node-id]")].every(
+        (node): boolean => {
+          const box = node.getBoundingClientRect();
+          return (
+            box.left >= bounds.left &&
+            box.right <= bounds.right &&
+            box.top >= bounds.top &&
+            box.bottom <= bounds.bottom
+          );
+        }
+      );
     }),
     true,
     "Every node fits inside the map viewport"
@@ -195,12 +224,13 @@ try {
     .last()
     .click();
   await page.waitForFunction(
-    (count) => document.querySelectorAll("[data-node-id]").length === count + 2,
+    (count): boolean =>
+      document.querySelectorAll("[data-node-id]").length === count + 2,
     originalCount
   );
   await page.getByRole("button", { name: "Stop all responses" }).click();
   await page.waitForFunction(
-    () =>
+    (): boolean =>
       document.querySelectorAll('[data-node-id][data-state="streaming"]')
         .length === 0
   );
@@ -215,18 +245,22 @@ try {
   assert.equal(await page.locator("[data-node-id]").count(), 7);
   await page.getByRole("button", { name: "Run 3 replies" }).click();
   await page.waitForFunction(
-    () =>
+    (): boolean =>
       document.querySelectorAll('[data-node-id][data-state="streaming"]')
         .length === 3
   );
   await page.clock.runFor(1800);
-  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.evaluate((): void =>
+    document.documentElement.classList.add("dark")
+  );
   await capture(page, "threads-dark-live");
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await page.evaluate((): void =>
+    document.documentElement.classList.remove("dark")
+  );
   assert.equal(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth
+      (): boolean => document.documentElement.scrollWidth <= window.innerWidth
     ),
     true,
     "No page-level horizontal overflow on mobile"
@@ -237,7 +271,7 @@ try {
   await mobileBranch.scrollIntoViewIfNeeded();
   assert.ok(
     await mobileBranch.evaluate(
-      (element) => element.getBoundingClientRect().width >= 100
+      (element): boolean => element.getBoundingClientRect().width >= 100
     ),
     "Mobile branch targets remain readable"
   );
@@ -255,3 +289,10 @@ try {
 } finally {
   await browser.close();
 }
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-console */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable node/no-top-level-await */

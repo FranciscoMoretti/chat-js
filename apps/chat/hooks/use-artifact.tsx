@@ -1,15 +1,19 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
-import type { ReactNode } from "react";
-import {
+import React, {
   createContext,
   useCallback,
   useContext,
   useMemo,
   useState,
 } from "react";
+import type { ReactNode } from "react";
 
 import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
+/* oxlint-enable sort-imports */
+
+/* oxlint-disable no-undefined -- initialArtifactData: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
 
 const initialArtifactData: UIArtifact = {
   content: "",
@@ -21,12 +25,17 @@ const initialArtifactData: UIArtifact = {
   status: "idle",
   title: "",
 };
+/* oxlint-enable no-undefined */
+
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- Selector: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including state: UIArtifact). */
 
 type Selector<T> = (state: UIArtifact) => T;
+/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
 type MetadataUpdater = (current: ArtifactMetadata) => ArtifactMetadata;
 
 type MetadataStore = Record<string, ArtifactMetadata>;
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ArtifactContextType: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact: UIArtifact). */
 
 interface ArtifactContextType {
   artifact: UIArtifact;
@@ -39,10 +48,14 @@ interface ArtifactContextType {
     metadata: ArtifactMetadata | MetadataUpdater
   ) => void;
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable no-undefined -- ArtifactContext: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
 
 const ArtifactContext = createContext<ArtifactContextType | undefined>(
   undefined
 );
+/* oxlint-enable no-undefined */
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-ternary, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ArtifactProvider: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: ReactNode }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ArtifactProvider = ({ children }: { children: ReactNode }) => {
   const [artifactState, setArtifactState] =
@@ -91,6 +104,9 @@ export const ArtifactProvider = ({ children }: { children: ReactNode }) => {
     </ArtifactContext.Provider>
   );
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-ternary, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+
+/* oxlint-disable typescript/explicit-function-return-type -- useArtifactContext: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const useArtifactContext = () => {
   const context = useContext(ArtifactContext);
@@ -99,6 +115,8 @@ const useArtifactContext = () => {
   }
   return context;
 };
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable import/group-exports, import/no-named-export, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- useArtifactSelector: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 export const useArtifactSelector = <Selected,>(
   selector: Selector<Selected>
@@ -109,6 +127,9 @@ export const useArtifactSelector = <Selected,>(
 
   return selectedValue;
 };
+/* oxlint-enable import/group-exports, import/no-named-export, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+
+/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, oxc/no-rest-spread-properties, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useArtifact: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useArtifact = () => {
   const {
@@ -160,3 +181,4 @@ export const useArtifact = () => {
     [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
   );
 };
+/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, oxc/no-rest-spread-properties, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

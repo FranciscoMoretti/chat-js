@@ -1,16 +1,39 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { ModelMessage } from "ai";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { calculateMessagesTokens, truncateMessages } from "./token-utils";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable no-magic-numbers, no-underscore-dangle, typescript/explicit-function-return-type --
+ * no-magic-numbers (#517): _mockEncoder uses 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-underscore-dangle (#520): _mockEncoder accesses the established _mockEncoder field convention; renaming requires changing the owning SDK or backing-field contract.
+ * typescript/explicit-function-return-type (#560): Keep _mockEncoder's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 // Mock js-tiktoken encoder for consistent testing.
 const _mockEncoder = {
   encode: (text: string) => Array.from({ length: Math.ceil(text.length / 4) }),
 };
+/* oxlint-enable no-magic-numbers, no-underscore-dangle, typescript/explicit-function-return-type */
 
+/* oxlint-disable no-underscore-dangle, node/no-top-level-await --
+ * no-underscore-dangle (#520): _originalModule accesses the established _originalModule field convention; renaming requires changing the owning SDK or backing-field contract.
+ * node/no-top-level-await (#539): _originalModule runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
+ */
 // Mock the module.
 const _originalModule = await import("./token-utils");
+/* oxlint-enable no-underscore-dangle, node/no-top-level-await */
 
+/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): describe("truncateMessages") uses i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * init-declarations (#507): describe("truncateMessages") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-lines-per-function (#510): describe("truncateMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): describe("truncateMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): describe("truncateMessages") uses 1000, 50, 1, 0, -1, 200, 100, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * typescript/prefer-readonly-parameter-types (#565): describe("truncateMessages") accepts msg; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 describe("truncateMessages", () => {
   let messages: ModelMessage[];
 
@@ -288,7 +311,11 @@ describe("truncateMessages", () => {
     expect(resultLow[0].role).toBe("system");
   });
 });
+/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): describe("calculateMessagesTokens") uses 0, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ */
 describe("calculateMessagesTokens", () => {
   it("should calculate tokens for string content", () => {
     const messages: ModelMessage[] = [{ content: "Hello world", role: "user" }];
@@ -337,3 +364,6 @@ describe("calculateMessagesTokens", () => {
     expect(tokens).toBeGreaterThanOrEqual(5);
   });
 });
+/* oxlint-enable no-magic-numbers */
+
+/* oxlint-disable max-lines -- #509: This token-utils.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

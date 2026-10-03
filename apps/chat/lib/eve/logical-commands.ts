@@ -1,15 +1,28 @@
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): CommandState preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ */
 type CommandState = {
   pending: boolean;
   cancelling: boolean;
   cancellation: number;
   failure?: Error;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 const idle: CommandState = {
   cancellation: 0,
   cancelling: false,
   pending: false,
 };
 
+/* oxlint-disable import/no-named-export, import/prefer-default-export, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+ * import/no-named-export (#527): Preserve the named LogicalCommands API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): LogicalCommands remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * no-undefined (#519): LogicalCommands uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-rest-spread-properties (#543): LogicalCommands copies or separates ...this.get(id); ...change while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/explicit-function-return-type (#560): Keep LogicalCommands's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep LogicalCommands's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): LogicalCommands accepts change: Partial<CommandState>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 /** Command locks belong to the execution session, never the selected view. */
 export class LogicalCommands {
   private readonly states = new Map<string, CommandState>();
@@ -21,13 +34,13 @@ export class LogicalCommands {
       this.listeners.delete(listener);
     };
   };
-  public update(id: string, change: Partial<CommandState>) {
+  public update(id: string, change: Partial<CommandState>): void {
     this.states.set(id, { ...this.get(id), ...change });
     for (const listener of this.listeners) {
       listener();
     }
   }
-  public claim(id: string) {
+  public claim(id: string): boolean {
     if (this.get(id).pending) {
       return false;
     }
@@ -35,3 +48,4 @@ export class LogicalCommands {
     return true;
   }
 }
+/* oxlint-enable import/no-named-export, import/prefer-default-export, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

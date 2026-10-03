@@ -1,6 +1,11 @@
+/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- the node:timers/promises import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { setTimeout as sleep } from "node:timers/promises";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable eslint/sort-imports -- the electron import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   app,
   BrowserWindow,
@@ -10,36 +15,53 @@ import {
   shell,
   Tray,
 } from "electron";
+/* oxlint-enable eslint/sort-imports */
 import type { MenuItemConstructorOptions } from "electron";
 
+/* oxlint-disable eslint/sort-imports -- the ./config import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
+/* oxlint-enable eslint/sort-imports */
 import { electronAuthClient } from "./lib/auth-client";
+/* oxlint-disable eslint/sort-imports -- the ./lib/auth-cookies import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { hasSessionCookie, isBetterAuthCookieName } from "./lib/auth-cookies";
+/* oxlint-enable eslint/sort-imports */
 
 const isSquirrelStartupEvent = (): boolean => {
   if (process.platform !== "win32") {
     return false;
   }
 
-  return process.argv.some((arg) => arg.startsWith("--squirrel-"));
+  return process.argv.some((arg): boolean => arg.startsWith("--squirrel-"));
 };
 
 if (isSquirrelStartupEvent()) {
   app.quit();
 }
 
+/* oxlint-disable node/no-process-env -- main.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- main.ts: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 // Disable GPU acceleration in WSL / headless environments to prevent D3D12 crashes.
 if (process.env.WSL_DISTRO_NAME || process.env.WSLENV) {
   app.disableHardwareAcceleration();
   app.commandLine.appendSwitch("disable-gpu");
   app.commandLine.appendSwitch("disable-software-rasterizer");
 }
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable node/no-process-env */
 
 let isQuitting = false;
+/* oxlint-disable unicorn/no-null -- mainWindow: The SDK/wire/OS contract uses null as an explicit absence value. */
 let mainWindow: BrowserWindow | null = null;
+/* oxlint-enable unicorn/no-null */
+/* oxlint-disable unicorn/no-null -- tray: The SDK/wire/OS contract uses null as an explicit absence value. */
 let tray: Tray | null = null;
+/* oxlint-enable unicorn/no-null */
+/* oxlint-disable unicorn/no-null -- pendingAuthRefreshTimer: The SDK/wire/OS contract uses null as an explicit absence value. */
 let pendingAuthRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+/* oxlint-enable unicorn/no-null */
+/* oxlint-disable unicorn/no-null -- currentAuthOverlayMessage: The SDK/wire/OS contract uses null as an explicit absence value. */
 let currentAuthOverlayMessage: string | null = null;
+/* oxlint-enable unicorn/no-null */
 let isAuthFlowInProgress = false;
 let currentAuthFlowId = 0;
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
@@ -55,15 +77,19 @@ type AuthRendererState =
       detail?: string | null;
     };
 
+/* oxlint-disable unicorn/no-null -- currentAuthState: The SDK/wire/OS contract uses null as an explicit absence value. */
 let currentAuthState: AuthRendererState = {
   message: null,
   status: "idle",
 };
+/* oxlint-enable unicorn/no-null */
 
 if (!gotSingleInstanceLock) {
   app.quit();
 }
 
+/* oxlint-disable eslint/no-magic-numbers -- registerProtocolClient: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable eslint/no-console -- registerProtocolClient: This command or desktop boundary reports startup, progress and failures to its operator. */
 const registerProtocolClient = (): void => {
   if (process.defaultApp) {
     if (process.platform === "win32" && process.argv.length >= 2) {
@@ -81,6 +107,8 @@ const registerProtocolClient = (): void => {
 
   app.setAsDefaultProtocolClient(APP_SCHEME);
 };
+/* oxlint-enable eslint/no-console */
+/* oxlint-enable eslint/no-magic-numbers */
 
 const broadcastAuthState = (): void => {
   if (!mainWindow || mainWindow.isDestroyed()) {
@@ -90,6 +118,12 @@ const broadcastAuthState = (): void => {
   mainWindow.webContents.send("chatjs:auth-state-changed", currentAuthState);
 };
 
+/* oxlint-disable eslint/max-lines-per-function -- setAuthOverlay: The operation keeps its validation, ordered side effects and cleanup in one scope. */
+/* oxlint-disable oxc/no-async-await -- setAuthOverlay: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable eslint/no-ternary -- setAuthOverlay: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable unicorn/no-null -- setAuthOverlay: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable eslint/no-console -- setAuthOverlay: This command or desktop boundary reports startup, progress and failures to its operator. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- setAuthOverlay: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const setAuthOverlay = async (
   win: BrowserWindow | null,
   options:
@@ -158,8 +192,8 @@ const setAuthOverlay = async (
 
   try {
     if (win.webContents.isLoadingMainFrame()) {
-      win.webContents.once("did-finish-load", () => {
-        void (async () => {
+      win.webContents.once("did-finish-load", (): void => {
+        void (async (): Promise<void> => {
           try {
             await win.webContents.executeJavaScript(script);
           } catch (error) {
@@ -178,7 +212,16 @@ const setAuthOverlay = async (
     console.warn("[electron-main] failed to update auth overlay", error);
   }
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-console */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
 
+/* oxlint-disable eslint/max-statements -- setAuthState: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable oxc/no-async-await -- setAuthState: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- setAuthState: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const setAuthState = async (nextState: AuthRendererState): Promise<void> => {
   currentAuthState = nextState;
   broadcastAuthState();
@@ -205,7 +248,13 @@ const setAuthState = async (nextState: AuthRendererState): Promise<void> => {
 
   await setAuthOverlay(mainWindow, { visible: false });
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-async-await -- resetAuthFlow: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable unicorn/no-null -- resetAuthFlow: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable eslint/no-magic-numbers -- resetAuthFlow: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const resetAuthFlow = async (): Promise<void> => {
   if (pendingAuthRefreshTimer) {
     clearTimeout(pendingAuthRefreshTimer);
@@ -220,6 +269,9 @@ const resetAuthFlow = async (): Promise<void> => {
     status: "idle",
   });
 };
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-async-await */
 
 // Setup the @better-auth/electron main process handler.
 // Registers the protocol handler, deep-link listeners, CSP updates, and
@@ -234,39 +286,64 @@ registerProtocolClient();
 // Better Auth should register these bridges in setupMain(), but we also
 // register them explicitly so the preload bridge stays reliable in dev builds.
 ipcMain.removeHandler("better-auth:requestAuth");
-ipcMain.handle("better-auth:requestAuth", async (_event, options) => {
-  if (isAuthFlowInProgress) {
-    mainWindow?.show();
-    mainWindow?.focus();
-    return;
-  }
+/* oxlint-disable eslint/max-statements -- better-auth:requestAuth: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable oxc/no-async-await -- better-auth:requestAuth: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable oxc/no-optional-chaining -- better-auth:requestAuth: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable eslint/no-magic-numbers -- better-auth:requestAuth: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable eslint/no-ternary -- better-auth:requestAuth: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- better-auth:requestAuth: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+ipcMain.handle(
+  "better-auth:requestAuth",
+  async (_event, options): Promise<void> => {
+    if (isAuthFlowInProgress) {
+      mainWindow?.show();
+      mainWindow?.focus();
+      return;
+    }
 
-  isAuthFlowInProgress = true;
-  currentAuthFlowId += 1;
+    isAuthFlowInProgress = true;
+    currentAuthFlowId += 1;
 
-  await setAuthState({
-    message: "Waiting for sign-in in your browser...",
-    status: "awaiting-browser",
-  });
-
-  try {
-    // oxlint-disable-next-line typescript/no-unsafe-argument -- Electron IPC supplies untyped payloads; Better Auth validates its request options at this bridge.
-    await electronAuthClient.requestAuth(options);
-  } catch (error) {
-    isAuthFlowInProgress = false;
     await setAuthState({
-      detail: error instanceof Error ? error.message : String(error),
-      message: "Couldn't open the browser sign-in flow.",
-      status: "error",
+      message: "Waiting for sign-in in your browser...",
+      status: "awaiting-browser",
     });
-    throw error;
-  }
-});
 
-ipcMain.handle("chatjs:cancel-auth-flow", async () => {
+    try {
+      // oxlint-disable-next-line typescript/no-unsafe-argument -- Electron IPC supplies untyped payloads; Better Auth validates its request options at this bridge.
+      await electronAuthClient.requestAuth(options);
+    } catch (error) {
+      isAuthFlowInProgress = false;
+      await setAuthState({
+        detail: error instanceof Error ? error.message : String(error),
+        message: "Couldn't open the browser sign-in flow.",
+        status: "error",
+      });
+      throw error;
+    }
+  }
+);
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
+
+/* oxlint-disable oxc/no-async-await -- chatjs:cancel-auth-flow: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+ipcMain.handle("chatjs:cancel-auth-flow", async (): Promise<void> => {
   await resetAuthFlow();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable eslint/max-statements -- syncAuthSessionCookies: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable eslint/max-lines-per-function -- syncAuthSessionCookies: The operation keeps its validation, ordered side effects and cleanup in one scope. */
+/* oxlint-disable oxc/no-async-await -- syncAuthSessionCookies: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable oxc/no-optional-chaining -- syncAuthSessionCookies: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable eslint/no-magic-numbers -- syncAuthSessionCookies: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable unicorn/no-null -- syncAuthSessionCookies: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- syncAuthSessionCookies: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/promise-function-async -- syncAuthSessionCookies: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const syncAuthSessionCookies = async (
   win?: BrowserWindow | null
 ): Promise<void> => {
@@ -282,8 +359,10 @@ const syncAuthSessionCookies = async (
 
   await Promise.all(
     existingCookies
-      .filter((cookie) => isBetterAuthCookieName(cookie.name))
-      .map((cookie) => targetSession.cookies.remove(url.origin, cookie.name))
+      .filter((cookie): boolean => isBetterAuthCookieName(cookie.name))
+      .map((cookie): Promise<void> =>
+        targetSession.cookies.remove(url.origin, cookie.name)
+      )
   );
 
   const cookieHeader = electronAuthClient.getCookie();
@@ -308,12 +387,12 @@ const syncAuthSessionCookies = async (
     .filter(
       (cookie): cookie is { name: string; value: string } => cookie !== null
     )
-    .filter((cookie: { name: string; value: string }) =>
+    .filter((cookie: { name: string; value: string }): boolean =>
       isBetterAuthCookieName(cookie.name)
     );
 
   await Promise.all(
-    cookies.map((cookie: { name: string; value: string }) =>
+    cookies.map((cookie: { name: string; value: string }): Promise<void> =>
       targetSession.cookies.set({
         name: cookie.name,
         path: "/",
@@ -324,23 +403,47 @@ const syncAuthSessionCookies = async (
     )
   );
 };
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable eslint/max-statements */
 
 ipcMain.removeHandler("better-auth:signOut");
+/* oxlint-disable oxc/no-async-await -- better-auth:signOut: Await sequencing preserves Electron startup, auth and filesystem error handling. */
 ipcMain.handle("better-auth:signOut", async () => {
   const result = await electronAuthClient.signOut();
   await syncAuthSessionCookies();
   return result;
 });
+/* oxlint-enable oxc/no-async-await */
 
 ipcMain.removeHandler("better-auth:getUser");
+/* oxlint-disable oxc/no-async-await -- better-auth:getUser: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable oxc/no-optional-chaining -- better-auth:getUser: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable unicorn/no-null -- better-auth:getUser: The SDK/wire/OS contract uses null as an explicit absence value. */
 ipcMain.handle("better-auth:getUser", async () => {
   const sessionResult = await electronAuthClient.getSession();
   return sessionResult.data?.user ?? null;
 });
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- getAppAssetPath: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const getAppAssetPath = (...segments: string[]): string =>
   path.join(app.getAppPath(), ...segments);
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable eslint/max-statements -- authenticateFromDeepLink: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable oxc/no-async-await -- authenticateFromDeepLink: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable eslint/no-ternary -- authenticateFromDeepLink: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable unicorn/no-null -- authenticateFromDeepLink: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable eslint/no-console -- authenticateFromDeepLink: This command or desktop boundary reports startup, progress and failures to its operator. */
+/* oxlint-disable typescript/strict-boolean-expressions -- authenticateFromDeepLink: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
   try {
     if (!isAuthFlowInProgress) {
@@ -373,7 +476,18 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
     return false;
   }
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable eslint/no-console */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/max-statements -- waitForElectronSession: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable oxc/no-async-await -- waitForElectronSession: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable eslint/no-magic-numbers -- waitForElectronSession: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable oxc/no-optional-chaining -- waitForElectronSession: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable eslint/no-console -- waitForElectronSession: This command or desktop boundary reports startup, progress and failures to its operator. */
 const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
   const start = Date.now();
 
@@ -399,7 +513,19 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
 
   return false;
 };
+/* oxlint-enable eslint/no-console */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/max-statements -- scheduleAuthRefresh: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable eslint/max-lines-per-function -- scheduleAuthRefresh: The operation keeps its validation, ordered side effects and cleanup in one scope. */
+/* oxlint-disable eslint/no-console -- scheduleAuthRefresh: This command or desktop boundary reports startup, progress and failures to its operator. */
+/* oxlint-disable oxc/no-async-await -- scheduleAuthRefresh: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable eslint/no-ternary -- scheduleAuthRefresh: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable unicorn/no-null -- scheduleAuthRefresh: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable eslint/no-magic-numbers -- scheduleAuthRefresh: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const scheduleAuthRefresh = (): void => {
   const targetWindow = mainWindow;
   const authFlowId = currentAuthFlowId;
@@ -416,8 +542,8 @@ const scheduleAuthRefresh = (): void => {
   targetWindow.show();
   targetWindow.focus();
 
-  pendingAuthRefreshTimer = setTimeout(() => {
-    void (async () => {
+  pendingAuthRefreshTimer = setTimeout((): void => {
+    void (async (): Promise<void> => {
       try {
         const ready = await waitForElectronSession();
         if (!ready) {
@@ -457,7 +583,18 @@ const scheduleAuthRefresh = (): void => {
     pendingAuthRefreshTimer = null;
   }, 250);
 };
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/no-console */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-rest-spread-properties -- createWindow: Fresh object composition preserves immutable state/configuration and existing override order. */
+/* oxlint-disable eslint/no-ternary -- createWindow: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable typescript/strict-boolean-expressions -- createWindow: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- createWindow: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const createWindow = (): BrowserWindow => {
   const win = new BrowserWindow({
     ...WINDOW_DEFAULTS,
@@ -480,7 +617,7 @@ const createWindow = (): BrowserWindow => {
   // feels like a crash. Session sync still runs after explicit auth events.
   void win.loadURL(APP_URL);
 
-  win.webContents.on("did-finish-load", () => {
+  win.webContents.on("did-finish-load", (): void => {
     if (currentAuthOverlayMessage) {
       void setAuthOverlay(win, {
         message: currentAuthOverlayMessage,
@@ -496,7 +633,7 @@ const createWindow = (): BrowserWindow => {
   });
 
   // Minimize to tray on close
-  win.on("close", (event) => {
+  win.on("close", (event): void => {
     if (!isQuitting) {
       event.preventDefault();
       win.hide();
@@ -509,7 +646,14 @@ const createWindow = (): BrowserWindow => {
 
   return win;
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable eslint/id-length -- createTray: The local index/OS/library binding retains its conventional API notation. */
+/* oxlint-disable oxc/no-optional-chaining -- createTray: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable typescript/strict-boolean-expressions -- createTray: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createTray = (): Tray => {
   const iconPath = getAppAssetPath("build", "icon.png");
   const trayIcon = nativeImage.createFromPath(iconPath);
@@ -517,7 +661,7 @@ const createTray = (): Tray => {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      click: () => {
+      click: (): void => {
         mainWindow?.show();
         mainWindow?.focus();
       },
@@ -525,7 +669,7 @@ const createTray = (): Tray => {
     },
     { type: "separator" },
     {
-      click: () => {
+      click: (): void => {
         isQuitting = true;
         app.quit();
       },
@@ -536,7 +680,7 @@ const createTray = (): Tray => {
   t.setToolTip(APP_NAME);
   t.setContextMenu(contextMenu);
 
-  t.on("click", () => {
+  t.on("click", (): void => {
     if (mainWindow?.isVisible()) {
       mainWindow.hide();
     } else {
@@ -547,7 +691,11 @@ const createTray = (): Tray => {
 
   return t;
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/id-length */
 
+/* oxlint-disable eslint/no-ternary -- setupApplicationMenu: The expression preserves the existing fallback/derived-value contract within this operation. */
 const setupApplicationMenu = (): void => {
   if (process.platform !== "darwin") {
     return;
@@ -591,7 +739,10 @@ const setupApplicationMenu = (): void => {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 };
+/* oxlint-enable eslint/no-ternary */
 
+/* oxlint-disable oxc/no-async-await -- setupAutoUpdater: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable eslint/no-console -- setupAutoUpdater: This command or desktop boundary reports startup, progress and failures to its operator. */
 const setupAutoUpdater = async (): Promise<void> => {
   if (!app.isPackaged) {
     return;
@@ -612,15 +763,22 @@ const setupAutoUpdater = async (): Promise<void> => {
     );
   }
 };
+/* oxlint-enable eslint/no-console */
+/* oxlint-enable oxc/no-async-await */
 
-ipcMain.handle("chatjs:sync-auth-session", async () => {
+/* oxlint-disable oxc/no-async-await -- chatjs:sync-auth-session: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+ipcMain.handle("chatjs:sync-auth-session", async (): Promise<void> => {
   await syncAuthSessionCookies();
 });
+/* oxlint-enable oxc/no-async-await */
 
 ipcMain.handle("chatjs:get-auth-state", () => currentAuthState);
 
+/* oxlint-disable oxc/no-async-await -- main.ts: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable eslint/no-magic-numbers -- main.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable oxc/no-optional-chaining -- main.ts: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: Start readiness asynchronously so deep-link and second-instance handlers below register immediately.
-void (async () => {
+void (async (): Promise<void> => {
   await app.whenReady();
   app.setName(APP_NAME);
   setupApplicationMenu();
@@ -628,7 +786,7 @@ void (async () => {
   tray = createTray();
   void setupAutoUpdater();
 
-  app.on("activate", () => {
+  app.on("activate", (): void => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainWindow = createWindow();
     } else {
@@ -636,23 +794,33 @@ void (async () => {
     }
   });
 })();
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
 
-app.on("open-url", (_event, url) => {
-  void (async () => {
+/* oxlint-disable oxc/no-async-await -- open-url: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- open-url: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+app.on("open-url", (_event, url): void => {
+  void (async (): Promise<void> => {
     const didAuthenticate = await authenticateFromDeepLink(url);
     if (didAuthenticate) {
       scheduleAuthRefresh();
     }
   })();
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 
-app.on("second-instance", (_event, commandLine) => {
-  const deepLinkUrl = commandLine.find((value) =>
+/* oxlint-disable oxc/no-async-await -- second-instance: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- second-instance: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- second-instance: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
+app.on("second-instance", (_event, commandLine): void => {
+  const deepLinkUrl = commandLine.find((value): boolean =>
     value.startsWith(`${APP_SCHEME}://`)
   );
 
   if (deepLinkUrl) {
-    void (async () => {
+    void (async (): Promise<void> => {
       const didAuthenticate = await authenticateFromDeepLink(deepLinkUrl);
       if (didAuthenticate) {
         scheduleAuthRefresh();
@@ -660,14 +828,21 @@ app.on("second-instance", (_event, commandLine) => {
     })();
   }
 });
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 
-app.on("before-quit", () => {
+/* oxlint-disable oxc/no-optional-chaining -- before-quit: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+app.on("before-quit", (): void => {
   isQuitting = true;
   tray?.destroy();
 });
+/* oxlint-enable oxc/no-optional-chaining */
 
-app.on("window-all-closed", () => {
+app.on("window-all-closed", (): void => {
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
+
+/* oxlint-disable max-lines -- window-all-closed: This module is one coordinated protocol/lifecycle implementation; splitting requires an ownership and public API decision. */

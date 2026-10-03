@@ -1,8 +1,18 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This server/tooling module requires import { readdir, readFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { readdir, readFile } from "node:fs/promises";
 import nodePath from "node:path";
 
 import { z } from "zod";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
+/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers --
+ * import/group-exports (#523): localEveSandboxOwnerSchema stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named localEveSandboxOwnerSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-magic-numbers (#517): localEveSandboxOwnerSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 export const localEveSandboxOwnerSchema = z.strictObject({
   backendName: z.literal("microsandbox"),
   sessionId: z.string().min(1),
@@ -10,7 +20,26 @@ export const localEveSandboxOwnerSchema = z.strictObject({
   version: z.literal(1),
   writeAheadResources: z.literal(true).optional(),
 });
+/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers */
 
+/* oxlint-disable id-length, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): readLocalEveSandboxInventory uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * import/group-exports (#523): readLocalEveSandboxInventory stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named readLocalEveSandboxInventory API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * init-declarations (#507): readLocalEveSandboxInventory assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * jsdoc/require-param (#534): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-continue (#515): readLocalEveSandboxInventory skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+ * no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): readLocalEveSandboxInventory derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): readLocalEveSandboxInventory uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): readLocalEveSandboxInventory sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): readLocalEveSandboxInventory accepts sessionIds: string[]; entry; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
@@ -105,3 +134,4 @@ export const readLocalEveSandboxInventory = async (
   }
   return { owned, unattributedDirectories };
 };
+/* oxlint-enable id-length, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

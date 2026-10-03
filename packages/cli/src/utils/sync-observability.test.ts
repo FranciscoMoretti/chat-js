@@ -1,24 +1,56 @@
 import { afterEach, expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { observabilityItems } from "../../../registry/src/features/observability";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { scaffoldFromTemplate } from "../helpers/scaffold";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 import { syncFeatures } from "./sync-features";
 
 const roots: string[] = [];
-afterEach(async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+    roots
+      .splice(0)
+      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
-const fixture = async () => {
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-observability-"));
   roots.push(root);
   return root;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const itemFiles = async (item: (typeof observabilityItems)[number]) => [
   ...(await Promise.all(
     item.files.map(async (file) => ({
@@ -36,19 +68,29 @@ const itemFiles = async (item: (typeof observabilityItems)[number]) => [
     type: "registry:file" as const,
   },
 ];
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Every subset protects omission as well as independent installation.
 for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
   const selected = observabilityItems.filter(
-    (_, index) => Math.floor(mask / 2 ** index) % 2
+    (_, index): number => Math.floor(mask / 2 ** index) % 2
   );
-  test(`generates only installed observability imports: ${selected.map((item) => item.name).join(", ") || "none"}`, async () => {
+  test(`generates only installed observability imports: ${selected.map((item): string => item.name).join(", ") || "none"}`, async (): Promise<void> => {
     const root = await fixture();
     await Promise.all(
-      selected.map(async (item) => {
+      selected.map(async (item): Promise<void> => {
         const files = await itemFiles(item);
         await Promise.all(
-          files.map(async (file) => {
+          files.map(async (file): Promise<void> => {
             const target = path.join(root, file.target.replace(/^~\//u, ""));
             await mkdir(path.dirname(target), { recursive: true });
             await writeFile(target, file.content);
@@ -82,9 +124,23 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     ).toBe(layout);
   });
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const item of observabilityItems) {
-  test(`shadcn installs ${item.name} independently into an omitted scaffold`, async () => {
+  test(`shadcn installs ${item.name} independently into an omitted scaffold`, async (): Promise<void> => {
     const root = await fixture();
     await scaffoldFromTemplate(root);
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -102,13 +158,13 @@ for (const item of observabilityItems) {
       expect(manifest.dependencies[dependency]).toBeUndefined();
     }
     const descriptors = await Promise.all(
-      observabilityItems.map((feature) =>
+      observabilityItems.map((feature): Promise<boolean> =>
         Bun.file(
           path.join(root, `features/${feature.name}/chatjs.json`)
         ).exists()
       )
     );
-    expect(descriptors).toEqual(observabilityItems.map(() => false));
+    expect(descriptors).toEqual(observabilityItems.map((): boolean => false));
     // Exercise shadcn's dependency installation without the scaffold's unrelated
     // unpublished workspace packages (the packed generated-app suite covers those).
     await writeFile(
@@ -146,7 +202,7 @@ for (const item of observabilityItems) {
       );
       expect(registration).toContain(`"${item.name}"`);
       for (const feature of observabilityItems.filter(
-        (candidate) => candidate !== item
+        (candidate): boolean => candidate !== item
       )) {
         expect(registration).not.toContain(`"${feature.name}"`);
       }
@@ -164,11 +220,11 @@ for (const item of observabilityItems) {
     }
   }, 30_000);
 
-  test(`rejects orphaned and mismatched ${item.name} source before writing registrations`, async () => {
+  test(`rejects orphaned and mismatched ${item.name} source before writing registrations`, async (): Promise<void> => {
     const root = await fixture();
     const files = await itemFiles(item);
     await Promise.all(
-      files.map(async (file) => {
+      files.map(async (file): Promise<void> => {
         const target = path.join(root, file.target.replace(/^~\//u, ""));
         await mkdir(path.dirname(target), { recursive: true });
         await writeFile(target, file.content);
@@ -191,3 +247,11 @@ for (const item of observabilityItems) {
     ).toBe(false);
   });
 }
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */

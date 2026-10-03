@@ -1,3 +1,8 @@
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { readFile } from "node:fs/promises";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -6,9 +11,18 @@ import { z } from "zod";
 
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable node/no-process-env --
+ * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-enable node/no-process-env */
 
+/* oxlint-disable oxc/no-async-await, unicorn/max-nested-calls --
+ * oxc/no-async-await (#540): test("compiled ChatJS tools exclude optional Eve defaults that bypass application pol sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/max-nested-calls (#568): test("compiled ChatJS tools exclude optional Eve defaults that bypass application pol keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 test("compiled ChatJS tools exclude optional Eve defaults that bypass application policy", async () => {
   const pointer = z
     .object({ runtimeAppRoot: z.string() })
@@ -40,7 +54,18 @@ test("compiled ChatJS tools exclude optional Eve defaults that bypass applicatio
     "mcp",
   ]);
 });
+/* oxlint-enable oxc/no-async-await, unicorn/max-nested-calls */
 
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * init-declarations (#507): test("Canvas selection survives native history and edits while later turns reset to a assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-lines-per-function (#510): test("Canvas selection survives native history and edits while later turns reset to a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("Canvas selection survives native history and edits while later turns reset to a keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("Canvas selection survives native history and edits while later turns reset to a uses 200, 0, 409, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("Canvas selection survives native history and edits while later turns reset to a sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): test("Canvas selection survives native history and edits while later turns reset to a copies or separates ...operation while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test("Canvas selection survives native history and edits while later turns reset to a accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("Canvas selection survives native history and edits while later turns reset to a preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("Canvas selection survives native history and edits while later turns reset to automatic", async ({
   page,
 }, testInfo) => {
@@ -165,3 +190,4 @@ test("Canvas selection survives native history and edits while later turns reset
     path: testInfo.outputPath("tool-selection-edit-mobile.png"),
   });
 });
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

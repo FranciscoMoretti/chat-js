@@ -1,6 +1,13 @@
+/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions --
+ * import/no-named-export (#527): Preserve the named assertEveTestDatabase API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/prefer-default-export (#532): assertEveTestDatabase remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+ * jsdoc/require-param (#534): assertEveTestDatabase's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ * typescript/strict-boolean-expressions (#610): assertEveTestDatabase intentionally keeps the existing falsy-value behavior of isolated; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /** Remote acceptance tests require both an explicit opt-in and an isolated target. */
-export function assertEveTestDatabase(databaseUrl: string) {
+export function assertEveTestDatabase(databaseUrl: string): void {
   const url = new URL(databaseUrl);
   if (
     ["postgres:", "postgresql:"].includes(url.protocol) &&
@@ -20,3 +27,4 @@ export function assertEveTestDatabase(databaseUrl: string) {
     );
   }
 }
+/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions */

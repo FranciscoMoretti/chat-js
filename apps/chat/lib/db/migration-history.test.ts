@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { readFileSync } from "node:fs";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { readFileSync } from "node:fs";
 
 import { describe, expect, test } from "vitest";
@@ -6,10 +10,20 @@ import {
   getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
 } from "./migration-history";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
 const baseline = { createdAt: 2, hash: "eve" };
 const next = { createdAt: 3, hash: "next" };
 
+/* oxlint-disable max-lines-per-function, no-ternary, node/no-sync, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * max-lines-per-function (#510): describe("getMigrationHistoryProblem") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-ternary (#518): describe("getMigrationHistoryProblem") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * node/no-sync (#538): describe("getMigrationHistoryProblem") uses readFileSync( new URL("migrations/0000_eve_baseline.sql", import.meta.url), "utf-8"  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+ * oxc/no-optional-chaining (#542): describe("getMigrationHistoryProblem") handles optional match.groups?.table without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): describe("getMigrationHistoryProblem") copies or separates ...baseline while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): describe("getMigrationHistoryProblem") accepts match; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): describe("getMigrationHistoryProblem") intentionally keeps the existing falsy-value behavior of match.groups?.table; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 describe("getMigrationHistoryProblem", () => {
   test("recognizes every baseline table and every retired table", () => {
     const baselineSql = readFileSync(
@@ -106,3 +120,4 @@ describe("getMigrationHistoryProblem", () => {
     ).toMatch(/unknown/u);
   });
 });
+/* oxlint-enable max-lines-per-function, no-ternary, node/no-sync, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

@@ -1,9 +1,14 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-shared-messages"; "../lib/eve/shared-messages" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveSharedMessages } from "../components/eve/eve-shared-messages";
 import { sharedEvePart } from "../lib/eve/shared-messages";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 const parts: EveMessagePart[] = [
   {
@@ -51,6 +56,10 @@ const parts: EveMessagePart[] = [
     type: "dynamic-tool",
   },
 ];
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+ * typescript/prefer-readonly-parameter-types (#565): process.stdout.write accepts part; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * unicorn/max-nested-calls (#568): process.stdout.write keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 process.stdout.write(
   renderToStaticMarkup(
     createElement(EveSharedMessages, {
@@ -62,3 +71,4 @@ process.stdout.write(
     })
   )
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */

@@ -17,6 +17,9 @@ type ElectronRendererAuthState =
       detail?: string | null;
     };
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): Window accepts state: ElectronRendererAuthState; context: ElectronAuthErrorContext; options?: { provider?: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 interface Window {
   electronAPI?: {
     cancelAuthFlow?: () => Promise<void>;
@@ -36,3 +39,4 @@ interface Window {
   requestAuth?: (options?: { provider?: string }) => Promise<void> | void;
   signOut?: () => Promise<void>;
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

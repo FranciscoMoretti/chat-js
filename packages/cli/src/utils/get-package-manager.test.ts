@@ -1,10 +1,24 @@
 import { describe, expect, it } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { inferPackageManager } from "./get-package-manager";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
+/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 describe("inferPackageManager", () => {
   it("falls back to the launcher package manager when no lockfile is present", () => {
     const cwd = path.join(tmpdir(), `chat-js-pm-${crypto.randomUUID()}`);
@@ -45,7 +59,12 @@ describe("inferPackageManager", () => {
     }
   });
 });
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable node/no-sync */
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 for (const manifest of ["{", "", "null", '{"packageManager":42}']) {
   it(`uses a lockfile when the manifest is unusable: ${manifest}`, () => {
     const cwd = path.join(tmpdir(), `chat-js-pm-${crypto.randomUUID()}`);
@@ -59,3 +78,4 @@ for (const manifest of ["{", "", "null", '{"packageManager":42}']) {
     }
   });
 }
+/* oxlint-enable node/no-sync */

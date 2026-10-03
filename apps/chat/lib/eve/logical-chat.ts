@@ -1,10 +1,25 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { EveMessage, EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
 
 import type { EveBranchReference } from "./fork-source";
 import { LogicalCommands } from "./logical-commands";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): NativeChatAgent is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): NativeChatAgent stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named NativeChatAgent API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): LogicalBranch is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): LogicalBranch stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named LogicalBranch API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type LogicalBranch = EveBranchReference & {
   sessionId: string | null;
   createdAt: Date | string;
@@ -18,12 +33,23 @@ export type LogicalBranch = EveBranchReference & {
       }[]
     | null;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): LogicalNode preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ */
 type LogicalNode = {
   id: string;
   parentId: string | null;
   conversationId: string;
   message: EveMessage;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, typescript/consistent-type-definitions --
+ * import/exports-last (#522): LogicalChatSnapshot is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): LogicalChatSnapshot stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named LogicalChatSnapshot API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * typescript/consistent-type-definitions (#559): LogicalChatSnapshot preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ */
 export type LogicalChatSnapshot = {
   readyBranches: ReadonlySet<string>;
   chatId: string;
@@ -37,8 +63,14 @@ export type LogicalChatSnapshot = {
   agents: ReadonlyMap<string, NativeChatAgent>;
   error?: string;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, typescript/consistent-type-definitions */
 
-const logicalNativeId = (sessionId: string, message: EveMessage) => {
+/* oxlint-disable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * oxc/no-optional-chaining (#542): logicalNativeId handles optional message.metadata?.custom?.chatjs without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): logicalNativeId accepts message: EveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): logicalNativeId intentionally keeps the existing falsy-value behavior of custom; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
+const logicalNativeId = (sessionId: string, message: EveMessage): string => {
   const custom = message.metadata?.custom?.chatjs;
   if (
     message.role === "user" &&
@@ -51,18 +83,29 @@ const logicalNativeId = (sessionId: string, message: EveMessage) => {
   }
   return JSON.stringify([sessionId, message.id]);
 };
+/* oxlint-enable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-const aliasKey = (branchId: string, messageId: string) =>
+const aliasKey = (branchId: string, messageId: string): string =>
   JSON.stringify([branchId, messageId]);
-const busy = (agent?: NativeChatAgent) =>
+
+/* oxlint-disable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+ * oxc/no-optional-chaining (#542): busy handles optional agent?.status without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): busy accepts agent?: NativeChatAgent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
+const busy = (agent?: NativeChatAgent): boolean =>
   agent?.status === "streaming" ||
   agent?.status === "submitted" ||
   agent?.status === "resuming";
+/* oxlint-enable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+ * oxc/no-optional-chaining (#542): latestMessageTime handles optional agent?.events; event.meta?.at without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): latestMessageTime accepts agent: NativeChatAgent | undefined; createdAt: string | Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 const latestMessageTime = (
   agent: NativeChatAgent | undefined,
   createdAt: string | Date
-) => {
+): number => {
   let time = new Date(createdAt).getTime();
   for (const event of agent?.events ?? []) {
     if (
@@ -74,7 +117,27 @@ const latestMessageTime = (
   }
   return time;
 };
+/* oxlint-enable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable id-length, import/exports-last, import/group-exports, import/no-named-export, init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * id-length (#506): LogicalChat uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * import/exports-last (#522): LogicalChat is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): LogicalChat stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named LogicalChat API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * init-declarations (#507): LogicalChat assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-lines-per-function (#510): LogicalChat keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): LogicalChat keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-continue (#515): LogicalChat skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+ * no-magic-numbers (#517): LogicalChat uses 0, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): LogicalChat derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): LogicalChat uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-optional-chaining (#542): LogicalChat handles optional previous?.data; path?.length; this.snapshot.children.get(node.id)?.at(-1); agent?.data.messages.length; this.agents.get(branch.id)?.status without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep LogicalChat's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep LogicalChat's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): LogicalChat accepts branches: readonly LogicalBranch[]; a; b; agent: NativeChatAgent; branch; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): LogicalChat intentionally keeps the existing falsy-value behavior of path?.length; last; id; branch.parentConversationId; agent?.data.messages.length; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): LogicalChat preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 /**
  * Chat identity and selection are independent of native session lifetime.
  * Durable branch intent plus native replay reconstructs this disposable index.
@@ -124,7 +187,7 @@ export class LogicalChat {
     };
   };
 
-  public setBranches(branches: readonly LogicalBranch[]) {
+  public setBranches(branches: readonly LogicalBranch[]): void {
     this.branches = branches.toSorted(
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() ||
@@ -134,7 +197,7 @@ export class LogicalChat {
     this.publish();
   }
 
-  public observe(conversationId: string, agent: NativeChatAgent) {
+  public observe(conversationId: string, agent: NativeChatAgent): void {
     const previous = this.agents.get(conversationId);
     if (
       previous?.data === agent.data &&
@@ -148,20 +211,20 @@ export class LogicalChat {
     this.publish();
   }
 
-  public setVisible(visible: boolean) {
+  public setVisible(visible: boolean): void {
     if (this.visible && !visible) {
       this.leave();
     }
     this.visible = visible;
   }
 
-  public leave() {
+  public leave(): void {
     this.hydrateLatest = false;
     this.follow = false;
     this.pendingSelection = undefined;
   }
 
-  public selectBranch(conversationId: string) {
+  public selectBranch(conversationId: string): void {
     this.hydrateLatest = false;
     this.follow = true;
     const path = this.snapshot.paths.get(conversationId);
@@ -175,7 +238,7 @@ export class LogicalChat {
     this.publish();
   }
 
-  public selectNode(id: string) {
+  public selectNode(id: string): void {
     this.hydrateLatest = false;
     let node = this.snapshot.nodes.get(id);
     if (!node) {
@@ -207,7 +270,7 @@ export class LogicalChat {
   }
 
   // oxlint-disable-next-line eslint/complexity -- Atomically publish topology, aliases and selection after ordered projection.
-  private publish() {
+  private publish(): void {
     const nodes = new Map<string, LogicalNode>();
     const paths = new Map<string, string[]>();
     const readyBranches = new Set<string>();
@@ -322,7 +385,18 @@ export class LogicalChat {
     }
   }
 }
+/* oxlint-enable id-length, import/exports-last, import/group-exports, import/no-named-export, init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
+/* oxlint-disable max-params, no-magic-numbers, no-ternary, no-undefined, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * max-params (#511): sourcePrefix keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): sourcePrefix uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): sourcePrefix derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): sourcePrefix uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-optional-chaining (#542): sourcePrefix handles optional sourceAgent?.data.messages.find( (message) => message.role === "user" && ; message.metadata?.turnId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep sourcePrefix's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): sourcePrefix accepts branch: LogicalBranch; aliases: ReadonlyMap<string, string>; sourceAgent?: NativeChatAgent; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): sourcePrefix intentionally keeps the existing falsy-value behavior of branch.parentConversationId; branch.forkMessageId; boundaryId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 const sourcePrefix = (
   branch: LogicalBranch,
   source: readonly string[],
@@ -357,7 +431,20 @@ const sourcePrefix = (
   }
   return { prefix: source.slice(0, index), replaced: boundaryId };
 };
+/* oxlint-enable max-params, no-magic-numbers, no-ternary, no-undefined, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * max-lines-per-function (#510): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): projectBranch uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): projectBranch derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-optional-chaining (#542): projectBranch handles optional message.metadata?.optimistic without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep projectBranch's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): projectBranch accepts branch: LogicalBranch; agent: NativeChatAgent; paths: ReadonlyMap<string, string[]>; nodes: Map<string, LogicalNode>; aliases: Map<string, string>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): projectBranch intentionally keeps the existing falsy-value behavior of replaced; branch.responseGroupId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): projectBranch preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 // oxlint-disable-next-line eslint/complexity -- Prefix aliases, regenerated users and new native nodes share a single ordered pass.
 const projectBranch = (
   branch: LogicalBranch,
@@ -434,6 +521,15 @@ const projectBranch = (
     : messages.length > prefix.length;
   return { hasLocalMessage, path };
 };
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-export const logicalChatBusy = (snapshot: LogicalChatSnapshot) =>
+/* oxlint-disable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+ * import/group-exports (#523): logicalChatBusy stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named logicalChatBusy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * typescript/prefer-readonly-parameter-types (#565): logicalChatBusy accepts snapshot: LogicalChatSnapshot; agent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
+export const logicalChatBusy = (snapshot: LogicalChatSnapshot): boolean =>
   [...snapshot.agents.values()].some((agent) => busy(agent));
+/* oxlint-enable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable max-lines -- #509: This logical-chat.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

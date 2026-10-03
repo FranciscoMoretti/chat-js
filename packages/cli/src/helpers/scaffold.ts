@@ -1,21 +1,55 @@
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { existsSync } from "node:fs";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { cp, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import pathModule from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { mcpFiles } from "../../../registry/src/features/mcp";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { registryUrl } from "../registry/shadcn";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { PackageManager } from "../types";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { runCommand } from "../utils/run-command";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { initializeFeatureUi } from "../utils/sync-features";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { syncTools } from "../utils/sync-tools";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-enable import/max-dependencies */
 import { resolvePackageDirectory } from "./resolve-package-directory";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
   normalizeScaffoldContent,
 } from "./scaffold-content";
+/* oxlint-enable eslint/sort-imports */
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
@@ -28,6 +62,8 @@ const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "sharp",
 ] as const;
 
+/* oxlint-disable eslint/no-underscore-dangle -- This identifier follows an external/internal protocol field or an intentionally unused destructured binding. */
+/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 const getCliPackageRoot = (): string => {
   const __dir = import.meta.dirname;
 
@@ -40,15 +76,23 @@ const getCliPackageRoot = (): string => {
 
   throw new Error("Could not locate the @chat-js/cli package root.");
 };
+/* oxlint-enable node/no-sync */
+/* oxlint-enable eslint/no-underscore-dangle */
 
 const getRepoRoot = (): string =>
   pathModule.resolve(getCliPackageRoot(), "../..");
 
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const findTemplateDir = (name: string): string | null => {
   const cliRoot = getCliPackageRoot();
   const candidate = pathModule.join(cliRoot, "templates", name);
   return existsSync(candidate) ? candidate : null;
 };
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable node/no-sync */
+/* oxlint-enable eslint/no-ternary */
 
 const shouldCopyChatAppFilePath = (
   sourceDir: string,
@@ -58,6 +102,9 @@ const shouldCopyChatAppFilePath = (
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const replaceInFile = async (
   filePath: string,
   replacements: [string, string][]
@@ -71,14 +118,23 @@ const replaceInFile = async (
   }
   await writeFile(filePath, content);
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable node/no-sync */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = pathModule.join(destination, "tools", "chatjs");
   await rm(toolsDir, { force: true, recursive: true });
   await mkdir(toolsDir, { recursive: true });
   await syncTools(destination);
 };
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const writePnpmWorkspaceConfig = async (
   destination: string,
   options?: { blockExoticSubdeps?: boolean }
@@ -107,7 +163,18 @@ const writePnpmWorkspaceConfig = async (
     ].join("\n")}\n`
   );
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const applyChatTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
@@ -177,7 +244,15 @@ const applyChatTemplateSourceTransforms = async (
     ),
   });
 };
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable unicorn/max-nested-calls */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 const applyElectronTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
@@ -197,7 +272,9 @@ const applyElectronTemplateSourceTransforms = async (
     ],
   ]);
 };
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 const copyChatTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
@@ -208,7 +285,9 @@ const copyChatTemplateFromRepoSource = async (
   });
   await applyChatTemplateSourceTransforms(destination);
 };
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 const copyElectronTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
@@ -220,7 +299,12 @@ const copyElectronTemplateFromRepoSource = async (
   });
   await applyElectronTemplateSourceTransforms(destination);
 };
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const normalizeChatAppFiles = async (
   destination: string,
   packageManager: PackageManager
@@ -265,7 +349,12 @@ const normalizeChatAppFiles = async (
 
   await resetInstallableTools(destination);
 };
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 const normalizeElectronFiles = async (
   destination: string,
   packageManager: PackageManager
@@ -301,7 +390,11 @@ const normalizeElectronFiles = async (
     await writePnpmWorkspaceConfig(destination, { blockExoticSubdeps: false });
   }
 };
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const excludeElectronFromRootTypecheck = async (
   projectDir: string
 ): Promise<void> => {
@@ -314,7 +407,24 @@ const excludeElectronFromRootTypecheck = async (
   tsconfig.exclude = [...new Set([...(tsconfig.exclude ?? []), "electron"])];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 };
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const scaffoldFromTemplate = async (
   destination: string,
   options?: {
@@ -324,7 +434,7 @@ export const scaffoldFromTemplate = async (
   const packageManager = options?.packageManager ?? "bun";
   const templateDir = findTemplateDir("chat-app");
 
-  await (templateDir
+  await (typeof templateDir === "string" && templateDir !== ""
     ? cp(templateDir, destination, {
         filter: (file) => shouldCopyChatAppFilePath(templateDir, file),
         recursive: true,
@@ -438,7 +548,30 @@ export const scaffoldFromTemplate = async (
   await initializeFeatureUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const scaffoldElectron = async (
   projectDir: string,
   opts: { projectName: string; packageManager?: PackageManager }
@@ -454,7 +587,7 @@ export const scaffoldElectron = async (
   const destination = pathModule.join(projectDir, "electron");
   const templateDir = findTemplateDir("electron");
 
-  await (templateDir
+  await (typeof templateDir === "string" && templateDir !== ""
     ? cp(templateDir, destination, {
         filter: (file) =>
           shouldCopyElectronFile(pathModule.relative(templateDir, file)),
@@ -482,7 +615,19 @@ export const scaffoldElectron = async (
   await normalizeElectronFiles(destination, packageManager);
   await excludeElectronFromRootTypecheck(projectDir);
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 export const scaffoldFromGit = async (
   url: string,
   destination: string
@@ -497,3 +642,8 @@ export const scaffoldFromGit = async (
     recursive: true,
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+
+/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

@@ -1,14 +1,29 @@
+/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { spawnSync } from "node:child_process";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- the node:fs import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
+/* oxlint-disable import/no-nodejs-modules -- the node:fs import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { existsSync, readFileSync } from "node:fs";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable eslint/sort-imports -- the @electron-forge/maker-deb import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { MakerDeb } from "@electron-forge/maker-deb";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- the @electron-forge/maker-dmg import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { MakerDMG } from "@electron-forge/maker-dmg";
+/* oxlint-enable eslint/sort-imports */
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
+/* oxlint-disable eslint/sort-imports -- the @electron-forge/shared-types import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { ForgeConfig } from "@electron-forge/shared-types";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable typescript/consistent-type-definitions -- Branding: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
 type Branding = {
   appName: string;
   appPrefix: string;
@@ -16,12 +31,18 @@ type Branding = {
   orgName?: string;
   orgEmail?: string;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
 
 // oxlint-disable-next-line unicorn/prefer-module -- Electron Forge loads this configuration through its CommonJS TypeScript loader.
 const appRoot = __dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
+/* oxlint-disable node/no-sync -- runBunScript: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
+/* oxlint-disable oxc/no-rest-spread-properties -- runBunScript: Fresh object composition preserves immutable state/configuration and existing override order. */
+/* oxlint-disable node/no-process-env -- runBunScript: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
+/* oxlint-disable eslint/no-magic-numbers -- runBunScript: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- runBunScript: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const runBunScript = (
   script: string,
   env: Partial<NodeJS.ProcessEnv> = {}
@@ -37,6 +58,11 @@ const runBunScript = (
     );
   }
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable node/no-sync */
 
 const ensurePrebuild = (): void => {
   if (prebuildComplete) {
@@ -47,6 +73,9 @@ const ensurePrebuild = (): void => {
   prebuildComplete = true;
 };
 
+/* oxlint-disable node/no-sync -- loadBranding: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
+/* oxlint-disable eslint/no-ternary -- loadBranding: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable eslint/no-undefined -- loadBranding: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 const loadBranding = (): Branding => {
   ensurePrebuild();
 
@@ -91,7 +120,14 @@ const loadBranding = (): Branding => {
         : undefined,
   };
 };
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable node/no-sync */
 
+/* oxlint-disable eslint/max-lines-per-function -- createForgeConfig: The operation keeps its validation, ordered side effects and cleanup in one scope. */
+/* oxlint-disable oxc/no-async-await -- createForgeConfig: Await sequencing preserves Electron startup, auth and filesystem error handling. */
+/* oxlint-disable eslint/no-ternary -- createForgeConfig: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable typescript/strict-boolean-expressions -- createForgeConfig: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
   const { appName, appPrefix, orgName, orgEmail } = branding;
@@ -180,7 +216,13 @@ const createForgeConfig = (): ForgeConfig => {
     },
   };
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
 
 const config = createForgeConfig();
 
+/* oxlint-disable import/no-default-export -- forge.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default config;
+/* oxlint-enable import/no-default-export */

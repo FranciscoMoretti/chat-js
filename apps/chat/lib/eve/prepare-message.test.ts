@@ -17,6 +17,9 @@ const attachment = {
   type: "file",
 };
 
+/* oxlint-disable oxc/no-rest-spread-properties --
+ * oxc/no-rest-spread-properties (#543): test("only accepts supported ChatJS attachment references") copies or separates ...attachment while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 test("only accepts supported ChatJS attachment references", () => {
   expect(eveMessageInput.safeParse([attachment]).success).toBe(true);
   for (const data of [
@@ -34,7 +37,13 @@ test("only accepts supported ChatJS attachment references", () => {
       .success
   ).toBe(false);
 });
+/* oxlint-enable oxc/no-rest-spread-properties */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+ * max-statements (#512): test("reads verified bytes from storage and rejects mismatched types and unsupported  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("reads verified bytes from storage and rejects mismatched types and unsupported  uses 1025 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("reads verified bytes from storage and rejects mismatched types and unsupported  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("reads verified bytes from storage and rejects mismatched types and unsupported models", async () => {
   mocks.model.mockResolvedValue({ input: { image: true, pdf: false } });
   mocks.download.mockResolvedValue(
@@ -65,3 +74,4 @@ test("reads verified bytes from storage and rejects mismatched types and unsuppo
     "does not support"
   );
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */

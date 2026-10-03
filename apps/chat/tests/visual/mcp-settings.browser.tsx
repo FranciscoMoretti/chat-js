@@ -1,7 +1,9 @@
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
 import { takeSnapshot } from "@uiverify/vitest";
-import { act } from "react";
+import React, { act } from "react";
 import { createRoot } from "react-dom/client";
-import { toast, Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
@@ -9,12 +11,17 @@ import { ConnectorsSettings } from "@/components/settings/connectors-settings";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
+/* oxlint-disable import/max-dependencies -- @/components/settings/settings-page import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
+/* oxlint-enable import/max-dependencies */
 
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
+
+/* oxlint-disable typescript/explicit-function-return-type -- mocks: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const mocks = vi.hoisted(() => {
   // oxlint-disable-next-line unicorn/consistent-function-scoping -- vi.hoisted must initialize the mock factory before module imports.
@@ -48,6 +55,9 @@ const mocks = vi.hoisted(() => {
     search: new URLSearchParams(),
   };
 });
+/* oxlint-enable typescript/explicit-function-return-type */
+
+/* oxlint-disable oxc/no-async-await -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 afterEach(async () => {
   await act(() => toast.dismiss());
   mocks.listError = false;
@@ -57,6 +67,9 @@ afterEach(async () => {
   vi.clearAllMocks();
   mocks.search = new URLSearchParams();
 });
+/* oxlint-enable oxc/no-async-await */
+
+/* oxlint-disable unicorn/no-null -- connector: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 const connector = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
   enabled: true,
@@ -70,20 +83,32 @@ const connector = {
   url: "https://docs.example.test/mcp",
   userId: "fixture-owner",
 };
+/* oxlint-enable unicorn/no-null */
 vi.mock("@/features/installed", () => ({
   installedFeatures: new Set(["mcp"]),
 }));
+/* oxlint-disable typescript/explicit-function-return-type -- mcp-settings.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+
 vi.mock("@/trpc/react", () => ({ useTRPC: () => ({ mcp: mocks.mcp }) }));
+/* oxlint-enable typescript/explicit-function-return-type */
+
+/* oxlint-disable typescript/explicit-function-return-type -- mcp-settings.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 vi.mock("next/navigation", () => ({
   useRouter: () => mocks.router,
   useSearchParams: () => mocks.search,
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/nuqs/mcp-search-params", () => ({
   mcpConnectorsSettingsSearchParams: {},
 }));
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- mcp-settings.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
 vi.mock("nuqs", () => ({
   useQueryStates: () => [{ connectorId: null, dialog: null }, vi.fn()],
 }));
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+
+/* oxlint-disable no-magic-numbers, no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- mcp-settings.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { queryKey }: { queryKey: string[] }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({
     isPending: mocks.pendingAuthorization,
@@ -130,6 +155,8 @@ vi.mock("@tanstack/react-query", () => ({
   },
   useQueryClient: () => mocks.queryClient,
 }));
+/* oxlint-enable no-magic-numbers, no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable max-statements, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/strict-void-return -- renderPage: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including details ? "Connector details" : "Connectors & MCP"); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const renderPage = async (
   details: boolean,
@@ -183,6 +210,9 @@ const renderPage = async (
     container.remove();
   };
 };
+/* oxlint-enable max-statements, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/strict-void-return */
+
+/* oxlint-disable oxc/no-async-await -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test("connector list shows custom and shared connectors with their management links", async () => {
   const cleanup = await renderPage(false);
@@ -210,6 +240,9 @@ test("connector list shows custom and shared connectors with their management li
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+
+/* oxlint-disable oxc/no-async-await -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test("connector details show discovery, owner controls and the back link", async () => {
   const cleanup = await renderPage(true);
@@ -240,6 +273,9 @@ test("connector details show discovery, owner controls and the back link", async
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+
+/* oxlint-disable no-ternary, oxc/no-async-await -- mcp-settings.browser route: no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including details ? "details" : "list"); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 for (const details of [false, true]) {
   test(`connector ${details ? "details" : "list"} displays missing credentials instead of an empty state`, async () => {
@@ -262,6 +298,9 @@ for (const details of [false, true]) {
     }
   });
 }
+/* oxlint-enable no-ternary, oxc/no-async-await */
+
+/* oxlint-disable no-ternary, oxc/no-async-await -- mcp-settings.browser route: no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including details ? "details" : "list"); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 for (const details of [false, true]) {
   test(`cached ${details ? "details" : "list"} remains usable after a background refresh error`, async () => {
@@ -281,6 +320,9 @@ for (const details of [false, true]) {
     }
   });
 }
+/* oxlint-enable no-ternary, oxc/no-async-await */
+
+/* oxlint-disable oxc/no-async-await -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
 
 test("expired OAuth discovery offers reconnect instead of a permanent spinner", async () => {
   mocks.needsOAuth = true;
@@ -295,6 +337,8 @@ test("expired OAuth discovery offers reconnect instead of a permanent spinner", 
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable max-statements, oxc/no-async-await, typescript/promise-function-async -- mcp-settings.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("custom connector advanced settings expose transport and credentials and reject a blank name", async () => {
   const cleanup = await renderPage(false, true);
@@ -325,6 +369,9 @@ test("custom connector advanced settings expose transport and credentials and re
     await cleanup();
   }
 });
+/* oxlint-enable max-statements, oxc/no-async-await, typescript/promise-function-async */
+
+/* oxlint-disable oxc/no-async-await, typescript/promise-function-async -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("pending OAuth can be dismissed", async () => {
   mocks.pendingAuthorization = true;
@@ -345,6 +392,9 @@ test("pending OAuth can be dismissed", async () => {
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await, typescript/promise-function-async */
+
+/* oxlint-disable oxc/no-async-await, typescript/promise-function-async -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("dismissed OAuth ignores a late authorization result", async () => {
   const cleanup = await renderPage(false, false, true);
@@ -369,6 +419,9 @@ test("dismissed OAuth ignores a late authorization result", async () => {
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await, typescript/promise-function-async */
+
+/* oxlint-disable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- mcp-settings.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { clientId, expectedClientId }); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test.each([
   { clientId: "   ", expectedClientId: undefined },
@@ -412,6 +465,9 @@ test.each([
     }
   }
 );
+/* oxlint-enable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+
+/* oxlint-disable oxc/no-async-await, oxc/no-optional-chaining -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback. */
 
 test("OAuth callback errors display the safe actionable message", async () => {
   const message =
@@ -435,6 +491,9 @@ test("OAuth callback errors display the safe actionable message", async () => {
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await, oxc/no-optional-chaining */
+
+/* oxlint-disable oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async -- mcp-settings.browser route: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 test("invalid authorization links keep the dialog open and display an error", async () => {
   const cleanup = await renderPage(false, false, true);
   try {
@@ -464,3 +523,6 @@ test("invalid authorization links keep the dialog open and display an error", as
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async */
+
+/* oxlint-disable max-lines -- mcp-settings.browser keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

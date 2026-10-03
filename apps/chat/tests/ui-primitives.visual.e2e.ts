@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * oxc/no-async-await (#540): test("UI primitives visual fixture") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("UI primitives visual fixture") accepts { page }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("UI primitives visual fixture", async ({ page }) => {
   await page.goto("/visual-fixtures/ui-primitives");
   await expect(page.getByTestId("ui-primitives-fixture")).toBeVisible();
@@ -19,3 +23,4 @@ test("UI primitives visual fixture", async ({ page }) => {
     "ui-primitives-tooltip-open.png"
   );
 });
+/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */

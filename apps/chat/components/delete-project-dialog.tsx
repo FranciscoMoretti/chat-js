@@ -1,8 +1,9 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import { toast } from "sonner";
 
 import {
@@ -16,12 +17,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useTRPC } from "@/trpc/react";
+/* oxlint-enable sort-imports */
 
 interface DeleteProjectDialogProps {
   deleteId: string | null;
   setShowDeleteDialog: (show: boolean) => void;
   showDeleteDialog: boolean;
 }
+/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, no-ternary, oxc/no-async-await, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return -- DeleteProjectDialog: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including deleteMutation.isPending ? "Deleting..." : "Delete"); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 export const DeleteProjectDialog = ({
   deleteId,
@@ -51,7 +54,7 @@ export const DeleteProjectDialog = ({
   );
 
   const handleDelete = useCallback(async () => {
-    if (!deleteId) {
+    if (!(typeof deleteId === "string" && deleteId !== "")) {
       return;
     }
     try {
@@ -113,3 +116,4 @@ export const DeleteProjectDialog = ({
     </AlertDialog>
   );
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, no-ternary, oxc/no-async-await, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */

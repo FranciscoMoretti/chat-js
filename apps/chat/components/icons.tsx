@@ -1,4 +1,11 @@
-export const GitIcon = ({ size = 16 }: { size?: number }) => (
+import React from "react";
+/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- GitIcon: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
+
+export const GitIcon = ({
+  size = 16,
+}: {
+  size?: number;
+}): React.JSX.Element => (
   <svg
     strokeLinejoin="round"
     style={{ color: "currentcolor", height: size, width: size }}
@@ -20,8 +27,15 @@ export const GitIcon = ({ size = 16 }: { size?: number }) => (
     </defs>
   </svg>
 );
+/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
 
-export const SummarizeIcon = ({ size = 16 }: { size?: number }) => (
+/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SummarizeIcon: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
+
+export const SummarizeIcon = ({
+  size = 16,
+}: {
+  size?: number;
+}): React.JSX.Element => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -38,3 +52,4 @@ export const SummarizeIcon = ({ size = 16 }: { size?: number }) => (
     />
   </svg>
 );
+/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types */

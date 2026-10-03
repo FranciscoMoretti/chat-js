@@ -1,11 +1,22 @@
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { readFile, writeFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
   researchAgentFiles,
   researchAgentDirectories,
 } from "../../../registry/src/tools/research";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const researchTestFiles = [
   "lib/eve/research-availability.test.ts",
   "lib/eve/research-tool.test.ts",
@@ -13,6 +24,9 @@ export const researchTestFiles = [
   "lib/eve/research-search-updates.test.ts",
   "tests/native-research-runtime.ts",
 ];
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
 // Runtime regressions, historical migration tools and sample evaluations stay
 // in the reference repository rather than becoming downstream app source.
@@ -63,7 +77,8 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
         file === "lib/eve/mcp-adapter.test.ts" ||
         file === "lib/eve/mcp-registration.test.ts")) ||
     researchAgentDirectories.some(
-      (directory) => file === directory || file.startsWith(`${directory}/`)
+      (directory): boolean =>
+        file === directory || file.startsWith(`${directory}/`)
     ) ||
     file === "evals" ||
     file.startsWith("evals/") ||
@@ -76,7 +91,9 @@ const isRepositoryOnlyFile = (relativePath: string): boolean => {
       (file.endsWith(".visual.e2e.ts") ||
         file
           .split("/")
-          .some((segment) => segment.endsWith(".visual.e2e.ts-snapshots")))) ||
+          .some((segment): boolean =>
+            segment.endsWith(".visual.e2e.ts-snapshots")
+          ))) ||
     (file.startsWith("playwright.eve") && file.endsWith(".config.ts"))
   );
 };
@@ -102,7 +119,7 @@ const EXCLUDED_FILES = new Set([".DS_Store", "bun.lock", "bun.lockb"]);
 const shouldCopyAppFile = (relativePath: string): boolean => {
   const segments = relativePath.split(path.sep);
   return !segments.some(
-    (segment) =>
+    (segment): boolean =>
       EXCLUDED_SEGMENTS.has(segment) ||
       EXCLUDED_FILES.has(segment) ||
       segment.endsWith(".tsbuildinfo") ||
@@ -110,20 +127,43 @@ const shouldCopyAppFile = (relativePath: string): boolean => {
   );
 };
 
+/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const shouldCopyChatAppFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) && !isRepositoryOnlyFile(relativePath);
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
+/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const shouldCopyElectronFile = (relativePath: string): boolean =>
   shouldCopyAppFile(relativePath) &&
   !relativePath
     .split(path.sep)
     .some((segment) => segment === "release" || segment === "branding.json");
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
 // Remove the reference-app project while retaining the starter behavior suites.
 const REFERENCE_VISUAL_PROJECT =
   /^ {4}\{\n {6}name: "visual",[\s\S]*?^ {4}\},\n/gmu;
 
-export const normalizeScaffoldContent = async (destination: string) => {
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+export const normalizeScaffoldContent = async (
+  destination: string
+): Promise<void> => {
   const packagePath = path.join(destination, "package.json");
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
@@ -203,3 +243,12 @@ export const normalizeScaffoldContent = async (destination: string) => {
     )
   );
 };
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/group-exports */

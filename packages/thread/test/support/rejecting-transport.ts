@@ -1,8 +1,16 @@
 import type { ChatTransport, UIMessage } from "ai";
 
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
   Promise.resolve(null);
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable unicorn/no-null */
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class RejectingTransport implements ChatTransport<UIMessage> {
   public requests = 0;
 
@@ -13,3 +21,7 @@ export class RejectingTransport implements ChatTransport<UIMessage> {
 
   public reconnectToStream = reconnectToNoStream;
 }
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/prefer-default-export */

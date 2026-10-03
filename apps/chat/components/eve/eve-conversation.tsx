@@ -1,7 +1,8 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import type { useEveAgent } from "eve/react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -21,7 +22,9 @@ import { isEveCommandRejection } from "@/lib/eve/command-rejection";
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
+/* oxlint-disable import/max-dependencies -- @/lib/eve/logical-response-slots import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
+/* oxlint-enable import/max-dependencies */
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { EveMessageInput } from "@/lib/eve/message-input";
@@ -38,8 +41,8 @@ import { EveForkRecovery } from "./eve-fork-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useLogicalChat } from "./eve-logical-context";
 import {
-  EveLogicalVersions,
   EveLogicalResponses,
+  EveLogicalVersions,
 } from "./eve-logical-navigation";
 import { EveMessages } from "./eve-messages";
 import {
@@ -52,6 +55,8 @@ import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
+/* oxlint-enable sort-imports */
+/* oxlint-disable import/exports-last, import/no-named-export, import/prefer-default-export, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- EveConversation: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including canonical ? { ...message, parts: canonical.parts } : message); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including latestTurn?.type); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including failure?: Error); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including snapshot.cursorId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // This controller coordinates streaming, optimistic delivery, recovery, and comparison state.
 // oxlint-disable-next-line eslint/complexity
@@ -139,7 +144,10 @@ export const EveConversation = ({
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Merge canonical message metadata into a view without mutating runtime message snapshots.
     .map((message) => {
       const id = controller.logicalId(conversationId, message.id);
-      const canonical = id ? snapshot.nodes.get(id)?.message : undefined;
+      const canonical =
+        typeof id === "string" && id !== ""
+          ? snapshot.nodes.get(id)?.message
+          : undefined;
       return canonical ? { ...message, parts: canonical.parts } : message;
     });
   const editingMessageId =
@@ -174,7 +182,7 @@ export const EveConversation = ({
       return;
     }
     setCommandFailure(undefined);
-    // oxlint-disable-next-line react/todo -- Preserve command lock cleanup while React Compiler lacks finally support.
+
     try {
       await action();
     } catch (error) {
@@ -202,7 +210,6 @@ export const EveConversation = ({
     }
   };
   const sendPendingMessage = async (pending: ActivePendingEveMessage) => {
-    // oxlint-disable-next-line react/todo -- Preserve optimistic message recovery cleanup while React Compiler lacks finally support.
     try {
       await send(
         () =>
@@ -347,9 +354,6 @@ export const EveConversation = ({
                 isReadonly={false}
                 messages={messages}
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Message editing delegates pending and failure handling to the existing fork submission lifecycle.
                 editor={
                   editingMessageId
                     ? {
@@ -393,7 +397,7 @@ export const EveConversation = ({
                     : undefined
                 }
                 modelForMessage={modelForMessage}
-                renderVersions={(message) => (
+                renderVersions={(message): React.JSX.Element => (
                   <EveLogicalVersions
                     conversationId={conversationId}
                     messageId={message.id}
@@ -404,7 +408,7 @@ export const EveConversation = ({
                     }
                   />
                 )}
-                renderResponses={(message) => (
+                renderResponses={(message): React.JSX.Element => (
                   <EveLogicalResponses
                     conversationId={conversationId}
                     messageId={message.id}
@@ -453,14 +457,12 @@ export const EveConversation = ({
                   });
                 }}
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-                onRegenerate={(message, response) =>
-                  fork.begin(message, { events: agent.events, response })
-                }
+                onRegenerate={(message, response) => {
+                  void fork.begin(message, { events: agent.events, response });
+                }}
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-                onSuggestion={(suggestion) =>
-                  run(async () => {
+                onSuggestion={(suggestion) => {
+                  void run(async () => {
                     // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
                     if (modelIds.length > 1) {
                       await fork.compare(
@@ -480,8 +482,8 @@ export const EveConversation = ({
                         composerDraft.selectedTool ?? undefined
                       );
                     }
-                  })
-                }
+                  });
+                }}
 
                 // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                 respond={(response) =>
@@ -503,7 +505,7 @@ export const EveConversation = ({
             </p>
             {[snapshot.error, displayedError, composerDraft.error]
               .filter(Boolean)
-              .map((message) => (
+              .map((message): React.JSX.Element => (
                 <p key={message} role="alert">
                   {message}
                 </p>
@@ -520,15 +522,14 @@ export const EveConversation = ({
                 <div className="flex flex-wrap gap-2">
                   {pendingMessage.retryable && pendingMessage.operationId && (
                     <Button
-                      // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-                      onClick={() =>
-                        run(async () => {
+                      onClick={() => {
+                        void run(async () => {
                           const retried = delivery.retry(pendingMessage);
                           if (retried) {
                             await sendPendingMessage(retried);
                           }
-                        })
-                      }
+                        });
+                      }}
                       size="sm"
                       type="button"
                       variant="outline"
@@ -592,9 +593,8 @@ export const EveConversation = ({
               // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
               onStop={cancel}
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-              onSubmit={() =>
-                run(async () => {
+              onSubmit={() => {
+                void run(async () => {
                   // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
                   if (modelIds.length > 1) {
                     await fork.compare(
@@ -613,8 +613,8 @@ export const EveConversation = ({
                       composerDraft.selectedTool ?? undefined
                     );
                   }
-                })
-              }
+                });
+              }}
               onToolChange={handleSelectedToolChange}
               readOnly={Boolean(comparison)}
               retainedModelId={pendingMessage?.modelId}
@@ -628,8 +628,9 @@ export const EveConversation = ({
                 <Button
                   disabled={busy || commandPending || cancelPending}
 
-                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-                  onClick={() => run(agent.resume)}
+                  onClick={() => {
+                    void run(agent.resume);
+                  }}
                   size="sm"
                   type="button"
                   variant="ghost"
@@ -643,6 +644,9 @@ export const EveConversation = ({
     </EveArtifactLayout>
   );
 };
+/* oxlint-enable import/exports-last, import/no-named-export, import/prefer-default-export, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
+
+/* oxlint-disable oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- sameComposerDraft: oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including sent.attachments[index]?.url); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: ReturnType<typeof restoreDraft>). */
 
 const sameComposerDraft = (
   draft: ReturnType<typeof restoreDraft>,
@@ -653,6 +657,9 @@ const sameComposerDraft = (
   draft.attachments.every(
     (file, index) => file.url === sent.attachments[index]?.url
   );
+/* oxlint-enable oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- nextTurnBoundary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 5); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const nextTurnBoundary = (
   event: ReturnType<typeof useEveAgent>["events"][number] | undefined
@@ -671,6 +678,9 @@ const nextTurnBoundary = (
   }
   return `turn_${BigInt(event.data.turnId.slice(5)) + 1n}`;
 };
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useConversationInput: no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const useConversationInput = (
   ownerId: string,
@@ -722,6 +732,9 @@ const useConversationInput = (
     },
   };
 };
+/* oxlint-enable no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+
+/* oxlint-disable no-ternary, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- retainedToolSelection: no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including retained ? (retained.selectedTool ?? null) : draft); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including comparison: { selectedTool?: UiToolName } | undefined); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const retainedToolSelection = (
   comparison: { selectedTool?: UiToolName } | undefined,
@@ -731,3 +744,6 @@ const retainedToolSelection = (
   const retained = comparison ?? pending;
   return retained ? (retained.selectedTool ?? null) : draft;
 };
+/* oxlint-enable no-ternary, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+
+/* oxlint-disable max-lines -- eve-conversation keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

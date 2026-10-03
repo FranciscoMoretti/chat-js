@@ -1,4 +1,7 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
+
+import React from "react";
 
 import { AttachmentList } from "@/components/attachment-list";
 import { UserMessageView } from "@/components/user-message-view";
@@ -9,18 +12,23 @@ import { useChatModels } from "@/providers/chat-models-provider";
 
 import { EveResponseGroupCards } from "./eve-response-group-cards";
 import type { EveResponseCardCandidate } from "./eve-response-group-cards";
+/* oxlint-enable sort-imports */
 
-type OptimisticResponseGroupOperation = {
+interface OptimisticResponseGroupOperation {
   forkKind?: "comparison" | "edit";
   message: EveMessageInput;
   modelIds: string[];
   operationId: string;
-};
+}
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- shouldAppendEveOptimisticResponseGroup: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: OptimisticResponseGroupOperation). */
 
 /** Edited turns already own their inline optimistic row. */
 export const shouldAppendEveOptimisticResponseGroup = (
   operation: OptimisticResponseGroupOperation
 ) => operation.forkKind !== "edit";
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EveOptimisticResponseGroup: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including getModelById(candidate.modelId)?.name); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including candidate); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** A saved comparison request is visible before its native conversations exist. */
 export const EveOptimisticResponseGroup = ({
@@ -60,3 +68,4 @@ export const EveOptimisticResponseGroup = ({
     </div>
   );
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

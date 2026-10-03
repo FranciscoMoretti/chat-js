@@ -4,6 +4,9 @@ import { resolveEveSetup } from "./eve-setup-config";
 
 const world = "@workflow/world-postgres";
 
+/* oxlint-disable no-undefined --
+ * no-undefined (#519): describe("EVE setup selection") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ */
 describe("EVE setup selection", () => {
   it("skips PostgreSQL provisioning on Vercel even with a stale URL", () => {
     expect(resolveEveSetup("vercel")).toEqual({ local: false, managed: true });
@@ -50,6 +53,7 @@ describe("EVE setup selection", () => {
     }
   );
 });
+/* oxlint-enable no-undefined */
 
 it.each([
   "postgres://db/workflows?pool_mode=transaction",

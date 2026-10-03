@@ -1,8 +1,19 @@
 import type { Sql } from "postgres";
 
+/* oxlint-disable eslint/sort-imports -- the ./model import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { SnapshotProvider } from "./model";
+/* oxlint-enable eslint/sort-imports */
 
-/** Deterministic provider contract simulator, not an implementation of EVE SandboxBackend. */
+/* oxlint-disable import/prefer-default-export -- mockProvider: Consumers use this named API so adding another export will not require changing existing imports. */
+/* oxlint-disable import/no-named-export -- mockProvider: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable oxc/no-async-await -- mockProvider: Await sequencing preserves this operation's dependent I/O and error propagation. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- mockProvider: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/strict-boolean-expressions -- mockProvider: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
+/**
+ * Simulate the provider contract with deterministic database-backed snapshots.
+ * @param sql - Connection used to persist mock VM and snapshot state.
+ * @returns A replay-safe snapshot provider for the branching prototype.
+ */
 export const mockProvider = (sql: Sql): SnapshotProvider => ({
   async capture(key, sandbox) {
     await sql.begin(async (tx) => {
@@ -37,3 +48,8 @@ export const mockProvider = (sql: Sql): SnapshotProvider => ({
     });
   },
 });
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/prefer-default-export */

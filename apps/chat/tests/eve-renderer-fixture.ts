@@ -1,9 +1,14 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-tool-result" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 const states: {
   label: string;
@@ -139,6 +144,9 @@ const states: {
   },
 ];
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): content accepts { label, part }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 const content = renderToStaticMarkup(
   createElement(
     "main",
@@ -157,5 +165,6 @@ const content = renderToStaticMarkup(
     )
   )
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 process.stdout.write(content);

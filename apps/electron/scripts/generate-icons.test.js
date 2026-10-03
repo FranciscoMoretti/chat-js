@@ -1,20 +1,37 @@
 import { describe, expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { spawnSync } from "node:child_process";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- the node:fs import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
+/* oxlint-disable import/no-nodejs-modules -- the node:fs import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { existsSync, rmSync } from "node:fs";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable eslint/sort-imports -- the ../forge.config import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
+/* oxlint-disable import/no-relative-parent-imports -- the ../forge.config import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import forgeConfig from "../forge.config";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 
 const appRoot = path.resolve(import.meta.dir, "..");
 const buildDir = path.join(appRoot, "build");
 const outputFiles = ["icon.png", "icon.icns", "icon.ico"];
 
+/* oxlint-disable node/no-sync -- cleanupGeneratedIcons: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 const cleanupGeneratedIcons = () => {
   for (const file of outputFiles) {
     rmSync(path.join(buildDir, file), { force: true });
   }
 };
+/* oxlint-enable node/no-sync */
 
+/* oxlint-disable node/no-sync -- generate-icons: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
+/* oxlint-disable eslint/no-magic-numbers -- generate-icons: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
+/* oxlint-disable oxc/no-optional-chaining -- generate-icons: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 describe("generate-icons", () => {
   test("writes Forge-compatible icon assets", () => {
     cleanupGeneratedIcons();
@@ -36,3 +53,6 @@ describe("generate-icons", () => {
     expect(forgeConfig.packagerConfig?.icon).toBe("./build/icon");
   });
 });
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable node/no-sync */

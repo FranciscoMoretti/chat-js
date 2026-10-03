@@ -8,6 +8,7 @@ const preview = {
   name: "preview/feature",
   parent_id: "br-quiet-pine-za1aryyz",
 };
+/* oxlint-disable typescript/consistent-type-definitions -- RunOptions: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
 type RunOptions = {
   state?: string;
   repo?: string;
@@ -22,6 +23,15 @@ type RunOptions = {
   stateBeforeDelete?: string;
   openBeforeDelete?: boolean;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
+/* oxlint-disable oxc/no-async-await -- run: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
+/* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
+/* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
+/* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
+/* oxlint-disable eslint/no-ternary -- run: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable unicorn/no-null -- run: The fixture explicitly exercises the null state required by the API. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- run: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
+/* oxlint-disable typescript/promise-function-async -- run: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const run = async ({
   state = "closed",
   repo = "owner/repo",
@@ -61,7 +71,7 @@ const run = async ({
                 state: (getCount += 1) === 1 ? state : stateBeforeDelete,
               },
             }),
-          list: () => {
+          list: (): void => {
             // Pagination is handled by the mock; the list method is only a token.
           },
         },
@@ -80,9 +90,23 @@ const run = async ({
   });
   return { calls, result };
 };
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
 
-describe("preview database cleanup", () => {
-  it("deletes only the exact closed-PR preview in the dedicated project", async () => {
+/* oxlint-disable eslint/max-lines-per-function -- preview database cleanup: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
+/* oxlint-disable oxc/no-async-await -- preview database cleanup: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
+/* oxlint-disable oxc/no-rest-spread-properties -- preview database cleanup: The scenario copies fixture inputs so later assertions retain their original values. */
+/* oxlint-disable eslint/no-magic-numbers -- preview database cleanup: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
+/* oxlint-disable oxc/no-optional-chaining -- preview database cleanup: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- preview database cleanup: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
+describe("preview database cleanup", (): void => {
+  it("deletes only the exact closed-PR preview in the dedicated project", async (): Promise<void> => {
     const { calls } = await run();
     expect(calls).toEqual([
       {
@@ -97,22 +121,22 @@ describe("preview database cleanup", () => {
   });
   it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])(
     "skips unsafe PR ownership/state %j",
-    async (options) => {
+    async (options): Promise<void> => {
       const { calls } = await run(options);
       expect(calls).toEqual([]);
     }
   );
   it.each([{ stateBeforeDelete: "open" }, { openBeforeDelete: true }])(
     "preserves a preview whose PR use changes during lookup %j",
-    async (options) => {
+    async (options): Promise<void> => {
       const { calls, result } = await run(options);
-      expect(calls.every((call) => call.method === "GET")).toBe(true);
+      expect(calls.every((call): boolean => call.method === "GET")).toBe(true);
       expect(result).toContain("Skipped");
     }
   );
   it.each(["2026-09-30T00:00:00Z", "invalid"])(
     "preserves recreated previews or unknown creation dates %s",
-    async (created_at) => {
+    async (created_at): Promise<void> => {
       const { calls, result } = await run({
         branches: [{ ...preview, created_at }],
       });
@@ -120,7 +144,7 @@ describe("preview database cleanup", () => {
       expect(result).toContain("Skipped");
     }
   );
-  it("finds later-page previews using the opaque next cursor", async () => {
+  it("finds later-page previews using the opaque next cursor", async (): Promise<void> => {
     const { calls, result } = await run({
       pages: [
         { branches: [], pagination: { next: "next/page?" } },
@@ -130,7 +154,7 @@ describe("preview database cleanup", () => {
     expect(calls[1]?.url).toEndWith("?cursor=next%2Fpage%3F");
     expect(result).toContain("Deleted");
   });
-  it("checks uniqueness across all pages and rejects looping pagination", async () => {
+  it("checks uniqueness across all pages and rejects looping pagination", async (): Promise<void> => {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
     await expect(
       run({
@@ -150,7 +174,7 @@ describe("preview database cleanup", () => {
       })
     ).rejects.toThrow("repeated");
   });
-  it("treats a missing branch or concurrent deletion as successful cleanup", async () => {
+  it("treats a missing branch or concurrent deletion as successful cleanup", async (): Promise<void> => {
     const absent = await run({ branches: [] });
     expect(absent.calls).toHaveLength(1);
     const concurrent = await run({ deleteStatus: 404 });
@@ -162,11 +186,14 @@ describe("preview database cleanup", () => {
     { ...preview, default: true },
     { ...preview, primary: true },
     { ...preview, protected: true },
-  ])("refuses protected or unrelated branches %j", async (branch) => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(run({ branches: [branch] })).rejects.toThrow("Refusing");
-  });
-  it("rejects ambiguous branch names and reports API failure", async () => {
+  ])(
+    "refuses protected or unrelated branches %j",
+    async (branch): Promise<void> => {
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
+      await expect(run({ branches: [branch] })).rejects.toThrow("Refusing");
+    }
+  );
+  it("rejects ambiguous branch names and reports API failure", async (): Promise<void> => {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
     await expect(run({ branches: [preview, preview] })).rejects.toThrow(
       "ambiguous"
@@ -177,3 +204,9 @@ describe("preview database cleanup", () => {
     );
   });
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-lines-per-function */

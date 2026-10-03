@@ -1,9 +1,27 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../eve/code-sandbox-name" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { and, eq, sql } from "drizzle-orm";
 
 import { eveCodeSandboxName } from "../eve/code-sandbox-name";
 import { db } from "./client";
 import { eveCodeSandbox, eveConversation } from "./schema";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * import/group-exports (#523): reserveEveCodeSandbox stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named reserveEveCodeSandbox API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): reserveEveCodeSandbox's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): reserveEveCodeSandbox's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): reserveEveCodeSandbox sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): reserveEveCodeSandbox handles optional conversation?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): reserveEveCodeSandbox accepts provider: { teamId: string; projectId: string; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): reserveEveCodeSandbox intentionally keeps the existing falsy-value behavior of conversation?.sessionId; existing; inserted; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** Commit intent before provider I/O; no resource may be allocated by this function. */
 export const reserveEveCodeSandbox = async (
   ownerId: string,
@@ -13,7 +31,7 @@ export const reserveEveCodeSandbox = async (
     teamId: string;
     projectId: string;
   }
-) =>
+): Promise<string> =>
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -65,13 +83,21 @@ export const reserveEveCodeSandbox = async (
     }
     return inserted.name;
   });
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/strict-boolean-expressions --
+ * import/group-exports (#523): recordEveCodeSandboxDeletion stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named recordEveCodeSandboxDeletion API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): recordEveCodeSandboxDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * oxc/no-async-await (#540): recordEveCodeSandboxDeletion sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/strict-boolean-expressions (#610): recordEveCodeSandboxDeletion intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** Internal coordinator only: caller must prove no pending allocation can finish later. */
 export const recordEveCodeSandboxDeletion = async (
   ownerId: string,
   conversationId: string,
   name: string
-) => {
+): Promise<void> => {
   const [row] = await db
     .update(eveCodeSandbox)
     .set({ state: "deleted" })
@@ -87,13 +113,21 @@ export const recordEveCodeSandboxDeletion = async (
     throw new Error("Code sandbox ownership not found.");
   }
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/strict-boolean-expressions --
+ * import/group-exports (#523): confirmEveCodeSandboxCreation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named confirmEveCodeSandboxCreation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): confirmEveCodeSandboxCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * oxc/no-async-await (#540): confirmEveCodeSandboxCreation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/strict-boolean-expressions (#610): confirmEveCodeSandboxCreation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** A successful create reply proves this invocation has finished allocating. */
 export const confirmEveCodeSandboxCreation = async (
   ownerId: string,
   conversationId: string,
   name: string
-) => {
+): Promise<void> => {
   const [row] = await db
     .update(eveCodeSandbox)
     .set({ creationConfirmed: true })
@@ -110,7 +144,18 @@ export const confirmEveCodeSandboxCreation = async (
     throw new Error("Unresolved code sandbox ownership not found.");
   }
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+ * import/group-exports (#523): listEveCodeSandboxesForDeletion stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named listEveCodeSandboxesForDeletion API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): listEveCodeSandboxesForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): listEveCodeSandboxesForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * no-magic-numbers (#517): listEveCodeSandboxesForDeletion uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): listEveCodeSandboxesForDeletion sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep listEveCodeSandboxesForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep listEveCodeSandboxesForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 /** Internal cleanup inventory; unretired families cannot authorize provider deletion. */
 export const listEveCodeSandboxesForDeletion = async (
   ownerId: string,
@@ -157,3 +202,4 @@ export const listEveCodeSandboxesForDeletion = async (
       )
     );
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

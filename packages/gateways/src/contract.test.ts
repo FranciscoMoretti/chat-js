@@ -3,25 +3,55 @@ import type {
   LanguageModelV4,
 } from "@ai-sdk/provider";
 import type { ImageModel } from "ai";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { describe, expect, it } from "vitest";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { gatewayMetadata } from "../../registry/src/gateways/metadata";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { GatewayType } from "../../registry/src/gateways/metadata";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { OpenAIGateway } from "../../registry/src/gateways/openai/gateway";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { OpenRouterGateway } from "../../registry/src/gateways/openrouter/gateway";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import gatewayPackage from "../package.json";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import type { GatewayProvider } from "./gateway-provider";
+/* oxlint-enable import/max-dependencies */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { GatewayOptions } from "./runtime";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const callUnsupportedModel = <T>(
   method: (modelId: never) => T,
   receiver: object
   // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
 ): T => Reflect.apply(method, receiver, ["unsupported-model"]);
+/* oxlint-enable eslint/id-length */
 
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const adapters: {
   name: GatewayType;
   create: (
@@ -116,7 +146,13 @@ const adapters: {
     video: false,
   },
 ];
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/id-length */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe.each(adapters)("$name gateway contract", (adapter) => {
   it("creates AI SDK v4 models and reports unsupported media as null", () => {
     const gateway = adapter.create({ env: adapter.env });
@@ -149,3 +185,7 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     expect(requested).toEqual([adapter.name]);
   });
 });
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-async-await */

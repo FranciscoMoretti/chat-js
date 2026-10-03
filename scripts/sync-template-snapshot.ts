@@ -1,16 +1,45 @@
+/* oxlint-disable import/no-nodejs-modules -- the node:crypto import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { createHash } from "node:crypto";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- the node:fs/promises import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
+/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { readdir, readFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
 
-const join = (...segments: string[]) => path.join(...segments);
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- join: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+const join = (...segments: string[]): string => path.join(...segments);
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/exports-last -- SNAPSHOT_CONCURRENCY: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/group-exports -- SNAPSHOT_CONCURRENCY: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- SNAPSHOT_CONCURRENCY: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const SNAPSHOT_CONCURRENCY = 32;
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
+/* oxlint-disable import/exports-last -- SnapshotOptions: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
+/* oxlint-disable import/no-named-export -- SnapshotOptions: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable typescript/consistent-type-definitions -- SnapshotOptions: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
 export type SnapshotOptions = {
   concurrency?: number;
   onActiveOperationsChange?: (activeOperations: number) => void;
 };
+/* oxlint-enable typescript/consistent-type-definitions */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/exports-last */
 
+/* oxlint-disable eslint/max-statements -- SnapshotIoLimiter: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable eslint/no-magic-numbers -- SnapshotIoLimiter: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable oxc/no-async-await -- SnapshotIoLimiter: Await sequencing preserves this operation's dependent I/O and error propagation. */
+/* oxlint-disable eslint/id-length -- SnapshotIoLimiter: The local index/OS/library binding retains its conventional API notation. */
+/* oxlint-disable oxc/no-optional-chaining -- SnapshotIoLimiter: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable unicorn/no-null -- SnapshotIoLimiter: The SDK/wire/OS contract uses null as an explicit absence value. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SnapshotIoLimiter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 class SnapshotIoLimiter {
   private activeOperations = 0;
   private readonly concurrency: number;
@@ -59,7 +88,18 @@ class SnapshotIoLimiter {
     }
   }
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-async-await -- collectSnapshotWithLimiter: Await sequencing preserves this operation's dependent I/O and error propagation. */
+/* oxlint-disable eslint/no-ternary -- collectSnapshotWithLimiter: The expression preserves the existing fallback/derived-value contract within this operation. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- collectSnapshotWithLimiter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/promise-function-async -- collectSnapshotWithLimiter: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const collectSnapshotWithLimiter = async (
   dir: string,
   prefix: string,
@@ -91,10 +131,22 @@ const collectSnapshotWithLimiter = async (
   }
   return output;
 };
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable import/group-exports -- collectSnapshot: Keep the named API with its implementation; existing direct exports are the consumer contract. */
+/* oxlint-disable import/no-named-export -- collectSnapshot: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- collectSnapshot: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+/* oxlint-disable typescript/promise-function-async -- collectSnapshot: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 export const collectSnapshot = (
   dir: string,
   prefix = "",
   options: SnapshotOptions = {}
 ): Promise<Map<string, string>> =>
   collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

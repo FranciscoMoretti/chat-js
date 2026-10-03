@@ -1,14 +1,30 @@
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { mcpDefinition } from "../../../registry/src/features/mcp";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { builtInGateways } from "../registry/gateways";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "../types";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 
 type EnvVarName = string;
 
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export interface EnvRequirement {
   description: string;
   options: EnvVarName[][];
 }
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
   Object.fromEntries(
     builtInGateways.map((item) => [
@@ -21,7 +37,15 @@ export const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
       })),
     ])
   );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const coreFeatureEnvRequirements: Partial<
   Record<CoreFeatureKey, EnvRequirement[]>
 > = {
@@ -33,7 +57,14 @@ export const coreFeatureEnvRequirements: Partial<
       requirement.options.map((group) => group.join(" + ")).join(" or "),
   })),
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 export const builtInToolEnvRequirements: Record<
   BuiltInToolKey,
   EnvRequirement | undefined
@@ -51,7 +82,12 @@ export const builtInToolEnvRequirements: Record<
     options: [["TAVILY_API_KEY"], ["FIRECRAWL_API_KEY"]],
   },
 };
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   github: {
     description: "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
@@ -66,7 +102,11 @@ export const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
     options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
   },
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const envVarDescriptions: Record<string, string> = {
   AI_GATEWAY_API_KEY: "Vercel AI Gateway API key",
   AUTH_GITHUB_ID: "GitHub OAuth client id",
@@ -91,3 +131,5 @@ export const envVarDescriptions: Record<string, string> = {
   VERCEL_TEAM_ID: "Vercel team id for sandbox execution",
   VERCEL_TOKEN: "Vercel token for sandbox execution",
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

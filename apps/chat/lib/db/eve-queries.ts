@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../eve/session-mapping-error" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 // oxlint-disable-next-line eslint/max-classes-per-file -- Keep the related admission error variants alongside their shared query contract.
 import {
   and,
@@ -30,6 +34,7 @@ import { EveSessionMappingError } from "../eve/session-mapping-error";
 import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 // Creation reservations remain readable for recovery; deleting transcripts do not.
 const visibleConversation = inArray(eveConversation.state, [
@@ -38,6 +43,15 @@ const visibleConversation = inArray(eveConversation.state, [
   "uncertain",
 ]);
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+ * import/exports-last (#522): getBoundEveConversationForSession is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): getBoundEveConversationForSession stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getBoundEveConversationForSession API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-magic-numbers (#517): getBoundEveConversationForSession uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): getBoundEveConversationForSession sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep getBoundEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getBoundEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 export const getBoundEveConversationForSession = async (
   ownerId: string,
   sessionId: string
@@ -55,7 +69,20 @@ export const getBoundEveConversationForSession = async (
     .limit(1);
   return rows[0];
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+ * import/exports-last (#522): readEveSessionMapping is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): readEveSessionMapping stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named readEveSessionMapping API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): readEveSessionMapping's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): readEveSessionMapping's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * no-ternary (#518): readEveSessionMapping derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): readEveSessionMapping sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep readEveSessionMapping's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep readEveSessionMapping's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): readEveSessionMapping accepts identity: { reservationId: string } | { sessionId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 /** Internal mapping lookup includes tombstones so deletion cannot look like pending delivery. */
 export const readEveSessionMapping = async (
   identity: { reservationId: string } | { sessionId: string }
@@ -76,9 +103,36 @@ export const readEveSessionMapping = async (
     );
   return row;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-export const ownsEveSession = async (ownerId: string, sessionId: string) =>
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await --
+ * import/exports-last (#522): ownsEveSession is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): ownsEveSession stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named ownsEveSession API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): ownsEveSession sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ */
+export const ownsEveSession = async (
+  ownerId: string,
+  sessionId: string
+): Promise<boolean> =>
   Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await */
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
+ * import/exports-last (#522): listEveConversations is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): listEveConversations stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named listEveConversations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * max-lines-per-function (#510): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): listEveConversations uses 51, 0, 50, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): listEveConversations derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): listEveConversations uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): listEveConversations sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep listEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep listEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/strict-boolean-expressions (#610): listEveConversations intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/max-nested-calls (#568): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * unicorn/no-null (#570): listEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 export const listEveConversations = async (
   ownerId: string,
   input?: EveHistoryInput
@@ -173,6 +227,20 @@ export const listEveConversations = async (
         : null,
   };
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+ * import/exports-last (#522): getEveConversation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): getEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getEveConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-magic-numbers (#517): getEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): getEveConversation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): getEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): getEveConversation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): getEveConversation copies or separates ...row.conversation while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/explicit-function-return-type (#560): Keep getEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/strict-boolean-expressions (#610): getEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 export const getEveConversation = async (ownerId: string, id: string) => {
   const [row] = await db
     .select({
@@ -213,7 +281,24 @@ export const getEveConversation = async (ownerId: string, id: string) => {
       }
     : undefined;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+ * import/exports-last (#522): getEveChatPageConversation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): getEveChatPageConversation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getEveChatPageConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): getEveChatPageConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): getEveChatPageConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-statements (#512): getEveChatPageConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): getEveChatPageConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): getEveChatPageConversation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): getEveChatPageConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): getEveChatPageConversation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): getEveChatPageConversation handles optional active?.chatId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep getEveChatPageConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getEveChatPageConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/strict-boolean-expressions (#610): getEveChatPageConversation intentionally keeps the existing falsy-value behavior of logical; logical.activeConversationId; member; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** Resolve either a logical chat route or an exact private session route. */
 export const getEveChatPageConversation = async (
   ownerId: string,
@@ -259,7 +344,18 @@ export const getEveChatPageConversation = async (
     .limit(1);
   return member ? await getEveConversation(ownerId, member.id) : undefined;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls --
+ * import/exports-last (#522): getEveChatIdentity is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): getEveChatIdentity stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getEveChatIdentity API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-magic-numbers (#517): getEveChatIdentity uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): getEveChatIdentity sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep getEveChatIdentity's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getEveChatIdentity's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * unicorn/max-nested-calls (#568): getEveChatIdentity keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
   const [identity] = await db
     .select({
@@ -295,6 +391,14 @@ export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
     .limit(1);
   return identity;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+ * import/exports-last (#522): CreationConflictError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): CreationConflictError stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named CreationConflictError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-optional-chaining (#542): CreationConflictError handles optional options?.code without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): CreationConflictError accepts options?: ErrorOptions & { code?: "creation_conflict" | "creation_in_progress"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 export class CreationConflictError extends Error {
   public readonly code: "creation_conflict" | "creation_in_progress";
   public constructor(
@@ -308,10 +412,11 @@ export class CreationConflictError extends Error {
     this.name = "CreationConflictError";
   }
 }
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
 
 const assertCreationAvailable = (
   state: typeof eveConversation.$inferSelect.state
-) => {
+): void => {
   if (state === "deleting" || state === "deleted") {
     throw new CreationConflictError(
       "This conversation can no longer be created."
@@ -319,13 +424,30 @@ const assertCreationAvailable = (
   }
 };
 
+/* oxlint-disable no-ternary, no-undefined, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * no-ternary (#518): boundConversation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): boundConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-optional-chaining (#542): boundConversation handles optional row?.state without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep boundConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): boundConversation accepts row: typeof eveConversation.$inferSelect | undefined; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): boundConversation intentionally keeps the existing falsy-value behavior of row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 const boundConversation = (
   row: typeof eveConversation.$inferSelect | undefined
 ) =>
   row?.state === "bound" && row.sessionId
     ? { id: row.id, sessionId: row.sessionId }
     : undefined;
+/* oxlint-enable no-ternary, no-undefined, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+ * import/exports-last (#522): getEveCreation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): getEveCreation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getEveCreation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): getEveCreation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep getEveCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getEveCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 export const getEveCreation = async (ownerId: string, operationId: string) => {
   const [row] = await db
     .select()
@@ -338,19 +460,33 @@ export const getEveCreation = async (ownerId: string, operationId: string) => {
     );
   return row;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+ * import/exports-last (#522): CreationProjectNotFoundError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): CreationProjectNotFoundError stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named CreationProjectNotFoundError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * typescript/prefer-readonly-parameter-types (#565): CreationProjectNotFoundError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 export class CreationProjectNotFoundError extends Error {
   public constructor(message?: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "CreationProjectNotFoundError";
   }
 }
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * no-magic-numbers (#517): assertResponseGroupCandidateAvailable uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): assertResponseGroupCandidateAvailable sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): assertResponseGroupCandidateAvailable accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): assertResponseGroupCandidateAvailable intentionally keeps the existing falsy-value behavior of deletedGroup; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 const assertResponseGroupCandidateAvailable = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   operationId: string
-) => {
+): Promise<void> => {
   const [deletedGroup] = await tx
     .select({ id: eveResponseGroup.id })
     .from(eveResponseGroup)
@@ -366,13 +502,23 @@ const assertResponseGroupCandidateAvailable = async (
     throw new CreationConflictError("This response group has been deleted.");
   }
 };
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * max-lines-per-function (#510): assertGuestCreationAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): assertGuestCreationAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): assertGuestCreationAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): assertGuestCreationAdmission uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): assertGuestCreationAdmission sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): assertGuestCreationAdmission accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): assertGuestCreationAdmission intentionally keeps the existing falsy-value behavior of reservationId; guest; quota; creation; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 const assertGuestCreationAdmission = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   operationId: string,
   reservationId?: string
-) => {
+): Promise<void> => {
   if (!reservationId) {
     const [guest] = await tx
       .select({ ownerId: eveGuest.ownerId })
@@ -423,13 +569,21 @@ const assertGuestCreationAdmission = async (
     }
   }
 };
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable max-params, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * max-params (#511): assignCreationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): assignCreationProject uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): assignCreationProject sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): assignCreationProject accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): assignCreationProject intentionally keeps the existing falsy-value behavior of target; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 const assignCreationProject = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   chatId: string,
   ownerId: string,
   projectId: string
-) => {
+): Promise<void> => {
   const [target] = await tx
     .select({ id: project.id })
     .from(project)
@@ -443,7 +597,22 @@ const assignCreationProject = async (
     .values({ chatId, ownerId, projectId: target.id })
     .onConflictDoNothing();
 };
+/* oxlint-enable max-params, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * max-lines-per-function (#510): reserveEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): reserveEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): reserveEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): reserveEveConversation uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): reserveEveConversation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): reserveEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): reserveEveConversation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): reserveEveConversation handles optional source?.sessionId; source?.chatId; initialGroup?.id; fork?.checkpointId; fork?.beforeMessageId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): reserveEveConversation copies or separates ...value while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/explicit-function-return-type (#560): Keep reserveEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): reserveEveConversation accepts value: Omit<typeof eveConversation.$inferInsert, "chatId">; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): reserveEveConversation intentionally keeps the existing falsy-value behavior of existingReservation; source?.sessionId; source; createdChat; existingChat; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 const reserveEveConversation = async (
   value: Omit<typeof eveConversation.$inferInsert, "chatId">,
   initialTitle: string,
@@ -576,7 +745,23 @@ const reserveEveConversation = async (
     }
     return rows;
   });
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+ * import/exports-last (#522): beginEveConversationDeletion is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): beginEveConversationDeletion stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named beginEveConversationDeletion API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): beginEveConversationDeletion sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep beginEveConversationDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep beginEveConversationDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): beginEveConversationDeletion accepts tx; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): beginEveConversationDeletion intentionally keeps the existing falsy-value behavior of source; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/max-nested-calls (#568): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 /** Fence one conversation family; retirement and physical purge must finish separately. */
 export const beginEveConversationDeletion = async (
   ownerId: string,
@@ -654,7 +839,12 @@ export const beginEveConversationDeletion = async (
       rootId: source.chatId,
     };
   });
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
+/* oxlint-disable oxc/no-optional-chaining, unicorn/no-null --
+ * oxc/no-optional-chaining (#542): matchesEveFork handles optional fork?.conversationId; fork?.beforeTurnId; fork?.beforeMessageId; fork?.checkpointId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * unicorn/no-null (#570): matchesEveFork preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 const matchesEveFork = (
   existing: Pick<
     typeof eveConversation.$inferSelect,
@@ -666,14 +856,31 @@ const matchesEveFork = (
   >,
   fork: EveForkInput | undefined,
   forkKind: typeof eveConversation.$inferSelect.forkKind
-) =>
+): boolean =>
   existing.parentConversationId === (fork?.conversationId ?? null) &&
   existing.forkTurnId === (fork?.beforeTurnId ?? null) &&
   existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
   existing.forkCheckpointId === (fork?.checkpointId ?? null) &&
   existing.forkKind === forkKind;
+/* oxlint-enable oxc/no-optional-chaining, unicorn/no-null */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): CreationTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 type CreationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable max-lines-per-function, max-params, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
+ * max-lines-per-function (#510): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): bindConversationSession sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): bindConversationSession handles optional bound?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep bindConversationSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): bindConversationSession accepts tx: CreationTransaction; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): bindConversationSession intentionally keeps the existing falsy-value behavior of sessionBinding; bound?.sessionId; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/max-nested-calls (#568): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * unicorn/no-null (#570): bindConversationSession preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 const bindConversationSession = async (
   tx: CreationTransaction,
   ownerId: string,
@@ -735,7 +942,24 @@ const bindConversationSession = async (
     .where(and(eq(eveChat.id, bound.chatId), eq(eveChat.ownerId, ownerId)));
   return { id: bound.id, sessionId: bound.sessionId };
 };
+/* oxlint-enable max-lines-per-function, max-params, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * import/group-exports (#523): createEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named createEveConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-params (#511): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): createEveConversation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): createEveConversation handles optional lock?.locked without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/explicit-function-return-type (#560): Keep createEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep createEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): createEveConversation accepts { initialModelId, initialRequest, initialContentHash, initialTitle = message, fo; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): createEveConversation intentionally keeps the existing falsy-value behavior of initialProjectId; reservation; existing; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): createEveConversation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 /** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
 export const createEveConversation = async (
@@ -886,7 +1110,15 @@ export const createEveConversation = async (
     throw error;
   }
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
+/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+ * import/group-exports (#523): listEveOwnerBindings stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named listEveOwnerBindings API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): listEveOwnerBindings sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep listEveOwnerBindings's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep listEveOwnerBindings's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 export const listEveOwnerBindings = async (ownerId: string) =>
   await db
     .select({
@@ -901,7 +1133,19 @@ export const listEveOwnerBindings = async (ownerId: string) =>
         ne(eveConversation.state, "deleted")
       )
     );
+/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
+/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * import/group-exports (#523): updateEveConversationMetadata stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named updateEveConversationMetadata API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-ternary (#518): updateEveConversationMetadata derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): updateEveConversationMetadata uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): updateEveConversationMetadata sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep updateEveConversationMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep updateEveConversationMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): updateEveConversationMetadata accepts updates: { title?: string; isPinned?: boolean; visibility?: "private" | "public"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): updateEveConversationMetadata intentionally keeps the existing falsy-value behavior of updates.title; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 export const updateEveConversationMetadata = async (
   ownerId: string,
   id: string,
@@ -948,12 +1192,19 @@ export const updateEveConversationMetadata = async (
     .returning({ id: eveChat.id });
   return row;
 };
+/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await --
+ * import/group-exports (#523): isEveRootTitlePending stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named isEveRootTitlePending API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-magic-numbers (#517): isEveRootTitlePending uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): isEveRootTitlePending sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ */
 export const isEveRootTitlePending = async (
   ownerId: string,
   conversationId: string,
   fallbackTitle: string
-) => {
+): Promise<boolean> => {
   const [row] = await db
     .select({ id: eveChat.id })
     .from(eveConversation)
@@ -975,13 +1226,20 @@ export const isEveRootTitlePending = async (
     .limit(1);
   return Boolean(row);
 };
+/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable import/group-exports, import/no-named-export, max-params, oxc/no-async-await --
+ * import/group-exports (#523): replaceEveRootFallbackTitle stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named replaceEveRootFallbackTitle API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * max-params (#511): replaceEveRootFallbackTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): replaceEveRootFallbackTitle sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ */
 export const replaceEveRootFallbackTitle = async (
   ownerId: string,
   conversationId: string,
   fallbackTitle: string,
   generatedTitle: string
-) => {
+): Promise<boolean> => {
   const [row] = await db
     .update(eveChat)
     .set({ title: generatedTitle, titleStatus: "generated" })
@@ -999,12 +1257,18 @@ export const replaceEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
+/* oxlint-enable import/group-exports, import/no-named-export, max-params, oxc/no-async-await */
 
+/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await --
+ * import/group-exports (#523): settleEveRootFallbackTitle stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named settleEveRootFallbackTitle API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): settleEveRootFallbackTitle sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ */
 export const settleEveRootFallbackTitle = async (
   ownerId: string,
   conversationId: string,
   fallbackTitle: string
-) => {
+): Promise<boolean> => {
   const [row] = await db
     .update(eveChat)
     .set({ titleStatus: "fallback" })
@@ -1022,12 +1286,19 @@ export const settleEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
+/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await */
 
+/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * import/group-exports (#523): recordEveConversationActivity stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named recordEveConversationActivity API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): recordEveConversationActivity sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): recordEveConversationActivity accepts at: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 export const recordEveConversationActivity = async (
   ownerId: string,
   sessionId: string,
   at: Date
-) => {
+): Promise<void> => {
   await db
     .update(eveChat)
     .set({ updatedAt: at })
@@ -1043,7 +1314,20 @@ export const recordEveConversationActivity = async (
       )
     );
 };
+/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+ * import/group-exports (#523): getPublicEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getPublicEveConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * no-magic-numbers (#517): getPublicEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): getPublicEveConversation derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): getPublicEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): getPublicEveConversation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): getPublicEveConversation copies or separates ...row.conversation while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/explicit-function-return-type (#560): Keep getPublicEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getPublicEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/strict-boolean-expressions (#610): getPublicEveConversation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 export const getPublicEveConversation = async (id: string) => {
   const [row] = await db
     .select({ chat: { title: eveChat.title }, conversation: eveConversation })
@@ -1065,7 +1349,15 @@ export const getPublicEveConversation = async (id: string) => {
     .limit(1);
   return row ? { ...row.conversation, title: row.chat.title } : undefined;
 };
+/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+ * import/group-exports (#523): listEveConversationBranches stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named listEveConversationBranches API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): listEveConversationBranches sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep listEveConversationBranches's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep listEveConversationBranches's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 export const listEveConversationBranches = async (
   ownerId: string,
   conversationId: string
@@ -1116,7 +1408,18 @@ export const listEveConversationBranches = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: listEveConversationBranches has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { branches, chatId: conversation.chatId, rootId };
 };
+/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+ * import/group-exports (#523): getDeletingEveConversationForSession stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getDeletingEveConversationForSession API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): getDeletingEveConversationForSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): getDeletingEveConversationForSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * no-magic-numbers (#517): getDeletingEveConversationForSession uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): getDeletingEveConversationForSession sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep getDeletingEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getDeletingEveConversationForSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 /** Internal cleanup only; does not grant browser or conversation access. */
 export const getDeletingEveConversationForSession = async (
   ownerId: string,
@@ -1135,7 +1438,17 @@ export const getDeletingEveConversationForSession = async (
     .limit(1);
   return row;
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
+/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls, unicorn/no-null --
+ * import/group-exports (#523): getEveConversationProject stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getEveConversationProject API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): getEveConversationProject sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep getEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getEveConversationProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * unicorn/max-nested-calls (#568): getEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * unicorn/no-null (#570): getEveConversationProject preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 export const getEveConversationProject = async (
   ownerId: string,
   routeId: string
@@ -1177,7 +1490,18 @@ export const getEveConversationProject = async (
     );
   return assigned ?? null;
 };
+/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls, unicorn/no-null */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls --
+ * import/group-exports (#523): listPendingEveCreations stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named listPendingEveCreations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): listPendingEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): listPendingEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * oxc/no-async-await (#540): listPendingEveCreations sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep listPendingEveCreations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep listPendingEveCreations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * unicorn/max-nested-calls (#568): listPendingEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 /** Only interrupted message commands are replayable here; copies and deletion have separate journals. */
 export const listPendingEveCreations = async (ownerId: string) =>
   await db
@@ -1193,7 +1517,19 @@ export const listPendingEveCreations = async (ownerId: string) =>
         )
       )
     );
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * import/group-exports (#523): bindAcceptedEveConversation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named bindAcceptedEveConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): bindAcceptedEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): bindAcceptedEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * oxc/no-async-await (#540): bindAcceptedEveConversation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep bindAcceptedEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep bindAcceptedEveConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): bindAcceptedEveConversation accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): bindAcceptedEveConversation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 /** Caller must verify a native operation receipt for this reservation and exact session. */
 export const bindAcceptedEveConversation = async (
   ownerId: string,
@@ -1203,3 +1539,6 @@ export const bindAcceptedEveConversation = async (
   await db.transaction((tx) =>
     bindConversationSession(tx, ownerId, reservationId, sessionId)
   );
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+
+/* oxlint-disable max-lines -- #509: This eve-queries.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

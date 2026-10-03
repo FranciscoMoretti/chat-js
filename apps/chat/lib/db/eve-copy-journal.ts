@@ -1,3 +1,8 @@
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+ * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../eve/copy-journal-contract"; "../eve/copy-transcript"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { createHash } from "node:crypto";
 
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -18,21 +23,40 @@ import {
   eveResponseGroup,
   eveStoredFile,
 } from "./schema";
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): CopyTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 type CopyTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/* oxlint-enable no-magic-numbers */
 const hashPattern = /^[a-f0-9]{64}$/u;
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+ * import/exports-last (#522): EveCopySourceChangedError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): EveCopySourceChangedError stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named EveCopySourceChangedError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * typescript/prefer-readonly-parameter-types (#565): EveCopySourceChangedError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 export class EveCopySourceChangedError extends CreationConflictError {
   public constructor(message?: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "EveCopySourceChangedError";
   }
 }
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * import/exports-last (#522): lockEveCopyOwners is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): lockEveCopyOwners stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named lockEveCopyOwners API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): lockEveCopyOwners sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): lockEveCopyOwners accepts tx: CopyTransaction; owners: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 export const lockEveCopyOwners = async (
   tx: CopyTransaction,
   owners: string[]
-) => {
+): Promise<void> => {
   for (const owner of [...new Set(owners)].toSorted()) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
     await tx.execute(
@@ -40,12 +64,24 @@ export const lockEveCopyOwners = async (
     );
   }
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * import/exports-last (#522): rejectEveCopyPreflight is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): rejectEveCopyPreflight stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named rejectEveCopyPreflight API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): rejectEveCopyPreflight's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-statements (#512): rejectEveCopyPreflight keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): rejectEveCopyPreflight uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): rejectEveCopyPreflight sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): rejectEveCopyPreflight accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): rejectEveCopyPreflight intentionally keeps the existing falsy-value behavior of existing; group; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** Durable rejection prevents a concurrent request from later reserving the discarded operation. */
 export const rejectEveCopyPreflight = async (
   ownerId: string,
   operationId: string
-) => {
+): Promise<void> => {
   await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId]);
     const [existing] = await tx
@@ -92,11 +128,18 @@ export const rejectEveCopyPreflight = async (
     });
   });
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await --
+ * import/exports-last (#522): isUnacceptedEveCopy is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): isUnacceptedEveCopy stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named isUnacceptedEveCopy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): isUnacceptedEveCopy sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ */
 export const isUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
-) => {
+): Promise<boolean> => {
   const [copy] = await db
     .select({ id: eveConversationCopy.conversationId })
     .from(eveConversationCopy)
@@ -109,7 +152,17 @@ export const isUnacceptedEveCopy = async (
     );
   return Boolean(copy);
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * import/exports-last (#522): assertEveCopySourceAvailable is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): assertEveCopySourceAvailable stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named assertEveCopySourceAvailable API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): assertEveCopySourceAvailable's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * oxc/no-async-await (#540): assertEveCopySourceAvailable sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): assertEveCopySourceAvailable accepts tx: CopyTransaction; source: { sourceConversationId: string; sourceSessionId: string; sourceOwnerId: strin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): assertEveCopySourceAvailable intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** Caller holds source/destination family locks; the shared row lock serializes revocation. */
 export const assertEveCopySourceAvailable = async (
   tx: CopyTransaction,
@@ -118,7 +171,7 @@ export const assertEveCopySourceAvailable = async (
     sourceSessionId: string;
     sourceOwnerId: string;
   }
-) => {
+): Promise<void> => {
   const [row] = await tx
     .select({ id: eveConversation.id })
     .from(eveConversation)
@@ -138,7 +191,17 @@ export const assertEveCopySourceAvailable = async (
     );
   }
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+ * import/exports-last (#522): readEveCopy is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): readEveCopy stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named readEveCopy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): readEveCopy sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep readEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep readEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/strict-boolean-expressions (#610): readEveCopy intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 export const readEveCopy = async (
   tx: Pick<CopyTransaction, "select">,
   ownerId: string,
@@ -166,7 +229,17 @@ export const readEveCopy = async (
   }
   return row;
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+ * import/exports-last (#522): getEveCopyOperation is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): getEveCopyOperation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named getEveCopyOperation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * oxc/no-async-await (#540): getEveCopyOperation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep getEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep getEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/strict-boolean-expressions (#610): getEveCopyOperation intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 export const getEveCopyOperation = async (
   ownerId: string,
   operationId: string
@@ -191,8 +264,14 @@ export const getEveCopyOperation = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveCopyOperation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readEveCopy(db, ownerId, conversation.id);
 };
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-const validateCopyDocumentCheckpoints = (plan: EveCopyPlan) => {
+/* oxlint-disable max-statements, no-ternary, typescript/prefer-readonly-parameter-types --
+ * max-statements (#512): validateCopyDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-ternary (#518): validateCopyDocumentCheckpoints derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * typescript/prefer-readonly-parameter-types (#565): validateCopyDocumentCheckpoints accepts plan: EveCopyPlan; checkpoint; message; document; revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
+const validateCopyDocumentCheckpoints = (plan: EveCopyPlan): void => {
   const checkpoints = new Map(
     plan.documentCheckpoints.map((checkpoint) => [
       checkpoint.messageIndex,
@@ -231,9 +310,19 @@ const validateCopyDocumentCheckpoints = (plan: EveCopyPlan) => {
     }
   }
 };
+/* oxlint-enable max-statements, no-ternary, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * max-lines-per-function (#510): validateCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): validateCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): validateCopyPlan uses 0, 2_147_483_647 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): validateCopyPlan derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * typescript/prefer-readonly-parameter-types (#565): validateCopyPlan accepts plan: EveCopyPlan; file; head; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): validateCopyPlan intentionally keeps the existing falsy-value behavior of parent; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): validateCopyPlan preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
-const validateCopyPlan = (plan: EveCopyPlan) => {
+const validateCopyPlan = (plan: EveCopyPlan): void => {
   parseSessionTranscriptSeed(plan.seed);
   const keys = new Set<string>();
   const sourceKeys = new Set(
@@ -303,13 +392,21 @@ const validateCopyPlan = (plan: EveCopyPlan) => {
   }
   validateCopyDocumentCheckpoints(plan);
 };
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
+/* oxlint-disable max-params, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * max-params (#511): assertSourceFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): assertSourceFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): assertSourceFiles derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * oxc/no-async-await (#540): assertSourceFiles sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): assertSourceFiles accepts tx: CopyTransaction; plan: EveCopyPlan; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 const assertSourceFiles = async (
   tx: CopyTransaction,
   ownerId: string,
   conversationId: string,
   plan: EveCopyPlan
-) => {
+): Promise<void> => {
   const keys = [
     ...new Set(
       plan.files.flatMap((file) =>
@@ -344,7 +441,22 @@ const assertSourceFiles = async (
     );
   }
 };
+/* oxlint-enable max-params, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+ * import/group-exports (#523): reserveEveCopyOperation stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named reserveEveCopyOperation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): reserveEveCopyOperation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): reserveEveCopyOperation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-lines-per-function (#510): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): reserveEveCopyOperation uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): reserveEveCopyOperation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * typescript/explicit-function-return-type (#560): Keep reserveEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep reserveEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): reserveEveCopyOperation accepts input: { operationId: string; sourceConversationId: string; sourceSessionId: string; ; tx; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): reserveEveCopyOperation intentionally keeps the existing falsy-value behavior of existing; group; source; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 /** Allocation and source authorization are committed before any destination storage I/O. */
 export const reserveEveCopyOperation = async (
   ownerId: string,
@@ -492,3 +604,6 @@ export const reserveEveCopyOperation = async (
     return await readEveCopy(tx, ownerId, conversation.id);
   });
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
+/* oxlint-disable max-lines -- #509: This eve-copy-journal.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

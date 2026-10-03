@@ -1,14 +1,36 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { UIMessage } from "ai";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { AbstractThread, Thread } from "../src";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { ThreadState } from "../src";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { useThread } from "../src/react";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { UseThreadHelpers } from "../src/react";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { MemoryThreadState } from "../src/thread-state";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 
 declare const messageId: string;
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const useCompatibilityCheck = () => {
   const thread = useThread();
   const chatCompatible: UseChatHelpers<UIMessage> = thread;
@@ -35,13 +57,20 @@ const useCompatibilityCheck = () => {
   const explicitHelpers: UseThreadHelpers<UIMessage> = thread;
   return explicitHelpers;
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 class StateBackedThread extends AbstractThread {
   public constructor(threadState: ThreadState) {
     super({ state: threadState });
   }
 }
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 const useExternalThreadCheck = () => {
   const thread = new Thread();
   const defaultThread = useThread({ thread });
@@ -52,8 +81,9 @@ const useExternalThreadCheck = () => {
   });
   return { defaultThread, stateBackedThread };
 };
+/* oxlint-enable typescript/explicit-function-return-type */
 
-const useInvalidOwnershipChecks = () => {
+const useInvalidOwnershipChecks = (): void => {
   const state = new MemoryThreadState();
   // @ts-expect-error Thread uses its own memory-backed state.
   void new Thread({ state });

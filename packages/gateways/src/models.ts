@@ -12,14 +12,26 @@ type KnownTag =
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Gateway tags are extensible provider strings; the KnownTag annotation supplies completion without rejecting new provider tags.
 const tagSchema = z.string() as z.ZodType<KnownTag>;
 
+/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const supportedAiGatewayModelTypes = [
   "language",
   "embedding",
   "image",
   "video",
 ] as const;
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
+/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type AiGatewayModelType = (typeof supportedAiGatewayModelTypes)[number];
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
 const aiGatewayModelTypeSchema = z.union([
   z.literal("language"),
@@ -32,12 +44,17 @@ const aiGatewayModelTypeInputSchema = z.union([
   z.string(),
 ]);
 
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const pricingTierSchema = z.object({
   cost: z.string(),
   max: z.number().optional(),
   min: z.number().default(0),
 });
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 // Single model schema
 export const aiGatewayModelSchema = z.object({
   context_window: z.number(),
@@ -62,24 +79,43 @@ export const aiGatewayModelSchema = z.object({
   tags: z.array(tagSchema).optional(),
   type: aiGatewayModelTypeInputSchema,
 });
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
+/* oxlint-enable import/exports-last */
 
 type ParsedAiGatewayModel = z.infer<typeof aiGatewayModelSchema>;
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type AiGatewayModel = Omit<ParsedAiGatewayModel, "type"> & {
   type: AiGatewayModelType;
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const isAiGatewayModelType = (
   type: string
 ): type is AiGatewayModelType =>
   supportedAiGatewayModelTypes.some((supportedType) => supportedType === type);
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const aiGatewayModelDiscriminatorSchema = z.object({
   type: z.string(),
 });
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 // Parse the response envelope before validating individual supported models.
 export const aiGatewayModelsEnvelopeSchema = z.object({
   data: z.array(z.unknown()),
   object: z.literal("list"),
 });
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

@@ -1,10 +1,17 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-tool-result"; "../hooks/use-artifact"; "../lib/eve/tool-result" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+
 import type { EveMessagePart } from "eve/client";
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
 import { ArtifactProvider } from "../hooks/use-artifact";
 import { createToolResult } from "../lib/eve/tool-result";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 const common = {
   input: {},
@@ -12,6 +19,10 @@ const common = {
   toolName: "deepResearch",
   type: "dynamic-tool",
 } as const;
+/* oxlint-disable no-magic-numbers, oxc/no-rest-spread-properties --
+ * no-magic-numbers (#517): parts uses 0, 0.5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-rest-spread-properties (#543): parts copies or separates ...common while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   { ...common, inputText: "", state: "input-streaming" },
   { ...common, state: "input-available" },
@@ -72,6 +83,10 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   },
   { ...common, output: { invalid: true }, state: "output-available" },
 ];
+/* oxlint-enable no-magic-numbers, oxc/no-rest-spread-properties */
+/* oxlint-disable react/jsx-max-depth --
+ * react/jsx-max-depth (#548): process.stdout.write keeps related fixture render states together; extraction changes component, state, and layout boundaries.
+ */
 process.stdout.write(
   renderToStaticMarkup(
     <ArtifactProvider>
@@ -85,3 +100,4 @@ process.stdout.write(
     </ArtifactProvider>
   )
 );
+/* oxlint-enable react/jsx-max-depth */

@@ -1,4 +1,5 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import type {
   EveMessage,
@@ -6,7 +7,7 @@ import type {
   EveMessagePart,
   InputResponse,
 } from "eve/client";
-import { useState } from "react";
+import React, { useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -17,7 +18,9 @@ import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view"
 import { MessageActionsView } from "@/components/message-actions-view";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { RetryButtonView } from "@/components/retry-button-view";
+/* oxlint-disable import/max-dependencies -- @/components/tag import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { Tag } from "@/components/tag";
+/* oxlint-enable import/max-dependencies */
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UserMessageView } from "@/components/user-message-view";
@@ -33,6 +36,8 @@ import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
+/* oxlint-enable sort-imports */
+/* oxlint-disable max-lines-per-function, no-ternary, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PendingInput: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including option.style === "danger" ? "outline" : "default"); oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including request.allowFreeform). */
 
 const PendingInput = ({
   request,
@@ -48,7 +53,7 @@ const PendingInput = ({
     <div className="space-y-3">
       <p>{request.prompt}</p>
       <div className="flex flex-wrap gap-2">
-        {request.options?.map((option) => (
+        {request.options?.map((option): React.JSX.Element => (
           <Button
             disabled={disabled}
             key={option.id}
@@ -87,6 +92,9 @@ const PendingInput = ({
     </div>
   );
 };
+/* oxlint-enable max-lines-per-function, no-ternary, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
+/* oxlint-disable typescript/explicit-function-return-type -- toolStatus: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const toolStatus = (
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>
@@ -105,9 +113,11 @@ const toolStatus = (
   }
   return "Working…";
 };
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable max-lines-per-function, max-statements, no-ternary, no-undefined, oxc/no-optional-chaining, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Part: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including part.toolMetadata?.eve?.inputRequest); react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // This renderer handles all streamed EVE part variants and their recovery states.
-// oxlint-disable-next-line eslint/complexity
+
 const Part = ({
   messageId,
   isReadonly,
@@ -200,6 +210,9 @@ const Part = ({
     </section>
   );
 };
+/* oxlint-enable max-lines-per-function, max-statements, no-ternary, no-undefined, oxc/no-optional-chaining, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- EveMessages: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including editor?.messageId === message.id ? editor : undefined); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including editor?.messageId); react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message: EveMessage); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including eveUserForkBoundary(message)); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+
 // Parts remain EVE-owned; the message chrome is shared with the original runtime.
 export const EveMessages = ({
   conversationId,
@@ -294,9 +307,6 @@ export const EveMessages = ({
           }
         }}
 
-        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.
-
-        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value.
         feedback={
           message.role === "assistant" && !isReadonly ? (
             <>
@@ -339,7 +349,7 @@ export const EveMessages = ({
           actions={actions}
           attachments={message.parts
             .filter((part) => part.type === "file")
-            .map((part, index) => (
+            .map((part, index): React.JSX.Element => (
               // oxlint-disable-next-line react/no-array-index-key -- #551: File parts retain their position in the streamed message.
               <EveAttachment key={`${message.id}:file:${index}`} part={part} />
             ))}
@@ -362,7 +372,7 @@ export const EveMessages = ({
       >
         <MessageContent className="w-full px-0 py-0 text-left">
           <span className="sr-only">Assistant</span>
-          {message.parts.map((part, index) => (
+          {message.parts.map((part, index): React.JSX.Element => (
             <Part
               disabled={disabled}
               isReadonly={isReadonly}
@@ -393,3 +403,6 @@ export const EveMessages = ({
     );
   });
 };
+/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+
+/* oxlint-disable max-lines -- eve-messages keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
@@ -18,7 +19,14 @@ const COMMUNITY_LINKS = [
   { href: "https://x.com/franmoretti_", label: "X / Twitter" },
 ];
 
-export const Footer = () => (
+/* oxlint-disable import/prefer-default-export -- Footer: Consumers use this named API so adding another export will not require changing existing imports. */
+/* oxlint-disable import/no-named-export -- Footer: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
+/* oxlint-disable eslint/max-lines-per-function -- Footer: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
+/* oxlint-disable react/jsx-no-literals -- Footer: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
+/* oxlint-disable react/forbid-component-props -- Footer: className/style are the deliberate styling interface of these UI/layout primitives. */
+/* oxlint-disable react/jsx-max-depth -- Footer: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Footer: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+export const Footer = (): React.JSX.Element => (
   <footer className="border-border/40 border-t">
     <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
       <div className="flex flex-col gap-10 sm:flex-row sm:justify-between">
@@ -109,3 +117,10 @@ export const Footer = () => (
     </div>
   </footer>
 );
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-enable react/forbid-component-props */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/prefer-default-export */

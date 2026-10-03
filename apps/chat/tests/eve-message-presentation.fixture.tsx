@@ -1,5 +1,9 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../components/controlled-chat-composer"; "../components/eve/eve-messages"; "../components/message-siblings-view"; "../components/response-choice-cards" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import type { EveMessage } from "eve/client";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
@@ -7,6 +11,7 @@ import { EveMessages } from "../components/eve/eve-messages";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
 import { LegacyUserMessageReference } from "./eve-message-presentation.legacy";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 const messages: readonly EveMessage[] = [
   {
@@ -35,6 +40,10 @@ const messages: readonly EveMessage[] = [
   },
 ];
 
+/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
+ * typescript/explicit-function-return-type (#560): Keep comparisonSlots's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * unicorn/no-null (#570): comparisonSlots preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 const comparisonSlots = [
   {
     handleSelect: () => null,
@@ -53,6 +62,7 @@ const comparisonSlots = [
     statusLabel: "Generating...",
   },
 ];
+/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 const inlineResponseCards = (
   <div data-testid="inline-response-cards">
@@ -60,7 +70,18 @@ const inlineResponseCards = (
   </div>
 );
 
-const Editor = ({ onSubmit }: { onSubmit?: (value: string) => void }) => {
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types --
+ * react-perf/jsx-no-jsx-as-prop (#555): Editor creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react-perf/jsx-no-new-function-as-prop (#557): Editor creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react/jsx-no-literals (#549): Editor owns this fixture copy; replacing literal text requires a localization/content-management contract.
+ * react/only-export-components (#553): Editor is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
+ * typescript/prefer-readonly-parameter-types (#565): Editor accepts { onSubmit }: { onSubmit?: (value: string) => void }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
+const Editor = ({
+  onSubmit,
+}: {
+  onSubmit?: (value: string) => void;
+}): React.JSX.Element => {
   const [draft, setDraft] = useState("First user message");
   return (
     <div className="w-full space-y-2" data-testid="inline-editor">
@@ -80,7 +101,18 @@ const Editor = ({ onSubmit }: { onSubmit?: (value: string) => void }) => {
     </div>
   );
 };
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable no-magic-numbers, no-ternary, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+ * no-magic-numbers (#517): VersionControls uses 3, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-ternary (#518): VersionControls derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * react-perf/jsx-no-new-function-as-prop (#557): VersionControls creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react/no-multi-comp (#552): VersionControls keeps related fixture render states together; extraction changes component, state, and layout boundaries.
+ * react/only-export-components (#553): VersionControls is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
+ * typescript/explicit-function-return-type (#560): Keep VersionControls's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/prefer-readonly-parameter-types (#565): VersionControls accepts { message, onLog, }: { message: EveMessage; onLog: (value: string) => void; }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * unicorn/no-null (#570): VersionControls preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 const VersionControls = ({
   message,
   onLog,
@@ -101,7 +133,20 @@ const VersionControls = ({
     />
   );
 };
+/* oxlint-enable no-magic-numbers, no-ternary, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
+/* oxlint-disable max-lines-per-function, no-ternary, no-undefined, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+ * max-lines-per-function (#510): Transcript keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-ternary (#518): Transcript derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ * no-undefined (#519): Transcript uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-optional-chaining (#542): Transcript handles optional message.metadata?.modelId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * react-perf/jsx-no-new-function-as-prop (#557): Transcript creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react/no-multi-comp (#552): Transcript keeps related fixture render states together; extraction changes component, state, and layout boundaries.
+ * react/only-export-components (#553): Transcript is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
+ * typescript/prefer-readonly-parameter-types (#565): Transcript accepts { isReadonly, loading, onLog, title, }: { isReadonly: boolean; loading: boolean; onLo; message; user; response; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/strict-boolean-expressions (#610): Transcript intentionally keeps the existing falsy-value behavior of editingId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): Transcript preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 const Transcript = ({
   isReadonly,
   loading,
@@ -112,7 +157,7 @@ const Transcript = ({
   loading: boolean;
   onLog: (value: string) => void;
   title: string;
-}) => {
+}): React.JSX.Element => {
   const [editingId, setEditingId] = useState<string>();
   const edit = useMemo(
     () =>
@@ -121,7 +166,7 @@ const Transcript = ({
             content: <Editor onSubmit={(value) => onLog(`submit:${value}`)} />,
             disabled: false,
             messageId: editingId,
-            onCancel: () => setEditingId(undefined),
+            onCancel: (): void => setEditingId(undefined),
           }
         : undefined,
     [editingId, onLog]
@@ -157,7 +202,16 @@ const Transcript = ({
     </section>
   );
 };
+/* oxlint-enable max-lines-per-function, no-ternary, no-undefined, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): LegacyReference uses 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * react-perf/jsx-no-jsx-as-prop (#555): LegacyReference creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react-perf/jsx-no-new-function-as-prop (#557): LegacyReference creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react/no-multi-comp (#552): LegacyReference keeps related fixture render states together; extraction changes component, state, and layout boundaries.
+ * react/only-export-components (#553): LegacyReference is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
+ * typescript/prefer-readonly-parameter-types (#565): LegacyReference accepts { isReadonly, loading, title, }: { isReadonly: boolean; loading: boolean; title: stri; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 const LegacyReference = ({
   isReadonly,
   loading,
@@ -166,7 +220,7 @@ const LegacyReference = ({
   isReadonly: boolean;
   loading: boolean;
   title: string;
-}) => {
+}): React.JSX.Element => {
   const [versionIndex, setVersionIndex] = useState(1);
   let testId = "legacy-reference";
   if (isReadonly) {
@@ -198,11 +252,23 @@ const LegacyReference = ({
     </section>
   );
 };
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
-const Fixture = () => {
+/* oxlint-disable max-lines-per-function, oxc/no-rest-spread-properties, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types --
+ * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-rest-spread-properties (#543): Fixture copies or separates ...slot while preserving existing object ownership; mutating source objects is not equivalent.
+ * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react-perf/jsx-no-new-function-as-prop (#557): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
+ * react/jsx-no-literals (#549): Fixture owns this fixture copy; replacing literal text requires a localization/content-management contract.
+ * react/no-multi-comp (#552): Fixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.
+ * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
+ * typescript/prefer-readonly-parameter-types (#565): Fixture accepts current; slot; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
+const Fixture = (): React.JSX.Element => {
   const [log, setLog] = useState<string[]>([]);
   const [selected, setSelected] = useState("comparison-a");
-  const append = (value: string) => setLog((current) => [...current, value]);
+  const append = (value: string): void =>
+    setLog((current) => [...current, value]);
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-4">
       <h1 className="text-xl font-semibold">EVE message presentation</h1>
@@ -240,7 +306,7 @@ const Fixture = () => {
           // oxlint-disable-next-line oxc/no-map-spread -- #541: Attach this fixture instance's handlers without mutating shared comparison slots.
           slots={comparisonSlots.map((slot) => ({
             ...slot,
-            handleSelect: () => setSelected(slot.id),
+            handleSelect: (): void => setSelected(slot.id),
             selected: selected === slot.id,
           }))}
         />
@@ -251,6 +317,7 @@ const Fixture = () => {
     </main>
   );
 };
+/* oxlint-enable max-lines-per-function, oxc/no-rest-spread-properties, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
 const root = document.querySelector("#root");
 if (!root) {

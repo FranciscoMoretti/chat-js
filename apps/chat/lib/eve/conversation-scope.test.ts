@@ -13,8 +13,17 @@ vi.mock("../db/eve-queries", () => ({
 }));
 vi.mock("./server", () => ({ eveRequest: mocks.request }));
 const reservationId = "01912345-1234-7123-8123-123456789abc";
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async --
+ * no-magic-numbers (#517): resolve uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * typescript/explicit-function-return-type (#560): Keep resolve's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/promise-function-async (#606): resolve preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 const resolve = (id: unknown = reservationId) =>
   resolveEveConversationScope("owner", "native", AbortSignal.timeout(1000), id);
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-disable unicorn/no-null --
+ * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.read.mockResolvedValue({
@@ -26,6 +35,10 @@ beforeEach(() => {
   });
   mocks.request.mockResolvedValue(Response.json({ sessionId: "native" }));
 });
+/* oxlint-enable unicorn/no-null */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("binds the exact accepted session before the HTTP caller receives its reply") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("binds the exact accepted session before the HTTP caller receives its reply", async () => {
   expect(await resolve()).toEqual({
     conversationId: reservationId,
@@ -34,11 +47,22 @@ it("binds the exact accepted session before the HTTP caller receives its reply",
   expect(mocks.read).toHaveBeenCalledWith({ reservationId });
   expect(mocks.bind).toHaveBeenCalledWith("owner", reservationId, "native");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("rejects a subagent inheriting its parent's reservation attribute") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("rejects a subagent inheriting its parent's reservation attribute", async () => {
   mocks.request.mockResolvedValue(Response.json({ sessionId: "parent" }));
   await expect(resolve()).rejects.toMatchObject({ code: "binding_conflict" });
   expect(mocks.bind).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+ * no-undefined (#519): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * unicorn/no-null (#570): it.each([ [undefined, "identity_missing"], [{ ownerId: "foreign", state: "creating" } preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 it.each([
   [undefined, "identity_missing"],
   [{ ownerId: "foreign", state: "creating" }, "owner_mismatch"],
@@ -55,6 +79,11 @@ it.each([
   expect(mocks.request).not.toHaveBeenCalled();
   expect(mocks.bind).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): it("uses the existing reverse binding for sessions created before the attribute exist uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("uses the existing reverse binding for sessions created before the attribute exist sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("uses the existing reverse binding for sessions created before the attribute existed", async () => {
   mocks.read.mockResolvedValue({
     id: reservationId,
@@ -71,6 +100,12 @@ it("uses the existing reverse binding for sessions created before the attribute 
   ).toEqual({ conversationId: reservationId, ownerId: "owner" });
   expect(mocks.request).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * no-magic-numbers (#517): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r uses 404, 503, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): it.each([ [404, { code: "eve_operation_not_found" }, "receipt_pending"], [503, {}, "r accepts body; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 it.each([
   [404, { code: "eve_operation_not_found" }, "receipt_pending"],
   [503, {}, "receipt_unavailable"],
@@ -83,6 +118,10 @@ it.each([
     expect(mocks.bind).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("leaves pending copies to their resource journal") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("leaves pending copies to their resource journal", async () => {
   mocks.read.mockResolvedValue({
     creationKind: "copy",
@@ -94,14 +133,24 @@ it("leaves pending copies to their resource journal", async () => {
   expect(mocks.bind).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await --
+ * no-magic-numbers (#517): it("does not call missing pre-attribute identity corruption") uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): it("does not call missing pre-attribute identity corruption") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): it("does not call missing pre-attribute identity corruption") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("does not call missing pre-attribute identity corruption", async () => {
   mocks.read.mockResolvedValue(undefined);
   await expect(
     resolveEveConversationScope("owner", "native", AbortSignal.timeout(1000))
   ).rejects.toMatchObject({ code: "identity_pending" });
 });
+/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("classifies a transport outage without treating the mapping as corrupt") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("classifies a transport outage without treating the mapping as corrupt", async () => {
   mocks.request.mockRejectedValue(new TypeError("connection refused"));
   await expect(resolve()).rejects.toMatchObject({
@@ -109,7 +158,13 @@ it("classifies a transport outage without treating the mapping as corrupt", asyn
   });
   expect(mocks.bind).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await --
+ * no-magic-numbers (#517): it("rejects malformed context and missing authentication before reading storage") uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): it("rejects malformed context and missing authentication before reading storage") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): it("rejects malformed context and missing authentication before reading storage") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("rejects malformed context and missing authentication before reading storage", async () => {
   await expect(resolve("not-a-reservation")).rejects.toMatchObject({
     code: "binding_conflict",
@@ -124,3 +179,4 @@ it("rejects malformed context and missing authentication before reading storage"
   ).rejects.toMatchObject({ code: "unauthenticated" });
   expect(mocks.read).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await */

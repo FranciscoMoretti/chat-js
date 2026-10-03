@@ -2,8 +2,14 @@ const UNDERSCORE_COLLAPSE_REGEX = /_+/gu;
 const UNDERSCORE_TRIM_REGEX = /^_|_$/gu;
 const NON_ALPHANUMERIC_REGEX = /[^a-z0-9]/gu;
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): MCP_NAME_MAX_LENGTH is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): MCP_NAME_MAX_LENGTH stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named MCP_NAME_MAX_LENGTH API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 /** Maximum length for connector names */
 export const MCP_NAME_MAX_LENGTH = 20;
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
 
 /** Reserved namespace prefix for global connectors (userId = null) */
 const GLOBAL_NAMESPACE_PREFIX = "global";
@@ -11,10 +17,20 @@ const GLOBAL_NAMESPACE_PREFIX = "global";
 /** Separator between namespace and tool name (OpenAI requires ^[a-zA-Z0-9_-]+$) */
 const TOOL_ID_SEPARATOR = "__";
 
+/* oxlint-disable import/no-named-export --
+ * import/no-named-export (#527): Preserve the named GenerateMcpNameIdResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type GenerateMcpNameIdResult =
   | { ok: true; nameId: string }
   | { ok: false; error: "empty" | "reserved" };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns --
+ * import/group-exports (#523): generateMcpNameId stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named generateMcpNameId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): generateMcpNameId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): generateMcpNameId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ */
 /**
  * Generates a namespace (nameId) from a connector name.
  * Rules:
@@ -40,7 +56,14 @@ export const generateMcpNameId = (name: string): GenerateMcpNameIdResult => {
 
   return { nameId, ok: true };
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns --
+ * import/group-exports (#523): createToolId stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named createToolId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): createToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): createToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ */
 /**
  * Creates a fully qualified tool ID from namespace and tool name.
  * Format: `{namespace}__{toolName}`
@@ -57,7 +80,17 @@ export const createToolId = (
   }
   return `${namespace}${TOOL_ID_SEPARATOR}${toolName}`;
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns */
 
+/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null --
+ * import/group-exports (#523): parseToolId stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named parseToolId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-param (#534): parseToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): parseToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-statements (#512): parseToolId keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): parseToolId uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * unicorn/no-null (#570): parseToolId preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 /**
  * Parses a tool ID back into its components.
  * Splits on `__` separator to get namespace and tool name.
@@ -100,3 +133,4 @@ export const parseToolId = (
     toolName: rest,
   };
 };
+/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null */

@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queries"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/server" dependency within this package instead of introducing an alias or barrel API.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 /* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -13,9 +17,19 @@ import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { eveRequest } from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable import/no-relative-parent-imports, sort-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * max-lines-per-function (#510): test("a lost native creation reply recovers the same session from the retained compos keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("a lost native creation reply recovers the same session from the retained compos keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("a lost native creation reply recovers the same session from the retained compos uses 120_000, 0, 1, 30_000, 200, 404, 15_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("a lost native creation reply recovers the same session from the retained compos sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("a lost native creation reply recovers the same session from the retained compos handles optional reservation?.state; reservation?.id; bound?.sessionId; bound?.state without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): test("a lost native creation reply recovers the same session from the retained compos accepts { page, }; route; { ownerId, pending }; event; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("a lost native creation reply recovers the same session from the retained compos preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("a lost native creation reply recovers the same session from the retained composer", async ({
   page,
 }) => {
@@ -129,7 +143,19 @@ test("a lost native creation reply recovers the same session from the retained c
     )
   ).toBeNull();
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
+ * max-lines-per-function (#510): test("an unresolved project conversation recovers after its project is deleted") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("an unresolved project conversation recovers after its project is deleted") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("an unresolved project conversation recovers after its project is deleted") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("an unresolved project conversation recovers after its project is deleted") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test("an unresolved project conversation recovers after its project is deleted") handles optional reservation?.state; reservation?.id; bound?.state; bound?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * oxc/no-rest-spread-properties (#543): test("an unresolved project conversation recovers after its project is deleted") copies or separates ...operation while preserving existing object ownership; mutating source objects is not equivalent.
+ * typescript/prefer-readonly-parameter-types (#565): test("an unresolved project conversation recovers after its project is deleted") accepts { page, }; testInfo; route; { key, pending }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("an unresolved project conversation recovers after its project is deleted") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * unicorn/max-nested-calls (#568): test("an unresolved project conversation recovers after its project is deleted") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 test("an unresolved project conversation recovers after its project is deleted", async ({
   page,
 }, testInfo) => {
@@ -221,7 +247,7 @@ test("an unresolved project conversation recovers after its project is deleted",
   await recovery.screenshot({
     path: testInfo.outputPath("recovery-error-mobile.png"),
   });
-  let releaseRetry: () => void = () => {
+  let releaseRetry: () => void = (): void => {
     /* The gate is not ready to release before the retry route is intercepted. */
   };
   const retryGate = new Promise<void>((resolve) => {
@@ -259,7 +285,16 @@ test("an unresolved project conversation recovers after its project is deleted",
     "project-recovery-ok"
   );
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * max-lines-per-function (#510): test("a missing project preserves an unreserved request until definitive rejection") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("a missing project preserves an unreserved request until definitive rejection") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("a missing project preserves an unreserved request until definitive rejection") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("a missing project preserves an unreserved request until definitive rejection") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("a missing project preserves an unreserved request until definitive rejection") accepts { page, }; testInfo; route; { key, operation }; { key, ownerId }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("a missing project preserves an unreserved request until definitive rejection") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 test("a missing project preserves an unreserved request until definitive rejection", async ({
   page,
 }, testInfo) => {
@@ -357,7 +392,16 @@ test("a missing project preserves an unreserved request until definitive rejecti
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
   expect(saved.next.projectId).toBeUndefined();
 });
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
+/* oxlint-disable max-lines-per-function, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
+ * max-lines-per-function (#510): test("a rejected project composer retains its request across project deletion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("a rejected project composer retains its request across project deletion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): test("a rejected project composer retains its request across project deletion") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("a rejected project composer retains its request across project deletion") accepts { page, }; testInfo; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): test("a rejected project composer retains its request across project deletion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * unicorn/max-nested-calls (#568): test("a rejected project composer retains its request across project deletion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 test("a rejected project composer retains its request across project deletion", async ({
   page,
 }, testInfo) => {
@@ -416,3 +460,6 @@ test("a rejected project composer retains its request across project deletion", 
     retained
   );
 });
+/* oxlint-enable max-lines-per-function, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
+
+/* oxlint-disable max-lines -- #509: This eve-create-recovery.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

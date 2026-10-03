@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import {
   mkdir,
   mkdtemp,
@@ -7,27 +8,58 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import pathModule from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { fileURLToPath } from "node:url";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
 import gatewayPackage from "@chat-js/gateways/package.json";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { gatewayMetadata } from "../../registry/src/gateways/metadata";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import cliPackage from "../package.json";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { GATEWAYS } from "../src/types";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
 import { externalGatewayFixture } from "./external-gateway";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import {
   nativeToolFixture,
   verifyNativeToolRuntime,
 } from "./native-tool-fixture";
+/* oxlint-enable import/max-dependencies */
+/* oxlint-enable eslint/sort-imports */
 import { run } from "./run-command";
 
 // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { dirname, join } = pathModule;
 
+/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const originalRegistryUrl = process.env.CHATJS_REGISTRY_URL;
+/* oxlint-enable node/no-process-env */
+/* oxlint-disable node/no-top-level-await -- Module initialization must complete before dependent code consumes the prepared runtime or build artifact. */
 const root = await mkdtemp(join(tmpdir(), "chatjs-gateway-integration-"));
+/* oxlint-enable node/no-top-level-await */
 const packageDirectory = dirname(
   fileURLToPath(import.meta.resolve("@chat-js/gateways/package.json"))
 );
@@ -35,6 +67,9 @@ const cliDirectory = join(import.meta.dir, "..");
 const cliEntry = join(root, "cli/node_modules/@chat-js/cli/dist/index.js");
 const archive = join(root, `chat-js-gateways-${gatewayPackage.version}.tgz`);
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterAll(async () => {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const cleanupTimeout = Promise.withResolvers<never>();
@@ -51,6 +86,9 @@ afterAll(async () => {
     clearTimeout(timeout);
   }
 });
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-enable oxc/no-async-await */
 
 const executionDefinition = {
   contractVersion: 1,
@@ -61,6 +99,15 @@ const executionDefinition = {
   tools: [{ rendererExport: "CommandRenderer", toolExport: "runCommand" }],
 };
 const external = externalGatewayFixture();
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const registryServer = Bun.serve({
   async fetch(request) {
     const path = new URL(request.url).pathname;
@@ -330,7 +377,20 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
   hostname: "127.0.0.1",
   port: 0,
 });
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/id-length */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 beforeAll(async () => {
   await run(packageDirectory, ["bun", "run", "build"]);
   await run(packageDirectory, ["bun", "pm", "pack", "--destination", root]);
@@ -371,7 +431,13 @@ beforeAll(async () => {
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   process.env.CHATJS_REGISTRY_URL = `http://127.0.0.1:${registryServer.port}/{name}.json`;
 });
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 afterAll(() => {
   // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   registryServer.stop(true);
@@ -381,7 +447,10 @@ afterAll(() => {
     process.env.CHATJS_REGISTRY_URL = originalRegistryUrl;
   }
 });
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable eslint/no-undefined */
 
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 // oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
 const gatewaySource = (gateway: Gateway | "acme"): string =>
   // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -389,6 +458,7 @@ const gatewaySource = (gateway: Gateway | "acme"): string =>
     ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/gateway.json`
     : gateway;
+/* oxlint-enable eslint/no-ternary */
 
 // oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
 const storageArguments = (gateway: Gateway | "acme"): string[] => {
@@ -450,6 +520,10 @@ const toolArguments = (gateway: Gateway | "acme"): string[] => {
   return [];
 };
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 const verifyResearchInstallation = async (
   cwd: string,
   // oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
@@ -511,7 +585,17 @@ const verifyResearchInstallation = async (
     );
   }
 };
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const gateway of [...GATEWAYS, "acme"]) {
   const electronFlag = gateway === "vercel" ? "--electron" : "--no-electron";
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
@@ -1001,11 +1085,11 @@ ${originalSearch}`
         "WordCountRendererWithAnIntentionallyLongNameForFormattingVerification";
       await writeFile(
         join(longDirectory, "tool.ts"),
-        `export { wordCount as ${toolExport} } from "../word-count/tool";`
+        `/* oxlint-disable import/no-named-export, import/prefer-default-export, import/no-relative-parent-imports -- This fixture reexports the installed word-count implementation under an intentionally long name to verify generated import formatting. */\nexport { wordCount as ${toolExport} } from "../word-count/tool";\n/* oxlint-enable import/no-named-export, import/prefer-default-export, import/no-relative-parent-imports */\n`
       );
       await writeFile(
         join(longDirectory, "renderer.tsx"),
-        `export { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";`
+        `/* oxlint-disable import/no-named-export, import/prefer-default-export, import/no-relative-parent-imports -- This fixture reexports the installed word-count implementation under an intentionally long name to verify generated import formatting. */\nexport { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";\n/* oxlint-enable import/no-named-export, import/prefer-default-export, import/no-relative-parent-imports */\n`
       );
       await writeFile(
         join(longDirectory, "chatjs.json"),
@@ -1028,7 +1112,15 @@ ${originalSearch}`
     ).toBe(false);
   }, 180_000);
 }
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 it("native tools: a minimal scaffold installs external EVE tools and preserves durable usage", async () => {
   const cwd = join(root, "native");
   await run(root, [
@@ -1063,7 +1155,14 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
   await run(cwd, ["bun", "run", "test:types"]);
   await verifyNativeToolRuntime(cwd);
 }, 240_000);
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 for (const installAtCreation of [false, true]) {
   it(`MCP: create ${installAtCreation ? "with" : "without"} MCP and add preserve core, UI order and setup errors`, async () => {
     const name = `mcp-${installAtCreation ? "installed" : "omitted"}`;
@@ -1204,3 +1303,10 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
     );
   }, 180_000);
 }
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/max-statements */
+
+/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

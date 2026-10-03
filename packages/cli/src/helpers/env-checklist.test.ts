@@ -1,8 +1,13 @@
 import { describe, expect, it } from "bun:test";
 
 import { coreFeatureEnvRequirements } from "./config-requirements";
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { collectEnvChecklist } from "./env-checklist";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("collectEnvChecklist", () => {
   it("uses the LiteLLM base URL as the gateway requirement", () => {
     const entries = collectEnvChecklist({
@@ -139,7 +144,13 @@ describe("collectEnvChecklist", () => {
     expect(entries.some((entry) => entry.vars === "CUSTOM_TOKEN")).toBe(true);
   });
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-lines-per-function */
 
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("includes every installed MCP requirement and preserves combined and alternative groups", () => {
   const previous = coreFeatureEnvRequirements.mcp;
   coreFeatureEnvRequirements.mcp = [
@@ -192,3 +203,6 @@ it("includes every installed MCP requirement and preserves combined and alternat
     coreFeatureEnvRequirements.mcp = previous;
   }
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-lines-per-function */

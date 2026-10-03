@@ -1,11 +1,18 @@
+/* oxlint-disable import/no-nodejs-modules --
+ * import/no-nodejs-modules (#529): This server/tooling module requires import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
+ */
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 import { customType } from "drizzle-orm/pg-core";
 
 import { env } from "@/lib/env";
+/* oxlint-enable import/no-nodejs-modules */
 
 const ALGORITHM = "aes-256-gcm";
 
+/* oxlint-disable typescript/strict-boolean-expressions --
+ * typescript/strict-boolean-expressions (#610): getKey intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
 const getKey = (): Buffer => {
   const key = env.MCP_ENCRYPTION_KEY;
   if (!key) {
@@ -13,7 +20,11 @@ const getKey = (): Buffer => {
   }
   return Buffer.from(key, "base64");
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
 
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): encrypt uses 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
 const encrypt = (plaintext: string): string => {
   const key = getKey();
   const iv = randomBytes(16);
@@ -25,6 +36,7 @@ const encrypt = (plaintext: string): string => {
   const authTag = cipher.getAuthTag();
   return `${iv.toString("base64")}:${authTag.toString("base64")}:${encrypted.toString("base64")}`;
 };
+/* oxlint-enable no-magic-numbers */
 
 const decrypt = (encrypted: string): string => {
   const key = getKey();
@@ -41,16 +53,29 @@ const decrypt = (encrypted: string): string => {
   return decipher.update(dataB64, "base64", "utf-8") + decipher.final("utf-8");
 };
 
+/* oxlint-disable import/group-exports, import/no-named-export --
+ * import/group-exports (#523): encryptedText stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named encryptedText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 /**
  * Custom Drizzle type for encrypted text fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
  */
 export const encryptedText = customType<{ driverData: string; data: string }>({
-  dataType: () => "text",
-  fromDriver: (value) => decrypt(value),
-  toDriver: (value) => encrypt(value),
+  dataType: (): string => "text",
+  fromDriver: (value): string => decrypt(value),
+  toDriver: (value): string => encrypt(value),
 });
+/* oxlint-enable import/group-exports, import/no-named-export */
 
+/* oxlint-disable id-length, import/group-exports, import/no-named-export, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+ * id-length (#506): encryptedJson uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * import/group-exports (#523): encryptedJson stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named encryptedJson API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * jsdoc/require-returns (#535): encryptedJson's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * typescript/explicit-function-return-type (#560): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/explicit-module-boundary-types (#562): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+ */
 /**
  * Custom Drizzle type for encrypted JSON fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
@@ -58,8 +83,9 @@ export const encryptedText = customType<{ driverData: string; data: string }>({
  */
 export const encryptedJson = <T>() =>
   customType<{ driverData: string; data: T }>({
-    dataType: () => "text",
+    dataType: (): string => "text",
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Encrypted JSON columns are typed by their Drizzle declaration; adding per-column runtime schemas requires a database serialization contract migration.
     fromDriver: (value) => JSON.parse(decrypt(value)) as T,
-    toDriver: (value) => encrypt(JSON.stringify(value)),
+    toDriver: (value): string => encrypt(JSON.stringify(value)),
   });
+/* oxlint-enable id-length, import/group-exports, import/no-named-export, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

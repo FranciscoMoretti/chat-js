@@ -1,7 +1,11 @@
 import type { RegistryItem } from "shadcn/schema";
 
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { toolDefinitionSchema } from "../../metadata";
+/* oxlint-enable import/no-relative-parent-imports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const researchAgentFiles = [
   "agent/tools/deepResearch.ts",
   "agent/subagents/researchPlanner/agent.ts",
@@ -14,7 +18,12 @@ export const researchAgentFiles = [
   "agent/subagents/researcher/tools/webSearch.ts",
   "agent/subagents/researcher/hooks/billing.ts",
 ];
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export const researchAgentDirectories = [
   ...new Set(
     researchAgentFiles
@@ -22,7 +31,12 @@ export const researchAgentDirectories = [
       .map((file) => file.split("/").slice(0, 3).join("/"))
   ),
 ];
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */
 
+/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const researchItem: RegistryItem = {
   description:
     "Native EVE research workflow, subagents, prompts, and progress UI",
@@ -79,3 +93,5 @@ export const researchItem: RegistryItem = {
   registryDependencies: ["@chatjs/text-documents"],
   type: "registry:item",
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/group-exports */

@@ -1,8 +1,16 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { MockLanguageModelV3 } from "ai/test";
 import { expect, it, vi } from "vitest";
 
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
+ * typescript/explicit-function-return-type (#560): Keep model's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/promise-function-async (#606): model preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 const model = new MockLanguageModelV3({
   doGenerate: () =>
     Promise.resolve({
@@ -18,9 +26,15 @@ const model = new MockLanguageModelV3({
       warnings: [],
     }),
 });
+/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("./model-selection")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ * typescript/promise-function-async (#606): vi.mock("./model-selection") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 vi.mock("./model-selection", () => ({
   resolveEveModel: () => Promise.resolve({ model, modelOptions: {} }),
 }));
+/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
 vi.mock("../config", () => ({
   config: {
     ai: {
@@ -34,6 +48,11 @@ vi.mock("../config", () => ({
   },
 }));
 
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+ * no-magic-numbers (#517): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") handles optional result?.responseMetadata; result?.modelCalls; result?.modelCalls?.[0]; result?.modelCalls?.[0].failed without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ */
 it("the real AI SDK delivers usage before rejecting invalid structured suggestions", async () => {
   const result = await generateEveFollowupSuggestions({
     assistant: "Because.",
@@ -51,3 +70,4 @@ it("the real AI SDK delivers usage before rejecting invalid structured suggestio
   expect(result?.modelCalls?.[0].failed).toBeUndefined();
   expect(model.doGenerateCalls).toHaveLength(1);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */

@@ -1,9 +1,19 @@
 import { afterEach, expect, it } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { mkdir, readFile, rm } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { create } from "./create";
+/* oxlint-enable eslint/sort-imports */
 
 const tempDirs: string[] = [];
 
@@ -16,12 +26,24 @@ const makeTempDir = (name: string): string => {
   return dir;
 };
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
     tempDirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 it.each([false, true])(
   "preserves cloned source without registry access (ChatJS: %s)",
   async (chatjs) => {
@@ -85,7 +107,14 @@ it.each([false, true])(
     }
   }
 );
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable node/no-sync */
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 it("rejects retired installer flags explicitly", async () => {
   create.exitOverride();
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
@@ -101,3 +130,4 @@ it("rejects retired installer flags explicitly", async () => {
     create.parseAsync(["--registry"], { from: "user" })
   ).rejects.toThrow("unknown option");
 });
+/* oxlint-enable oxc/no-async-await */

@@ -22,12 +22,20 @@ vi.mock("../file-storage", () => ({
 const cutoff = new Date("2026-01-01");
 const old = new Date("2025-12-31");
 const key = "abcdefghijklmnopqrstuvwx.png";
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+ * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts keys: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.prepare.mockImplementation((keys: string[]) =>
     Promise.resolve(keys.map((fileKey) => ({ key: fileKey, ownerId: "owner" })))
   );
 });
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): test("only submits old valid keys and deletes the ownership-filtered result") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
     yield {
@@ -60,6 +68,14 @@ test("only submits old valid keys and deletes the ownership-filtered result", as
   expect(mocks.remove).toHaveBeenCalledWith([`/api/files/${key}`]);
   expect(mocks.complete).toHaveBeenCalledWith("owner", [key]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+ * id-length (#506): test("a failed batch retains its deletion fence without starving subsequent batches") uses _; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * no-magic-numbers (#517): test("a failed batch retains its deletion fence without starving subsequent batches") uses 24, 100, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test("a failed batch retains its deletion fence without starving subsequent batches") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test("a failed batch retains its deletion fence without starving subsequent batches") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/prefer-readonly-parameter-types (#565): test("a failed batch retains its deletion fence without starving subsequent batches") accepts [fileKeys]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ */
 test("a failed batch retains its deletion fence without starving subsequent batches", async () => {
   const keys = Array.from({ length: 101 }, (_, i) =>
     String(i).padStart(24, "0")
@@ -79,3 +95,4 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   );
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });
+/* oxlint-enable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types */

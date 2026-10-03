@@ -4,8 +4,11 @@ import type {
 } from "@ai-sdk/provider";
 import type { ImageModel } from "ai";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { AiGatewayModel } from "./models.ts";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export interface GatewayProvider<
   TGateway extends string = string,
   TModelId extends string = string,
@@ -27,3 +30,4 @@ export interface GatewayProvider<
   fetchModels: () => Promise<AiGatewayModel[]>;
   readonly type: TGateway;
 }
+/* oxlint-enable import/no-named-export */

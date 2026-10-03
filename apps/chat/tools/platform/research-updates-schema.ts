@@ -9,6 +9,9 @@ const TaskUpdateSchema = BaseStreamUpdateSchema.extend({
   status: z.enum(["running", "completed"]),
 });
 
+/* oxlint-disable unicorn/max-nested-calls --
+ * unicorn/max-nested-calls (#568): WebSearchSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ */
 const WebSearchSchema = TaskUpdateSchema.extend({
   queries: z.array(z.string()),
   results: z
@@ -24,10 +27,23 @@ const WebSearchSchema = TaskUpdateSchema.extend({
     .optional(),
   type: z.literal("web"),
 });
+/* oxlint-enable unicorn/max-nested-calls */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): WebSearchUpdate is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): WebSearchUpdate stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named WebSearchUpdate API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
 
+/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+ * import/exports-last (#522): SearchResultItem is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/group-exports (#523): SearchResultItem stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named SearchResultItem API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type SearchResultItem = NonNullable<WebSearchUpdate["results"]>[number];
+/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
 
 const StartedSchema = BaseStreamUpdateSchema.extend({
   timestamp: z.number(),
@@ -49,6 +65,9 @@ const WritingSchema = TaskUpdateSchema.extend({
   type: z.literal("writing"),
 });
 
+/* oxlint-disable import/no-named-export --
+ * import/no-named-export (#527): Preserve the named ResearchUpdateSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export const ResearchUpdateSchema = z.discriminatedUnion("type", [
   WebSearchSchema,
   StartedSchema,
@@ -56,5 +75,11 @@ export const ResearchUpdateSchema = z.discriminatedUnion("type", [
   ThoughtsSchema,
   WritingSchema,
 ]);
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/group-exports, import/no-named-export --
+ * import/group-exports (#523): ResearchUpdate stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/no-named-export (#527): Preserve the named ResearchUpdate API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 export type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
+/* oxlint-enable import/group-exports, import/no-named-export */

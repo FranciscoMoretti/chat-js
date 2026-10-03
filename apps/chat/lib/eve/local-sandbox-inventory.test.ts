@@ -1,3 +1,7 @@
+/* oxlint-disable import/no-nodejs-modules, sort-imports --
+ * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, symlink, writeFile, } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import {
   mkdir,
   mkdtemp,
@@ -12,7 +16,13 @@ import nodePath from "node:path";
 import { expect, test } from "vitest";
 
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
+/* oxlint-enable import/no-nodejs-modules, sort-imports */
 
+/* oxlint-disable max-lines-per-function, max-statements, oxc/no-async-await --
+ * max-lines-per-function (#510): test("local inventory selects exact native owners across versions and reports unknown keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test("local inventory selects exact native owners across versions and reports unknown keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): test("local inventory selects exact native owners across versions and reports unknown sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("local inventory selects exact native owners across versions and reports unknown resources", async () => {
   const appRoot = await mkdtemp(
     nodePath.join(tmpdir(), "eve-owner-inventory-")
@@ -93,7 +103,13 @@ test("local inventory selects exact native owners across versions and reports un
     await rm(appRoot, { force: true, recursive: true });
   }
 });
+/* oxlint-enable max-lines-per-function, max-statements, oxc/no-async-await */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+ * max-statements (#512): test("unowned directories remain unattributed regardless of their names") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test("unowned directories remain unattributed regardless of their names") uses 25, 0, -1, 16 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): test("unowned directories remain unattributed regardless of their names") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("unowned directories remain unattributed regardless of their names", async () => {
   const appRoot = await mkdtemp(
     nodePath.join(tmpdir(), "eve-legacy-inventory-")
@@ -137,7 +153,12 @@ test("unowned directories remain unattributed regardless of their names", async 
     await rm(appRoot, { force: true, recursive: true });
   }
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
 
+/* oxlint-disable max-statements, oxc/no-async-await --
+ * max-statements (#512): test("other backend caches and linked provider roots prevent a complete local invento keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): test("other backend caches and linked provider roots prevent a complete local invento sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 test("other backend caches and linked provider roots prevent a complete local inventory", async () => {
   const appRoot = await mkdtemp(
     nodePath.join(tmpdir(), "eve-provider-inventory-")
@@ -163,3 +184,4 @@ test("other backend caches and linked provider roots prevent a complete local in
     await rm(appRoot, { force: true, recursive: true });
   }
 });
+/* oxlint-enable max-statements, oxc/no-async-await */

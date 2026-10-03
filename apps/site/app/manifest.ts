@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
 
+/* oxlint-disable eslint/sort-imports -- the @/lib/site-config import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { siteConfig, siteLinks } from "@/lib/site-config";
+/* oxlint-enable eslint/sort-imports */
 
+/* oxlint-disable import/no-default-export -- manifest: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     background_color: "#f8f7f4",
@@ -36,3 +39,4 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#09090b",
   };
 }
+/* oxlint-enable import/no-default-export */

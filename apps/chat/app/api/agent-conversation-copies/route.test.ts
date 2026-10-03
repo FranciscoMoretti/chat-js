@@ -18,17 +18,26 @@ const input = {
   operationId: "d6b4be57-c67c-4231-b0ac-5a82a873c20a",
   sourceConversationId: "9d86c472-7b38-458d-9811-55078f3b04dc",
 };
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 const request = (body: unknown = input, origin = "http://localhost:3790") =>
   new Request("http://localhost:3790/api/agent-conversation-copies", {
     body: JSON.stringify(body),
     headers: { "content-type": "application/json", origin },
     method: "POST",
   });
+/* oxlint-enable typescript/explicit-function-return-type */
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.session.mockResolvedValue({ user: { id: "owner" } });
   mocks.save.mockResolvedValue({ id: input.operationId, sessionId: "native" });
 });
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+ * no-magic-numbers (#517): it("requires login and same origin before copy work") uses 401, 403 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("requires login and same origin before copy work") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * unicorn/no-null (#570): it("requires login and same origin before copy work") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 it("requires login and same origin before copy work", async () => {
   mocks.session.mockResolvedValue(null);
   const resolvedResult2 = await POST(request());
@@ -38,6 +47,12 @@ it("requires login and same origin before copy work", async () => {
   expect(resolvedResult3.status).toBe(403);
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+ * no-magic-numbers (#517): it("rejects browser seeds, execution controls and oversized bodies") uses 3000, 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("rejects browser seeds, execution controls and oversized bodies") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): it("rejects browser seeds, execution controls and oversized bodies") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 it("rejects browser seeds, execution controls and oversized bodies", async () => {
   for (const body of [
     { ...input, seed: { messages: [] } },
@@ -51,6 +66,12 @@ it("rejects browser seeds, execution controls and oversized bodies", async () =>
   }
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+ * no-magic-numbers (#517): it("canonicalizes operation coordinates and returns only the owned binding") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("canonicalizes operation coordinates and returns only the owned binding") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-rest-spread-properties (#543): it("canonicalizes operation coordinates and returns only the owned binding") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
+ */
 it("canonicalizes operation coordinates and returns only the owned binding", async () => {
   const response = await POST(
     request({
@@ -67,6 +88,11 @@ it("canonicalizes operation coordinates and returns only the owned binding", asy
   );
   expect(response.headers.get("cache-control")).toBe("no-store");
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+ * no-magic-numbers (#517): it("retains ambiguous operations and exposes only an owned recovery location") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("retains ambiguous operations and exposes only an owned recovery location") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("retains ambiguous operations and exposes only an owned recovery location", async () => {
   mocks.save.mockRejectedValue(new Error("sensitive native failure"));
   mocks.creation.mockResolvedValue({
@@ -85,6 +111,10 @@ it("retains ambiguous operations and exposes only an owned recovery location", a
   expect(JSON.stringify(body)).not.toContain("sensitive");
   expect(mocks.creation).toHaveBeenCalledWith("owner", input.operationId);
 });
+/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await --
+ * oxc/no-async-await (#540): it("allows discarding the browser request only for a known unavailable operation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("allows discarding the browser request only for a known unavailable operation", async () => {
   mocks.save.mockRejectedValue(new Error("rejected"));
   mocks.creation.mockResolvedValue({
@@ -102,3 +132,4 @@ it("allows discarding the browser request only for a known unavailable operation
     retryable: true,
   });
 });
+/* oxlint-enable oxc/no-async-await */

@@ -1,54 +1,98 @@
 import { afterEach, expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable eslint/sort-imports */
 
 import ts from "typescript";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { mcpItem, mcpFiles } from "../../../registry/src/features/mcp";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { scaffoldFromTemplate } from "../helpers/scaffold";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { initializeFeatureUi, syncFeatures } from "./sync-features";
+/* oxlint-enable eslint/sort-imports */
 
 const roots: string[] = [];
 const demo = path.resolve(import.meta.dir, "../../../../apps/chat");
-afterEach(async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+afterEach(async (): Promise<void> => {
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+    roots
+      .splice(0)
+      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
-const fixture = async () => {
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+const fixture = async (): Promise<string> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-feature-"));
   roots.push(root);
   await Promise.all(
-    ["composer-controls.ts", "settings-items.ts"].map((file) =>
+    ["composer-controls.ts", "settings-items.ts"].map((file): Promise<void> =>
       cp(path.join(demo, file), path.join(root, file))
     )
   );
   return root;
 };
-const install = async (root: string) => {
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+const install = async (root: string): Promise<void> => {
   await Promise.all(
-    [...mcpFiles, "features/mcp/chatjs.json"].map(async (file) => {
-      await mkdir(path.dirname(path.join(root, file)), { recursive: true });
-      await writeFile(
-        path.join(root, file),
-        file === "features/mcp/chatjs.json"
-          ? JSON.stringify(mcpItem.meta?.chatjs)
-          : await readFile(
-              path.resolve(
-                import.meta.dir,
-                "../../../registry/src/features/mcp",
-                file
-              ),
-              "utf-8"
-            )
-      );
-    })
+    [...mcpFiles, "features/mcp/chatjs.json"].map(
+      async (file): Promise<void> => {
+        await mkdir(path.dirname(path.join(root, file)), { recursive: true });
+        await writeFile(
+          path.join(root, file),
+          file === "features/mcp/chatjs.json"
+            ? JSON.stringify(mcpItem.meta?.chatjs)
+            : await readFile(
+                path.resolve(
+                  import.meta.dir,
+                  "../../../registry/src/features/mcp",
+                  file
+                ),
+                "utf-8"
+              )
+        );
+      }
+    )
   );
 };
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
 
-test("new core UI has no MCP imports; installing MCP registers its router and preserves editable order on sync", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+test("new core UI has no MCP imports; installing MCP registers its router and preserves editable order on sync", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   for (const file of [
@@ -106,8 +150,13 @@ test("new core UI has no MCP imports; installing MCP registers its router and pr
   );
   expect(settings.match(/mcpSettingsItem,/gu)).toHaveLength(1);
 });
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
-test("partial MCP installation cannot register routes", async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+test("partial MCP installation cannot register routes", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   await install(root);
@@ -120,13 +169,24 @@ test("partial MCP installation cannot register routes", async () => {
     await readFile(path.join(root, "features/installed-routers.ts"), "utf-8")
   ).not.toContain("mcpRouter");
 });
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-enable oxc/no-async-await */
 
-test("shadcn installs MCP into a core-only scaffold with no duplicate demo source", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+test("shadcn installs MCP into a core-only scaffold with no duplicate demo source", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-mcp-install-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
   const presence = await Promise.all(
-    mcpFiles.map((file) => Bun.file(path.join(root, file)).exists())
+    mcpFiles.map((file): Promise<boolean> =>
+      Bun.file(path.join(root, file)).exists()
+    )
   );
   expect(presence.some(Boolean)).toBe(false);
   expect(
@@ -160,7 +220,9 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
     await installItems([`http://127.0.0.1:${server.port}/mcp.json`], root);
     await syncFeatures(root, { addUi: true, expectedMcp: true });
     const installed = await Promise.all(
-      mcpFiles.map((file) => Bun.file(path.join(root, file)).exists())
+      mcpFiles.map((file): Promise<boolean> =>
+        Bun.file(path.join(root, file)).exists()
+      )
     );
     expect(installed.every(Boolean)).toBe(true);
     expect(
@@ -171,7 +233,17 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
     server.stop(true);
   }
 }, 30_000);
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 for (const [importText, entry] of [
   [
     'import { ConnectorsControl } from "@/features/mcp/composer";',
@@ -186,7 +258,7 @@ for (const [importText, entry] of [
     "connectors.ConnectorsControl",
   ],
 ] as const) {
-  test(`restores a removed UI entry using ${entry} without duplicate imports`, async () => {
+  test(`restores a removed UI entry using ${entry} without duplicate imports`, async (): Promise<void> => {
     const root = await fixture();
     await initializeFeatureUi(root);
     await install(root);
@@ -207,8 +279,11 @@ for (const [importText, entry] of [
     ).toBe(content);
   });
 }
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
 
-test("preserves an existing contribution with a custom import", async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+test("preserves an existing contribution with a custom import", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   await install(root);
@@ -220,9 +295,13 @@ test("preserves an existing contribution with a custom import", async () => {
     content
   );
 });
+/* oxlint-enable oxc/no-async-await */
 
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const file of ["composer-controls.ts", "settings-items.ts"]) {
-  test(`an unsupported ${file} leaves both UI files and registrations unchanged`, async () => {
+  test(`an unsupported ${file} leaves both UI files and registrations unchanged`, async (): Promise<void> => {
     const root = await fixture();
     await initializeFeatureUi(root);
     await install(root);
@@ -239,7 +318,9 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
       "features/installed-routers.ts",
     ];
     const before = await Promise.all(
-      paths.map((entry) => readFile(path.join(root, entry), "utf-8"))
+      paths.map((entry): Promise<string> =>
+        readFile(path.join(root, entry), "utf-8")
+      )
     );
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
     await expect(syncFeatures(root, { addUi: true })).rejects.toThrow(
@@ -247,13 +328,19 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
     );
     expect(
       await Promise.all(
-        paths.map((entry) => readFile(path.join(root, entry), "utf-8"))
+        paths.map((entry): Promise<string> =>
+          readFile(path.join(root, entry), "utf-8")
+        )
       )
     ).toEqual(before);
   });
 }
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable oxc/no-async-await */
 
-test("missing descriptors report partial MCP source and how to recover", async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+test("missing descriptors report partial MCP source and how to recover", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   await install(root);
@@ -261,16 +348,21 @@ test("missing descriptors report partial MCP source and how to recover", async (
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
   await expect(syncFeatures(root)).rejects.toThrow("chat-js add mcp");
 });
+/* oxlint-enable oxc/no-async-await */
 
-test("empty feature registration uses a zero-argument Set constructor", async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+test("empty feature registration uses a zero-argument Set constructor", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   expect(
     await readFile(path.join(root, "features/installed.ts"), "utf-8")
   ).toContain("new Set()");
 });
+/* oxlint-enable oxc/no-async-await */
 
-test("adds the requested binding when the module already has another named import", async () => {
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+test("adds the requested binding when the module already has another named import", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   await install(root);
@@ -293,8 +385,19 @@ test("adds the requested binding when the module already has another named impor
     await readFile(path.join(root, "settings-items.ts"), "utf-8")
   ).toContain("  connectors,");
 });
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
 
-test("core scaffold omits uploads; shadcn add registers uploads alongside MCP and sync preserves user order", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
+/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
+/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+test("core scaffold omits uploads; shadcn add registers uploads alongside MCP and sync preserves user order", async (): Promise<void> => {
   const { attachmentUploadsItem, attachmentUploadFiles } =
     await import("../../../registry/src/features/attachment-uploads");
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-upload-install-"));
@@ -305,7 +408,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     JSON.stringify({ dependencies: {}, name: "upload-fixture" })
   );
   const uploadPresence = await Promise.all(
-    attachmentUploadFiles.map((file) =>
+    attachmentUploadFiles.map((file): Promise<boolean> =>
       Bun.file(path.join(root, file)).exists()
     )
   );
@@ -403,8 +506,19 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     server.stop(true);
   }
 }, 30_000);
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
 
-test("unrelated additions preserve computed feature UI; requesting MCP still requires manual composition", async () => {
+/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
+/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
+test("unrelated additions preserve computed feature UI; requesting MCP still requires manual composition", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
   await install(root);
@@ -424,3 +538,7 @@ test("unrelated additions preserve computed feature UI; requesting MCP still req
     "manually"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-statements */
+
+/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

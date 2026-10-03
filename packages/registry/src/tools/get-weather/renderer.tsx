@@ -1,14 +1,22 @@
 "use client";
-
 import { format, isWithinInterval } from "date-fns";
+import React from "react";
 import type { z } from "zod";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { useIsMobile } from "@/hooks/use-mobile";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable eslint/sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { weatherInput, weatherResult } from "./schemas";
+/* oxlint-enable eslint/sort-imports */
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -17,6 +25,7 @@ type GetWeatherRendererTool = ToolRendererProps<
   typeof weatherResult
 >["tool"];
 
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const SAMPLE = {
   current: { interval: 900, temperature_2m: 29.3, time: "2024-10-07T19:30" },
   current_units: { interval: "seconds", temperature_2m: "°C", time: "iso8601" },
@@ -171,9 +180,19 @@ const SAMPLE = {
   timezone_abbreviation: "GMT",
   utc_offset_seconds: 0,
 };
+/* oxlint-enable eslint/no-magic-numbers */
 
+/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const n = (num: number): number => Math.ceil(num);
+/* oxlint-enable eslint/id-length */
 
+/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
+/* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const WeatherCard = ({
   weatherAtLocation,
 }: {
@@ -194,7 +213,8 @@ const WeatherCard = ({
   const isMobile = useIsMobile();
   const hoursToShow = isMobile ? 5 : 6;
   const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
-    (time) => new Date(time) >= new Date(weatherAtLocation.current.time)
+    (time): boolean =>
+      new Date(time) >= new Date(weatherAtLocation.current.time)
   );
   const displayStartIndex =
     currentTimeIndex === -1
@@ -258,7 +278,19 @@ const WeatherCard = ({
     </div>
   );
 };
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-enable eslint/no-ternary */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable eslint/max-lines-per-function */
+/* oxlint-enable react/only-export-components */
 
+/* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
+/* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
+/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GetWeatherView = ({
   tool,
 }: {
@@ -280,9 +312,18 @@ const GetWeatherView = ({
 
   return <WeatherCard weatherAtLocation={tool.output} />;
 };
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-enable react/only-export-components */
+/* oxlint-enable react/no-multi-comp */
 
+/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
+/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const GetWeatherRenderer = defineToolRenderer({
   inputSchema: weatherInput,
   outputSchema: weatherResult,
   render: GetWeatherView,
 });
+/* oxlint-enable import/no-named-export */
+/* oxlint-enable import/prefer-default-export */

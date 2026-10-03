@@ -1,15 +1,23 @@
 "use client";
+/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
 import type * as React from "react";
+/* oxlint-enable import/no-namespace */
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
+/* oxlint-disable oxc/no-rest-spread-properties, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- InputGroup: oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
-const InputGroup = ({ className, ...props }: React.ComponentProps<"div">) => (
+const InputGroup = ({
+  className,
+  ...props
+}: React.ComponentProps<"div">): React.JSX.Element => (
   <div
     className={cn(
       "group/input-group border-input dark:bg-input/30 relative flex w-full items-center rounded-md border shadow-xs transition-[color,box-shadow] outline-none",
@@ -33,6 +41,7 @@ const InputGroup = ({ className, ...props }: React.ComponentProps<"div">) => (
     {...props}
   />
 );
+/* oxlint-enable oxc/no-rest-spread-properties, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
 
 const inputGroupAddonVariants = cva(
   "text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
@@ -54,13 +63,14 @@ const inputGroupAddonVariants = cva(
     },
   }
 );
+/* oxlint-disable id-length, no-magic-numbers, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupAddon: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
 const InputGroupAddon = ({
   className,
   align = "inline-start",
   ...props
 }: React.ComponentProps<"div"> &
-  VariantProps<typeof inputGroupAddonVariants>) => (
+  VariantProps<typeof inputGroupAddonVariants>): React.JSX.Element => (
   <div
     className={cn(inputGroupAddonVariants({ align }), className)}
     data-align={align}
@@ -83,6 +93,7 @@ const InputGroupAddon = ({
     {...props}
   />
 );
+/* oxlint-enable id-length, no-magic-numbers, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const inputGroupButtonVariants = cva(
   "flex items-center gap-2 text-sm shadow-none",
@@ -101,6 +112,7 @@ const inputGroupButtonVariants = cva(
     },
   }
 );
+/* oxlint-disable oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupButton: oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const InputGroupButton = ({
   className,
@@ -109,7 +121,7 @@ const InputGroupButton = ({
   size = "xs",
   ...props
 }: Omit<React.ComponentProps<typeof Button>, "size"> &
-  VariantProps<typeof inputGroupButtonVariants>) => (
+  VariantProps<typeof inputGroupButtonVariants>): React.JSX.Element => (
   <Button
     className={cn(inputGroupButtonVariants({ size }), className)}
     data-size={size}
@@ -118,11 +130,14 @@ const InputGroupButton = ({
     {...props}
   />
 );
+/* oxlint-enable oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable oxc/no-rest-spread-properties, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupText: oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
 const InputGroupText = ({
   className,
   ...props
-}: React.ComponentProps<"span">) => (
+}: React.ComponentProps<"span">): React.JSX.Element => (
   <span
     className={cn(
       "text-muted-foreground flex items-center gap-2 text-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
@@ -131,11 +146,14 @@ const InputGroupText = ({
     {...props}
   />
 );
+/* oxlint-enable oxc/no-rest-spread-properties, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupInput: oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"input">). */
 
 const InputGroupInput = ({
   className,
   ...props
-}: React.ComponentProps<"input">) => (
+}: React.ComponentProps<"input">): React.JSX.Element => (
   <Input
     className={cn(
       "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
@@ -145,11 +163,14 @@ const InputGroupInput = ({
     {...props}
   />
 );
+/* oxlint-enable oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupTextarea: oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"textarea">). */
 
 const InputGroupTextarea = ({
   className,
   ...props
-}: React.ComponentProps<"textarea">) => (
+}: React.ComponentProps<"textarea">): React.JSX.Element => (
   <Textarea
     className={cn(
       "flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",
@@ -159,6 +180,9 @@ const InputGroupTextarea = ({
     {...props}
   />
 );
+/* oxlint-enable oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable import/no-named-export -- input-group.tsx exports: import/no-named-export: existing callers import this public component, type, or hook by name. */
 
 export {
   InputGroup,
@@ -168,3 +192,4 @@ export {
   InputGroupText,
   InputGroupTextarea,
 };
+/* oxlint-enable import/no-named-export */

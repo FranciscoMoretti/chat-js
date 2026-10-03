@@ -3,16 +3,29 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { withMcpOAuthRefreshLock } from "./mcp-oauth-lock";
 
 const mocks = vi.hoisted(() => ({ begin: vi.fn(), released: vi.fn() }));
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("postgres")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("postgres", () => ({
   default: () => ({ begin: mocks.begin }),
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: {} }));
+/* oxlint-disable typescript/explicit-function-return-type --
+ * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/connection")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+ */
 vi.mock("@/lib/db/connection", () => ({
   databaseConnection: () => ({ options: {}, url: "postgres://test" }),
 }));
+/* oxlint-enable typescript/explicit-function-return-type */
 
 beforeEach(() => vi.clearAllMocks());
 
+/* oxlint-disable max-statements, oxc/no-async-await, typescript/promise-function-async --
+ * max-statements (#512): it("cancellation after lock acquisition waits for the active refresh to finish and re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * oxc/no-async-await (#540): it("cancellation after lock acquisition waits for the active refresh to finish and re sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * typescript/promise-function-async (#606): it("cancellation after lock acquisition waits for the active refresh to finish and re preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
 it("cancellation after lock acquisition waits for the active refresh to finish and release the transaction", async () => {
   mocks.begin.mockImplementation(
     async (run: (transaction: unknown) => Promise<unknown>) => {
@@ -51,7 +64,13 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
   await rejected;
   expect(mocks.released).toHaveBeenCalledOnce();
 });
+/* oxlint-enable max-statements, oxc/no-async-await, typescript/promise-function-async */
 
+/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+ * max-statements (#512): it("cancellation while acquiring the lock cancels the query and never starts refresh  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): it("cancellation while acquiring the lock cancels the query and never starts refresh  uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * oxc/no-async-await (#540): it("cancellation while acquiring the lock cancels the query and never starts refresh  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ */
 it("cancellation while acquiring the lock cancels the query and never starts refresh work", async () => {
   const lock = Promise.withResolvers<unknown[]>();
   const controller = new AbortController();
@@ -84,3 +103,4 @@ it("cancellation while acquiring the lock cancels the query and never starts ref
   expect(cancel).toHaveBeenCalledOnce();
   expect(refresh).not.toHaveBeenCalled();
 });
+/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */

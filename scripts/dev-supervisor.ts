@@ -1,21 +1,40 @@
+/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { execFileSync, spawn } from "node:child_process";
+/* oxlint-enable import/no-nodejs-modules */
+/* oxlint-disable import/no-nodejs-modules -- the node:timers/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { setTimeout as delay } from "node:timers/promises";
+/* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable eslint/sort-imports -- the ./dev-health import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { checkHealth } from "./dev-health";
+/* oxlint-enable eslint/sort-imports */
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
+/* oxlint-disable node/no-process-env -- origin: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 const origin = process.env.APP_URL;
+/* oxlint-enable node/no-process-env */
+/* oxlint-disable typescript/strict-boolean-expressions -- dev-supervisor.ts: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 if (!origin || !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)) {
   throw new Error("Run through bun dev:supervise with a local worktree URL.");
 }
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 let stopping = false;
+/* oxlint-disable eslint/init-declarations -- child: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
 let child: ReturnType<typeof spawn> | undefined;
-const sleep = (ms: number) => delay(ms);
+/* oxlint-enable eslint/init-declarations */
+/* oxlint-disable typescript/promise-function-async -- sleep: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+const sleep = (ms: number): Promise<void> => delay(ms);
+/* oxlint-enable typescript/promise-function-async */
 // Eve's development runtime detaches its child process. Track descendants
 // while the launcher is alive so shutdown also cleans up detached workers.
 let descendants = new Map<number, string>();
-const trackChildren = () => {
+/* oxlint-disable eslint/max-statements -- trackChildren: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
+/* oxlint-disable oxc/no-optional-chaining -- trackChildren: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
+/* oxlint-disable node/no-sync -- trackChildren: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
+/* oxlint-disable typescript/strict-boolean-expressions -- trackChildren: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- trackChildren: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+const trackChildren = (): void => {
   if (!child?.pid) {
     return;
   }
@@ -56,7 +75,12 @@ const trackChildren = () => {
     }
   }
 };
-const terminate = (signal: NodeJS.Signals) => {
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable node/no-sync */
+/* oxlint-enable oxc/no-optional-chaining */
+/* oxlint-enable eslint/max-statements */
+const terminate = (signal: NodeJS.Signals): void => {
   trackChildren();
   for (const pid of descendants.keys()) {
     try {
@@ -69,13 +93,19 @@ const terminate = (signal: NodeJS.Signals) => {
 const signals: NodeJS.Signals[] = ["SIGTERM", "SIGINT"];
 for (const signal of signals) {
   // oxlint-disable-next-line eslint/no-loop-func -- Signal handlers intentionally update the shared shutdown flag.
-  process.on(signal, () => {
+  process.on(signal, (): void => {
     stopping = true;
     terminate("SIGTERM");
   });
 }
 let backoff = 5000;
 let failedStartups = 0;
+/* oxlint-disable eslint/no-console -- dev-supervisor.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
+/* oxlint-disable oxc/no-rest-spread-properties -- dev-supervisor.ts: Fresh object composition preserves immutable state/configuration and existing override order. */
+/* oxlint-disable node/no-process-env -- dev-supervisor.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
+/* oxlint-disable node/no-top-level-await -- dev-supervisor.ts: This Bun/ESM entrypoint must finish initialization before later module statements run. */
+/* oxlint-disable eslint/no-magic-numbers -- dev-supervisor.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+/* oxlint-disable eslint/no-undefined -- dev-supervisor.ts: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 // oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Process signal and exit callbacks update these flags while the loop awaits.
 while (!stopping) {
   console.info("Starting ChatJS and managed Eve runtime");
@@ -85,10 +115,10 @@ while (!stopping) {
     stdio: "inherit",
   });
   let exited = false;
-  child.once("exit", () => {
+  child.once("exit", (): void => {
     exited = true;
   });
-  child.once("error", () => {
+  child.once("error", (): void => {
     exited = true;
   });
   const started = Date.now();
@@ -144,3 +174,9 @@ while (!stopping) {
     backoff = Math.min(backoff * 2, 60_000);
   }
 }
+/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable node/no-top-level-await */
+/* oxlint-enable node/no-process-env */
+/* oxlint-enable oxc/no-rest-spread-properties */
+/* oxlint-enable eslint/no-console */

@@ -1,10 +1,25 @@
+/* oxlint-disable import/no-relative-parent-imports --
+ * import/no-relative-parent-imports (#530): Keep the explicit "../ai/app-models" dependency within this package instead of introducing an alias or barrel API.
+ */
 import type { AppModelDefinition, AppModelId } from "../ai/app-models";
 import { getAppModelDefinition } from "../ai/app-models";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/exports-last, import/no-named-export --
+ * import/exports-last (#522): UsageInfo is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
+ * import/no-named-export (#527): Preserve the named UsageInfo API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ */
 /** Minimal usage info needed for cost calculation */
 export interface UsageInfo {
   inputTokens?: number;
   outputTokens?: number;
 }
+/* oxlint-enable import/exports-last, import/no-named-export */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+ * jsdoc/require-param (#534): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * no-magic-numbers (#517): calculateLLMCost uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * typescript/prefer-readonly-parameter-types (#565): calculateLLMCost accepts usage: UsageInfo; pricing: { input: string; output: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 /**
  * Calculate LLM cost in CENTS from AI SDK usage data and model pricing.
  * Pricing is per-token in dollars (e.g., "0.00000006" = $0.06 per million tokens).
@@ -20,6 +35,7 @@ const calculateLLMCost = (
   const outputCost = (usage.outputTokens ?? 0) * Number(pricing.output);
   return (inputCost + outputCost) * 100;
 };
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 interface LLMCostEntry {
   modelId: AppModelId;
   source: string;
@@ -39,6 +55,23 @@ interface ImageCostEntry {
   usage: UsageInfo;
 }
 type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
+/* oxlint-disable id-length, import/no-named-export, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+ * id-length (#506): CostAccumulator uses e; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * import/no-named-export (#527): Preserve the named CostAccumulator API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../ai/models" dependency within this package instead of introducing an alias or barrel API.
+ * jsdoc/require-param (#534): CostAccumulator's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * jsdoc/require-returns (#535): CostAccumulator's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+ * max-params (#511): CostAccumulator keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): CostAccumulator keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-continue (#515): CostAccumulator skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
+ * no-magic-numbers (#517): CostAccumulator uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * oxc/no-async-await (#540): CostAccumulator sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): CostAccumulator handles optional models.find((model) => model.id === entry.modelId)?.pricing?.image; model?.pricing?.input; model?.pricing?.output without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): CostAccumulator accepts usage: UsageInfo; entry; model; e; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/promise-function-async (#606): CostAccumulator preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * typescript/strict-boolean-expressions (#610): CostAccumulator intentionally keeps the existing falsy-value behavior of model?.pricing?.input; model?.pricing?.output; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): CostAccumulator preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
 /**
  * Accumulates costs from multiple LLM and external API calls.
  * Pass through call chain, collect at request end.
@@ -129,3 +162,4 @@ export class CostAccumulator {
     return this.entries.length > 0;
   }
 }
+/* oxlint-enable id-length, import/no-named-export, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */

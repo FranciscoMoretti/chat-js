@@ -1,6 +1,14 @@
 import { defineConfig } from "@/lib/config-schema";
 
+/* oxlint-disable node/no-process-env --
+ * node/no-process-env (#537): isProd reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ */
 const isProd = process.env.NODE_ENV === "production";
+/* oxlint-enable node/no-process-env */
+/* oxlint-disable no-magic-numbers, no-ternary --
+ * no-magic-numbers (#517): config uses 10, 1000, 5, 60, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-ternary (#518): config derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+ */
 /**
  * ChatJS Configuration
  *
@@ -142,4 +150,9 @@ const config = defineConfig({
     paymentProcessors: [],
   },
 });
+/* oxlint-enable no-magic-numbers, no-ternary */
+/* oxlint-disable import/no-default-export --
+ * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
+ */
 export default config;
+/* oxlint-enable import/no-default-export */

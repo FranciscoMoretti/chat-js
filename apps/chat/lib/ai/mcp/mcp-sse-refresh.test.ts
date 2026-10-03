@@ -1,12 +1,27 @@
+/* oxlint-disable sort-imports --
+ * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
+ */
 import { createMCPClient } from "@ai-sdk/mcp";
 import type { OAuthClientProvider, OAuthTokens } from "@ai-sdk/mcp";
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 const serverUrl = "https://mcp.test/";
 const endpointUrl = `${serverUrl}messages`;
 const authorizationServerUrl = "https://auth.test/";
 const tokenEndpoint = `${authorizationServerUrl}token`;
 
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+ * init-declarations (#507): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+ * max-lines-per-function (#510): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-statements (#512): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * no-magic-numbers (#517): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-undefined (#519): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * oxc/no-async-await (#540): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+ * oxc/no-optional-chaining (#542): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re handles optional streamController?.enqueue( encoder.encode( `data: ${JSON.stringify({  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+ * typescript/prefer-readonly-parameter-types (#565): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re accepts { timing }; input: string | URL | Request; init?: RequestInit; controller; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * unicorn/no-null (#570): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ */
 test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
   "SSE $timing 401 responses share one complete OAuth refresh",
   async ({ timing }) => {
@@ -31,15 +46,15 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     const provider: OAuthClientProvider = {
       clientInformation: () => ({ client_id: "client" }),
       clientMetadata: { redirect_uris: ["https://app.test/oauth/callback"] },
-      codeVerifier: () => "verifier",
-      redirectToAuthorization: () => {
+      codeVerifier: (): string => "verifier",
+      redirectToAuthorization: (): void => {
         // This fixture never enters the authorization redirect flow.
       },
       redirectUrl: "https://app.test/oauth/callback",
-      saveCodeVerifier: () => {
+      saveCodeVerifier: (): void => {
         // This fixture already has a code verifier.
       },
-      saveTokens: (nextTokens) => {
+      saveTokens: (nextTokens): void => {
         tokens = nextTokens;
         firstRefreshSaved.resolve(undefined);
       },
@@ -54,7 +69,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
 
       if (request.url === serverUrl && request.method === "GET") {
         const stream = new ReadableStream<Uint8Array>({
-          start(controller) {
+          start(controller): void {
             streamController = controller;
             controller.enqueue(
               encoder.encode(`event: endpoint\ndata: ${endpointUrl}\n\n`)
@@ -163,3 +178,4 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     }
   }
 );
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
