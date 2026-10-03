@@ -4,7 +4,7 @@ import React from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable import/no-named-export, import/prefer-default-export, typescript/prefer-readonly-parameter-types -- Tag: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Tag: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const Tag = ({
   children,
@@ -22,4 +22,4 @@ export const Tag = ({
     {children}
   </span>
 );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

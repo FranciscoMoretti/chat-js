@@ -5,13 +5,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 /* oxlint-disable import/no-nodejs-modules -- the node:os import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- the node:path import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable node/no-top-level-await -- workflow: The test module must finish asynchronous fixture initialization before registering dependent scenarios. */
 // Exercise the actual workflow function with fake external services. No credentials,
 // npm publication, GitHub writes, or changes to the checkout are involved.
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- This fixture reads the repository-owned GitHub workflow shape and exercises the extracted publish function.
@@ -20,7 +17,6 @@ const workflow = Bun.YAML.parse(
     new URL("../.github/workflows/release.yml", import.meta.url)
   ).text()
 ) as { jobs: { release: { steps: { name?: string; run: string }[] } } };
-/* oxlint-enable node/no-top-level-await */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- step: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 const step = workflow.jobs.release.steps.find(
   (candidate: { name?: string }): boolean =>
@@ -77,7 +73,6 @@ gh() {
 `;
 
 /* oxlint-disable eslint/max-statements -- retry repairs release metadata without republishing after verification fails: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable oxc/no-async-await -- retry repairs release metadata without republishing after verification fails: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable typescript/explicit-function-return-type -- retry repairs release metadata without republishing after verification fails: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable node/no-sync -- retry repairs release metadata without republishing after verification fails: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 /* oxlint-disable eslint/no-magic-numbers -- retry repairs release metadata without republishing after verification fails: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -111,11 +106,9 @@ test("retry repairs release metadata without republishing after verification fai
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- retry pushes an existing local tag after the first push fails: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable oxc/no-async-await -- retry pushes an existing local tag after the first push fails: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable typescript/explicit-function-return-type -- retry pushes an existing local tag after the first push fails: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable node/no-sync -- retry pushes an existing local tag after the first push fails: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 /* oxlint-disable eslint/no-magic-numbers -- retry pushes an existing local tag after the first push fails: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -148,11 +141,8 @@ test("retry pushes an existing local tag after the first push fails", async (): 
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-ternary -- release-fallback.test.ts: The expression preserves the existing fallback/derived-value contract within this operation. */
-/* oxlint-disable oxc/no-async-await -- release-fallback.test.ts: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable node/no-sync -- release-fallback.test.ts: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 /* oxlint-disable eslint/no-magic-numbers -- release-fallback.test.ts: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 for (const lookupFails of [false, true]) {
@@ -187,5 +177,3 @@ for (const lookupFails of [false, true]) {
 }
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-ternary */

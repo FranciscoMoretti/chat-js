@@ -1,5 +1,4 @@
 "use client";
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import React from "react";
 
@@ -7,7 +6,6 @@ import { ModelSelector } from "@/components/model-selector";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
-/* oxlint-enable sort-imports */
 
 const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   {
@@ -81,7 +79,7 @@ const fixtureModels = [
   ),
 ];
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals -- ModelToolbarVisualFixture: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals -- ModelToolbarVisualFixture: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
 
 export const ModelToolbarVisualFixture = (): React.JSX.Element => (
   <ChatModelsProvider models={fixtureModels}>
@@ -106,4 +104,4 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
     </main>
   </ChatModelsProvider>
 );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals */

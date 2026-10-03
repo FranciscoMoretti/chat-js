@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import { ExternalLink } from "lucide-react";
 import React, { Suspense } from "react";
 
@@ -11,9 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable no-ternary, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- ModelsSettingsHeader: no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- ModelsSettingsHeader: react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ModelsSettingsHeader = ({
   showRegistryLink = false,
@@ -48,8 +45,8 @@ const ModelsSettingsHeader = ({
     )}
   </SettingsPageHeader>
 );
-/* oxlint-enable no-ternary, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable oxc/no-async-await, react/no-multi-comp, typescript/explicit-function-return-type -- ModelsSettingsContent: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-enable react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type -- ModelsSettingsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const ModelsSettingsContent = async () => {
   const queryClient = getQueryClient();
@@ -67,7 +64,7 @@ const ModelsSettingsContent = async () => {
     </HydrateClient>
   );
 };
-/* oxlint-enable oxc/no-async-await, react/no-multi-comp, typescript/explicit-function-return-type */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/forbid-component-props, react/jsx-max-depth, react/no-multi-comp -- ModelsSettingsPage: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 

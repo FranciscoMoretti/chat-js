@@ -3,7 +3,6 @@ import { afterEach, expect, test } from "bun:test";
 import { checkHealth } from "./dev-health";
 
 const servers: ReturnType<typeof Bun.serve>[] = [];
-/* oxlint-disable oxc/no-async-await -- dev-health.test.ts: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable eslint/no-magic-numbers -- dev-health.test.ts: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 afterEach(async (): Promise<void> => {
   for (const server of servers.splice(0)) {
@@ -12,8 +11,6 @@ afterEach(async (): Promise<void> => {
   }
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable eslint/no-ternary -- fixture: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- fixture: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 const fixture = (
   auth: () => Response,
@@ -32,9 +29,7 @@ const fixture = (
   return server.url.origin;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
 
-/* oxlint-disable oxc/no-async-await -- requires the app health endpoint and a working unauthenticated auth route: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- requires the app health endpoint and a working unauthenticated auth route: The fixture explicitly exercises the null state required by the API. */
 test("requires the app health endpoint and a working unauthenticated auth route", async (): Promise<void> => {
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
@@ -43,18 +38,14 @@ test("requires the app health endpoint and a working unauthenticated auth route"
   ).resolves.toBeUndefined();
 });
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- rejects healthy infrastructure when dynamic auth routing returns a 404: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 test("rejects healthy infrastructure when dynamic auth routing returns a 404", async (): Promise<void> => {
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
   await expect(
     checkHealth(fixture(() => new Response("Not found", { status: 404 })))
   ).rejects.toThrow("Authentication route returned HTTP 404");
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- rejects HTML, redirects and unexpected sessions instead of reporting ready: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 test("rejects HTML, redirects and unexpected sessions instead of reporting ready", async (): Promise<void> => {
   for (const auth of [
     () => new Response("<html>Not found</html>"),
@@ -65,9 +56,7 @@ test("rejects HTML, redirects and unexpected sessions instead of reporting ready
     await expect(checkHealth(fixture(auth))).rejects.toThrow();
   }
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- still rejects unavailable infrastructure even when authentication routing works: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- still rejects unavailable infrastructure even when authentication routing works: The fixture explicitly exercises the null state required by the API. */
 test("still rejects unavailable infrastructure even when authentication routing works", async (): Promise<void> => {
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
@@ -81,4 +70,3 @@ test("still rejects unavailable infrastructure even when authentication routing 
   ).rejects.toThrow("Readiness returned HTTP 503");
 });
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */

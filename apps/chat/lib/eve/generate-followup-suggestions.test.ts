@@ -45,10 +45,7 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type --
- * oxc/no-async-await (#540): it("retains paid usage when structured output cannot be read") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): it("retains paid usage when structured output cannot be read") handles optional result?.responseMetadata; result?.modelCalls without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): it("retains paid usage when structured output cannot be read") copies or separates ...evidence while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep it("retains paid usage when structured output cannot be read")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 it("retains paid usage when structured output cannot be read", async () => {
@@ -70,12 +67,8 @@ it("retains paid usage when structured output cannot be read", async () => {
     expect.objectContaining({ maxOutputTokens: 512, maxRetries: 0 })
   );
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("returns valid suggestions and records the configured auxiliary model") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("returns valid suggestions and records the configured auxiliary model") copies or separates ...evidence while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("returns valid suggestions and records the configured auxiliary model", async () => {
   mocks.generate.mockImplementation(({ onStepFinish }) => {
     // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This generate-followup-suggestions fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
@@ -88,23 +81,14 @@ it("returns valid suggestions and records the configured auxiliary model", async
   });
   expect(mocks.model).toHaveBeenCalledWith(mocks.feature.default);
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("records a failed attempt without turning an optional feature error into answer fa sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("records a failed attempt without turning an optional feature error into answer failure", async () => {
   mocks.generate.mockRejectedValue(new Error("Provider unavailable"));
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({
     modelCalls: [{ failed: true, modelId: mocks.feature.default }],
   });
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("does not spend when disabled, without an answer, or before model resolution succe sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("does not spend when disabled, without an answer, or before model resolution succe copies or separates ...exchange while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("does not spend when disabled, without an answer, or before model resolution succeeds", async () => {
   mocks.feature.enabled = false;
   expect(await generateEveFollowupSuggestions(exchange)).toBeUndefined();
@@ -118,4 +102,3 @@ it("does not spend when disabled, without an answer, or before model resolution 
   });
   expect(mocks.generate).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */

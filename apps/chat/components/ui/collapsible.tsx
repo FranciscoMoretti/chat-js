@@ -9,7 +9,5 @@ const {
   CollapsibleTrigger,
   CollapsibleContent,
 } = CollapsiblePrimitive;
-/* oxlint-disable import/no-named-export -- collapsible.tsx exports: import/no-named-export: existing callers import this public component, type, or hook by name. */
 
 export { Collapsible, CollapsibleContent, CollapsibleTrigger };
-/* oxlint-enable import/no-named-export */

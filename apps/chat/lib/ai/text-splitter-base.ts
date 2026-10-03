@@ -1,22 +1,15 @@
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named TextSplitterParams API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export interface TextSplitterParams {
   chunkOverlap: number;
   chunkSize: number;
 }
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable id-length, import/no-named-export, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, no-underscore-dangle, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable id-length, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * id-length (#506): TextSplitter uses d as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/no-named-export (#527): Preserve the named TextSplitter API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): TextSplitter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): TextSplitter emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-continue (#515): TextSplitter skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): TextSplitter uses 1000, 200, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): TextSplitter derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): TextSplitter uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * no-underscore-dangle (#520): TextSplitter accesses the established _len field convention; renaming requires changing the owning SDK or backing-field contract.
- * oxc/no-optional-chaining (#542): TextSplitter handles optional fields?.chunkSize; fields?.chunkOverlap; currentDoc[0]?.length without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): TextSplitter accepts texts: string[]; documents: string[]; docs: string[]; { docs, currentDoc, separator, }: { docs: string[]; currentDoc: string[]; ; { currentDoc, overlapLimit, total, nextLength, }: { currentDoc: string[]; ; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): TextSplitter preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -112,4 +105,4 @@ export abstract class TextSplitter implements TextSplitterParams {
     return docs;
   }
 }
-/* oxlint-enable id-length, import/no-named-export, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, no-underscore-dangle, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable id-length, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null */

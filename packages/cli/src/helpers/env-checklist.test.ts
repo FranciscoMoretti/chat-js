@@ -1,9 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import { coreFeatureEnvRequirements } from "./config-requirements";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { collectEnvChecklist } from "./env-checklist";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */

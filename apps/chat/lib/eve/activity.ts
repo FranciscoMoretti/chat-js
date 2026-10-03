@@ -6,11 +6,8 @@ import type { MessageStreamEvent } from "eve/client";
 import { recordEveConversationActivity } from "../db/eve-queries";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
- * import/no-named-export (#527): Preserve the named ingestEveActivity API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): ingestEveActivity remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): ingestEveActivity's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): ingestEveActivity sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): ingestEveActivity accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Project only activity metadata from Eve; replay must never move a chat backwards. */
@@ -27,4 +24,4 @@ export const ingestEveActivity = async (
     );
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types */

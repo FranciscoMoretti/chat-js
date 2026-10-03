@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { afterEach, expect, test, vi } from "vitest";
 
 import { CreationRejectedError } from "./create-conversation";
@@ -18,12 +15,10 @@ import {
 } from "./pending-create";
 import { resolveCreationRequest } from "./resolve-creation-request";
 import type { EveResponseGroupResult } from "./response-group-contracts";
-/* oxlint-enable sort-imports */
 
 afterEach(() => vi.unstubAllGlobals());
-/* oxlint-disable no-magic-numbers, no-ternary, typescript/explicit-function-return-type, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null --
  * no-magic-numbers (#517): fixture uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): fixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/no-null (#570): fixture preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -60,11 +55,10 @@ const fixture = () => {
   };
   return { operation, result, storage };
 };
-/* oxlint-enable no-magic-numbers, no-ternary, typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("lost creation replies retain the exact ordered operation across changed compose uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("lost creation replies retain the exact ordered operation across changed compose sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("lost creation replies retain the exact ordered operation across changed composer choices", async () => {
   const { storage, operation } = fixture();
@@ -85,12 +79,10 @@ test("lost creation replies retain the exact ordered operation across changed co
     "saved comparison"
   );
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("partial binding moves recovery before releasing the composer and preserves a su keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("partial binding moves recovery before releasing the composer and preserves a su sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("partial binding moves recovery before releasing the composer and preserves a su copies or separates ...result; ...candidate while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("partial binding moves recovery before releasing the composer and preserves a subsequent draft", async () => {
   const { storage, operation, result } = fixture();
@@ -117,10 +109,9 @@ test("partial binding moves recovery before releasing the composer and preserves
   expect(readResponseGroupDraft(storage, "owner", result.id)).toBeUndefined();
   expect(readCreationRequest(storage, "owner")).toEqual(next);
 });
-/* oxlint-enable max-statements, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable oxc/no-rest-spread-properties, typescript/explicit-function-return-type --
- * oxc/no-rest-spread-properties (#543): test("storage failure cannot release an unresolved request") copies or separates ...storage while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep test("storage failure cannot release an unresolved request")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 test("storage failure cannot release an unresolved request", () => {
@@ -136,12 +127,10 @@ test("storage failure cannot release an unresolved request", () => {
   ).toThrow("Storage full");
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
 });
-/* oxlint-enable oxc/no-rest-spread-properties, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("all rejected candidates are definitive while a mixed uncertain result keeps its uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("all rejected candidates are definitive while a mixed uncertain result keeps its sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("all rejected candidates are definitive while a mixed uncertain result keeps its copies or separates ...result; ...rejected; ...result.candidates[1] while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("all rejected candidates are definitive while a mixed uncertain result keeps its request", async () => {
   const { operation, result } = fixture();
@@ -168,12 +157,8 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(mixed)));
   await expect(requestResponseGroup(operation)).resolves.toEqual(mixed);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-ternary, oxc/no-rest-spread-properties --
- * no-ternary (#518): test("rejected secondary candidates retain the original request for their retry") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-rest-spread-properties (#543): test("rejected secondary candidates retain the original request for their retry") copies or separates ...result; ...candidate while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("rejected secondary candidates retain the original request for their retry", () => {
   const { storage, operation, result } = fixture();
   const rejected: EveResponseGroupResult = {
@@ -189,7 +174,6 @@ test("rejected secondary candidates retain the original request for their retry"
     operation
   );
 });
-/* oxlint-enable no-ternary, oxc/no-rest-spread-properties */
 
 test("moving a definitively rejected project comparison preserves all repeated models", () => {
   const { storage } = fixture();
@@ -218,12 +202,10 @@ test("moving a definitively rejected project comparison preserves all repeated m
   ).toBeUndefined();
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("follow-up retries recover the saved checkpoint before dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("follow-up retries recover the saved checkpoint before dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("follow-up retries recover the saved checkpoint before dispatch") uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("follow-up retries recover the saved checkpoint before dispatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("follow-up retries recover the saved checkpoint before dispatch") copies or separates ...scope; ...fork while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("follow-up retries recover the saved checkpoint before dispatch", async () => {
   const { storage, result } = fixture();
@@ -282,12 +264,10 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     operation
   );
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("a checkpoint receipt for different history cannot dispatch a comparison") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("a checkpoint receipt for different history cannot dispatch a comparison") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("a checkpoint receipt for different history cannot dispatch a comparison") copies or separates ...fork while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("a checkpoint receipt for different history cannot dispatch a comparison", async () => {
   const { storage } = fixture();
@@ -318,12 +298,10 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
     operation
   );
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-statements (#512): test("only an exact durable checkpoint rejection releases a comparison for editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("only an exact durable checkpoint rejection releases a comparison for editing") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("only an exact durable checkpoint rejection releases a comparison for editing") copies or separates ...scope; ...fork; ...rejection while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("only an exact durable checkpoint rejection releases a comparison for editing") accepts [url]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): test("only an exact durable checkpoint rejection releases a comparison for editing") intentionally keeps the existing falsy-value behavior of fetcher.mock.calls.every(([url]) => url.endsWith("/checkpoint")); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -374,6 +352,6 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
   // The UI owns releasing the matching pending request; the original draft is never erased here.
   expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
 });
-/* oxlint-enable max-statements, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This create-response-group.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

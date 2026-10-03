@@ -24,9 +24,8 @@ vi.mock("../ai/to-model-data", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("combines API and nested model usage without rounding each call") uses 5, 0.0505 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("combines API and nested model usage without rounding each call") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("combines API and nested model usage without rounding each call", async () => {
   const cost = createEveToolCost();
@@ -35,20 +34,16 @@ test("combines API and nested model usage without rounding each call", async () 
   expect(await cost.totalUsd()).toBeCloseTo(0.0505);
   expect(await cost.totalUsd()).toBeCloseTo(0.0505);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("includes dedicated image pricing in the durable total") uses 2, 0.08 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("includes dedicated image pricing in the durable total") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("includes dedicated image pricing in the durable total", async () => {
   const cost = createEveToolCost();
   cost.addImageCost("priced-image", 2, {}, "image");
   expect(await cost.totalUsd()).toBeCloseTo(0.08);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("missing pricing and missing usage remain unknown rather than free") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
+/* oxlint-enable no-magic-numbers */
 test("missing pricing and missing usage remain unknown rather than free", async () => {
   const missing = createEveToolCost();
   missing.addLLMCost("missing", { inputTokens: 0, outputTokens: 1 }, "image");
@@ -57,10 +52,8 @@ test("missing pricing and missing usage remain unknown rather than free", async 
   empty.addLLMCost("priced", {}, "image");
   await expect(empty.totalUsd()).resolves.toBeUndefined();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
- * oxc/no-async-await (#540): test.each([{ inputTokens: 100 }, { outputTokens: 100 }])("partial usage remains unres sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): test.each([{ inputTokens: 100 }, { outputTokens: 100 }])("partial usage remains unres accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
@@ -71,4 +64,4 @@ test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
     await expect(cost.totalUsd()).resolves.toBeUndefined();
   }
 );
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

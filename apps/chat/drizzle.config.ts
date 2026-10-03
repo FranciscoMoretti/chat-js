@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
 import { databaseConnection } from "./lib/db/connection";
-/* oxlint-enable sort-imports */
 
 config({
   path: ".env.local",

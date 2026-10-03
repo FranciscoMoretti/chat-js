@@ -1,5 +1,4 @@
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 export type StrictLiterals<T> = T extends string
   ? string extends T
@@ -7,11 +6,9 @@ export type StrictLiterals<T> = T extends string
     : T
   : T;
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type ExtractModelIdFromProvider<ProviderFactory> =
   ProviderFactory extends (...args: infer _Args) => infer Provider
     ? Provider extends {
@@ -23,11 +20,9 @@ export type ExtractModelIdFromProvider<ProviderFactory> =
       ? ModelId
       : never
     : never;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type ExtractImageModelIdFromProvider<ProviderFactory> =
   ProviderFactory extends (...args: infer _Args) => infer Provider
     ? Provider extends {
@@ -36,5 +31,4 @@ export type ExtractImageModelIdFromProvider<ProviderFactory> =
       ? ModelId
       : never
     : never;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

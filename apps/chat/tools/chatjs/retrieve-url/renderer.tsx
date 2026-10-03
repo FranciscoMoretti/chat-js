@@ -4,13 +4,9 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { retrievedInput, retrievedResult } from "./schemas";
-/* oxlint-enable eslint/sort-imports */
 
 type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedInput,
@@ -204,7 +200,6 @@ const getFirstItem = (result: unknown): unknown => {
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -228,7 +223,6 @@ const getErrorMessage = (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
@@ -279,12 +273,8 @@ const RetrieveUrlView = ({
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const RetrieveUrlRenderer = defineToolRenderer({
   inputSchema: retrievedInput,
   outputSchema: retrievedResult,
   render: RetrieveUrlView,
 });
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

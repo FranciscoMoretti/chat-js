@@ -10,17 +10,14 @@ const compression = mock(
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
 mock.module("browser-image-compression", () => ({ default: compression }));
-/* oxlint-disable node/no-top-level-await -- Module initialization must complete before dependent code consumes the prepared runtime or build artifact. */
 const { processFilesForUpload } =
   await import("./attachment-uploads/features/attachment-uploads/upload-prep");
-/* oxlint-enable node/no-top-level-await */
 
 const options = {
   acceptedTypes: { "application/pdf": [".pdf"], "image/png": [".png"] },
   maxBytes: 10,
   maxDimension: 2048,
 };
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 test("upload preparation respects configured accepted types and size limits", async () => {
   const pdf = new File(["pdf"], "document.pdf", { type: "application/pdf" });
   const oversized = new File(["oversized document"], "large.pdf", {
@@ -36,17 +33,12 @@ test("upload preparation respects configured accepted types and size limits", as
   expect(prepared.stillOversized).toEqual([oversized]);
   expect(prepared.unsupportedFiles).toEqual([svg, jpg]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 test("small accepted images preserve exact bytes without browser compression", async () => {
   const image = new File(["png"], "photo.png", { type: "image/png" });
   const prepared = await processFilesForUpload([image], options);
   expect(prepared.files).toEqual([image]);
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("compresses large accepted images and retains failed oversized originals", async () => {
   const image = new File(["oversized image data"], "photo.original", {
@@ -68,10 +60,7 @@ test("compresses large accepted images and retains failed oversized originals", 
   expect(failed.files).toEqual([]);
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("preparation preserves mixed PDF and compressed-image input order", async () => {
   const pdf = new File(["pdf"], "first.pdf", { type: "application/pdf" });
@@ -85,4 +74,3 @@ test("preparation preserves mixed PDF and compressed-image input order", async (
   ]);
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-async-await */

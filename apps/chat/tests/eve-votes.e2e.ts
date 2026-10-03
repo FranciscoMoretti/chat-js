@@ -1,8 +1,7 @@
-/* oxlint-disable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-namespace (#528): The EveClient namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -24,41 +23,28 @@ import { eveConversation, eveVote, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { voteEveMessage } from "../lib/eve/vote-message";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-namespace, import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 const native = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): vi.mock("eve/client") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): vi.mock("eve/client") copies or separates ...(await original<typeof EveClient>()) while preserving existing object ownership; mutating source objects is not equivalent.
- */
 vi.mock("eve/client", async (original) => ({
   ...(await original<typeof EveClient>()),
   Client: class {
     public sessions = { attach: native.attach };
   },
 }));
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(user).values({ email: `${owner}@test.in runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,
   name: "Feedback fixture",
 });
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-/* oxlint-enable oxc/no-async-await */
 const events: MessageStreamEvent[] = [
   {
     data: { message: "Question", sequence: 0, turnId: "turn_0" },
@@ -81,8 +67,7 @@ beforeEach(() => {
   native.attach.mockReset().mockReturnValue({ snapshot: native.snapshot });
   native.snapshot.mockReset().mockResolvedValue({ events });
 });
-/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type --
- * oxc/no-async-await (#540): conversation sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 async function conversation() {
@@ -93,13 +78,11 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
-/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("native assistant feedback persists, replaces a vote and stays private when shar keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native assistant feedback persists, replaces a vote and stays private when shar uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("native assistant feedback persists, replaces a vote and stays private when shar sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("native assistant feedback persists, replaces a vote and stays private when shar copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("native assistant feedback persists, replaces a vote and stays private when shared", async () => {
   const row = await conversation();
@@ -123,11 +106,8 @@ test("native assistant feedback persists, replaces a vote and stays private when
   expect(await voteEveMessage("stranger", input)).toBeNull();
   expect(native.attach).not.toHaveBeenCalled();
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("unknown messages and native user messages cannot receive feedback") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("unknown messages and native user messages cannot receive feedback", async () => {
   const row = await conversation();
   for (const messageId of ["turn_0:user", "turn_99:assistant"]) {
@@ -141,11 +121,9 @@ test("unknown messages and native user messages cannot receive feedback", async 
   }
   expect(await getEveMessageVotes(owner, row.id)).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("deletion erases existing feedback and rejects a vote whose snapshot finishes af uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("deletion erases existing feedback and rejects a vote whose snapshot finishes af sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("deletion erases existing feedback and rejects a vote whose snapshot finishes after deletion", async () => {
   const row = await conversation();
@@ -168,11 +146,8 @@ test("deletion erases existing feedback and rejects a vote whose snapshot finish
   expect(await voteEveMessage(owner, input)).toBeNull();
   expect(native.attach).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("the same native message ID in a different conversation has independent feedback sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("the same native message ID in a different conversation has independent feedback", async () => {
   const first = await conversation();
   const second = await conversation();
@@ -204,4 +179,3 @@ test("the same native message ID in a different conversation has independent fee
     { isUpvoted: false, messageId: "turn_0:assistant" },
   ]);
 });
-/* oxlint-enable oxc/no-async-await */

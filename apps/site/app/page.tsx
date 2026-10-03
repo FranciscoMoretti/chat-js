@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import React from "react";
 
-/* oxlint-disable eslint/sort-imports -- the @/components/faq import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { Faq } from "@/components/faq";
-/* oxlint-enable eslint/sort-imports */
 import { Features } from "@/components/features";
 import { Footer } from "@/components/footer";
 import { GetStarted } from "@/components/get-started";
@@ -15,13 +13,10 @@ import { Platforms } from "@/components/platforms";
 import { TechStack } from "@/components/tech-stack";
 /* oxlint-enable import/max-dependencies */
 import { UseCases } from "@/components/use-cases";
-/* oxlint-disable eslint/sort-imports -- the @/lib/site-config import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { siteConfig, siteLinks } from "@/lib/site-config";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-/* oxlint-disable import/no-named-export -- metadata: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.home,
@@ -36,7 +31,6 @@ export const metadata: Metadata = {
   },
   title: "The Prod-Ready AI Chat App",
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable import/exports-last */
 

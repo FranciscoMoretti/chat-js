@@ -1,5 +1,4 @@
 "use client";
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { CopyIcon, DownloadIcon, ImageOffIcon, XIcon } from "lucide-react";
 import React from "react";
@@ -15,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
 
 interface ImageModalProps {
   imageName?: string;
@@ -24,7 +22,7 @@ interface ImageModalProps {
   onClose: () => void;
   showActions?: boolean;
 }
-/* oxlint-disable id-length, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- handleCopyImage: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e: React.MouseEvent). */
+/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- handleCopyImage: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e: React.MouseEvent). */
 
 const handleCopyImage = async (
   e: React.MouseEvent,
@@ -44,8 +42,8 @@ const handleCopyImage = async (
     toast.error("Failed to copy image to clipboard");
   }
 };
-/* oxlint-enable id-length, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable id-length, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- handleDownload: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e: React.MouseEvent). */
+/* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- handleDownload: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e: React.MouseEvent). */
 
 const handleDownload = async (
   e: React.MouseEvent,
@@ -71,8 +69,8 @@ const handleDownload = async (
     toast.error("Failed to download image");
   }
 };
-/* oxlint-enable id-length, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable id-length, import/group-exports, import/no-named-export, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- ImageActions: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
+/* oxlint-enable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable id-length, import/group-exports, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, typescript/prefer-readonly-parameter-types -- ImageActions: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
 export const ImageActions = ({
   className,
@@ -110,9 +108,9 @@ export const ImageActions = ({
     </Button>
   </div>
 );
-/* oxlint-enable id-length, import/group-exports, import/no-named-export, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, import/group-exports, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, no-ternary, no-undefined, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ImageModal: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable import/group-exports, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ImageModal: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 export const ImageModal = ({
   isOpen,
@@ -175,4 +173,4 @@ export const ImageModal = ({
     </Dialog>
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, no-ternary, no-undefined, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

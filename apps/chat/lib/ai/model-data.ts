@@ -1,6 +1,3 @@
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named ModelData API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export interface ModelData {
   context_window: number;
   description: string;
@@ -36,4 +33,3 @@ export interface ModelData {
   toolCall: boolean | undefined;
   type: "language" | "embedding" | "image" | "video";
 }
-/* oxlint-enable import/no-named-export */

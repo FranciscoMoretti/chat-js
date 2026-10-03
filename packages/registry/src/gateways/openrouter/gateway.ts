@@ -3,14 +3,10 @@ import type {
   LanguageModelV4,
 } from "@ai-sdk/provider";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-/* oxlint-enable eslint/sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ImageModel } from "ai";
-/* oxlint-enable eslint/sort-imports */
 
 interface OpenRouterModelResponse {
   architecture: {
@@ -40,7 +36,6 @@ interface OpenRouterModelResponse {
 }
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const deriveTags = (model: OpenRouterModelResponse): string[] => {
   const inputMods = model.architecture?.input_modalities ?? ["text"];
@@ -69,12 +64,9 @@ const deriveTags = (model: OpenRouterModelResponse): string[] => {
   return tags;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
@@ -112,16 +104,12 @@ const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export class OpenRouterGateway
   extends GatewayRuntime
@@ -143,7 +131,7 @@ export class OpenRouterGateway
   }
 
   // The gateway interface requires an image factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this
+  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
   public createImageModel(_modelId: never): ImageModel | null {
     // OpenRouter routes image generation through multimodal language models.
     // Return null to signal callers should use createLanguageModel instead.
@@ -151,7 +139,7 @@ export class OpenRouterGateway
   }
 
   // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this
+  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
   public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
@@ -161,7 +149,7 @@ export class OpenRouterGateway
   }
 
   // The models endpoint is fixed by the provider contract.
-  // eslint-disable-next-line class-methods-use-this
+  // eslint-disable-next-line class-methods-use-this -- Review debt #623: this provider URL helper is independent of instance state; review conversion to a static or module helper.
   private getModelsUrl(): string {
     return "https://openrouter.ai/api/v1/models";
   }
@@ -214,15 +202,11 @@ export class OpenRouterGateway
   }
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export { OpenRouterGateway as Gateway };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

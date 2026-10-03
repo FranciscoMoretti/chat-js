@@ -39,17 +39,13 @@ const enabled = (): boolean => {
   }
 };
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-void-return --
- * import/no-named-export (#527): Preserve the named startLocalEveGuestCleanup API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): startLocalEveGuestCleanup remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-void-return --
  * init-declarations (#507): startLocalEveGuestCleanup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * jsdoc/require-returns (#535): startLocalEveGuestCleanup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): startLocalEveGuestCleanup emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-undefined (#519): startLocalEveGuestCleanup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): startLocalEveGuestCleanup sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): startLocalEveGuestCleanup handles optional schedulerGlobal.chatjsEveGuestCleanup?.stop() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep startLocalEveGuestCleanup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep startLocalEveGuestCleanup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-void-return (#611): startLocalEveGuestCleanup's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
@@ -124,4 +120,4 @@ export const startLocalEveGuestCleanup = () => {
   // oxlint-disable-next-line typescript/consistent-return -- #580: startLocalEveGuestCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return scheduler.stop;
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-void-return */
+/* oxlint-enable init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-void-return */

@@ -4,33 +4,22 @@ import assert from "node:assert/strict";
 /* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { mkdir } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- the node:url import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 /* oxlint-disable import/no-nodejs-modules -- the node:url import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { fileURLToPath } from "node:url";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- the playwright import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { chromium } from "playwright";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- the playwright import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { Page } from "playwright";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable node/no-top-level-await -- browser: The test module must finish asynchronous fixture initialization before registering dependent scenarios. */
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.
 const browser = await chromium.launch();
-/* oxlint-enable node/no-top-level-await */
 const output = fileURLToPath(
   new URL("../uiverify-screenshots/", import.meta.url)
 );
-/* oxlint-disable node/no-top-level-await -- thread-playground.visual.ts: The test module must finish asynchronous fixture initialization before registering dependent scenarios. */
 await mkdir(output, { recursive: true });
-/* oxlint-enable node/no-top-level-await */
 const errors: string[] = [];
 
-/* oxlint-disable oxc/no-async-await -- capture: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- capture: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 const capture = async (page: Page, name: string): Promise<void> => {
   await page.getByTestId("thread-playground").screenshot({
@@ -41,12 +30,9 @@ const capture = async (page: Page, name: string): Promise<void> => {
   });
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable node/no-top-level-await -- thread-playground.visual.ts: The test module must finish asynchronous fixture initialization before registering dependent scenarios. */
 /* oxlint-disable node/no-process-env -- thread-playground.visual.ts: The scenario explicitly controls process environment inputs and restores them during cleanup. */
 /* oxlint-disable eslint/no-magic-numbers -- thread-playground.visual.ts: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable oxc/no-optional-chaining -- thread-playground.visual.ts: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-console -- thread-playground.visual.ts: Console output is the observable diagnostic exercised by this fixture. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- thread-playground.visual.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- thread-playground.visual.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
@@ -292,7 +278,5 @@ try {
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-console */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-top-level-await */

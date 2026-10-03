@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { createHash } from "node:crypto";
 
@@ -11,7 +10,7 @@ import {
   guestRequestIpHash,
   settleGuestCreation,
 } from "./guest-admission";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): mocks uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -116,9 +115,6 @@ it("does not trust arbitrary forwarded headers or alternate IP spellings for quo
   expect(() => digest("fe80::1%eth0")).toThrow();
 });
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): it("self-hosted guest quotas use only the configured proxy header") copies or separates ...headers while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("self-hosted guest quotas use only the configured proxy header", () => {
   mocks.env.NODE_ENV = "production";
   mocks.env.TRUSTED_CLIENT_IP_HEADER = "x-real-ip";
@@ -149,12 +145,7 @@ it("self-hosted guest quotas use only the configured proxy header", () => {
     )
   ).toThrow("Trusted client address");
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("checks guest policy and ownership before reserving account/quota") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("checks guest policy and ownership before reserving account/quota") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("checks guest policy and ownership before reserving account/quota", async () => {
   const denied = await admitGuestCreation(request, principal, {
     ...input,
@@ -175,11 +166,7 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("binds quota to the complete creation intent and retains native operation replays" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("binds quota to the complete creation intent and retains native operation replays", async () => {
   expect(await admitGuestCreation(request, principal, input)).toEqual({
     reservationId: "attempt",
@@ -207,11 +194,7 @@ it("binds quota to the complete creation intent and retains native operation rep
     status: "replay",
   });
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("recovers an active durable reservation without repeating volatile validation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("recovers an active durable reservation without repeating volatile validation", async () => {
   mocks.existing.mockResolvedValue({
     requestHash: requestHash(input),
@@ -228,12 +211,9 @@ it("recovers an active durable reservation without repeating volatile validation
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects changed replay content before volatile validation") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rejects changed replay content before volatile validation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("rejects changed replay content before volatile validation") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("rejects changed replay content before volatile validation", async () => {
   mocks.existing.mockResolvedValue({
@@ -254,11 +234,8 @@ it("rejects changed replay content before volatile validation", async () => {
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("runs full validation before reusing a released operation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("runs full validation before reusing a released operation", async () => {
   mocks.existing.mockResolvedValue({
     requestHash: requestHash(input),
@@ -273,10 +250,8 @@ it("runs full validation before reusing a released operation", async () => {
   expect(mocks.files).toHaveBeenCalled();
   expect(mocks.reserve).toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await, unicorn/no-null --
- * oxc/no-async-await (#540): it("refunds only explicit rejection, keeps ambiguous reservations, and commits succes sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("refunds only explicit rejection, keeps ambiguous reservations, and commits succes preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("refunds only explicit rejection, keeps ambiguous reservations, and commits success", async () => {
@@ -311,11 +286,8 @@ it("refunds only explicit rejection, keeps ambiguous reservations, and commits s
     "attempt"
   );
 });
-/* oxlint-enable oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("propagates the atomic refund decision when a creation already exists") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("propagates the atomic refund decision when a creation already exists", async () => {
   mocks.release.mockResolvedValue(false);
   expect(
@@ -328,4 +300,3 @@ it("propagates the atomic refund decision when a creation already exists", async
   ).toBe(false);
   expect(mocks.commit).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

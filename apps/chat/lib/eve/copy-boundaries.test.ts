@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 
 import { eveCopyBoundaries } from "./copy-boundaries";
-/* oxlint-enable sort-imports */
 
 it("distinguishes imported boundaries from new native turns that restart at zero", () => {
   const events: MessageStreamEvent[] = [

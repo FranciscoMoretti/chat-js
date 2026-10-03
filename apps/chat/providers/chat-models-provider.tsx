@@ -1,8 +1,5 @@
 "use client";
 
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { useQuery } from "@tanstack/react-query";
 import React, { createContext, useCallback, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
@@ -12,7 +9,6 @@ import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-enable sort-imports */
 
 interface ChatModelsContextType {
   allModels: AppModelDefinition[];
@@ -28,12 +24,9 @@ const ChatModelsContext = createContext<ChatModelsContextType | undefined>(
 );
 /* oxlint-enable no-undefined */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, max-lines-per-function, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): ChatModelsProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named ChatModelsProvider API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): ChatModelsProvider keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-optional-chaining (#542): ChatModelsProvider handles optional session?.user without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): ChatModelsProvider copies or separates ...trpc.settings.getModelPreferences.queryOptions() while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): ChatModelsProvider accepts { children, models, }: { children: ReactNode; models: AppModelDefinition[]; }; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const ChatModelsProvider = ({
@@ -94,11 +87,10 @@ export const ChatModelsProvider = ({
     </ChatModelsContext.Provider>
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, max-lines-per-function, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): useChatModels stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named useChatModels API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-undefined (#519): useChatModels uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * react/only-export-components (#553): useChatModels is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  * typescript/explicit-function-return-type (#560): Keep useChatModels's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -111,4 +103,4 @@ export const useChatModels = () => {
   }
   return context;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

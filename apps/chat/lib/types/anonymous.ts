@@ -6,10 +6,6 @@ import { config } from "../config";
 
 const anonConfig = config.anonymous;
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export --
- * import/no-named-export (#527): Preserve the named ANONYMOUS_LIMITS API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): ANONYMOUS_LIMITS remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
- */
 export const ANONYMOUS_LIMITS = {
   AVAILABLE_MODELS: config.ai.anonymousModels,
   AVAILABLE_TOOLS: anonConfig.availableTools,
@@ -21,4 +17,3 @@ export const ANONYMOUS_LIMITS = {
   // Max session time
   SESSION_DURATION: 2_147_483_647,
 } as const;
-/* oxlint-enable import/no-named-export, import/prefer-default-export */

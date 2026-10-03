@@ -1,16 +1,11 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 
 import { optimisticEveMetadata } from "./optimistic-metadata";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-lines-per-function, max-statements, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, unicorn/no-null --
  * max-lines-per-function (#510): describe("optimistic logical chat metadata") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("optimistic logical chat metadata") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): describe("optimistic logical chat metadata") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): describe("optimistic logical chat metadata") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 describe("optimistic logical chat metadata", () => {
@@ -94,4 +89,4 @@ describe("optimistic logical chat metadata", () => {
     });
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, unicorn/no-null */

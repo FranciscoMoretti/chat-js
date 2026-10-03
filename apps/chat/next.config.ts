@@ -1,9 +1,5 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { withEve } from "eve/next";
 import type { NextConfig } from "next";
-/* oxlint-enable sort-imports */
 
 const nextConfig: NextConfig = {
   cacheComponents: true,

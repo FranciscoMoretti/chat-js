@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/delete-document/execute" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { beforeEach, expect, it, vi } from "vitest";
 
@@ -9,7 +8,7 @@ import {
   executeDocumentDeletion,
   requestDocumentDeletion,
 } from "../../tools/chatjs/delete-document/execute";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
   kinds: new Set(["code", "text"]),
@@ -38,8 +37,7 @@ const identity = {
   principalId: "owner",
   principalType: "user",
 };
-/* oxlint-disable oxc/no-rest-spread-properties, unicorn/no-null --
- * oxc/no-rest-spread-properties (#543): context copies or separates ...identity while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): context preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const context = testToolContext({
@@ -49,7 +47,7 @@ const context = testToolContext({
     turn: { id: "turn", sequence: 1 },
   },
 });
-/* oxlint-enable oxc/no-rest-spread-properties, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -67,10 +65,8 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("requests native approval only for the current owned title and revision") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("requests native approval only for the current owned title and revision") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("requests native approval only for the current owned title and revision") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("requests native approval only for the current owned title and revision", async () => {
   await expect(requestDocumentDeletion(input, context)).resolves.toBe(
@@ -95,12 +91,8 @@ it("requests native approval only for the current owned title and revision", asy
   );
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-undefined */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("requires an owner receipt before performing the conditional deletion") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("requires an owner receipt before performing the conditional deletion") copies or separates ...context; ...identity while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("requires an owner receipt before performing the conditional deletion", async () => {
   await expect(executeDocumentDeletion(input, context)).rejects.toThrow(
     "owner's approval"
@@ -125,11 +117,7 @@ it("requires an owner receipt before performing the conditional deletion", async
     context.abortSignal
   );
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("rejects absent document implementations before requesting approval or executing") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("rejects absent document implementations before requesting approval or executing", async () => {
   mocks.kinds.clear();
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
@@ -140,12 +128,7 @@ it("rejects absent document implementations before requesting approval or execut
   );
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("rechecks kind availability after approval") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("rechecks kind availability after approval") copies or separates ...context while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("rechecks kind availability after approval", async () => {
   mocks.kinds.delete("text");
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
@@ -159,4 +142,3 @@ it("rechecks kind availability after approval", async () => {
   ).rejects.toThrow("disabled for this kind");
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */

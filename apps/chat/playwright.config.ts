@@ -22,13 +22,11 @@ const PORT = process.env.PORT || 3000;
  * of the WebServer respecting the correct set port
  */
 const baseURL = `http://localhost:${PORT}`;
-/* oxlint-disable import/no-default-export, no-magic-numbers, no-ternary, no-undefined, node/no-process-env, oxc/no-rest-spread-properties, typescript/strict-boolean-expressions --
+/* oxlint-disable import/no-default-export, no-magic-numbers, no-undefined, node/no-process-env, typescript/strict-boolean-expressions --
  * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
  * no-magic-numbers (#517): default export uses 60, 1000, 2, 1, 120 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-ternary (#518): default export derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * node/no-process-env (#537): default export reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * oxc/no-rest-spread-properties (#543): default export copies or separates ...devices["Desktop Chrome"] while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/strict-boolean-expressions (#610): default export intentionally keeps the existing falsy-value behavior of process.env.CI; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /**
@@ -125,4 +123,4 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
 });
-/* oxlint-enable import/no-default-export, no-magic-numbers, no-ternary, no-undefined, node/no-process-env, oxc/no-rest-spread-properties, typescript/strict-boolean-expressions */
+/* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, node/no-process-env, typescript/strict-boolean-expressions */

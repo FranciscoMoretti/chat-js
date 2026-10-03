@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-shared-messages"; "../lib/eve/shared-messages" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
@@ -8,7 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveSharedMessages } from "../components/eve/eve-shared-messages";
 import { sharedEvePart } from "../lib/eve/shared-messages";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const parts: EveMessagePart[] = [
   {

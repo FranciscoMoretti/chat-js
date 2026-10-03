@@ -1,10 +1,6 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { DELETE, GET } from "./route";
-/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   env: {
@@ -51,9 +47,8 @@ beforeEach(() => {
   mocks.state.mockResolvedValue({ rootId: id, state: "bound" });
   mocks.remove.mockResolvedValue({ rootId: id });
 });
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("cleans an unaccepted copy with never-dispatched proof instead of native retiremen uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("cleans an unaccepted copy with never-dispatched proof instead of native retiremen sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("cleans an unaccepted copy with never-dispatched proof instead of native retirement", async () => {
   const rootId = "00000000-0000-4000-8000-000000000099";
@@ -66,10 +61,9 @@ it("cleans an unaccepted copy with never-dispatched proof instead of native reti
   expect(mocks.removeCopy).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("runs owner-authorized family deletion with a server-controlled worker root") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("runs owner-authorized family deletion with a server-controlled worker root") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("runs owner-authorized family deletion with a server-controlled worker root", async () => {
   const response = await DELETE(request(), context);
@@ -78,11 +72,10 @@ it("runs owner-authorized family deletion with a server-controlled worker root",
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(mocks.remove).toHaveBeenCalledWith("owner", id, process.cwd());
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("hides unavailable and foreign bindings without cleanup") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("hides unavailable and foreign bindings without cleanup") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("hides unavailable and foreign bindings without cleanup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("hides unavailable and foreign bindings without cleanup", async () => {
   mocks.state.mockResolvedValue(undefined);
@@ -91,10 +84,9 @@ it("hides unavailable and foreign bindings without cleanup", async () => {
   expect(mocks.state).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-enable no-magic-numbers, no-undefined */
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): it("requires login and valid coordinates") uses 401, 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("requires login and valid coordinates") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("requires login and valid coordinates") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("requires login and valid coordinates", async () => {
@@ -108,10 +100,9 @@ it("requires login and valid coordinates", async () => {
   expect(resolvedResult4.status).toBe(400);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects cross-origin mutation before any cleanup") uses 403 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("rejects cross-origin mutation before any cleanup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("rejects cross-origin mutation before any cleanup", async () => {
   const resolvedResult6 = await DELETE(
@@ -121,10 +112,9 @@ it("rejects cross-origin mutation before any cleanup", async () => {
   expect(resolvedResult6.status).toBe(403);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("refuses unsupported provider configuration before revoking access") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("refuses unsupported provider configuration before revoking access") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("refuses unsupported provider configuration before revoking access", async () => {
   mocks.env.WORKFLOW_POSTGRES_URL = "postgresql://remote.example/db";
@@ -136,10 +126,9 @@ it("refuses unsupported provider configuration before revoking access", async ()
   expect(resolvedResult8.status).toBe(503);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("reports pending erasure without leaking internal failure details") uses 202 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("reports pending erasure without leaking internal failure details") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("reports pending erasure without leaking internal failure details", async () => {
   mocks.remove.mockRejectedValue(new Error("private provider details"));
@@ -153,20 +142,16 @@ it("reports pending erasure without leaking internal failure details", async () 
     status: "pending",
   });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("does not call an unstarted operation pending") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("does not call an unstarted operation pending") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("does not call an unstarted operation pending", async () => {
   mocks.remove.mockRejectedValue(new Error("creation unsettled"));
   const resolvedResult9 = await DELETE(request(), context);
   expect(resolvedResult9.status).toBe(409);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("returns completed tombstones idempotently and GET never resumes cleanup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
+/* oxlint-enable no-magic-numbers */
 it("returns completed tombstones idempotently and GET never resumes cleanup", async () => {
   mocks.state.mockResolvedValue({ rootId: id, state: "deleted" });
   const resolvedResult10 = await DELETE(request(), context);
@@ -187,4 +172,3 @@ it("returns completed tombstones idempotently and GET never resumes cleanup", as
   });
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

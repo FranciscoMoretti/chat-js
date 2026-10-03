@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { MessageStreamEvent } from "eve/client";
 import { describe, expect, it } from "vitest";
 
@@ -8,7 +5,6 @@ import {
   eveMessageDelivery,
   eveMessageDeliveryMetadata,
 } from "./message-delivery";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep memoryStorage's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -138,9 +134,8 @@ describe("Eve message delivery recovery", () => {
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-undefined */
 
-/* oxlint-disable max-statements, oxc/no-optional-chaining --
+/* oxlint-disable max-statements --
  * max-statements (#512): it("retries a busy saved delivery with its original identity and clears rejection bef keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-optional-chaining (#542): it("retries a busy saved delivery with its original identity and clears rejection bef handles optional reloaded?.retryable; retry?.operationId; retry?.rejection; retry?.retryable without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 it("retries a busy saved delivery with its original identity and clears rejection before dispatch", () => {
   const storage = memoryStorage();
@@ -173,4 +168,4 @@ it("retries a busy saved delivery with its original identity and clears rejectio
     eveMessageDelivery.retry(storage, "session", original)
   ).toBeUndefined();
 });
-/* oxlint-enable max-statements, oxc/no-optional-chaining */
+/* oxlint-enable max-statements */

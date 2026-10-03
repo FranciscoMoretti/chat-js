@@ -2,11 +2,9 @@ import { resolveWorkflowWorld } from "./world-config";
 
 type Environment = Record<string, string | undefined>;
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-ternary, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/exports-last, import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/exports-last (#522): resolveWorkflowDatabaseUrl is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): resolveWorkflowDatabaseUrl stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named resolveWorkflowDatabaseUrl API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * no-ternary (#518): resolveWorkflowDatabaseUrl derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): resolveWorkflowDatabaseUrl uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep resolveWorkflowDatabaseUrl's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep resolveWorkflowDatabaseUrl's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -18,7 +16,7 @@ export const resolveWorkflowDatabaseUrl = (source: Environment) =>
     ? undefined
     : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
       source.WORKFLOW_POSTGRES_URL || source.DATABASE_URL;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-ternary, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): applicationOrigin's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -44,12 +42,10 @@ const applicationOrigin = (value: string | undefined) => {
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): resolveEveEnvironment stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named resolveEveEnvironment API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): resolveEveEnvironment's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): resolveEveEnvironment's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-ternary (#518): resolveEveEnvironment derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/explicit-function-return-type (#560): Keep resolveEveEnvironment's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep resolveEveEnvironment's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): resolveEveEnvironment accepts source: Environment; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -69,11 +65,10 @@ export const resolveEveEnvironment = (source: Environment) => ({
         `http://localhost:${source.PORT || "3000"}`),
   WORKFLOW_POSTGRES_URL: resolveWorkflowDatabaseUrl(source),
 });
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): configureWorkflowEnvironment stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named configureWorkflowEnvironment API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): configureWorkflowEnvironment's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/prefer-readonly-parameter-types (#565): configureWorkflowEnvironment accepts source: Environment; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): configureWorkflowEnvironment intentionally keeps the existing falsy-value behavior of url; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -86,11 +81,10 @@ export const configureWorkflowEnvironment = (source: Environment): void => {
     source.WORKFLOW_POSTGRES_URL = url;
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns --
  * import/group-exports (#523): isWorkflowTransactionPooler stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named isWorkflowTransactionPooler API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): isWorkflowTransactionPooler's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): isWorkflowTransactionPooler's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  */
@@ -109,4 +103,4 @@ export const isWorkflowTransactionPooler = (value: string): boolean => {
       url.port === "6543")
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns */

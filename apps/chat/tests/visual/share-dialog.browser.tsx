@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -10,7 +8,6 @@ import { page } from "vitest/browser";
 import { ShareDialog, ShareDialogView } from "@/components/share-button";
 
 import "./sandbox.css";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- share-dialog.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -25,7 +22,7 @@ vi.mock("@/components/upgrade-cta/login-prompt", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type -- flushReact: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-disable typescript/explicit-function-return-type -- flushReact: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const flushReact = async (update: () => void) => {
   await act(async () => {
@@ -33,8 +30,8 @@ const flushReact = async (update: () => void) => {
     await Promise.resolve();
   });
 };
-/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return -- share-dialog.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return -- share-dialog.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 test("share link confirms a completed copy and reports clipboard rejection", async () => {
   const copy = Promise.withResolvers<undefined>();
@@ -112,4 +109,4 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
     vi.restoreAllMocks();
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return */

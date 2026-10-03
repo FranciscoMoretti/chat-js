@@ -5,16 +5,13 @@ import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 /* oxlint-disable import/no-nodejs-modules -- the node:os import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- the node:path import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/resolve-package-directory import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- the ../packages/cli/src/helpers/scaffold-content import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/scaffold-content import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import {
   shouldCopyChatAppFile,
@@ -22,13 +19,10 @@ import {
   normalizeScaffoldContent,
 } from "../packages/cli/src/helpers/scaffold-content";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/vendor-patched-package import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- the ./sync-template-snapshot import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { collectSnapshot } from "./sync-template-snapshot";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- join: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const join = (...segments: string[]): string => path.join(...segments);
@@ -78,7 +72,6 @@ const TEMPLATE_STRIPPED_IMPORTS = [
 
 /* oxlint-disable eslint/max-statements -- applyTemplateTransforms: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- applyTemplateTransforms: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable oxc/no-async-await -- applyTemplateTransforms: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable eslint/no-magic-numbers -- applyTemplateTransforms: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable unicorn/no-null -- applyTemplateTransforms: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable typescript/promise-function-async -- applyTemplateTransforms: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
@@ -150,11 +143,9 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable oxc/no-async-await -- applyElectronTemplateTransforms: Await sequencing preserves this operation's dependent I/O and error propagation. */
 const applyElectronTemplateTransforms = async (
   destination: string
 ): Promise<void> => {
@@ -180,9 +171,7 @@ const applyElectronTemplateTransforms = async (
   );
   await writeFile(packageJsonPath, packageJson);
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- copyElectronTemplate: Await sequencing preserves this operation's dependent I/O and error propagation. */
 const copyElectronTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
@@ -192,9 +181,7 @@ const copyElectronTemplate = async (destination: string): Promise<void> => {
   });
   await applyElectronTemplateTransforms(destination);
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- copyTemplate: Await sequencing preserves this operation's dependent I/O and error propagation. */
 const copyTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(sourceDir, destination, {
@@ -203,12 +190,9 @@ const copyTemplate = async (destination: string): Promise<void> => {
   });
   await applyTemplateTransforms(destination);
 };
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-statements -- assertSynced: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable oxc/no-async-await -- assertSynced: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable unicorn/no-null -- assertSynced: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable oxc/no-optional-chaining -- assertSynced: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-console -- assertSynced: This command or desktop boundary reports startup, progress and failures to its operator. */
 /* oxlint-disable eslint/id-length -- assertSynced: The local index/OS/library binding retains its conventional API notation. */
 /* oxlint-disable eslint/no-magic-numbers -- assertSynced: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
@@ -259,12 +243,9 @@ const assertSynced = async (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-console */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable node/no-top-level-await -- sync-template.ts: This Bun/ESM entrypoint must finish initialization before later module statements run. */
 /* oxlint-disable eslint/no-magic-numbers -- sync-template.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/no-console -- sync-template.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 if (isCheck) {
@@ -283,4 +264,3 @@ if (isCheck) {
 }
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-top-level-await */

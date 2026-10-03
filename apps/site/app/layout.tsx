@@ -1,23 +1,16 @@
 import { Analytics } from "@vercel/analytics/next";
-/* oxlint-disable eslint/sort-imports -- the next import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { Metadata, Viewport } from "next";
-/* oxlint-enable eslint/sort-imports */
 import { ThemeProvider } from "next-themes";
-/* oxlint-disable eslint/sort-imports -- the next/font/google import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
-/* oxlint-enable eslint/sort-imports */
 import React from "react";
 
 import { siteConfig } from "@/lib/site-config";
 
-/* oxlint-disable eslint/sort-imports -- the ./globals.css import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import "./globals.css";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- metadata: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-/* oxlint-disable import/no-named-export -- metadata: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const metadata: Metadata = {
   alternates: {
     types: {
@@ -70,7 +63,6 @@ export const metadata: Metadata = {
     title: `${siteConfig.title} — The Prod-Ready AI Chat App`,
   },
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
@@ -78,7 +70,6 @@ export const metadata: Metadata = {
 /* oxlint-disable import/exports-last -- viewport: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- viewport: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/only-export-components -- viewport: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-/* oxlint-disable import/no-named-export -- viewport: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const viewport: Viewport = {
   initialScale: 1,
   themeColor: [
@@ -87,7 +78,6 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */

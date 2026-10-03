@@ -23,8 +23,6 @@ const USE_CASES = [
   },
 ];
 
-/* oxlint-disable import/prefer-default-export -- UseCases: Consumers use this named API so adding another export will not require changing existing imports. */
-/* oxlint-disable import/no-named-export -- UseCases: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- UseCases: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable react/jsx-no-literals -- UseCases: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/jsx-max-depth -- UseCases: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
@@ -114,5 +112,3 @@ export const UseCases = (): React.JSX.Element => (
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

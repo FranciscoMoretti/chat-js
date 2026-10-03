@@ -14,16 +14,12 @@ import {
 import type { Metadata } from "next";
 import React from "react";
 
-/* oxlint-disable eslint/sort-imports -- the @/components/footer import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { Footer } from "@/components/footer";
-/* oxlint-enable eslint/sort-imports */
 import { Navbar } from "@/components/navbar";
-/* oxlint-disable eslint/sort-imports -- the @/components/thread-showcase import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   ThreadInstallCommand,
   ThreadPlayground,
 } from "@/components/thread-showcase";
-/* oxlint-enable eslint/sort-imports */
 import { siteConfig, siteLinks } from "@/lib/site-config";
 
 const THREADS_TITLE = "useThread — Branching Chats for AI SDK";
@@ -32,7 +28,6 @@ const THREADS_DESCRIPTION =
 
 /* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-/* oxlint-disable import/no-named-export -- metadata: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.threads,
@@ -53,7 +48,6 @@ export const metadata: Metadata = {
     title: THREADS_TITLE,
   },
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable import/exports-last */
 

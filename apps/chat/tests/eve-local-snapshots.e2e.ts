@@ -1,7 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This test harness requires import { randomBytes } from "node:crypto";; import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/local-sandbox-fence"; "../lib/eve/purge-local-sandbox" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
@@ -15,16 +14,14 @@ import { expect, test } from "vitest";
 
 import { fenceLocalEveSandboxMutations } from "../lib/eve/local-sandbox-fence";
 import { purgeLocalEveSandboxes } from "../lib/eve/purge-local-sandbox";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined --
  * init-declarations (#507): test("family cleanup removes parent and child VMs and snapshots while preserving an u assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("family cleanup removes parent and child VMs and snapshots while preserving an u keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("family cleanup removes parent and child VMs and snapshots while preserving an u keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("family cleanup removes parent and child VMs and snapshots while preserving an u uses 16, 1, 1024, 10_000, 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("family cleanup removes parent and child VMs and snapshots while preserving an u uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("family cleanup removes parent and child VMs and snapshots while preserving an u sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("family cleanup removes parent and child VMs and snapshots while preserving an u handles optional vm?.destroy().catch((error: unknown) => { if ( !( error instanceof Err without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
 // This provider acceptance test touches only newly named local fixture resources.
 test("family cleanup removes parent and child VMs and snapshots while preserving an unrelated snapshot", async () => {
@@ -180,15 +177,13 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
     await rm(root, { force: true, recursive: true });
   }
 }, 120_000);
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * init-declarations (#507): test("EVE checkpoint capture records real provider resources for retryable cleanup") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("EVE checkpoint capture records real provider resources for retryable cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("EVE checkpoint capture records real provider resources for retryable cleanup") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("EVE checkpoint capture records real provider resources for retryable cleanup") uses 16, 1, 0, 2, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("EVE checkpoint capture records real provider resources for retryable cleanup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("EVE checkpoint capture records real provider resources for retryable cleanup") handles optional handle.captureForkCheckpoint?.("turn_0"); checkpoint?.snapshotName; handle.captureForkCheckpoint?.("turn_1"); child?.shutdown() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * unicorn/no-null (#570): test("EVE checkpoint capture records real provider resources for retryable cleanup") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("EVE checkpoint capture records real provider resources for retryable cleanup", async () => {
@@ -343,6 +338,6 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     await rm(appRoot, { force: true, recursive: true });
   }
 }, 60_000);
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-local-snapshots.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

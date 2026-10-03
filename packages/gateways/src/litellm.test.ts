@@ -59,7 +59,6 @@ const getFetchCall = (fetchMock: ReturnType<typeof mockModelsFetch>) =>
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 describe("LiteLLMGateway", (): void => {
   it("fetches models from the LiteLLM /v1/models endpoint", async (): Promise<void> => {
@@ -123,5 +122,4 @@ describe("LiteLLMGateway", (): void => {
   });
 });
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */

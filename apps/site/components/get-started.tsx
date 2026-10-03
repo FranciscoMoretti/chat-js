@@ -7,16 +7,12 @@ import { siteLinks } from "@/lib/site-config";
 
 const command = "npx @chat-js/cli@latest create my-app";
 
-/* oxlint-disable import/prefer-default-export -- GetStarted: Consumers use this named API so adding another export will not require changing existing imports. */
-/* oxlint-disable import/no-named-export -- GetStarted: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- GetStarted: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
-/* oxlint-disable oxc/no-async-await -- GetStarted: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable eslint/no-magic-numbers -- GetStarted: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable react/jsx-no-literals -- GetStarted: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/jsx-max-depth -- GetStarted: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- GetStarted: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
 /* oxlint-disable react/forbid-component-props -- GetStarted: className/style are the deliberate styling interface of these UI/layout primitives. */
-/* oxlint-disable eslint/no-ternary -- GetStarted: The expression selects a render/state value locally; changing component boundaries or closure ownership is outside this styling restriction. */
 export const GetStarted = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
@@ -114,13 +110,9 @@ export const GetStarted = (): React.JSX.Element => {
     </section>
   );
 };
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

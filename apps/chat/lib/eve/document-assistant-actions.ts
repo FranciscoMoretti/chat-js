@@ -1,18 +1,15 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../config" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
 import { config } from "../config";
 import type { DocumentAssistantRequest } from "./document-contracts";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * import/group-exports (#523): documentAssistantActions stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named documentAssistantActions API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): documentAssistantActions derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/explicit-function-return-type (#560): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -69,11 +66,10 @@ export const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
     }
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): documentAssistantRequest stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named documentAssistantRequest API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): documentAssistantRequest accepts action: ReturnType<typeof documentAssistantActions>[number]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const documentAssistantRequest = (
@@ -84,4 +80,4 @@ export const documentAssistantRequest = (
   message: `${action.instruction}\n\nTarget document: ${documentId}. Selected revision: ${revisionId}. Use readDocument to read this document, then use the document tools to apply the requested changes.`,
   modelId: action.modelId,
 });
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */

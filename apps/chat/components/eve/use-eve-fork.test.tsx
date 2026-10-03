@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import type { EveMessage } from "eve/client";
 import React from "react";
 import { act, create } from "react-test-renderer";
@@ -9,7 +7,6 @@ import { CreationRejectedError } from "@/lib/eve/create-conversation";
 import { eveToolMetadata } from "@/lib/eve/message-tool-selection";
 
 import { useEveFork } from "./use-eve-fork";
-/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   openRuntime: vi.fn(),
@@ -152,7 +149,7 @@ const deferred = <T,>() => {
 };
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type -- flushEffects: oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-disable typescript/explicit-function-return-type -- flushEffects: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 const flushEffects = async () => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
@@ -160,7 +157,7 @@ const flushEffects = async () => {
     await Promise.resolve();
   });
 };
-/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
 afterEach(() => {
   mocks.resolveCreationRequest.mockReset();
@@ -168,7 +165,7 @@ afterEach(() => {
   mocks.openRuntime.mockReset();
   vi.unstubAllGlobals();
 });
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- use-eve-fork.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including renderer?.unmount()); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value). */
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- use-eve-fork.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value). */
 
 describe("useEveFork", () => {
   it("opens an inline edit with the original response model and tool", async () => {
@@ -721,6 +718,6 @@ describe("useEveFork", () => {
     }
   });
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- use-eve-fork.test keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

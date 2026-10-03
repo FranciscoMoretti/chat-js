@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { MessageStreamEvent } from "eve/client";
 import { expect, it } from "vitest";
 
 import { eveEventSearchText } from "./search-text";
-/* oxlint-enable sort-imports */
 
 const received: MessageStreamEvent = {
   data: {
@@ -46,9 +42,6 @@ it("projects visible text with stable keys for live events and restored history"
     { key: "event:user-1", text: "saffron rice" },
   ]);
 });
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): it("indexes seeded display text while excluding reasoning, tools and system-authored  copies or separates ...received; ...received.data while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("indexes seeded display text while excluding reasoning, tools and system-authored input", () => {
   expect(
     eveEventSearchText({
@@ -75,4 +68,3 @@ it("indexes seeded display text while excluding reasoning, tools and system-auth
     })
   ).toEqual([{ key: "seed:0", text: "visible answer" }]);
 });
-/* oxlint-enable oxc/no-rest-spread-properties */

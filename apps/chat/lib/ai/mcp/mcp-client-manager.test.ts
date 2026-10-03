@@ -40,9 +40,6 @@ const connector = (id: string) => ({
 });
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("a failed state cannot remove another active authorization") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("a failed state cannot remove another active authorization", async () => {
   const config = connector("other-state");
   const client = getOrCreateMcpClient(config);
@@ -50,10 +47,6 @@ it("a failed state cannot remove another active authorization", async () => {
   expect(getOrCreateMcpClient(config)).toBe(client);
   expect(mocks.close).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("a failed state cannot close an established connection") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("a failed state cannot close an established connection", async () => {
   mocks.state.status = "connected";
   const config = connector("connected");
@@ -62,10 +55,6 @@ it("a failed state cannot close an established connection", async () => {
   expect(getOrCreateMcpClient(config)).toBe(client);
   expect(mocks.close).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("the matching authorizing client is removed and closed") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("the matching authorizing client is removed and closed", async () => {
   const config = connector("matching");
   const client = getOrCreateMcpClient(config);
@@ -73,11 +62,7 @@ it("the matching authorizing client is removed and closed", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
   expect(getOrCreateMcpClient(config)).not.toBe(client);
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("unconditional removal closes and evicts an established client") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("unconditional removal closes and evicts an established client", async () => {
   mocks.state.status = "connected";
   const config = connector("unconditional");
@@ -86,4 +71,3 @@ it("unconditional removal closes and evicts an established client", async () => 
   expect(mocks.close).toHaveBeenCalledOnce();
   expect(getOrCreateMcpClient(config)).not.toBe(client);
 });
-/* oxlint-enable oxc/no-async-await */

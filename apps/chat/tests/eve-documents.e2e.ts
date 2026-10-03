@@ -1,8 +1,7 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "node:assert/strict" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-documents"; "../lib/db/eve-file-purge"; "../lib/db/eve-files" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -53,14 +52,11 @@ import { documentHistoryTurns } from "../lib/eve/document-history";
 import { executeEveDocumentTool } from "../lib/eve/document-tools";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(user).values( [owner, stranger].map((id runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -68,10 +64,8 @@ await db.insert(user).values(
     name: "Artifact fixture",
   }))
 );
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable max-statements, oxc/no-async-await --
+/* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 afterAll(async () => {
   await db
@@ -104,10 +98,9 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, owner));
   await db.delete(user).where(eq(user.id, stranger));
 });
-/* oxlint-enable max-statements, oxc/no-async-await */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type --
- * oxc/no-async-await (#540): conversation sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 async function conversation() {
@@ -118,7 +111,7 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
-/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep draft's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -140,12 +133,10 @@ function draft(conversationId: string) {
 }
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("document purge requires the owned family fence, erases inherited revisions, and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("document purge requires the owned family fence, erases inherited revisions, and keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("document purge requires the owned family fence, erases inherited revisions, and uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("document purge requires the owned family fence, erases inherited revisions, and sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("document purge requires the owned family fence, erases inherited revisions, and copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("document purge requires the owned family fence, erases inherited revisions, and is retryable", async () => {
   const root = await conversation();
@@ -213,12 +204,11 @@ test("document purge requires the owned family fence, erases inherited revisions
     })
   ).rejects.toThrow();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("an external document reference rolls back every purge step") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("an external document reference rolls back every purge step") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("an external document reference rolls back every purge step") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("an external document reference rolls back every purge step", async () => {
   const root = await conversation();
@@ -255,15 +245,12 @@ test("an external document reference rolls back every purge step", async () => {
       .where(eq(eveDocumentHead.conversationId, external.id))
   ).toHaveLength(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null --
  * max-lines-per-function (#510): test("manual edits backfill inherited boundaries in old forks before adding manual an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("manual edits backfill inherited boundaries in old forks before adding manual an uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("manual edits backfill inherited boundaries in old forks before adding manual an uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("manual edits backfill inherited boundaries in old forks before adding manual an sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("manual edits backfill inherited boundaries in old forks before adding manual an handles optional (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("manual edits backfill inherited boundaries in old forks before adding manual an copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * unicorn/no-null (#570): test("manual edits backfill inherited boundaries in old forks before adding manual an preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("manual edits backfill inherited boundaries in old forks before adding manual ancestry", async () => {
@@ -320,16 +307,13 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id
   ).toBe(original.id);
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
  * max-lines-per-function (#510): test("manual edits backfill old native boundaries and stay isolated across nested for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("manual edits backfill old native boundaries and stay isolated across nested for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("manual edits backfill old native boundaries and stay isolated across nested for uses 0, 1, 2, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("manual edits backfill old native boundaries and stay isolated across nested for uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("manual edits backfill old native boundaries and stay isolated across nested for sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("manual edits backfill old native boundaries and stay isolated across nested for handles optional (await getEveDocumentRevision(owner, chat.id, input.documentId))?.id; (await getEveDocumentRevision(owner, child.id, input.documentId))?.content; (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("manual edits backfill old native boundaries and stay isolated across nested for copies or separates ...input; ...manualInput while preserving existing object ownership; mutating source objects is not equivalent.
  * unicorn/no-null (#570): test("manual edits backfill old native boundaries and stay isolated across nested for preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("manual edits backfill old native boundaries and stay isolated across nested forks", async () => {
@@ -401,15 +385,12 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     })
   ).rejects.toThrow("native history");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("turn checkpoints restore exact heads, including empty state, and never change o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("turn checkpoints restore exact heads, including empty state, and never change o keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("turn checkpoints restore exact heads, including empty state, and never change o uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("turn checkpoints restore exact heads, including empty state, and never change o sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("turn checkpoints restore exact heads, including empty state, and never change o handles optional (await getEveDocumentRevision(owner, laterBranch.id, input.documentId)) ?.content; (await getEveDocumentRevision(owner, earlierBranch.id, input.documentId)) ?.id; document?.id; document?.content without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("turn checkpoints restore exact heads, including empty state, and never change o copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/promise-function-async (#606): test("turn checkpoints restore exact heads, including empty state, and never change o preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("turn checkpoints restore exact heads, including empty state, and never change on replay", async () => {
@@ -479,13 +460,12 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     captureEveDocumentCheckpoint(stranger, chat.id, 2)
   ).rejects.toThrow("not found");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): test("a document save cancelled while waiting for its lock never writes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a document save cancelled while waiting for its lock never writes") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("a document save cancelled while waiting for its lock never writes") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("a document save cancelled while waiting for its lock never writes") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("a document save cancelled while waiting for its lock never writes") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("a document save cancelled while waiting for its lock never writes", async () => {
@@ -527,16 +507,13 @@ test("a document save cancelled while waiting for its lock never writes", async 
     []
   );
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined --
  * max-lines-per-function (#510): test("document viewing respects visibility, revocation and fork ancestry without expo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("document viewing respects visibility, revocation and fork ancestry without expo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("document viewing respects visibility, revocation and fork ancestry without expo uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("document viewing respects visibility, revocation and fork ancestry without expo uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("document viewing respects visibility, revocation and fork ancestry without expo sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("document viewing respects visibility, revocation and fork ancestry without expo handles optional visible?.revision; visible?.history without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("document viewing respects visibility, revocation and fork ancestry without expo copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("document viewing respects visibility, revocation and fork ancestry without exposing storage metadata", async () => {
   const chat = await conversation();
@@ -600,14 +577,12 @@ test("document viewing respects visibility, revocation and fork ancestry without
     await getAccessibleEveDocument(undefined, child.id, input.documentId)
   ).toBeUndefined();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("native document calls replay safely and reject stale edits and cross-conversati keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native document calls replay safely and reject stale edits and cross-conversati keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native document calls replay safely and reject stale edits and cross-conversati uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("native document calls replay safely and reject stale edits and cross-conversati sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("native document calls replay safely and reject stale edits and cross-conversati copies or separates ...input; ...context; ...context.session while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("native document calls replay safely and reject stale edits and cross-conversation reads", async () => {
   const chat = await conversation();
@@ -692,13 +667,10 @@ test("native document calls replay safely and reject stale edits and cross-conve
     await getEveDocumentHistory(owner, chat.id, created.documentId)
   ).toHaveLength(2);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): test("concurrent replays create one revision and old replays never rewind the head") uses 1, 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("concurrent replays create one revision and old replays never rewind the head") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("concurrent replays create one revision and old replays never rewind the head") handles optional (await getEveDocumentHistory(owner, chat.id, input.documentId)).at(-1)?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("concurrent replays create one revision and old replays never rewind the head") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("concurrent replays create one revision and old replays never rewind the head") accepts revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("concurrent replays create one revision and old replays never rewind the head") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -724,12 +696,10 @@ test("concurrent replays create one revision and old replays never rewind the he
     saveEveDocumentRevision({ ...input, content: "Changed replay" })
   ).rejects.toThrow("replay");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): test("two distinct saves from the same revision cannot overwrite each other") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("two distinct saves from the same revision cannot overwrite each other") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("two distinct saves from the same revision cannot overwrite each other") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("two distinct saves from the same revision cannot overwrite each other") accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("two distinct saves from the same revision cannot overwrite each other") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -757,12 +727,8 @@ test("two distinct saves from the same revision cannot overwrite each other", as
     await getEveDocumentHistory(owner, chat.id, input.documentId)
   ).toHaveLength(2);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): test("artifact reads and updates are scoped to owner and conversation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("artifact reads and updates are scoped to owner and conversation") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("artifact reads and updates are scoped to owner and conversation", async () => {
   const chat = await conversation();
   const other = await conversation();
@@ -799,15 +765,11 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
     })
   ).rejects.toThrow();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * max-lines-per-function (#510): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("forks select the pre-turn revision and parent and child edits stay independent" uses -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("forks select the pre-turn revision and parent and child edits stay independent" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("forks select the pre-turn revision and parent and child edits stay independent" handles optional (await getEveDocumentHistory(owner, child.id, input.documentId)).at(-1)?.id; (await getEveDocumentRevision(owner, chat.id, input.documentId))?.content without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("forks select the pre-turn revision and parent and child edits stay independent" copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("forks select the pre-turn revision and parent and child edits stay independent" accepts revision; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -880,16 +842,12 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
       )
   ).toHaveLength(4);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): test("history beyond 1000 revisions remains readable and forkable without loading all keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("history beyond 1000 revisions remains readable and forkable without loading all keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("history beyond 1000 revisions remains readable and forkable without loading all uses 0, 1, -1, 1002, 498 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("history beyond 1000 revisions remains readable and forkable without loading all derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test("history beyond 1000 revisions remains readable and forkable without loading all sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("history beyond 1000 revisions remains readable and forkable without loading all handles optional history.at(-1)?.id; (await getEveDocumentHistory(owner, child.id, input.documentId)).at(-1)?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("history beyond 1000 revisions remains readable and forkable without loading all copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("history beyond 1000 revisions remains readable and forkable without loading all accepts version; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): test("history beyond 1000 revisions remains readable and forkable without loading all intentionally keeps the existing falsy-value behavior of tail; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -950,14 +908,11 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
   ).toBeUndefined();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("document references protect owned files across families and revision history") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("document references protect owned files across families and revision history") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("document references protect owned files across families and revision history") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("document references protect owned files across families and revision history") handles optional ( await getEveDocumentRevision( owner, destination.id, input.documentI without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("document references protect owned files across families and revision history") copies or separates ...draft(destination.id); ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("document references protect owned files across families and revision history", async () => {
   const prefix = "/api/files/";
@@ -1007,16 +962,13 @@ test("document references protect owned files across families and revision histo
     )?.content
   ).toBe(input.content);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties */
+/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
  * max-lines-per-function (#510): test("named idle snapshots preserve manual edits across retries without changing turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("named idle snapshots preserve manual edits across retries without changing turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("named idle snapshots preserve manual edits across retries without changing turn uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("named idle snapshots preserve manual edits across retries without changing turn uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("named idle snapshots preserve manual edits across retries without changing turn sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("named idle snapshots preserve manual edits across retries without changing turn handles optional (await getEveDocumentRevision(owner, child.id, input.documentId))?.id; (await getEveDocumentRevision(owner, ordinary.id, input.documentId))?.id; (await getEveDocumentRevision(owner, grandchild.id, input.documentId))?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("named idle snapshots preserve manual edits across retries without changing turn copies or separates ...input; ...fork while preserving existing object ownership; mutating source objects is not equivalent.
  * unicorn/no-null (#570): test("named idle snapshots preserve manual edits across retries without changing turn preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("named idle snapshots preserve manual edits across retries without changing turn checkpoints", async () => {
@@ -1099,12 +1051,11 @@ test("named idle snapshots preserve manual edits across retries without changing
     )
   ).rejects.toThrow("different");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("named checkpoints reject foreign owners, changed boundaries and deletion, and p keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("named checkpoints reject foreign owners, changed boundaries and deletion, and p uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("named checkpoints reject foreign owners, changed boundaries and deletion, and p sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("named checkpoints reject foreign owners, changed boundaries and deletion, and preserve empty manifests", async () => {
   const chat = await conversation();
@@ -1152,11 +1103,10 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
     ).toEqual([]);
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("missing or mismatched named document boundaries stop native allocation") uses 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("missing or mismatched named document boundaries stop native allocation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): test("missing or mismatched named document boundaries stop native allocation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("missing or mismatched named document boundaries stop native allocation", async () => {
@@ -1193,14 +1143,12 @@ test("missing or mismatched named document boundaries stop native allocation", a
   ).rejects.toThrow("Named document checkpoint");
   expect(allocations).toBe(0);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
  * max-statements (#512): test.each([false, true])("native descendants retain imported document boundaries, inc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test.each([false, true])("native descendants retain imported document boundaries, inc uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test.each([false, true])("native descendants retain imported document boundaries, inc derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): test.each([false, true])("native descendants retain imported document boundaries, inc uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test.each([false, true])("native descendants retain imported document boundaries, inc sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/strict-boolean-expressions (#610): test.each([false, true])("native descendants retain imported document boundaries, inc intentionally keeps the existing falsy-value behavior of checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 test.each([false, true])(
@@ -1256,15 +1204,12 @@ test.each([false, true])(
     ]);
   }
 );
-/* oxlint-enable max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("imported forks restore the selected document boundary and exclude the later pre keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("imported forks restore the selected document boundary and exclude the later pre keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("imported forks restore the selected document boundary and exclude the later pre uses 0, 2, 4, 6 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test("imported forks restore the selected document boundary and exclude the later pre derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test("imported forks restore the selected document boundary and exclude the later pre sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("imported forks restore the selected document boundary and exclude the later pre copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("imported forks restore the selected document boundary and exclude the later prefix", async () => {
   const root = await conversation();
@@ -1332,13 +1277,12 @@ test("imported forks restore the selected document boundary and exclude the late
     expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
  * max-lines-per-function (#510): test("imported fork reservations retain their boundary across uncertain creation and  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("imported fork reservations retain their boundary across uncertain creation and  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("imported fork reservations retain their boundary across uncertain creation and  uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("imported fork reservations retain their boundary across uncertain creation and  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep test("imported fork reservations retain their boundary across uncertain creation and 's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): test("imported fork reservations retain their boundary across uncertain creation and  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test("imported fork reservations retain their boundary across uncertain creation and  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -1402,15 +1346,12 @@ test("imported fork reservations retain their boundary across uncertain creation
     )
   ).toEqual(bound);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn handles optional (await getEveDocumentRevision(owner, child.id, input.documentId))?.id; (await getEveDocumentRevision(owner, root.id, input.documentId))?.id without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("approved deletion is scoped, revision-checked, retryable, and preserves fork sn copies or separates ...scope; ...deletion; ...input while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("approved deletion is scoped, revision-checked, retryable, and preserves fork snapshots", async () => {
   const root = await conversation();
@@ -1492,6 +1433,6 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     (await getEveDocumentRevision(owner, root.id, input.documentId))?.id
   ).toBe(replacement.id);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This eve-documents.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

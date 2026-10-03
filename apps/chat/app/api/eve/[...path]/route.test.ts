@@ -43,8 +43,7 @@ vi.mock("@/lib/eve/reconcile-usage", () => ({
 vi.mock("@/lib/eve/server", () => ({ eveRequest: mocks.eveRequest }));
 
 const operationId = "00000000-0000-4000-8000-000000000001";
-/* oxlint-disable oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * oxc/no-rest-spread-properties (#543): request copies or separates ...headers while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): request accepts headers: Record<string, string> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -62,7 +61,7 @@ const request = (headers: Record<string, string> = {}) =>
     },
     method: "POST",
   });
-/* oxlint-enable oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -78,9 +77,8 @@ beforeEach(() => {
   );
 });
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("requires a message operation ID before dispatch") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("requires a message operation ID before dispatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("requires a message operation ID before dispatch", async () => {
   const response = await POST(request(), {
@@ -93,11 +91,10 @@ test("requires a message operation ID before dispatch", async () => {
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("stamps the validated operation into server-owned durable metadata") uses 202 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("stamps the validated operation into server-owned durable metadata") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("stamps the validated operation into server-owned durable metadata", async () => {
   const response = await POST(
@@ -125,11 +122,10 @@ test("stamps the validated operation into server-owned durable metadata", async 
     "createTextDocument"
   );
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("keeps a busy admission retryable without dispatching or rejecting its message") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("keeps a busy admission retryable without dispatching or rejecting its message") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("keeps a busy admission retryable without dispatching or rejecting its message", async () => {
   mocks.reconcile.mockRejectedValue(new EveUsageReconciliationBusyError());
@@ -147,4 +143,4 @@ test("keeps a busy admission retryable without dispatching or rejecting its mess
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */

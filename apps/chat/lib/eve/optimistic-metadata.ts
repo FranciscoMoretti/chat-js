@@ -17,13 +17,11 @@ type History = InfiniteData<Awaited<ReturnType<typeof listEveConversations>>>;
 type Metadata = { title: string; isPinned: boolean };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
  * import/exports-last (#522): pendingEveMetadataMutations is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): pendingEveMetadataMutations stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named pendingEveMetadataMutations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-optional-chaining (#542): pendingEveMetadataMutations handles optional mutation.options.meta?.eveMetadata without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): pendingEveMetadataMutations accepts cache: QueryClient; mutation; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Background title refreshes defer to the last metadata mutation's reconciliation. */
@@ -32,13 +30,11 @@ export const pendingEveMetadataMutations = (cache: QueryClient): number =>
     predicate: (mutation): boolean =>
       mutation.options.meta?.eveMetadata === true,
   });
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, no-undefined, typescript/prefer-readonly-parameter-types --
  * id-length (#506): rollbackFields uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-ternary (#518): rollbackFields derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): rollbackFields uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-rest-spread-properties (#543): rollbackFields copies or separates ...current; ...(patch.title !== undefined && current.title === patch.title ? { title: previous.ti; ...(patch.isPinned !== undefined && current.isPinned === patch.isPinned ? { isPinned: while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): rollbackFields accepts previous: Metadata; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const rollbackFields = <T extends Metadata>(
@@ -54,18 +50,13 @@ const rollbackFields = <T extends Metadata>(
     ? { isPinned: previous.isPinned }
     : {}),
 });
-/* oxlint-enable id-length, no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, max-params, no-continue, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): optimisticEveMetadata stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named optimisticEveMetadata API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): optimisticEveMetadata skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-ternary (#518): optimisticEveMetadata derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): optimisticEveMetadata sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): optimisticEveMetadata handles optional data?.chatId; previous?.pages .flatMap((page) => page.items) .find((item) => item.id === id); previous?.chatId; current?.chatId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): optimisticEveMetadata copies or separates ...data; ...page; ...item; ...patch; ...current while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): optimisticEveMetadata accepts cache: QueryClient; page; item; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -137,4 +128,4 @@ export const optimisticEveMetadata = async (
     }
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, max-params, no-continue, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

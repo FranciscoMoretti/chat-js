@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { z } from "zod";
 
 import { CreationRejectedError } from "./create-conversation";
@@ -8,17 +5,14 @@ import { finishCreation, readCreationRequest } from "./pending-create";
 import type { CreationScope } from "./pending-create";
 import { eveResponseGroupResult } from "./response-group-contracts";
 import { eveResponseGroupInput } from "./response-group-input";
-/* oxlint-enable sort-imports */
 
 const recoveryKey = (ownerId: string, groupId: string): string =>
   `chatjs.eve.comparison:${ownerId}:${groupId}`;
 
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * import/group-exports (#523): readResponseGroupDraft stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named readResponseGroupDraft API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * no-ternary (#518): readResponseGroupDraft derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): readResponseGroupDraft uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep readResponseGroupDraft's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep readResponseGroupDraft's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -32,14 +26,12 @@ export const readResponseGroupDraft = (
   const saved = storage.getItem(recoveryKey(ownerId, groupId));
   return saved ? eveResponseGroupInput.parse(JSON.parse(saved)) : undefined;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, max-params, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-params, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): retainResponseGroupDraft stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named retainResponseGroupDraft API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): retainResponseGroupDraft's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-params (#511): retainResponseGroupDraft keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-optional-chaining (#542): retainResponseGroupDraft handles optional readCreationRequest(storage, ownerId, scope)?.operationId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): retainResponseGroupDraft accepts operation: z.infer<typeof eveResponseGroupInput>; result: z.infer<typeof eveResponseGroupResult>; scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Move recovery to its bound group before allowing a new request in this composer. */
@@ -65,14 +57,11 @@ export const retainResponseGroupDraft = (
     finishCreation(storage, ownerId, scope);
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, max-params, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, max-params, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): requestResponseGroup stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named requestResponseGroup API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): requestResponseGroup uses 75_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): requestResponseGroup sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): requestResponseGroup handles optional primary?.state without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep requestResponseGroup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep requestResponseGroup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): requestResponseGroup accepts operation: z.infer<typeof eveResponseGroupInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -107,4 +96,4 @@ export const requestResponseGroup = async (
   }
   return result;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

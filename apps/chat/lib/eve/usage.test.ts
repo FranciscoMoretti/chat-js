@@ -1,21 +1,16 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 /* oxlint-disable unicorn/prefer-structured-clone -- Exercise persisted JSON wire data, including omitted undefined values. */
 import type { MessageStreamEvent } from "eve/client";
 import { beforeEach, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { ingestEveUsage } from "./usage";
-/* oxlint-enable sort-imports */
 
 const record = vi.hoisted(() => vi.fn());
 vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));
 vi.mock("../db/eve-billing", () => ({ recordEveUsage: record }));
 beforeEach(() => record.mockReset());
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("records each auxiliary model attempt with replay-stable independent identities") uses 0.001, 0.002, 2, 0, 3, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("records each auxiliary model attempt with replay-stable independent identities") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("records each auxiliary model attempt with replay-stable independent identities") accepts [call]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("records each auxiliary model attempt with replay-stable independent identities", async () => {
@@ -44,11 +39,9 @@ it("records each auxiliary model attempt with replay-stable independent identiti
   expect(record.mock.calls[2]).toEqual(record.mock.calls[0]);
   expect(record.mock.calls[3]).toEqual(record.mock.calls[1]);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("requires reconciliation for unpriced completed calls and preserves failed-attempt uses 2, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("requires reconciliation for unpriced completed calls and preserves failed-attempt sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("requires reconciliation for unpriced completed calls and preserves failed-attempt copies or separates ...event; ...event.data while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("requires reconciliation for unpriced completed calls and preserves failed-attempt evidence", async () => {
   record.mockResolvedValue(false);
@@ -72,11 +65,8 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(record.mock.calls[1][0].costUsd).toBe(0);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("retains failed-step evidence without reporting an unpriced completed call") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("retains failed-step evidence without reporting an unpriced completed call", async () => {
   record.mockResolvedValue(false);
   const event = {
@@ -98,7 +88,6 @@ it("retains failed-step evidence without reporting an unpriced completed call", 
     })
   );
 });
-/* oxlint-enable oxc/no-async-await */
 
 const toolEvent = (output: unknown, id = "event-one"): MessageStreamEvent => ({
   data: {
@@ -117,9 +106,8 @@ const toolEvent = (output: unknown, id = "event-one"): MessageStreamEvent => ({
   type: "action.result",
 });
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * no-magic-numbers (#517): it("ingests receipts from arbitrary installed names with the same ledger identity aft uses 0.02, 2, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("ingests receipts from arbitrary installed names with the same ledger identity aft sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("ingests receipts from arbitrary installed names with the same ledger identity aft accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): it("ingests receipts from arbitrary installed names with the same ledger identity aft keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -149,11 +137,10 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
     turnId: "turn_1",
   });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): it("retains unpriced and malformed external receipts for reconciliation") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("retains unpriced and malformed external receipts for reconciliation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("retains unpriced and malformed external receipts for reconciliation") accepts [value]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("retains unpriced and malformed external receipts for reconciliation", async () => {
@@ -177,11 +164,8 @@ it("retains unpriced and malformed external receipts for reconciliation", async 
     undefined,
   ]);
 });
-/* oxlint-enable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("does not infer billing from ordinary tool output") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("does not infer billing from ordinary tool output", async () => {
   await ingestEveUsage(
     "owner",
@@ -190,11 +174,9 @@ it("does not infer billing from ordinary tool output", async () => {
   );
   expect(record).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("attributes child model events to the root turn without billing delegation summari uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("attributes child model events to the root turn without billing delegation summari sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("attributes child model events to the root turn without billing delegation summaries", async () => {
   const attribution = { sessionId: "root", turnId: "turn_7" };
@@ -227,4 +209,4 @@ it("attributes child model events to the root turn without billing delegation su
   });
   expect(record).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */

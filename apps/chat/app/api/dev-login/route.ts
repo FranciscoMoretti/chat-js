@@ -1,19 +1,14 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { session, user } from "@/lib/db/schema";
 import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): serializeSignedCookie uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): serializeSignedCookie sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): serializeSignedCookie accepts opt: { path?: string; httpOnly?: boolean; sameSite?: string; secure?: boolean; e; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): serializeSignedCookie intentionally keeps the existing falsy-value behavior of opt.path; opt.httpOnly; opt.secure; opt.sameSite; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -62,16 +57,13 @@ const serializeSignedCookie = async (
   }
   return cookie;
 };
-/* oxlint-enable max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, oxc/no-async-await, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/no-named-export (#527): Preserve the named GET API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): GET remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): GET keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): GET keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): GET uses 30, 24, 60, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * node/no-process-env (#537): GET reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * oxc/no-async-await (#540): GET sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/strict-boolean-expressions (#610): GET intentionally keeps the existing falsy-value behavior of devUser; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -139,4 +131,4 @@ export const GET = async (): Promise<Response> => {
     status: 302,
   });
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, oxc/no-async-await, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions, unicorn/no-null */

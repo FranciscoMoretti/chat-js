@@ -5,10 +5,6 @@ import { env } from "../env";
 import { resolveWorkflowWorld } from "./world-config";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export --
- * import/no-named-export (#527): Preserve the named localDeletionAvailable API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): localDeletionAvailable remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
- */
 export const localDeletionAvailable = (): boolean => {
   if (resolveWorkflowWorld(env) === "vercel") {
     return false;
@@ -27,4 +23,3 @@ export const localDeletionAvailable = (): boolean => {
     return false;
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export */

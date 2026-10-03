@@ -1,7 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env"; "../lib/eve/conversation-scope" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
@@ -19,7 +18,7 @@ import { resolveEveConversationScope } from "../lib/eve/conversation-scope";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 const native = vi.hoisted(() => ({ positions: vi.fn(), request: vi.fn() }));
 vi.mock("server-only", () => ({}));
@@ -56,9 +55,6 @@ vi.mock("../lib/db/eve-stream-positions", () => ({
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 afterAll(async () => {
   await db
     .delete(eveConversation)
@@ -66,16 +62,11 @@ afterAll(async () => {
   await db.delete(eveChat).where(inArray(eveChat.ownerId, owners));
   await db.delete(user).where(inArray(user.id, owners));
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti uses -1, 0, 1, 409, 503, 200, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-async-await (#540): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-optional-chaining (#542): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti handles optional interrupted?.state; interrupted?.initialRequest; retained?.initialRequest; interrupted?.id; recovered?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti copies or separates ...command while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti accepts init: RequestInit; sessions: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -182,11 +173,10 @@ test.each(["before-dispatch", "lost-response"])(
     expect(allocations).toHaveLength(2);
   }
 );
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test("a verified native hook binds while dispatch is in flight without conflicting wi uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("a verified native hook binds while dispatch is in flight without conflicting wi sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("a verified native hook binds while dispatch is in flight without conflicting wi preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("a verified native hook binds while dispatch is in flight without conflicting with the HTTP response", async () => {
@@ -233,11 +223,10 @@ test("a verified native hook binds while dispatch is in flight without conflicti
     bindAcceptedEveConversation(owner, binding.id, "different-native")
   ).rejects.toThrow("binding_conflict");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): test("concurrent bindings cannot claim one native session for two branches") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("concurrent bindings cannot claim one native session for two branches") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("concurrent bindings cannot claim one native session for two branches") accepts row; result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("concurrent bindings cannot claim one native session for two branches") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -268,13 +257,12 @@ test("concurrent bindings cannot claim one native session for two branches", asy
     }
   );
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("mapping rejects deletion, foreign ownership and inherited subagent identity wit preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("mapping rejects deletion, foreign ownership and inherited subagent identity without rebinding", async () => {
@@ -329,4 +317,4 @@ test("mapping rejects deletion, foreign ownership and inherited subagent identit
     bindAcceptedEveConversation(owner, crypto.randomUUID(), sessionId)
   ).rejects.toMatchObject({ code: "identity_missing" });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */

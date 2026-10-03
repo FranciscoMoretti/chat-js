@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { WorkflowToolContext } from "eve/tools";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -11,7 +10,7 @@ import {
 } from "@/tools/chatjs/deep-research/steps";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
   research: true,
@@ -84,9 +83,6 @@ const owner = {
   principalId: "owner",
   principalType: "user",
 };
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): context copies or separates ...testToolContext({ callId: "research-call", session: { auth: { current: owner, init while preserving existing object ownership; mutating source objects is not equivalent.
- */
 const context = (): WorkflowToolContext => ({
   ...testToolContext({
     callId: "research-call",
@@ -100,7 +96,6 @@ const context = (): WorkflowToolContext => ({
   agents: {},
   ask: vi.fn(),
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -114,9 +109,8 @@ beforeEach(() => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses the owned native transcript without feeding the live research invocation bac uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("uses the owned native transcript without feeding the live research invocation bac sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("uses the owned native transcript without feeding the live research invocation back into the brief", async () => {
   const prepared = await prepareResearch(context());
@@ -124,11 +118,8 @@ it("uses the owned native transcript without feeding the live research invocatio
   expect(prepared.messages).not.toContain("research-call");
   expect(prepared.timestamp).toBeGreaterThan(0);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("rejects absent research and text documents before reading the transcript") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("rejects absent research and text documents before reading the transcript", async () => {
   mocks.research = false;
   await expect(prepareResearch(context())).rejects.toThrow(
@@ -142,11 +133,7 @@ it("rejects absent research and text documents before reading the transcript", a
 
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("rejects research without an installed search provider") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("rejects research without an installed search provider", async () => {
   Reflect.deleteProperty(mocks.tools, "webSearch");
   await expect(prepareResearch(context())).rejects.toThrow(
@@ -154,12 +141,7 @@ it("rejects research without an installed search provider", async () => {
   );
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("rejects guest and incompatible selected-tool invocations") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("rejects guest and incompatible selected-tool invocations") copies or separates ...ctx; ...ctx.session; ...owner while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("rejects guest and incompatible selected-tool invocations", async () => {
   const ctx = context();
   await expect(
@@ -189,12 +171,7 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   ).rejects.toThrow("authenticated owner");
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("does not save after cancellation and retains the root operation identity on succe sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("does not save after cancellation and retains the root operation identity on succe copies or separates ...ctx while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("does not save after cancellation and retains the root operation identity on success", async () => {
   const ctx = context();
   const abort = new AbortController();
@@ -222,4 +199,3 @@ it("does not save after cancellation and retains the root operation identity on 
     ctx
   );
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */

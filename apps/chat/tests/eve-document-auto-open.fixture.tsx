@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-artifact-layout"; "../components/eve/eve-document-tool"; "../components/ui/sidebar"; "../hooks/use-artifact"; "../trpc/react" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { QueryClientProvider } from "@tanstack/react-query";
 import type { EveMessagePart } from "eve/client";
@@ -18,7 +17,7 @@ import {
   queryClient,
   trpcClient,
 } from "./eve-artifact-query.fixture";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 type Part = Extract<EveMessagePart, { type: "dynamic-tool" }>;
 const completed: Part = {
@@ -36,11 +35,9 @@ const completed: Part = {
   toolName: "createTextDocument",
   type: "dynamic-tool",
 };
-/* oxlint-disable max-lines-per-function, no-ternary, no-undefined, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): Fixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-rest-spread-properties (#543): Fixture copies or separates ...completed; ...artifact while preserving existing object ownership; mutating source objects is not equivalent.
  * react-perf/jsx-no-new-function-as-prop (#557): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-no-literals (#549): Fixture owns this fixture copy; replacing literal text requires a localization/content-management contract.
  * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
@@ -159,9 +156,8 @@ const Fixture = ({
     </main>
   );
 };
-/* oxlint-enable max-lines-per-function, no-ternary, no-undefined, oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable no-ternary, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/promise-function-async --
- * no-ternary (#518): App derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/promise-function-async --
  * no-undefined (#519): App uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * react-perf/jsx-no-new-function-as-prop (#557): App creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-no-literals (#549): App owns this fixture copy; replacing literal text requires a localization/content-management contract.
@@ -200,7 +196,7 @@ const App = (): React.JSX.Element => {
     </>
   );
 };
-/* oxlint-enable no-ternary, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/promise-function-async */
+/* oxlint-enable no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/promise-function-async */
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");

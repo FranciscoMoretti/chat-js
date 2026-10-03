@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { describe, expect, it } from "vitest";
 
 import { createConversationInput } from "./contracts";
@@ -11,11 +8,9 @@ import {
   sameOrigin,
 } from "./request-policy";
 import { sendCommand } from "./send-command";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-lines-per-function, oxc/no-optional-chaining, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, unicorn/no-null --
  * max-lines-per-function (#510): describe("Eve request policy") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-optional-chaining (#542): describe("Eve request policy") handles optional parseSessionRequest("/eve/v1/session/a/stream", "GET")?.sessionId; policy?.schema.safeParse(input).success; policy?.schema.safeParse({ message: "hello", owner: "other" }).success; policy?.schema.safeParse({ message: " " }).success; policy?.schema.safeParse({ inputResponses: [{ optionId: "allow", requestId: "req" }], without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * unicorn/no-null (#570): describe("Eve request policy") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 describe("Eve request policy", () => {
@@ -109,12 +104,11 @@ describe("Eve request policy", () => {
     }
   });
 });
-/* oxlint-enable max-lines-per-function, oxc/no-optional-chaining, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
  * max-lines-per-function (#510): describe("Eve command recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("Eve command recovery") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): describe("Eve command recovery") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep describe("Eve command recovery")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): describe("Eve command recovery") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): describe("Eve command recovery") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -172,11 +166,10 @@ describe("Eve command recovery", () => {
     expect(replayed).toBe(1);
   });
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("waits for authoritative acceptance after cancellation without submitting twice") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("waits for authoritative acceptance after cancellation without submitting twice") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it("waits for authoritative acceptance after cancellation without submitting twice") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("waits for authoritative acceptance after cancellation without submitting twice", async () => {
@@ -200,11 +193,8 @@ it("waits for authoritative acceptance after cancellation without submitting twi
   expect(submissions).toBe(1);
   expect(snapshots).toBe(2);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): it("accepts conversation-based forks and rejects raw native identities or invalid tur copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
   const input = { message: "replacement", operationId: crypto.randomUUID() };
   expect(
@@ -236,11 +226,7 @@ it("accepts conversation-based forks and rejects raw native identities or invali
     }).success
   ).toBe(true);
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): it("allows a project for new conversations while forks inherit their existing project copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("allows a project for new conversations while forks inherit their existing project", () => {
   const input = {
     message: "Project conversation",
@@ -259,11 +245,7 @@ it("allows a project for new conversations while forks inherit their existing pr
     }).success
   ).toBe(false);
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): it("accepts exactly one canonical imported fork boundary") copies or separates ...input.fork; ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("accepts exactly one canonical imported fork boundary", () => {
   const input = {
     fork: {
@@ -286,4 +268,3 @@ it("accepts exactly one canonical imported fork boundary", () => {
     );
   }
 });
-/* oxlint-enable oxc/no-rest-spread-properties */

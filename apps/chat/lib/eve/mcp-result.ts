@@ -23,13 +23,8 @@ const modelOutput = z.discriminatedUnion("type", [
   }),
 ]);
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable import/no-named-export, import/prefer-default-export --
- * import/no-named-export (#527): Preserve the named eveMcpResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): eveMcpResult remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
- */
 export const eveMcpResult = z.object({
   kind: z.literal("chatjs.mcp-result"),
   output: z.json(),
   modelOutput,
 });
-/* oxlint-enable import/no-named-export, import/prefer-default-export */

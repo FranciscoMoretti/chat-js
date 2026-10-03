@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/controlled-chat-composer"; "../components/eve/eve-messages"; "../components/message-siblings-view"; "../components/response-choice-cards" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import type { EveMessage } from "eve/client";
 import React, { useMemo, useState } from "react";
@@ -11,7 +10,7 @@ import { EveMessages } from "../components/eve/eve-messages";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
 import { LegacyUserMessageReference } from "./eve-message-presentation.legacy";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const messages: readonly EveMessage[] = [
   {
@@ -103,9 +102,8 @@ const Editor = ({
 };
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, no-ternary, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): VersionControls uses 3, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-ternary (#518): VersionControls derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * react-perf/jsx-no-new-function-as-prop (#557): VersionControls creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/no-multi-comp (#552): VersionControls keeps related fixture render states together; extraction changes component, state, and layout boundaries.
  * react/only-export-components (#553): VersionControls is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
@@ -133,13 +131,11 @@ const VersionControls = ({
     />
   );
 };
-/* oxlint-enable no-magic-numbers, no-ternary, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-ternary, no-undefined, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): Transcript keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-ternary (#518): Transcript derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): Transcript uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-optional-chaining (#542): Transcript handles optional message.metadata?.modelId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * react-perf/jsx-no-new-function-as-prop (#557): Transcript creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/no-multi-comp (#552): Transcript keeps related fixture render states together; extraction changes component, state, and layout boundaries.
  * react/only-export-components (#553): Transcript is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
@@ -202,7 +198,7 @@ const Transcript = ({
     </section>
   );
 };
-/* oxlint-enable max-lines-per-function, no-ternary, no-undefined, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): LegacyReference uses 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -254,9 +250,8 @@ const LegacyReference = ({
 };
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, oxc/no-rest-spread-properties, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-rest-spread-properties (#543): Fixture copies or separates ...slot while preserving existing object ownership; mutating source objects is not equivalent.
  * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react-perf/jsx-no-new-function-as-prop (#557): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-no-literals (#549): Fixture owns this fixture copy; replacing literal text requires a localization/content-management contract.
@@ -317,7 +312,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable max-lines-per-function, oxc/no-rest-spread-properties, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
 const root = document.querySelector("#root");
 if (!root) {

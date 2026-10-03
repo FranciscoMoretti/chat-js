@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 /* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
@@ -7,7 +5,6 @@ import type * as React from "react";
 /* oxlint-enable import/no-namespace */
 
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
 
 const badgeVariants = cva(
   "focus:ring-ring inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none",
@@ -28,15 +25,15 @@ const badgeVariants = cva(
     },
   }
 );
-/* oxlint-disable import/exports-last, import/no-named-export -- BadgeProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/exports-last -- BadgeProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together;  */
 
 export interface BadgeProps
   extends
     React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
-/* oxlint-enable import/exports-last, import/no-named-export */
+/* oxlint-enable import/exports-last */
 
-/* oxlint-disable oxc/no-rest-spread-properties, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Badge: oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }: BadgeProps). */
+/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Badge: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }: BadgeProps). */
 
 const Badge = ({
   className,
@@ -45,8 +42,8 @@ const Badge = ({
 }: BadgeProps): React.JSX.Element => (
   <div className={cn(badgeVariants({ variant }), className)} {...props} />
 );
-/* oxlint-enable oxc/no-rest-spread-properties, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/no-named-export, react/only-export-components -- badge.tsx exports: import/no-named-export: existing callers import this public component, type, or hook by name; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
+/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable react/only-export-components -- badge.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Badge, badgeVariants };
-/* oxlint-enable import/no-named-export, react/only-export-components */
+/* oxlint-enable react/only-export-components */

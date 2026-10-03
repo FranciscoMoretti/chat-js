@@ -1,21 +1,13 @@
 "use client";
 
 import { useTheme } from "next-themes";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { parse, unparse } from "papaparse";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import React, { memo, useMemo, useState } from "react";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import DataGrid, { textEditor } from "react-data-grid";
-/* oxlint-enable eslint/sort-imports */
 
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import "react-data-grid/lib/styles.css";
-/* oxlint-enable eslint/sort-imports */
 
 interface SheetEditorProps {
   content: string;
@@ -37,7 +29,6 @@ const generateCsv = (data: (string | number)[][]): string => unparse(data);
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
@@ -173,7 +164,6 @@ const PureSpreadsheetEditor = ({
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -193,8 +183,4 @@ const areEqual = (
   prevProps.isReadonly === nextProps.isReadonly;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const SpreadsheetEditor = memo(PureSpreadsheetEditor, areEqual);
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

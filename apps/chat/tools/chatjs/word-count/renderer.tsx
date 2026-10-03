@@ -2,13 +2,9 @@
 import React from "react";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { wordCountInput, wordCountResult } from "./schemas";
-/* oxlint-enable eslint/sort-imports */
 
 type WordCountRendererTool = ToolRendererProps<
   typeof wordCountInput,
@@ -77,12 +73,8 @@ const WordCountView = ({
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const WordCountRenderer = defineToolRenderer({
   inputSchema: wordCountInput,
   outputSchema: wordCountResult,
   render: WordCountView,
 });
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

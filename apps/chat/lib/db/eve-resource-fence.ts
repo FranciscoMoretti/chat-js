@@ -93,10 +93,8 @@ do $$ declare table_name text; begin
 end $$;
 `;
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): installEvePostgresResourceFence stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named installEvePostgresResourceFence API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): installEvePostgresResourceFence sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): installEvePostgresResourceFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export const installEvePostgresResourceFence = async (
@@ -106,15 +104,13 @@ export const installEvePostgresResourceFence = async (
     await query.unsafe(installSql);
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): fenceEvePostgresResourcesInTransaction stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named fenceEvePostgresResourcesInTransaction API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): fenceEvePostgresResourcesInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): fenceEvePostgresResourcesInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): fenceEvePostgresResourcesInTransaction uses 1, 10_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): fenceEvePostgresResourcesInTransaction sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResourcesInTransaction accepts query: TransactionSql; input: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Shares the caller's READ COMMITTED transaction with inventory coordination. */
@@ -166,13 +162,11 @@ export const fenceEvePostgresResourcesInTransaction = async (
     }
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): fenceEvePostgresResources stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named fenceEvePostgresResources API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): fenceEvePostgresResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * oxc/no-async-await (#540): fenceEvePostgresResources sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResources accepts connection: Sql; input: { runIds: string[]; streamIds: string[]; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
@@ -191,4 +185,4 @@ export const fenceEvePostgresResources = async (
     await fenceEvePostgresResourcesInTransaction(query, input);
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types */

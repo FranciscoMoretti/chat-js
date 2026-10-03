@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { describe, expect, it } from "vitest";
 
 import { draftMessage } from "./draft";
 import { prepareCreation, readCreation } from "./pending-create";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep describe("multipart draft recovery")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.

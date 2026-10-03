@@ -1,10 +1,8 @@
 /* oxlint-disable import/exports-last -- PreviewConfigurationError: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- PreviewConfigurationError: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- PreviewConfigurationError: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export class PreviewConfigurationError extends Error {
   public override name = "PreviewConfigurationError";
 }
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
@@ -35,7 +33,6 @@ const matchingAuthority = (app: URL, migration: URL): boolean => {
 
 /* oxlint-disable import/group-exports -- resolveMaintainerPreviewDatabase: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- resolveMaintainerPreviewDatabase: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable import/no-named-export -- resolveMaintainerPreviewDatabase: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- resolveMaintainerPreviewDatabase: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable eslint/max-lines-per-function -- resolveMaintainerPreviewDatabase: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable typescript/explicit-function-return-type -- resolveMaintainerPreviewDatabase: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
@@ -116,6 +113,5 @@ export const resolveMaintainerPreviewDatabase = (
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */

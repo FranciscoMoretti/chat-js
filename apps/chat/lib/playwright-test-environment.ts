@@ -11,9 +11,7 @@ const isEnabledFlag = (value: string | undefined): boolean => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/no-named-export (#527): Preserve the named isPlaywrightTestEnvironment API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): isPlaywrightTestEnvironment remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * node/no-process-env (#537): isPlaywrightTestEnvironment reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/prefer-readonly-parameter-types (#565): isPlaywrightTestEnvironment accepts env: NodeJS.ProcessEnv = process.env; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): isPlaywrightTestEnvironment intentionally keeps the existing falsy-value behavior of env.PLAYWRIGHT_TEST_BASE_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -27,4 +25,4 @@ export const isPlaywrightTestEnvironment = (
     isEnabledFlag(env.PLAYWRIGHT) ||
     isEnabledFlag(env.CI_PLAYWRIGHT)
   );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

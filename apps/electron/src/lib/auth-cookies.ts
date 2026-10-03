@@ -4,17 +4,14 @@ const isSessionTokenCookieName = (name: string): boolean =>
   name.endsWith(".session_token");
 
 /* oxlint-disable import/group-exports -- isBetterAuthCookieName: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- isBetterAuthCookieName: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const isBetterAuthCookieName = (name: string): boolean =>
   name.startsWith(ELECTRON_AUTH_COOKIE_PREFIX) ||
   name.startsWith(`__Secure-${ELECTRON_AUTH_COOKIE_PREFIX}`) ||
   isSessionTokenCookieName(name) ||
   name.endsWith(".session_data");
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- hasSessionCookie: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- hasSessionCookie: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/no-magic-numbers -- hasSessionCookie: Zero rejects empty cookie names/values and index + 1 skips the single equals delimiter; these offsets define the cookie-header parser. */
 export const hasSessionCookie = (cookieHeader: string): boolean =>
   cookieHeader.split(";").some((entry) => {
@@ -26,5 +23,4 @@ export const hasSessionCookie = (cookieHeader: string): boolean =>
     );
   });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

@@ -3,7 +3,6 @@ import { describe, expect, it } from "bun:test";
 import { presentationAt, script, stateAt } from "./story";
 
 /* oxlint-disable eslint/no-magic-numbers -- Two-path story: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Two-path story: The scenario copies fixture inputs so later assertions retain their original values. */
 /* oxlint-disable eslint/id-length -- Two-path story: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 describe("Two-path story", () => {
   it("keeps the original while its alternative streams in the background", () => {
@@ -49,5 +48,4 @@ describe("Two-path story", () => {
   });
 });
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-magic-numbers */

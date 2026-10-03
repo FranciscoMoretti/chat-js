@@ -24,11 +24,9 @@ type RunOptions = {
   openBeforeDelete?: boolean;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable oxc/no-async-await -- run: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
 /* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable eslint/no-ternary -- run: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable unicorn/no-null -- run: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- run: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- run: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
@@ -93,17 +91,12 @@ const run = async ({
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-lines-per-function -- preview database cleanup: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
-/* oxlint-disable oxc/no-async-await -- preview database cleanup: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- preview database cleanup: The scenario copies fixture inputs so later assertions retain their original values. */
 /* oxlint-disable eslint/no-magic-numbers -- preview database cleanup: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable oxc/no-optional-chaining -- preview database cleanup: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- preview database cleanup: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 describe("preview database cleanup", (): void => {
   it("deletes only the exact closed-PR preview in the dedicated project", async (): Promise<void> => {
@@ -205,8 +198,5 @@ describe("preview database cleanup", (): void => {
   });
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */

@@ -1,12 +1,8 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { NextRequest } from "next/server";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { GET } from "@/app/api/mcp/oauth/callback/route";
 import { MissingCredentialsError } from "@/lib/required-credentials";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): mocks preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -70,9 +66,8 @@ beforeEach(() => {
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("redirects an OAuth callback with an explicit setup error before accessing connect uses 307 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("redirects an OAuth callback with an explicit setup error before accessing connect sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("redirects an OAuth callback with an explicit setup error before accessing connector secrets", async () => {
   mocks.requireCredentials.mockImplementation(() => {
@@ -93,11 +88,10 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
   );
   expect(mocks.getSession).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable max-statements, unicorn/no-null --
  * max-statements (#512): it("provider cancellation deletes only pending state and returns a safe connector-sco keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("provider cancellation deletes only pending state and returns a safe connector-sco sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("provider cancellation deletes only pending state and returns a safe connector-sco preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("provider cancellation deletes only pending state and returns a safe connector-scoped message", async () => {
@@ -125,12 +119,10 @@ it("provider cancellation deletes only pending state and returns a safe connecto
   expect(mocks.removeClient).toHaveBeenCalledWith("connector", "state");
   expect(mocks.invalidate).toHaveBeenCalledWith("connector");
 });
-/* oxlint-enable max-statements, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable max-statements, unicorn/no-null */
 
-/* oxlint-disable no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * no-ternary (#518): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-undefined (#519): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ accepts session; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): it.each([ undefined, { mcpConnectorId: "connector", state: "state", tokens: { access_ preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -165,11 +157,10 @@ it.each([
     expect(mocks.invalidate).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-undefined, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable no-undefined, unicorn/no-null --
  * no-undefined (#519): it("an attempt completed between lookup and deletion retains its client") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): it("an attempt completed between lookup and deletion retains its client") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("an attempt completed between lookup and deletion retains its client") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("an attempt completed between lookup and deletion retains its client", async () => {
@@ -193,4 +184,4 @@ it("an attempt completed between lookup and deletion retains its client", async 
   expect(mocks.removeClient).not.toHaveBeenCalled();
   expect(mocks.invalidate).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-undefined, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable no-undefined, unicorn/no-null */

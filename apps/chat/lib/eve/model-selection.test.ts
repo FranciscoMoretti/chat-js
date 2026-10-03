@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { MockLanguageModelV3 } from "ai/test";
 import { expect, test, vi } from "vitest";
 
@@ -9,11 +6,9 @@ import {
   loadEveModelDefinition,
   resolveEveModel,
 } from "./model-selection";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/no-relative-parent-imports, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async --
+/* oxlint-disable import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/promise-function-async --
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/gateways/fallback-models" dependency within this package instead of introducing an alias or barrel API.
- * oxc/no-async-await (#540): vi.mock("../ai/active-gateway") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("../ai/active-gateway")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): vi.mock("../ai/active-gateway") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -35,7 +30,7 @@ vi.mock("../ai/active-gateway", () => ({
     },
   }),
 }));
-/* oxlint-enable import/no-relative-parent-imports, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-enable import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/promise-function-async */
 vi.mock("../config", () => ({
   config: {
     ai: {
@@ -72,9 +67,6 @@ vi.mock("../ai/gateways/fallback-models", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("keeps the provider model and reasoning variant distinct") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("keeps the provider model and reasoning variant distinct", async () => {
   expect(getEveModelDefinition()).toMatchObject({
     id: "plain",
@@ -93,17 +85,12 @@ test("keeps the provider model and reasoning variant distinct", async () => {
     },
   });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("the logical reasoning identity still dispatches to the original provider model" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("the logical reasoning identity still dispatches to the original provider model", async () => {
   const resolved = await resolveEveModel("thinking-reasoning");
   await expect(resolved.model.doGenerate({ prompt: [] })).rejects.toThrow(
     "provider model: thinking"
   );
 });
-/* oxlint-enable oxc/no-async-await */
 
 test.each(["unknown", "disabled", "image", "plain-reasoning"])(
   "rejects unavailable selection %s",
@@ -112,13 +99,9 @@ test.each(["unknown", "disabled", "image", "plain-reasoning"])(
   }
 );
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("accepts live catalog models absent from the snapshot") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("accepts live catalog models absent from the snapshot", async () => {
   expect(() => getEveModelDefinition("live-only")).toThrow();
   expect(await loadEveModelDefinition("live-only")).toMatchObject({
     id: "live-only",
   });
 });
-/* oxlint-enable oxc/no-async-await */

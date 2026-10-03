@@ -1,7 +1,5 @@
 import { setupRenderer } from "@better-auth/electron/preload";
-/* oxlint-disable eslint/sort-imports -- the electron import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { contextBridge, ipcRenderer } from "electron";
-/* oxlint-enable eslint/sort-imports */
 
 // Setup @better-auth/electron renderer bridges.
 // Exposes window.requestAuth(), window.onAuthenticated(), window.signOut(), etc.

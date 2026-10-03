@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
@@ -22,32 +21,23 @@ import {
 import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(user).values({ email: `${owner}@test.in runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,
   name: "Sandbox ownership",
 });
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 afterAll(async () => {
   await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type --
- * oxc/no-async-await (#540): conversation sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 async function conversation() {
@@ -58,12 +48,10 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
-/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-statements, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("unresolved allocation blocks final deletion until confirmed cleanup; retries re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("unresolved allocation blocks final deletion until confirmed cleanup; retries re sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("unresolved allocation blocks final deletion until confirmed cleanup; retries re copies or separates ...provider while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("unresolved allocation blocks final deletion until confirmed cleanup; retries retain the tombstone", async () => {
   const row = await conversation();
@@ -93,11 +81,8 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
     reserveEveCodeSandbox(owner, row.id, "call-2", provider)
   ).rejects.toThrow("unavailable");
 });
-/* oxlint-enable max-statements, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("foreign owners cannot reserve or resolve resources, and completed calls cannot  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("foreign owners cannot reserve or resolve resources, and completed calls cannot reallocate", async () => {
   const row = await conversation();
   await expect(
@@ -112,11 +97,7 @@ test("foreign owners cannot reserve or resolve resources, and completed calls ca
     reserveEveCodeSandbox(owner, row.id, "call", provider)
   ).rejects.toThrow("Reconcile");
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("concurrent allocation and deletion cannot leave an untracked admitted resource" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("concurrent allocation and deletion cannot leave an untracked admitted resource", async () => {
   const row = await conversation();
   const [allocation] = await Promise.allSettled([
@@ -137,11 +118,9 @@ test("concurrent allocation and deletion cannot leave an untracked admitted reso
     ).toEqual([]);
   }
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable max-statements, oxc/no-async-await --
+/* oxlint-disable max-statements --
  * max-statements (#512): test("only a retired owned family can inventory confirmed creation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): test("only a retired owned family can inventory confirmed creation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("only a retired owned family can inventory confirmed creation", async () => {
   const row = await conversation();
@@ -177,4 +156,4 @@ test("only a retired owned family can inventory confirmed creation", async () =>
     confirmEveCodeSandboxCreation(owner, row.id, name)
   ).rejects.toThrow("ownership");
 });
-/* oxlint-enable max-statements, oxc/no-async-await */
+/* oxlint-enable max-statements */

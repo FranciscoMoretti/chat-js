@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-copy-documents"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
@@ -21,7 +20,7 @@ import {
 import { env } from "../lib/env";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const ownerId = crypto.randomUUID();
@@ -34,18 +33,11 @@ const rootRevision = crypto.randomUUID();
 const visibleRevision = crypto.randomUUID();
 const privateRevision = crypto.randomUUID();
 const hiddenRevision = crypto.randomUUID();
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(user).values({ email: `${ownerId}@test. runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(user).values({
   email: `${ownerId}@test.invalid`,
   id: ownerId,
   name: "Copy documents fixture",
 });
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await insertEveConversationFixtures([ { firstMessage: " runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await insertEveConversationFixtures([
   {
     firstMessage: "Published",
@@ -68,7 +60,6 @@ await insertEveConversationFixtures([
     state: "bound",
   },
 ]);
-/* oxlint-enable node/no-top-level-await */
 const revision = {
   conversationId,
   documentId,
@@ -77,21 +68,12 @@ const revision = {
   title: "Published artifact",
   turnIndex: 3,
 } satisfies Partial<typeof eveDocumentRevision.$inferInsert>;
-/* oxlint-disable node/no-top-level-await, oxc/no-rest-spread-properties --
- * node/no-top-level-await (#539): await db.insert(eveDocumentRevision).values({ ...revisi runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- * oxc/no-rest-spread-properties (#543): await db.insert(eveDocumentRevision).values({ ...revisi copies or separates ...revision while preserving existing object ownership; mutating source objects is not equivalent.
- */
 await db.insert(eveDocumentRevision).values({
   ...revision,
   content: "First published version",
   id: rootRevision,
   operationId: "root",
 });
-/* oxlint-enable node/no-top-level-await, oxc/no-rest-spread-properties */
-/* oxlint-disable node/no-top-level-await, oxc/no-rest-spread-properties --
- * node/no-top-level-await (#539): await db.insert(eveDocumentRevision).values([ { ...revi runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- * oxc/no-rest-spread-properties (#543): await db.insert(eveDocumentRevision).values([ { ...revi copies or separates ...revision while preserving existing object ownership; mutating source objects is not equivalent.
- */
 await db.insert(eveDocumentRevision).values([
   {
     ...revision,
@@ -116,10 +98,6 @@ await db.insert(eveDocumentRevision).values([
     operationId: "hidden",
   },
 ]);
-/* oxlint-enable node/no-top-level-await, oxc/no-rest-spread-properties */
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(eveDocumentHead).values([ { conversatio runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(eveDocumentHead).values([
   { conversationId, documentId, ownerId, revisionId: visibleRevision },
   {
@@ -135,10 +113,6 @@ await db.insert(eveDocumentHead).values([
     revisionId: hiddenRevision,
   },
 ]);
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 afterAll(async () => {
   for (const table of [
     eveImportedDocumentCheckpointEntry,
@@ -157,15 +131,13 @@ afterAll(async () => {
     .where(inArray(eveConversation.id, [branchId, conversationId]));
   await db.delete(user).where(eq(user.id, ownerId));
 });
-/* oxlint-enable oxc/no-async-await */
 const resources = {
   documentIds: [documentId],
   revisionIds: [rootRevision, visibleRevision],
 };
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): test("captures all accessible ancestors without private branches, unrelated documents uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("captures all accessible ancestors without private branches, unrelated documents sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("captures all accessible ancestors without private branches, unrelated documents accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("captures all accessible ancestors without private branches, unrelated documents, or runtime ownership fields", async () => {
@@ -196,12 +168,8 @@ test("captures all accessible ancestors without private branches, unrelated docu
     expect(JSON.stringify(result)).not.toContain(forbidden);
   }
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): test("rejects a referenced private revision or a missing document instead of partiall sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("rejects a referenced private revision or a missing document instead of partiall copies or separates ...resources while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("rejects a referenced private revision or a missing document instead of partially copying", async () => {
   await expect(
     snapshotPublicEveCopyDocuments(
@@ -234,11 +202,7 @@ test("rejects a referenced private revision or a missing document instead of par
     )
   ).rejects.toThrow("unavailable");
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("requires publication even for an empty resource manifest") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("requires publication even for an empty resource manifest", async () => {
   await expect(
     snapshotPublicEveCopyDocuments(
@@ -263,11 +227,9 @@ test("requires publication even for an empty resource manifest", async () => {
     )
   ).toEqual({ checkpoints: [], documents: [] });
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): test("observes revocation committed while preparation is waiting on the source row") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): test("observes revocation committed while preparation is waiting on the source row") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("observes revocation committed while preparation is waiting on the source row") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("observes revocation committed while preparation is waiting on the source row", async () => {
@@ -297,11 +259,10 @@ test("observes revocation committed while preparation is waiting on the source r
     .set({ visibility: "public" })
     .where(eq(eveConversation.id, conversationId));
 });
-/* oxlint-enable no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("snapshots native and imported boundaries independently of later document heads" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): test("snapshots native and imported boundaries independently of later document heads" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 test("snapshots native and imported boundaries independently of later document heads", async () => {
   await db.insert(eveDocumentCheckpoint).values([
@@ -347,4 +308,4 @@ test("snapshots native and imported boundaries independently of later document h
     ])
   ).rejects.toThrow("boundary is unavailable");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */

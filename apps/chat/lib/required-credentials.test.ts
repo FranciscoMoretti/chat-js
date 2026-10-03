@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { expect, test } from "vitest";
 
 import {
   MissingCredentialsError,
   requireCredentials,
 } from "./required-credentials";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("reports missing groups explicitly without exposing supplied secrets") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -65,13 +61,11 @@ test("supports alternative credentials, combined groups, and Vercel runtime auth
 });
 /* oxlint-enable id-length */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-optional-chaining, oxc/no-rest-spread-properties --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers --
  * init-declarations (#507): test("reports only unsatisfied subgroups recursively, even without descriptions") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("reports only unsatisfied subgroups recursively, even without descriptions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("reports only unsatisfied subgroups recursively, even without descriptions") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("reports only unsatisfied subgroups recursively, even without descriptions") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-optional-chaining (#542): test("reports only unsatisfied subgroups recursively, even without descriptions") handles optional failure?.requirements; failure?.message; requirements[0]?.allOf without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
- * oxc/no-rest-spread-properties (#543): test("reports only unsatisfied subgroups recursively, even without descriptions") copies or separates ...env while preserving existing object ownership; mutating source objects is not equivalent.
  */
 test("reports only unsatisfied subgroups recursively, even without descriptions", () => {
   const requirements = [
@@ -148,4 +142,4 @@ test("reports only unsatisfied subgroups recursively, even without descriptions"
     })
   ).not.toThrow();
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-optional-chaining, oxc/no-rest-spread-properties */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers */

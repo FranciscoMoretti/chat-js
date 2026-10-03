@@ -21,9 +21,8 @@ vi.mock("@/lib/db/connection", () => ({
 
 beforeEach(() => vi.clearAllMocks());
 
-/* oxlint-disable max-statements, oxc/no-async-await, typescript/promise-function-async --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): it("cancellation after lock acquisition waits for the active refresh to finish and re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("cancellation after lock acquisition waits for the active refresh to finish and re sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): it("cancellation after lock acquisition waits for the active refresh to finish and re preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("cancellation after lock acquisition waits for the active refresh to finish and release the transaction", async () => {
@@ -64,12 +63,11 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
   await rejected;
   expect(mocks.released).toHaveBeenCalledOnce();
 });
-/* oxlint-enable max-statements, oxc/no-async-await, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("cancellation while acquiring the lock cancels the query and never starts refresh  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("cancellation while acquiring the lock cancels the query and never starts refresh  uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("cancellation while acquiring the lock cancels the query and never starts refresh  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("cancellation while acquiring the lock cancels the query and never starts refresh work", async () => {
   const lock = Promise.withResolvers<unknown[]>();
@@ -103,4 +101,4 @@ it("cancellation while acquiring the lock cancels the query and never starts ref
   expect(cancel).toHaveBeenCalledOnce();
   expect(refresh).not.toHaveBeenCalled();
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable max-statements, no-magic-numbers */

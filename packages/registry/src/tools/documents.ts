@@ -3,11 +3,9 @@ import type { RegistryItem } from "shadcn/schema";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { toolDefinitionSchema } from "../../metadata";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import registryPackage from "../../package.json";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -58,7 +56,6 @@ const bundles = [
 ] as const;
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const documentItems: RegistryItem[] = [
   {
     description:
@@ -135,11 +132,9 @@ export const documentItems: RegistryItem[] = [
     type: "registry:item" as const,
   })),
 ];
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const savedCodeExecutionItem: RegistryItem = {
   description: "Run saved code revisions with a compatible installed executor",
   files: documentFiles("saved-code-execution", [
@@ -167,11 +162,9 @@ export const savedCodeExecutionItem: RegistryItem = {
   registryDependencies: ["@chatjs/code-documents", "@chatjs/code-execution-ui"],
   type: "registry:item",
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const codeExecutionUiItem: RegistryItem = {
   dependencies: ["echarts", "echarts-for-react", "motion"],
   description: "Shared chart renderer for installed code execution tools",
@@ -187,5 +180,4 @@ export const codeExecutionUiItem: RegistryItem = {
   name: "code-execution-ui",
   type: "registry:item",
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

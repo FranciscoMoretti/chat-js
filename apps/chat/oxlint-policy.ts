@@ -1,19 +1,20 @@
 import type { OxlintConfig } from "oxlint";
 
-// Audited restrictions are enforced repository-wide and in generated apps.
-// Contract-specific exceptions belong beside the affected source code.
-// oxlint-disable-next-line import/no-named-export, import/prefer-default-export -- Root and standalone configurations share this explicit named rule-map contract.
+// Audited policy is shared by the repository and generated apps.
+// Deliberate policy exclusions are documented here; retained-rule exceptions belong beside the source.
 export const auditedRestrictionRules = {
   "id-length": "error",
   "import/exports-last": "error",
   "import/group-exports": "error",
   "import/max-dependencies": "error",
   "import/no-default-export": "error",
-  "import/no-named-export": "error",
+  // Named exports are the documented package and application API convention.
+  "import/no-named-export": "off",
   "import/no-namespace": "error",
   "import/no-nodejs-modules": "error",
   "import/no-relative-parent-imports": "error",
-  "import/prefer-default-export": "error",
+  // A single named export preserves the same API convention as multi-export modules.
+  "import/prefer-default-export": "off",
   "init-declarations": "error",
   "jsdoc/require-param": "error",
   "jsdoc/require-returns": "error",
@@ -24,15 +25,20 @@ export const auditedRestrictionRules = {
   "no-console": "error",
   "no-continue": "error",
   "no-magic-numbers": "error",
-  "no-ternary": "error",
+  // Value-selecting ternaries are allowed; no-nested-ternary still limits nesting.
+  "no-ternary": "off",
   "no-undefined": "error",
   "no-underscore-dangle": "error",
   "node/no-process-env": "error",
   "node/no-sync": "error",
-  "node/no-top-level-await": "error",
-  "oxc/no-async-await": "error",
-  "oxc/no-optional-chaining": "error",
-  "oxc/no-rest-spread-properties": "error",
+  // ESM tooling uses top-level await, also required by unicorn/prefer-top-level-await.
+  "node/no-top-level-await": "off",
+  // Node 24 and modern browsers support await; promise safety rules enforce correct usage.
+  "oxc/no-async-await": "off",
+  // Optional chaining is required by the application coding guidance and supported by the target runtimes.
+  "oxc/no-optional-chaining": "off",
+  // Modern targets support typed object composition; no-map-spread still prevents accumulator copying.
+  "oxc/no-rest-spread-properties": "off",
   "react-perf/jsx-no-jsx-as-prop": "error",
   "react-perf/jsx-no-new-array-as-prop": "error",
   "react-perf/jsx-no-new-function-as-prop": "error",
@@ -43,8 +49,10 @@ export const auditedRestrictionRules = {
   "react/jsx-props-no-spreading": "error",
   "react/no-multi-comp": "error",
   "react/only-export-components": "error",
-  "react/react-in-jsx-scope": "error",
-  "sort-imports": "error",
+  // The automatic react-jsx runtime does not require a React binding.
+  "react/react-in-jsx-scope": "off",
+  // Oxfmt owns declaration and member ordering; a second sorter creates conflicting rewrites.
+  "sort-imports": "off",
   "typescript/consistent-type-definitions": "error",
   "typescript/explicit-function-return-type": "error",
   "typescript/explicit-module-boundary-types": "error",

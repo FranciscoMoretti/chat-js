@@ -21,9 +21,8 @@ beforeEach(() => {
   mocks.env.VERCEL_ENV = "";
 });
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses PostgreSQL locally and propagates lookup failures") uses 12 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it("uses PostgreSQL locally and propagates lookup failures") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("uses PostgreSQL locally and propagates lookup failures", async () => {
   const positions = new Map([["session", 12]]);
@@ -38,15 +37,11 @@ it("uses PostgreSQL locally and propagates lookup failures", async () => {
     "database unavailable"
   );
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("never queries PostgreSQL on Vercel, including when a stale URL remains") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("never queries PostgreSQL on Vercel, including when a stale URL remains", async () => {
   mocks.env.VERCEL = "1";
   mocks.env.VERCEL_ENV = "production";
   expect(await getEveStreamPositions(["session"])).toEqual(new Map());
   expect(mocks.positions).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */

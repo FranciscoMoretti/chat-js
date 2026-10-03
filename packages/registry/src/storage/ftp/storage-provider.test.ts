@@ -5,7 +5,6 @@ import { Client } from "basic-ftp";
 import { createStorageAdapter } from "./storage-provider";
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 it("uses TLS for default FTP connections and preserves implicit TLS selection", async () => {
@@ -23,7 +22,7 @@ it("uses TLS for default FTP connections and preserves implicit TLS selection", 
         throw new TypeError("Expected a connection factory");
       }
       // Each connection mutates the same environment-backed adapter configuration.
-      // eslint-disable-next-line no-await-in-loop
+      // eslint-disable-next-line no-await-in-loop -- Each connect mutates the same environment-backed adapter configuration; complete and close one connection before the next variant.
       const client = await raw.connect();
       expect(access).toHaveBeenLastCalledWith(
         expect.objectContaining({ secure: secure ?? true })
@@ -41,5 +40,4 @@ it("uses TLS for default FTP connections and preserves implicit TLS selection", 
 });
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

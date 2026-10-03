@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { expect, it, vi } from "vitest";
 
 import { createCachedConnectionStatus } from "./cache";
 import type { ConnectionStatusResult } from "./cache";
-/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({ cache: vi.fn() }));
 vi.mock("next/cache", () => ({
@@ -13,10 +9,9 @@ vi.mock("next/cache", () => ({
   unstable_cache: mocks.cache,
 }));
 
-/* oxlint-disable init-declarations, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type --
+/* oxlint-disable init-declarations, no-magic-numbers, typescript/explicit-function-return-type --
  * init-declarations (#507): it.each(["disconnected", "authorizing", "connecting", "incompatible"])("a transient % assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * no-magic-numbers (#517): it.each(["disconnected", "authorizing", "connecting", "incompatible"])("a transient % uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each(["disconnected", "authorizing", "connecting", "incompatible"])("a transient % sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep it.each(["disconnected", "authorizing", "connecting", "incompatible"])("a transient %'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 it.each(["disconnected", "authorizing", "connecting", "incompatible"])(
@@ -57,4 +52,4 @@ it.each(["disconnected", "authorizing", "connecting", "incompatible"])(
     );
   }
 );
-/* oxlint-enable init-declarations, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable init-declarations, no-magic-numbers, typescript/explicit-function-return-type */

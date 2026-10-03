@@ -1,12 +1,8 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { Sandbox } from "@vercel/sandbox";
 import pino from "pino";
 import { expect, it, vi } from "vitest";
 
 import { executePythonInSandbox } from "./python";
-/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -17,10 +13,9 @@ vi.mock("@vercel/sandbox", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it.each([0, 1])("does not log package credentials when pip exits with %s") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each([0, 1])("does not log package credentials when pip exits with %s") uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): it.each([0, 1])("does not log package credentials when pip exits with %s") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it.each([0, 1])(
   "does not log package credentials when pip exits with %s",
@@ -70,4 +65,4 @@ it.each([0, 1])(
     }
   }
 );
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable max-statements, no-magic-numbers */

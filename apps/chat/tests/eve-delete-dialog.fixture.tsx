@@ -1,13 +1,12 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-delete-dialog" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import React from "react";
 import { createRoot } from "react-dom/client";
 
 import { EveDeleteDialogView } from "../components/eve/eve-delete-dialog";
 import type { EveDeletionPhase } from "../components/eve/eve-delete-dialog";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const phases: EveDeletionPhase[] = [
   "confirm",

@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import React from "react";
 import { act, create } from "react-test-renderer";
 import { afterEach, expect, test, vi } from "vitest";
@@ -8,10 +6,9 @@ import {
   EveOptimisticResponseGroup,
   shouldAppendEveOptimisticResponseGroup,
 } from "./eve-optimistic-response-group";
-/* oxlint-enable sort-imports */
 
 const operationId = "11111111-1111-4111-8111-111111111111";
-/* oxlint-disable no-ternary, typescript/explicit-function-return-type -- eve-optimistic-response-group.test route: no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including id === "first-model" ? "First model" : "Second model"); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-disable typescript/explicit-function-return-type -- eve-optimistic-response-group.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/providers/chat-models-provider", () => ({
   useChatModels: () => ({
@@ -21,7 +18,7 @@ vi.mock("@/providers/chat-models-provider", () => ({
     }),
   }),
 }));
-/* oxlint-enable no-ternary, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -49,7 +46,7 @@ test("does not append an edited turn after the source transcript", () => {
     })
   ).toBe(true);
 });
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, oxc/no-optional-chaining, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-optimistic-response-group.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including renderer?.root.findAllByType("button")); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including button). */
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-optimistic-response-group.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including button). */
 
 test("renders stable disabled generating cards from the durable comparison request", () => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
@@ -86,4 +83,4 @@ test("renders stable disabled generating cards from the durable comparison reque
     act(() => renderer?.unmount());
   }
 });
-/* oxlint-enable init-declarations, max-statements, no-magic-numbers, oxc/no-optional-chaining, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */

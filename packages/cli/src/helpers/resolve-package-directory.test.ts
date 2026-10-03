@@ -5,18 +5,15 @@ import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
 import { resolvePackageDirectory } from "./resolve-package-directory";
 
 // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = path;
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 it("resolves a non-hoisted package from the workspace that declares it", async () => {
   const root = await mkdtemp(join(tmpdir(), "chatjs-package-resolution-"));
   const app = join(root, "apps", "chat");
@@ -51,4 +48,3 @@ it("resolves a non-hoisted package from the workspace that declares it", async (
     await rm(root, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-async-await */

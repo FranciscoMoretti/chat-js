@@ -1,13 +1,12 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import assert from "node:assert/strict";
 
 import { beforeEach, describe, it } from "vitest";
 
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable init-declarations, max-lines-per-function, no-magic-numbers --
  * init-declarations (#507): describe("RecursiveCharacterTextSplitter") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.

@@ -1,12 +1,8 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
 
 import { CodeExecution } from "./renderer";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("@/components/sandbox") accepts { code }: { code: string }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.

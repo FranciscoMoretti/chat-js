@@ -1,27 +1,20 @@
 /* oxlint-disable import/no-nodejs-modules -- the node:child_process import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { execFileSync } from "node:child_process";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- the node:fs/promises import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 /* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-nodejs-modules -- the node:os import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- the node:path import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
 import postgres from "postgres";
-/* oxlint-disable eslint/sort-imports -- the vitest import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 import { mockProvider } from "./mock-provider";
-/* oxlint-disable eslint/sort-imports -- the ./model import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   append,
   beginWriter,
@@ -36,7 +29,6 @@ import {
   validatePrefix,
   writeFile,
 } from "./model";
-/* oxlint-enable eslint/sort-imports */
 import type { Message } from "./model";
 
 /* oxlint-disable eslint/init-declarations -- directory: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
@@ -58,7 +50,6 @@ const text = (value: string): Message => ({
   role: "user",
 });
 
-/* oxlint-disable oxc/no-async-await -- branching.test.ts: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable node/no-sync -- branching.test.ts: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 beforeAll(async () => {
   // No env files, URLs, shared services or remote DB acceptance path.
@@ -103,9 +94,6 @@ beforeAll(async () => {
   );
 });
 /* oxlint-enable node/no-sync */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- branching.test.ts: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-optional-chaining -- branching.test.ts: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable node/no-sync -- branching.test.ts: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 afterAll(async () => {
   await sql?.end();
@@ -121,9 +109,6 @@ afterAll(async () => {
   }
 });
 /* oxlint-enable node/no-sync */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- branching.test.ts: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 beforeEach(async () => {
   await sql`truncate child_request,checkpoint,writer,branch,node,provider_snapshot,provider_vm,resource,annotation cascade`;
   await sql`insert into resource (id,owner,kind,bytes) values
@@ -134,7 +119,6 @@ beforeEach(async () => {
   await sql`insert into provider_vm (id,files) values ('original','{"work.txt":"v1"}')`;
   await sql`insert into branch (id,owner,sandbox,documents) values ('root','alice','original','{"doc":"revision-1"}')`;
 });
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-params -- add: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- add: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
@@ -150,16 +134,13 @@ const add = (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
-/* oxlint-disable oxc/no-async-await -- checkpoint: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable typescript/explicit-function-return-type -- checkpoint: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 const checkpoint = async () => {
   await reserve(sql, capture);
   await complete(sql, mockProvider(sql), owner, capture.id);
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- write: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable typescript/explicit-function-return-type -- write: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 const write = async (branch: string, bytes: string) => {
   await beginWriter(sql, owner, branch, "file-writer", "sandbox-process");
@@ -173,10 +154,8 @@ const write = async (branch: string, bytes: string) => {
   await endWriter(sql, owner, branch, "file-writer");
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-statements -- shared immutable prefix, attachment references and annotations survive nested branches ...: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable oxc/no-async-await -- shared immutable prefix, attachment references and annotations survive nested branches ...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- shared immutable prefix, attachment references and annotations survive nested branches ...: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- shared immutable prefix, attachment references and annotations survive nested branches ...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("shared immutable prefix, attachment references and annotations survive nested branches without duplicate messages", async () => {
@@ -229,13 +208,10 @@ test("shared immutable prefix, attachment references and annotations survive nes
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- stopping snapshot restores parent and independent child; later document and file edits ...: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable oxc/no-async-await -- stopping snapshot restores parent and independent child; later document and file edits ...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- stopping snapshot restores parent and independent child; later document and file edits ...: The fixture explicitly exercises the null state required by the API. */
-/* oxlint-disable oxc/no-optional-chaining -- stopping snapshot restores parent and independent child; later document and file edits ...: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-magic-numbers -- stopping snapshot restores parent and independent child; later document and file edits ...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("stopping snapshot restores parent and independent child; later document and file edits stay isolated", async () => {
   await add("m1", null);
@@ -261,12 +237,9 @@ test("stopping snapshot restores parent and independent child; later document an
   await add("child-next", "m1", "child");
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable oxc/no-async-await -- completion events cannot override an outstanding %s writer: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- completion events cannot override an outstanding %s writer: The fixture explicitly exercises the null state required by the API. */
 test.each([
   "turn",
@@ -291,9 +264,7 @@ test.each([
   }
 );
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- concurrent writer admission and capture serialize: exactly one is admitted: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable eslint/no-magic-numbers -- concurrent writer admission and capture serialize: exactly one is admitted: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- concurrent writer admission and capture serialize: exactly one is admitted: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 test("concurrent writer admission and capture serialize: exactly one is admitted", async () => {
@@ -307,11 +278,7 @@ test("concurrent writer admission and capture serialize: exactly one is admitted
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- lost snapshot response remains fenced; recovery reuses original receipt and survives co...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- lost snapshot response remains fenced; recovery reuses original receipt and survives co...: The scenario copies fixture inputs so later assertions retain their original values. */
-/* oxlint-disable oxc/no-optional-chaining -- lost snapshot response remains fenced; recovery reuses original receipt and survives co...: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-magic-numbers -- lost snapshot response remains fenced; recovery reuses original receipt and survives co...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable unicorn/no-null -- lost snapshot response remains fenced; recovery reuses original receipt and survives co...: The fixture explicitly exercises the null state required by the API. */
 test("lost snapshot response remains fenced; recovery reuses original receipt and survives coordinator reconstruction", async () => {
@@ -341,12 +308,7 @@ test("lost snapshot response remains fenced; recovery reuses original receipt an
 });
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- crash after restore before publication retries without resnapshotting or overwriting pa...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-optional-chaining -- crash after restore before publication retries without resnapshotting or overwriting pa...: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-magic-numbers -- crash after restore before publication retries without resnapshotting or overwriting pa...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("crash after restore before publication retries without resnapshotting or overwriting parent", async () => {
   await reserve(sql, capture);
@@ -367,11 +329,7 @@ test("crash after restore before publication retries without resnapshotting or o
   expect(await sql`select id from provider_vm`).toHaveLength(2);
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- pending checkpoint after process death is recoverable; changed intent and foreign owner...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- pending checkpoint after process death is recoverable; changed intent and foreign owner...: The scenario copies fixture inputs so later assertions retain their original values. */
 test("pending checkpoint after process death is recoverable; changed intent and foreign ownership fail", async () => {
   await reserve(sql, capture);
   await expect(
@@ -397,14 +355,9 @@ test("pending checkpoint after process death is recoverable; changed intent and 
     })
   ).rejects.toThrow("not owned");
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-statements -- child creation is idempotent through lost replies, including after child continuation: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable oxc/no-async-await -- child creation is idempotent through lost replies, including after child continuation: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- child creation is idempotent through lost replies, including after child continuation: The scenario copies fixture inputs so later assertions retain their original values. */
 /* oxlint-disable unicorn/no-null -- child creation is idempotent through lost replies, including after child continuation: The fixture explicitly exercises the null state required by the API. */
-/* oxlint-disable oxc/no-optional-chaining -- child creation is idempotent through lost replies, including after child continuation: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-magic-numbers -- child creation is idempotent through lost replies, including after child continuation: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("child creation is idempotent through lost replies, including after child continuation", async () => {
   await checkpoint();
@@ -435,17 +388,12 @@ test("child creation is idempotent through lost replies, including after child c
   ).rejects.toThrow("conflicting child");
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- historical edit/regenerate uses the prior boundary, excludes suffix, retains original m...: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable oxc/no-async-await -- historical edit/regenerate uses the prior boundary, excludes suffix, retains original m...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- historical edit/regenerate uses the prior boundary, excludes suffix, retains original m...: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- historical edit/regenerate uses the prior boundary, excludes suffix, retains original m...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable oxc/no-optional-chaining -- historical edit/regenerate uses the prior boundary, excludes suffix, retains original m...: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 test("historical edit/regenerate uses the prior boundary, excludes suffix, retains original model annotation", async () => {
   await add("question-1", null);
   await add("answer-1", "question-1", "root", {
@@ -468,13 +416,10 @@ test("historical edit/regenerate uses the prior boundary, excludes suffix, retai
   expect(selected.at(-1)).toEqual(text("replacement-question"));
   expect(await history(sql, owner, "answer-2")).toHaveLength(4);
 });
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable oxc/no-async-await -- tool pairs and bounded input fail closed; incomplete cancelled/failed turns cannot be c...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- tool pairs and bounded input fail closed; incomplete cancelled/failed turns cannot be c...: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- tool pairs and bounded input fail closed; incomplete cancelled/failed turns cannot be c...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("tool pairs and bounded input fail closed; incomplete cancelled/failed turns cannot be captured", async () => {
@@ -500,9 +445,7 @@ test("tool pairs and bounded input fail closed; incomplete cancelled/failed turn
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- optimistic branch head compare prevents concurrent appends from losing messages: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- optimistic branch head compare prevents concurrent appends from losing messages: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- optimistic branch head compare prevents concurrent appends from losing messages: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- optimistic branch head compare prevents concurrent appends from losing messages: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
@@ -516,9 +459,7 @@ test("optimistic branch head compare prevents concurrent appends from losing mes
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- resource grants are owner checked and retained after source branch removal: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- resource grants are owner checked and retained after source branch removal: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- resource grants are owner checked and retained after source branch removal: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("resource grants are owner checked and retained after source branch removal", async () => {
@@ -555,10 +496,7 @@ test("resource grants are owner checked and retained after source branch removal
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- separate idle captures retain manual edits even when transcript head is unchanged: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- separate idle captures retain manual edits even when transcript head is unchanged: The scenario copies fixture inputs so later assertions retain their original values. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- separate idle captures retain manual edits even when transcript head is unchanged: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 test("separate idle captures retain manual edits even when transcript head is unchanged", async () => {
   await checkpoint();
@@ -584,10 +522,7 @@ test("separate idle captures retain manual edits even when transcript head is un
   ]);
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- fork cannot reuse an unrelated branch or resurrect a deleted child: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 test("fork cannot reuse an unrelated branch or resurrect a deleted child", async () => {
   await checkpoint();
   await expect(
@@ -604,10 +539,7 @@ test("fork cannot reuse an unrelated branch or resurrect a deleted child", async
     "conflicting child"
   );
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- deletion during child restore fences publication: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- deletion during child restore fences publication: The scenario copies fixture inputs so later assertions retain their original values. */
 /* oxlint-disable eslint/no-magic-numbers -- deletion during child restore fences publication: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("deletion during child restore fences publication", async () => {
   await checkpoint();
@@ -631,12 +563,8 @@ test("deletion during child restore fences publication", async () => {
   expect(rows).toHaveLength(0);
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- app annotations are separate records and excluded from model history: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable unicorn/no-null -- app annotations are separate records and excluded from model history: The fixture explicitly exercises the null state required by the API. */
-/* oxlint-disable oxc/no-optional-chaining -- app annotations are separate records and excluded from model history: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-magic-numbers -- app annotations are separate records and excluded from model history: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("app annotations are separate records and excluded from model history", async () => {
   await add("annotated", null, "root", {
@@ -659,6 +587,4 @@ test("app annotations are separate records and excluded from model history", asy
 
 /* oxlint-disable max-lines -- app annotations are separate records and excluded from model history: The file is one cohesive fixture suite whose setup and cleanup are shared; splitting it needs test ownership boundaries. */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */

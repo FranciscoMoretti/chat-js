@@ -3,9 +3,7 @@ import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
-/* oxlint-disable eslint/sort-imports -- the ./theme-toggle import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { ThemeToggle } from "./theme-toggle";
-/* oxlint-enable eslint/sort-imports */
 
 const NAV_LINKS = [
   { href: siteLinks.threads, label: "Threads" },
@@ -17,8 +15,6 @@ const NAV_LINKS = [
   },
 ];
 
-/* oxlint-disable import/prefer-default-export -- Navbar: Consumers use this named API so adding another export will not require changing existing imports. */
-/* oxlint-disable import/no-named-export -- Navbar: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- Navbar: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable react/jsx-no-literals -- Navbar: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/forbid-component-props -- Navbar: className/style are the deliberate styling interface of these UI/layout primitives. */
@@ -103,5 +99,3 @@ export const Navbar = (): React.JSX.Element => (
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

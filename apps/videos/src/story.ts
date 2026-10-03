@@ -1,34 +1,25 @@
 /* oxlint-disable import/exports-last -- FPS: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- FPS: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- FPS: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const FPS = 30;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- DURATION: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- DURATION: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- DURATION: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const DURATION = 48;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- PathId: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- PathId: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- PathId: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type PathId = "city" | "food";
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- ReplyState: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- ReplyState: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- ReplyState: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type ReplyState = "streaming" | "stopped" | "complete";
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- script: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- script: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- script: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const script = {
   budget: {
     prompt: "Make it vegetarian.",
@@ -61,19 +52,15 @@ export const script = {
   title: "Lisbon weekend",
   url: "chatjs.dev/threads",
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- LaunchScript: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- LaunchScript: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- LaunchScript: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type LaunchScript = typeof script;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- beats: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- beats: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- beats: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const beats = [
   {
     at: 0,
@@ -86,23 +73,19 @@ export const beats = [
     title: "Add branching to your chat",
   },
 ];
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- clamp: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- clamp: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- clamp: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/id-length -- clamp: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- clamp: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 export const clamp = (x: number): number => Math.max(0, Math.min(1, x));
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- ease: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- ease: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- ease: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/id-length -- ease: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- ease: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 export const ease = (x: number): number => {
@@ -111,7 +94,6 @@ export const ease = (x: number): number => {
 };
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable eslint/no-magic-numbers -- textAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
@@ -120,7 +102,6 @@ const textAt = (text: string, fraction: number): string =>
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable eslint/id-length -- editTextAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- editTextAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable eslint/no-ternary -- editTextAt: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- editTextAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const editTextAt = (t: number, content: LaunchScript): string => {
   let prefixLength = 0;
@@ -138,7 +119,6 @@ const editTextAt = (t: number, content: LaunchScript): string => {
     : `${editPrefix}${textAt(editSuffix, (t - 42.6) / 1.1)}`;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 
@@ -160,13 +140,10 @@ const noteAt = (t: number): string => {
 
 /* oxlint-disable import/group-exports -- stateAt: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- stateAt: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable import/no-named-export -- stateAt: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- stateAt: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- stateAt: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/id-length -- stateAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- stateAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable eslint/no-ternary -- stateAt: The expression preserves the existing fallback/derived-value contract within this operation. */
-/* oxlint-disable oxc/no-rest-spread-properties -- stateAt: Fresh object composition preserves immutable state/configuration and existing override order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- stateAt: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 export const stateAt = (t: number, content: LaunchScript = script) => {
   let selected: PathId = "city";
@@ -218,22 +195,16 @@ export const stateAt = (t: number, content: LaunchScript = script) => {
   };
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */
 /* oxlint-disable import/group-exports -- StoryState: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- StoryState: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type StoryState = ReturnType<typeof stateAt>;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-disable import/group-exports -- captionBeats: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- captionBeats: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const captionBeats = [
   { end: 11.5, label: "Try another answer", start: 10 },
   { end: 18, label: "Switch while replies stream", start: 16.5 },
@@ -241,13 +212,10 @@ export const captionBeats = [
   { end: 32, label: "Continue the other", start: 30.5 },
   { end: 41.5, label: "Edit any message. Keep both versions.", start: 40 },
 ];
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-disable import/group-exports -- presentationAt: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- presentationAt: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- presentationAt: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- presentationAt: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/no-ternary -- presentationAt: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable eslint/no-magic-numbers -- presentationAt: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable eslint/id-length -- presentationAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable unicorn/no-null -- presentationAt: The SDK/wire/OS contract uses null as an explicit absence value. */
@@ -277,13 +245,10 @@ export const presentationAt = (wallTime: number) => {
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-disable import/group-exports -- cursorAt: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- cursorAt: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- cursorAt: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- cursorAt: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/id-length -- cursorAt: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
@@ -312,5 +277,4 @@ export const cursorAt = (t: number) => {
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

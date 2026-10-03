@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -12,7 +9,6 @@ import {
 } from "@/components/ai-elements/context";
 
 import { getUsageTokenDetails } from "./usage-token-details";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-lines-per-function --
  * max-lines-per-function (#510): describe("persisted token usage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

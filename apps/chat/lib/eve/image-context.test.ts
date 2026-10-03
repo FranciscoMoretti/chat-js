@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { ModelMessage } from "ai";
 import { expect, test } from "vitest";
 
 import { eveImageContext } from "./image-context";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null --
  * max-lines-per-function (#510): test("uses only the latest user attachments and generated images from this native bra keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

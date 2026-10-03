@@ -1,11 +1,8 @@
 "use client";
 
 import { getMessageText } from "@chat-js/thread";
-/* oxlint-disable eslint/sort-imports -- the @chat-js/thread import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { ThreadRunHandle } from "@chat-js/thread";
-/* oxlint-enable eslint/sort-imports */
 import { useThread } from "@chat-js/thread/react";
-/* oxlint-disable eslint/sort-imports -- the lucide-react import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   Check,
   ChevronLeft,
@@ -19,22 +16,17 @@ import {
   Sparkles,
   Square,
 } from "lucide-react";
-/* oxlint-enable eslint/sort-imports */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-/* oxlint-disable eslint/sort-imports -- the ./thread-playground-model import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   buildTreeLayout,
   initialTree,
   createPlaygroundTransport,
 } from "./thread-playground-model";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- the ./thread-playground-model import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type {
   PlaygroundChat as ThreadChat,
   PlaygroundMessage,
 } from "./thread-playground-model";
-/* oxlint-enable eslint/sort-imports */
 
 import styles from "./thread-showcase.module.css";
 
@@ -44,7 +36,6 @@ const MAX_ACTIVE_RUNS = 8;
 type PlaygroundChat = ThreadChat & { stoppedIds: ReadonlySet<string> };
 
 /* oxlint-disable typescript/explicit-function-return-type -- responseState: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable oxc/no-optional-chaining -- responseState: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- responseState: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const responseState = (chat: PlaygroundChat, message: PlaygroundMessage) => {
   if (message.role !== "assistant") {
@@ -63,12 +54,10 @@ const responseState = (chat: PlaygroundChat, message: PlaygroundMessage) => {
   return "complete";
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-magic-numbers -- ResponseStatus: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable react/jsx-no-literals -- ResponseStatus: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
-/* oxlint-disable eslint/no-ternary -- ResponseStatus: The expression selects a render/state value locally; changing component boundaries or closure ownership is outside this styling restriction. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ResponseStatus: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const ResponseStatus = ({
   chat,
@@ -103,21 +92,17 @@ const ResponseStatus = ({
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable import/exports-last -- ThreadInstallCommand: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- ThreadInstallCommand: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/no-multi-comp -- ThreadInstallCommand: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable import/no-named-export -- ThreadInstallCommand: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
-/* oxlint-disable oxc/no-async-await -- ThreadInstallCommand: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable eslint/no-magic-numbers -- ThreadInstallCommand: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable react/jsx-no-literals -- ThreadInstallCommand: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/jsx-max-depth -- ThreadInstallCommand: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable react/forbid-component-props -- ThreadInstallCommand: className/style are the deliberate styling interface of these UI/layout primitives. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ThreadInstallCommand: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
-/* oxlint-disable eslint/no-ternary -- ThreadInstallCommand: The expression selects a render/state value locally; changing component boundaries or closure ownership is outside this styling restriction. */
 export const ThreadInstallCommand = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
@@ -158,14 +143,11 @@ export const ThreadInstallCommand = (): React.JSX.Element => {
     </div>
   );
 };
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
@@ -174,11 +156,9 @@ export const ThreadInstallCommand = (): React.JSX.Element => {
 /* oxlint-disable eslint/max-lines-per-function -- Conversation: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/no-undefined -- Conversation: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable eslint/no-magic-numbers -- Conversation: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-/* oxlint-disable oxc/no-optional-chaining -- Conversation: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable react/jsx-no-literals -- Conversation: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/jsx-max-depth -- Conversation: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- Conversation: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
-/* oxlint-disable eslint/no-ternary -- Conversation: The expression selects a render/state value locally; changing component boundaries or closure ownership is outside this styling restriction. */
 /* oxlint-disable react/forbid-component-props -- Conversation: className/style are the deliberate styling interface of these UI/layout primitives. */
 /* oxlint-disable unicorn/no-null -- Conversation: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Conversation: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
@@ -454,11 +434,9 @@ const Conversation = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -467,14 +445,12 @@ const Conversation = ({
 /* oxlint-disable react/no-multi-comp -- TreeCanvas: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/max-lines-per-function -- TreeCanvas: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/no-undefined -- TreeCanvas: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable eslint/no-ternary -- TreeCanvas: The expression selects a render/state value locally; changing component boundaries or closure ownership is outside this styling restriction. */
 /* oxlint-disable eslint/no-magic-numbers -- TreeCanvas: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable react/jsx-no-literals -- TreeCanvas: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TreeCanvas: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable react/jsx-max-depth -- TreeCanvas: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable unicorn/no-null -- TreeCanvas: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- TreeCanvas: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
-/* oxlint-disable oxc/no-optional-chaining -- TreeCanvas: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TreeCanvas: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* oxlint-disable typescript/strict-boolean-expressions -- TreeCanvas: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
@@ -617,14 +593,12 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */
@@ -648,9 +622,6 @@ const messageInput = (text: string, title: string, messageId?: string) => ({
 /* oxlint-disable eslint/max-lines-per-function -- PlaygroundSession: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable unicorn/no-null -- PlaygroundSession: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 /* oxlint-disable eslint/no-magic-numbers -- PlaygroundSession: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-/* oxlint-disable oxc/no-rest-spread-properties -- PlaygroundSession: Fresh object composition preserves immutable state/configuration and existing override order. */
-/* oxlint-disable oxc/no-async-await -- PlaygroundSession: Await sequencing preserves this operation's dependent I/O and error propagation. */
-/* oxlint-disable eslint/no-ternary -- PlaygroundSession: The expression selects a render/state value locally; changing component boundaries or closure ownership is outside this styling restriction. */
 /* oxlint-disable eslint/id-length -- PlaygroundSession: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-undefined -- PlaygroundSession: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable react/jsx-no-literals -- PlaygroundSession: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
@@ -837,9 +808,6 @@ const PlaygroundSession = (): React.JSX.Element => {
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -848,7 +816,6 @@ const PlaygroundSession = (): React.JSX.Element => {
 
 /* oxlint-disable import/group-exports -- ThreadPlayground: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/no-multi-comp -- ThreadPlayground: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable import/no-named-export -- ThreadPlayground: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/no-magic-numbers -- ThreadPlayground: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable react/jsx-no-literals -- ThreadPlayground: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ThreadPlayground: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
@@ -876,20 +843,17 @@ export const ThreadPlayground = (): React.JSX.Element => {
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- ThreadShowcase: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable react/no-multi-comp -- ThreadShowcase: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable import/no-named-export -- ThreadShowcase: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const ThreadShowcase = (): React.JSX.Element => (
   <>
     <ThreadPlayground />
     <ThreadInstallCommand />
   </>
 );
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable import/group-exports */
 

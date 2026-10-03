@@ -1,12 +1,8 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { describe, expect, it } from "vitest";
 
 import { authSessionOptions } from "./auth-session-options";
-/* oxlint-enable sort-imports */
 
 const local = {
   baseUrl: "http://localhost:3000",
@@ -14,9 +10,6 @@ const local = {
   development: true,
 };
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): describe("development auth isolation") copies or separates ...local; ...change while preserving existing object ownership; mutating source objects is not equivalent.
- */
 describe("development auth isolation", () => {
   it("isolates ports and databases while keeping restarts stable", () => {
     const first = authSessionOptions(local);
@@ -49,10 +42,8 @@ describe("development auth isolation", () => {
     });
   });
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-rest-spread-properties, typescript/explicit-function-return-type --
- * oxc/no-rest-spread-properties (#543): makeApp copies or separates ...authSessionOptions({ baseUrl, databaseUrl, development: true }) while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep makeApp's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const makeApp = (baseUrl: string, databaseUrl: string) => {
@@ -67,11 +58,10 @@ const makeApp = (baseUrl: string, databaseUrl: string) => {
   });
   return { auth, data };
 };
-/* oxlint-enable oxc/no-rest-spread-properties, typescript/explicit-function-return-type */
+/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): signup uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-async-await (#540): signup sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): signup accepts auth: ReturnType<typeof makeApp>["auth"]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 const signup = async (
@@ -96,11 +86,10 @@ const signup = async (
     .map((cookie) => cookie.split(";")[0])
     .join("; ");
 };
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, oxc/no-async-await --
+/* oxlint-disable max-statements --
  * max-statements (#512): it("two local apps sharing a browser cookie jar retain separate users") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * oxc/no-async-await (#540): it("two local apps sharing a browser cookie jar retain separate users") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
 it("two local apps sharing a browser cookie jar retain separate users", async () => {
   const first = makeApp(local.baseUrl, local.databaseUrl);
@@ -128,4 +117,4 @@ it("two local apps sharing a browser cookie jar retain separate users", async ()
     user: { name: "second" },
   });
 });
-/* oxlint-enable max-statements, oxc/no-async-await */
+/* oxlint-enable max-statements */

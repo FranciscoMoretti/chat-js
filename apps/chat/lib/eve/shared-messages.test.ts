@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { EveMessagePart } from "eve/client";
 import { expect, it } from "vitest";
 
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it("shares transcript content without authorization challenges or runtime metadata") accepts message; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -105,11 +101,10 @@ it.each([
   }
 );
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): it("removes owner approval and execution fields while preserving every tool status") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it("removes owner approval and execution fields while preserving every tool status") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("removes owner approval and execution fields while preserving every tool status") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * oxc/no-rest-spread-properties (#543): it("removes owner approval and execution fields while preserving every tool status") copies or separates ...base; ...base.approval while preserving existing object ownership; mutating source objects is not equivalent.
  */
 it("removes owner approval and execution fields while preserving every tool status", () => {
   const base = {
@@ -175,7 +170,7 @@ it("removes owner approval and execution fields while preserving every tool stat
     }
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it.each([ { kind: "chatjs.tool-result", output: { message: "Unsupported version" }, s uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -220,9 +215,6 @@ it.each([
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): it("preserves streaming and partial published tool content without runtime fields") copies or separates ...base; ...expected while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("preserves streaming and partial published tool content without runtime fields", () => {
   const base = {
     input: { text: "partial" },
@@ -251,10 +243,8 @@ it("preserves streaming and partial published tool content without runtime field
     expect(sharedEvePart(part)).toEqual([expected]);
   }
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
- * oxc/no-optional-chaining (#542): it("projects the original native model without private turn identities") handles optional messages.find((message) => message.role === "assistant")?.metadata without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it("projects the original native model without private turn identities") accepts message; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("projects the original native model without private turn identities", () => {
@@ -280,4 +270,4 @@ it("projects the original native model without private turn identities", () => {
   ).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
   expect(JSON.stringify(messages)).not.toContain('"turnId"');
 });
-/* oxlint-enable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

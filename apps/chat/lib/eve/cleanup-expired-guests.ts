@@ -1,24 +1,20 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-journal"; "../db/eve-guest-cleanup" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { isUnacceptedEveCopy } from "../db/eve-copy-journal";
 import { claimExpiredEveGuestFamilies } from "../db/eve-guest-cleanup";
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
 import { localDeletionAvailable } from "./local-deletion-available";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-console, no-continue, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/no-named-export (#527): Preserve the named cleanupExpiredEveGuests API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * import/prefer-default-export (#532): cleanupExpiredEveGuests remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-console, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): cleanupExpiredEveGuests's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): cleanupExpiredEveGuests's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): cleanupExpiredEveGuests keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): cleanupExpiredEveGuests emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-continue (#515): cleanupExpiredEveGuests skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): cleanupExpiredEveGuests uses 5, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-async-await (#540): cleanupExpiredEveGuests sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep cleanupExpiredEveGuests's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep cleanupExpiredEveGuests's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): cleanupExpiredEveGuests intentionally keeps the existing falsy-value behavior of family; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -65,4 +61,4 @@ export const cleanupExpiredEveGuests = async (appRoot: string) => {
   }
   return { deletedCount, pendingCount, skipped: false };
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-console, no-continue, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-console, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */

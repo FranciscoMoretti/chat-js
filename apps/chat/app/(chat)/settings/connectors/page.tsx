@@ -1,20 +1,12 @@
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-/* oxlint-enable eslint/sort-imports */
 import { connection } from "next/server";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import React, { Suspense } from "react";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
-/* oxlint-enable eslint/sort-imports */
 import { Skeleton } from "@/components/ui/skeleton";
 import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
@@ -35,7 +27,6 @@ const ConnectorsSettingsHeader = () => (
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 const ConnectorsSettingsContent = async () => {
   await connection();
   // Keep this result out of the layout's earlier hydration boundary.
@@ -52,7 +43,6 @@ const ConnectorsSettingsContent = async () => {
     </HydrationBoundary>
   );
 };
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 

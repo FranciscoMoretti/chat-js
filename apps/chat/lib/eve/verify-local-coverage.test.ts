@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
@@ -10,7 +9,7 @@ import nodePath from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 const mocks = vi.hoisted(() => ({
   end: vi.fn(),
@@ -59,9 +58,8 @@ const identity = () => ({
   version: 1,
 });
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/no-nodejs-modules, oxc/no-async-await, typescript/promise-function-async --
+/* oxlint-disable import/no-nodejs-modules, typescript/promise-function-async --
  * import/no-nodejs-modules (#529): This test harness requires import("node:fs/promises"); its Node runtime boundary deliberately permits these built-ins.
- * oxc/no-async-await (#540): beforeEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 beforeEach(async () => {
@@ -90,18 +88,11 @@ beforeEach(async () => {
     )
   );
 });
-/* oxlint-enable import/no-nodejs-modules, oxc/no-async-await, typescript/promise-function-async */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): afterEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
+/* oxlint-enable import/no-nodejs-modules, typescript/promise-function-async */
 afterEach(async () => {
   vi.unstubAllGlobals();
   await rm(root, { force: true, recursive: true });
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("matches native evidence to a local identity and carries owner/root authorization" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("matches native evidence to a local identity and carries owner/root authorization", async () => {
   await verifyLocalEveFamilyCoverage("owner", root, inventories);
   const [[url, init]] = mocks.fetch.mock.calls;
@@ -118,10 +109,7 @@ it("matches native evidence to a local identity and carries owner/root authoriza
   expect(init.redirect).toBe("error");
   expect(mocks.end).toHaveBeenCalledOnce();
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties, typescript/promise-function-async --
- * oxc/no-async-await (#540): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") copies or separates ...identity() while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it.each(["appRoot", "sessionId", "backendName"])(
@@ -143,10 +131,8 @@ it.each(["appRoot", "sessionId", "backendName"])(
     expect(mocks.end).toHaveBeenCalledOnce();
   }
 );
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties, typescript/promise-function-async */
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties, unicorn/no-null --
- * oxc/no-async-await (#540): it("rejects missing native evidence and mismatched local evidence") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("rejects missing native evidence and mismatched local evidence") copies or separates ...identity() while preserving existing object ownership; mutating source objects is not equivalent.
+/* oxlint-enable typescript/promise-function-async */
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("rejects missing native evidence and mismatched local evidence") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("rejects missing native evidence and mismatched local evidence", async () => {
@@ -162,10 +148,7 @@ it("rejects missing native evidence and mismatched local evidence", async () => 
     verifyLocalEveFamilyCoverage("owner", root, inventories)
   ).rejects.toThrow("Local sandbox ownership");
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties, unicorn/no-null */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("does not follow a linked identity file") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
+/* oxlint-enable unicorn/no-null */
 it("does not follow a linked identity file", async () => {
   const actual = nodePath.join(root, "actual.json");
   await writeFile(actual, JSON.stringify(identity()));
@@ -175,4 +158,3 @@ it("does not follow a linked identity file", async () => {
     verifyLocalEveFamilyCoverage("owner", root, inventories)
   ).rejects.toThrow();
 });
-/* oxlint-enable oxc/no-async-await */

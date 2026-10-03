@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/active-gateway"; "../ai/gateways/fallback-models"; "../ai/gateways/registry"; "../ai/model-data"; "../ai/to-model-data" dependency within this package instead of introducing an alias or barrel API.
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
 import { wrapLanguageModel } from "ai";
@@ -12,14 +11,13 @@ import type { InstalledGateway } from "../ai/gateways/registry";
 import type { ModelData } from "../ai/model-data";
 import { toModelData } from "../ai/to-model-data";
 import { config } from "../config";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types --
  * import/exports-last (#522): EveModelUnavailableError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): EveModelUnavailableError stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named EveModelUnavailableError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): EveModelUnavailableError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 export class EveModelUnavailableError extends Error {
@@ -28,14 +26,12 @@ export class EveModelUnavailableError extends Error {
     this.name = "EveModelUnavailableError";
   }
 }
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/exports-last (#522): getEveModelDefinition is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): getEveModelDefinition stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named getEveModelDefinition API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): getEveModelDefinition uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * oxc/no-rest-spread-properties (#543): getEveModelDefinition copies or separates ...model while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep getEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep getEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): getEveModelDefinition accepts models = getFallbackModels(config.ai.gateway).map((model) => toModelData(model) ); model; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -69,7 +65,7 @@ export const getEveModelDefinition = (
     reasoning: model.reasoning && id.endsWith("-reasoning"),
   };
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable init-declarations --
  * init-declarations (#507): catalog assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -82,12 +78,10 @@ let catalog: { expires: number; models: ModelData[] } | undefined;
 let loading: Promise<ModelData[]> | undefined;
 /* oxlint-enable init-declarations */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * import/group-exports (#523): loadEveModelDefinition stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named loadEveModelDefinition API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): loadEveModelDefinition uses 3_600_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * oxc/no-async-await (#540): loadEveModelDefinition sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep loadEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep loadEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): loadEveModelDefinition accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -108,12 +102,10 @@ export const loadEveModelDefinition = async (requestedId?: string) => {
   }
   return getEveModelDefinition(requestedId, catalog.models);
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls --
  * import/group-exports (#523): resolveEveModel stays exported at its declaration so its public contract is visible beside its implementation.
- * import/no-named-export (#527): Preserve the named resolveEveModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- * oxc/no-async-await (#540): resolveEveModel sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep resolveEveModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep resolveEveModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/max-nested-calls (#568): resolveEveModel keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -135,4 +127,4 @@ export const resolveEveModel = async (requestedId?: string) => {
     },
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */

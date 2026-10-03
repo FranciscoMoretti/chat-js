@@ -8,12 +8,10 @@ import { fileURLToPath } from "node:url";
 /* oxlint-disable import/no-relative-parent-imports -- the ../apps/chat/node_modules/postgres import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import type postgresType from "../apps/chat/node_modules/postgres";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- the ./vercel-preview-environment import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   PreviewConfigurationError,
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable typescript/consistent-type-definitions -- BuildOperations: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BuildOperations: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -30,7 +28,6 @@ type BuildOperations = {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable eslint/no-ternary -- formatBuildFailure: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable eslint/no-undefined -- formatBuildFailure: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable typescript/strict-boolean-expressions -- formatBuildFailure: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const formatBuildFailure = (phase: string, error: unknown): string => {
@@ -51,15 +48,10 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
 
 /* oxlint-disable import/exports-last -- runMaintainerBuild: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/prefer-default-export -- runMaintainerBuild: Consumers use this named API so adding another export will not require changing existing imports. */
 /* oxlint-disable eslint/max-statements -- runMaintainerBuild: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable import/no-named-export -- runMaintainerBuild: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
-/* oxlint-disable oxc/no-async-await -- runMaintainerBuild: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable eslint/init-declarations -- runMaintainerBuild: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
-/* oxlint-disable oxc/no-rest-spread-properties -- runMaintainerBuild: Fresh object composition preserves immutable state/configuration and existing override order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- runMaintainerBuild: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- runMaintainerBuild: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 export const runMaintainerBuild = async (
@@ -112,20 +104,13 @@ export const runMaintainerBuild = async (
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export */
 /* oxlint-enable import/exports-last */
 
-/* oxlint-disable node/no-top-level-await -- vercel-preview-build.ts: This Bun/ESM entrypoint must finish initialization before later module statements run. */
 /* oxlint-disable node/no-process-env -- vercel-preview-build.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable oxc/no-async-await -- vercel-preview-build.ts: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable eslint/no-magic-numbers -- vercel-preview-build.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/no-console -- vercel-preview-build.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable eslint/no-ternary -- vercel-preview-build.ts: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable typescript/promise-function-async -- vercel-preview-build.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- vercel-preview-build.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 if (import.meta.main) {
@@ -179,9 +164,6 @@ if (import.meta.main) {
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-top-level-await */

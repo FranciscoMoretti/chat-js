@@ -7,8 +7,6 @@ import { AbstractThread } from "../../src/abstract-thread";
 import type { ThreadState } from "../../src/types";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export class StateBackedThread extends AbstractThread {
   public constructor(state: ThreadState, transport?: ChatTransport<UIMessage>) {
@@ -16,5 +14,3 @@ export class StateBackedThread extends AbstractThread {
   }
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */
