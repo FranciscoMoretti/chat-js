@@ -112,7 +112,7 @@ const AllSourcesView = ({
 };
 /* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ShowSourcesButton = ({
   sources,

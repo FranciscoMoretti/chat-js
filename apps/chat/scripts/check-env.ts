@@ -244,7 +244,7 @@ const checkGatewaySnapshot = (): string | null => {
  * max-statements (#512): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): checkEnv emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): checkEnv uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): checkEnv accepts issue; e; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): checkEnv accepts issue; validationError; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): checkEnv intentionally keeps the existing falsy-value behavior of snapshotWarning; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const checkEnv = async (): Promise<void> => {

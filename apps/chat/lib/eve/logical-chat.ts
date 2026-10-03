@@ -108,7 +108,7 @@ no-magic-numbers (#517): LogicalChat uses 0, -1 in its existing protocol/math/la
 no-undefined (#519): LogicalChat uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/explicit-function-return-type (#560): Keep LogicalChat's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep LogicalChat's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): LogicalChat accepts branches: readonly LogicalBranch[]; a; b; agent: NativeChatAgent; branch; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/prefer-readonly-parameter-types (#565): LogicalChat accepts branches: readonly LogicalBranch[]; leftBranch; rightBranch; agent: NativeChatAgent; branch; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): LogicalChat intentionally keeps the existing falsy-value behavior of path?.length; last; id; branch.parentConversationId; agent?.data.messages.length; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): LogicalChat preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**

@@ -49,7 +49,7 @@ async function job(body: unknown): Promise<string> {
 }
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts a; b; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts leftJob; rightJob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();

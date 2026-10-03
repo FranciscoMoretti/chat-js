@@ -21,7 +21,7 @@ import {
  * max-statements (#512): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): snapshotCopyCheckpoints uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/explicit-function-return-type (#560): Keep snapshotCopyCheckpoints's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): snapshotCopyCheckpoints accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; input: { conversationId: string; ownerId: string; documentIds: string[]; boundaries:; boundary; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): snapshotCopyCheckpoints accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; input: { conversationId: string; ownerId: string; documentIds: string[]; boundaries:; boundary; leftHead; rightHead; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const snapshotCopyCheckpoints = async (
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],

@@ -28,7 +28,7 @@ no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing pro
 no-undefined (#519): readLocalEveSandboxInventory uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/explicit-function-return-type (#560): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep readLocalEveSandboxInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): readLocalEveSandboxInventory accepts sessionIds: string[]; entry; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+typescript/prefer-readonly-parameter-types (#565): readLocalEveSandboxInventory accepts sessionIds: string[]; entry; leftEntry; rightEntry; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full

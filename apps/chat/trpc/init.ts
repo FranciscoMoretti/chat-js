@@ -43,8 +43,8 @@ const createTRPCContext = cache(async () => {
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): t accepts { shape, error }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): t preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ * typescript/prefer-readonly-parameter-types (#565): trpc accepts { shape, error }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * unicorn/no-null (#570): trpc preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /**
  * 2. INITIALIZATION

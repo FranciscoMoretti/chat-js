@@ -66,7 +66,7 @@ const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): buildChatModels uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): buildChatModels accepts appModels: AppModelDefinition[]; model; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): buildChatModels accepts appModels: AppModelDefinition[]; model; leftModel; rightModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const buildChatModels = (
   appModels: AppModelDefinition[]
@@ -110,7 +110,7 @@ const fetchChatModels = cache(
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): getAppModelDefinition accepts m; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+typescript/prefer-readonly-parameter-types (#565): getAppModelDefinition accepts candidateModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const getAppModelDefinition = async (
   modelId: AppModelId
 ): Promise<AppModelDefinition> => {
@@ -137,9 +137,8 @@ const snapshotMatchesGateway = (gateway: string): boolean =>
   generatedForGateway === gateway;
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
- * id-length (#506): KNOWN_MODEL_IDS uses m as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/prefer-readonly-parameter-types (#565): KNOWN_MODEL_IDS accepts m; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ *  * typescript/prefer-readonly-parameter-types (#565): KNOWN_MODEL_IDS accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const KNOWN_MODEL_IDS = new Set<string>(
   snapshotMatchesGateway(config.ai.gateway)

@@ -72,7 +72,7 @@ const userCredit = pgTable("UserCredit", {
 type UserCredit = InferSelectModel<typeof userCredit>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): userModelPreference accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+typescript/prefer-readonly-parameter-types (#565): userModelPreference accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const userModelPreference = pgTable(
   "UserModelPreference",
@@ -99,8 +99,7 @@ const userModelPreference = pgTable(
 
 type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): project uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): project accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): project accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const project = pgTable(
   "Project",
@@ -128,8 +127,7 @@ const project = pgTable(
 
 type Project = InferSelectModel<typeof project>;
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): eveGuest uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): eveGuest accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveGuest accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Guest ownership is separate from BetterAuth sessions and monetary credits.
 // Retain expired identities after content cleanup so late usage remains guest usage.
 const eveGuest = pgTable(
@@ -157,8 +155,7 @@ const eveGuest = pgTable(
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): eveGuestRate uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): eveGuestRate accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveGuestRate accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const eveGuestRate = pgTable(
   "EveGuestRate",
   {
@@ -180,8 +177,7 @@ const eveGuestRate = pgTable(
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): eveGuestMessage uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): eveGuestMessage accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveGuestMessage accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const eveGuestMessage = pgTable(
   "EveGuestMessage",
   {
@@ -270,8 +266,7 @@ const verification = pgTable("verification", {
   value: text("value").notNull(),
 });
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): mcpConnector uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): mcpConnector accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpConnector accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const mcpConnector = pgTable(
   "McpConnector",
@@ -312,8 +307,7 @@ const mcpConnector = pgTable(
 
 type McpConnector = InferSelectModel<typeof mcpConnector>;
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): mcpOAuthSession uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): mcpOAuthSession accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpOAuthSession accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const mcpOAuthSession = pgTable(
   "McpOAuthSession",

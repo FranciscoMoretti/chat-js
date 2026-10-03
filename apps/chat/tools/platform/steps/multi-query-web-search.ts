@@ -31,7 +31,7 @@ type MultiQuerySearchResponse = {
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): multiQueryWebSearchStep accepts { queries, search, dataStream, toolCallId, }: { queries: SearchQuery[]; search: ( qu; query: SearchQuery; q; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): multiQueryWebSearchStep accepts { queries, search, dataStream, toolCallId, }: { queries: SearchQuery[]; search: ( qu; query: SearchQuery; query; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const multiQueryWebSearchStep = async ({
   queries,
