@@ -2,21 +2,17 @@ import type { GatewayProvider } from "./gateway-provider.ts";
 
 type AnyGatewayProvider = GatewayProvider<string, never, never, never>;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type VideoDefault<TGateway extends AnyGatewayProvider> = {
+interface VideoDefault<TGateway extends AnyGatewayProvider> {
   default?: Parameters<TGateway["createVideoModel"]>[0];
-};
+}
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type ImageDefault<TGateway extends AnyGatewayProvider> = {
+interface ImageDefault<TGateway extends AnyGatewayProvider> {
   default?: Parameters<TGateway["createImageModel"]>[0];
-};
+}
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/consistent-type-definitions */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 interface GatewayModelDefaults<TGateway extends AnyGatewayProvider> {
   anonymousModels: Parameters<TGateway["createLanguageModel"]>[0][];

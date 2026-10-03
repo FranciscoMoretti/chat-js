@@ -4,15 +4,13 @@ import type { ChatStatus, UIMessage } from "ai";
 import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
 import type { ThreadConcurrency, ThreadRun } from "./types";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type RunRecord<TMessage extends UIMessage> = {
+interface RunRecord<TMessage extends UIMessage> {
   chat: ThreadRunChat<TMessage>;
   error: Error | undefined;
   finished: Promise<void>;
   spec: ThreadRunSpec;
   status: ChatStatus;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */

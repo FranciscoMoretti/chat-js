@@ -10,15 +10,13 @@ import type {
 
 import { ThreadRunState } from "./thread-run-state";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadRunSpec = {
+interface ThreadRunSpec {
   id: string;
   initialPathMessageId: string | null;
   messageId?: string;
   parentMessageId: string | null;
   siblingOrder: number;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AbstractChat callbacks and ChatTransport use mutable message/chunk payloads; resume handling updates the owned ThreadRunState before forwarding those SDK objects. */
 interface ThreadRunHost<TMessage extends UIMessage> {

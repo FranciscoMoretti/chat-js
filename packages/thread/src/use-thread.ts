@@ -26,12 +26,10 @@ const useIsomorphicLayoutEffect =
   // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadHookOptions = {
+interface ThreadHookOptions {
   experimental_throttle?: number;
   resume?: boolean;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 type ThreadCallbacks<TMessage extends UIMessage> = Pick<
   ThreadInit<TMessage>,
@@ -107,7 +105,7 @@ const hasSuppliedThread = <TMessage extends UIMessage>(
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
+/* oxlint-disable typescript/consistent-type-definitions -- TreeHelpers is the published tree-helper return contract composed into the SDK-compatible UseThreadHelpers alias; public helper type-form changes remain deferred to the API audit in #622. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
   activeRuns: ThreadRun[];

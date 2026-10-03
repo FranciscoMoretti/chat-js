@@ -207,7 +207,32 @@ for (const [specifier, file] of [["@chat-js/thread", "index.js"], ["@chat-js/thr
       const typeConsumerPath = path.join(temporaryDirectory, "consumer.ts");
       await Promise.all([
         writeFile(runtimeConsumerPath, consumerSource),
-        writeFile(typeConsumerPath, consumerSource),
+        writeFile(
+          typeConsumerPath,
+          `${consumerSource}
+import type { UIMessage } from "ai";
+import { createThread } from "@chat-js/thread";
+
+type LabeledMessage = UIMessage<{ threadLabel: string }>;
+const labeledThread = new Thread<LabeledMessage>();
+const createdThread = createThread<LabeledMessage>();
+const threadLabel: string | undefined = labeledThread.getSnapshot().messages[0]?.metadata?.threadLabel;
+const createdLabel: string | undefined = createdThread.getSnapshot().messages[0]?.metadata?.threadLabel;
+// @ts-expect-error Thread metadata must retain its specialized shape.
+labeledThread.getSnapshot().messages[0]?.metadata?.absentProperty;
+// @ts-expect-error createThread metadata must retain its specialized shape.
+createdThread.getSnapshot().messages[0]?.metadata?.absentProperty;
+
+// This function is only type-checked, never passed to the runtime consumer.
+function checkHookInference() {
+  const helpers = useThread({ thread: labeledThread });
+  const hookLabel: string | undefined = helpers.messages[0]?.metadata?.threadLabel;
+  // @ts-expect-error useThread must infer the supplied thread's metadata shape.
+  helpers.messages[0]?.metadata?.absentProperty;
+  return hookLabel;
+}
+`
+        ),
       ]);
 
       run(["node", runtimeConsumerPath], temporaryDirectory);
