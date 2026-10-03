@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "../lib/db/eve-guests"; "../lib/db/eve-queries"; "../lib/db/eve-response-groups" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -39,13 +39,13 @@ import {
 } from "../lib/eve/guest-credential";
 import { eveResponseGroupCandidates } from "../lib/eve/response-group-candidates";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
 const ips: string[] = [];
 
-/* oxlint-disable no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions  --
  * no-ternary (#518): findEveGuest derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): findEveGuest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-async-await (#540): findEveGuest sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -59,9 +59,9 @@ async function findEveGuest(tokenHash: string) {
     .where(eq(eveGuest.tokenHash, tokenHash));
   return row && row.expiresAt > new Date() ? row : undefined;
 }
-/* oxlint-enable no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type  --
  * no-magic-numbers (#517): guest uses 10, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): guest sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep guest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -76,7 +76,7 @@ async function guest(messageLimit = 10) {
   owners.push(row.ownerId);
   return row;
 }
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -95,7 +95,7 @@ function request(ownerId: string) {
 }
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -111,9 +111,9 @@ afterAll(async () => {
     await db.delete(eveGuestRate).where(inArray(eveGuestRate.ipHash, ips));
   }
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("guest identity is server-owned, expires and grants no BetterAuth session or sig uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("guest identity is server-owned, expires and grants no BetterAuth session or sig sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("guest identity is server-owned, expires and grants no BetterAuth session or sig handles optional (await findEveGuest(row.tokenHash))?.ownerId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -139,9 +139,9 @@ test("guest identity is server-owned, expires and grants no BetterAuth session o
     status: "unavailable",
   });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * no-magic-numbers (#517): test("concurrent replay reserves once and rejects changed request content") uses 1, 7, 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("concurrent replay reserves once and rejects changed request content") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("concurrent replay reserves once and rejects changed request content") handles optional (await findEveGuest(row.tokenHash))?.remainingMessages without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -174,9 +174,9 @@ test("concurrent replay reserves once and rejects changed request content", asyn
     })
   ).toEqual({ status: "conflict" });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async  --
  * no-magic-numbers (#517): test("distinct concurrent sends cannot overspend the guest balance") uses 1, 5, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("distinct concurrent sends cannot overspend the guest balance") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("distinct concurrent sends cannot overspend the guest balance") handles optional (await findEveGuest(row.tokenHash))?.remainingMessages without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -199,9 +199,9 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
   ).toHaveLength(5);
   expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): test("IP quotas survive cookie replacement and rejected limits spend no guest balance uses 10, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("IP quotas survive cookie replacement and rejected limits spend no guest balance sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("IP quotas survive cookie replacement and rejected limits spend no guest balance handles optional (await findEveGuest(second.tokenHash))?.remainingMessages without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -230,12 +230,8 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
     ).map((rate) => rate.requests)
   ).toEqual([1, 1]);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): test("simultaneous guests share one IP admission limit") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("simultaneous guests share one IP admission limit") copies or separates ...request(first.ownerId); ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("simultaneous guests share one IP admission limit", async () => {
   const first = await guest();
   const second = await guest();
@@ -253,9 +249,8 @@ test("simultaneous guests share one IP admission limit", async () => {
     "reserved",
   ]);
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" uses 1, 10, 9 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -317,9 +312,9 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
   ).toBe(false);
   expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(9);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("committing and releasing the same attempt are mutually exclusive") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-ternary (#518): test("committing and releasing the same attempt are mutually exclusive") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): test("committing and releasing the same attempt are mutually exclusive") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -341,9 +336,9 @@ test("committing and releasing the same attempt are mutually exclusive", async (
     results[0] ? 0 : 1
   );
 });
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async  --
  * no-magic-numbers (#517): test("guest provider accounting survives expiry and replay without creating monetary  uses 0, 1, 0.002 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("guest provider accounting survives expiry and replay without creating monetary  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): test("guest provider accounting survives expiry and replay without creating monetary  copies or separates ...evidence while preserving existing object ownership; mutating source objects is not equivalent.
@@ -378,9 +373,9 @@ test("guest provider accounting survives expiry and replay without creating mone
     await db.select().from(userCredit).where(eq(userCredit.userId, row.ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async  --
  * max-statements (#512): test("first admission creates one guest and reserves once across different IPs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("first admission creates one guest and reserves once across different IPs") uses 60_000, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("first admission creates one guest and reserves once across different IPs") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -421,9 +416,9 @@ test("first admission creates one guest and reserves once across different IPs",
     await db.select().from(userCredit).where(eq(userCredit.userId, ownerId))
   ).toEqual([]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("denied first admission creates no account or quota rows") uses 0, 100, 60_000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-ternary (#518): test("denied first admission creates no account or quota rows") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): test("denied first admission creates no account or quota rows") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -461,9 +456,9 @@ test("denied first admission creates no account or quota rows", async () => {
     ).toEqual([]);
   }
 });
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/max-nested-calls --
+/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls  --
  * no-magic-numbers (#517): test("bootstrap cannot replace an expired identity or reset its balance") uses 1, 60_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("bootstrap cannot replace an expired identity or reset its balance") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/max-nested-calls (#568): test("bootstrap cannot replace an expired identity or reset its balance") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -491,9 +486,9 @@ test("bootstrap cannot replace an expired identity or reset its balance", async 
     reserveEveGuestMessage(request(crypto.randomUUID()), bootstrap)
   ).rejects.toThrow("Invalid guest admission");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/max-nested-calls */
+/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("comparison admission rolls back a fresh account when any candidate exceeds quot uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("comparison admission rolls back a fresh account when any candidate exceeds quot sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): test("comparison admission rolls back a fresh account when any candidate exceeds quot copies or separates ...first while preserving existing object ownership; mutating source objects is not equivalent.
@@ -526,9 +521,9 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): test("failed mixed replay/new comparison leaves prior admission intact and rolls back keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("failed mixed replay/new comparison leaves prior admission intact and rolls back uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("failed mixed replay/new comparison leaves prior admission intact and rolls back sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -566,9 +561,9 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
     ).map((bucket) => bucket.requests)
   ).toEqual([1, 1]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-statements (#512): test("concurrent comparison retries debit each distinct candidate exactly once") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("concurrent comparison retries debit each distinct candidate exactly once") uses 2, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("concurrent comparison retries debit each distinct candidate exactly once") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -610,9 +605,9 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
     ).map((bucket) => bucket.requests)
   ).toEqual([2, 2]);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("comparison rate limits roll back all candidates and reject duplicate operation  uses 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("comparison rate limits roll back all candidates and reject duplicate operation  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("comparison rate limits roll back all candidates and reject duplicate operation  handles optional (await findEveGuest(row.tokenHash))?.remainingMessages without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -644,9 +639,9 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
     ])
   ).rejects.toThrow("unique operations");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls  --
  * no-magic-numbers (#517): test("comparison persistence failure rolls back guest identity and every quota reserv uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("comparison persistence failure rolls back guest identity and every quota reserv sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): test("comparison persistence failure rolls back guest identity and every quota reserv copies or separates ...first while preserving existing object ownership; mutating source objects is not equivalent.
@@ -698,9 +693,9 @@ test("comparison persistence failure rolls back guest identity and every quota r
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable max-statements, no-magic-numbers  --
  * max-statements (#512): test("refunded guest creation cannot dispatch late, while a new admission can recover keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("refunded guest creation cannot dispatch late, while a new admission can recover uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("refunded guest creation cannot dispatch late, while a new admission can recover sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -752,9 +747,9 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
   expect((await findEveGuest(row.tokenHash))?.remainingMessages).toBe(0);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable max-statements, no-magic-numbers  --
  * max-statements (#512): test("creation claims and refunds serialize without a free native dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("creation claims and refunds serialize without a free native dispatch") uses 4, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("creation claims and refunds serialize without a free native dispatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -794,9 +789,9 @@ test("creation claims and refunds serialize without a free native dispatch", asy
     }
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("committed quota without a creation journal cannot authorize a new dispatch") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("committed quota without a creation journal cannot authorize a new dispatch") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -820,6 +815,6 @@ test("committed quota without a creation journal cannot authorize a new dispatch
   ).rejects.toThrow("Committed guest admission has no creation journal");
   expect(dispatch).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This eve-guests.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

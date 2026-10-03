@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/credits"; "../db/eve-files"; "../db/eve-guests"; "../db/eve-queries"; "../logger" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -22,11 +22,11 @@ import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "./usage-reconciliation-busy";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 const logger = createModuleLogger("eve/admission");
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, max-lines-per-function, max-statements, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named createEveConversationOperation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): createEveConversationOperation remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * init-declarations (#507): createEveConversationOperation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -132,4 +132,4 @@ export const createEveConversationOperation = async (
     preparedMessage
   );
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, max-lines-per-function, max-statements, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { readFile, realpath } from "node:fs/promises";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-documents"; "../lib/db/schema"; "../lib/env"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
@@ -25,11 +25,11 @@ import { env } from "../lib/env";
 import { conversationBinding } from "../lib/eve/contracts";
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null  --
  * init-declarations (#507): test("compiled idle capture preserves native history and exact document revisions in  assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("compiled idle capture preserves native history and exact document revisions in  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("compiled idle capture preserves native history and exact document revisions in  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -283,9 +283,9 @@ test("compiled idle capture preserves native history and exact document revision
     page.getByRole("button", { exact: true, name: "Send" })
   ).toBeEnabled();
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * init-declarations (#507): test("an advanced source rejects the exact comparison checkpoint and keeps the editab assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("an advanced source rejects the exact comparison checkpoint and keeps the editab keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("an advanced source rejects the exact comparison checkpoint and keeps the editab keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -432,6 +432,6 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     await other.close();
   }
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-idle-checkpoint-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

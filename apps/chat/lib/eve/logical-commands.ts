@@ -14,7 +14,7 @@ const idle: CommandState = {
   pending: false,
 };
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/no-named-export (#527): Preserve the named LogicalCommands API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): LogicalCommands remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * no-undefined (#519): LogicalCommands uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -48,4 +48,4 @@ export class LogicalCommands {
     return true;
   }
 }
-/* oxlint-enable import/no-named-export, import/prefer-default-export, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

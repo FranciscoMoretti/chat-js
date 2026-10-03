@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-dispatch"; "../db/eve-deletion"; "../db/eve-documents" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,9 +9,9 @@ import {
 } from "../db/eve-deletion";
 import { purgeEveFamilyDocuments } from "../db/eve-documents";
 import { purgeEveFamilyFiles } from "./purge-files";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, max-statements, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable jsdoc/require-param, max-statements  --
  * import/no-named-export (#527): Preserve the named deleteUnacceptedEveCopy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): deleteUnacceptedEveCopy remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): deleteUnacceptedEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -44,4 +44,4 @@ export const deleteUnacceptedEveCopy = async (
     }
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, max-statements, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable jsdoc/require-param, max-statements */

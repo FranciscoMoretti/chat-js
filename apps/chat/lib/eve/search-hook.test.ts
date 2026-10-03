@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/search" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -7,7 +7,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import search from "../../agent/hooks/search";
 import type { EveSearchText } from "./search-text";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => {
   const state: EveSearchText[] = [];
@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => {
  */
 vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
-/* oxlint-disable no-ternary, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
  * no-ternary (#518): vi.mock("eve/context") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/context")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("eve/context") accepts current: EveSearchText[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -48,7 +48,7 @@ vi.mock("eve/context", () => ({
           },
         },
 }));
-/* oxlint-enable no-ternary, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 vi.mock("./search-backfill", () => ({
   backfillEveSearchConversation: mocks.recover,
 }));
@@ -102,7 +102,7 @@ const started: HookEvent = {
   meta: restored.meta,
   type: "turn.started",
 };
-/* oxlint-disable oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * oxc/no-optional-chaining (#542): dispatch handles optional search.events?.["*"]?.(event, hookContext) without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/explicit-function-return-type (#560): Keep dispatch's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): dispatch accepts event: HookEvent; hookContext = context; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -110,7 +110,7 @@ const started: HookEvent = {
  */
 const dispatch = (event: HookEvent, hookContext = context) =>
   search.events?.["*"]?.(event, hookContext);
-/* oxlint-enable oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 beforeEach(() => {
   vi.resetAllMocks();
   vi.spyOn(console, "error").mockImplementation(() => {
@@ -123,7 +123,7 @@ beforeEach(() => {
     ownerId: "owner",
   });
 });
-/* oxlint-disable no-console, oxc/no-async-await --
+/* oxlint-disable no-console  --
  * no-console (#514): it("defers inherited history until binding and retains it if indexing fails") emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * oxc/no-async-await (#540): it("defers inherited history until binding and retains it if indexing fails") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -139,11 +139,7 @@ it("defers inherited history until binding and retains it if indexing fails", as
   ]);
   expect(mocks.state).toEqual([]);
 });
-/* oxlint-enable no-console, oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("never indexes subagent-private text into the parent chat") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("never indexes subagent-private text into the parent chat") copies or separates ...context; ...context.session while preserving existing object ownership; mutating source objects is not equivalent.
- */
+/* oxlint-enable no-console */
 it("never indexes subagent-private text into the parent chat", async () => {
   await dispatch(restored, {
     ...context,
@@ -160,22 +156,13 @@ it("never indexes subagent-private text into the parent chat", async () => {
   expect(mocks.state).toEqual([]);
   expect(mocks.resolve).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("does no scope or database work on a turn with no pending text") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("does no scope or database work on a turn with no pending text", async () => {
   await dispatch(started);
   expect(mocks.resolve).not.toHaveBeenCalled();
   expect(mocks.index).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("retains newly received text when scope resolution fails and retries it") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("retains newly received text when scope resolution fails and retries it") copies or separates ...restored.meta while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("retains newly received text when scope resolution fails and retries it", async () => {
   mocks.resolve.mockRejectedValueOnce(new Error("mapping unavailable"));
   await expect(
@@ -192,9 +179,8 @@ it("retains newly received text when scope resolution fails and retries it", asy
   ]);
   expect(mocks.state).toEqual([]);
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable max-statements, no-console, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-statements, no-console, no-magic-numbers, no-undefined  --
  * max-statements (#512): it("bounds failed retries by entry count and records how omitted events can be recove keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): it("bounds failed retries by entry count and records how omitted events can be recove emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): it("bounds failed retries by entry count and records how omitted events can be recove uses 300, 1, 256 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -225,9 +211,9 @@ it("bounds failed retries by entry count and records how omitted events can be r
   expect(mocks.state).toEqual([]);
   expect(mocks.recovery).toBe(false);
 });
-/* oxlint-enable max-statements, no-console, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-statements, no-console, no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-console, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-console, no-magic-numbers  --
  * no-console (#514): it("bounds pending text size and deduplicates replayed history") emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): it("bounds pending text size and deduplicates replayed history") uses 256_001, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("bounds pending text size and deduplicates replayed history") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -256,9 +242,9 @@ it("bounds pending text size and deduplicates replayed history", async () => {
   await dispatch(restored);
   expect(mocks.state).toHaveLength(1);
 });
-/* oxlint-enable no-console, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-console, no-magic-numbers */
 
-/* oxlint-disable id-length, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable id-length, no-magic-numbers  --
  * id-length (#506): it("automatically recovers a large restored history and the next message on a healthy uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): it("automatically recovers a large restored history and the next message on a healthy uses 256 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("automatically recovers a large restored history and the next message on a healthy sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -290,4 +276,4 @@ it("automatically recovers a large restored history and the next message on a he
   expect(mocks.state).toEqual([]);
   expect(mocks.recovery).toBe(false);
 });
-/* oxlint-enable id-length, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable id-length, no-magic-numbers */

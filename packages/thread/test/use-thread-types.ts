@@ -1,29 +1,21 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { UIMessage } from "ai";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { AbstractThread, Thread } from "../src";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { ThreadState } from "../src";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { useThread } from "../src/react";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { UseThreadHelpers } from "../src/react";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { MemoryThreadState } from "../src/thread-state";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 
 declare const messageId: string;
 

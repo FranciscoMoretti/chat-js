@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -13,7 +13,7 @@ import { eveConversation, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
@@ -23,7 +23,7 @@ const conversationUrl = /\/chat\/[0-9a-f-]+$/u;
 const modelId = "openai/gpt-5-nano";
 const modelName = "GPT-5 nano";
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions  --
  * init-declarations (#507): test("the single-model picker dispatches and retains the selected native model") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("the single-model picker dispatches and retains the selected native model") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("the single-model picker dispatches and retains the selected native model") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -140,4 +140,4 @@ test("the single-model picker dispatches and retains the selected native model",
     }
   }
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

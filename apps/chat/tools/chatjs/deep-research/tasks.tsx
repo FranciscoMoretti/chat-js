@@ -1,18 +1,12 @@
 import { CircleCheck, Dot, FileText, Pencil, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type React from "react";
-/* oxlint-enable eslint/sort-imports */
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ResearchTask } from "./task";
-/* oxlint-enable eslint/sort-imports */
 
 const icons: Record<ResearchUpdate["type"], React.ElementType> = {
   completed: CircleCheck,
@@ -74,9 +68,7 @@ const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -106,9 +98,7 @@ export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/prefer-default-export */
 /* oxlint-enable import/exports-last */
 
 interface StepWrapperProps {

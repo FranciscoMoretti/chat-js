@@ -1,21 +1,13 @@
 import { Loader2, SearchIcon } from "lucide-react";
 import { motion } from "motion/react";
-/* oxlint-disable eslint/sort-imports -- Oxfmt groups the React value import with the existing dependency imports; preserve formatter ordering. */
 import React from "react";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { WebSourceBadge } from "@/components/source-badge";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { Badge } from "@/components/ui/badge";
-/* oxlint-enable eslint/sort-imports */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import { UpdateTitle } from "./update-title";
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -123,5 +115,3 @@ export const ResearchTask = ({
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

@@ -1,6 +1,6 @@
 import { env } from "@/lib/env";
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions --
+/* oxlint-disable jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named getBaseUrl API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): getBaseUrl remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-returns (#535): getBaseUrl's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -25,4 +25,4 @@ export const getBaseUrl = (): string => {
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
   return `http://localhost:${process.env.PORT || "3000"}`;
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions */

@@ -49,7 +49,7 @@ beforeEach(() => {
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.create.mockResolvedValue({ candidates: [], id: input.operationId });
 });
-/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers, no-undefined  --
  * no-magic-numbers (#517): test("authenticates and checks origin before dispatching with server-owned identity") uses 403, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("authenticates and checks origin before dispatching with server-owned identity") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-async-await (#540): test("authenticates and checks origin before dispatching with server-owned identity") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -66,8 +66,8 @@ test("authenticates and checks origin before dispatching with server-owned ident
     undefined
   );
 });
-/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-enable no-magic-numbers, no-undefined */
+/* oxlint-disable no-magic-numbers, unicorn/no-null  --
  * no-magic-numbers (#517): test("unauthenticated requests cannot create groups") uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("unauthenticated requests cannot create groups") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("unauthenticated requests cannot create groups") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -77,8 +77,8 @@ test("unauthenticated requests cannot create groups", async () => {
   const resolvedResult3 = await POST(request());
   expect(resolvedResult3.status).toBe(401);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("reads only through the authenticated owner's scope and does not cache bindings" uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("reads only through the authenticated owner's scope and does not cache bindings" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -93,9 +93,9 @@ test("reads only through the authenticated owner's scope and does not cache bind
     "private, no-store"
   );
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null  --
  * max-statements (#512): test("guest comparisons cannot dispatch without successful batch admission") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("guest comparisons cannot dispatch without successful batch admission") uses 429, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("guest comparisons cannot dispatch without successful batch admission") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -125,9 +125,9 @@ test("guest comparisons cannot dispatch without successful batch admission", asy
   await GET(request(), { params: Promise.resolve({ id: input.operationId }) });
   expect(mocks.get).toHaveBeenCalledWith("guest", input.operationId);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("schedules one title generation for an initial comparison chat") uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("schedules one title generation for an initial comparison chat") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("schedules one title generation for an initial comparison chat") handles optional mocks.after.mock.calls[0]?.[0]() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -165,12 +165,8 @@ test("schedules one title generation for an initial comparison chat", async () =
     ownerId: "owner",
   });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): test("does not retitle a forked comparison chat") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): test("does not retitle a forked comparison chat") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("does not retitle a forked comparison chat", async () => {
   mocks.create.mockResolvedValue({
     candidates: [
@@ -204,4 +200,3 @@ test("does not retitle a forked comparison chat", async () => {
 
   expect(mocks.after).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */

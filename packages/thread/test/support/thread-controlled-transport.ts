@@ -1,11 +1,8 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -85,9 +82,6 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

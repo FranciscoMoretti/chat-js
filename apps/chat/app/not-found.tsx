@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import React from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable react/jsx-max-depth, react/jsx-no-literals --
  * react/jsx-max-depth (#548): NotFound keeps related render components together; extraction changes component, state, and layout boundaries.

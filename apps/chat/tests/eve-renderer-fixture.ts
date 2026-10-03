@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-tool-result" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,7 +8,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const states: {
   label: string;

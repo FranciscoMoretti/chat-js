@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -26,12 +26,12 @@ import { eveCopyInput } from "../lib/eve/copy-input";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { textPdf } from "./eve-attachment-fixtures";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash-lite";
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null  --
  * init-declarations (#507): test("saves without generation, recovers after source revocation and reload, and cont assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -278,9 +278,9 @@ test("saves without generation, recovers after source revocation and reload, and
     )
   ).toBeVisible();
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * init-declarations (#507): for (const attachment of [ { answer: "red", bytes: Buff assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): for (const attachment of [ { answer: "red", bytes: Buff keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -581,6 +581,6 @@ for (const attachment of [
     expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-copy-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

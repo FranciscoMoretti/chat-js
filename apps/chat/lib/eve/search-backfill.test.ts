@@ -50,7 +50,7 @@ beforeEach(() => {
 });
 /* oxlint-enable id-length */
 
-/* oxlint-disable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): it("recovers every restored entry and the latest message, and can retry after a parti uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): it("recovers every restored entry and the latest message, and can retry after a parti uses 4, 0, 3, 2, 100 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("recovers every restored entry and the latest message, and can retry after a parti uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -83,4 +83,4 @@ it("recovers every restored entry and the latest message, and can retry after a 
     { key: "event:latest", text: "Newest message" },
   ]);
 });
-/* oxlint-enable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

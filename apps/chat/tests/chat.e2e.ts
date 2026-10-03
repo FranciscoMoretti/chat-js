@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): test("chat page loads") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("chat page loads") accepts { page }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -9,9 +9,9 @@ test("chat page loads", async ({ page }) => {
   await expect(page).toHaveURL("/");
   await expect(page.getByRole("textbox")).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): test("development login tool is available on the login page") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("development login tool is available on the login page") accepts { page, }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -24,4 +24,4 @@ test("development login tool is available on the login page", async ({
   await expect(devLogin).toBeVisible();
   await expect(devLogin).toHaveAttribute("href", "/api/dev-login");
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

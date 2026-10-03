@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/ai/mcp/mcp-client"; "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts"; "../lib/eve/mcp-tools" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -14,7 +14,7 @@ import { conversationBinding } from "../lib/eve/contracts";
 import { discoverEveMcpTools } from "../lib/eve/mcp-tools";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -22,7 +22,7 @@ import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * init-declarations (#507): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("MCP OAuth callback persists credentials for fresh Eve clients and native execut keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -190,4 +190,4 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     }
   }
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

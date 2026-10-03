@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import { ArrowRight, FileText } from "lucide-react";
 import React, { useId } from "react";
 
@@ -24,8 +22,7 @@ import type { SearchResultItem } from "@/tools/platform/research-updates-schema"
 
 import { Favicon } from "./favicon";
 import { FaviconGroup } from "./favicon-group";
-/* oxlint-enable sort-imports */
-/* oxlint-disable oxc/no-optional-chaining, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SourcesList: oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources, }: { sources: SearchResultItem[] | undefined; }). */
+/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SourcesList: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources, }: { sources: SearchResultItem[] | undefined; }). */
 
 const SourcesList = ({
   sources,
@@ -56,7 +53,7 @@ const SourcesList = ({
     ))}
   </div>
 );
-/* oxlint-enable oxc/no-optional-chaining, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable max-lines-per-function, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- AllSourcesView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AllSourcesView = ({
@@ -115,7 +112,7 @@ const AllSourcesView = ({
 };
 /* oxlint-enable max-lines-per-function, react/forbid-component-props, react/jsx-max-depth, react/jsx-no-literals, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, oxc/no-optional-chaining, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including document.querySelector<HTMLElement>(#${dialogId})?.click()); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable id-length, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ShowSourcesButton: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ShowSourcesButton = ({
   sources,
@@ -144,8 +141,8 @@ const ShowSourcesButton = ({
     <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
   </button>
 );
-/* oxlint-enable id-length, oxc/no-optional-chaining, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/no-named-export, import/prefer-default-export, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Sources: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources }: { sources: SearchResultItem[] }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable id-length, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-no-literals, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Sources: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources }: { sources: SearchResultItem[] }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const Sources = ({ sources }: { sources: SearchResultItem[] }) => {
   const sourcesDialogId = useId();
@@ -162,4 +159,4 @@ export const Sources = ({ sources }: { sources: SearchResultItem[] }) => {
     </div>
   );
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

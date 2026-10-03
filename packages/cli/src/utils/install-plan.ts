@@ -17,11 +17,9 @@ import path from "node:path";
 
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 import type { planInstallation } from "./installation-plan";
 import { preflight } from "./preflight";
 import { toolRegistrationTargets } from "./sync-tools";
@@ -35,7 +33,6 @@ const hash = (content: Buffer): string =>
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const optionalFile = async (file: string) => {
   try {
@@ -48,24 +45,17 @@ const optionalFile = async (file: string) => {
   }
 };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 const readReceipt = async (cwd: string) => {
   await preflight(cwd, [receiptFile]);
   const source = await optionalFile(path.join(cwd, receiptFile));
   return source ? receiptSchema.parse(JSON.parse(source.toString())) : {};
 };
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -81,12 +71,8 @@ const sourceTargets = (plan: Plan) => [
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const directoryFiles = async (
   cwd: string,
@@ -107,12 +93,8 @@ const directoryFiles = async (
   return files.flat();
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -141,26 +123,18 @@ export const recordInstalledSource = async (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const plannedSourceTargets = sourceTargets;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -295,13 +269,9 @@ export const installPlan = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */

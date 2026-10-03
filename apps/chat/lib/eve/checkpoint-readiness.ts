@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import {
@@ -8,9 +5,8 @@ import {
   checkpointRejectionReason,
 } from "./checkpoint-rejection";
 import { eveRequest } from "./server";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): readEveCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named readEveCheckpoint API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): readEveCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -67,9 +63,9 @@ export const readEveCheckpoint = async (
   }
   throw new Error("Source checkpoint lookup is unavailable.");
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, max-params, no-magic-numbers, oxc/no-async-await, unicorn/max-nested-calls --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-params, no-magic-numbers, unicorn/max-nested-calls  --
  * import/group-exports (#523): waitForEveCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named waitForEveCheckpoint API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): waitForEveCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -111,4 +107,4 @@ export const waitForEveCheckpoint = async (
     "Source checkpoint is not ready. Retry the same operation shortly."
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, max-params, no-magic-numbers, oxc/no-async-await, unicorn/max-nested-calls */
+/* oxlint-enable import/group-exports, jsdoc/require-param, max-params, no-magic-numbers, unicorn/max-nested-calls */

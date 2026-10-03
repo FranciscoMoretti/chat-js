@@ -5,7 +5,7 @@ import { z } from "zod";
 const captureStyle =
   "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility:hidden !important; }";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls  --
  * max-lines-per-function (#510): test("logical header metadata is optimistic, rolls back, and preserves project and mo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("logical header metadata is optimistic, rolls back, and preserves project and mo keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("logical header metadata is optimistic, rolls back, and preserves project and mo uses 180_000, -1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -179,4 +179,4 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
     style: captureStyle,
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */

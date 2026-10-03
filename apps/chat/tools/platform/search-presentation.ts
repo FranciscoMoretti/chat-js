@@ -1,25 +1,21 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { createModuleLogger } from "@/lib/logger";
 
 import { multiQueryWebSearchStep } from "./steps/multi-query-web-search";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): DEFAULT_MAX_RESULTS is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): DEFAULT_MAX_RESULTS stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named DEFAULT_MAX_RESULTS API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const DEFAULT_MAX_RESULTS = 5;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
 // Bound the number of parallel searches per tool call.
 const MAX_SEARCH_QUERIES = 2;
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers --
+/* oxlint-disable import/group-exports, no-magic-numbers  --
  * import/group-exports (#523): searchQueriesSchema stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named searchQueriesSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): searchQueriesSchema uses 1, 10 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -41,9 +37,9 @@ export const searchQueriesSchema = z
   )
   .max(MAX_SEARCH_QUERIES)
   .describe(`Array of search queries. Maximum ${MAX_SEARCH_QUERIES} queries.`);
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers */
+/* oxlint-enable import/group-exports, no-magic-numbers */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): executeMultiQuerySearch stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named executeMultiQuerySearch API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): executeMultiQuerySearch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -130,4 +126,4 @@ export const executeMultiQuerySearch = async ({
   );
   return { searches: searchResults, ...(error ? { error } : {}) };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

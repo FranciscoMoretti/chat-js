@@ -3,12 +3,8 @@ import Image from "next/image";
 import React from "react";
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import InteractiveChart from "./interactive-charts";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { BaseChart } from "./interactive-charts";
-/* oxlint-enable eslint/sort-imports */
 
 const chartLabels = {
   title: z.string().default(""),
@@ -23,7 +19,6 @@ const series = z.array(
   })
 );
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 const chartSchema = z.discriminatedUnion("type", [
@@ -55,7 +50,6 @@ const chartSchema = z.discriminatedUnion("type", [
 ]);
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const pngSchema = z.object({
   base64: z.string().min(1),
@@ -63,11 +57,8 @@ const pngSchema = z.object({
 });
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -102,8 +93,5 @@ export const CodeExecutionChart = ({ value }: { value: unknown }) => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

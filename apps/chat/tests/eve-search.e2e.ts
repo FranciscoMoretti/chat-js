@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "node:child_process" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/reconcile-usage" dependency within this package instead of introducing an alias or barrel API.
@@ -20,11 +20,11 @@ import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("native search retains sources, progress and billing across reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native search retains sources, progress and billing across reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native search retains sources, progress and billing across reload") uses 2, 1, 0, 15_000, 0.05 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -147,9 +147,9 @@ test("native search retains sources, progress and billing across reload", async 
     path: "tests/eve-results/screenshots/eve-search-mobile.png",
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-statements (#512): test("search loading and failure states remain readable") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("search loading and failure states remain readable") uses 3, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("search loading and failure states remain readable") uses execFileSync( "bun", ["tests/eve-search-renderer-fixture.ts"], { encoding: "utf-8" }  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
@@ -187,4 +187,4 @@ test("search loading and failure states remain readable", async ({ page }) => {
     });
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

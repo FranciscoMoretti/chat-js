@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/copy-boundaries" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -15,9 +15,9 @@ import {
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
 } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): snapshotCopyCheckpoints uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-lines-per-function (#510): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -147,9 +147,9 @@ const snapshotCopyCheckpoints = async (
   });
   return checkpoints;
 };
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * import/no-named-export (#527): Preserve the named snapshotPublicEveCopyDocuments API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): snapshotPublicEveCopyDocuments remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): snapshotPublicEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -305,4 +305,4 @@ export const snapshotPublicEveCopyDocuments = async (
     return { checkpoints, documents };
   });
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

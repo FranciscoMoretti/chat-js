@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-namespace, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-namespace, import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-namespace (#528): The EveServer namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
  * import/no-nodejs-modules (#529): This test harness requires import { setTimeout } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env"; "../lib/eve/create-conversation-operation" dependency within this package instead of introducing an alias or barrel API.
@@ -16,11 +16,11 @@ import { env } from "../lib/env";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
 import type * as EveServer from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-namespace, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-namespace, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 const probe = vi.hoisted(() => ({ beforeResponse: false, dispatches: 0 }));
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): vi.mock("../lib/eve/server") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): vi.mock("../lib/eve/server") uses 1, 25_000, 100 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): vi.mock("../lib/eve/server") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -63,7 +63,7 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
     },
   };
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 assertEveTestDatabase(env.DATABASE_URL);
 if (!new URL(env.DATABASE_URL).pathname.includes("identity_test")) {
@@ -72,7 +72,7 @@ if (!new URL(env.DATABASE_URL).pathname.includes("identity_test")) {
   );
 }
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, unicorn/no-null --
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null  --
  * max-statements (#512): test("real native hook binds before a lost response, and retry keeps the accepted ses keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("real native hook binds before a lost response, and retry keeps the accepted ses uses 409, 200, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("real native hook binds before a lost response, and retry keeps the accepted ses sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -105,9 +105,9 @@ test("real native hook binds before a lost response, and retry keeps the accepte
   });
   expect(probe.dispatches).toBe(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("native acceptance deduplicates concurrent callers and rejects foreign or forged keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native acceptance deduplicates concurrent callers and rejects foreign or forged keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native acceptance deduplicates concurrent callers and rejects foreign or forged uses 401, 403, 0, 1, 202, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -190,4 +190,4 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
     state: "bound",
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import { eveMessageInput } from "./message-input";
 import type { EveMessageInput } from "./message-input";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): draftAttachment stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named draftAttachment API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -17,14 +13,10 @@ export const draftAttachment = z.object({
   name: z.string(),
   url: z.string(),
 });
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named DraftAttachment API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
+/* oxlint-enable import/group-exports */
 export type DraftAttachment = z.infer<typeof draftAttachment>;
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): restoreDraft stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named restoreDraft API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): restoreDraft accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -53,9 +45,9 @@ export const restoreDraft = (
       .join("\n"),
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): draftMessage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named draftMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): draftMessage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -79,9 +71,9 @@ export const draftMessage = (
     })),
   ]);
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): attachmentDigest stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named attachmentDigest API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): attachmentDigest uses 16, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -93,4 +85,4 @@ export const attachmentDigest = async (bytes: ArrayBuffer): Promise<string> =>
     new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
     (byte) => byte.toString(16).padStart(2, "0")
   ).join("");
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */

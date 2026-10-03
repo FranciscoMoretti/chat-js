@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
@@ -10,7 +7,6 @@ import { getActiveGateway } from "./active-gateway";
 import type { AppModelId } from "./app-models";
 import { getAppModelDefinition } from "./app-models";
 import type { InstalledGateway } from "./gateways/registry";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): ActiveGatewayModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -34,7 +30,7 @@ type ActiveGatewayVideoModelId = Parameters<
 >[0];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, node/no-process-env, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): getLanguageModel stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getLanguageModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): getLanguageModel uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -70,9 +66,9 @@ export const getLanguageModel = async (modelId: AppModelId) => {
     model: languageProvider,
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, node/no-process-env, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): getImageModel stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getImageModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -89,9 +85,9 @@ export const getImageModel = (modelId: ActiveGatewayImageModelId) => {
   }
   return imageModel;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): getVideoModel stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getVideoModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getVideoModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -107,9 +103,9 @@ export const getVideoModel = (modelId: ActiveGatewayVideoModelId) => {
   }
   return videoModel;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): getMultimodalImageModel stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getMultimodalImageModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getMultimodalImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -118,9 +114,9 @@ export const getVideoModel = (modelId: ActiveGatewayVideoModelId) => {
 // Get a multimodal language model that can generate images via generateText
 export const getMultimodalImageModel = (modelId: ActiveGatewayModelId) =>
   getActiveGateway().createLanguageModel(modelId);
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): getModelProviderOptions stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getModelProviderOptions API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * oxc/no-async-await (#540): getModelProviderOptions sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -131,4 +127,4 @@ export const getMultimodalImageModel = (modelId: ActiveGatewayModelId) =>
 
 export const getModelProviderOptions = async (providerModelId: AppModelId) =>
   modelProviderOptions(await getAppModelDefinition(providerModelId));
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

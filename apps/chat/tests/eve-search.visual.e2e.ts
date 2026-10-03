@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -7,7 +7,7 @@ import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { serialize } from "superjson";
 import { z } from "zod";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable unicorn/max-nested-calls --
  * unicorn/max-nested-calls (#568): searchBatchSchema keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -17,7 +17,7 @@ const searchBatchSchema = z.object({
 });
 /* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * no-magic-numbers (#517): test("search states") uses 20, 1024 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("search states") uses execFileSync( "bun", [ "-e", 'const result=await Bun.build({entrypoints:["tests/; execFileSync( "bun", [ "-e", 'import postcss from "postcss";import tailwind from within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
  * oxc/no-async-await (#540): test("search states") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -63,9 +63,9 @@ test("search states", async ({ page }, testInfo) => {
     path: testInfo.outputPath("search-states.png"),
   });
 });
-/* oxlint-enable no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null  --
  * max-lines-per-function (#510): test("debounces requests, hides obsolete results, and navigates to the matching branc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("debounces requests, hides obsolete results, and navigates to the matching branc keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("debounces requests, hides obsolete results, and navigates to the matching branc uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -142,9 +142,9 @@ test("debounces requests, hides obsolete results, and navigates to the matching 
     /\/chat\/00000000-0000-4000-8000-000000000002$/u
   );
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null  --
  * max-lines-per-function (#510): test("does not publish a response for text superseded during the debounce window") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("does not publish a response for text superseded during the debounce window") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("does not publish a response for text superseded during the debounce window") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -245,9 +245,9 @@ test("does not publish a response for text superseded during the debounce window
   await expect(page.getByRole("listbox")).toHaveAttribute("aria-busy", "false");
   expect(requests).toEqual(["original", "intermediate", "latest", "original"]);
 });
-/* oxlint-enable max-lines-per-function, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * id-length (#506): test("recent-chat skeletons reserve the loaded dialog height") uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-lines-per-function (#510): test("recent-chat skeletons reserve the loaded dialog height") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("recent-chat skeletons reserve the loaded dialog height") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -358,6 +358,6 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
     },
   ]);
 });
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-search.visual.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

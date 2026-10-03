@@ -1,5 +1,4 @@
 "use client";
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import React from "react";
 import type { ReactNode } from "react";
@@ -7,8 +6,7 @@ import type { ReactNode } from "react";
 import { HeaderActions } from "@/components/header-actions";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
-/* oxlint-disable import/no-named-export, import/prefer-default-export, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ChatHeaderView: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ChatHeaderView: ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ChatHeaderView = ({
   breadcrumb,
@@ -35,4 +33,4 @@ export const ChatHeaderView = ({
     <HeaderActions />
   </header>
 );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

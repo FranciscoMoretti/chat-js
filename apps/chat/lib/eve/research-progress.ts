@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tools/platform/research-updates-schema"; "../ai/tool-context" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,9 +9,9 @@ import type { ToolProgressWriter } from "../ai/tool-context";
 import type { ToolOutput } from "./tool-result";
 import { executeWithToolProgress } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable id-length, import/no-named-export, import/prefer-default-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * id-length (#506): executeWithResearchProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/no-named-export (#527): Preserve the named executeWithResearchProgress API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): executeWithResearchProgress remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
@@ -44,4 +44,4 @@ export const executeWithResearchProgress = <T extends ToolOutput>(
       });
     }
   );
-/* oxlint-enable id-length, import/no-named-export, import/prefer-default-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

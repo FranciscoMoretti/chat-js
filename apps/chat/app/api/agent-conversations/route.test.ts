@@ -61,7 +61,7 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("keeps a terminal creation response ambiguous when its refund is refused") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("keeps a terminal creation response ambiguous when its refund is refused") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -87,9 +87,9 @@ test("keeps a terminal creation response ambiguous when its refund is refused", 
     "reservation"
   );
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("preserves authoritative deletion when its committed quota cannot be refunded") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("preserves authoritative deletion when its committed quota cannot be refunded") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -114,9 +114,9 @@ test("preserves authoritative deletion when its committed quota cannot be refund
     creationRejected: true,
   });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("defers root title generation until after the creation response") uses 200, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("defers root title generation until after the creation response") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("defers root title generation until after the creation response") handles optional mocks.after.mock.calls[0]?.[0]() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -142,4 +142,4 @@ test("defers root title generation until after the creation response", async () 
     ownerId: "guest",
   });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable no-magic-numbers */

@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
@@ -11,7 +8,6 @@ import {
   resolveEveEnvironment,
 } from "./eve/environment";
 import { resolveWorkflowWorld } from "./eve/world-config";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): isPlaywrightTestEnvironmentEnabled reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -44,7 +40,7 @@ const postgresUrl = z.url().refine(
   { message: "Must use a postgres:// or postgresql:// URL" }
 );
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, max-lines-per-function, no-magic-numbers, no-ternary, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): getEveRuntimeEnvOptions is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): getEveRuntimeEnvOptions stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getEveRuntimeEnvOptions API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -130,11 +126,11 @@ export const getEveRuntimeEnvOptions = (
             "Local/self-hosted workflow database override; defaults to DATABASE_URL. Unused on Vercel"
           ),
 });
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, max-lines-per-function, no-magic-numbers, no-ternary, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): clientEnvSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): clientEnvSchema stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named clientEnvSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -143,9 +139,9 @@ export const clientEnvSchema = {
   NEXT_PUBLIC_REACT_QUERY_DEVTOOLS: z.enum(["0", "1"]).optional(),
   NEXT_PUBLIC_REACT_SCAN: z.enum(["0", "1"]).optional(),
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable no-ternary, no-undefined, typescript/explicit-function-return-type --
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type  --
  * no-ternary (#518): playwrightDefault derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): playwrightDefault uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep playwrightDefault's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -155,9 +151,9 @@ const playwrightDefault = (value: unknown, fallback: string) =>
   (value === null || value === undefined || value === "")
     ? fallback
     : value;
-/* oxlint-enable no-ternary, no-undefined, typescript/explicit-function-return-type */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, node/no-process-env, oxc/no-rest-spread-properties --
+/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, node/no-process-env  --
  * import/group-exports (#523): serverEnvSchema stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named serverEnvSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): serverEnvSchema uses 1, 44 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -344,4 +340,4 @@ export const serverEnvSchema = {
     eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
   ),
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, node/no-process-env, oxc/no-rest-spread-properties */
+/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, node/no-process-env */

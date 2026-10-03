@@ -1,7 +1,5 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ChatRequestOptions, UIMessage } from "ai";
-/* oxlint-enable eslint/sort-imports */
 import {
   useCallback,
   useEffect,
@@ -13,10 +11,7 @@ import {
 
 import type { AbstractThread } from "./abstract-thread";
 import { Thread } from "./thread";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { SnapshotStore } from "./thread-snapshot-store";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   MessageTreeSnapshot,
   ThreadInit,
@@ -26,13 +21,10 @@ import type {
   ThreadStateSnapshot,
   TreeSendOptions,
 } from "./types";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 const useIsomorphicLayoutEffect =
   // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
-/* oxlint-enable eslint/no-ternary */
 
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
 type ThreadHookOptions = {
@@ -48,7 +40,6 @@ type ThreadCallbacks<TMessage extends UIMessage> = Pick<
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 class LatestThreadDispatchers<TMessage extends UIMessage> {
@@ -93,7 +84,6 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -103,14 +93,12 @@ type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type UseThreadOptions<TMessage extends UIMessage = UIMessage> =
   | ExternalThreadOptions<TMessage>
   | (ThreadHookOptions &
       ThreadInit<TMessage> & {
         thread?: never;
       });
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
@@ -125,7 +113,6 @@ const hasSuppliedThread = <TMessage extends UIMessage>(
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
@@ -159,13 +146,11 @@ export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
@@ -178,7 +163,6 @@ export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
   };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
@@ -225,12 +209,8 @@ const useThreadField = <
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const useThread = <TMessage extends UIMessage = UIMessage>(
@@ -378,10 +358,6 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */

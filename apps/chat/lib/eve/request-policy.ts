@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import { frontendToolsSchema } from "../ai/types";
 import { eveMessageInput } from "./message-input";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const streamIndex = /^\d{1,12}$/u;
 const sessionPath =
@@ -54,7 +54,7 @@ const cancel = z
   .object({ turnId: z.string().min(1).max(200).optional() })
   .strict();
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/group-exports (#523): parseSessionRequest stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named parseSessionRequest API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): parseSessionRequest uses 1, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -84,8 +84,8 @@ export const parseSessionRequest = (path: string, method: string) => {
     schema: action === "cancel" ? cancel : z.union([message, respond]),
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/group-exports (#523): safeStreamQuery stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named safeStreamQuery API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-ternary (#518): safeStreamQuery derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -114,8 +114,8 @@ export const safeStreamQuery = (params: URLSearchParams) => {
   }
   return result;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): sameOrigin stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named sameOrigin API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-ternary (#518): sameOrigin derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -131,4 +131,4 @@ export const sameOrigin = (request: Request, origin: string) => {
     : request.method === "GET" &&
         request.headers.get("sec-fetch-site") !== "cross-site";
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

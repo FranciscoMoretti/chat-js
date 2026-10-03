@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import { getEveConversation } from "@/lib/db/eve-queries";
@@ -13,7 +10,6 @@ import { CheckpointRejectedError } from "@/lib/eve/checkpoint-rejection";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): inputSchema uses 64 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -29,7 +25,7 @@ const inputSchema = z
   .strict();
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named POST API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): POST remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -129,4 +125,4 @@ export const POST = async (
     );
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

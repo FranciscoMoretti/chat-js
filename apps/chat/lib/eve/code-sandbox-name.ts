@@ -4,7 +4,7 @@
 import { createHash } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named eveCodeSandboxName API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): eveCodeSandboxName remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): eveCodeSandboxName's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -56,4 +56,4 @@ export const eveCodeSandboxName = ({
     .digest("hex");
   return `chatjs-code-${digest.slice(0, 48)}`;
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

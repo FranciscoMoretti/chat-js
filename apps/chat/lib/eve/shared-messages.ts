@@ -1,15 +1,11 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { defaultMessageReducer } from "eve/client";
 import type { EveMessagePart, MessageStreamEvent } from "eve/client";
 
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { responseModelReferences } from "./response-model";
 import { toolOutputSchema, hasEveToolReceipt } from "./tool-result";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-ternary, oxc/no-rest-spread-properties --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements  --
  * jsdoc/require-param (#534): sharedTool's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): sharedTool's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): sharedTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -104,9 +100,9 @@ const sharedTool = (
     }
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-ternary, oxc/no-rest-spread-properties */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-statements, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): sharedEvePart stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named sharedEvePart API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): sharedEvePart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -157,9 +153,9 @@ export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
   // Connection challenges can contain owner-only authorization URLs and codes.
   return [{ text: "An account connection was requested.", type: "text" }];
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-statements, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, init-declarations, no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable import/group-exports, init-declarations, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/group-exports (#523): sharedEveMessages stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named sharedEveMessages API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * init-declarations (#507): sharedEveMessages assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -202,4 +198,4 @@ export const sharedEveMessages = (events: readonly MessageStreamEvent[]) => {
     };
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, init-declarations, no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/group-exports, init-declarations, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

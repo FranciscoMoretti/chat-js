@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-search" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,9 +8,9 @@ import { indexEveSearchText } from "../db/eve-search";
 import { getEveConnectionOptions } from "./connection-options";
 import { eveEventSearchText } from "./search-text";
 import type { EveSearchText } from "./search-text";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable jsdoc/require-param, no-magic-numbers  --
  * import/no-named-export (#527): Preserve the named backfillEveSearchConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): backfillEveSearchConversation remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): backfillEveSearchConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -40,4 +40,4 @@ export const backfillEveSearchConversation = async (
   }
   await indexEveSearchText(ownerId, conversationId, batch);
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable jsdoc/require-param, no-magic-numbers */

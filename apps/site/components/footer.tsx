@@ -19,8 +19,6 @@ const COMMUNITY_LINKS = [
   { href: "https://x.com/franmoretti_", label: "X / Twitter" },
 ];
 
-/* oxlint-disable import/prefer-default-export -- Footer: Consumers use this named API so adding another export will not require changing existing imports. */
-/* oxlint-disable import/no-named-export -- Footer: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- Footer: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable react/jsx-no-literals -- Footer: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/forbid-component-props -- Footer: className/style are the deliberate styling interface of these UI/layout primitives. */
@@ -122,5 +120,3 @@ export const Footer = (): React.JSX.Element => (
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

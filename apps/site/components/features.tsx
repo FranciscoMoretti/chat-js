@@ -1,5 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-/* oxlint-disable eslint/sort-imports -- the lucide-react import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import {
   BrainCircuit,
   Code,
@@ -14,7 +13,6 @@ import {
   Search,
   Video,
 } from "lucide-react";
-/* oxlint-enable eslint/sort-imports */
 import React from "react";
 
 interface Feature {
@@ -142,9 +140,7 @@ const SectionLabel = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable import/prefer-default-export -- Features: Consumers use this named API so adding another export will not require changing existing imports. */
 /* oxlint-disable react/no-multi-comp -- Features: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable import/no-named-export -- Features: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable react/jsx-no-literals -- Features: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/jsx-max-depth -- Features: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable eslint/id-length -- Features: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
@@ -192,6 +188,4 @@ export const Features = (): React.JSX.Element => (
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/prefer-default-export */

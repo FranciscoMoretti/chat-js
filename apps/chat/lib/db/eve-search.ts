@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,7 +8,7 @@ import { MAX_SEARCH_QUERY_LENGTH } from "../eve/search-text";
 import type { EveSearchText } from "../eve/search-text";
 import { db } from "./client";
 import { eveConversation, eveSearchText } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): SearchTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -16,7 +16,7 @@ import { eveConversation, eveSearchText } from "./schema";
 type SearchTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, max-params, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): writeEveSearchText is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): writeEveSearchText stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named writeEveSearchText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -77,9 +77,9 @@ export const writeEveSearchText = async (
       });
   }
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, max-params, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/exports-last (#522): indexEveSearchText is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): indexEveSearchText stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named indexEveSearchText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -99,7 +99,7 @@ export const indexEveSearchText = async (
     );
   }
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): EveSearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
@@ -127,7 +127,7 @@ const queryToken = /!|[()]|'(?<term>(?:[^'\\]|\\.|'')*)'(?<prefix>:\*)?/gu;
 const escapedQueryCharacter = /\\(?<character>.)/gu;
 const markedWord = /⟦(?<word>[^⟧]*)⟧/gu;
 
-/* oxlint-disable max-statements, no-continue, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-statements (#512): highlightSearchExcerpt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): highlightSearchExcerpt skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): highlightSearchExcerpt uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -175,9 +175,9 @@ const highlightSearchExcerpt = (
     return length ? `⟦${word.slice(0, length)}⟧${word.slice(length)}` : marked;
   });
 };
-/* oxlint-enable max-statements, no-continue, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/group-exports (#523): searchEveConversations stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named searchEveConversations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): searchEveConversations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -282,4 +282,4 @@ export const searchEveConversations = async (
         : null,
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

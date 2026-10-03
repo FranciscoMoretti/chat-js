@@ -1,12 +1,8 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, no-magic-numbers, no-ternary, no-undefined, node/no-process-env, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named POST API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): POST remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * no-magic-numbers (#517): POST uses 60, 24, 365 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -52,4 +48,4 @@ export const POST = async (request: NextRequest) => {
     );
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, no-magic-numbers, no-ternary, no-undefined, node/no-process-env, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, no-undefined, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

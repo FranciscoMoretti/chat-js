@@ -4,16 +4,12 @@ import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- the node:url import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 /* oxlint-disable import/no-nodejs-modules -- the node:url import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { fileURLToPath } from "node:url";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable import/no-namespace -- the png2icons import: The library namespace is the existing primitive/type API; replacing it requires changing its consumers and type references. */
-/* oxlint-disable eslint/sort-imports -- the png2icons import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import * as png2icons from "png2icons";
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-namespace */
 
 const root = fileURLToPath(new URL("..", import.meta.url));

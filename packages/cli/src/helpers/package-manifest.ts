@@ -5,11 +5,9 @@ import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { PackageManager } from "../types";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 
 type DependencyMap = Record<string, string>;
 type ScriptMap = Record<string, string>;
@@ -162,12 +160,8 @@ const normalizeElectronDevDependencies = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
@@ -238,9 +232,5 @@ export const normalizeScaffoldedPackageJson = (
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export */

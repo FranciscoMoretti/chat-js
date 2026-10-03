@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named TextSplitterParams API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export interface TextSplitterParams {
   chunkOverlap: number;
   chunkSize: number;
 }
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable id-length, import/no-named-export, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, no-underscore-dangle, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable id-length, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * id-length (#506): TextSplitter uses d as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/no-named-export (#527): Preserve the named TextSplitter API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): TextSplitter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -112,4 +108,4 @@ export abstract class TextSplitter implements TextSplitterParams {
     return docs;
   }
 }
-/* oxlint-enable id-length, import/no-named-export, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, no-underscore-dangle, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable id-length, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null */

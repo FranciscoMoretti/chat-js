@@ -5,9 +5,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable eslint/sort-imports -- the ./dev-health import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { checkHealth } from "./dev-health";
-/* oxlint-enable eslint/sort-imports */
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
 /* oxlint-disable node/no-process-env -- origin: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
@@ -30,7 +28,6 @@ const sleep = (ms: number): Promise<void> => delay(ms);
 // while the launcher is alive so shutdown also cleans up detached workers.
 let descendants = new Map<number, string>();
 /* oxlint-disable eslint/max-statements -- trackChildren: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable oxc/no-optional-chaining -- trackChildren: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable node/no-sync -- trackChildren: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
 /* oxlint-disable typescript/strict-boolean-expressions -- trackChildren: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- trackChildren: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -78,7 +75,6 @@ const trackChildren = (): void => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable node/no-sync */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/max-statements */
 const terminate = (signal: NodeJS.Signals): void => {
   trackChildren();
@@ -101,9 +97,7 @@ for (const signal of signals) {
 let backoff = 5000;
 let failedStartups = 0;
 /* oxlint-disable eslint/no-console -- dev-supervisor.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable oxc/no-rest-spread-properties -- dev-supervisor.ts: Fresh object composition preserves immutable state/configuration and existing override order. */
 /* oxlint-disable node/no-process-env -- dev-supervisor.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable node/no-top-level-await -- dev-supervisor.ts: This Bun/ESM entrypoint must finish initialization before later module statements run. */
 /* oxlint-disable eslint/no-magic-numbers -- dev-supervisor.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/no-undefined -- dev-supervisor.ts: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 // oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Process signal and exit callbacks update these flags while the loop awaits.
@@ -176,7 +170,5 @@ while (!stopping) {
 }
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-top-level-await */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-console */

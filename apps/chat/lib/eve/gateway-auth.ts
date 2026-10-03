@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import { timingSafeEqual } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types"; "../db/eve-guests"; "../db/eve-queries"; "../db/eve-sandbox-coverage-proof"; "../db/eve-subagents" dependency within this package instead of introducing an alias or barrel API.
@@ -23,7 +23,7 @@ import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 const checkpointLookupPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;
@@ -35,7 +35,7 @@ const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * oxc/no-async-await (#540): authorizeDeletionRequest sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): authorizeDeletionRequest accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): authorizeDeletionRequest intentionally keeps the existing falsy-value behavior of sessionId; rootSessionId; env.WORKFLOW_POSTGRES_URL; await getDeletingEveConversationForSession(owner, rootSessionId); distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -72,9 +72,9 @@ const authorizeDeletionRequest = async (
     sessionId
   );
 };
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions  --
  * no-magic-numbers (#517): gatewaySessionPolicy uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): gatewaySessionPolicy derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-optional-chaining (#542): gatewaySessionPolicy handles optional compactionPath.exec(path)?.[1]; checkpointLookupPath.exec(path)?.[1]; namedCheckpointLookupPath.exec(path)?.[1] without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -97,9 +97,9 @@ const gatewaySessionPolicy = (path: string, method: string) => {
     ? { sessionId: checkpointSession }
     : parseSessionRequest(path, method);
 };
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
-/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * oxc/no-async-await (#540): readCreationReservation sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep readCreationReservation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): readCreationReservation accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -132,9 +132,9 @@ const readCreationReservation = async (request: Request, owner: string) => {
   }
   return reservation.id;
 };
-/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): readGatewayAttributes uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-async-await (#540): readGatewayAttributes sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -175,7 +175,7 @@ const readGatewayAttributes = async (request: Request, owner: string) => {
   }
   return attributes;
 };
-/* oxlint-enable max-statements, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): guestAttributesAllowed accepts expiresAt: Date; attributes: Record<string, string>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -197,7 +197,7 @@ const guestAttributesAllowed = (
     ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, oxc/no-async-await --
+/* oxlint-disable max-params  --
  * max-params (#511): ownsGatewaySession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): ownsGatewaySession sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  */
@@ -216,9 +216,9 @@ const ownsGatewaySession = async (
   }
   return Boolean(await getEveSubagent(owner, sessionId));
 };
-/* oxlint-enable max-params, oxc/no-async-await */
+/* oxlint-enable max-params */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named authenticateEveGateway API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): authenticateEveGateway remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * max-lines-per-function (#510): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -297,4 +297,4 @@ export const authenticateEveGateway = async (request: Request) => {
     subject: owner,
   };
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

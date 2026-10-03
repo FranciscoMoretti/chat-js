@@ -1,14 +1,10 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-/* oxlint-enable eslint/sort-imports */
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
-/* oxlint-enable eslint/sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 
@@ -40,11 +36,9 @@ const toAiGatewayModel = (
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export class OpenAICompatibleGateway
   extends GatewayRuntime
@@ -76,7 +70,7 @@ export class OpenAICompatibleGateway
   }
 
   // The gateway interface requires a video factory even when unsupported.
-  // eslint-disable-next-line class-methods-use-this
+  // eslint-disable-next-line class-methods-use-this -- GatewayProvider requires this instance factory even when the provider does not support this model type.
   public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
@@ -144,16 +138,12 @@ export class OpenAICompatibleGateway
   }
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export { OpenAICompatibleGateway as Gateway };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

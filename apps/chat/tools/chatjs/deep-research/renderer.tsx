@@ -1,24 +1,13 @@
 "use client";
 import React from "react";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt groups the React value import with the existing dependency imports; preserve formatter ordering. */
 import { EveDocumentTool } from "@/components/eve/eve-document-tool";
-/* oxlint-enable eslint/sort-imports */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ReasonSearchResearchProgress } from "./progress";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { researchInput, researchOutput } from "./schemas";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
@@ -57,6 +46,3 @@ export const DeepResearchRenderer = defineToolRenderer({
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

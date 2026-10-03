@@ -95,7 +95,6 @@ const execInfoFromExitCode = (exitCode: number): JsExecInfo => {
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -144,14 +143,9 @@ const parseExecutionOutput = async (execResult: {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const executeJavaScriptInSandbox = async ({
   sandbox,
@@ -189,8 +183,4 @@ export const executeJavaScriptInSandbox = async ({
   };
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export */

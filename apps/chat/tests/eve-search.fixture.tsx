@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-search-results-view" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -6,7 +6,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 
 import { EveSearchResultsView } from "../components/eve/eve-search-results-view";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const item = {
   conversationId: "branch",
@@ -15,9 +15,6 @@ const item = {
   id: "chat",
   title: "Weekend dinner ideas",
 };
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): states copies or separates ...item while preserving existing object ownership; mutating source objects is not equivalent.
- */
 const states = [
   {
     isSearch: false,
@@ -61,12 +58,11 @@ const states = [
   { isSearch: false, items: [], label: "Empty history", query: "" },
   { hasMore: true, items: [item], label: "Pagination", query: "saffron" },
 ];
-/* oxlint-enable oxc/no-rest-spread-properties */
 const root = document.querySelector("#root");
 if (!root) {
   throw new Error("Missing fixture root");
 }
-/* oxlint-disable oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types  --
  * oxc/no-rest-spread-properties (#543): createRoot(root).render copies or separates ...state while preserving existing object ownership; mutating source objects is not equivalent.
  * react-perf/jsx-no-new-function-as-prop (#557): createRoot(root).render creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): createRoot(root).render keeps related fixture render states together; extraction changes component, state, and layout boundaries.
@@ -109,4 +105,4 @@ createRoot(root).render(
     ))}
   </main>
 );
-/* oxlint-enable oxc/no-rest-spread-properties, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

@@ -5,15 +5,11 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { inferPackageManager } from "./get-package-manager";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */

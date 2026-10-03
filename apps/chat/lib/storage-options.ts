@@ -1,17 +1,15 @@
-// oxlint-disable-next-line sort-imports -- Generated imports enumerate every installed registration in deterministic order.
 import type { EnvRequirement } from "./config-requirements";
-// oxlint-disable-next-line sort-imports -- Generated imports enumerate every installed registration in deterministic order.
 import type { createStorageAdapter } from "./storage-provider";
 
 /* oxlint-disable no-magic-numbers -- Tuple index zero selects the storage factory options parameter. */
-// oxlint-disable-next-line import/no-named-export, import/prefer-default-export, import/group-exports -- Generated named registrations preserve the app import contract, optional capabilities, and immutable custom overrides.
+// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export const storageOptions = {} satisfies Parameters<
   typeof createStorageAdapter
 >[0];
 /* oxlint-enable no-magic-numbers */
-// oxlint-disable-next-line import/no-named-export, import/prefer-default-export, import/group-exports -- Generated named registrations preserve the app import contract, optional capabilities, and immutable custom overrides.
+// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export const storageId = "vercel-blob";
-// oxlint-disable-next-line import/no-named-export, import/prefer-default-export, import/group-exports -- Generated named registrations preserve the app import contract, optional capabilities, and immutable custom overrides.
+// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export const storageEnvRequirements: EnvRequirement[] = [
   {
     description: "Vercel Blob credentials",

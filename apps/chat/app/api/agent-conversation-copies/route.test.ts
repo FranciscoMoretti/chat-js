@@ -33,7 +33,7 @@ beforeEach(() => {
   mocks.session.mockResolvedValue({ user: { id: "owner" } });
   mocks.save.mockResolvedValue({ id: input.operationId, sessionId: "native" });
 });
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null  --
  * no-magic-numbers (#517): it("requires login and same origin before copy work") uses 401, 403 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("requires login and same origin before copy work") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("requires login and same origin before copy work") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -47,8 +47,8 @@ it("requires login and same origin before copy work", async () => {
   expect(resolvedResult3.status).toBe(403);
   expect(mocks.save).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, unicorn/no-null */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("rejects browser seeds, execution controls and oversized bodies") uses 3000, 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("rejects browser seeds, execution controls and oversized bodies") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): it("rejects browser seeds, execution controls and oversized bodies") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
@@ -66,8 +66,8 @@ it("rejects browser seeds, execution controls and oversized bodies", async () =>
   }
   expect(mocks.save).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("canonicalizes operation coordinates and returns only the owned binding") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("canonicalizes operation coordinates and returns only the owned binding") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): it("canonicalizes operation coordinates and returns only the owned binding") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
@@ -88,8 +88,8 @@ it("canonicalizes operation coordinates and returns only the owned binding", asy
   );
   expect(response.headers.get("cache-control")).toBe("no-store");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("retains ambiguous operations and exposes only an owned recovery location") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("retains ambiguous operations and exposes only an owned recovery location") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -111,10 +111,7 @@ it("retains ambiguous operations and exposes only an owned recovery location", a
   expect(JSON.stringify(body)).not.toContain("sensitive");
   expect(mocks.creation).toHaveBeenCalledWith("owner", input.operationId);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("allows discarding the browser request only for a known unavailable operation") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
+/* oxlint-enable no-magic-numbers */
 it("allows discarding the browser request only for a known unavailable operation", async () => {
   mocks.save.mockRejectedValue(new Error("rejected"));
   mocks.creation.mockResolvedValue({
@@ -132,4 +129,3 @@ it("allows discarding the browser request only for a known unavailable operation
     retryable: true,
   });
 });
-/* oxlint-enable oxc/no-async-await */

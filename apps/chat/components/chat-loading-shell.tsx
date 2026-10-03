@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-/* oxlint-disable import/no-named-export, import/prefer-default-export, react/forbid-component-props, react/jsx-max-depth -- ChatLoadingShell: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries. */
+/* oxlint-disable react/forbid-component-props, react/jsx-max-depth -- ChatLoadingShell: ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries. */
 
 export const ChatLoadingShell = (): React.JSX.Element => (
   <div className="bg-background flex h-dvh w-full flex-col">
@@ -23,4 +23,4 @@ export const ChatLoadingShell = (): React.JSX.Element => (
     </div>
   </div>
 );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, react/forbid-component-props, react/jsx-max-depth */
+/* oxlint-enable react/forbid-component-props, react/jsx-max-depth */

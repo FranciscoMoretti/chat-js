@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { after } from "next/server";
 
 import { env } from "@/lib/env";
@@ -11,9 +8,8 @@ import { sameOrigin } from "@/lib/eve/request-policy";
 import { createEveResponseGroup } from "@/lib/eve/response-group";
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named POST API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): POST remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -81,4 +77,4 @@ export const POST = async (request: Request): Promise<Response> => {
     );
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */

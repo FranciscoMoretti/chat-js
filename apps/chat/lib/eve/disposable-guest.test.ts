@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This test harness requires import { randomUUID } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -13,7 +13,7 @@ import {
   readGuestCredential,
 } from "./disposable-guest";
 import { authenticateDisposableGuest } from "./disposable-guest-auth";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 vi.mock("../env", () => ({
   env: {
@@ -22,7 +22,7 @@ vi.mock("../env", () => ({
 }));
 afterEach(() => vi.useRealTimers());
 
-/* oxlint-disable oxc/no-rest-spread-properties, typescript/explicit-function-return-type --
+/* oxlint-disable typescript/explicit-function-return-type  --
  * oxc/no-rest-spread-properties (#543): claims copies or separates ...newGuestClaims("test-model") while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep claims's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -30,8 +30,8 @@ const claims = () => ({
   ...newGuestClaims("test-model"),
   sessionId: "session-owned",
 });
-/* oxlint-enable oxc/no-rest-spread-properties, typescript/explicit-function-return-type */
-/* oxlint-disable no-ternary, no-undefined, typescript/explicit-function-return-type --
+/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type  --
  * no-ternary (#518): request derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): request uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -45,9 +45,9 @@ const request = (token: string, path: string, body?: unknown) =>
     },
     method: body === undefined ? "GET" : "POST",
   });
-/* oxlint-enable no-ternary, no-undefined, typescript/explicit-function-return-type */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable no-magic-numbers, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("credentials are signed, expire, and cannot be edited to name another session") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-rest-spread-properties (#543): test("credentials are signed, expire, and cannot be edited to name another session") copies or separates ...original while preserving existing object ownership; mutating source objects is not equivalent.
  */
@@ -62,11 +62,8 @@ test("credentials are signed, expire, and cannot be edited to name another sessi
   vi.setSystemTime(original.expiresAt);
   expect(readGuestCredential(token)).toBeNull();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("every read, send, cancel and retirement is restricted to the signed session") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("every read, send, cancel and retirement is restricted to the signed session", async () => {
   const token = issueGuestCredential(claims());
   expect(
@@ -112,11 +109,7 @@ test("every read, send, cancel and retirement is restricted to the signed sessio
     )
   ).toBeNull();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("browser credentials cannot create, fork, read checkpoints or submit tools, file sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("browser credentials cannot create, fork, read checkpoints or submit tools, files or privileged context", async () => {
   const token = issueGuestCredential(claims());
   expect(
@@ -143,11 +136,7 @@ test("browser credentials cannot create, fork, read checkpoints or submit tools,
     ).toBeNull();
   }
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("server-only bootstrap credentials authorize empty creation, never session acces sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("server-only bootstrap credentials authorize empty creation, never session access", async () => {
   const token = issueGuestCredential(newGuestClaims("test-model"));
   expect(
@@ -164,4 +153,3 @@ test("server-only bootstrap credentials authorize empty creation, never session 
     )
   ).toBeNull();
 });
-/* oxlint-enable oxc/no-async-await */

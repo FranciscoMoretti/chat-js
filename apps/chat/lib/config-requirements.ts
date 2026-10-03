@@ -12,18 +12,14 @@ const normalizedCredentialGroups = (
     .toSorted()
     .join(" or ");
 
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named EnvRequirement API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export interface EnvRequirement {
   allOf?: EnvRequirement[];
   description?: string;
   options: EnvVarName[][];
   runtimeAuth?: string;
 }
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): formatRequirementDescription stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named formatRequirementDescription API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * oxc/no-optional-chaining (#542): formatRequirementDescription handles optional requirement.description ?.split(ALTERNATIVE_SEPARATOR) .map((option) => option.split( without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -58,9 +54,9 @@ export const formatRequirementDescription = (
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   return requirement.description || keys;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): authEnvRequirements stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named authEnvRequirements API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -81,9 +77,9 @@ export const authEnvRequirements: Record<
     options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
   },
 };
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): isRequirementSatisfied stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named isRequirementSatisfied API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): isRequirementSatisfied accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; group; option; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -104,9 +100,9 @@ export const isRequirementSatisfied = (
     )
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/group-exports (#523): getMissingRequirement stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getMissingRequirement API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-ternary (#518): getMissingRequirement derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -120,4 +116,4 @@ export const getMissingRequirement = (
   isRequirementSatisfied(requirement, env)
     ? null
     : formatRequirementDescription(requirement);
-/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null */

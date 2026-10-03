@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { isDeepStrictEqual } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,7 +9,7 @@ import type { Sql } from "postgres";
 import { z } from "zod";
 
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 const savedSchema = z.object({
   appRoot: z.string(),
@@ -17,7 +17,7 @@ const savedSchema = z.object({
   sessionIds: z.array(z.string()),
 });
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): verifyEveSandboxCoverage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named verifyEveSandboxCoverage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): verifyEveSandboxCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -107,9 +107,9 @@ export const verifyEveSandboxCoverage = async (
     }
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): isFencedEveDescendant stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named isFencedEveDescendant API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): isFencedEveDescendant's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -157,4 +157,4 @@ export const isFencedEveDescendant = async (
     await connection.end();
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types */

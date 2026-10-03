@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-search"; "../../lib/eve/conversation-scope"; "../../lib/eve/search-backfill"; "../../lib/eve/search-text" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -10,7 +10,7 @@ import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
 import { backfillEveSearchConversation } from "../../lib/eve/search-backfill";
 import { eveEventSearchText } from "../../lib/eve/search-text";
 import type { EveSearchText } from "../../lib/eve/search-text";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const maxPendingEntries = 256;
 const maxPendingCharacters = 256_000;
@@ -18,7 +18,7 @@ const maxPendingCharacters = 256_000;
 const needsRecovery = defineState("chatjs.search-recovery", () => false);
 const pending = defineState<EveSearchText[]>("chatjs.search-prefix", () => []);
 
-/* oxlint-disable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-lines-per-function (#510): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -126,4 +126,4 @@ export default defineHook({
     },
   },
 });
-/* oxlint-enable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

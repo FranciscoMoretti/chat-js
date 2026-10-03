@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash, randomUUID } from "node:crypto";; import { createServer } from "node:http";; import type { IncomingMessage, ServerResponse } from "node:http";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -11,7 +11,7 @@ import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { z } from "zod";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 const BEARER_PREFIX = /^Bearer /u;
 /* oxlint-disable no-magic-numbers --
@@ -109,7 +109,7 @@ function sendJson(
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
+/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return  --
  * import/no-named-export (#527): Preserve the named startEveOAuthMcpServer API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): startEveOAuthMcpServer remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-returns (#535): startEveOAuthMcpServer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -420,6 +420,6 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     tokenResult: eveOAuthMcpTokenResultMarker,
   };
 }
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 /* oxlint-disable max-lines -- #509: This eve-oauth-mcp-server.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

@@ -24,7 +24,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): describe("EVE deployment authentication") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): describe("EVE deployment authentication") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): describe("EVE deployment authentication") handles optional fetcher.mock.calls[0]?.[1]?.headers without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -49,9 +49,9 @@ describe("EVE deployment authentication", () => {
     expect(headers.has("x-vercel-protection-bypass")).toBe(false);
   });
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("sends protocol requests directly to the named chat worker") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("sends protocol requests directly to the named chat worker") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): it("sends protocol requests directly to the named chat worker") handles optional fetcher.mock.calls[0]?.[0]; fetcher.mock.calls[0]?.[1]?.redirect without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -66,9 +66,9 @@ it("sends protocol requests directly to the named chat worker", async () => {
   );
   expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("routes the real SDK directly to the named chat worker") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("routes the real SDK directly to the named chat worker") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): it("routes the real SDK directly to the named chat worker") handles optional fetcher.mock.calls[0]?.[0]; fetcher.mock.calls[0]?.[1]?.redirect without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -89,7 +89,7 @@ it("routes the real SDK directly to the named chat worker", async () => {
   );
   expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable no-magic-numbers */
 
 it("requires a workflow database locally but not on managed Vercel", () => {
   mocks.env.WORKFLOW_POSTGRES_URL = "";

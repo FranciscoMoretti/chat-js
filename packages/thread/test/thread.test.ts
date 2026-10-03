@@ -5,29 +5,21 @@ import type { UIMessage } from "ai";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { getMessageText } from "../src/message-utils";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { Thread } from "../src/thread";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
   createThreadStateSnapshot,
   MemoryThreadState,
 } from "../src/thread-state";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { ThreadState } from "../src/types";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { RecordingThreadState } from "./support/recording-thread-state";
-/* oxlint-enable eslint/sort-imports */
 import { StateBackedThread } from "./support/state-backed-thread";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ControlledTransport } from "./support/thread-controlled-transport";
-/* oxlint-enable eslint/sort-imports */
 import { ResumeTransport } from "./support/thread-resume-transport";
 
 const user = (id: string): UIMessage => ({
@@ -62,7 +54,6 @@ const requireMessage = (message: UIMessage | undefined) => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
   predicate: () => boolean,
@@ -75,20 +66,15 @@ const waitFor = async (
     throw new Error("Timed out waiting for request");
   }
   await Bun.sleep(1);
-  // oxlint-disable-next-line typescript/no-confusing-void-expression -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-  return await waitFor(predicate, attemptsRemaining - 1);
+  await waitFor(predicate, attemptsRemaining - 1);
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -1214,12 +1200,9 @@ describe("Thread", (): void => {
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 

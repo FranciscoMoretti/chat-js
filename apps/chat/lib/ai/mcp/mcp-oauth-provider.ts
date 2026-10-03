@@ -2,20 +2,15 @@
 import { randomUUID } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   OAuthClientMetadata,
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
-/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { mcpFetch } from "@/lib/ai/mcp/mcp-fetch";
-/* oxlint-enable eslint/sort-imports */
 import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   createOAuthSession,
   deleteSessionByState,
@@ -26,11 +21,8 @@ import {
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
-/* oxlint-enable eslint/sort-imports */
 import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { McpOAuthSession } from "@/lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-oauth-provider");
@@ -43,16 +35,11 @@ const refreshTokensSchema = z.object({
   token_type: z.string(),
 });
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
@@ -510,15 +497,10 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

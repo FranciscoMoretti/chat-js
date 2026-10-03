@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { ModelMessage, ToolModelMessage, SystemModelMessage } from "ai";
 import { getEncoding } from "js-tiktoken";
 
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
-/* oxlint-enable sort-imports */
 
 const MinChunkSize = 140;
 const NON_TEXT_PART_TOKEN_ESTIMATE = 765;
@@ -13,7 +9,7 @@ const MESSAGE_WRAPPER_TOKEN_OVERHEAD = 5;
 const ESTIMATED_CHARACTERS_PER_TOKEN = 3;
 const encoder = getEncoding("o200k_base");
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-ternary, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): calculateMessagesTokens is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): calculateMessagesTokens stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named calculateMessagesTokens API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -48,7 +44,7 @@ export const calculateMessagesTokens = (messages: ModelMessage[]): number => {
 
   return totalTokens;
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-ternary, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): trimPrompt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -89,7 +85,7 @@ const trimPrompt = (prompt: string, contextSize: number): string => {
 };
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * no-magic-numbers (#517): extractSystemMessage uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): extractSystemMessage derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-optional-chaining (#542): extractSystemMessage handles optional messages[0]?.role without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -110,9 +106,9 @@ const extractSystemMessage = (
   const otherMessages = systemMessage ? messages.slice(1) : messages;
   return { otherMessages, systemMessage };
 };
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-rest-spread-properties (#543): handleExceededSystemMessage copies or separates ...systemMessage while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): handleExceededSystemMessage accepts systemMessage: SystemModelMessage | null; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -131,7 +127,7 @@ const handleExceededSystemMessage = (
 
   return [systemMessage];
 };
-/* oxlint-enable oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): removeOldestMessagesUntilFit uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -153,7 +149,7 @@ const removeOldestMessagesUntilFit = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): truncateStringContent uses 4, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * oxc/no-rest-spread-properties (#543): truncateStringContent copies or separates ...lastMessage while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): truncateStringContent accepts lastMessage: Exclude<ModelMessage, ToolModelMessage>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -173,9 +169,9 @@ const truncateStringContent = (
 
   return { ...lastMessage, content: trimmedContent };
 };
-/* oxlint-enable no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * no-magic-numbers (#517): truncateToolResultPart uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * oxc/no-rest-spread-properties (#543): truncateToolResultPart copies or separates ...part while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): truncateToolResultPart accepts part: ToolModelMessage["content"][number]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -216,9 +212,9 @@ const truncateToolResultPart = (
 
   return { tokensRemoved: partTokens, truncatedPart: null };
 };
-/* oxlint-enable no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): truncateToolArrayContent uses i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-statements (#512): truncateToolArrayContent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): truncateToolArrayContent uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -250,7 +246,7 @@ const truncateToolArrayContent = (
 
   return { ...lastMessage, content };
 };
-/* oxlint-enable id-length, max-statements, no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): truncateLastMessageIfNeeded uses 0, -1, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -288,7 +284,7 @@ const truncateLastMessageIfNeeded = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-statements, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): truncateMessages stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named truncateMessages API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): truncateMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -336,4 +332,4 @@ export const truncateMessages = (
     ? [systemMessage, ...truncatedMessages]
     : truncatedMessages;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-statements, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */

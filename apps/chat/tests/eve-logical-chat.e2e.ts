@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const chatRoute = /\/chat\/[a-f\d-]+$/u;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("logical chat keeps its URL and native observers across first send, retry, edit  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("logical chat keeps its URL and native observers across first send, retry, edit  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("logical chat keeps its URL and native observers across first send, retry, edit  uses 240_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -129,4 +129,4 @@ test("logical chat keeps its URL and native observers across first send, retry, 
     path: testInfo.outputPath("reloaded-tree.png"),
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

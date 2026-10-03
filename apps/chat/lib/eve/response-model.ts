@@ -1,6 +1,6 @@
 import type { MessageStreamEvent } from "eve/client";
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): responseModelReferences stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named responseModelReferences API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): responseModelReferences's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -29,9 +29,9 @@ export const responseModelReferences = (
   }
   return models;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): responseModel stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named responseModel API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): responseModel's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -59,4 +59,4 @@ export const responseModel = (
     "The response model is unavailable. Reload before regenerating."
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

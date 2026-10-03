@@ -7,32 +7,20 @@ import {
 } from "@lexical/markdown";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-/* oxlint-enable eslint/sort-imports */
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-/* oxlint-enable eslint/sort-imports */
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { EditorState } from "lexical";
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/max-dependencies */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { $getRoot } from "lexical";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import React, { memo, useEffect, useRef } from "react";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { createEditorConfig, handleEditorChange } from "./editor-config";
-/* oxlint-enable eslint/sort-imports */
 
 interface EditorProps {
   content: string;
@@ -108,7 +96,6 @@ const ContentUpdatePlugin = ({
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
@@ -159,7 +146,6 @@ const PureEditor = ({
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
@@ -173,8 +159,4 @@ const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean =>
   prevProps.isReadonly === nextProps.isReadonly;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const Editor = memo(PureEditor, areEqual);
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

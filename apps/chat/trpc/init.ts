@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as sleep } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -20,9 +20,9 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@/lib/auth";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): createTRPCContext is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): createTRPCContext stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named createTRPCContext API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -47,16 +47,16 @@ export const createTRPCContext = cache(async () => {
     user: session?.user,
   };
 });
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/no-named-export --
+/* oxlint-disable import/exports-last  --
  * import/exports-last (#522): Context is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/no-named-export (#527): Preserve the named Context API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
-/* oxlint-enable import/exports-last, import/no-named-export */
+/* oxlint-enable import/exports-last */
 
-/* oxlint-disable id-length, no-ternary, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * id-length (#506): t uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-ternary (#518): t derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-rest-spread-properties (#543): t copies or separates ...shape; ...shape.data while preserving existing object ownership; mutating source objects is not equivalent.
@@ -84,9 +84,9 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   },
   transformer: superjson,
 });
-/* oxlint-enable id-length, no-ternary, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): { createCallerFactory } is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): { createCallerFactory } stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named { createCallerFactory } API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -97,9 +97,9 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  * @see https://trpc.io/docs/server/server-side-calls
  */
 export const { createCallerFactory } = t;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): createTRPCRouter is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): createTRPCRouter stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named createTRPCRouter API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -117,9 +117,9 @@ export const { createCallerFactory } = t;
  * @see https://trpc.io/docs/router
  */
 export const createTRPCRouter = t.router;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable no-console, no-magic-numbers, no-underscore-dangle, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types  --
  * no-console (#514): timingMiddleware emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): timingMiddleware uses 400, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-underscore-dangle (#520): timingMiddleware accesses the established _config field convention; renaming requires changing the owning SDK or backing-field contract.
@@ -148,9 +148,9 @@ const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
 
   return result;
 });
-/* oxlint-enable no-console, no-magic-numbers, no-underscore-dangle, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): publicProcedure stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named publicProcedure API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -162,9 +162,9 @@ const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-console, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/group-exports, no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/group-exports (#523): protectedProcedure stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named protectedProcedure API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-console (#514): protectedProcedure emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -196,4 +196,4 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     },
   });
 });
-/* oxlint-enable import/group-exports, import/no-named-export, no-console, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/group-exports, no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

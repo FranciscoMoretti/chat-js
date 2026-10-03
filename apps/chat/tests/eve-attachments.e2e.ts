@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "node:child_process" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-file-purge"; "../lib/db/eve-orphaned-files"; "../lib/db/schema"; "../lib/file-url" dependency within this package instead of introducing an alias or barrel API.
@@ -25,7 +25,7 @@ import {
 } from "../lib/db/schema";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -40,7 +40,7 @@ const redPng = Buffer.from(
   "base64"
 );
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * max-lines-per-function (#510): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("ChatJS upload remains durable through creation retries and message editing") uses 180_000, 60_000, 0, 1, 409, 400, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -264,9 +264,9 @@ test("ChatJS upload remains durable through creation retries and message editing
     ]);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): test("composer uploads and clears attachments, then reload confirms an in-flight mult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("composer uploads and clears attachments, then reload confirms an in-flight mult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("composer uploads and clears attachments, then reload confirms an in-flight mult uses 0, -1, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -415,9 +415,9 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     ]);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("an uncertain creation retains the same visible attachment and immutable request keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("an uncertain creation retains the same visible attachment and immutable request keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("an uncertain creation retains the same visible attachment and immutable request uses 0, 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -502,9 +502,9 @@ test("an uncertain creation retains the same visible attachment and immutable re
       path: "tests/eve-results/screenshots/eve-composer-retained.png",
     });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): test("uploaded attachment has durable authenticated ownership") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("uploaded attachment has durable authenticated ownership") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("uploaded attachment has durable authenticated ownership") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -599,9 +599,9 @@ test("uploaded attachment has durable authenticated ownership", async ({
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions  --
  * max-statements (#512): test("a fenced orphan URL stops serving bytes before physical removal") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a fenced orphan URL stops serving bytes before physical removal") uses 1000, 1, 404, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("a fenced orphan URL stops serving bytes before physical removal") uses execFileSync("bun", [ "--no-env-file", "-e", 'import { deleteFilesByUrls } from ". within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
@@ -652,6 +652,6 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-attachments.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

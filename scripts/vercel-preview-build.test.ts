@@ -21,7 +21,6 @@ const lockQuery =
 
 /* oxlint-disable eslint/max-params -- harness: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- harness: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable eslint/no-ternary -- harness: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- harness: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const harness = (
@@ -71,11 +70,9 @@ const harness = (
 };
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 
-/* oxlint-disable oxc/no-async-await -- locks before migration, releases before build, and passes direct credentials to both co...: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 it("locks before migration, releases before build, and passes direct credentials to both commands", async (): Promise<void> => {
   const test = harness();
   await runMaintainerBuild(preview, test.operations);
@@ -94,10 +91,7 @@ it("locks before migration, releases before build, and passes direct credentials
   }
   expect(preview.DATABASE_MIGRATION_URL).toBe("postgres://wrong/db");
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- only runs the normal build in %s: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- only runs the normal build in %s: The scenario copies fixture inputs so later assertions retain their original values. */
 /* oxlint-disable eslint/no-magic-numbers -- only runs the normal build in %s: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it.each(["production", "development"])(
   "only runs the normal build in %s",
@@ -110,11 +104,7 @@ it.each(["production", "development"])(
   }
 );
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- rejects invalid configuration before opening a connection or invoking a command: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-rest-spread-properties -- rejects invalid configuration before opening a connection or invoking a command: The scenario copies fixture inputs so later assertions retain their original values. */
 it("rejects invalid configuration before opening a connection or invoking a command", async (): Promise<void> => {
   const test = harness();
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
@@ -126,11 +116,7 @@ it("rejects invalid configuration before opening a connection or invoking a comm
   ).rejects.toThrow("during validation");
   expect(test.events).toEqual([]);
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- reports failure at %s without leaking credentials: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
-/* oxlint-disable oxc/no-optional-chaining -- reports failure at %s without leaking credentials: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 it.each([
   ["open", "connection", false],
   ["SELECT 1", "connection", true],
@@ -160,10 +146,7 @@ it.each([
     expect(test.events.includes("build")).toBe(step === "build");
   }
 );
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- does not start migration until the advisory lock is acquired: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 /* oxlint-disable eslint/no-undefined -- does not start migration until the advisory lock is acquired: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable eslint/no-magic-numbers -- does not start migration until the advisory lock is acquired: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- does not start migration until the advisory lock is acquired: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
@@ -185,9 +168,7 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- only includes safe error codes: %s: Await ordering defines fixture setup, observed completion and cleanup for this scenario. */
 it.each([
   ["ECONNREFUSED", " (ECONNREFUSED)"],
   ["55P03", " (55P03)"],
@@ -203,4 +184,3 @@ it.each([
     );
   }
 );
-/* oxlint-enable oxc/no-async-await */

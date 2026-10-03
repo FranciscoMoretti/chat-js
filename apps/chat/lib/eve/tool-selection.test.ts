@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-namespace, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-namespace, import/no-relative-parent-imports  --
  * import/no-namespace (#528): The InstalledFeatures namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/tool-selection"; "../ai/types" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -29,13 +29,9 @@ import {
   eveTurnTool,
   filterEveTools,
 } from "./turn-tools";
-/* oxlint-enable import/no-namespace, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-namespace, import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): vi.mock("@/tools/chatjs/installed-features") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): vi.mock("@/tools/chatjs/installed-features") copies or separates ...actual while preserving existing object ownership; mutating source objects is not equivalent.
- */
 vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
   const actual = await importOriginal<typeof InstalledFeatures>();
   for (const kind of actual.installedDocumentKinds) {
@@ -43,13 +39,12 @@ vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
   }
   return { ...actual, installedDocumentKinds: mocks.kinds };
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
 
-/* oxlint-disable no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions  --
  * no-ternary (#518): startTurn derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-optional-chaining (#542): startTurn handles optional selectionHook.events?.["turn.started"]?.( { data: { sequence: 1, turnId: "turn_1" },  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * oxc/no-rest-spread-properties (#543): startTurn copies or separates ...(selectedTool ? { selectedTool } : {}); ...(principalType === "guest" ? { chatjsGuest: "true" } : {}) while preserving existing object ownership; mutating source objects is not equivalent.
@@ -96,11 +91,8 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
       },
     }
   );
-/* oxlint-enable no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("limits every toolbox and resets a later automatic turn instead of inheriting the  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("limits every toolbox and resets a later automatic turn instead of inheriting the initiator's choice", async () => {
   await contextStorage.run(new ContextContainer(), async () => {
     await startTurn("webSearch");
@@ -117,7 +109,6 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
     expect(filterEveTools(tools)).toEqual(tools);
   });
 });
-/* oxlint-enable oxc/no-async-await */
 
 it("includes document revision reads without leaking unrelated tools", () => {
   expect(selectedEveTools("createTextDocument")).toEqual([
@@ -211,9 +202,6 @@ it.each([["model-a"], ["model-a", "model-b"]])(
 );
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("restores the selected capability from Eve serialized context before a resumed ste sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("restores the selected capability from Eve serialized context before a resumed step", async () => {
   const original = new ContextContainer();
   const saved = await contextStorage.run(original, async () => {
@@ -237,9 +225,8 @@ it("restores the selected capability from Eve serialized context before a resume
     expect(eveTurnTool.get()).toBeNull();
   });
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable no-undefined, oxc/no-async-await --
+/* oxlint-disable no-undefined  --
  * no-undefined (#519): it("guest automatic and explicit turns retain only configured anonymous tools") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-async-await (#540): it("guest automatic and explicit turns retain only configured anonymous tools") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -259,7 +246,7 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
     expect(filterEveTools(tools)).toEqual(tools);
   });
 });
-/* oxlint-enable no-undefined, oxc/no-async-await */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable max-statements --
  * max-statements (#512): it("withholds document operations when their implementations are not installed") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

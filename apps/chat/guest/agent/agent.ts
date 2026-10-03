@@ -7,7 +7,7 @@ import { GUEST_SESSION_DURATION_MS } from "../../lib/eve/disposable-guest";
 import { resolveEveModel } from "../../lib/eve/model-selection";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * oxc/no-optional-chaining (#542): default export handles optional context.session.auth.initiator?.attributes.modelId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): default export accepts context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -31,4 +31,4 @@ export default defineAgent({
     },
   }),
 });
-/* oxlint-enable import/no-default-export, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

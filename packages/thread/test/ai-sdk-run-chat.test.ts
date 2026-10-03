@@ -3,17 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { ThreadRunChat } from "../src/ai-sdk-run-chat";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { ThreadRunSpec } from "../src/ai-sdk-run-chat";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
-/* oxlint-enable eslint/sort-imports */
 import { TestRunHost } from "./support/test-run-host";
 
 const userMessage = (): UIMessage => ({
@@ -45,7 +41,6 @@ const emitRichResponse = (transport: ControlledTransport): void => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
   predicate: () => boolean,
@@ -58,17 +53,13 @@ const waitFor = async (
     throw new Error("Timed out waiting for request");
   }
   await Bun.sleep(1);
-  // oxlint-disable-next-line typescript/no-confusing-void-expression -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-  return await waitFor(predicate, attemptsRemaining - 1);
+  await waitFor(predicate, attemptsRemaining - 1);
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("ThreadRunChat", (): void => {
   test("matches the AI SDK React Chat reducer for one response", async (): Promise<void> => {
@@ -208,8 +199,6 @@ describe("ThreadRunChat", (): void => {
   });
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

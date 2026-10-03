@@ -1,12 +1,12 @@
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): ChatRouteSource is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ChatRouteSource stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named ChatRouteSource API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type ChatRouteSource = "chat" | "home" | "project" | "share";
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): ParsedChatIdFromPathname is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ParsedChatIdFromPathname stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named ParsedChatIdFromPathname API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -48,14 +48,14 @@ export type ParsedChatIdFromPathname =
       source: null;
       projectId: null;
     };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
 const SHARE_ROUTE_PATTERN = /^\/share\/(?<shareId>[^/]+)$/u;
 const PROJECT_ROUTE_PATTERN =
   /^\/project\/(?<projectId>[^/]+)(?:\/chat\/(?<chatId>[^/]+))?$/u;
 const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
 
-/* oxlint-disable import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, oxc/no-optional-chaining, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named parseChatIdFromPathname API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): parseChatIdFromPathname's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): parseChatIdFromPathname's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -101,4 +101,4 @@ export const parseChatIdFromPathname = (
 
   return { id: null, projectId: null, source: null, type: "passthrough" };
 };
-/* oxlint-enable import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, oxc/no-optional-chaining, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/strict-boolean-expressions, unicorn/no-null */

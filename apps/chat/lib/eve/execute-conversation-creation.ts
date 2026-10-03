@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries"; "../logger" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -26,11 +26,11 @@ import { eveMessageDeliveryMetadata } from "./message-delivery";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 const logger = createModuleLogger("eve/creation");
 
-/* oxlint-disable no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions  --
  * no-ternary (#518): resolveFork derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): resolveFork sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): resolveFork handles optional source?.sessionId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -67,12 +67,8 @@ const resolveFork = async (
     ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
   };
 };
-/* oxlint-enable no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-ternary, oxc/no-rest-spread-properties --
- * no-ternary (#518): creationFailure derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
- * oxc/no-rest-spread-properties (#543): creationFailure copies or separates ...(cause instanceof CreationConflictError ? { code: cause.code } : {}) while preserving existing object ownership; mutating source objects is not equivalent.
- */
 const creationFailure = (cause: unknown): Response => {
   if (cause instanceof CreationProjectNotFoundError) {
     return Response.json(
@@ -95,9 +91,8 @@ const creationFailure = (cause: unknown): Response => {
     { status: 409 }
   );
 };
-/* oxlint-enable no-ternary, oxc/no-rest-spread-properties */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named executeEveConversationCreation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): executeEveConversationCreation remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -238,4 +233,4 @@ export const executeEveConversationCreation = async (
     return creationFailure(error);
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

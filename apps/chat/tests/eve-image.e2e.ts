@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/tool-result" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -19,10 +19,10 @@ import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { toolResultSchema } from "../lib/eve/tool-result";
 import { keyFromFileUrl } from "../lib/file-url";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("native image generation, editing and sharing preserve stored results") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native image generation, editing and sharing preserve stored results") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native image generation, editing and sharing preserve stored results") uses 300_000, 0, 15_000, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -216,4 +216,4 @@ test("native image generation, editing and sharing preserve stored results", asy
     await anonymous.close();
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

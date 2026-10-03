@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/config"; "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -22,7 +22,7 @@ import {
 } from "../lib/db/schema";
 import { conversationBinding } from "../lib/eve/contracts";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -30,7 +30,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-statements (#512): test("document tool states remain readable on desktop and mobile") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("document tool states remain readable on desktop and mobile") uses 2, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("document tool states remain readable on desktop and mobile") uses execFileSync( "bun", ["tests/eve-document-renderer-fixture.ts"], { encoding: "utf-8"  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
@@ -69,9 +69,9 @@ test("document tool states remain readable on desktop and mobile", async ({
     });
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("native documents open in ChatJS, retain versions after reload, and honor shared keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native documents open in ChatJS, retain versions after reload, and honor shared keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native documents open in ChatJS, retain versions after reload, and honor shared uses 240_000, 20_000, 0, 1, 3, 120_000, 390, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -521,6 +521,6 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
       .where(eq(eveConversation.id, binding.id));
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-document-tools.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

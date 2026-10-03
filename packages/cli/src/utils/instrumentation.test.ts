@@ -8,12 +8,10 @@ import { runInNewContext } from "node:vm";
 
 import ts from "typescript";
 
-/* oxlint-disable node/no-top-level-await -- Module initialization must complete before dependent code consumes the prepared runtime or build artifact. */
 const source = await readFile(
   new URL("../../../../apps/chat/instrumentation.ts", import.meta.url),
   "utf-8"
 );
-/* oxlint-enable node/no-top-level-await */
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -22,8 +20,6 @@ const compiled = ts.transpileModule(source, {
 }).outputText;
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
@@ -75,6 +71,4 @@ for (const runtime of ["nodejs", "edge"]) {
   }
 }
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/max-statements */

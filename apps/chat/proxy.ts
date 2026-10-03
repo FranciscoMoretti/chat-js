@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { config as appConfig } from "@/lib/config";
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
-/* oxlint-enable sort-imports */
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
 
@@ -47,7 +43,7 @@ const isAuthPage = (pathname: string): boolean =>
   pathname.startsWith("/register") ||
   isDeviceLoginPage(pathname);
 
-/* oxlint-disable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * oxc/no-optional-chaining (#542): getSafeReturnTo handles optional returnTo?.startsWith("/") without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): getSafeReturnTo accepts url: URL; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): getSafeReturnTo intentionally keeps the existing falsy-value behavior of returnTo?.startsWith("/"); distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -60,9 +56,9 @@ const getSafeReturnTo = (url: URL): string | null => {
   }
   return returnTo;
 };
-/* oxlint-enable oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): proxy stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named proxy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): proxy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -104,9 +100,9 @@ export const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(new URL("/login", url));
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): config stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named config API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -127,4 +123,4 @@ export const config = {
     "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */

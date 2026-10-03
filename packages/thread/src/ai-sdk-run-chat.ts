@@ -1,5 +1,4 @@
 import { AbstractChat } from "ai";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type {
   ChatInit,
   ChatRequestOptions,
@@ -8,12 +7,10 @@ import type {
   UIMessage,
   UIMessageChunk,
 } from "ai";
-/* oxlint-enable eslint/sort-imports */
 
 import { ThreadRunState } from "./thread-run-state";
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
 export type ThreadRunSpec = {
   id: string;
@@ -23,11 +20,9 @@ export type ThreadRunSpec = {
   siblingOrder: number;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export interface ThreadRunHost<TMessage extends UIMessage> {
   readonly dataPartSchemas: ChatInit<TMessage>["dataPartSchemas"];
@@ -49,18 +44,12 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
   writeRunMessage: (runId: string, message: TMessage) => void;
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class ThreadRunChat<
@@ -191,12 +180,7 @@ export class ThreadRunChat<
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */

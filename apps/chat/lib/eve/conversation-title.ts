@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { generateText } from "ai";
 
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -15,15 +12,14 @@ import { createModuleLogger } from "@/lib/logger";
 
 import { eveMessageTitle } from "./message-input";
 import type { EveMessageInput } from "./message-input";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): EVE_TITLE_MAX_LENGTH is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): EVE_TITLE_MAX_LENGTH stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named EVE_TITLE_MAX_LENGTH API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const EVE_TITLE_MAX_LENGTH = 40;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
 const whitespace = /\s+/gu;
 const trailingPunctuation = /[,:;.?!]+$/u;
@@ -31,7 +27,7 @@ const surroundingQuotes = /^[\s"'“”‘’]+|[\s"'“”‘’]+$/gu;
 
 const log = createModuleLogger("eve.conversation-title");
 
-/* oxlint-disable no-magic-numbers, no-ternary --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): compactTitle uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): compactTitle derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  */
@@ -47,9 +43,9 @@ const compactTitle = (value: string): string => {
     .replace(trailingPunctuation, "")
     .trim();
 };
-/* oxlint-enable no-magic-numbers, no-ternary */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): eveConversationTitleFallback is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): eveConversationTitleFallback stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveConversationTitleFallback API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -61,12 +57,12 @@ const compactTitle = (value: string): string => {
 export const eveConversationTitleFallback = (
   message: EveMessageInput
 ): string => compactTitle(eveMessageTitle(message)) || "New conversation";
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
 const normalizeGeneratedTitle = (title: string): string =>
   compactTitle(title.replace(surroundingQuotes, ""));
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): generateEveConversationTitleResult stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named generateEveConversationTitleResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): generateEveConversationTitleResult's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -108,9 +104,9 @@ Rules (strictly follow all):
     return { source: "fallback" as const, title: fallback };
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): persistGeneratedEveConversationTitle stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named persistGeneratedEveConversationTitle API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): persistGeneratedEveConversationTitle's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -171,4 +167,4 @@ export const persistGeneratedEveConversationTitle = async ({
   // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

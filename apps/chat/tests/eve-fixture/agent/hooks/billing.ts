@@ -6,7 +6,7 @@ import { defineHook } from "eve/hooks";
 import { recordEveUsage } from "../../../../lib/db/eve-billing";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * oxc/no-async-await (#540): default export sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): default export handles optional context.session.auth.initiator?.principalId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -31,4 +31,4 @@ export default defineHook({
     },
   },
 });
-/* oxlint-enable import/no-default-export, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

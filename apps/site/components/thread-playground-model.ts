@@ -1,36 +1,26 @@
 import { getMessageText } from "@chat-js/thread";
-/* oxlint-disable eslint/sort-imports -- the @chat-js/thread import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { MessageTreeSnapshot } from "@chat-js/thread";
-/* oxlint-enable eslint/sort-imports */
 import type { UseThreadHelpers } from "@chat-js/thread/react";
-/* oxlint-disable eslint/sort-imports -- the ai import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable import/exports-last -- PlaygroundMetadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- PlaygroundMetadata: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- PlaygroundMetadata: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export interface PlaygroundMetadata {
   activeStreamId: string | null;
   createdAt: string;
   title?: string;
 }
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
 /* oxlint-disable import/exports-last -- PlaygroundMessage: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- PlaygroundMessage: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- PlaygroundMessage: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type PlaygroundMessage = UIMessage<PlaygroundMetadata>;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable import/exports-last -- PlaygroundChat: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- PlaygroundChat: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- PlaygroundChat: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export type PlaygroundChat = UseThreadHelpers<PlaygroundMessage>;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
@@ -40,7 +30,6 @@ interface StreamBody {
 
 /* oxlint-disable import/exports-last -- LayoutNode: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- LayoutNode: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- LayoutNode: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/id-length -- LayoutNode: The local index/OS/library binding retains its conventional API notation. */
 export interface LayoutNode {
   depth: number;
@@ -49,7 +38,6 @@ export interface LayoutNode {
   y: number;
 }
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
@@ -146,18 +134,14 @@ const initialNodes = [
 
 /* oxlint-disable import/exports-last -- initialTree: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- initialTree: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- initialTree: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
   cursorId: "msg_05a",
   nodes: initialNodes,
   version: 1,
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
-/* oxlint-disable oxc/no-async-await -- delay: Await sequencing preserves this operation's dependent I/O and error propagation. */
-/* oxlint-disable oxc/no-optional-chaining -- delay: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-undefined -- delay: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- delay: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
@@ -180,20 +164,14 @@ const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
 
 const RESPONSE_NUMBER_PATTERN = /\d+/u;
 
 /* oxlint-disable import/group-exports -- createPlaygroundTransport: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- createPlaygroundTransport: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable import/no-named-export -- createPlaygroundTransport: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- createPlaygroundTransport: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable unicorn/no-null -- createPlaygroundTransport: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-magic-numbers -- createPlaygroundTransport: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable oxc/no-optional-chaining -- createPlaygroundTransport: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
-/* oxlint-disable eslint/no-ternary -- createPlaygroundTransport: The expression preserves the existing fallback/derived-value contract within this operation. */
-/* oxlint-disable oxc/no-async-await -- createPlaygroundTransport: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable typescript/promise-function-async -- createPlaygroundTransport: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- createPlaygroundTransport: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- createPlaygroundTransport: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
@@ -277,18 +255,13 @@ export const createPlaygroundTransport =
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- buildTreeLayout: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- buildTreeLayout: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- buildTreeLayout: The exported SDK/composite API preserves inferred relationships; an explicit boundary type requires a public contract decision. */
 /* oxlint-disable typescript/explicit-function-return-type -- buildTreeLayout: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/init-declarations -- buildTreeLayout: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
@@ -347,5 +320,4 @@ export const buildTreeLayout = ({
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

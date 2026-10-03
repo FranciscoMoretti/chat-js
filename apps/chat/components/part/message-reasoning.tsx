@@ -25,7 +25,5 @@ const PureReasoningPart = ({
   </Reasoning>
 );
 /* oxlint-enable react/forbid-component-props, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/no-named-export, import/prefer-default-export -- ReasoningPart: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration. */
 
 export const ReasoningPart = memo(PureReasoningPart);
-/* oxlint-enable import/no-named-export, import/prefer-default-export */

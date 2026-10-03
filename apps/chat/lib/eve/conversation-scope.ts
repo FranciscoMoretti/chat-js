@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -10,9 +10,9 @@ import {
 } from "../db/eve-queries";
 import { eveRequest } from "./server";
 import { EveSessionMappingError } from "./session-mapping-error";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable init-declarations, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * init-declarations (#507): assertNativeReceipt assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-params (#511): assertNativeReceipt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): assertNativeReceipt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -56,9 +56,9 @@ const assertNativeReceipt = async (
     throw new EveSessionMappingError("binding_conflict");
   }
 };
-/* oxlint-enable init-declarations, max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable init-declarations, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named resolveEveConversationScope API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): resolveEveConversationScope remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): resolveEveConversationScope's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -121,4 +121,4 @@ export const resolveEveConversationScope = async (
   await bindAcceptedEveConversation(ownerId, row.id, sessionId);
   return { conversationId: row.id, ownerId };
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

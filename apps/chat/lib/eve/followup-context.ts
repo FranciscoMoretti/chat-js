@@ -1,14 +1,14 @@
 import type { HookEvent } from "eve/hooks";
 
 const MAX_CONTEXT_CHARACTERS = 12_000;
-/* oxlint-disable import/no-named-export, typescript/consistent-type-definitions --
+/* oxlint-disable typescript/consistent-type-definitions  --
  * import/no-named-export (#527): Preserve the named FollowupContext API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): FollowupContext preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
 export type FollowupContext = { user: string; assistant: string };
-/* oxlint-enable import/no-named-export, typescript/consistent-type-definitions */
+/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
  * import/no-named-export (#527): Preserve the named followupContext API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): followupContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): followupContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -41,4 +41,4 @@ export const followupContext = (
   }
   return current;
 };
-/* oxlint-enable import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */

@@ -1,22 +1,18 @@
 import type { MessageStreamEvent } from "eve/client";
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): MAX_SEARCH_QUERY_LENGTH stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named MAX_SEARCH_QUERY_LENGTH API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const MAX_SEARCH_QUERY_LENGTH = 255;
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named EveSearchText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export interface EveSearchText {
   key: string;
   text: string;
 }
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): eveSeedSearchText stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveSeedSearchText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -41,9 +37,9 @@ export const eveSeedSearchText = (
       ? [{ key: `seed:${index}`, text }]
       : [];
   });
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): eveEventSearchText stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveEventSearchText API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -77,4 +73,4 @@ export const eveEventSearchText = (
   }
   return [];
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

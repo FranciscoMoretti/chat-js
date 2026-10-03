@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as delay } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -11,9 +11,9 @@ import { getEveCreation, listPendingEveCreations } from "../db/eve-queries";
 import { createConversationInput } from "./contracts";
 import { EveCreationRecoveryError } from "./creation-recovery-error";
 import { executeEveConversationCreation } from "./execute-conversation-creation";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/strict-boolean-expressions --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions  --
  * jsdoc/require-param (#534): waitForConcurrentBinding's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): waitForConcurrentBinding's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): waitForConcurrentBinding uses 8, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -44,9 +44,9 @@ const waitForConcurrentBinding = async (
   }
   return false;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable jsdoc/require-param, max-statements, no-continue, no-magic-numbers, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named recoverEveCreations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): recoverEveCreations remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): recoverEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -89,4 +89,4 @@ export const recoverEveCreations = async (ownerId: string): Promise<void> => {
     }
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, max-statements, no-continue, no-magic-numbers, unicorn/no-null */

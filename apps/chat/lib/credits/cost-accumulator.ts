@@ -4,7 +4,7 @@
 import type { AppModelDefinition, AppModelId } from "../ai/app-models";
 import { getAppModelDefinition } from "../ai/app-models";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/exports-last, import/no-named-export --
+/* oxlint-disable import/exports-last  --
  * import/exports-last (#522): UsageInfo is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/no-named-export (#527): Preserve the named UsageInfo API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -13,7 +13,7 @@ export interface UsageInfo {
   inputTokens?: number;
   outputTokens?: number;
 }
-/* oxlint-enable import/exports-last, import/no-named-export */
+/* oxlint-enable import/exports-last */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -55,7 +55,7 @@ interface ImageCostEntry {
   usage: UsageInfo;
 }
 type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
-/* oxlint-disable id-length, import/no-named-export, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable id-length, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null  --
  * id-length (#506): CostAccumulator uses e; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/no-named-export (#527): Preserve the named CostAccumulator API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/models" dependency within this package instead of introducing an alias or barrel API.
@@ -162,4 +162,4 @@ export class CostAccumulator {
     return this.entries.length > 0;
   }
 }
-/* oxlint-enable id-length, import/no-named-export, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable id-length, import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */

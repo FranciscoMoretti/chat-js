@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import "server-only";
 import { and, desc, eq, or, sql } from "drizzle-orm";
 
@@ -15,9 +12,8 @@ import {
   userModelPreference,
 } from "./schema";
 import type { User, UserModelPreference } from "./schema";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): createProject stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named createProject API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * oxc/no-rest-spread-properties (#543): createProject copies or separates ...(icon && { icon }); ...(iconColor && { iconColor }) while preserving existing object ownership; mutating source objects is not equivalent.
@@ -51,9 +47,9 @@ export const createProject = ({
     updatedAt: new Date(),
     userId,
   });
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): getProjectsByUserId stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getProjectsByUserId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep getProjectsByUserId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -66,9 +62,9 @@ export const getProjectsByUserId = ({ userId }: { userId: string }) =>
     .from(project)
     .where(eq(project.userId, userId))
     .orderBy(desc(project.updatedAt));
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): getProjectById stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getProjectById API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * oxc/no-async-await (#540): getProjectById sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -83,9 +79,9 @@ export const getProjectById = async ({ id }: { id: string }) => {
     .where(eq(project.id, id));
   return selectedProject;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): updateProject stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named updateProject API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * oxc/no-rest-spread-properties (#543): updateProject copies or separates ...updates while preserving existing object ownership; mutating source objects is not equivalent.
@@ -109,9 +105,9 @@ export const updateProject = ({
     .update(project)
     .set({ ...updates, updatedAt: new Date() })
     .where(eq(project.id, id));
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): deleteProject stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named deleteProject API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/explicit-function-return-type (#560): Keep deleteProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -120,9 +116,9 @@ export const updateProject = ({
  */
 export const deleteProject = ({ id }: { id: string }) =>
   db.delete(project).where(eq(project.id, id));
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): getUserById stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getUserById API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): getUserById uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -141,9 +137,9 @@ export const getUserById = async ({
     .limit(1);
   return users[0];
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/group-exports (#523): getUserModelPreferences stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getUserModelPreferences API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/prefer-readonly-parameter-types (#565): getUserModelPreferences accepts { userId, }: { userId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -158,9 +154,9 @@ export const getUserModelPreferences = ({
     .select()
     .from(userModelPreference)
     .where(eq(userModelPreference.userId, userId));
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): upsertUserModelPreference stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named upsertUserModelPreference API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * oxc/no-async-await (#540): upsertUserModelPreference sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -189,9 +185,9 @@ export const upsertUserModelPreference = async ({
       target: [userModelPreference.userId, userModelPreference.modelId],
     });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): getEveMessageVotes stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getEveMessageVotes API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): getEveMessageVotes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -212,9 +208,9 @@ export const getEveMessageVotes = (ownerId: string, conversationId: string) =>
         eq(eveConversation.state, "bound")
       )
     );
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/group-exports (#523): saveEveMessageVote stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named saveEveMessageVote API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): saveEveMessageVote's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -265,9 +261,9 @@ export const saveEveMessageVote = (
       });
     return saved;
   });
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable import/group-exports, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null  --
  * import/group-exports (#523): assignEveConversationProject stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named assignEveConversationProject API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -343,4 +339,4 @@ export const assignEveConversationProject = (
       .where(eq(eveChat.id, logicalChat.id));
     return { conversationId: routeId, projectId };
   });
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable import/group-exports, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */

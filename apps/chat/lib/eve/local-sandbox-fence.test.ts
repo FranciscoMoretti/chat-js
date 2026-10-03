@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { mkdir, mkdtemp, readFile, rm, utimes, writeFile, } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -17,9 +17,9 @@ import nodePath from "node:path";
 import { expect, test } from "vitest";
 
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, unicorn/max-nested-calls --
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/max-nested-calls  --
  * max-statements (#512): test("fences every member before checking pending operations and never expires unreso keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("fences every member before checking pending operations and never expires unreso uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("fences every member before checking pending operations and never expires unreso sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -61,4 +61,4 @@ test("fences every member before checking pending operations and never expires u
     await rm(appRoot, { force: true, recursive: true });
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, unicorn/max-nested-calls */
+/* oxlint-enable max-statements, no-magic-numbers, unicorn/max-nested-calls */

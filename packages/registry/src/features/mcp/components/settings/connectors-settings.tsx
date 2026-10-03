@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -11,30 +10,20 @@ import {
   Radio,
   Trash2,
 } from "lucide-react";
-/* oxlint-enable eslint/sort-imports */
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import React, { Fragment, useCallback, useEffect, useMemo } from "react";
-/* oxlint-enable eslint/sort-imports */
 import { toast } from "sonner";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { InternalLink } from "@/components/internal-link";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { ConnectorHeader } from "@/components/settings/connector-header";
-/* oxlint-enable eslint/sort-imports */
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { SettingsPageContent } from "@/components/settings/settings-page";
 /* oxlint-enable import/max-dependencies */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { Badge } from "@/components/ui/badge";
-/* oxlint-enable eslint/sort-imports */
 import { Button } from "@/components/ui/button";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,25 +31,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-/* oxlint-enable eslint/sort-imports */
 import { Separator } from "@/components/ui/separator";
 import { installedFeatures } from "@/features/installed";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { McpConnector } from "@/lib/db/schema";
-/* oxlint-enable eslint/sort-imports */
 import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
-/* oxlint-enable eslint/sort-imports */
 import { useTRPC } from "@/trpc/react";
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
@@ -241,10 +222,7 @@ const CustomConnectorRow = ({
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react/forbid-component-props */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -274,24 +252,18 @@ const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
 /* oxlint-disable react/forbid-component-props -- The composed UI component exposes this styling prop as part of its supported public API. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const ConnectorsSettings = () => {
   const trpc = useTRPC();
@@ -555,23 +527,17 @@ export const ConnectorsSettings = () => {
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

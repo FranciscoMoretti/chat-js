@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { generateUUID } from "@/lib/utils";
 
 import { deduplicateByDomainAndUrl } from "./search-utils";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/consistent-type-definitions --
+/* oxlint-disable import/group-exports, typescript/consistent-type-definitions  --
  * import/group-exports (#523): SearchQuery stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named SearchQuery API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
@@ -16,9 +12,9 @@ export type SearchQuery = {
   maxResults: number;
   query: string;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/consistent-type-definitions */
+/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/consistent-type-definitions --
+/* oxlint-disable import/group-exports, typescript/consistent-type-definitions  --
  * import/group-exports (#523): MultiQuerySearchResult stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named MultiQuerySearchResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): MultiQuerySearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
@@ -31,9 +27,9 @@ export type MultiQuerySearchResult = {
     content: string;
   }[];
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/consistent-type-definitions */
+/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/consistent-type-definitions --
+/* oxlint-disable import/group-exports, typescript/consistent-type-definitions  --
  * import/group-exports (#523): MultiQuerySearchResponse stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named MultiQuerySearchResponse API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): MultiQuerySearchResponse preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
@@ -42,9 +38,9 @@ export type MultiQuerySearchResponse = {
   error?: string;
   searches: MultiQuerySearchResult[];
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/consistent-type-definitions */
+/* oxlint-enable import/group-exports, typescript/consistent-type-definitions */
 
-/* oxlint-disable id-length, import/no-named-export, max-lines-per-function, max-statements, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): multiQueryWebSearchStep uses q as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/no-named-export (#527): Preserve the named multiQueryWebSearchStep API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -147,4 +143,4 @@ export const multiQueryWebSearchStep = async ({
     };
   }
 };
-/* oxlint-enable id-length, import/no-named-export, max-lines-per-function, max-statements, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */

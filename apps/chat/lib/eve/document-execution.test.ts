@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context"; "../../tools/chatjs/saved-code-execution/execute" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -6,7 +6,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
   code: true,
@@ -85,10 +85,6 @@ beforeEach(() => {
   });
 });
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("executes only the owned saved revision and preserves its billing receipt") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("executes only the owned saved revision and preserves its billing receipt") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("executes only the owned saved revision and preserves its billing receipt", async () => {
   const result = await executeEveCodeDocument(
     { ...input, code: "malicious replacement", ownerId: "other" },
@@ -118,9 +114,8 @@ it("executes only the owned saved revision and preserves its billing receipt", a
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types  --
  * no-undefined (#519): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-async-await (#540): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte copies or separates ...revision while preserving existing object ownership; mutating source objects is not equivalent.
@@ -140,12 +135,8 @@ it.each([
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("does not execute when cancelled during revision lookup") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("does not execute when cancelled during revision lookup") copies or separates ...context while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("does not execute when cancelled during revision lookup", async () => {
   const cancellation = new AbortController();
   mocks.read.mockImplementation(() => {
@@ -160,12 +151,7 @@ it("does not execute when cancelled during revision lookup", async () => {
   ).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("retains a charged receipt when sandbox chart output is malformed") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("retains a charged receipt when sandbox chart output is malformed") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
   mocks.execute.mockResolvedValue({
     kind: "chatjs.tool-result",
@@ -184,11 +170,7 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
     usage: { costUsd: 0.05 },
   });
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it.each(["code", "execution"])("enforces the %s installation requirement before acces sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it.each(["code", "execution"])(
   "enforces the %s installation requirement before accessing documents",
   async (gate) => {
@@ -205,4 +187,3 @@ it.each(["code", "execution"])(
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
-/* oxlint-enable oxc/no-async-await */

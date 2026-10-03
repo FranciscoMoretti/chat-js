@@ -1,6 +1,6 @@
 "use client";
 
-/* oxlint-disable import/max-dependencies, sort-imports --
+/* oxlint-disable import/max-dependencies  --
  * import/max-dependencies (#524): import from "@tanstack/react-query" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -18,9 +18,9 @@ import type { AppRouter } from "@/trpc/routers/_app";
 
 import { isAbortedRequest } from "./is-aborted-request";
 import { makeQueryClient } from "./query-client";
-/* oxlint-enable import/max-dependencies, sort-imports */
+/* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, react/only-export-components --
+/* oxlint-disable import/exports-last, import/group-exports, react/only-export-components  --
  * import/exports-last (#522): { TRPCProvider, useTRPC, useTRPCClient } is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): { TRPCProvider, useTRPC, useTRPCClient } stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named { TRPCProvider, useTRPC, useTRPCClient } API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -28,7 +28,7 @@ import { makeQueryClient } from "./query-client";
  */
 export const { TRPCProvider, useTRPC, useTRPCClient } =
   createTRPCContext<AppRouter>();
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, react/only-export-components */
+/* oxlint-enable import/exports-last, import/group-exports, react/only-export-components */
 
 /* oxlint-disable init-declarations --
  * init-declarations (#507): browserQueryClient assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -71,7 +71,7 @@ const getUrl = (): string => {
   return `${base}/api/trpc`;
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable import/group-exports, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/group-exports (#523): TRPCReactProvider stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named TRPCReactProvider API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-ternary (#518): TRPCReactProvider derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -124,4 +124,4 @@ export const TRPCReactProvider = (props: {
     </QueryClientProvider>
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null */

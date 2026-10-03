@@ -5,9 +5,6 @@ import { eveCodeSandboxName } from "./code-sandbox-name";
 const provider = { projectId: "project-a", teamId: "team-a" };
 const sandboxNamePattern = /^chatjs-code-[a-f0-9]{48}$/u;
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): test("the same native call has a stable opaque name, isolated by owner and session") copies or separates ...scope; ...provider while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("the same native call has a stable opaque name, isolated by owner and session", () => {
   const scope = {
     callId: "call-a",
@@ -44,7 +41,6 @@ test("the same native call has a stable opaque name, isolated by owner and sessi
     })
   );
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): test("missing native identity cannot allocate an anonymous fallback sandbox") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.

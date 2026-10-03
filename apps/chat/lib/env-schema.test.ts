@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
 import { getEveRuntimeEnvOptions } from "./env-schema";
-/* oxlint-enable sort-imports */
 
 const schema = z.object(getEveRuntimeEnvOptions({}));
 /* oxlint-disable no-magic-numbers --
@@ -18,7 +14,7 @@ const valid = {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types  --
  * max-lines-per-function (#510): describe("EVE runtime environment") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-rest-spread-properties (#543): describe("EVE runtime environment") copies or separates ...valid while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): describe("EVE runtime environment") accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -74,11 +70,8 @@ describe("EVE runtime environment", () => {
     expect(schema.safeParse(value).success).toBe(false);
   });
 });
-/* oxlint-enable max-lines-per-function, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): test.each(["preview", "production"])("Vercel %s needs no workflow database") copies or separates ...credentials while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test.each(["preview", "production"])(
   "Vercel %s needs no workflow database",
   (VERCEL_ENV) => {
@@ -96,4 +89,3 @@ test.each(["preview", "production"])(
     expect(schema.safeParse(credentials).success).toBe(false);
   }
 );
-/* oxlint-enable oxc/no-rest-spread-properties */

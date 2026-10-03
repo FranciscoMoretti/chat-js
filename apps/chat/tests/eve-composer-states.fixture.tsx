@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/controlled-chat-composer"; "../components/eve/eve-thinking-message" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,7 +9,7 @@ import { createRoot } from "react-dom/client";
 
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
 import { EveThinkingMessage } from "../components/eve/eve-thinking-message";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const states: {
   name: string;
@@ -50,7 +50,7 @@ const states: {
   { cancellable: true, name: "Ready", status: "ready" },
 ];
 
-/* oxlint-disable no-ternary, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types  --
  * no-ternary (#518): Fixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
@@ -86,7 +86,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable no-ternary, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
 const root = document.querySelector("#root");
 if (!root) {

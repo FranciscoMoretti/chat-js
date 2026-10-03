@@ -1,13 +1,9 @@
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named MigrationIdentity API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export interface MigrationIdentity {
   createdAt: number;
   hash: string;
 }
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): KNOWN_CHATJS_TABLE_NAMES stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named KNOWN_CHATJS_TABLE_NAMES API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -54,9 +50,9 @@ export const KNOWN_CHATJS_TABLE_NAMES = [
   "Suggestion",
   "Vote",
 ] as const;
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/group-exports (#523): getMigrationHistoryProblem stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getMigrationHistoryProblem API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): getMigrationHistoryProblem uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -93,4 +89,4 @@ export const getMigrationHistoryProblem = ({
     ? null
     : "This database uses a migration history from before the EVE-only baseline.";
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */

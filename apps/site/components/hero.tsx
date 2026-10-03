@@ -25,9 +25,7 @@ const Sparkle = ({
 );
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable import/prefer-default-export -- Hero: Consumers use this named API so adding another export will not require changing existing imports. */
 /* oxlint-disable react/no-multi-comp -- Hero: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable import/no-named-export -- Hero: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- Hero: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable react/jsx-no-literals -- Hero: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react/forbid-component-props -- Hero: className/style are the deliberate styling interface of these UI/layout primitives. */
@@ -166,6 +164,4 @@ export const Hero = (): React.JSX.Element => (
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/prefer-default-export */

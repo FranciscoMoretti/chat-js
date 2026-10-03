@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -12,7 +10,6 @@ import { installedToolNames } from "@/tools/chatjs/installed-features";
 import { EveDocumentRun } from "@/tools/chatjs/saved-code-execution/document";
 
 import "./sandbox.css";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- eve-document-bundles.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -52,7 +49,7 @@ const editorProps = {
   status: "idle" as const,
 };
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
-/* oxlint-disable max-statements, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals -- eve-document-bundles.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including container.querySelector(".cm-content")?.textContent); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
+/* oxlint-disable max-statements, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals -- eve-document-bundles.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; ; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration. */
 
 test("installed text, code and sheet bundles render saved content", async () => {
   document.documentElement.classList.add("dark");
@@ -97,9 +94,9 @@ test("installed text, code and sheet bundles render saved content", async () => 
     container.remove();
   }
 });
-/* oxlint-enable max-statements, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals */
+/* oxlint-enable max-statements, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-document-bundles.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including inline ? "Inline preview" : "Document panel"); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including element). */
+/* oxlint-disable max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-document-bundles.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including element). */
 
 test("a removed editor has an explicit notice in panel and inline views", async () => {
   const original = documentUi.text;
@@ -142,9 +139,9 @@ test("a removed editor has an explicit notice in panel and inline views", async 
     container.remove();
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, react/jsx-no-literals, react/jsx-props-no-spreading, typescript/promise-function-async -- eve-document-bundles.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-no-literals, react/jsx-props-no-spreading, typescript/promise-function-async -- eve-document-bundles.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("saved code run controls follow installed execution and retain disabled states", async () => {
   const container = document.createElement("main");
@@ -225,4 +222,4 @@ test("saved code run controls follow installed execution and retain disabled sta
     container.remove();
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, react/jsx-no-literals, react/jsx-props-no-spreading, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-no-literals, react/jsx-props-no-spreading, typescript/promise-function-async */

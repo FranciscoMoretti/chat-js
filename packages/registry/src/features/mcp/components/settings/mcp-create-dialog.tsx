@@ -1,30 +1,20 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-/* oxlint-enable eslint/sort-imports */
 import { ChevronDown } from "lucide-react";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import React, { useEffect, useState } from "react";
-/* oxlint-enable eslint/sort-imports */
 import { useForm } from "react-hook-form";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { toast } from "sonner";
-/* oxlint-enable eslint/sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { Badge } from "@/components/ui/badge";
-/* oxlint-enable eslint/sort-imports */
 import { Button } from "@/components/ui/button";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import {
   Dialog,
@@ -44,7 +34,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   Select,
   SelectContent,
@@ -52,11 +41,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-/* oxlint-enable eslint/sort-imports */
 import { Spinner } from "@/components/ui/spinner";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
-/* oxlint-enable eslint/sort-imports */
 import { config } from "@/lib/config";
 import { useTRPC } from "@/trpc/react";
 
@@ -82,14 +68,9 @@ const mcpConnectorFormSchema = z.object({
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
@@ -362,13 +343,8 @@ export const McpCreateDialog = ({
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

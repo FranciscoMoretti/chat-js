@@ -5,19 +5,13 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { builtInGateways, resolveGateway } from "./gateways";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 it("validates gateway integration metadata with the standard registry schema", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-metadata-"));
   const source = path.join(cwd, "gateway.json");
@@ -40,11 +34,7 @@ it("validates gateway integration metadata with the standard registry schema", a
     await rm(cwd, { force: true, recursive: true });
   }
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
@@ -72,5 +62,3 @@ it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-async-await */

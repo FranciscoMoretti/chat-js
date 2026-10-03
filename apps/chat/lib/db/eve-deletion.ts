@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 
 import { db } from "./client";
@@ -25,9 +22,8 @@ import {
   eveSearchText,
   eveSubagentSession,
 } from "./schema";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null  --
  * import/group-exports (#523): completeEveConversationDeletion stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named completeEveConversationDeletion API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): completeEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -164,9 +160,9 @@ export const completeEveConversationDeletion = async (
       );
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable import/group-exports, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * import/group-exports (#523): getEveDeletionState stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getEveDeletionState API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): getEveDeletionState's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -229,4 +225,4 @@ export const getEveDeletionState = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDeletionState has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return member ? { rootId: row.chatId, state: member.state } : undefined;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

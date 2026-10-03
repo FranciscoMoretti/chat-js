@@ -1,23 +1,17 @@
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import React, { act } from "react";
-/* oxlint-enable eslint/sort-imports */
 import { createRoot } from "react-dom/client";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { expect, test, vi } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { EveToolResult } from "../../../apps/chat/components/eve/eve-tool-result";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
   createToolError,
   createToolResult,
 } from "../../../apps/chat/lib/eve/tool-result";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { WebSearchRenderer as FirecrawlSearchRenderer } from "../src/tools/firecrawl-search/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -28,13 +22,10 @@ import { WebSearchRenderer as TavilySearchRenderer } from "../src/tools/tavily-s
 import { WordCountRenderer } from "../src/tools/word-count/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import "../../../apps/chat/app/globals.css";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 vi.mock("@/lib/ai/tool-renderer-registry", async () => {
@@ -44,7 +35,6 @@ vi.mock("@/lib/ai/tool-renderer-registry", async () => {
 });
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react/jsx-no-literals -- These labels are intentional product copy in the existing English UI; translating them requires an application localization contract. */
@@ -61,13 +51,11 @@ vi.mock("@/lib/stores/hooks-message-parts", () => ({
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 test("search and word-count renderers preserve their visible states", async (): Promise<void> => {
   const container = document.createElement("main");
   document.documentElement.classList.add("dark");
@@ -207,11 +195,9 @@ test("search and word-count renderers preserve their visible states", async (): 
   await act((): void => root.unmount());
   container.remove();
 });
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

@@ -22,7 +22,6 @@ type ImageDefault<G extends AnyGatewayProvider> = {
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export interface GatewayModelDefaults<G extends AnyGatewayProvider> {
@@ -61,4 +60,3 @@ export interface GatewayModelDefaults<G extends AnyGatewayProvider> {
 }
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable import/no-named-export */

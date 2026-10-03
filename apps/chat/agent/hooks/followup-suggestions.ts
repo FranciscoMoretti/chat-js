@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/eve/followup-context"; "../../lib/eve/generate-followup-suggestions" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,14 +8,14 @@ import { defineHook } from "eve/hooks";
 import { followupContext } from "../../lib/eve/followup-context";
 import type { FollowupContext } from "../../lib/eve/followup-context";
 import { generateEveFollowupSuggestions } from "../../lib/eve/generate-followup-suggestions";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const context = defineState<FollowupContext>(
   "chatjs.followups.context",
   () => ({ assistant: "", user: "" })
 );
 
-/* oxlint-disable import/no-default-export, no-ternary, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/no-default-export, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * no-ternary (#518): default export derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -37,4 +37,4 @@ export default defineHook({
       context.update((current) => followupContext(current, event)),
   },
 });
-/* oxlint-enable import/no-default-export, no-ternary, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/no-default-export, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

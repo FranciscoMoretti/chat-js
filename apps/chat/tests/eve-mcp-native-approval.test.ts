@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import {
   ContextContainer,
   contextStorage,
@@ -19,14 +16,13 @@ import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-reques
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
 
 const actor = {
   authenticator: "test",
   principalId: "owner",
   principalType: "user",
 };
-/* oxlint-disable oxc/no-rest-spread-properties, unicorn/no-null --
+/* oxlint-disable unicorn/no-null  --
  * oxc/no-rest-spread-properties (#543): session copies or separates ...actor while preserving existing object ownership; mutating source objects is not equivalent.
  * unicorn/no-null (#570): session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -35,7 +31,7 @@ const session = {
   sessionId: "session",
   turn: { id: "turn_1", sequence: 1 },
 };
-/* oxlint-enable oxc/no-rest-spread-properties, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 const batch: ResolvedInputBatch = {
   event: { sequence: 1, stepIndex: 0, turnId: "turn_1" },
   inputs: [
@@ -56,7 +52,7 @@ const batch: ResolvedInputBatch = {
     },
   ],
 };
-/* oxlint-disable no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type --
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type  --
  * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-rest-spread-properties (#543): fixture copies or separates ...actor while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/explicit-function-return-type (#560): Keep fixture's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -73,9 +69,9 @@ function fixture() {
   });
   return { ctx, state };
 }
-/* oxlint-enable no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): test("native executor receives only its exact authorized session/call/tool/input rece sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): test("native executor receives only its exact authorized session/call/tool/input rece copies or separates ...session while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("native executor receives only its exact authorized session/call/tool/input rece accepts toolContext; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -106,9 +102,9 @@ test("native executor receives only its exact authorized session/call/tool/input
     ).toBeUndefined();
   });
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-rest-spread-properties --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
  * max-statements (#512): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("old audit history, denied responses, and ambiguous calls cannot mint receipts") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -148,9 +144,9 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
     ).toBeUndefined();
   });
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-rest-spread-properties */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test.each(["owner", "stranger"])("native harness binds approval to its authorized res keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test.each(["owner", "stranger"])("native harness binds approval to its authorized res keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test.each(["owner", "stranger"])("native harness binds approval to its authorized res uses 4, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -271,4 +267,4 @@ test.each(["owner", "stranger"])(
     }
   }
 );
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

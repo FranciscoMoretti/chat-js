@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { createHash, randomBytes } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-copy-dispatch"; "../lib/db/eve-copy-journal"; "../lib/db/eve-copy-resources"; "../lib/db/eve-deletion" dependency within this package instead of introducing an alias or barrel API.
@@ -47,7 +47,7 @@ import { env } from "../lib/env";
 import type { EveCopyPlan } from "../lib/eve/copy-journal-contract";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const invalidSeedError = /Too small|byte limit/u;
@@ -55,9 +55,6 @@ const invalidBoundaryError = /boundaries must match imported user messages/u;
 const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
 const owners = [ownerId, sourceOwnerId];
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(user).values( owners.map((id) => ({ ema runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(user).values(
   owners.map((id) => ({
     email: `${id}@test.invalid`,
@@ -65,10 +62,6 @@ await db.insert(user).values(
     name: "Copy journal fixture",
   }))
 );
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 afterAll(async () => {
   for (const table of [
     eveConversationCopyFile,
@@ -85,7 +78,6 @@ afterAll(async () => {
   }
   await db.delete(user).where(inArray(user.id, owners));
 });
-/* oxlint-enable oxc/no-async-await */
 const bytes = Buffer.from("public fixture");
 const sha256 = createHash("sha256").update(bytes).digest("hex");
 /* oxlint-disable no-magic-numbers --
@@ -94,7 +86,7 @@ const sha256 = createHash("sha256").update(bytes).digest("hex");
 const key = (): string => randomBytes(18).toString("base64url");
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null  --
  * max-lines-per-function (#510): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): fixture uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -227,8 +219,8 @@ async function fixture() {
     targetKey,
   };
 }
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
-/* oxlint-disable id-length, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): prepare uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * oxc/no-async-await (#540): prepare sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): prepare accepts f: Awaited<ReturnType<typeof fixture>>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -242,9 +234,9 @@ async function prepare(f: Awaited<ReturnType<typeof fixture>>): Promise<void> {
   );
   await writeEveCopyDocuments(ownerId, f.saved.conversation.id);
 }
-/* oxlint-enable id-length, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, max-statements, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null  --
  * id-length (#506): test("reserves one immutable root and destination resources before writes, rejecting  uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-statements (#512): test("reserves one immutable root and destination resources before writes, rejecting  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("reserves one immutable root and destination resources before writes, rejecting  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -295,9 +287,9 @@ test("reserves one immutable root and destination resources before writes, rejec
     })
   ).rejects.toThrow("ordinary message");
 });
-/* oxlint-enable id-length, max-statements, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async --
+/* oxlint-disable id-length, max-statements, typescript/promise-function-async  --
  * id-length (#506): test("cannot accept or expose a native seed before file and document receipts commit" uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-statements (#512): test("cannot accept or expose a native seed before file and document receipts commit" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("cannot accept or expose a native seed before file and document receipts commit" sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -330,9 +322,9 @@ test("cannot accept or expose a native seed before file and document receipts co
     (await getEveCopyOperation(ownerId, f.input.operationId))?.copy.plan
   ).toBeNull();
 });
-/* oxlint-enable id-length, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async */
+/* oxlint-enable id-length, max-statements, typescript/promise-function-async */
 
-/* oxlint-disable id-length, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): test("an uncertain file write retries the same allocated key and records completion o uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): test("an uncertain file write retries the same allocated key and records completion o uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("an uncertain file write retries the same allocated key and records completion o sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -367,9 +359,9 @@ test("an uncertain file write retries the same allocated key and records complet
     f.storage.writeDestinationFile.mock.calls.map((call) => call[0])
   ).toEqual([f.targetKey, f.targetKey]);
 });
-/* oxlint-enable id-length, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async, unicorn/no-null --
+/* oxlint-disable id-length, max-statements, typescript/promise-function-async, unicorn/no-null  --
  * id-length (#506): test("accepted copies recover after source revocation and a lost native reply, then d uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-statements (#512): test("accepted copies recover after source revocation and a lost native reply, then d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("accepted copies recover after source revocation and a lost native reply, then d sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -424,9 +416,9 @@ test("accepted copies recover after source revocation and a lost native reply, t
     rejectUnacceptedEveCopy(ownerId, f.saved.conversation.id)
   ).rejects.toThrow("Accepted copies");
 });
-/* oxlint-enable id-length, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable id-length, max-statements, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, oxc/no-async-await, typescript/promise-function-async --
+/* oxlint-disable id-length, max-statements, typescript/promise-function-async  --
  * id-length (#506): test("revocation before acceptance prevents dispatch and permits a never-dispatched c uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-statements (#512): test("revocation before acceptance prevents dispatch and permits a never-dispatched c keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("revocation before acceptance prevents dispatch and permits a never-dispatched c sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -475,9 +467,9 @@ test("revocation before acceptance prevents dispatch and permits a never-dispatc
   });
   await expect(reserveEveCopyOperation(ownerId, f.input)).rejects.toThrow();
 });
-/* oxlint-enable id-length, max-statements, oxc/no-async-await, typescript/promise-function-async */
+/* oxlint-enable id-length, max-statements, typescript/promise-function-async */
 
-/* oxlint-disable id-length, oxc/no-async-await, typescript/promise-function-async --
+/* oxlint-disable id-length, typescript/promise-function-async  --
  * id-length (#506): test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a c uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * oxc/no-async-await (#540): test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a c sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/promise-function-async (#606): test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a c preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -503,9 +495,9 @@ test("foreign owners cannot write resources, accept, reject, resolve, or dispatc
   ).rejects.toThrow("not found");
   expect(f.storage.writeDestinationFile).not.toHaveBeenCalled();
 });
-/* oxlint-enable id-length, oxc/no-async-await, typescript/promise-function-async */
+/* oxlint-enable id-length, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("invalid native seeds or document boundaries never reserve resources") uses 8, 1024, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-ternary (#518): test("invalid native seeds or document boundaries never reserve resources") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): test("invalid native seeds or document boundaries never reserve resources") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -548,9 +540,9 @@ test("invalid native seeds or document boundaries never reserve resources", asyn
     expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
   }
 });
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable id-length, oxc/no-async-await --
+/* oxlint-disable id-length  --
  * id-length (#506): test("document changes before acceptance leave the copy rejectable") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * oxc/no-async-await (#540): test("document changes before acceptance leave the copy rejectable") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -580,9 +572,9 @@ test("document changes before acceptance leave the copy rejectable", async () =>
     rejectUnacceptedEveCopy(ownerId, f.saved.conversation.id)
   ).resolves.toMatchObject({ neverDispatched: true });
 });
-/* oxlint-enable id-length, oxc/no-async-await */
+/* oxlint-enable id-length */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/promise-function-async --
+/* oxlint-disable id-length, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async  --
  * id-length (#506): test("concurrent accepted retries dispatch once and return the same binding") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-statements (#512): test("concurrent accepted retries dispatch once and return the same binding") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("concurrent accepted retries dispatch once and return the same binding") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -615,9 +607,9 @@ test("concurrent accepted retries dispatch once and return the same binding", as
   ).toEqual(bound);
   expect(create).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable id-length, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/promise-function-async */
+/* oxlint-enable id-length, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 
-/* oxlint-disable id-length, oxc/no-async-await --
+/* oxlint-disable id-length  --
  * id-length (#506): test("commits an empty imported document boundary together with copied resources") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * oxc/no-async-await (#540): test("commits an empty imported document boundary together with copied resources") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -649,6 +641,6 @@ test("commits an empty imported document boundary together with copied resources
       )
   ).toEqual([]);
 });
-/* oxlint-enable id-length, oxc/no-async-await */
+/* oxlint-enable id-length */
 
 /* oxlint-disable max-lines -- #509: This eve-copy-journal.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

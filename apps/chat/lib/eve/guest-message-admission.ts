@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types"; "../db/eve-guests"; "../types/anonymous" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -19,9 +19,9 @@ import { rejectEveCommand } from "./command-rejection";
 import { guestRequestIpHash } from "./guest-admission";
 import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 import type { EveMessageInput } from "./message-input";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): admitGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named admitGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -103,8 +103,8 @@ export const admitGuestMessage = async (
     429
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-enable import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/group-exports (#523): settleGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named settleGuestMessage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -145,4 +145,4 @@ export const settleGuestMessage = async (
     );
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */

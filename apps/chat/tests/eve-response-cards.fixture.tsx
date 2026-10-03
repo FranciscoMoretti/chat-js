@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-response-group-cards"; "../components/response-choice-cards" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,7 +9,7 @@ import { createRoot } from "react-dom/client";
 import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
 import type { EveResponseCardCandidate } from "../components/eve/eve-response-group-cards";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const candidates: EveResponseCardCandidate[] = [
   { modelName: "GPT-5", operationId: "ready", state: "bound", status: "ready" },

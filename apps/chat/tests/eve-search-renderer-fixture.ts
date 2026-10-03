@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-tool-result"; "../lib/eve/tool-result" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveToolResult } from "../components/eve/eve-tool-result";
 import { createToolResult } from "../lib/eve/tool-result";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): parts uses 0, 0.05 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

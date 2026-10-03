@@ -13,9 +13,6 @@ vi.mock("../db/eve-guests", () => {
 beforeEach(() => session.mockResolvedValue(null));
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("old guest cookies no longer authorize application history") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("old guest cookies no longer authorize application history", async () => {
   expect(
     await resolveEvePrincipal(
@@ -23,11 +20,7 @@ test("old guest cookies no longer authorize application history", async () => {
     )
   ).toBeNull();
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("registered ownership is unchanged") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("registered ownership is unchanged", async () => {
   session.mockResolvedValue({ user: { id: "registered-owner" } });
   expect(await resolveEvePrincipal(new Headers())).toEqual({
@@ -35,4 +28,3 @@ test("registered ownership is unchanged", async () => {
     ownerId: "registered-owner",
   });
 });
-/* oxlint-enable oxc/no-async-await */

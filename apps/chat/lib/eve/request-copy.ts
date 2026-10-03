@@ -1,19 +1,15 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import { conversationBinding } from "./contracts";
 import { eveCopyInput } from "./copy-input";
 import type { EveCopyInput } from "./copy-input";
-/* oxlint-enable sort-imports */
 
 const keyFor = (ownerId: string, sourceId: string): string =>
   `chatjs.eve.pending-copy:${ownerId}:${sourceId.toLowerCase()}`;
 
 type CopyStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-params, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): preparePendingEveCopy stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named preparePendingEveCopy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-params (#511): preparePendingEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -41,9 +37,9 @@ export const preparePendingEveCopy = (
   storage.setItem(key, JSON.stringify(input));
   return input;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-params, no-ternary, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): finishPendingEveCopy stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named finishPendingEveCopy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/strict-boolean-expressions (#610): finishPendingEveCopy intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -62,9 +58,9 @@ export const finishPendingEveCopy = (
     storage.removeItem(key);
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): EveCopyRequestError stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named EveCopyRequestError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -82,9 +78,9 @@ export class EveCopyRequestError extends Error {
     this.conversationId = conversationId;
   }
 }
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null --
+/* oxlint-disable import/group-exports, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null  --
  * import/group-exports (#523): requestEveCopy stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named requestEveCopy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): requestEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -136,4 +132,4 @@ export const requestEveCopy = async (input: EveCopyInput) => {
     );
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */

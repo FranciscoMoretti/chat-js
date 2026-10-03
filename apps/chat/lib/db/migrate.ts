@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -15,13 +15,13 @@ import {
   getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
 } from "./migration-history";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 config({
   path: ".env.local",
 });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, no-ternary, node/no-process-env, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): runMigrate emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -139,9 +139,9 @@ const runMigrate = async (): Promise<void> => {
 
   console.log("✅ Migrations completed in", end - start, "ms");
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, no-ternary, node/no-process-env, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-console, oxc/no-async-await, typescript/explicit-function-return-type --
+/* oxlint-disable no-console, typescript/explicit-function-return-type  --
  * no-console (#514): void (async () => { try { await runMigrate(); } catch ( emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * oxc/no-async-await (#540): void (async () => { try { await runMigrate(); } catch ( sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await runMigrate(); } catch ('s return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -156,4 +156,4 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable no-console, typescript/explicit-function-return-type */

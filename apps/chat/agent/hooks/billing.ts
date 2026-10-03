@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-subagents"; "../../lib/eve/usage" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,9 +9,9 @@ import {
   registerEveSubagent,
 } from "../../lib/db/eve-subagents";
 import { ingestEveUsage } from "../../lib/eve/usage";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/no-default-export, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-statements (#512): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): default export sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -62,4 +62,4 @@ export default defineHook({
     },
   },
 });
-/* oxlint-enable import/no-default-export, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/no-default-export, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

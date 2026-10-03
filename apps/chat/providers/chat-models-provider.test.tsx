@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import React from "react";
 import { act, create } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
@@ -9,7 +6,6 @@ import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { config } from "@/lib/config";
 
 import { ChatModelsProvider, useChatModels } from "./chat-models-provider";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type --
  * no-undefined (#519): vi.mock("@tanstack/react-query") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -101,7 +97,7 @@ const ContextProbe = ({
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return  --
  * init-declarations (#507): describe("ChatModelsProvider") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("ChatModelsProvider") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("ChatModelsProvider") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -192,4 +188,4 @@ describe("ChatModelsProvider", () => {
     }
   });
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */

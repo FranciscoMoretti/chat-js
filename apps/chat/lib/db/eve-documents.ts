@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../artifacts/artifact-kind"; "../eve/document-contracts" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -20,7 +20,7 @@ import {
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
 } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): revisionInput uses 2_000_000, 1, 512, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -45,7 +45,7 @@ const revisionInput = z.object({
 type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): purgeEveFamilyDocuments is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): purgeEveFamilyDocuments stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named purgeEveFamilyDocuments API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -163,7 +163,7 @@ export const purgeEveFamilyDocuments = async (
         )
       );
   });
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep ancestorIds's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -208,7 +208,7 @@ const orderRevisionHistory = <
 };
 /* oxlint-enable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * jsdoc/require-param (#534): backfillDocumentCheckpoints's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -312,9 +312,9 @@ const backfillDocumentCheckpoints =
       }
     }
   };
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * oxc/no-async-await (#540): prepareManualRevision sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): prepareManualRevision accepts tx: DocumentTransaction; input: z.infer<typeof revisionInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): prepareManualRevision intentionally keeps the existing falsy-value behavior of input.expectedRevisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -338,9 +338,9 @@ const prepareManualRevision = async (
     );
   }
 };
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/exports-last (#522): saveEveDocumentRevision is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): saveEveDocumentRevision stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named saveEveDocumentRevision API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -476,9 +476,9 @@ export const saveEveDocumentRevision = async (
     return revision;
   });
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): getEveDocumentHistory is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): getEveDocumentHistory stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getEveDocumentHistory API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -533,9 +533,9 @@ export const getEveDocumentHistory = async (
     );
   return orderRevisionHistory(revisions, head.revisionId);
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-params, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls  --
  * max-params (#511): inheritImportedDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): inheritImportedDocumentCheckpoints uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): inheritImportedDocumentCheckpoints derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -596,9 +596,9 @@ const inheritImportedDocumentCheckpoints = async (
       .values(entries.map((entry) => ({ ...entry, conversationId })));
   }
 };
-/* oxlint-enable max-params, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): initializeImportedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): initializeImportedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): initializeImportedForkDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -658,7 +658,7 @@ const initializeImportedForkDocuments = async (
     messageIndex
   );
 };
-/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): parseForkTurnIndex uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -672,7 +672,7 @@ const parseForkTurnIndex = (turnId: string): number => {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls  --
  * max-lines-per-function (#510): inheritDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): inheritDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): inheritDocumentCheckpoints uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -736,9 +736,9 @@ const inheritDocumentCheckpoints = async (
   }
   return inheritedCheckpoints;
 };
-/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): initializeNamedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): initializeNamedForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): initializeNamedForkDocuments uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -802,9 +802,9 @@ const initializeNamedForkDocuments = async (
       .onConflictDoNothing();
   }
 };
-/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): initializeEveForkDocuments is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): initializeEveForkDocuments stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named initializeEveForkDocuments API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -957,9 +957,9 @@ export const initializeEveForkDocuments = async (
       }
     }
   });
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): captureEveDocumentCheckpoint is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): captureEveDocumentCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named captureEveDocumentCheckpoint API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -978,8 +978,7 @@ export const captureEveDocumentCheckpoint = async (
   turnIndex: number
 ): Promise<void> => {
   z.number().int().nonnegative().parse(turnIndex);
-  // oxlint-disable-next-line typescript/no-confusing-void-expression -- #582: Returning the awaited operation preserves early termination and propagation of its asynchronous failure.
-  return await db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${conversationId}`}, 0))`
     );
@@ -1021,9 +1020,9 @@ export const captureEveDocumentCheckpoint = async (
     }
   });
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): captureEveNamedDocumentCheckpoint is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): captureEveNamedDocumentCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named captureEveNamedDocumentCheckpoint API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -1105,9 +1104,9 @@ export const captureEveNamedDocumentCheckpoint = async (
     }
   });
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type  --
  * jsdoc/require-param (#534): readDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): readDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * oxc/no-async-await (#540): readDocumentRevision sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -1129,9 +1128,9 @@ const readDocumentRevision =
       );
     return revision;
   };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): getEveDocumentRevision stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getEveDocumentRevision API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): getEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -1166,9 +1165,9 @@ export const getEveDocumentRevision = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDocumentRevision has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): getAccessibleEveDocument stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getAccessibleEveDocument API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): getAccessibleEveDocument's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -1251,9 +1250,9 @@ export const getAccessibleEveDocument = async (
     },
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): removeEveDocumentFromConversation stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named removeEveDocumentFromConversation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): removeEveDocumentFromConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -1342,6 +1341,6 @@ export const removeEveDocumentFromConversation = async (
       title: revision.title,
     };
   });
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-documents.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

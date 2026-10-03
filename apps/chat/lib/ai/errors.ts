@@ -1,4 +1,4 @@
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): ErrorType is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ErrorType stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named ErrorType API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -11,9 +11,9 @@ export type ErrorType =
   | "not_found"
   | "rate_limit"
   | "offline";
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): Surface is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): Surface stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named Surface API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -28,15 +28,15 @@ export type Surface =
   | "vote"
   | "document"
   | "suggestions";
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): ErrorCode is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ErrorCode stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named ErrorCode API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export type ErrorCode = `${ErrorType}:${Surface}`;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
 type ErrorVisibility = "response" | "log" | "none";
 
@@ -143,7 +143,7 @@ const getStatusCodeByType = (type: ErrorType): number => {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/no-named-export, no-console --
+/* oxlint-disable no-console  --
  * import/no-named-export (#527): Preserve the named ChatSDKError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-console (#514): ChatSDKError emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  */
@@ -188,4 +188,4 @@ export class ChatSDKError extends Error {
     return Response.json({ cause, code, message }, { status: statusCode });
   }
 }
-/* oxlint-enable import/no-named-export, no-console */
+/* oxlint-enable no-console */

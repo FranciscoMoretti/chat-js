@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { FilesError } from "files-sdk";
 
 import {
@@ -9,11 +6,10 @@ import {
   getFileProviderUrl,
   storageSupportsRange,
 } from "./file-storage";
-/* oxlint-enable sort-imports */
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null  --
  * no-magic-numbers (#517): parseRange uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): parseRange derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-optional-chaining (#542): parseRange handles optional match.groups?.suffix; match.groups?.start; match.groups?.end without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -43,9 +39,9 @@ const parseRange = (value: string, size: number) => {
     ? { end, start }
     : null;
 };
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named createFileContentResponse API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): createFileContentResponse remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -120,4 +116,4 @@ export const createFileContentResponse = async (
     return new Response("File download failed", { status: 500 });
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

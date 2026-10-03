@@ -1,10 +1,7 @@
 import { it } from "bun:test";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import assert from "node:assert/strict";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import {
   mkdir,
@@ -15,19 +12,16 @@ import {
   writeFile,
 } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
   SNAPSHOT_CONCURRENCY,
   collectSnapshot,
 } from "../../../scripts/sync-template-snapshot";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 
 // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
 const { join } = path;
@@ -35,8 +29,6 @@ const { join } = path;
 const hash = (value: string): string =>
   new Bun.CryptoHasher("sha256").update(value).digest("hex");
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const collectFileOrder = async (
@@ -59,11 +51,8 @@ const collectFileOrder = async (
 };
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
@@ -126,5 +115,4 @@ it("collects ordered hashes with bounded nested filesystem concurrency", async (
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

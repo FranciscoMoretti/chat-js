@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { readdir, readFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -6,9 +6,9 @@ import { readdir, readFile } from "node:fs/promises";
 import nodePath from "node:path";
 
 import { z } from "zod";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers --
+/* oxlint-disable import/group-exports, no-magic-numbers  --
  * import/group-exports (#523): localEveSandboxOwnerSchema stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named localEveSandboxOwnerSchema API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): localEveSandboxOwnerSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -20,9 +20,9 @@ export const localEveSandboxOwnerSchema = z.strictObject({
   version: z.literal(1),
   writeAheadResources: z.literal(true).optional(),
 });
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers */
+/* oxlint-enable import/group-exports, no-magic-numbers */
 
-/* oxlint-disable id-length, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): readLocalEveSandboxInventory uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): readLocalEveSandboxInventory stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named readLocalEveSandboxInventory API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -134,4 +134,4 @@ export const readLocalEveSandboxInventory = async (
   }
   return { owned, unattributedDirectories };
 };
-/* oxlint-enable id-length, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

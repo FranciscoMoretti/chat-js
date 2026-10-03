@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { describe, expect, it } from "vitest";
 
 import { resolveEveResponseGroupLineage } from "./response-group-lineage";
 import type { EveResponseGroupLineageConversation } from "./response-group-lineage";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * no-magic-numbers (#517): row uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-rest-spread-properties (#543): row copies or separates ...overrides while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): row accepts overrides: Partial<EveResponseGroupLineageConversation> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -28,9 +24,9 @@ const row = (
   sessionId: `session-${id}`,
   ...overrides,
 });
-/* oxlint-enable no-magic-numbers, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, oxc/no-optional-chaining --
+/* oxlint-disable max-lines-per-function  --
  * max-lines-per-function (#510): describe("response group lineage") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-optional-chaining (#542): describe("response group lineage") handles optional fromOtherSlot?.replacements.get("operation-a"); resolveEveResponseGroupLineage("a-new", conversations, [ group, ])?.replacements.get(; resolveEveResponseGroupLineage( regenerated.id, [copy, candidate, regenerated],  without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
@@ -142,4 +138,4 @@ describe("response group lineage", () => {
     ).toBeUndefined();
   });
 });
-/* oxlint-enable max-lines-per-function, oxc/no-optional-chaining */
+/* oxlint-enable max-lines-per-function */

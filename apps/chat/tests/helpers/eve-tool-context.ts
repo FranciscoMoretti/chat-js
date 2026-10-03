@@ -7,7 +7,7 @@ const unexpected = () => {
   throw new Error("Unexpected native resource access in test");
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/no-named-export, import/prefer-default-export, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named testToolContext API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): testToolContext remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * oxc/no-rest-spread-properties (#543): testToolContext copies or separates ...overrides while preserving existing object ownership; mutating source objects is not equivalent.
@@ -31,4 +31,4 @@ export const testToolContext = (
   toolName: "test",
   ...overrides,
 });
-/* oxlint-enable import/no-named-export, import/prefer-default-export, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */

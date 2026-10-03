@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This test harness requires import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -20,7 +20,7 @@ import { db } from "../lib/db/client";
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
@@ -28,7 +28,7 @@ const conversationUrl = /\/chat\/[^/]+$/u;
 const failureMessage = /failure|failed/iu;
 const connectionFailure = /fetch|failed/iu;
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): capture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): capture accepts page: Page; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -41,9 +41,9 @@ async function capture(page: Page, name: string): Promise<void> {
       "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility: hidden !important; }",
   });
 }
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * oxc/no-async-await (#540): test.beforeEach sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test.beforeEach accepts { page }; route; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test.beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -56,9 +56,9 @@ test.beforeEach(async ({ page }) => {
     page.getByRole("heading", { exact: true, name: "Chat" })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): create sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): create accepts page: Page; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -69,9 +69,9 @@ async function create(page: Page, message: string): Promise<void> {
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(conversationUrl);
 }
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * max-lines-per-function (#510): test("native transcript survives reload; streaming preserves the next draft; cancella keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native transcript survives reload; streaming preserves the next draft; cancella keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native transcript survives reload; streaming preserves the next draft; cancella uses 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -133,9 +133,9 @@ test("native transcript survives reload; streaming preserves the next draft; can
     )
   ).toBe(true);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): test("freeform agent question survives reload and accepts an answer") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("freeform agent question survives reload and accepts an answer") accepts { page, }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -156,9 +156,9 @@ test("freeform agent question survives reload and accepts an answer", async ({
     page.getByText("Answer received.", { exact: true })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * no-ternary (#518): for (const decision of ["Approve", "Cancel"]) { test(`p derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): for (const decision of ["Approve", "Cancel"]) { test(`p sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): for (const decision of ["Approve", "Cancel"]) { test(`p accepts { page, }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -189,9 +189,9 @@ for (const decision of ["Approve", "Cancel"]) {
     await capture(page, `tool-${decision.toLowerCase()}`);
   });
 }
-/* oxlint-enable no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): test("failed turn is visible and the conversation can continue") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("failed turn is visible and the conversation can continue") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("failed turn is visible and the conversation can continue") accepts { page, }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -221,9 +221,9 @@ test("failed turn is visible and the conversation can continue", async ({
     page.getByText("Verified: recovered", { exact: true })
   ).toBeVisible();
 });
-/* oxlint-enable max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * init-declarations (#507): test("lost creation reply retries the same conversation and access checks reject bypa assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("lost creation reply retries the same conversation and access checks reject bypa keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("lost creation reply retries the same conversation and access checks reject bypa keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -296,9 +296,9 @@ test("lost creation reply retries the same conversation and access checks reject
     await anonymous.close();
   }
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-statements (#512): test("exhausted credits block new messages but permit rejecting an approval") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("exhausted credits block new messages but permit rejecting an approval") uses 402 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("exhausted credits block new messages but permit rejecting an approval") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -354,9 +354,9 @@ test("exhausted credits block new messages but permit rejecting an approval", as
       .where(eq(userCredit.userId, owner.id));
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * max-statements (#512): test("unknown completed usage prevents new admission until its cost is reconciled") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("unknown completed usage prevents new admission until its cost is reconciled") uses -1, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("unknown completed usage prevents new admission until its cost is reconciled") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -415,9 +415,9 @@ test("unknown completed usage prevents new admission until its cost is reconcile
       .where(eq(eveUsage.eventId, usage.eventId));
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): test("normal navigation and sidebar search use Eve without sending to the old chat AP keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("normal navigation and sidebar search use Eve without sending to the old chat AP sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("normal navigation and sidebar search use Eve without sending to the old chat AP accepts { page, }; request; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -469,9 +469,9 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   ).toBeVisible();
   expect(legacyRequests).toEqual([]);
 });
-/* oxlint-enable max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): test("unknown conversations and removed legacy APIs are unavailable") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("unknown conversations and removed legacy APIs are unavailable") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("unknown conversations and removed legacy APIs are unavailable") accepts { page, }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -498,9 +498,9 @@ test("unknown conversations and removed legacy APIs are unavailable", async ({
     expect(response.status()).toBe(404);
   }
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): test("ChatJS editor supports Enter, multiline drafts and composition") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("ChatJS editor supports Enter, multiline drafts and composition") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("ChatJS editor supports Enter, multiline drafts and composition") accepts { page, }; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -529,9 +529,9 @@ test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   await expect(page.getByRole("log")).toContainText("Verified: keyboard send");
   expect(errors).toEqual([]);
 });
-/* oxlint-enable max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * init-declarations (#507): test("stalled creation releases the composer and retries the retained operation") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): test("stalled creation releases the composer and retries the retained operation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("stalled creation releases the composer and retries the retained operation") uses 90_000, 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -586,9 +586,9 @@ test("stalled creation releases the composer and retries the retained operation"
     release?.();
   }
 });
-/* oxlint-enable init-declarations, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): test("reload during an accepted turn restores the user message and follows the respon sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("reload during an accepted turn restores the user message and follows the respon accepts { page, }; response; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -615,9 +615,9 @@ test("reload during an accepted turn restores the user message and follows the r
     page.getByText("Verified: slow reload recovery", { exact: true })
   ).toBeVisible();
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): test("reload before acceptance recovers a late message without resending") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("reload before acceptance recovers a late message without resending") uses 500, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("reload before acceptance recovers a late message without resending") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -654,9 +654,9 @@ test("reload before acceptance recovers a late message without resending", async
   ).toHaveText("");
   await capture(page, "reload-recovered");
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-void-return --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-void-return  --
  * max-statements (#512): test("reload retains text when the send never reaches the server") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("reload retains text when the send never reaches the server") uses 5000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("reload retains text when the send never reaches the server") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -707,6 +707,6 @@ test("reload retains text when the send never reaches the server", async ({
     page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })
   ).toBeVisible();
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
 
 /* oxlint-disable max-lines -- #509: This eve-browser.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

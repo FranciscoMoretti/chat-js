@@ -2,19 +2,12 @@ import type { Sandbox } from "@vercel/sandbox";
 import { defineTool } from "eve/tools";
 
 import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { CodeExecutor } from "@/lib/eve/code-executor";
-/* oxlint-enable eslint/sort-imports */
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -23,19 +16,15 @@ import {
   getSandboxRuntime,
   resolveSandboxAuth,
 } from "./execution-sandbox";
-/* oxlint-enable eslint/sort-imports */
 import { executeJavaScriptInSandbox } from "./javascript";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { executePythonInSandbox } from "./python";
 /* oxlint-enable import/max-dependencies */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { codeExecutionResult, codeExecutionInput } from "./schemas";
-/* oxlint-enable eslint/sort-imports */
 
 // Vercel Sandbox execution.
 const COST_CENTS = 5;
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const observeCleanup = async (pending: Promise<void>): Promise<void> => {
   try {
@@ -45,17 +34,12 @@ const observeCleanup = async (pending: Promise<void>): Promise<void> => {
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -132,18 +116,13 @@ export const executeCode: CodeExecutor = ({ code, title, language }, context) =>
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const codeExecution = withCodeSandboxCleanup(
   defineTool({
     description: `Sandboxed code execution for Python and JavaScript.
@@ -193,5 +172,4 @@ Output rules:
   }),
   codeSandboxCleanupCapability
 );
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

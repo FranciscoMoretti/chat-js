@@ -1,14 +1,10 @@
 "use client";
 
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import React from "react";
 import type { ComponentType } from "react";
 import { z } from "zod";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): ValidatedToolRenderer is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ValidatedToolRenderer stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named ValidatedToolRenderer API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -18,9 +14,9 @@ export type ValidatedToolRenderer = ComponentType<{
   messageId: string;
   tool: unknown;
 }> & { validatedToolRenderer: true };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): isValidatedToolRenderer is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): isValidatedToolRenderer stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named isValidatedToolRenderer API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -31,7 +27,7 @@ export const isValidatedToolRenderer = (
   typeof renderer === "function" &&
   "validatedToolRenderer" in renderer &&
   renderer.validatedToolRenderer === true;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
 type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "input-streaming"; input?: Partial<TInput>; output?: never }
@@ -39,7 +35,7 @@ type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "output-available"; input: TInput; output: TOutput }
 );
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, import/no-named-export, typescript/consistent-type-definitions --
+/* oxlint-disable id-length, import/exports-last, import/group-exports, typescript/consistent-type-definitions  --
  * id-length (#506): ToolRendererProps uses I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/exports-last (#522): ToolRendererProps is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): ToolRendererProps stays exported at its declaration so its public contract is visible beside its implementation.
@@ -51,7 +47,7 @@ export type ToolRendererProps<I extends z.ZodType, O extends z.ZodType> = {
   messageId: string;
   isReadonly: boolean;
 };
-/* oxlint-enable id-length, import/exports-last, import/group-exports, import/no-named-export, typescript/consistent-type-definitions */
+/* oxlint-enable id-length, import/exports-last, import/group-exports, typescript/consistent-type-definitions */
 
 const envelope = z.object({
   errorText: z.string().optional(),
@@ -79,7 +75,7 @@ const InvalidResult = (): React.JSX.Element => (
 );
 /* oxlint-enable react/jsx-no-literals, react/only-export-components */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-ternary, no-undefined, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): defineToolRenderer stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named defineToolRenderer API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -211,4 +207,4 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     validatedToolRenderer: true as const,
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-ternary, no-undefined, oxc/no-optional-chaining, oxc/no-rest-spread-properties, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

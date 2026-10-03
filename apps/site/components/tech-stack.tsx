@@ -222,9 +222,7 @@ const TechCard = ({
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable import/prefer-default-export -- TechStack: Consumers use this named API so adding another export will not require changing existing imports. */
 /* oxlint-disable react/no-multi-comp -- TechStack: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
-/* oxlint-disable import/no-named-export -- TechStack: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable react/jsx-no-literals -- TechStack: This component owns its displayed copy and attribute text; replacing it with localization keys needs a product copy contract. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechStack: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable react/jsx-max-depth -- TechStack: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
@@ -279,6 +277,4 @@ export const TechStack = (): React.JSX.Element => (
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/prefer-default-export */

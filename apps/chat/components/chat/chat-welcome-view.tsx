@@ -12,7 +12,7 @@ const WelcomeMessage = (): React.JSX.Element => (
   </div>
 );
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-disable import/no-named-export, import/prefer-default-export, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatWelcomeView: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatWelcomeView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ChatWelcomeView = ({
   children,
@@ -35,4 +35,4 @@ export const ChatWelcomeView = ({
     </div>
   </div>
 );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */

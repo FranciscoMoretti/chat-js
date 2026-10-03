@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,7 +9,7 @@ import { researchSearchUpdates } from "@/tools/chatjs/deep-research/search-updat
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { createToolResult } from "./tool-result";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -34,7 +34,7 @@ const child = (callId: string, turnId = "turn", name = "researcher") => ({
 });
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, unicorn/no-null  --
  * max-lines-per-function (#510): it("restores actual search evidence only from researchers owned by this call and turn keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("restores actual search evidence only from researchers owned by this call and turn uses 0.05 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("restores actual search evidence only from researchers owned by this call and turn sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -105,4 +105,4 @@ it("restores actual search evidence only from researchers owned by this call and
   await expect(researchSearchUpdates(context)).resolves.toEqual([update]);
   expect(mocks.attach.mock.calls).toEqual([["root"], ["research:one"]]);
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, unicorn/no-null */

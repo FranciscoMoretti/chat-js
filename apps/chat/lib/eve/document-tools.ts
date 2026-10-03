@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-documents" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -20,7 +20,7 @@ import {
   eveDocumentOperations,
   eveDocumentReadInput,
 } from "./document-contracts";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
@@ -42,7 +42,7 @@ const documentIdForCall = (sessionId: string, callId: string): string => {
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named executeEveDocumentTool API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): executeEveDocumentTool remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * max-lines-per-function (#510): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -129,4 +129,4 @@ export const executeEveDocumentTool = async (
     title: revision.title,
   };
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

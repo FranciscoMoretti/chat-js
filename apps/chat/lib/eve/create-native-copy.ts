@@ -1,12 +1,8 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import { eveRequest } from "./server";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named createNativeEveCopy API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): createNativeEveCopy remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): createNativeEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -54,4 +50,4 @@ export const createNativeEveCopy = async (
   }
   return session.parse(await result.json()).sessionId;
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null */

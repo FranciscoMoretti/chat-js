@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { fileURLToPath } from "node:url";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 const eveRoot = fileURLToPath(
   new URL("./", import.meta.resolve("eve/package.json"))

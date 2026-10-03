@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-namespace, sort-imports --
+/* oxlint-disable import/no-namespace  --
  * import/no-namespace (#528): The AI namespace is the consumed SDK/module interface; renaming all member references requires changing that import contract.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -10,7 +10,7 @@ import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 import { generateVideoResult } from "./schemas";
 import { generateVideoTool } from "./tool";
-/* oxlint-enable import/no-namespace, sort-imports */
+/* oxlint-enable import/no-namespace */
 
 const mocks = vi.hoisted(() => ({
   definition: vi.fn(),
@@ -18,15 +18,10 @@ const mocks = vi.hoisted(() => ({
   model: vi.fn(),
   upload: vi.fn(),
 }));
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): vi.mock("ai") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): vi.mock("ai") copies or separates ...(await original<typeof AI>()) while preserving existing object ownership; mutating source objects is not equivalent.
- */
 vi.mock("ai", async (original) => ({
   ...(await original<typeof AI>()),
   experimental_generateVideo: mocks.generate,
 }));
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/tool-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -64,10 +59,6 @@ beforeEach(() => {
     url: "/api/files/generated",
   });
 });
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties --
- * oxc/no-async-await (#540): it("uses the native selected model, provider options, authorized storage and cost rec sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- * oxc/no-rest-spread-properties (#543): it("uses the native selected model, provider options, authorized storage and cost rec copies or separates ...input; ...context; ...context.session while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it("uses the native selected model, provider options, authorized storage and cost receipt", async () => {
   mocks.definition.mockResolvedValue({
     apiModelId: "selected",
@@ -107,10 +98,6 @@ it("uses the native selected model, provider options, authorized storage and cos
     usage: { costUsd: 0.5 },
   });
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("uses configured defaults") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("uses configured defaults", async () => {
   await generateVideoTool.execute(input, testToolContext());
   expect(mocks.model).toHaveBeenCalledWith("default-video");
@@ -118,8 +105,7 @@ it("uses configured defaults", async () => {
     expect.objectContaining({ aspectRatio: "16:9", duration: 5 })
   );
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable unicorn/no-null  --
  * oxc/no-async-await (#540): it("does not invent a charge when no video is returned") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): it("does not invent a charge when no video is returned") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -130,17 +116,13 @@ it("does not invent a charge when no video is returned", async () => {
   ).rejects.toThrow("No video generated");
   expect(mocks.upload).not.toHaveBeenCalled();
 });
-/* oxlint-enable oxc/no-async-await, unicorn/no-null */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("retains provider cost when storage fails") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
+/* oxlint-enable unicorn/no-null */
 it("retains provider cost when storage fails", async () => {
   mocks.upload.mockRejectedValue(new Error("Storage unavailable"));
   expect(
     await generateVideoTool.execute(input, testToolContext())
   ).toMatchObject({ status: "error", usage: { costUsd: 0.5 } });
 });
-/* oxlint-enable oxc/no-async-await */
 it("accepts saved results without file IDs", () => {
   const saved = {
     prompt: "Example",

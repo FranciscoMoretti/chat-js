@@ -4,7 +4,7 @@ import {
 } from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): MissingCredentialsError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): MissingCredentialsError stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named MissingCredentialsError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -28,9 +28,9 @@ export class MissingCredentialsError extends Error {
     this.requirements = requirements;
   }
 }
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * no-magic-numbers (#517): missingRequirement uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): missingRequirement derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-rest-spread-properties (#543): missingRequirement copies or separates ...requirement while preserving existing object ownership; mutating source objects is not equivalent.
@@ -50,9 +50,9 @@ const missingRequirement = (
   }
   return isRequirementSatisfied(requirement, env) ? null : requirement;
 };
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): requireCredentials stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named requireCredentials API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): requireCredentials uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -72,4 +72,4 @@ export const requireCredentials = (
     throw new MissingCredentialsError(integration, missing);
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */

@@ -9,7 +9,7 @@ import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 
 const nano = /GPT-5 Nano/iu;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("nested comparisons retain both groups, duplicate-model slots and retry attempts keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("nested comparisons retain both groups, duplicate-model slots and retry attempts keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("nested comparisons retain both groups, duplicate-model slots and retry attempts uses 240_000, 2, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -139,9 +139,9 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await expect(cards).toHaveCount(4);
   expect(page.url()).toBe(url);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-statements (#512): test("new-chat recovery survives an ambiguous reply and reload without a new operatio keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("new-chat recovery survives an ambiguous reply and reload without a new operatio uses 1, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("new-chat recovery survives an ambiguous reply and reload without a new operatio sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -185,4 +185,4 @@ test("new-chat recovery survives an ambiguous reply and reload without a new ope
     page.getByRole("button", { name: "Retry creation" })
   ).toBeEnabled();
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

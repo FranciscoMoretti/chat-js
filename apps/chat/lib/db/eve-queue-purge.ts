@@ -1,14 +1,10 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): removeUnlockedJobs uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): removeUnlockedJobs derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): removeUnlockedJobs sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -44,9 +40,9 @@ const removeUnlockedJobs = async (query: TransactionSql, jobIds: string[]) => {
   }
   return removed.map((job) => job.id).toSorted();
 };
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named purgeEvePostgresQueue API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): purgeEvePostgresQueue remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): purgeEvePostgresQueue's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -154,4 +150,4 @@ export const purgeEvePostgresQueue = async (
     }
   );
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

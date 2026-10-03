@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { afterEach, expect, it, vi } from "vitest";
@@ -8,7 +5,6 @@ import { afterEach, expect, it, vi } from "vitest";
 import { authSessionOptions } from "@/lib/auth-session-options";
 
 import { GET } from "./route";
-/* oxlint-enable sort-imports */
 
 const state = vi.hoisted(() => {
   const data: Record<"user" | "session", Record<string, unknown>[]> = {
@@ -41,7 +37,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: { AUTH_SECRET: state.secret } }));
-/* oxlint-disable no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
  * no-ternary (#518): vi.mock("@/lib/db/client") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): vi.mock("@/lib/db/client") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -79,7 +75,7 @@ vi.mock("@/lib/db/client", async () => {
     },
   };
 });
-/* oxlint-enable no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -87,7 +83,7 @@ afterEach(() => {
   state.data.session.length = 0;
 });
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-statements (#512): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali uses 302, 0, 1, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it.each(["http://localhost:3100", "https://localhost:3100"])("dev-login issues a vali sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -132,9 +128,9 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
     expect(state.data.session).toHaveLength(5);
   }
 );
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("does not create a session outside development") uses 404, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("does not create a session outside development") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -145,4 +141,4 @@ it("does not create a session outside development", async () => {
   expect(response.headers.getSetCookie()).toEqual([]);
   expect(state.data.session).toHaveLength(0);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */

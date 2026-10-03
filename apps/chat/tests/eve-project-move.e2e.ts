@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -18,7 +14,7 @@ test.use({ actionTimeout: 20_000 });
 const screenshotStyle =
   'nextjs-portal, [aria-label="Open Tanstack query devtools"] { display: none !important; }';
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls  --
  * max-lines-per-function (#510): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("moves native conversations from sidebar and project rows with recoverable failu keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("moves native conversations from sidebar and project rows with recoverable failu uses 180_000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -192,4 +188,4 @@ test("moves native conversations from sidebar and project rows with recoverable 
     expect(removed.ok(), await removed.text()).toBe(true);
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */

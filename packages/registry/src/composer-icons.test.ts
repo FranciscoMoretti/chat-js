@@ -1,9 +1,7 @@
 import { expect, test } from "bun:test";
 
 /* oxlint-disable import/no-namespace -- This namespace exposes a generated or compiler API whose members are selected at the call site. */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import * as lucide from "lucide-react";
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/no-namespace */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */

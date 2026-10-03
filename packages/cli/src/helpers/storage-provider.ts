@@ -7,16 +7,12 @@ import path from "node:path";
 
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { builtInStorage } from "../../../registry/src/storage/catalog";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { StorageSelection } from "../registry/storage";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-relative-parent-imports -- The provider generator shares the package-local registration emitter in formatter order. */
 import { generatedRegistrationSource } from "../utils/generated-registration-source";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -25,17 +21,14 @@ import { preflight } from "../utils/preflight";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
   (item) => item.meta.chatjs.id !== "memory"
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const parseStorageOptions = (value: string): Record<string, unknown> => {
   try {
     return z.record(z.string(), z.unknown()).parse(JSON.parse(value));
@@ -43,13 +36,10 @@ export const parseStorageOptions = (value: string): Record<string, unknown> => {
     throw new Error("Storage config must be a valid JSON object.");
   }
 };
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -108,7 +98,5 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */

@@ -33,9 +33,6 @@ beforeEach(() => {
   );
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("only submits old valid keys and deletes the ownership-filtered result") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
     yield {
@@ -68,8 +65,7 @@ test("only submits old valid keys and deletes the ownership-filtered result", as
   expect(mocks.remove).toHaveBeenCalledWith([`/api/files/${key}`]);
   expect(mocks.complete).toHaveBeenCalledWith("owner", [key]);
 });
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-disable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): test("a failed batch retains its deletion fence without starving subsequent batches") uses _; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): test("a failed batch retains its deletion fence without starving subsequent batches") uses 24, 100, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("a failed batch retains its deletion fence without starving subsequent batches") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -95,4 +91,4 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   );
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });
-/* oxlint-enable id-length, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

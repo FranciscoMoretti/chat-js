@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../env"; "../eve/usage-reconciliation-busy" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -17,7 +17,7 @@ import {
   user,
   userCredit,
 } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const hasConflictingCost = (
   stored: string | null,
@@ -25,7 +25,7 @@ const hasConflictingCost = (
 ): boolean =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): debitTurnUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * oxc/no-async-await (#540): debitTurnUsage sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): debitTurnUsage handles optional totals?.due; totals?.paid without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -66,9 +66,9 @@ const debitTurnUsage = async (
       .where(eq(eveUsage.eventId, input.eventId));
   }
 };
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/group-exports (#523): recordEveUsage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named recordEveUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): recordEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -177,9 +177,9 @@ export const recordEveUsage = async (input: {
     return recordedCost !== null && recordedCost !== undefined;
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): getEveUsageCursor stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getEveUsageCursor API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): getEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -207,9 +207,9 @@ export const getEveUsageCursor = async (
   }
   return row.streamIndex;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): advanceEveUsageCursor stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named advanceEveUsageCursor API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): advanceEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -243,9 +243,9 @@ export const advanceEveUsageCursor = async (
     throw new Error("Conversation not found.");
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): withManagedUsageReconciliation stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named withManagedUsageReconciliation API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): withManagedUsageReconciliation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -323,4 +323,4 @@ export const withManagedUsageReconciliation = async (
     await connection.end();
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

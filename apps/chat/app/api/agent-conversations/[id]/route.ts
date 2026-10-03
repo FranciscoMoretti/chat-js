@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { z } from "zod";
 
 import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
@@ -11,7 +8,6 @@ import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
 import { localDeletionAvailable } from "@/lib/eve/local-deletion-available";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
-/* oxlint-enable sort-imports */
 
 const headers = { "cache-control": "no-store" };
 /* oxlint-disable typescript/consistent-type-definitions --
@@ -20,7 +16,7 @@ const headers = { "cache-control": "no-store" };
 type Context = { params: Promise<{ id: string }> };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * oxc/no-async-await (#540): authorize sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep authorize's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): authorize accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -41,7 +37,7 @@ const authorize = async (request: Request, context: Context) => {
   }
   return { id, ownerId: principal.ownerId, source };
 };
-/* oxlint-enable oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep deletionStatus's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -57,7 +53,7 @@ const deletionStatus = (state: string) => {
 };
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): GET stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named GET API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -82,9 +78,9 @@ export const GET = async (
     { headers }
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/group-exports (#523): DELETE stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named DELETE API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -170,4 +166,4 @@ export const DELETE = async (
     );
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */

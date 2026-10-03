@@ -1,17 +1,13 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { createMCPClient } from "@ai-sdk/mcp";
 import type { OAuthClientProvider, OAuthTokens } from "@ai-sdk/mcp";
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
 
 const serverUrl = "https://mcp.test/";
 const endpointUrl = `${serverUrl}messages`;
 const authorizationServerUrl = "https://auth.test/";
 const tokenEndpoint = `${authorizationServerUrl}token`;
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * init-declarations (#507): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -178,4 +174,4 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     }
   }
 );
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */

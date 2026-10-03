@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -23,7 +23,7 @@ import {
 import { env } from "../lib/env";
 import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conversation";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 // This suite exercises app-family state with synthetic native runs. Real native
@@ -66,16 +66,12 @@ const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
 const sessionIds: string[] = [];
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(user).values({ email: `${owner}@test.in runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,
   name: "Deletion fixture",
 });
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable max-statements, oxc/no-async-await --
+/* oxlint-disable max-statements  --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -93,8 +89,8 @@ afterAll(async () => {
   }
   await native.end();
 });
-/* oxlint-enable max-statements, oxc/no-async-await */
-/* oxlint-disable no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
+/* oxlint-enable max-statements */
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions  --
  * no-ternary (#518): fixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-async-await (#540): fixture sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -121,9 +117,9 @@ async function fixture(parentId?: string) {
   );
   return { ...conversation, sessionId };
 }
-/* oxlint-enable no-ternary, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null  --
  * max-lines-per-function (#510): test("full deletion keeps uncertain resources pending, then erases only its family an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("full deletion keeps uncertain resources pending, then erases only its family an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("full deletion keeps uncertain resources pending, then erases only its family an uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -196,4 +192,4 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
     .where(eq(eveConversation.id, unrelated.id));
   expect(survivor.state).toBe("bound");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */

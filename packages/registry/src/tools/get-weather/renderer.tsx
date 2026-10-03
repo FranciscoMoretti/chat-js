@@ -3,20 +3,12 @@ import { format, isWithinInterval } from "date-fns";
 import React from "react";
 import type { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable eslint/sort-imports */
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { weatherInput, weatherResult } from "./schemas";
-/* oxlint-enable eslint/sort-imports */
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -190,7 +182,6 @@ const n = (num: number): number => Math.ceil(num);
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const WeatherCard = ({
@@ -280,7 +271,6 @@ const WeatherCard = ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -318,12 +308,8 @@ const GetWeatherView = ({
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const GetWeatherRenderer = defineToolRenderer({
   inputSchema: weatherInput,
   outputSchema: weatherResult,
   render: GetWeatherView,
 });
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

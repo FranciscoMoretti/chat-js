@@ -1,11 +1,7 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { ModelMessage } from "ai";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { calculateMessagesTokens, truncateMessages } from "./token-utils";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers, no-underscore-dangle, typescript/explicit-function-return-type --
  * no-magic-numbers (#517): _mockEncoder uses 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -18,13 +14,13 @@ const _mockEncoder = {
 };
 /* oxlint-enable no-magic-numbers, no-underscore-dangle, typescript/explicit-function-return-type */
 
-/* oxlint-disable no-underscore-dangle, node/no-top-level-await --
+/* oxlint-disable no-underscore-dangle  --
  * no-underscore-dangle (#520): _originalModule accesses the established _originalModule field convention; renaming requires changing the owning SDK or backing-field contract.
  * node/no-top-level-await (#539): _originalModule runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
  */
 // Mock the module.
 const _originalModule = await import("./token-utils");
-/* oxlint-enable no-underscore-dangle, node/no-top-level-await */
+/* oxlint-enable no-underscore-dangle */
 
 /* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * id-length (#506): describe("truncateMessages") uses i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.

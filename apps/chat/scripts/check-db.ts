@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/connection" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -7,7 +7,7 @@ import postgres from "postgres";
 import { z } from "zod";
 
 import { databaseConnection, databaseEnvOptions } from "../lib/db/connection";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 config({ path: ".env.local", quiet: true });
 config({ quiet: true });
@@ -16,7 +16,7 @@ const CONNECT_TIMEOUT_SECONDS = 10;
 const CHECK_DEADLINE_MS = 15_000;
 const CLOSE_TIMEOUT_SECONDS = 1;
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, no-ternary, node/no-process-env, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return  --
  * max-lines-per-function (#510): checkDatabase keeps runtime and migration connection checks with their deadline and cleanup; explicit Promise return annotations put this cohesive operation at 51 lines.
  * max-statements (#512): checkDatabase keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): checkDatabase emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -82,9 +82,9 @@ const checkDatabase = async (): Promise<void> => {
   await checkPurpose("runtime");
   await checkPurpose("migration");
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, no-ternary, node/no-process-env, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable no-console, oxc/no-async-await, typescript/explicit-function-return-type --
+/* oxlint-disable no-console, typescript/explicit-function-return-type  --
  * no-console (#514): void (async () => { try { await checkDatabase(); } catc emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * oxc/no-async-await (#540): void (async () => { try { await checkDatabase(); } catc sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await checkDatabase(); } catc's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -100,4 +100,4 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable no-console, typescript/explicit-function-return-type */

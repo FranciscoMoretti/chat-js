@@ -1,14 +1,10 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import {
   defaultShouldDehydrateQuery,
   QueryClient,
 } from "@tanstack/react-query";
 import { SuperJSON } from "superjson";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/no-named-export (#527): Preserve the named makeQueryClient API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): makeQueryClient remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * no-magic-numbers (#517): makeQueryClient uses 60, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -40,4 +36,4 @@ export const makeQueryClient = () => {
   });
   return queryClient;
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

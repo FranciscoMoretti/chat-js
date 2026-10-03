@@ -7,7 +7,7 @@ import React from "react";
 
 type NextProviderProps = Parameters<typeof NextThemesProvider>[0];
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable import/no-named-export, import/prefer-default-export, oxc/no-rest-spread-properties, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- ThemeProvider: import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: NextProviderProps). */
+/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- ThemeProvider: ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: NextProviderProps). */
 
 export const ThemeProvider = ({
   children,
@@ -15,4 +15,4 @@ export const ThemeProvider = ({
 }: NextProviderProps): React.JSX.Element => (
   <NextThemesProvider {...props}>{children}</NextThemesProvider>
 );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, oxc/no-rest-spread-properties, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

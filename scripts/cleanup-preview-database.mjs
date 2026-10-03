@@ -1,9 +1,6 @@
 /* oxlint-disable eslint/max-statements -- listBranches: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable oxc/no-async-await -- listBranches: Await sequencing preserves this operation's dependent I/O and error propagation. */
 /* oxlint-disable eslint/init-declarations -- listBranches: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
-/* oxlint-disable eslint/no-ternary -- listBranches: The expression preserves the existing fallback/derived-value contract within this operation. */
 /* oxlint-disable eslint/no-magic-numbers -- listBranches: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable oxc/no-optional-chaining -- listBranches: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- listBranches: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- listBranches: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /**
@@ -26,8 +23,7 @@ const listBranches = async (base, headers, request) => {
   let cursor;
   do {
     const url = cursor ? `${base}?cursor=${encodeURIComponent(cursor)}` : base;
-    // Each request requires the cursor from the preceding response.
-    // eslint-disable-next-line no-await-in-loop
+    // eslint-disable-next-line no-await-in-loop -- Each Neon pagination request requires the cursor from the preceding response.
     const response = await request(url, {
       headers,
       signal: AbortSignal.timeout(30_000),
@@ -52,11 +48,8 @@ const listBranches = async (base, headers, request) => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- isDeletablePreview: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -76,13 +69,8 @@ const isDeletablePreview = (branch, parentId) =>
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/prefer-default-export -- cleanupPreviewDatabase: Consumers use this named API so adding another export will not require changing existing imports. */
 /* oxlint-disable eslint/max-statements -- cleanupPreviewDatabase: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable import/no-named-export -- cleanupPreviewDatabase: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- cleanupPreviewDatabase: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable oxc/no-async-await -- cleanupPreviewDatabase: Await sequencing preserves this operation's dependent I/O and error propagation. */
-/* oxlint-disable oxc/no-rest-spread-properties -- cleanupPreviewDatabase: Fresh object composition preserves immutable state/configuration and existing override order. */
-/* oxlint-disable oxc/no-optional-chaining -- cleanupPreviewDatabase: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 /* oxlint-disable eslint/no-magic-numbers -- cleanupPreviewDatabase: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- cleanupPreviewDatabase: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/strict-boolean-expressions -- cleanupPreviewDatabase: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
@@ -176,10 +164,5 @@ export const cleanupPreviewDatabase = async ({
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export */

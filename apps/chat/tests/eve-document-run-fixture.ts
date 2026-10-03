@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../tools/chatjs/saved-code-execution/document" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,7 +8,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { EveDocumentRun } from "../tools/chatjs/saved-code-execution/document";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const input = {
   documentId: "60dbe86a-b2c4-4d32-ae09-a00e90b84e99",
@@ -20,9 +20,6 @@ const base = {
   toolName: "runCodeDocument",
   type: "dynamic-tool" as const,
 };
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): states copies or separates ...base while preserving existing object ownership; mutating source objects is not equivalent.
- */
 const states: {
   title: string;
   part?: EveMessagePart;
@@ -58,9 +55,8 @@ const states: {
     title: "Malformed result",
   },
 ];
-/* oxlint-enable oxc/no-rest-spread-properties */
 
-/* oxlint-disable no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null  --
  * no-ternary (#518): process.stdout.write derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): process.stdout.write uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-rest-spread-properties (#543): process.stdout.write copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
@@ -96,4 +92,4 @@ process.stdout.write(
     )
   )
 );
-/* oxlint-enable no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */

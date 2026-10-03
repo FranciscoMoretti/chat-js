@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { auth } from "@/lib/auth";
 import { getEveCreation } from "@/lib/db/eve-queries";
 import { env } from "@/lib/env";
@@ -8,11 +5,10 @@ import { eveCopyInput } from "@/lib/eve/copy-input";
 import { EveCopyNotReadyError } from "@/lib/eve/copy-transcript";
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { saveEveCopyOperation } from "@/lib/eve/save-copy-operation";
-/* oxlint-enable sort-imports */
 
 const headers = { "cache-control": "no-store" };
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * max-statements (#512): readCopyBody keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): readCopyBody uses 2048 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * oxc/no-async-await (#540): readCopyBody sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -52,9 +48,9 @@ const readCopyBody = async (request: Request): Promise<unknown> => {
     reader.releaseLock();
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named POST API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): POST remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * init-declarations (#507): POST assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -118,4 +114,4 @@ export const POST = async (request: Request): Promise<Response> => {
     );
   }
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

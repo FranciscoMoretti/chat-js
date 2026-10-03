@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/search-backfill"; "../lib/eve/server" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -9,9 +9,9 @@ import { db } from "../lib/db/client";
 import { eveConversation } from "../lib/db/schema";
 import { backfillEveSearchConversation } from "../lib/eve/search-backfill";
 import { assertEveConfigured } from "../lib/eve/server";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions  --
  * init-declarations (#507): main assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): main keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): main emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -73,8 +73,8 @@ const main = async () => {
   // oxlint-disable-next-line unicorn/no-process-exit -- #571: The one-shot backfill terminates with its aggregate result while the shared database pool remains open.
   process.exit(failed ? 1 : 0);
 };
-/* oxlint-enable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
-/* oxlint-disable no-console, oxc/no-async-await, typescript/explicit-function-return-type --
+/* oxlint-enable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-disable no-console, typescript/explicit-function-return-type  --
  * no-console (#514): void (async () => { try { await main(); } catch (error) emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * oxc/no-async-await (#540): void (async () => { try { await main(); } catch (error) sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await main(); } catch (error)'s return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -91,4 +91,4 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable no-console, typescript/explicit-function-return-type */

@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queue-fence"; "../lib/db/eve-resource-fence"; "../lib/eve/environment"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -13,11 +13,11 @@ import { installEvePostgresResourceFence } from "../lib/db/eve-resource-fence";
 import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 import { resolveEveSetup } from "./eve-setup-config";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync  --
  * max-lines-per-function (#510): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): run emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -112,9 +112,9 @@ const run = async (): Promise<void> => {
     await connection.end({ timeout: 1 });
   }
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync */
 
-/* oxlint-disable no-console, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type --
+/* oxlint-disable no-console, typescript/explicit-function-return-type  --
  * no-console (#514): void (async () => { try { await run(); } catch (error)  emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-ternary (#518): void (async () => { try { await run(); } catch (error)  derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): void (async () => { try { await run(); } catch (error)  sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -141,4 +141,4 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type */
+/* oxlint-enable no-console, typescript/explicit-function-return-type */

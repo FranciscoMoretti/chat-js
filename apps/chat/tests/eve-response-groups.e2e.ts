@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/eve-response-groups"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -28,7 +28,7 @@ import { env } from "../lib/env";
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
 import { createEveResponseGroup } from "../lib/eve/response-group";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/create-conversation-operation", () => ({
@@ -36,16 +36,12 @@ vi.mock("../lib/eve/create-conversation-operation", () => ({
 }));
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
-/* oxlint-disable node/no-top-level-await --
- * node/no-top-level-await (#539): await db.insert(user).values({ email: `${owner}@test.in runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
- */
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,
   name: "Response group test",
 });
-/* oxlint-enable node/no-top-level-await */
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): afterAll accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): afterAll intentionally keeps the existing falsy-value behavior of rows.filter((row) => row.parentConversationId); distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -63,9 +59,9 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("parallel reservations and partial dispatch retries keep ordered exact identitie keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("parallel reservations and partial dispatch retries keep ordered exact identitie keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("parallel reservations and partial dispatch retries keep ordered exact identitie uses 3, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -140,9 +136,9 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
     expect(child?.forkTurnId).toBe("turn_0");
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("unconfirmed initial creation never starts independent secondary roots") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("unconfirmed initial creation never starts independent secondary roots") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -162,9 +158,9 @@ test("unconfirmed initial creation never starts independent secondary roots", as
   ]);
   expect(createEveConversationOperation).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-statements (#512): test("continuation candidates share one source checkpoint and reject inaccessible sou keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("continuation candidates share one source checkpoint and reject inaccessible sou sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): test("continuation candidates share one source checkpoint and reject inaccessible sou handles optional row?.parentConversationId; row?.forkTurnId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
@@ -216,9 +212,9 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
     })
   ).rejects.toThrow("Source conversation not found");
 });
-/* oxlint-enable max-statements, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): test("definitive rejection is distinct from uncertainty and repeated model choices re uses 5, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("definitive rejection is distinct from uncertainty and repeated model choices re sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("definitive rejection is distinct from uncertainty and repeated model choices re accepts candidate; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -255,9 +251,9 @@ test("definitive rejection is distinct from uncertainty and repeated model choic
       .every((candidate) => candidate.state === "waiting")
   ).toBe(true);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null  --
  * max-lines-per-function (#510): test("deleting a partial family erases group payloads and fences unstarted candidates keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("deleting a partial family erases group payloads and fences unstarted candidates keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("deleting a partial family erases group payloads and fences unstarted candidates uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -332,9 +328,9 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   expect(untouched.deleted).toBe(false);
   expect(untouched.inputHash).toBe(unrelated.inputHash);
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): test("group reservation racing retirement cannot leave an active unstarted group") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * oxc/no-rest-spread-properties (#543): test("group reservation racing retirement cannot leave an active unstarted group") copies or separates ...input while preserving existing object ownership; mutating source objects is not equivalent.
  * typescript/prefer-readonly-parameter-types (#565): test("group reservation racing retirement cannot leave an active unstarted group") accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -372,9 +368,9 @@ test("group reservation racing retirement cannot leave an active unstarted group
     })
   ).rejects.toThrow("unavailable");
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable unicorn/no-null  --
  * oxc/no-async-await (#540): test("pre-contract groups block erasure until an exact replay recovers their source i sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("pre-contract groups block erasure until an exact replay recovers their source i preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -411,9 +407,9 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     sourceIdentityKnown: true,
   });
 });
-/* oxlint-enable oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers  --
  * max-lines-per-function (#510): test("owner-only group reads preserve order and rejection recovery without exposing i keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("owner-only group reads preserve order and rejection recovery without exposing i keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("owner-only group reads preserve order and rejection recovery without exposing i uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -472,9 +468,9 @@ test("owner-only group reads preserve order and rejection recovery without expos
     )
   ).rejects.toThrow("unavailable");
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions  --
  * max-statements (#512): test("an in-flight candidate prevents family erasure until its binding resolves") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("an in-flight candidate prevents family erasure until its binding resolves") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("an in-flight candidate prevents family erasure until its binding resolves") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -519,6 +515,6 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
     await getEveCreation(owner, group.candidates[1].operationId)
   ).toBeUndefined();
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-response-groups.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

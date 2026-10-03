@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-run-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -12,7 +12,7 @@ import {
   readEvePostgresRunInventoryInTransaction,
 } from "../lib/db/eve-run-inventory";
 import { env } from "../lib/env";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Run inventory acceptance requires local Postgres.");
@@ -20,7 +20,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 const query = postgres(env.DATABASE_URL, { max: 1 });
 const ids: string[] = [];
 const streamIds: string[] = [];
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): afterAll sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -33,9 +33,9 @@ afterAll(async () => {
   }
   await query.end();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): run sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): run accepts attributes: Record<string, string> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -52,11 +52,8 @@ async function run(
   `;
   return id;
 }
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): stream sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 async function stream(
   runId: string | null,
   existingId?: string
@@ -69,9 +66,8 @@ async function stream(
   `;
   return id;
 }
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable max-statements, no-magic-numbers  --
  * max-statements (#512): test("inventories native descendants and collectors without returning payloads or unr keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("inventories native descendants and collectors without returning payloads or unr uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("inventories native descendants and collectors without returning payloads or unr sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -121,9 +117,9 @@ test("inventories native descendants and collectors without returning payloads o
     await query`select id from workflow.workflow_runs where id = ${root}`
   ).toHaveLength(1);
 });
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, oxc/no-async-await, unicorn/no-null --
+/* oxlint-disable max-statements, unicorn/no-null  --
  * max-statements (#512): test("reports active work, missing relationships, and streams without exclusive owner keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("reports active work, missing relationships, and streams without exclusive owner sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * unicorn/no-null (#570): test("reports active work, missing relationships, and streams without exclusive owner preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -153,11 +149,8 @@ test("reports active work, missing relationships, and streams without exclusive 
     readEvePostgresRunInventory(query, missingParent)
   ).rejects.toThrow("session run is missing");
 });
-/* oxlint-enable max-statements, oxc/no-async-await, unicorn/no-null */
+/* oxlint-enable max-statements, unicorn/no-null */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): test("cyclic parent metadata terminates without duplicating records") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 test("cyclic parent metadata terminates without duplicating records", async () => {
   const root = await run();
   const child = await run({ $parentRunId: root });
@@ -167,9 +160,8 @@ test("cyclic parent metadata terminates without duplicating records", async () =
     [root, child].toSorted()
   );
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): test("retains missing queue-discovered seeds as incomplete ownership") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test("retains missing queue-discovered seeds as incomplete ownership") accepts transaction; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -186,4 +178,4 @@ test("retains missing queue-discovered seeds as incomplete ownership", async () 
   expect(inventory.missingRunIds).toEqual([missing]);
   expect(inventory.runs.map((row) => row.id)).toEqual([root]);
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

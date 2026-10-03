@@ -261,7 +261,7 @@ const dynamicToolPartSchema = z.union([
   dynamicToolPartOutputDeniedSchema,
 ]);
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): validateToolPart stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named validateToolPart API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): validateToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -275,9 +275,9 @@ const dynamicToolPartSchema = z.union([
  */
 export const validateToolPart = (part: unknown) =>
   toolPartSchema.safeParse(part);
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): validateDynamicToolPart stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named validateDynamicToolPart API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): validateDynamicToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -291,4 +291,4 @@ export const validateToolPart = (part: unknown) =>
  */
 export const validateDynamicToolPart = (part: unknown) =>
   dynamicToolPartSchema.safeParse(part);
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

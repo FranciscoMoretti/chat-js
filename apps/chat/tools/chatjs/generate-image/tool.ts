@@ -2,37 +2,23 @@ import { generateImage, generateText } from "ai";
 import type { FileUIPart } from "ai";
 import { defineTool } from "eve/tools";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
-/* oxlint-enable eslint/sort-imports */
 import { config } from "@/lib/config";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { createEveToolCost } from "@/lib/eve/tool-cost";
-/* oxlint-enable eslint/sort-imports */
 import { eveToolImageContext } from "@/lib/eve/tool-image-context";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { eveToolModelProvider } from "@/lib/eve/tool-models";
-/* oxlint-enable eslint/sort-imports */
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { downloadFile } from "@/lib/file-storage";
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/max-dependencies */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import type { FileUploader } from "@/lib/file-storage";
-/* oxlint-enable eslint/sort-imports */
 import { keyFromFileUrl } from "@/lib/file-url";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable eslint/sort-imports */
 import { getBaseUrl } from "@/lib/url";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { generateImageInput } from "./schemas";
-/* oxlint-enable eslint/sort-imports */
 
 const log = createModuleLogger("ai.tools.generate-image");
 
@@ -40,7 +26,6 @@ type ImageMode = "edit" | "generate";
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -109,7 +94,6 @@ const resolveImageModel = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
@@ -117,8 +101,6 @@ const resolveImageModel = async (
 const INLINE_IMAGE =
   /^data:image\/(?:png|jpeg|webp|gif);base64,(?<base64>[A-Za-z0-9+/=]+)$/u;
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   // Inline images do not initiate a network request.
@@ -144,10 +126,7 @@ const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   return Buffer.from(await file.arrayBuffer());
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -167,10 +146,8 @@ const collectEditImages = ({
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-ternary */
 
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const serializeError = (
@@ -204,10 +181,8 @@ const serializeError = (
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/id-length */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const resolveError = async (error: unknown): Promise<unknown> => {
   if (error && typeof error === "object" && "then" in error) {
@@ -221,11 +196,8 @@ const resolveError = async (error: unknown): Promise<unknown> => {
   return error;
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const getErrorDebugInfo = (err: unknown) => ({
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Error inspection accepts arbitrary SDK failure objects; retain optional diagnostic extraction without narrowing the supported error shapes.
@@ -235,18 +207,13 @@ const getErrorDebugInfo = (err: unknown) => ({
   errorType: typeof err,
 });
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const runGenerateImageTraditional = async ({
   mode,
@@ -340,22 +307,15 @@ const runGenerateImageTraditional = async ({
   return { fileId: result.fileId, imageUrl: result.url, prompt };
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-ternary */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -495,24 +455,14 @@ const runGenerateImageMultimodal = async ({
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
-/* oxlint-disable eslint/no-ternary -- This expression selects a value without introducing mutable intermediate state or changing evaluation order. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -623,15 +573,9 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-ternary */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/prefer-default-export */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

@@ -1,18 +1,14 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { ToolContext } from "eve/tools";
 
 import { createToolResult, createToolError } from "./tool-result";
 import type { ToolOutput, ToolResult } from "./tool-result";
-/* oxlint-enable sort-imports */
 
 /** Only an explicitly reported domain failure becomes an error receipt. */
 class ExpectedToolFailureError extends Error {
   public override name = "ExpectedToolFailureError";
 }
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-returns, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): createToolUsage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named createToolUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-returns (#535): createToolUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -62,14 +58,10 @@ export const createToolUsage = () => {
     },
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-returns, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named ToolUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
+/* oxlint-enable import/group-exports, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 export type ToolUsage = ReturnType<typeof createToolUsage>;
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable id-length, import/group-exports, import/no-named-export, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, import/group-exports, max-statements, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): executeWithToolUsage uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): executeWithToolUsage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named executeWithToolUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -98,9 +90,9 @@ export const executeWithToolUsage = async <T extends ToolOutput>(
     return createToolError(costUsd);
   }
 };
-/* oxlint-enable id-length, import/group-exports, import/no-named-export, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, import/group-exports, max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable id-length, import/group-exports, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * id-length (#506): executeWithToolProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/group-exports (#523): executeWithToolProgress stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named executeWithToolProgress API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -162,4 +154,4 @@ export const executeWithToolProgress = async function* executeWithToolProgress<
   });
   yield* stream;
 };
-/* oxlint-enable id-length, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable id-length, import/group-exports, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

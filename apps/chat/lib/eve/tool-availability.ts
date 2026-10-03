@@ -3,15 +3,11 @@ import type { ToolContext } from "eve/tools";
 
 import { toolAvailability } from "@/tools/chatjs/tool-availability";
 
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named ToolAvailability API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export type ToolAvailability = (
   session: Pick<ToolContext["session"], "auth" | "parent">
 ) => boolean;
-/* oxlint-enable import/no-named-export */
 
-/* oxlint-disable import/no-named-export, no-magic-numbers, no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/no-named-export (#527): Preserve the named installedToolAvailabilityMiddleware API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): installedToolAvailabilityMiddleware uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): installedToolAvailabilityMiddleware derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -37,4 +33,4 @@ export const installedToolAvailabilityMiddleware = (
       }),
   };
 };
-/* oxlint-enable import/no-named-export, no-magic-numbers, no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

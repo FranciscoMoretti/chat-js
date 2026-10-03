@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { act, create } from "react-test-renderer";
@@ -8,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { useMediaQuery } from "./use-media-query";
 import { useIsMobile } from "./use-mobile";
 import { useMounted } from "./use-mounted";
-/* oxlint-enable sort-imports */
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
@@ -27,25 +24,25 @@ const Value = ({ value }: { value: boolean }): React.JSX.Element => (
   <output>{String(value)}</output>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable oxc/no-optional-chaining, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MountedValue: oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including onValue?.(value)); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MountedValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
 const MountedValue = ({ onValue }: { onValue?: (value: boolean) => void }) => {
   const value = useMounted();
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable oxc/no-optional-chaining, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-optional-chaining, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MobileValue: oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including onValue?.(value)); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MobileValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
 const MobileValue = ({ onValue }: { onValue?: (value: boolean) => void }) => {
   const value = useIsMobile();
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable oxc/no-optional-chaining, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable oxc/no-optional-chaining, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MediaQueryValue: oxc/no-optional-chaining: optional access preserves the absent prop, query result, or browser capability fallback (including onValue?.(value)); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MediaQueryValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const MediaQueryValue = ({
   onValue,
@@ -58,7 +55,7 @@ const MediaQueryValue = ({
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable oxc/no-optional-chaining, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- installMatchMedia: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 

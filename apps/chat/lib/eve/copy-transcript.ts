@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -19,7 +19,7 @@ import {
 import { eveDocumentOperations } from "./document-contracts";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { sharedEveMessages } from "./shared-messages";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 type Seed = NonNullable<
   Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>
@@ -54,7 +54,7 @@ const REVISION_FIELDS = new Set([
   "expectedRevisionId",
   "parentRevisionId",
 ]);
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): EveCopyNotReadyError is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): EveCopyNotReadyError stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named EveCopyNotReadyError API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -65,8 +65,8 @@ export class EveCopyNotReadyError extends Error {
     this.name = "EveCopyNotReadyError";
   }
 }
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
-/* oxlint-disable max-statements, no-magic-numbers, no-ternary, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): completedPart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): completedPart uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): completedPart derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -123,8 +123,8 @@ const completedPart = (part: EveMessagePart): SeedPart => {
     }
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, no-ternary, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-params, max-statements, no-ternary, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-params (#511): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-ternary (#518): visitStrings derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -160,8 +160,8 @@ const visitStrings = (
     }
   }
 };
-/* oxlint-enable max-params, max-statements, no-ternary, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable init-declarations, max-statements, no-ternary, typescript/strict-boolean-expressions --
+/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable init-declarations, max-statements, typescript/strict-boolean-expressions  --
  * init-declarations (#507): transformFileReferences assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): transformFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-ternary (#518): transformFileReferences derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -188,8 +188,8 @@ const transformFileReferences = (
     const key = keyFromFileUrl(url.href);
     return key ? replace(key) + token.slice(candidate.length) : token;
   });
-/* oxlint-enable init-declarations, max-statements, no-ternary, typescript/strict-boolean-expressions */
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-enable init-declarations, max-statements, typescript/strict-boolean-expressions */
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): eveCopyResources is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): eveCopyResources stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveCopyResources API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -229,8 +229,8 @@ export const eveCopyResources = (
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
-/* oxlint-disable max-statements, no-continue, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-disable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): transcriptResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): transcriptResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * oxc/no-rest-spread-properties (#543): transcriptResources copies or separates ...resources while preserving existing object ownership; mutating source objects is not equivalent.
@@ -265,8 +265,8 @@ const transcriptResources = (seed: Seed) => {
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-enable max-statements, no-continue, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-enable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): prepareEveCopyTranscript is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): prepareEveCopyTranscript stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named prepareEveCopyTranscript API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -343,7 +343,7 @@ export const prepareEveCopyTranscript = (
     resources: transcriptResources(seed),
   };
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, no-ternary, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): CopyAllocations preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
@@ -354,7 +354,7 @@ type CopyAllocations = {
   inlineFiles?: ReadonlyMap<string, string>;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable id-length, import/exports-last, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable id-length, import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/exports-last (#522): rewriteEveCopyResources is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): rewriteEveCopyResources stays exported at its declaration so its public contract is visible beside its implementation.
@@ -467,7 +467,7 @@ export const rewriteEveCopyResources = <T>(
   );
   return root.value;
 };
-/* oxlint-enable id-length, import/exports-last, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
  * no-magic-numbers (#517): decodeInlineAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/explicit-function-return-type (#560): Keep decodeInlineAttachment's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -500,7 +500,7 @@ const decodeInlineAttachment = (
   };
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): eveCopyInlineAttachments is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): eveCopyInlineAttachments stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveCopyInlineAttachments API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -532,8 +532,8 @@ export const eveCopyInlineAttachments = (seed: Seed) => {
   }
   return [...files.values()];
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): copyAttachmentResolver uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -598,7 +598,7 @@ const copyAttachmentResolver = (
     part.size = stored.size;
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/prefer-readonly-parameter-types (#565): rewriteDocumentPart accepts part: SeedPart; allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): rewriteDocumentPart intentionally keeps the existing falsy-value behavior of field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -634,7 +634,7 @@ const rewriteDocumentPart = (
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): materializeEveCopyTranscript stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named materializeEveCopyTranscript API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): materializeEveCopyTranscript's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -688,6 +688,6 @@ export const materializeEveCopyTranscript = async (
   }
   return copied;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This copy-transcript.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

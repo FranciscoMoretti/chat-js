@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This test harness requires import { createServer } from "node:http";; import type { ServerResponse } from "node:http";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/ai/mcp/mcp-client"; "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/mcp-tools" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -20,7 +20,7 @@ import { db } from "../lib/db/client";
 import { mcpConnector, userCredit } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { discoverEveMcpTools, executeEveMcpTool } from "../lib/eve/mcp-tools";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("MCP acceptance requires local Postgres.");
@@ -32,7 +32,7 @@ const requestSchema = z.object({
   params: z.object({ name: z.string().optional() }).loose().optional(),
 });
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return  --
  * init-declarations (#507): localMcpServer assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): localMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): localMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -124,9 +124,9 @@ async function localMcpServer(invoke: (response: ServerResponse) => unknown) {
   }
   return { address, server };
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null  --
  * max-lines-per-function (#510): test("composer connector controls persist and fence native tool execution") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("composer connector controls persist and fence native tool execution") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("composer connector controls persist and fence native tool execution") uses 1, 0, 8, 10_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -267,9 +267,9 @@ test("composer connector controls persist and fence native tool execution", asyn
     );
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return  --
  * max-lines-per-function (#510): test("native MCP executes and its saved result survives connector removal and reload" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native MCP executes and its saved result survives connector removal and reload" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native MCP executes and its saved result survives connector removal and reload" uses 1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -406,9 +406,9 @@ test("native MCP executes and its saved result survives connector removal and re
     );
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return  --
  * max-lines-per-function (#510): test("stopping a pending MCP call closes its transport and permits another message") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("stopping a pending MCP call closes its transport and permits another message") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("stopping a pending MCP call closes its transport and permits another message") uses 1, 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -510,9 +510,9 @@ test("stopping a pending MCP call closes its transport and permits another messa
     );
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null  --
  * max-lines-per-function (#510): test("the real MCP client aborts an in-flight HTTP tool request") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("the real MCP client aborts an in-flight HTTP tool request") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("the real MCP client aborts an in-flight HTTP tool request") uses 0, 8 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -582,6 +582,6 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     );
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-mcp.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

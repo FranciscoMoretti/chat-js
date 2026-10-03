@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This test harness requires import { readFileSync } from "node:fs";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -10,12 +10,12 @@ import {
   getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
 } from "./migration-history";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 const baseline = { createdAt: 2, hash: "eve" };
 const next = { createdAt: 3, hash: "next" };
 
-/* oxlint-disable max-lines-per-function, no-ternary, node/no-sync, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): describe("getMigrationHistoryProblem") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-ternary (#518): describe("getMigrationHistoryProblem") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * node/no-sync (#538): describe("getMigrationHistoryProblem") uses readFileSync( new URL("migrations/0000_eve_baseline.sql", import.meta.url), "utf-8"  within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
@@ -120,4 +120,4 @@ describe("getMigrationHistoryProblem", () => {
     ).toMatch(/unknown/u);
   });
 });
-/* oxlint-enable max-lines-per-function, no-ternary, node/no-sync, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

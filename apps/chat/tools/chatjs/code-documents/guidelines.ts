@@ -1,5 +1,3 @@
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export const codeGuidelines = `
 Guidelines for Python code:
 - Each snippet should be complete and runnable on its own
@@ -15,5 +13,3 @@ Guidelines for Python code:
 
 The title MUST include the file extension (e.g., "script.py", "App.tsx", "utils.js").
 This extension determines syntax highlighting.`;
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

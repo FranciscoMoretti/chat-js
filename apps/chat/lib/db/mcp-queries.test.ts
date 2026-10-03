@@ -26,9 +26,6 @@ vi.mock("@/lib/logger", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("creates a new OAuth attempt even if expired-attempt cleanup fails") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("creates a new OAuth attempt even if expired-attempt cleanup fails", async () => {
   const error = new Error("cleanup failed");
   mocks.prune.mockRejectedValue(error);
@@ -46,4 +43,3 @@ it("creates a new OAuth attempt even if expired-attempt cleanup fails", async ()
     "Could not clean up expired OAuth sessions"
   );
 });
-/* oxlint-enable oxc/no-async-await */

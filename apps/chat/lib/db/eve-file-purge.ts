@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { and, eq, inArray, ne, notExists, notInArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): deletingFamilyIds uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * oxc/no-async-await (#540): deletingFamilyIds sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/explicit-function-return-type (#560): Keep deletingFamilyIds's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -35,9 +31,9 @@ const deletingFamilyIds = async (
   }
   return family.map((row) => row.id);
 };
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): prepareEveFamilyFilePurge stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named prepareEveFamilyFilePurge API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): prepareEveFamilyFilePurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -84,9 +80,9 @@ export const prepareEveFamilyFilePurge = async (
       .returning({ key: eveStoredFile.key });
     return files.map((file) => file.key).toSorted();
   });
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): completeEveFilePurge stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named completeEveFilePurge API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): completeEveFilePurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -118,9 +114,9 @@ export const completeEveFilePurge = async (
       );
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable import/group-exports, jsdoc/require-param, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * import/group-exports (#523): releaseEveFamilyFileReferences stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named releaseEveFamilyFileReferences API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): releaseEveFamilyFileReferences's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -183,4 +179,4 @@ export const releaseEveFamilyFileReferences = async (
       );
   });
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, max-lines-per-function, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable import/group-exports, jsdoc/require-param, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

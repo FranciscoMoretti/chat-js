@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-documents"; "../../lib/db/eve-queries"; "../../lib/eve/conversation-scope"; "../../lib/eve/project-instructions" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -11,9 +11,9 @@ import {
 import { getEveConversationProject } from "../../lib/db/eve-queries";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
 import { projectInstructions } from "../../lib/eve/project-instructions";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-default-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * no-magic-numbers (#517): default export uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): default export derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -72,4 +72,4 @@ export default defineHook({
     },
   },
 });
-/* oxlint-enable import/no-default-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */

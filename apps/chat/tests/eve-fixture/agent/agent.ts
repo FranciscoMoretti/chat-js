@@ -4,7 +4,7 @@
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
-/* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/strict-boolean-expressions, typescript/strict-void-return --
+/* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return  --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-statements (#512): default export keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): default export uses 5000, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -56,4 +56,4 @@ export default defineAgent({
   }),
   modelContextWindowTokens: 128_000,
 });
-/* oxlint-enable import/no-default-export, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return */

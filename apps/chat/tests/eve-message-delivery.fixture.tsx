@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/use-eve-message-delivery"; "../lib/eve/message-delivery" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,7 +8,7 @@ import { createRoot } from "react-dom/client";
 
 import { useEveMessageDelivery } from "../components/eve/use-eve-message-delivery";
 import { eveMessageDeliveryMetadata } from "../lib/eve/message-delivery";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): event preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -25,7 +25,7 @@ const event = (operationId: string): MessageStreamEvent => ({
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-ternary, no-undefined, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-ternary (#518): Fixture derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -135,7 +135,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable max-lines-per-function, no-ternary, no-undefined, oxc/no-optional-chaining, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-no-literals, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const root = document.querySelector("#root");
 if (!root) {

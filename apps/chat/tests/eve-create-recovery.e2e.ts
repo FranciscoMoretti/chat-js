@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queries"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/server" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -17,11 +17,11 @@ import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { eveRequest } from "../lib/eve/server";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("a lost native creation reply recovers the same session from the retained compos keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("a lost native creation reply recovers the same session from the retained compos keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a lost native creation reply recovers the same session from the retained compos uses 120_000, 0, 1, 30_000, 200, 404, 15_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -143,9 +143,9 @@ test("a lost native creation reply recovers the same session from the retained c
     )
   ).toBeNull();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls  --
  * max-lines-per-function (#510): test("an unresolved project conversation recovers after its project is deleted") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("an unresolved project conversation recovers after its project is deleted") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("an unresolved project conversation recovers after its project is deleted") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -285,9 +285,9 @@ test("an unresolved project conversation recovers after its project is deleted",
     "project-recovery-ok"
   );
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-lines-per-function (#510): test("a missing project preserves an unreserved request until definitive rejection") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("a missing project preserves an unreserved request until definitive rejection") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a missing project preserves an unreserved request until definitive rejection") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -392,9 +392,9 @@ test("a missing project preserves an unreserved request until definitive rejecti
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
   expect(saved.next.projectId).toBeUndefined();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls  --
  * max-lines-per-function (#510): test("a rejected project composer retains its request across project deletion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("a rejected project composer retains its request across project deletion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): test("a rejected project composer retains its request across project deletion") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -460,6 +460,6 @@ test("a rejected project composer retains its request across project deletion", 
     retained
   );
 });
-/* oxlint-enable max-lines-per-function, max-statements, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines -- #509: This eve-create-recovery.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

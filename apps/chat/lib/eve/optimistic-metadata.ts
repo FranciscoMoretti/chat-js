@@ -17,7 +17,7 @@ type History = InfiniteData<Awaited<ReturnType<typeof listEveConversations>>>;
 type Metadata = { title: string; isPinned: boolean };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): pendingEveMetadataMutations is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): pendingEveMetadataMutations stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named pendingEveMetadataMutations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -32,9 +32,9 @@ export const pendingEveMetadataMutations = (cache: QueryClient): number =>
     predicate: (mutation): boolean =>
       mutation.options.meta?.eveMetadata === true,
   });
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable id-length, no-undefined, typescript/prefer-readonly-parameter-types  --
  * id-length (#506): rollbackFields uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-ternary (#518): rollbackFields derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * no-undefined (#519): rollbackFields uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -54,9 +54,9 @@ const rollbackFields = <T extends Metadata>(
     ? { isPinned: previous.isPinned }
     : {}),
 });
-/* oxlint-enable id-length, no-ternary, no-undefined, oxc/no-rest-spread-properties, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, max-params, no-continue, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): optimisticEveMetadata stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named optimisticEveMetadata API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -137,4 +137,4 @@ export const optimisticEveMetadata = async (
     }
   };
 };
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, max-params, no-continue, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

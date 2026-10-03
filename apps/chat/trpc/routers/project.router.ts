@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -14,9 +11,8 @@ import {
 import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
 import { generateUUID } from "@/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * import/no-named-export (#527): Preserve the named projectRouter API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): projectRouter remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * no-magic-numbers (#517): projectRouter uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -150,4 +146,4 @@ export const projectRouter = createTRPCRouter({
       return { success: true };
     }),
 });
-/* oxlint-enable import/no-named-export, import/prefer-default-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

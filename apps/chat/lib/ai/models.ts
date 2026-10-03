@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 import { unstable_cache } from "next/cache";
 
@@ -10,13 +7,9 @@ import { createModuleLogger } from "@/lib/logger";
 import { getActiveGateway } from "./active-gateway";
 import type { ModelData } from "./model-data";
 import { toModelData } from "./to-model-data";
-/* oxlint-enable sort-imports */
 
 const log = createModuleLogger("ai/models");
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): fetchModelsRaw sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
- */
 const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
   const activeGateway = getActiveGateway();
 
@@ -37,9 +30,8 @@ const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
     throw error;
   }
 };
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * import/no-named-export (#527): Preserve the named fetchModels API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): fetchModels remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * oxc/no-async-await (#540): fetchModels sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -56,4 +48,4 @@ export const fetchModels = unstable_cache(
     tags: ["ai-gateway-models"],
   }
 );
-/* oxlint-enable import/no-named-export, import/prefer-default-export, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

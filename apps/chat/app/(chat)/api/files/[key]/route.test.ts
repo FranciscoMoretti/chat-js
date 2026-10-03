@@ -21,7 +21,7 @@ beforeEach(() => {
   mocks.serve.mockResolvedValue(new Response("file"));
 });
 const key = "abcdefghijklmnopqrstuvwx.png";
-/* oxlint-disable no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 404); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including managed ? 200 : 404); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 404); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 describe("file route", () => {
   const request = new Request(
@@ -56,9 +56,9 @@ describe("file route", () => {
     }
   );
 });
-/* oxlint-enable no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400); oxc/no-async-await: await preserves ordered requests and catch behavior in this feature operation. */
+/* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400);  */
 
 test("invalid path keys are rejected before authorization", async () => {
   const pathResponse = await getPathFile(
@@ -71,4 +71,4 @@ test("invalid path keys are rejected before authorization", async () => {
   expect(mocks.access).not.toHaveBeenCalled();
   expect(mocks.serve).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */

@@ -1,6 +1,6 @@
 import { TRPCClientError } from "@trpc/client";
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns  --
  * import/no-named-export (#527): Preserve the named isAbortedRequest API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): isAbortedRequest remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): isAbortedRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -10,4 +10,4 @@ import { TRPCClientError } from "@trpc/client";
 /** An intentionally cancelled transport is not an application failure. */
 export const isAbortedRequest = (result: unknown): boolean =>
   result instanceof TRPCClientError && result.cause?.name === "AbortError";
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-optional-chaining */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */

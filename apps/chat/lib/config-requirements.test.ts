@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { expect, test } from "vitest";
 
 import {
@@ -9,7 +6,6 @@ import {
   getMissingRequirement,
 } from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
-/* oxlint-enable sort-imports */
 
 const sandbox: EnvRequirement = {
   options: [
@@ -94,9 +90,6 @@ test("formats nested allOf requirements without losing credential names", () => 
   ).toContain("MISSING_KEY");
 });
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): test("code execution credential descriptions retain actionable environment key names" copies or separates ...sandbox while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("code execution credential descriptions retain actionable environment key names", () => {
   const described: EnvRequirement = {
     ...sandbox,
@@ -121,11 +114,7 @@ test("code execution credential descriptions retain actionable environment key n
     )
   ).toBeNull();
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): test("credential descriptions avoid duplicate exact key names across separators") copies or separates ...requirement while preserving existing object ownership; mutating source objects is not equivalent.
- */
 test("credential descriptions avoid duplicate exact key names across separators", () => {
   const requirement = authEnvRequirements.github;
   expect(
@@ -147,7 +136,6 @@ test("credential descriptions avoid duplicate exact key names across separators"
     )
   ).toContain("(AUTH_GITHUB_ID + AUTH_GITHUB_SECRET)");
 });
-/* oxlint-enable oxc/no-rest-spread-properties */
 
 test("credential descriptions retain the declared AND/OR grouping", () => {
   expect(

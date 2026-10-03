@@ -1,14 +1,10 @@
 import { TextSplitter } from "./text-splitter-base";
 import type { TextSplitterParams } from "./text-splitter-base";
 
-/* oxlint-disable import/no-named-export --
- * import/no-named-export (#527): Preserve the named RecursiveCharacterTextSplitterParams API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
- */
 export interface RecursiveCharacterTextSplitterParams extends TextSplitterParams {
   separators: string[];
 }
-/* oxlint-enable import/no-named-export */
-/* oxlint-disable id-length, import/no-named-export, max-statements, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * id-length (#506): RecursiveCharacterTextSplitter uses s; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * import/no-named-export (#527): Preserve the named RecursiveCharacterTextSplitter API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-statements (#512): RecursiveCharacterTextSplitter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -106,4 +102,4 @@ export class RecursiveCharacterTextSplitter
     return finalChunks;
   }
 }
-/* oxlint-enable id-length, import/no-named-export, max-statements, no-magic-numbers, no-ternary, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */

@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { readFileSync } from "node:fs";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -17,7 +17,7 @@ import { z } from "zod";
 import { db } from "../lib/db/client";
 import { eveConversation, eveVote } from "../lib/db/schema";
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -25,7 +25,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return  --
  * max-lines-per-function (#510): test("assistant feedback survives reload, recovers from errors and stays out of publi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("assistant feedback survives reload, recovers from errors and stays out of publi keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("assistant feedback survives reload, recovers from errors and stays out of publi uses 0, 1100, 390, 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -209,9 +209,9 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       .where(eq(eveConversation.id, binding.id));
   }
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 
-/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * max-statements (#512): test("shared feedback controls render unrated, selected and pending states") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("shared feedback controls render unrated, selected and pending states") uses 4, 0, 1, 2, 3, 1100, 390 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * node/no-sync (#538): test("shared feedback controls render unrated, selected and pending states") uses execFileSync("bun", [ "build", "tests/eve-feedback-fixture.tsx", "--target=browser", ; readFileSync(bundle, "utf-8") within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
@@ -262,4 +262,4 @@ test("shared feedback controls render unrated, selected and pending states", asy
     });
   }
 });
-/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

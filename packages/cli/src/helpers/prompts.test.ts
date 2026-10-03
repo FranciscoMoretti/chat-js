@@ -2,26 +2,18 @@ import { expect, it } from "bun:test";
 
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { externalGatewayFixture } from "../../test/external-gateway";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { collectEnvChecklist } from "./env-checklist";
-/* oxlint-enable eslint/sort-imports */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import {
   promptAssistantTools,
   promptCoreFeatures,
   promptObservability,
   promptDocumentTypes,
 } from "./prompts";
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
-/* oxlint-disable oxc/no-rest-spread-properties -- Copying these properties preserves immutable updates and the existing structural API without mutating the source object. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("uses external defaults and every environment group with --yes", async () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
@@ -57,8 +49,6 @@ it("uses external defaults and every environment group with --yes", async () => 
   ).not.toThrow();
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-rest-spread-properties */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 it("rejects a default for media the gateway cannot support", () => {
@@ -68,15 +58,12 @@ it("rejects a default for media the gateway cannot support", () => {
   expect(gatewayDefinitionSchema.safeParse(definition).success).toBe(false);
 });
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 it("defaults media tool installation selections to false with --yes", async () => {
   const { builtInTools } = await promptAssistantTools([], true);
   expect(builtInTools.imageGeneration).toBe(false);
   expect(builtInTools.videoGeneration).toBe(false);
 });
-/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 it.each([true, false])(
   "honors an explicit MCP installation choice with --yes: %s",
   async (mcp) => {
@@ -85,4 +72,3 @@ it.each([true, false])(
     expect(features.mcp).toBe(mcp);
   }
 );
-/* oxlint-enable oxc/no-async-await */

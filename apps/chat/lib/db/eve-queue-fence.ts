@@ -54,7 +54,7 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
   on graphile_worker._private_jobs for each row execute function workflow.eve_guard_queue();
 `;
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/no-named-export (#527): Preserve the named installEvePostgresQueueFence API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): installEvePostgresQueueFence remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): installEvePostgresQueueFence's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -78,4 +78,4 @@ export const installEvePostgresQueueFence = async (
     await query`insert into workflow.eve_queue_tasks(identifier) values (${taskIdentifier}) on conflict do nothing`;
   });
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */

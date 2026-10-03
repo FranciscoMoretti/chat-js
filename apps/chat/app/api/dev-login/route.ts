@@ -1,15 +1,11 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { session, user } from "@/lib/db/schema";
 import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-params (#511): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): serializeSignedCookie uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -62,9 +58,9 @@ const serializeSignedCookie = async (
   }
   return cookie;
 };
-/* oxlint-enable max-params, max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, oxc/no-async-await, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions, unicorn/no-null  --
  * import/no-named-export (#527): Preserve the named GET API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): GET remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * max-lines-per-function (#510): GET keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -139,4 +135,4 @@ export const GET = async (): Promise<Response> => {
     status: 302,
   });
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, oxc/no-async-await, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions, unicorn/no-null */

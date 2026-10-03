@@ -1,13 +1,9 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
 import { eveConversation, eveSubagentSession } from "./schema";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
+/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types  --
  * import/group-exports (#523): getEveSubagent stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named getEveSubagent API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * oxc/no-async-await (#540): getEveSubagent sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -41,9 +37,9 @@ export const getEveSubagent = async (ownerId: string, sessionId: string) => {
     );
   return binding;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): registerEveSubagent stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named registerEveSubagent API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -100,9 +96,9 @@ export const registerEveSubagent = async (
   }
   return bound;
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): listEveSubagents stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named listEveSubagents API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-ternary (#518): listEveSubagents derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -137,9 +133,9 @@ export const listEveSubagents = async (
         rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
       )
     );
-/* oxlint-enable import/group-exports, import/no-named-export, no-ternary, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable import/group-exports, no-magic-numbers  --
  * import/group-exports (#523): advanceEveSubagentUsageCursor stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named advanceEveSubagentUsageCursor API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -165,4 +161,4 @@ export const advanceEveSubagentUsageCursor = async (
       )
     );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable import/group-exports, no-magic-numbers */

@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, sort-imports --
+/* oxlint-disable import/max-dependencies  --
  * import/max-dependencies (#524): import from "@trpc/server" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -30,11 +30,11 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "@/trpc/init";
-/* oxlint-enable import/max-dependencies, sort-imports */
+/* oxlint-enable import/max-dependencies */
 
 const eveProcedure = protectedProcedure;
 
-/* oxlint-disable oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * oxc/no-async-await (#540): eveOwnedProcedure sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * oxc/no-optional-chaining (#542): eveOwnedProcedure handles optional ctx.user?.id; principal?.ownerId without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  * typescript/prefer-readonly-parameter-types (#565): eveOwnedProcedure accepts { ctx, next }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -51,9 +51,9 @@ const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   }
   return await next({ ctx: { eveOwnerId: ownerId } });
 });
-/* oxlint-enable oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * import/no-named-export (#527): Preserve the named eveRouter API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): eveRouter remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * no-magic-numbers (#517): eveRouter uses 1, 255, 512, 128 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -248,4 +248,4 @@ export const eveRouter = createTRPCRouter({
         await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
     ),
 });
-/* oxlint-enable import/no-named-export, import/prefer-default-export, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

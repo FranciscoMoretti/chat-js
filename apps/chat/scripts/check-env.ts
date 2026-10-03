@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "node:fs/promises" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import fs from "node:fs/promises";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * import/no-relative-parent-imports (#530): Keep the explicit "../features/installed"; "../lib/ai/gateway-model-defaults"; "../lib/ai/models.generated"; "../lib/config"; "../lib/config-requirements" dependency within this package instead of introducing an alias or barrel API.
@@ -31,7 +31,7 @@ import { resolveEveEnvironment } from "../lib/eve/environment";
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
 import { installedToolNames } from "../tools/chatjs/installed-features";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
@@ -79,7 +79,7 @@ const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * no-magic-numbers (#517): validateStorage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-ternary (#518): validateStorage derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/prefer-readonly-parameter-types (#565): validateStorage accepts env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -102,7 +102,7 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
     ? { feature: `fileStorage (${storageId})`, missing }
     : null;
 };
-/* oxlint-enable no-magic-numbers, no-ternary, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-statements (#512): validateAuthentication keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -149,7 +149,7 @@ const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
 };
 /* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * no-ternary (#518): validateInstalledItems derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * oxc/no-async-await (#540): validateInstalledItems sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): validateInstalledItems accepts env: NodeJS.ProcessEnv; entry; toolEnvVar; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -203,7 +203,7 @@ const validateInstalledItems = async (
 
   return toolErrors.flat();
 };
-/* oxlint-enable no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): validateBaseUrl accepts env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -243,7 +243,7 @@ const checkGatewaySnapshot = (): string | null => {
 };
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-console, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable id-length, max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * id-length (#506): checkEnv uses e as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-lines-per-function (#510): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -324,9 +324,9 @@ const checkEnv = async (): Promise<void> => {
 
   console.log("✅ Environment validation passed");
 };
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-console, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-console, no-magic-numbers, node/no-top-level-await --
+/* oxlint-disable no-console, no-magic-numbers  --
  * no-console (#514): try { await checkEnv(); } catch (error) { console.error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): try { await checkEnv(); } catch (error) { console.error uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * node/no-top-level-await (#539): try { await checkEnv(); } catch (error) { console.error runs in the configured Bun/ESM entrypoint and must finish before following module work; do not introduce background initialization.
@@ -337,4 +337,4 @@ try {
   console.error(error);
   process.exit(1);
 }
-/* oxlint-enable no-console, no-magic-numbers, node/no-top-level-await */
+/* oxlint-enable no-console, no-magic-numbers */

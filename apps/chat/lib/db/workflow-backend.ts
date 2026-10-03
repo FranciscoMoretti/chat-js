@@ -1,6 +1,6 @@
 import type { Sql } from "postgres";
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named ensureWorkflowBackend API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): ensureWorkflowBackend remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): ensureWorkflowBackend's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -26,4 +26,4 @@ export const ensureWorkflowBackend = async (
     await tx`insert into "EveWorkflowBackend" (id, world) values (1, ${world}) on conflict do nothing`;
   });
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules, sort-imports --
+/* oxlint-disable import/no-nodejs-modules  --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { readdir, readFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -8,7 +8,7 @@ import nodePath from "node:path";
 import { z } from "zod";
 
 import { localEveSandboxOwnerSchema } from "./local-sandbox-inventory";
-/* oxlint-enable import/no-nodejs-modules, sort-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 const sandboxNamePattern = /^eve-sbx-ses-[a-f0-9]{32}$/u;
 const stateSnapshotPattern = /^eve-sbx-state-[a-f0-9]{32}$/u;
@@ -43,7 +43,7 @@ const metadataSchema = z.object({
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-continue, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls  --
  * max-statements (#512): readResourceRecords keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): readResourceRecords skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-ternary (#518): readResourceRecords derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
@@ -95,9 +95,9 @@ const readResourceRecords = async (input: {
   }
   return records;
 };
-/* oxlint-enable max-statements, no-continue, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls  --
  * max-lines-per-function (#510): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): readLocalSandboxResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -194,9 +194,9 @@ const readLocalSandboxResources = async (input: {
     snapshotNames: [...new Set(snapshots)],
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, oxc/no-optional-chaining, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * max-statements (#512): removeRecordedSnapshots keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): removeRecordedSnapshots uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * oxc/no-async-await (#540): removeRecordedSnapshots sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -237,9 +237,9 @@ const removeRecordedSnapshots = async (
     }
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/no-named-export (#527): Preserve the named purgeLocalEveSandboxes API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): purgeLocalEveSandboxes remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * jsdoc/require-param (#534): purgeLocalEveSandboxes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -295,4 +295,4 @@ export const purgeLocalEveSandboxes = async (
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

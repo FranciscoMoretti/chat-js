@@ -5,24 +5,19 @@ import { execFileSync } from "node:child_process";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { existsSync } from "node:fs";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import nodePath from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable eslint/sort-imports */
 
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it("refuses to distribute a stale installed runtime", async () => {
   const root = await mkdtemp(
@@ -64,11 +59,9 @@ it("refuses to distribute a stale installed runtime", async () => {
   }
 });
 /* oxlint-enable node/no-sync */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it.each([
@@ -141,5 +134,4 @@ it.each([
 );
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

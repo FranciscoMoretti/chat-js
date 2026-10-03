@@ -8,7 +8,7 @@ afterEach(() => {
   vi.useRealTimers();
   request.mockReset();
 });
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("waits through source initialization and verifies exact checkpoint identity") uses 250, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("waits through source initialization and verifies exact checkpoint identity") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -34,8 +34,8 @@ it("waits through source initialization and verifies exact checkpoint identity",
     "/eve/chat/v1/session/source/checkpoint?beforeTurnId=turn_0",
   ]);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it("does not accept an unrelated source receipt or a generic not found") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("does not accept an unrelated source receipt or a generic not found") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -54,8 +54,8 @@ it("does not accept an unrelated source receipt or a generic not found", async (
   ).rejects.toThrow("lookup is unavailable");
   expect(request).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * no-magic-numbers (#517): it("times out without allocating or changing the requested checkpoint") uses 15_000, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it("times out without allocating or changing the requested checkpoint") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it("times out without allocating or changing the requested checkpoint") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -80,9 +80,9 @@ it("times out without allocating or changing the requested checkpoint", async ()
     )
   ).toBe(true);
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties --
+/* oxlint-disable no-magic-numbers, no-undefined  --
  * no-magic-numbers (#517): it("requires the exact named checkpoint receipt and never falls back to a turn lookup uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("requires the exact named checkpoint receipt and never falls back to a turn lookup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-async-await (#540): it("requires the exact named checkpoint receipt and never falls back to a turn lookup sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
@@ -114,9 +114,9 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     ).rejects.toThrow("Invalid source checkpoint");
   }
 });
-/* oxlint-enable no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-rest-spread-properties */
+/* oxlint-enable no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): it.each(["source_not_idle", "source_advanced"])("recognizes durable named checkpoint  uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): it.each(["source_not_idle", "source_advanced"])("recognizes durable named checkpoint  sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -135,9 +135,9 @@ it.each(["source_not_idle", "source_advanced"])(
     expect(request).toHaveBeenCalledTimes(1);
   }
 );
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * oxc/no-async-await (#540): it.each([ { checkpointRejected: true, error: "Identity conflict" }, { checkpointRejec sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ { checkpointRejected: true, error: "Identity conflict" }, { checkpointRejec accepts body; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -151,4 +151,4 @@ it.each([
     waitForEveCheckpoint("owner", "source", "turn_1", crypto.randomUUID())
   ).rejects.toThrow("lookup is unavailable");
 });
-/* oxlint-enable oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

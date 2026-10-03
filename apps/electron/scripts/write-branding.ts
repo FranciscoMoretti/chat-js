@@ -2,15 +2,11 @@
 import { writeFileSync } from "node:fs";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable eslint/sort-imports -- the @/lib/config import: Oxfmt groups and sorts by module paths; ordering by imported binding names would conflict with the formatter. */
 import { config } from "@/lib/config";
-/* oxlint-enable eslint/sort-imports */
 
 const { appName, appPrefix, appUrl, organization } = config;
-/* oxlint-disable oxc/no-optional-chaining -- orgEmail: The guarded lookup intentionally permits missing SDK/state fields; preserve one evaluation of the existing optional access. */
 const orgEmail =
   organization.contact?.privacyEmail || organization.contact?.legalEmail;
-/* oxlint-enable oxc/no-optional-chaining */
 
 /* oxlint-disable node/no-sync -- write-branding.ts: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
 /* oxlint-disable unicorn/no-null -- write-branding.ts: The SDK/wire/OS contract uses null as an explicit absence value. */

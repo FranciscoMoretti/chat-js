@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/* oxlint-disable import/no-default-export, no-magic-numbers, node/no-process-env, oxc/no-rest-spread-properties, typescript/strict-boolean-expressions --
+/* oxlint-disable import/no-default-export, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions  --
  * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
  * no-magic-numbers (#517): default export uses 3000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * node/no-process-env (#537): default export reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -23,4 +23,4 @@ export default defineConfig({
   },
   workers: 1,
 });
-/* oxlint-enable import/no-default-export, no-magic-numbers, node/no-process-env, oxc/no-rest-spread-properties, typescript/strict-boolean-expressions */
+/* oxlint-enable import/no-default-export, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions */

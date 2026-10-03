@@ -10,18 +10,15 @@ const MAX_PORT = 65_535;
 
 /* oxlint-disable import/exports-last -- WorktreeAppConfig: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- WorktreeAppConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- WorktreeAppConfig: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export interface WorktreeAppConfig {
   exports?: Record<string, string>;
   offset: number;
 }
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
 /* oxlint-disable import/exports-last -- WorktreeEnvConfig: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- WorktreeEnvConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- WorktreeEnvConfig: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export interface WorktreeEnvConfig {
   apps: Record<string, WorktreeAppConfig>;
   range: {
@@ -34,30 +31,25 @@ export interface WorktreeEnvConfig {
   };
   url: string;
 }
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
 /* oxlint-disable import/exports-last -- ResolvedWorktreeApp: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- ResolvedWorktreeApp: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- ResolvedWorktreeApp: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export interface ResolvedWorktreeApp {
   env: Record<string, string>;
   port: number;
   url: string;
 }
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
 /* oxlint-disable import/exports-last -- WorktreeRuntime: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable import/group-exports -- WorktreeRuntime: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- WorktreeRuntime: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 export interface WorktreeRuntime {
   apps: Record<string, ResolvedWorktreeApp>;
   slot: number;
 }
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 
@@ -135,10 +127,8 @@ const resolveSlot = (
 
 /* oxlint-disable import/group-exports -- resolveWorktreeRuntime: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- resolveWorktreeRuntime: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable import/no-named-export -- resolveWorktreeRuntime: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
 /* oxlint-disable eslint/max-lines-per-function -- resolveWorktreeRuntime: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable eslint/no-magic-numbers -- resolveWorktreeRuntime: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable oxc/no-rest-spread-properties -- resolveWorktreeRuntime: Fresh object composition preserves immutable state/configuration and existing override order. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- resolveWorktreeRuntime: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 export const resolveWorktreeRuntime = (
   config: WorktreeEnvConfig,
@@ -215,16 +205,12 @@ export const resolveWorktreeRuntime = (
   return { apps: resolvedApps, slot };
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable eslint/max-statements */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- loadWorktreeConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-/* oxlint-disable import/no-named-export -- loadWorktreeConfig: Existing consumers import this named API; changing its export form is an incompatible module contract change. */
-/* oxlint-disable oxc/no-async-await -- loadWorktreeConfig: Await sequencing preserves this operation's dependent I/O and error propagation. */
 export const loadWorktreeConfig = async (
   path = ".worktree-env.json"
 ): Promise<WorktreeEnvConfig> => {
@@ -235,6 +221,4 @@ export const loadWorktreeConfig = async (
   // oxlint-disable-next-line typescript/no-unsafe-return -- This repository-owned config is consumed by the runtime resolver; a separate input schema requires a config-format decision.
   return await configFile.json();
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

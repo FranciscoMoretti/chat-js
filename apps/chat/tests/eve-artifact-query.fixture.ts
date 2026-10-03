@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../trpc/routers/_app" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -10,28 +10,28 @@ import { SuperJSON } from "superjson";
 import { z } from "zod";
 
 import type { AppRouter } from "../trpc/routers/_app";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): conversationId is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): conversationId stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named conversationId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const conversationId = "00000000-0000-4000-8000-000000000010";
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): existingId is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): existingId stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named existingId API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const existingId = "00000000-0000-4000-8000-000000000003";
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 const inputSchema = z.object({
   conversationId: z.literal(conversationId),
   documentId: z.enum([existingId, "00000000-0000-4000-8000-000000000001"]),
   revisionId: z.uuid().optional(),
 });
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export --
+/* oxlint-disable import/exports-last, import/group-exports  --
  * import/exports-last (#522): queryClient is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): queryClient stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named queryClient API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -39,7 +39,7 @@ const inputSchema = z.object({
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 const olderId = "00000000-0000-4000-8000-000000000005";
 const restoredId = "00000000-0000-4000-8000-000000000006";
 /* oxlint-disable init-declarations --
@@ -47,7 +47,7 @@ const restoredId = "00000000-0000-4000-8000-000000000006";
  */
 let restoredContent: string | undefined;
 /* oxlint-enable init-declarations */
-/* oxlint-disable import/group-exports, import/no-named-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null  --
  * import/group-exports (#523): trpcClient stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named trpcClient API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * max-lines-per-function (#510): trpcClient keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -195,4 +195,4 @@ export const trpcClient = createTRPCClient<AppRouter>({
     }),
   ],
 });
-/* oxlint-enable import/group-exports, import/no-named-export, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-optional-chaining, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable import/group-exports, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */

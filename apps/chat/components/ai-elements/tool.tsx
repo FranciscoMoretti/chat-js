@@ -1,5 +1,4 @@
 "use client";
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import type { ToolUIPart } from "ai";
 import {
@@ -22,12 +21,11 @@ import {
 import { cn } from "@/lib/utils";
 
 import { CodeBlock } from "./code-block";
-/* oxlint-enable sort-imports */
-/* oxlint-disable import/group-exports, import/no-named-export -- ToolProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/group-exports -- ToolProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Tool: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolProps). */
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Tool: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolProps). */
 
 export const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
   <Collapsible
@@ -35,9 +33,9 @@ export const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export -- ToolHeaderProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/group-exports -- ToolHeaderProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export interface ToolHeaderProps {
   title?: string;
@@ -45,8 +43,8 @@ export interface ToolHeaderProps {
   state: ToolUIPart["state"];
   className?: string;
 }
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export, react/forbid-component-props, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- getStatusBadge: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports, react/forbid-component-props, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- getStatusBadge: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 export const getStatusBadge = (status: ToolUIPart["state"]) => {
   const labels: Record<ToolUIPart["state"], string> = {
@@ -76,9 +74,9 @@ export const getStatusBadge = (status: ToolUIPart["state"]) => {
     </Badge>
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, react/forbid-component-props, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports, react/forbid-component-props, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolHeader: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/group-exports, no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolHeader: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ToolHeader = ({
   className,
@@ -104,13 +102,13 @@ export const ToolHeader = ({
     <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, no-magic-numbers, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export -- ToolContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/group-exports -- ToolContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolContentProps). */
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolContentProps). */
 
 export const ToolContent = ({
   className,
@@ -124,15 +122,15 @@ export const ToolContent = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export -- ToolInputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/group-exports -- ToolInputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type ToolInputProps = ComponentProps<"div"> & {
   input: ToolUIPart["input"];
 };
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-rest-spread-properties, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ToolInput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, input, ...props }: ToolInputProps); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports, no-magic-numbers, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ToolInput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, input, ...props }: ToolInputProps); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ToolInput = ({
   className,
@@ -148,16 +146,16 @@ export const ToolInput = ({
     </div>
   </div>
 );
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-rest-spread-properties, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/group-exports, no-magic-numbers, react/jsx-no-literals, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, import/no-named-export -- ToolOutputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/group-exports -- ToolOutputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type ToolOutputProps = ComponentProps<"div"> & {
   output: ToolUIPart["output"];
   errorText: ToolUIPart["errorText"];
 };
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-rest-spread-properties, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolOutput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including output === "" ? '""' : output); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including errorText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolOutput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including errorText); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ToolOutput = ({
   className,
@@ -203,4 +201,4 @@ export const ToolOutput = ({
     </div>
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, no-ternary, no-undefined, oxc/no-rest-spread-properties, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

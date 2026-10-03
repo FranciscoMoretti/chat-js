@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, sort-imports --
+/* oxlint-disable import/max-dependencies  --
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -36,9 +36,9 @@ import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "@/lib/eve/usage-reconciliation-busy";
-/* oxlint-enable import/max-dependencies, sort-imports */
+/* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable no-ternary, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/prefer-readonly-parameter-types  --
  * no-ternary (#518): rejectRequest derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/prefer-readonly-parameter-types (#565): rejectRequest accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -51,9 +51,9 @@ const rejectRequest = (
   request.method === "POST"
     ? rejectEveCommand(message, status)
     : Response.json({ error: message }, { status });
-/* oxlint-enable no-ternary, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types  --
  * max-params (#511): checkTurnAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): checkTurnAdmission uses 402 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): checkTurnAdmission uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -84,7 +84,7 @@ const checkTurnAdmission = async (
     return rejectEveCommand("Insufficient credits", 402);
   }
 };
-/* oxlint-enable max-params, no-magic-numbers, no-undefined, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): selectionsConflict uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -109,7 +109,7 @@ const parseToolSelection = (
     .safeParse(header ?? body);
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null  --
  * init-declarations (#507): readCommand assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -185,9 +185,9 @@ const readCommand = async (
   }
   return { body, isNewMessage, message, modelId, selectedTool };
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-lines-per-function (#510): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): handle uses 401, 403, 404, 0, 400, 30_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -294,16 +294,16 @@ const handle = async (
     );
   }
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): GET stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named GET API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const GET = handle;
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): POST stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named POST API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const POST = handle;
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */

@@ -7,9 +7,6 @@ const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] = () =>
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable import/prefer-default-export -- Keep the named import contract used by registry consumers and package callers even when this module exposes one value. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
@@ -37,6 +34,3 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable oxc/no-optional-chaining */
-/* oxlint-enable import/no-named-export */
-/* oxlint-enable import/prefer-default-export */

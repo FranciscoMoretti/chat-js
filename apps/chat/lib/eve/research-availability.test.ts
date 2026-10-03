@@ -1,4 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
@@ -20,7 +20,7 @@ import { researchAvailable } from "@/tools/chatjs/deep-research/availability";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
 import { installedToolAvailabilityMiddleware } from "./tool-availability";
 import { eveTurnGuest, eveTurnTool } from "./turn-tools";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => {
   const tools: { webSearch?: object } = { webSearch: {} };
@@ -33,7 +33,7 @@ const mocks = vi.hoisted(() => {
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
-/* oxlint-disable no-magic-numbers, no-ternary, typescript/explicit-function-return-type --
+/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type  --
  * no-magic-numbers (#517): vi.mock("@/tools/chatjs/installed-features") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-ternary (#518): vi.mock("@/tools/chatjs/installed-features") derives branch values with conditional expressions; the enabled prefer-ternary rule also favors this form over assignment-only if statements.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/tools/chatjs/installed-features")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -47,14 +47,14 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
   },
   installedToolNames: { has: (): boolean => mocks.research },
 }));
-/* oxlint-enable no-magic-numbers, no-ternary, typescript/explicit-function-return-type */
+/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 vi.mock("../../tools/chatjs/providers", () => ({ providers: mocks.tools }));
 beforeEach(() => {
   mocks.tools.webSearch = {};
   mocks.research = true;
   mocks.text = true;
 });
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null  --
  * max-lines-per-function (#510): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -133,11 +133,8 @@ it.each([
     );
   })
 );
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await, oxc/no-optional-chaining, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable oxc/no-async-await --
- * oxc/no-async-await (#540): it("preserves the turn restriction when approval/reconnect auth omits selectedTool") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
- */
 it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
   const original = new ContextContainer();
   const saved = contextStorage.run(original, () => {
@@ -169,4 +166,3 @@ it("preserves the turn restriction when approval/reconnect auth omits selectedTo
     expect(researchAvailable(session)).toBe(false);
   });
 });
-/* oxlint-enable oxc/no-async-await */

@@ -38,7 +38,7 @@ beforeEach(() => {
     skipped: false,
   });
 });
-/* oxlint-disable no-undefined, oxc/no-optional-chaining --
+/* oxlint-disable no-undefined  --
  * no-undefined (#519): afterEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * oxc/no-optional-chaining (#542): afterEach handles optional stop?.() without repeated reads; expanding guards requires preserving missing-value and evaluation semantics.
  */
@@ -47,9 +47,9 @@ afterEach(() => {
   stop = undefined;
   vi.useRealTimers();
 });
-/* oxlint-enable no-undefined, oxc/no-optional-chaining */
+/* oxlint-enable no-undefined */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
  * max-statements (#512): test("startup is singleton and sweeps never overlap") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("startup is singleton and sweeps never overlap") uses 60_000, 1, 180_000, 2, 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("startup is singleton and sweeps never overlap") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -80,9 +80,9 @@ test("startup is singleton and sweeps never overlap", async () => {
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * no-magic-numbers (#517): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " uses 120_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  * typescript/prefer-readonly-parameter-types (#565): test.each([ { NODE_ENV: "production" }, { EVE_GATEWAY_SECRET: "" }, { DATABASE_URL: " accepts values; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -103,9 +103,9 @@ test.each([
     expect(stop).toBeUndefined();
   }
 );
-/* oxlint-enable no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, oxc/no-async-await --
+/* oxlint-disable no-magic-numbers  --
  * no-magic-numbers (#517): test("remote worker or World and a config disabled after startup cannot sweep") uses 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * oxc/no-async-await (#540): test("remote worker or World and a config disabled after startup cannot sweep") sequences asynchronous fixture actions and assertions with await; promise-function-async also requires async implementations.
  */
@@ -118,9 +118,9 @@ test("remote worker or World and a config disabled after startup cannot sweep", 
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).not.toHaveBeenCalled();
 });
-/* oxlint-enable no-magic-numbers, oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining --
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined  --
  * max-statements (#512): test("a failed sweep retries later and stopping in flight prevents rescheduling") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("a failed sweep retries later and stopping in flight prevents rescheduling") uses 120_000, 2, 60_000, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("a failed sweep retries later and stopping in flight prevents rescheduling") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -148,4 +148,4 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);
   error.mockRestore();
 });
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, oxc/no-async-await, oxc/no-optional-chaining */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined */

@@ -8,7 +8,6 @@ interface GatewayLogger {
 }
 
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export interface GatewayOptions {
   env?: Record<string, string | undefined>;
@@ -19,7 +18,6 @@ export interface GatewayOptions {
   logger?: GatewayLogger;
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/exports-last */
 
 const silentLogger: GatewayLogger = {
@@ -37,7 +35,6 @@ const silentLogger: GatewayLogger = {
   },
 };
 
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -59,4 +56,3 @@ export class GatewayRuntime {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable node/no-process-env */
-/* oxlint-enable import/no-named-export */

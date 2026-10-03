@@ -1,29 +1,19 @@
 import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import React, { act } from "react";
-/* oxlint-enable eslint/sort-imports */
 import { createRoot } from "react-dom/client";
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { expect, test } from "vitest";
-/* oxlint-enable eslint/sort-imports */
 import { page } from "vitest/browser";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import "../../../apps/chat/tests/visual/sandbox.css";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable eslint/sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable oxc/no-async-await -- Await preserves the existing sequencing, rejection propagation, and cleanup behavior of this asynchronous operation. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable oxc/no-optional-chaining -- Optional access deliberately propagates absence from the external or partially initialized data contract. */
 test("sandbox code updates while streaming without switching tabs", async (): Promise<void> => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("main");
@@ -75,7 +65,5 @@ test("sandbox code updates while streaming without switching tabs", async (): Pr
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("2185932");
 });
-/* oxlint-enable oxc/no-optional-chaining */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

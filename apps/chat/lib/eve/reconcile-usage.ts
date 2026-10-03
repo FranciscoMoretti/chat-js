@@ -1,4 +1,4 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports  --
  * import/max-dependencies (#524): import from "eve/client" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-billing"; "../db/eve-queries"; "../db/eve-subagents"; "../env" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
@@ -26,9 +26,9 @@ import { assertEveConfigured } from "./server";
 import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/strict-boolean-expressions --
+/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions  --
  * import/exports-last (#522): reconcileEveSubagentUsage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): reconcileEveSubagentUsage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named reconcileEveSubagentUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -104,9 +104,9 @@ export const reconcileEveSubagentUsage = async (
   }
   return !unresolved;
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await --
+/* oxlint-disable import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers  --
  * import/exports-last (#522): reconcileEveUsage is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): reconcileEveUsage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named reconcileEveUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -171,9 +171,9 @@ export const reconcileEveUsage = async (
     await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
   }
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, oxc/no-async-await */
+/* oxlint-enable import/exports-last, import/group-exports, init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * init-declarations (#507): reconcileAllOwnerUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): reconcileAllOwnerUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -266,9 +266,9 @@ const reconcileAllOwnerUsage = async (
     throw failure.cause;
   }
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-ternary, no-undefined, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/group-exports (#523): reconcileEveOwnerUsage stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named reconcileEveOwnerUsage API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * no-magic-numbers (#517): reconcileEveOwnerUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -282,8 +282,8 @@ export const reconcileEveOwnerUsage = async (
 ): Promise<void> => {
   await recoverEveCreations(ownerId);
   if (resolveWorkflowWorld(env) !== "vercel") {
-    // oxlint-disable-next-line typescript/no-confusing-void-expression -- #582: Returning the awaited operation preserves early termination and propagation of its asynchronous failure.
-    return await reconcileAllOwnerUsage(ownerId);
+    await reconcileAllOwnerUsage(ownerId);
+    return;
   }
   // Hooks handle normal billing. Rate-limit the missed-hook fallback durably:
   // settled history must not be streamed on every message or new conversation.
@@ -301,4 +301,4 @@ export const reconcileEveOwnerUsage = async (
     }
   );
 };
-/* oxlint-enable import/group-exports, import/no-named-export, no-magic-numbers, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

@@ -4,7 +4,7 @@
 import { getEveRuntimeEnvOptions } from "../lib/env-schema";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/no-named-export, import/prefer-default-export, init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * import/no-named-export (#527): Preserve the named resolveEveSetup API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * import/prefer-default-export (#532): resolveEveSetup remains a named API, consistent with no-default-export; adding future exports must not change caller import syntax.
  * init-declarations (#507): resolveEveSetup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -58,4 +58,4 @@ export const resolveEveSetup = (
     managed: false,
   };
 };
-/* oxlint-enable import/no-named-export, import/prefer-default-export, init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

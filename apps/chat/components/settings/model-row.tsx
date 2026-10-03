@@ -1,5 +1,3 @@
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
-
 import React, { memo } from "react";
 
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -11,9 +9,8 @@ import { ModelSelectorLogo } from "../model-selector-logo";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- ../ui/switch import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
 import { Switch } from "../ui/switch";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/exports-last, import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ModelRow: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/no-named-export: existing callers import this public component, type, or hook by name; import/prefer-default-export: the existing named import remains stable when this module adds another public declaration; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model.reasoning). */
+/* oxlint-disable import/exports-last, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ModelRow: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model.reasoning). */
 
 export const ModelRow = memo(
   ({
@@ -54,6 +51,6 @@ export const ModelRow = memo(
     );
   }
 );
-/* oxlint-enable import/exports-last, import/no-named-export, import/prefer-default-export, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/exports-last, react-perf/jsx-no-new-function-as-prop, react/forbid-component-props, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 ModelRow.displayName = "PureModelRow";

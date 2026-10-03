@@ -7,7 +7,7 @@ import {
   readCreation,
 } from "./pending-create";
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null  --
  * max-lines-per-function (#510): describe("fork ancestry and recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("fork ancestry and recovery") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("fork ancestry and recovery") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -73,7 +73,7 @@ describe("fork ancestry and recovery", () => {
     expect(readCreation(storage, "owner")).toEqual(fresh);
   });
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable max-statements, typescript/explicit-function-return-type, unicorn/no-null --
  * max-statements (#512): it("isolates project creation recovery from ordinary chats, other projects, and other keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

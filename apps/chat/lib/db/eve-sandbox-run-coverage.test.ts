@@ -59,9 +59,6 @@ it("rejects cycles even with a valid additional parent", () => {
     ]).unresolvedRunIds
   ).toEqual(["a", "b"]);
 });
-/* oxlint-disable oxc/no-rest-spread-properties --
- * oxc/no-rest-spread-properties (#543): it.each(["0.52.2", "0.61.0"])("only covers reviewed sleep workflow identities (%s)") copies or separates ...run("sleep", "executeSleepTool", "root"); ...sleep while preserving existing object ownership; mutating source objects is not equivalent.
- */
 it.each(["0.52.2", "0.61.0"])(
   "only covers reviewed sleep workflow identities (%s)",
   (version) => {
@@ -81,7 +78,6 @@ it.each(["0.52.2", "0.61.0"])(
     ).toEqual(["sleep"]);
   }
 );
-/* oxlint-enable oxc/no-rest-spread-properties */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("handles deep families without recursive stack growth") uses 10_000, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */

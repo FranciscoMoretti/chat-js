@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-/* oxlint-disable eslint/sort-imports -- Oxfmt owns deterministic import ordering; preserve its order rather than create a formatter/linter rewrite cycle. */
 import { composerIconNames } from "./composer-icons.generated";
-/* oxlint-enable eslint/sort-imports */
 
 const identifier = z
   .string()
@@ -10,7 +8,6 @@ const identifier = z
   .refine((value) => value !== "__proto__", "Reserved registration name");
 /* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export const envRequirementSchema = z.object({
@@ -22,7 +19,6 @@ export const envRequirementSchema = z.object({
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-enable import/exports-last */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
@@ -68,7 +64,6 @@ const toolDefinitionBase = z.object({
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // A single native EVE authoring contract. The version validates the descriptor format.
@@ -95,16 +90,12 @@ export const toolDefinitionSchema = toolDefinitionBase
   });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type ToolDefinition = z.infer<typeof toolDefinitionSchema>;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export const storageDefinitionSchema = z.object({
   configKeys: z.array(z.string()).default([]),
@@ -115,16 +106,12 @@ export const storageDefinitionSchema = z.object({
   optionalEnv: z.array(z.string().regex(/^[A-Z_][A-Z0-9_]*$/u)).default([]),
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type StorageDefinition = z.infer<typeof storageDefinitionSchema>;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 // Supported web installation boundaries. Implementations are added by their owners.
 export const featureIdSchema = z.enum([
   "mcp",
@@ -133,10 +120,8 @@ export const featureIdSchema = z.enum([
   "vercel-speed-insights",
   "langfuse",
 ]);
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export const featureDefinitionSchema = z.object({
   contractVersion: z.literal(1),
@@ -146,11 +131,8 @@ export const featureDefinitionSchema = z.object({
   requiresFeatures: z.array(featureIdSchema).optional(),
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */
 
 /* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable import/no-named-export -- Consumers import this public symbol by name; changing the export shape would require a coordinated API migration. */
 export type FeatureDefinition = z.infer<typeof featureDefinitionSchema>;
-/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

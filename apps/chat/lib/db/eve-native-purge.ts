@@ -1,6 +1,3 @@
-/* oxlint-disable sort-imports --
- * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
- */
 import postgres from "postgres";
 import type { Sql } from "postgres";
 import { z } from "zod";
@@ -8,9 +5,8 @@ import { z } from "zod";
 import { purgeEvePostgresSessionPayloads } from "./eve-payload-purge";
 import { purgeEvePostgresQueue } from "./eve-queue-purge";
 import { fenceEvePostgresSession } from "./eve-session-fence";
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable id-length, max-params, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable id-length, max-params, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * id-length (#506): withRetiredNativeSession uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-params (#511): withRetiredNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): withRetiredNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -48,9 +44,9 @@ const withRetiredNativeSession = async <T>(
     }
   }
 };
-/* oxlint-enable id-length, max-params, max-statements, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-params, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable id-length, max-params, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable id-length, max-params, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * id-length (#506): withNativeSession uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-params (#511): withNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * oxc/no-async-await (#540): withNativeSession sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -75,9 +71,9 @@ const withNativeSession = async <T>(
     await connection.end();
   }
 };
-/* oxlint-enable id-length, max-params, oxc/no-async-await, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable id-length, max-params, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions  --
  * max-statements (#512): prepareNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): prepareNativeSession uses 1, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * oxc/no-async-await (#540): prepareNativeSession sequences asynchronous I/O and failure handling with await; promise-function-async also requires async implementations.
@@ -123,9 +119,9 @@ const prepareNativeSession = async (
     }
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, oxc/no-async-await, oxc/no-rest-spread-properties, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types  --
  * import/group-exports (#523): purgeEveNativeSession stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named purgeEveNativeSession API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): purgeEveNativeSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -153,9 +149,9 @@ export const purgeEveNativeSession = async (
       return await purgeEvePostgresSessionPayloads(connection, scope);
     }
   );
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/group-exports (#523): prepareEveNativeSessionPurge stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named prepareEveNativeSessionPurge API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): prepareEveNativeSessionPurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -178,9 +174,9 @@ export const prepareEveNativeSessionPurge = async (
   await withNativeSession(databaseUrl, scope.sessionId, retire, (connection) =>
     prepareNativeSession(connection, scope)
   );
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, jsdoc/require-returns, oxc/no-async-await, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/promise-function-async  --
  * import/group-exports (#523): retireEveNativeSessions stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named retireEveNativeSessions API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * jsdoc/require-param (#534): retireEveNativeSessions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -209,4 +205,4 @@ export const retireEveNativeSessions = async (
     await connection.end();
   }
 };
-/* oxlint-enable import/group-exports, import/no-named-export, jsdoc/require-param, oxc/no-async-await, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

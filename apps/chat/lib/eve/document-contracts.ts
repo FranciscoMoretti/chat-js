@@ -1,21 +1,21 @@
-/* oxlint-disable import/no-relative-parent-imports, sort-imports --
+/* oxlint-disable import/no-relative-parent-imports  --
  * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
  * sort-imports (#521): Oxfmt owns the case-insensitive import groups in this section; ESLint declaration ordering would be undone by the required formatter.
  */
 import { z } from "zod";
 
 import { isFileStorageKey } from "../file-url";
-/* oxlint-enable import/no-relative-parent-imports, sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last, import/no-named-export, typescript/consistent-type-definitions --
+/* oxlint-disable import/exports-last, typescript/consistent-type-definitions  --
  * import/exports-last (#522): DocumentAssistantRequest is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/no-named-export (#527): Preserve the named DocumentAssistantRequest API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  * typescript/consistent-type-definitions (#559): DocumentAssistantRequest preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
 export type DocumentAssistantRequest = { message: string; modelId: string };
-/* oxlint-enable import/exports-last, import/no-named-export, typescript/consistent-type-definitions */
+/* oxlint-enable import/exports-last, typescript/consistent-type-definitions */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types  --
  * import/exports-last (#522): documentFileIds is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
  * import/group-exports (#523): documentFileIds stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named documentFileIds API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
@@ -29,7 +29,7 @@ export const documentFileIds = z
   .describe(
     "Stable file IDs used by this document, including embedded images. Provide the complete list on every save, or [] for no attachments; never include presigned URLs."
   );
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): documentContent uses 2_000_000, 1, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -40,13 +40,13 @@ const documentContent = z.object({
   title: z.string().min(1).max(1000),
 });
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveDocumentCreateInput stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveDocumentCreateInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const eveDocumentCreateInput = documentContent;
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveDocumentEditInput stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveDocumentEditInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -58,14 +58,14 @@ export const eveDocumentEditInput = documentContent.extend({
       "The revision ID returned by readDocument. Read again after a conflict."
     ),
 });
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveDocumentReadInput stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveDocumentReadInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const eveDocumentReadInput = z.object({ documentId: z.uuid() });
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveManualDocumentInput stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveManualDocumentInput API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -75,9 +75,9 @@ export const eveManualDocumentInput = eveDocumentEditInput.extend({
   fileIds: documentFileIds.default([]),
   operationId: z.uuid(),
 });
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveDocumentOperations stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveDocumentOperations API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -89,9 +89,9 @@ export const eveDocumentOperations = {
   editSheetDocument: { edit: true, kind: "sheet" },
   editTextDocument: { edit: true, kind: "text" },
 } as const;
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveDocumentResult stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveDocumentResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -103,17 +103,17 @@ export const eveDocumentResult = z.object({
   status: z.literal("success"),
   title: z.string(),
 });
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveDocumentWriteResult stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveDocumentWriteResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
 export const eveDocumentWriteResult = eveDocumentResult.extend({
   result: z.string(),
 });
-/* oxlint-enable import/group-exports, import/no-named-export */
-/* oxlint-disable import/group-exports, import/no-named-export --
+/* oxlint-enable import/group-exports */
+/* oxlint-disable import/group-exports  --
  * import/group-exports (#523): eveDocumentReadResult stays exported at its declaration so its public contract is visible beside its implementation.
  * import/no-named-export (#527): Preserve the named eveDocumentReadResult API used by direct imports; the simultaneously enabled no-default-export rule forbids converting it to a default.
  */
@@ -121,4 +121,4 @@ export const eveDocumentReadResult = eveDocumentResult.extend({
   content: z.string(),
   fileIds: z.array(z.string()),
 });
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */

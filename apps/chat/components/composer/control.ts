@@ -1,7 +1,7 @@
 import type { ComponentType, Dispatch, SetStateAction } from "react";
 
 import type { UiToolName } from "@/lib/ai/types";
-/* oxlint-disable import/group-exports, import/no-named-export -- ComposerControlProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/group-exports -- ComposerControlProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export interface ComposerControlProps {
   disabled?: boolean;
@@ -10,9 +10,9 @@ export interface ComposerControlProps {
   onToolChange: Dispatch<SetStateAction<UiToolName | null>>;
   onAttach: (accept: string, capture?: "environment" | "user") => void;
 }
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, import/no-named-export -- ComposerControl: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/group-exports -- ComposerControl: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export interface ComposerControl {
   id: string;
@@ -21,4 +21,4 @@ export interface ComposerControl {
     isAvailable?: (isMobile: boolean) => boolean;
   };
 }
-/* oxlint-enable import/group-exports, import/no-named-export */
+/* oxlint-enable import/group-exports */

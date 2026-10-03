@@ -1,5 +1,4 @@
 "use client";
-/* oxlint-disable sort-imports -- Oxfmt owns this module's external, type-only, and alias import groups; its case-insensitive order conflicts with this declaration-order rule. */
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
@@ -23,7 +22,6 @@ import { cn } from "@/lib/utils";
 
 import { Response } from "./response";
 import { Shimmer } from "./shimmer";
-/* oxlint-enable sort-imports */
 
 interface ReasoningContextValue {
   isStreaming: boolean;
@@ -46,7 +44,7 @@ const useReasoning = () => {
   return context;
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export -- ReasoningProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/exports-last, import/group-exports -- ReasoningProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type ReasoningProps = ComponentProps<typeof Collapsible> & {
   isStreaming?: boolean;
@@ -55,11 +53,11 @@ export type ReasoningProps = ComponentProps<typeof Collapsible> & {
   onOpenChange?: (open: boolean) => void;
   duration?: number;
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
 const AUTO_CLOSE_DELAY = 1000;
 const MS_IN_S = 1000;
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, max-lines-per-function, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Reasoning: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable import/exports-last, import/group-exports, max-lines-per-function, react/forbid-component-props, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Reasoning: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const Reasoning = memo(
   ({
@@ -138,12 +136,12 @@ export const Reasoning = memo(
     );
   }
 );
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, max-lines-per-function, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable import/exports-last, import/group-exports, max-lines-per-function, react/forbid-component-props, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export -- ReasoningTriggerProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/exports-last, import/group-exports -- ReasoningTriggerProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
 /* oxlint-disable no-magic-numbers, no-undefined, react/jsx-no-literals, typescript/explicit-function-return-type -- getThinkingMessage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-no-literals: these existing labels and accessible text are this feature content; localization is a separate content migration; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
@@ -157,7 +155,7 @@ const getThinkingMessage = (isStreaming: boolean, duration?: number) => {
   return <p>Thought for {duration} seconds</p>;
 };
 /* oxlint-enable no-magic-numbers, no-undefined, react/jsx-no-literals, typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, no-ternary, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; no-ternary: derive the existing render or state alternative inline without introducing another mutable state variable (including isOpen ? "rotate-180" : "rotate-0"); oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
 
 export const ReasoningTrigger = memo(
   ({ className, children, ...props }: ReasoningTriggerProps) => {
@@ -187,18 +185,18 @@ export const ReasoningTrigger = memo(
     );
   }
 );
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, no-ternary, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export -- ReasoningContentProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name. */
+/* oxlint-disable import/exports-last, import/group-exports -- ReasoningContentProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
 export type ReasoningContentProps = ComponentProps<
   typeof CollapsibleContent
 > & {
   children: string;
 };
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export */
+/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; import/no-named-export: existing callers import this public component, type, or hook by name; oxc/no-rest-spread-properties: compose immutable state or forward the remaining typed props without mutating the caller object; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningContentProps). */
+/* oxlint-disable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; ; react/forbid-component-props: className and style are the existing Tailwind and primitive composition API; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningContentProps). */
 
 export const ReasoningContent = memo(
   ({
@@ -218,7 +216,7 @@ export const ReasoningContent = memo(
     </CollapsibleContent>
   )
 );
-/* oxlint-enable import/exports-last, import/group-exports, import/no-named-export, oxc/no-rest-spread-properties, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/exports-last, import/group-exports, react/forbid-component-props, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 Reasoning.displayName = "Reasoning";
 ReasoningTrigger.displayName = "ReasoningTrigger";
