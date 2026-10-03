@@ -200,7 +200,7 @@ export default defineConfig({
       ],
     },
     tabs: [
-      // href keeps the tab on the declared route (1.2) instead of falling back
+      // The href keeps the tab on the declared route (1.2) instead of falling back
       // to the section's first content page when path isn't a standalone page.
       { href: "/", label: "Docs", path: "/" },
       { href: "/cookbook", label: "Cookbook", path: "/cookbook" },

@@ -147,7 +147,9 @@ describe("Eve command recovery", () => {
         return Promise.resolve();
       },
       true,
-      () => {}
+      () => {
+        // This test verifies replay without an additional side effect.
+      }
     );
     expect(replayed).toBe(1);
   });
@@ -166,7 +168,9 @@ it("waits for authoritative acceptance after cancellation without submitting twi
       return Promise.resolve();
     },
     true,
-    () => {},
+    () => {
+      // This test verifies cancellation without an additional side effect.
+    },
     () => snapshots >= 2
   );
   expect(submissions).toBe(1);

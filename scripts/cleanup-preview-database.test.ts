@@ -47,7 +47,9 @@ const run = async ({
                 state: (getCount += 1) === 1 ? state : stateBeforeDelete,
               },
             }),
-          list: () => {},
+          list: () => {
+            // Pagination is handled by the mock; the list method is only a token.
+          },
         },
       },
     },

@@ -343,7 +343,7 @@ export const useEveFork = (
       editRestoreFailed ||
       busy ||
       isNavigating ||
-      !!pending,
+      Boolean(pending),
     modelSelection: {
       onChange: (value: SelectedModelValue) => {
         if (busy || pending || isNavigating) {

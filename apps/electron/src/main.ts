@@ -383,7 +383,7 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
     try {
       // oxlint-disable-next-line no-await-in-loop -- Poll sequentially until the native cookie and server session agree.
       const sessionResult = await electronAuthClient.getSession();
-      const hasUser = !!sessionResult.data?.user;
+      const hasUser = Boolean(sessionResult.data?.user);
 
       if (hasCookie && hasUser) {
         return true;

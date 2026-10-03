@@ -18,7 +18,7 @@ interface ShareMenuItemProps {
 
 export const ShareMenuItem = ({ onShare, children }: ShareMenuItemProps) => {
   const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
+  const isAuthenticated = Boolean(session?.user);
 
   if (!isAuthenticated) {
     return (

@@ -34,7 +34,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 test("storage purge removes files and recovers a lost deletion acknowledgement and an unwritten reservation", async () => {
   const owner = crypto.randomUUID();
   const keys = Array.from({ length: 3 }, () => createFileId());
-  const urls = keys.map(createFileUrl);
+  const urls = keys.map((key) => createFileUrl(key));
   await db.insert(user).values({
     email: `${owner}@test.invalid`,
     id: owner,

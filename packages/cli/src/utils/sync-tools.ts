@@ -271,7 +271,7 @@ const sourceFor = (
 
 const validateToolDependencies = (definitions: ToolDefinition[]): void => {
   const availableKeys = new Set(
-    registrationsFor(definitions).map(registrationKey)
+    registrationsFor(definitions).map((item) => registrationKey(item))
   );
   for (const definition of definitions) {
     const missingTools = definition.requiresTools.filter(
@@ -377,7 +377,9 @@ export const validateToolInstallation = (
   ) {
     throw new Error("Only one bundle per document kind can be installed.");
   }
-  const keys = registrationsFor(definitions).map(registrationKey);
+  const keys = registrationsFor(definitions).map((item) =>
+    registrationKey(item)
+  );
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
   }
@@ -400,7 +402,7 @@ export const syncTools = async (
   const uiPath = join(dir, "ui.ts");
   const documents = definitions.filter((item) => item.documentKind);
   const registrations = registrationsFor(definitions);
-  const keys = registrations.map(registrationKey);
+  const keys = registrations.map((item) => registrationKey(item));
   const { providerBody, toolBody, uiBody } = sourceFor(registrations);
   await mkdir(dir, { recursive: true });
   const [customTools, customUi] = await Promise.all([
@@ -443,7 +445,7 @@ export const syncTools = async (
   await writeFile(
     join(dir, "composer-tools.ts"),
     generatedSource(
-      `import type { LucideIcon } from "lucide-react";\n${composerTools.length ? `import { ${composerTools.map((item, index) => `${item.composer?.icon} as Icon${index}`).join(", ")} } from "lucide-react";` : ""}\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length ? `{\n${composerTools.map((item, index) => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
+      `import type { LucideIcon } from "lucide-react";\n${composerTools.length > 0 ? `import { ${composerTools.map((item, index) => `${item.composer?.icon} as Icon${index}`).join(", ")} } from "lucide-react";` : ""}\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item, index) => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
     )
   );
   const runner = definitions.find((item) => item.documentRunExport);

@@ -232,7 +232,7 @@ test("ChatJS upload remains durable through creation retries and message editing
       "Look at the attached square again"
     );
   } finally {
-    // files-sdk is ESM-only; run application cleanup with the project's Bun runtime.
+    // Note: `files-sdk` is ESM-only; run application cleanup with the project's Bun runtime.
     execFileSync("bun", [
       "-e",
       'import { deleteFilesByUrls } from "./lib/file-storage"; await deleteFilesByUrls(JSON.parse(process.argv[1]));',
@@ -344,7 +344,12 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
           .where(eq(eveFileReference.conversationId, conversationId));
         return rows.map((row) => row.key).toSorted();
       })
-      .toEqual(urls.slice(1).map(keyFromFileUrl).toSorted());
+      .toEqual(
+        urls
+          .slice(1)
+          .map((url) => keyFromFileUrl(url))
+          .toSorted()
+      );
     // Reload after durable acceptance, while the response is still in progress.
     await expect(
       page

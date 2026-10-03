@@ -143,7 +143,7 @@ const guestAttributesAllowed = (
   requiresModel: boolean
 ) =>
   expiresAt > new Date() &&
-  (!requiresModel || !!attributes.modelId) &&
+  (!requiresModel || Boolean(attributes.modelId)) &&
   (!attributes.modelId ||
     ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
       (model) => model === attributes.modelId

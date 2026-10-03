@@ -66,7 +66,9 @@ export const EveConversation = ({
   useEffect(() => onStatusChange?.("ready"), [onStatusChange]);
   useEffect(
     () =>
-      onNavigationBlockedChange?.(!draft.loaded || !!draft.error || pending),
+      onNavigationBlockedChange?.(
+        !draft.loaded || Boolean(draft.error) || pending
+      ),
     [onNavigationBlockedChange, draft.loaded, draft.error, pending]
   );
   return (

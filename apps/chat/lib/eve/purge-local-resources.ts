@@ -28,7 +28,7 @@ export const purgeLocalEveFamilyResources = async (
     family.nativeInventories
   );
   const inventory = await readLocalEveSandboxInventory(appRoot, family.runIds);
-  if (inventory.unattributedDirectories.length) {
+  if (inventory.unattributedDirectories.length > 0) {
     throw new Error(
       "Resolve unattributed local sandbox resources before cleanup."
     );

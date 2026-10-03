@@ -36,7 +36,7 @@ const useCompatibilityCheck = () => {
 };
 
 class StateBackedThread extends AbstractThread<UIMessage> {
-  constructor(threadState: ThreadState<UIMessage>) {
+  public constructor(threadState: ThreadState<UIMessage>) {
     super({ state: threadState });
   }
 }

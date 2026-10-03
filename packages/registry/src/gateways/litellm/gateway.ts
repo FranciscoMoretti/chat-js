@@ -43,7 +43,7 @@ export class LiteLLMGateway
   extends GatewayRuntime
   implements GatewayProvider<"litellm", string, string, never>
 {
-  readonly type = "litellm" as const;
+  public readonly type = "litellm" as const;
 
   private getProvider() {
     const apiKey = this.getApiKey();
@@ -58,19 +58,19 @@ export class LiteLLMGateway
     });
   }
 
-  createLanguageModel(modelId: string): LanguageModelV4 {
+  public createLanguageModel(modelId: string): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
 
-  createImageModel(modelId: string): ImageModel {
+  public createImageModel(modelId: string): ImageModel {
     const provider = this.getProvider();
     return provider.imageModel(modelId);
   }
 
   // The gateway interface requires a video factory even when unsupported.
   // eslint-disable-next-line class-methods-use-this
-  createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
+  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
 
@@ -92,7 +92,7 @@ export class LiteLLMGateway
     return `${normalizedBaseURL}/v1/models`;
   }
 
-  async fetchModels(): Promise<AiGatewayModel[]> {
+  public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
 
@@ -127,7 +127,7 @@ export class LiteLLMGateway
 
       const body = litellmModelsResponseSchema.parse(await response.json());
       const models = body.data;
-      const result = models.map(toAiGatewayModel);
+      const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(
         { modelCount: result.length },

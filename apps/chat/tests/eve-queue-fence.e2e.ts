@@ -22,14 +22,14 @@ const runIds: string[] = [];
 await installEvePostgresResourceFence(query);
 await installEvePostgresQueueFence(query, task);
 afterAll(async () => {
-  if (ids.length) {
+  if (ids.length > 0) {
     await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null where id::text in ${query(ids)}`;
     await query`select id from graphile_worker.complete_jobs(${query.array(ids)}::bigint[])`;
   }
   await query`delete from graphile_worker._private_tasks where identifier = ${task}`;
   await query`delete from workflow.eve_queue_tasks where identifier = ${task}`;
   await query`delete from workflow.eve_queue_purge_runs where task_identifier = ${task}`;
-  if (runIds.length) {
+  if (runIds.length > 0) {
     await query`delete from workflow.eve_resource_fences where resource in ${query(runIds.map((id) => `run:${id}`))}`;
   }
   await query.end();

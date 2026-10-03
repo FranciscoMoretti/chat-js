@@ -230,13 +230,12 @@ export const LexicalChatInput = ({
               data-testid={testId}
               onKeyDown={onKeyDown}
               onPaste={onPaste}
-              spellCheck={true}
+              spellCheck
               style={{
                 MozBoxShadow: "none",
                 WebkitBoxShadow: "none",
                 boxShadow: "none",
               }}
-              // aria-placeholder={placeholder}
             />
           }
           ErrorBoundary={LexicalErrorBoundary}

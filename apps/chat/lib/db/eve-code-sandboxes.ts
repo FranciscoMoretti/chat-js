@@ -129,7 +129,7 @@ export const listEveCodeSandboxesForDeletion = async (
       )
     );
   if (
-    !family.length ||
+    family.length === 0 ||
     family.some((row) => row.state !== "deleting" && row.state !== "deleted")
   ) {
     throw new Error(

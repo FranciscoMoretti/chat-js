@@ -37,7 +37,9 @@ const agent = (
   error: undefined,
   events: [],
   prewarm: () => Promise.resolve(),
-  reset: () => {},
+  reset: () => {
+    // This test runtime has no resettable external state.
+  },
   respond: () => Promise.resolve(),
   resume: () => Promise.resolve(),
   send: () => Promise.resolve(),

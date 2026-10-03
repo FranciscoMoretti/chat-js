@@ -139,8 +139,12 @@ export const sharedEvePart = (part: EveMessagePart): EveMessagePart[] => {
 
 export const sharedEveMessages = (events: readonly MessageStreamEvent[]) => {
   const reducer = defaultMessageReducer();
+  const reduceEvent = reducer.reduce;
   // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
-  const state = events.reduce(reducer.reduce, reducer.initial());
+  const state = events.reduce(
+    (current, event) => reduceEvent(current, event),
+    reducer.initial()
+  );
   const models = responseModelReferences(events);
   return state.messages.map((message) => {
     let modelId: string | undefined;

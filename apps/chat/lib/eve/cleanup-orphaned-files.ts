@@ -11,7 +11,7 @@ export const cleanupEveOrphanedFiles = async (cutoff: Date) => {
   const purge = async (keys: string[]) => {
     try {
       const files = await prepareEveOrphanedFilePurge(keys, cutoff);
-      if (!files.length) {
+      if (files.length === 0) {
         return;
       }
       await deleteFilesByUrls(files.map(({ key }) => createFileUrl(key)));
@@ -41,10 +41,10 @@ export const cleanupEveOrphanedFiles = async (cutoff: Date) => {
       batch = [];
     }
   }
-  if (batch.length) {
+  if (batch.length > 0) {
     await purge(batch);
   }
-  if (errors.length) {
+  if (errors.length > 0) {
     throw new AggregateError(
       errors,
       "EVE orphan cleanup is incomplete; retry cleanup."

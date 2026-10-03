@@ -8,8 +8,8 @@ export class RecursiveCharacterTextSplitter
   extends TextSplitter
   implements RecursiveCharacterTextSplitterParams
 {
-  separators: string[] = ["\n\n", "\n", ".", ",", ">", "<", " ", ""];
-  constructor(fields?: Partial<RecursiveCharacterTextSplitterParams>) {
+  public separators: string[] = ["\n\n", "\n", ".", ",", ">", "<", " ", ""];
+  public constructor(fields?: Partial<RecursiveCharacterTextSplitterParams>) {
     super(fields);
     this.separators = fields?.separators ?? this.separators;
   }
@@ -74,7 +74,7 @@ export class RecursiveCharacterTextSplitter
       finalChunks.push(...mergedText);
     }
   }
-  splitText(text: string): string[] {
+  public splitText(text: string): string[] {
     if (this.chunkOverlap >= this.chunkSize) {
       throw new Error("Cannot have chunkOverlap >= chunkSize");
     }

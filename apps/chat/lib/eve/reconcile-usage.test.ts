@@ -47,7 +47,7 @@ vi.mock("./activity", () => ({ ingestEveActivity: vi.fn() }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.ingest }));
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = {
+    public sessions = {
       attach: (sessionId: string) => ({
         async *stream(options: unknown) {
           mocks.streamOptions(options);

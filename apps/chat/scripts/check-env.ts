@@ -52,7 +52,7 @@ const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
   const missing = gatewayEnvRequirements
     .map((requirement) => getMissingRequirement(requirement, env))
     .filter((value) => value !== null);
-  if (!missing.length) {
+  if (missing.length === 0) {
     return null;
   }
   return {
@@ -74,7 +74,7 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
   const missing = storageEnvRequirements
     .map((requirement) => getMissingRequirement(requirement, env))
     .filter((value) => value !== null);
-  return missing.length
+  return missing.length > 0
     ? { feature: `fileStorage (${storageId})`, missing }
     : null;
 };
@@ -167,7 +167,7 @@ const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
     return null;
   }
 
-  const hasBaseUrl = !!(env.APP_URL || env.VERCEL_URL);
+  const hasBaseUrl = Boolean(env.APP_URL || env.VERCEL_URL);
   if (hasBaseUrl) {
     return null;
   }

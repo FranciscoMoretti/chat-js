@@ -34,7 +34,7 @@ export class MemoryThreadState<
   readonly #listeners = new Set<() => void>();
   #snapshot: ThreadStateSnapshot<TMessage>;
 
-  constructor(
+  public constructor(
     options: {
       initialTree?: MessageTreeSnapshot<TMessage>;
       messages?: TMessage[];
@@ -43,16 +43,16 @@ export class MemoryThreadState<
     this.#snapshot = createThreadStateSnapshot(options);
   }
 
-  getSnapshot = () => this.#snapshot;
+  public getSnapshot = () => this.#snapshot;
 
-  subscribe = (listener: () => void) => {
+  public subscribe = (listener: () => void) => {
     this.#listeners.add(listener);
     return () => {
       this.#listeners.delete(listener);
     };
   };
 
-  update: ThreadState<TMessage>["update"] = (updater) => {
+  public update: ThreadState<TMessage>["update"] = (updater) => {
     this.#snapshot = updater(this.#snapshot);
     for (const listener of this.#listeners) {
       listener();

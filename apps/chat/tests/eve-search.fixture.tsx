@@ -66,7 +66,7 @@ createRoot(root).render(
             pending={false}
             searching={false}
             error={false}
-            isSearch={true}
+            isSearch
             hasMore={false}
             loadingMore={false}
             disableLoadMore={false}

@@ -39,11 +39,11 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
   #callbacks: ThreadCallbacks<TMessage>;
   #thread: AbstractThread<TMessage> | undefined;
 
-  constructor(callbacks: ThreadCallbacks<TMessage>) {
+  public constructor(callbacks: ThreadCallbacks<TMessage>) {
     this.#callbacks = callbacks;
   }
 
-  update(
+  public update(
     thread: AbstractThread<TMessage>,
     callbacks: ThreadCallbacks<TMessage>
   ) {
@@ -51,28 +51,29 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     this.#callbacks = callbacks;
   }
 
-  readonly onData = (
+  public readonly onData = (
     dataPart: Parameters<NonNullable<ThreadCallbacks<TMessage>["onData"]>>[0]
   ) => this.#callbacks.onData?.(dataPart);
 
-  readonly onError = (error: Error) => this.#callbacks.onError?.(error);
+  public readonly onError = (error: Error) => this.#callbacks.onError?.(error);
 
-  readonly onFinish = (
+  public readonly onFinish = (
     event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onFinish"]>>[0]
   ) => this.#callbacks.onFinish?.(event);
 
-  readonly onToolCall = (
+  public readonly onToolCall = (
     event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onToolCall"]>>[0]
   ) => Promise.resolve(this.#callbacks.onToolCall?.(event));
 
-  readonly sendAutomaticallyWhen = (
+  public readonly sendAutomaticallyWhen = (
     event: Parameters<
       NonNullable<ThreadCallbacks<TMessage>["sendAutomaticallyWhen"]>
     >[0]
   ) => this.#callbacks.sendAutomaticallyWhen?.(event) ?? false;
 
-  readonly setMessages: UseChatHelpers<TMessage>["setMessages"] = (messages) =>
-    this.#thread?.setMessages(messages);
+  public readonly setMessages: UseChatHelpers<TMessage>["setMessages"] = (
+    messages
+  ) => this.#thread?.setMessages(messages);
 }
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {

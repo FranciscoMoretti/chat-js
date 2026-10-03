@@ -131,7 +131,7 @@ export const installPlan = async (
   const overwrite = Boolean(
     options.overwrite || options.fresh || replacingShared
   );
-  // shadcn infers destinations for native UI files. Until those paths are
+  // The shadcn installer infers destinations for native UI files. Until those paths are
   // explicit, they cannot participate in protection or registration rollback.
   if (overwrite) {
     const unprotected = plan.items.flatMap((item) =>
@@ -139,14 +139,14 @@ export const installPlan = async (
         .filter((file) => !file.target?.startsWith("~/"))
         .map((file) => `${item.name}: ${file.path}`)
     );
-    if (unprotected.length) {
+    if (unprotected.length > 0) {
       throw new Error(
         `Cannot safely overwrite inferred installer destinations: ${unprotected.join(", ")}. Give these registry files explicit ~/ targets before combining them with provider installation or --overwrite. No source was installed.`
       );
     }
   }
   const protectedFiles =
-    plan.replacements.length || replacingShared
+    plan.replacements.length > 0 || replacingShared
       ? [...targets, ...retired.flat()]
       : [];
   if (!options.fresh && !options.overwrite) {
@@ -192,7 +192,7 @@ export const installPlan = async (
       result.status === "rejected" ? [String(result.reason)] : []
     );
     throw new Error(
-      `Installation did not complete. ${restorationErrors.length ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : error}`,
+      `Installation did not complete. ${restorationErrors.length > 0 ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : error}`,
       { cause: error }
     );
   }

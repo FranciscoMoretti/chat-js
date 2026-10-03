@@ -69,7 +69,7 @@ export const SidebarProjectItem = ({
         </InternalLink>
       </SidebarMenuButton>
 
-      <DropdownMenu modal={true}>
+      <DropdownMenu modal>
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"

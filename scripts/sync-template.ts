@@ -119,13 +119,13 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
 const applyElectronTemplateTransforms = async (
   destination: string
 ): Promise<void> => {
-  // tsconfig.json: rewrite monorepo-specific @/ alias to single-app path
+  // The tsconfig.json transform rewrites the monorepo-specific @/ alias to a single-app path.
   const tsconfigPath = join(destination, "tsconfig.json");
   let tsconfig = await readFile(tsconfigPath, "utf-8");
   tsconfig = tsconfig.replace(/"\.\.\/chat\/\*"/u, '"../*"');
   await writeFile(tsconfigPath, tsconfig);
 
-  // package.json: replace hardcoded package name and repository
+  // The package.json transform replaces the hardcoded package name and repository.
   const packageJsonPath = join(destination, "package.json");
   let packageJson = await readFile(packageJsonPath, "utf-8");
   packageJson = packageJson.replace(

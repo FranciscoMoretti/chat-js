@@ -38,7 +38,7 @@ export const SessionProvider = ({
     isPending: isClientPending,
     error: clientError,
   } = authClient.useSession();
-  // undefined = not seeded from the server tree yet
+  // `undefined` means the server tree has not seeded the session yet.
   const [serverSession, setServerSession] = useState<
     Session | null | undefined
   >();

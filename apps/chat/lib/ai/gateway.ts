@@ -32,17 +32,19 @@ export class VercelGateway
       VercelVideoModelId
     >
 {
-  readonly type = "vercel" as const;
+  public readonly type = "vercel" as const;
 
-  createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
     return this.getProvider()(modelId);
   }
 
-  createImageModel(modelId: VercelImageModelId): ImageModel {
+  public createImageModel(modelId: VercelImageModelId): ImageModel {
     return this.getProvider().imageModel(modelId);
   }
 
-  createVideoModel(modelId: VercelVideoModelId): Experimental_VideoModelV4 {
+  public createVideoModel(
+    modelId: VercelVideoModelId
+  ): Experimental_VideoModelV4 {
     return this.getProvider().videoModel(modelId);
   }
 
@@ -57,7 +59,7 @@ export class VercelGateway
     return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
   }
 
-  async fetchModels(): Promise<AiGatewayModel[]> {
+  public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
     if (!apiKey) {

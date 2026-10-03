@@ -12,7 +12,7 @@ vi.mock("./connection-options", () => ({
 }));
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
+    public sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
   },
 }));
 

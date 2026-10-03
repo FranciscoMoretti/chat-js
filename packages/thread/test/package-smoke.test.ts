@@ -112,8 +112,8 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       );
       run(["node", coreConsumerPath], temporaryDirectory);
       await Promise.all(
-        ["react", "@ai-sdk/react", "@types/react", "typescript"].map(
-          linkDependency
+        ["react", "@ai-sdk/react", "@types/react", "typescript"].map((name) =>
+          linkDependency(name)
         )
       );
 

@@ -43,8 +43,12 @@ test("reports ready only with database and Eve available", async () => {
 });
 test("bounds a stalled database check", async () => {
   vi.useFakeTimers();
-  // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
-  database.mockReturnValue(new Promise(() => {}));
+  database.mockReturnValue(
+    // oxlint-disable-next-line promise/avoid-new -- Bridge the readiness timer or never-settling test fixture to the awaited operation.
+    new Promise(() => {
+      // Leave the readiness check pending to exercise its timeout.
+    })
+  );
   vi.stubGlobal(
     "fetch",
     vi

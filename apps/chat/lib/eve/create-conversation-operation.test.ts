@@ -27,7 +27,9 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getEveCreation: mocks.creation,
 }));
 vi.mock("@/lib/db/eve-guests", () => ({
-  readEveGuestOwner: async () => {},
+  readEveGuestOwner: async () => {
+    // This test exercises non-guest conversation creation.
+  },
 }));
 vi.mock("@/lib/db/credits", () => ({ canSpend: () => Promise.resolve(true) }));
 vi.mock("@/lib/db/eve-files", () => ({ assertEveFilesOwned: vi.fn() }));

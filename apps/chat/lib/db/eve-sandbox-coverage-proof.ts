@@ -53,10 +53,10 @@ export const verifyEveSandboxCoverage = async (
       const actual = inventory.runs.map((run) => run.id).toSorted();
       if (
         !isDeepStrictEqual(actual, runIds) ||
-        inventory.activeRunIds.length ||
-        inventory.missingRunIds.length ||
-        inventory.ambiguousStreamIds.length ||
-        inventory.sandboxCoverage.unresolvedRunIds.length
+        inventory.activeRunIds.length > 0 ||
+        inventory.missingRunIds.length > 0 ||
+        inventory.ambiguousStreamIds.length > 0 ||
+        inventory.sandboxCoverage.unresolvedRunIds.length > 0
       ) {
         throw new Error(
           "Resolve incomplete sandbox workflow coverage before cleanup."

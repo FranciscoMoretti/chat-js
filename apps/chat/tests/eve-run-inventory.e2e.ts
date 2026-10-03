@@ -16,10 +16,10 @@ const query = postgres(env.DATABASE_URL, { max: 1 });
 const ids: string[] = [];
 const streamIds: string[] = [];
 afterAll(async () => {
-  if (streamIds.length) {
+  if (streamIds.length > 0) {
     await query`delete from workflow.workflow_stream_chunks where stream_id in ${query(streamIds)}`;
   }
-  if (ids.length) {
+  if (ids.length > 0) {
     await query`delete from workflow.workflow_runs where id in ${query(ids)}`;
   }
   await query.end();

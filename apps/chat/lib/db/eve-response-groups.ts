@@ -308,7 +308,7 @@ export const getEveResponseGroupForConversation = async (
   const boundFamily = family.flatMap((member) =>
     member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
   );
-  if (!boundFamily.length) {
+  if (boundFamily.length === 0) {
     return;
   }
   const operationIds = sql`ARRAY[${sql.join(
@@ -367,7 +367,7 @@ export const getEveResponseGroupForConversation = async (
       )
     ),
   ];
-  if (!candidateRootIds.length) {
+  if (candidateRootIds.length === 0) {
     return;
   }
   const groupFamilies = await db

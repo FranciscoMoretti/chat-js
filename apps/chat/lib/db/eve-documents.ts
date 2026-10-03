@@ -59,7 +59,7 @@ export const purgeEveFamilyDocuments = async (
         )
       )
       .orderBy(eveConversation.id);
-    if (!family.length || family.some((row) => row.state !== "deleting")) {
+    if (family.length === 0 || family.some((row) => row.state !== "deleting")) {
       throw new Error(
         "The entire conversation family must be pending deletion."
       );
@@ -194,7 +194,7 @@ const backfillDocumentCheckpoints =
       );
     const known = new Set(existing.map((checkpoint) => checkpoint.turnIndex));
     const missing = turnIndexes.filter((turnIndex) => !known.has(turnIndex));
-    if (!missing.length) {
+    if (missing.length === 0) {
       return;
     }
     const heads = await tx
@@ -258,7 +258,7 @@ const backfillDocumentCheckpoints =
             ]
           : [];
       });
-      if (entries.length) {
+      if (entries.length > 0) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
         await tx.insert(eveDocumentCheckpointEntry).values(entries);
       }
@@ -469,7 +469,7 @@ const inheritImportedDocumentCheckpoints = async (
           : lt(eveImportedDocumentCheckpoint.messageIndex, beforeMessageIndex)
       )
     );
-  if (!headers.length) {
+  if (headers.length === 0) {
     return;
   }
   const copied = await tx
@@ -477,7 +477,7 @@ const inheritImportedDocumentCheckpoints = async (
     .values(headers.map((header) => ({ ...header, conversationId })))
     .onConflictDoNothing()
     .returning({ messageIndex: eveImportedDocumentCheckpoint.messageIndex });
-  if (!copied.length) {
+  if (copied.length === 0) {
     return;
   }
   const entries = await tx
@@ -493,7 +493,7 @@ const inheritImportedDocumentCheckpoints = async (
         )
       )
     );
-  if (entries.length) {
+  if (entries.length > 0) {
     await tx
       .insert(eveImportedDocumentCheckpointEntry)
       .values(entries.map((entry) => ({ ...entry, conversationId })));
@@ -530,7 +530,7 @@ const initializeImportedForkDocuments = async (
         eq(eveImportedDocumentCheckpointEntry.messageIndex, messageIndex)
       )
     );
-  if (entries.length) {
+  if (entries.length > 0) {
     await tx
       .insert(eveDocumentHead)
       .values(
@@ -580,7 +580,7 @@ const inheritDocumentCheckpoints = async (
     );
   // The child inherits the native transcript prefix, so it must inherit its
   // document boundaries too. A later fork may target any earlier turn.
-  if (inheritedCheckpoints.length) {
+  if (inheritedCheckpoints.length > 0) {
     const copied = await tx
       .insert(eveDocumentCheckpoint)
       .values(
@@ -591,7 +591,7 @@ const inheritDocumentCheckpoints = async (
       )
       .onConflictDoNothing()
       .returning({ turnIndex: eveDocumentCheckpoint.turnIndex });
-    if (copied.length) {
+    if (copied.length > 0) {
       const entries = await tx
         .select()
         .from(eveDocumentCheckpointEntry)
@@ -605,7 +605,7 @@ const inheritDocumentCheckpoints = async (
             )
           )
         );
-      if (entries.length) {
+      if (entries.length > 0) {
         await tx
           .insert(eveDocumentCheckpointEntry)
           .values(entries.map((entry) => ({ ...entry, conversationId })));
@@ -657,7 +657,7 @@ const initializeNamedForkDocuments = async (
         eq(eveNamedDocumentCheckpointEntry.checkpointId, checkpointId)
       )
     );
-  if (entries.length) {
+  if (entries.length > 0) {
     await tx
       .insert(eveDocumentHead)
       .values(
@@ -749,7 +749,7 @@ export const initializeEveForkDocuments = async (
             eq(eveDocumentCheckpointEntry.ownerId, ownerId)
           )
         );
-      if (entries.length) {
+      if (entries.length > 0) {
         await tx
           .insert(eveDocumentHead)
           .values(
@@ -841,7 +841,7 @@ export const captureEveDocumentCheckpoint = async (
       .values({ conversationId, ownerId, turnIndex })
       .onConflictDoNothing()
       .returning();
-    if (!inserted.length) {
+    if (inserted.length === 0) {
       return;
     }
     const heads = await tx
@@ -853,7 +853,7 @@ export const captureEveDocumentCheckpoint = async (
           eq(eveDocumentHead.ownerId, ownerId)
         )
       );
-    if (heads.length) {
+    if (heads.length > 0) {
       await tx
         .insert(eveDocumentCheckpointEntry)
         .values(heads.map((head) => ({ ...head, turnIndex })));
@@ -921,7 +921,7 @@ export const captureEveNamedDocumentCheckpoint = async (
           eq(eveDocumentHead.ownerId, ownerId)
         )
       );
-    if (heads.length) {
+    if (heads.length > 0) {
       await tx
         .insert(eveNamedDocumentCheckpointEntry)
         .values(heads.map((head) => ({ ...head, checkpointId })));

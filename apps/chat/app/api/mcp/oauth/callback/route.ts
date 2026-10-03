@@ -49,7 +49,7 @@ export const GET = async (request: NextRequest) => {
   };
 
   log.info(
-    { error, hasCode: !!code, hasState: !!state },
+    { error, hasCode: Boolean(code), hasState: Boolean(state) },
     "OAuth callback received"
   );
 
@@ -79,7 +79,10 @@ export const GET = async (request: NextRequest) => {
     });
   }
   if (!(code && state)) {
-    log.error({ code: !!code, state: !!state }, "Missing code or state");
+    log.error(
+      { code: Boolean(code), state: Boolean(state) },
+      "Missing code or state"
+    );
     return redirectToConnector({
       errorMessage: "Missing authorization code or state parameter",
     });

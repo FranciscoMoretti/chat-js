@@ -22,7 +22,7 @@ export default defineHook({
       const entries = eveEventSearchText(event);
       const restoring =
         event.type === "history.restored" || event.type === "history.seeded";
-      if (!restoring && event.type !== "turn.started" && !entries.length) {
+      if (!restoring && event.type !== "turn.started" && entries.length === 0) {
         return;
       }
       let omitted = 0;
@@ -64,7 +64,7 @@ export default defineHook({
       if (restoring) {
         return;
       }
-      if (!pending.get().length && !needsRecovery.get()) {
+      if (pending.get().length === 0 && !needsRecovery.get()) {
         return;
       }
       try {

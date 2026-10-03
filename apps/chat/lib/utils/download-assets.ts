@@ -185,7 +185,7 @@ export const replaceFilePartUrlByBinaryDataInMessages = async (
     if (part.type === "image") {
       return mapImagePart(part as ImagePart, downloaded);
     }
-    // pass-through for text/tool/reasoning/etc
+    // Pass through text, tool, reasoning, and other parts unchanged.
     return part;
   };
 

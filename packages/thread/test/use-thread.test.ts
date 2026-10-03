@@ -166,8 +166,12 @@ describe("useThread", () => {
   test("uses current callbacks without replacing the chat transport", async () => {
     const firstTransport = new RejectingTransport();
     const secondTransport = new RejectingTransport();
-    const firstError = mock(() => {});
-    const secondError = mock(() => {});
+    const firstError = mock(() => {
+      /* Ignore transport errors while checking callback replacement. */
+    });
+    const secondError = mock(() => {
+      /* Ignore transport errors while checking callback replacement. */
+    });
     const hook = renderUseThread({
       id: "thread-1",
       onError: firstError,

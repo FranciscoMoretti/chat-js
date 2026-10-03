@@ -13,7 +13,7 @@ const query = postgres(env.DATABASE_URL, { max: 1 });
 const taskIdentifier = `eve-queue-fixture-${crypto.randomUUID()}`;
 const jobIds: string[] = [];
 afterAll(async () => {
-  if (jobIds.length) {
+  if (jobIds.length > 0) {
     // Only the fixture jobs are deliberately locked by this test.
     await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null
       where id::text in ${query(jobIds)}`;

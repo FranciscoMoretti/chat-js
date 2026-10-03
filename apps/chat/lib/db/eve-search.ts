@@ -61,7 +61,7 @@ export const indexEveSearchText = async (
   conversationId: string,
   entries: readonly EveSearchText[]
 ) => {
-  if (entries.length) {
+  if (entries.length > 0) {
     await db.transaction((tx) =>
       writeEveSearchText(tx, ownerId, conversationId, entries)
     );
@@ -146,7 +146,7 @@ export const searchEveConversations = async (
     with parsed as (select websearch_to_tsquery('simple', ${query}) as terms),
     query as (
       select case when ${prefixLastWord}
-        then to_tsquery('simple', regexp_replace(terms::text, ${finalSearchOperand}, ${"\\1\\2:*\\3"}))
+        then to_tsquery('simple', regexp_replace(terms::text, ${finalSearchOperand}, ${String.raw`\1\2:*\3`}))
         else terms end as terms
       from parsed
     ),

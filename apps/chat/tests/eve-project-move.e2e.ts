@@ -45,7 +45,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
     );
     const projectsRoute = (url: URL) => url.pathname.includes("project.list");
     let releaseProjects: () => void = () => {
-      /* empty */
+      /* The gate is not ready to release before the route is intercepted. */
     };
     const projectsGate = new Promise<void>((resolve) => {
       releaseProjects = resolve;
@@ -117,7 +117,7 @@ test("moves native conversations from sidebar and project rows with recoverable 
       style: screenshotStyle,
     });
     let releaseMove: () => void = () => {
-      /* empty */
+      /* The gate is not ready to release before the route is intercepted. */
     };
     const moveGate = new Promise<void>((resolve) => {
       releaseMove = resolve;

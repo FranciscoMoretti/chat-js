@@ -8,7 +8,7 @@ export const prepareEveOrphanedFilePurge = async (
   keys: string[],
   cutoff: Date
 ) => {
-  if (!keys.length) {
+  if (keys.length === 0) {
     return [];
   }
   if (keys.length > 100) {

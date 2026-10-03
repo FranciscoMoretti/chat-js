@@ -43,7 +43,7 @@ export class ThreadRunChat<
 > extends AbstractChat<TMessage> {
   readonly #state: ThreadRunState<TMessage>;
 
-  constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
+  public constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
     const responseMessageId = host.generateMessageId();
     const state = new ThreadRunState(host, spec);
     const transport: ChatTransport<TMessage> = {
@@ -139,22 +139,22 @@ export class ThreadRunChat<
     super.setStatus(options);
   }
 
-  refreshPath() {
+  public refreshPath() {
     this.#state.refreshPath();
   }
 
-  start(options?: ChatRequestOptions) {
+  public start(options?: ChatRequestOptions) {
     return this.sendMessage(undefined, options);
   }
 
-  startWithMessage(
+  public startWithMessage(
     message: NonNullable<Parameters<AbstractChat<TMessage>["sendMessage"]>[0]>,
     options?: ChatRequestOptions
   ) {
     return this.sendMessage(message, options);
   }
 
-  regenerateMessage(messageId: string, options?: ChatRequestOptions) {
+  public regenerateMessage(messageId: string, options?: ChatRequestOptions) {
     return this.regenerate({ ...options, messageId });
   }
 }

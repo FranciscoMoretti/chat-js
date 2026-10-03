@@ -12,7 +12,7 @@ import { config } from "../config";
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 
 export class EveModelUnavailableError extends Error {
-  constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "EveModelUnavailableError";
   }
@@ -20,7 +20,9 @@ export class EveModelUnavailableError extends Error {
 
 export const getEveModelDefinition = (
   requestedId?: string,
-  models = getFallbackModels(config.ai.gateway).map(toModelData)
+  models = getFallbackModels(config.ai.gateway).map((model) =>
+    toModelData(model)
+  )
 ) => {
   const id = requestedId ?? config.ai.workflows.chat;
   const model = models.find(
@@ -41,7 +43,7 @@ export const getEveModelDefinition = (
     apiModelId: model.id as Parameters<
       InstalledGateway["createLanguageModel"]
     >[0],
-    reasoning: !!model.reasoning && id.endsWith("-reasoning"),
+    reasoning: Boolean(model.reasoning) && id.endsWith("-reasoning"),
   };
 };
 
@@ -53,7 +55,7 @@ export const loadEveModelDefinition = async (requestedId?: string) => {
     loading ??= (async () => {
       try {
         const models = await getActiveGateway().fetchModels();
-        const converted = models.map(toModelData);
+        const converted = models.map((model) => toModelData(model));
         catalog = { expires: Date.now() + 3_600_000, models: converted };
         return converted;
       } finally {

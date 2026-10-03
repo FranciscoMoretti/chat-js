@@ -274,7 +274,7 @@ export const EveHistoryList = ({
           {history.isFetchingNextPage ? "Loading…" : "Load more conversations"}
         </Button>
       )}
-      {!(filtered.length || history.isPending || history.isError) &&
+      {!(filtered.length > 0 || history.isPending || history.isError) &&
         (projectId ? (
           <div className="border-border/60 rounded-xl border px-4 py-6">
             <p className="text-foreground text-sm font-medium">

@@ -40,7 +40,7 @@ export const draftMessage = (
   text: string,
   attachments: DraftAttachment[]
 ): EveMessageInput => {
-  if (!attachments.length) {
+  if (attachments.length === 0) {
     return eveMessageInput.parse(text);
   }
   return eveMessageInput.parse([

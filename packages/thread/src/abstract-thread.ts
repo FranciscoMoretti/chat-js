@@ -85,18 +85,18 @@ const createMessageFromInput = async <TMessage extends UIMessage>({
 };
 
 export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
-  readonly id: string;
-  readonly dataPartSchemas: AbstractThreadOptions<TMessage>["dataPartSchemas"];
-  readonly generateMessageId: NonNullable<
+  public readonly id: string;
+  public readonly dataPartSchemas: AbstractThreadOptions<TMessage>["dataPartSchemas"];
+  public readonly generateMessageId: NonNullable<
     AbstractThreadOptions<TMessage>["generateId"]
   >;
-  readonly messageMetadataSchema: AbstractThreadOptions<TMessage>["messageMetadataSchema"];
-  onData: AbstractThreadOptions<TMessage>["onData"];
-  onError: AbstractThreadOptions<TMessage>["onError"];
-  onFinish: AbstractThreadOptions<TMessage>["onFinish"];
-  onToolCall: AbstractThreadOptions<TMessage>["onToolCall"];
-  sendAutomaticallyWhen: AbstractThreadOptions<TMessage>["sendAutomaticallyWhen"];
-  transport: ChatTransport<TMessage>;
+  public readonly messageMetadataSchema: AbstractThreadOptions<TMessage>["messageMetadataSchema"];
+  public onData: AbstractThreadOptions<TMessage>["onData"];
+  public onError: AbstractThreadOptions<TMessage>["onError"];
+  public onFinish: AbstractThreadOptions<TMessage>["onFinish"];
+  public onToolCall: AbstractThreadOptions<TMessage>["onToolCall"];
+  public sendAutomaticallyWhen: AbstractThreadOptions<TMessage>["sendAutomaticallyWhen"];
+  public transport: ChatTransport<TMessage>;
 
   readonly #runHost: ThreadRunHost<TMessage>;
   readonly #runs: RunRegistry<TMessage>;
@@ -130,56 +130,59 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     }
   }
 
-  getSnapshot = () => this.#state.getSnapshot();
+  public getSnapshot = () => this.#state.getSnapshot();
 
-  subscribe = (listener: () => void) => this.#state.subscribe(listener);
+  public subscribe = (listener: () => void) => this.#state.subscribe(listener);
 
-  addMessage(message: TMessage, parentId: string | null) {
+  public addMessage(message: TMessage, parentId: string | null) {
     this.upsertMessage(message, parentId);
   }
 
-  addToolApprovalResponse: AbstractChat<TMessage>["addToolApprovalResponse"] =
+  public addToolApprovalResponse: AbstractChat<TMessage>["addToolApprovalResponse"] =
     async (response) => {
       const run = this.getOrCreateRunForApproval(response.id);
       await run.chat.addToolApprovalResponse(response);
     };
 
-  addToolOutput: AbstractChat<TMessage>["addToolOutput"] = async (output) => {
+  public addToolOutput: AbstractChat<TMessage>["addToolOutput"] = async (
+    output
+  ) => {
     const run = this.getOrCreateRunForToolCall(output.toolCallId);
     await run.chat.addToolOutput(output);
   };
 
-  addToolResult: AbstractChat<TMessage>["addToolResult"] = this.addToolOutput;
+  public addToolResult: AbstractChat<TMessage>["addToolResult"] =
+    this.addToolOutput;
 
-  getTreeSnapshot() {
+  public getTreeSnapshot() {
     return this.readTree((tree) => tree.getSnapshot());
   }
 
-  getChildren(messageId: string | null) {
+  public getChildren(messageId: string | null) {
     return this.readTree((tree) => tree.getChildren(messageId));
   }
 
-  getLeaves(messageId: string | null = null) {
+  public getLeaves(messageId: string | null = null) {
     return this.readTree((tree) => tree.getLeaves(messageId));
   }
 
-  getMessage(messageId: string) {
+  public getMessage(messageId: string) {
     return this.readTree((tree) => tree.getMessage(messageId));
   }
 
-  getParent(messageId: string) {
+  public getParent(messageId: string) {
     return this.readTree((tree) => tree.getParent(messageId));
   }
 
-  getPath(messageId?: string | null) {
+  public getPath(messageId?: string | null) {
     return this.readTree((tree) => tree.getPath(messageId));
   }
 
-  getSiblings(messageId: string) {
+  public getSiblings(messageId: string) {
     return this.readTree((tree) => tree.getSiblings(messageId));
   }
 
-  setActiveRun(runId: string) {
+  public setActiveRun(runId: string) {
     const run = this.#runs.require(runId);
     this.updateTree((tree) => {
       tree.setCursor(run.spec.messageId ?? run.spec.initialPathMessageId);
@@ -187,12 +190,12 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     });
   }
 
-  setCursor(messageId: string | null) {
+  public setCursor(messageId: string | null) {
     this.#runs.select(null);
     this.updateTree((tree) => tree.setCursor(messageId));
   }
 
-  setCursorToParentOf(messageId: string) {
+  public setCursorToParentOf(messageId: string) {
     this.#runs.select(null);
     this.updateTree((tree) => tree.setCursorToParentOf(messageId));
   }
@@ -238,7 +241,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     });
   }
 
-  regenerate: AbstractChat<TMessage>["regenerate"] = async ({
+  public regenerate: AbstractChat<TMessage>["regenerate"] = async ({
     messageId,
     ...options
   } = {}) => {
@@ -291,11 +294,11 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     await run.finished;
   };
 
-  upsertMessage(message: TMessage, parentId: string | null) {
+  public upsertMessage(message: TMessage, parentId: string | null) {
     this.updateTree((tree) => tree.upsertMessage(message, parentId));
   }
 
-  removeMessage(messageId: string) {
+  public removeMessage(messageId: string) {
     this.updateTree((tree) => tree.removeLeaf(messageId));
   }
 
@@ -303,7 +306,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.updateTree((tree) => tree.updatePath(messages));
   }
 
-  resumeStream: AbstractChat<TMessage>["resumeStream"] = async (
+  public resumeStream: AbstractChat<TMessage>["resumeStream"] = async (
     options = {}
   ) => {
     const run =
@@ -314,17 +317,22 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     await this.resumeRunRequest(run, options);
   };
 
-  resumeRun = async (runId: string, options: ChatRequestOptions = {}) => {
+  public resumeRun = async (
+    runId: string,
+    options: ChatRequestOptions = {}
+  ) => {
     await this.resumeRunRequest(this.#runs.require(runId), options);
   };
 
-  restore(snapshot: MessageTreeSnapshot<TMessage>) {
+  public restore(snapshot: MessageTreeSnapshot<TMessage>) {
     this.assertCanResetTree();
     this.#runs.clear();
     this.updateTree((tree) => tree.restore(snapshot));
   }
 
-  setMessages(messages: TMessage[] | ((messages: TMessage[]) => TMessage[])) {
+  public setMessages(
+    messages: TMessage[] | ((messages: TMessage[]) => TMessage[])
+  ) {
     const nextMessages =
       typeof messages === "function"
         ? messages(this.getSnapshot().messages)
@@ -333,7 +341,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.updateTree((tree) => tree.setPath(nextMessages));
   }
 
-  sendMessage = async (
+  public sendMessage = async (
     input?: SendMessageInput<TMessage>,
     options?: TreeSendOptions
   ) => {
@@ -363,7 +371,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     await run.finished;
   };
 
-  startRun = async ({
+  public startRun = async ({
     follow: requestedFollow,
     from,
     message: input,
@@ -429,34 +437,35 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     });
   };
 
-  clearError = () => {
+  public clearError = () => {
     const run = this.getSelectedRunRecord();
     if (run) {
       run.chat.clearError();
     }
   };
 
-  stop = () => this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve();
+  public stop = () =>
+    this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve();
 
-  async stopAll() {
+  public async stopAll() {
     await Promise.all(this.#runs.getActive().map((run) => run.chat.stop()));
   }
 
-  stopRun(runId: string) {
+  public stopRun(runId: string) {
     return this.#runs.get(runId)?.chat.stop() ?? Promise.resolve();
   }
 
-  stopRunForMessage(messageId: string) {
+  public stopRunForMessage(messageId: string) {
     const run = this.getRunForMessage(messageId);
     return run ? this.stopRun(run.id) : Promise.resolve();
   }
 
-  getRun(runId: string) {
+  public getRun(runId: string) {
     const run = this.#runs.get(runId);
     return run ? RunRegistry.toSnapshot(run) : undefined;
   }
 
-  getRunForMessage(messageId: string) {
+  public getRunForMessage(messageId: string) {
     const run = this.#runs.getForMessage(messageId);
     return run ? RunRegistry.toSnapshot(run) : undefined;
   }
@@ -801,7 +810,7 @@ export abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.#runs.add(record);
     this.publish();
     const finished = this.publishWhenFinished(start(chat));
-    // startRun may be detached; observing the rejection keeps finished awaitable.
+    // Callers can still await detached startRun calls through the finished promise.
     void (async () => {
       try {
         await finished;

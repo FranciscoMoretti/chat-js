@@ -134,16 +134,16 @@ export const fenceEvePostgresResourcesInTransaction = async (
     where id in ${query(runIds)} and status not in ('completed', 'failed', 'cancelled')
     limit 1
   `;
-  if (active.length) {
+  if (active.length > 0) {
     throw new Error("Retire active runs before fencing their payloads.");
   }
-  if (streamIds.length) {
+  if (streamIds.length > 0) {
     const ambiguous = await query`
       select stream_id from workflow.workflow_stream_chunks
       where stream_id in ${query(streamIds)}
         and (run_id is null or run_id not in ${query(runIds)}) limit 1
     `;
-    if (ambiguous.length) {
+    if (ambiguous.length > 0) {
       throw new Error("Stream ownership must be resolved before fencing.");
     }
   }

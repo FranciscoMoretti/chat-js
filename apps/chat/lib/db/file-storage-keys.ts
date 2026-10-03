@@ -16,7 +16,7 @@ export const storageKeyForFile = async (fileId: string) => {
 };
 
 export const fileIdsForStorageKeys = async (storageKeys: string[]) => {
-  if (!storageKeys.length) {
+  if (storageKeys.length === 0) {
     return new Map<string, string>();
   }
   const files = await db

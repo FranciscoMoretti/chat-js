@@ -46,7 +46,7 @@ export class OpenAIGateway
   implements
     GatewayProvider<"openai", OpenaiLanguageModelId, OpenaiImageModelId, never>
 {
-  readonly type = "openai" as const;
+  public readonly type = "openai" as const;
 
   private getProvider() {
     const apiKey = this.getApiKey();
@@ -56,19 +56,19 @@ export class OpenAIGateway
     return createOpenAI({ apiKey });
   }
 
-  createLanguageModel(modelId: OpenaiLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(modelId: OpenaiLanguageModelId): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
 
-  createImageModel(modelId: OpenaiImageModelId): ImageModel {
+  public createImageModel(modelId: OpenaiImageModelId): ImageModel {
     const provider = this.getProvider();
     return provider.image(modelId);
   }
 
   // The gateway interface requires a video factory even when unsupported.
   // eslint-disable-next-line class-methods-use-this
-  createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
+  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
 
@@ -76,7 +76,7 @@ export class OpenAIGateway
     return this.env.OPENAI_API_KEY;
   }
 
-  async fetchModels(): Promise<AiGatewayModel[]> {
+  public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
     if (!apiKey) {
@@ -105,7 +105,7 @@ export class OpenAIGateway
 
       const body = await response.json();
       const models = (body.data ?? []) as OpenAIModelResponse[];
-      const result = models.map(toAiGatewayModel);
+      const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(
         { modelCount: result.length },

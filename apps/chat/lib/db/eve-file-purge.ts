@@ -20,7 +20,7 @@ const deletingFamilyIds = async (
         eq(eveConversation.chatId, rootId)
       )
     );
-  if (!family.length || family.some((row) => row.state !== "deleting")) {
+  if (family.length === 0 || family.some((row) => row.state !== "deleting")) {
     throw new Error("The entire conversation family must be pending deletion.");
   }
   return family.map((row) => row.id);
@@ -66,7 +66,7 @@ export const prepareEveFamilyFilePurge = async (
 
 /** Call only after the provider confirms removal; no file identity is recycled. */
 export const completeEveFilePurge = async (ownerId: string, keys: string[]) => {
-  if (!keys.length) {
+  if (keys.length === 0) {
     return;
   }
   await db.transaction(async (tx) => {

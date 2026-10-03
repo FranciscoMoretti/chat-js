@@ -24,7 +24,7 @@ const native = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));
 vi.mock("eve/client", async (original) => ({
   ...(await original<typeof EveClient>()),
   Client: class {
-    sessions = { attach: native.attach };
+    public sessions = { attach: native.attach };
   },
 }));
 

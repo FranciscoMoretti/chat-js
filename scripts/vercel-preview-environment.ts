@@ -1,5 +1,5 @@
 export class PreviewConfigurationError extends Error {
-  override name = "PreviewConfigurationError";
+  public override name = "PreviewConfigurationError";
 }
 
 // PostgreSQL URLs use a non-special scheme, so normalize DNS names explicitly.

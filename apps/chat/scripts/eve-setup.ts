@@ -80,7 +80,7 @@ const run = async () => {
       select name from unnest(${required}::text[]) as name
       where to_regclass(name) is null
     `;
-    if (missing.length) {
+    if (missing.length > 0) {
       throw new Error(
         "EVE schema is incomplete. Run eve:setup with a database role allowed to apply migrations."
       );

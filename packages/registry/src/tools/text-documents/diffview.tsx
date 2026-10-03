@@ -26,19 +26,21 @@ type SerializedDiffTextNode = SerializedTextNode & {
 
 // Custom diff text node that supports styling
 class DiffTextNode extends TextNode {
-  __diffType?: DiffTypeValue;
+  public __diffType?: DiffTypeValue;
 
-  static getType(): string {
+  public static getType(): string {
     return "diff-text";
   }
 
-  static clone(node: DiffTextNode): DiffTextNode {
+  public static clone(node: DiffTextNode): DiffTextNode {
     const newNode = new DiffTextNode(node.__text, node.__key);
     newNode.__diffType = node.__diffType;
     return newNode;
   }
 
-  static importJSON(serializedNode: SerializedDiffTextNode): DiffTextNode {
+  public static importJSON(
+    serializedNode: SerializedDiffTextNode
+  ): DiffTextNode {
     const { text, diffType } = serializedNode;
     const node = new DiffTextNode(text);
     if (diffType !== undefined) {
@@ -47,7 +49,7 @@ class DiffTextNode extends TextNode {
     return node;
   }
 
-  exportJSON(): SerializedDiffTextNode {
+  public exportJSON(): SerializedDiffTextNode {
     return {
       ...super.exportJSON(),
       diffType: this.__diffType,
@@ -56,16 +58,16 @@ class DiffTextNode extends TextNode {
     };
   }
 
-  setDiffType(diffType: DiffTypeValue): void {
+  public setDiffType(diffType: DiffTypeValue): void {
     const writable = this.getWritable();
     writable.__diffType = diffType;
   }
 
-  getDiffType(): DiffTypeValue | undefined {
+  public getDiffType(): DiffTypeValue | undefined {
     return this.__diffType;
   }
 
-  createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
+  public createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
     const element = super.createDOM(config, editor);
     const diffType = this.getDiffType();
 
@@ -92,7 +94,7 @@ class DiffTextNode extends TextNode {
     return element;
   }
 
-  updateDOM(
+  public updateDOM(
     prevNode: DiffTextNode,
     dom: HTMLElement,
     config: EditorConfig

@@ -1,9 +1,9 @@
 import { eveRequest } from "./server";
 
 export class EveCreationTransportError extends Error {
-  readonly stage: "lookup" | "dispatch";
-  readonly status?: number;
-  constructor(stage: "lookup" | "dispatch", status?: number) {
+  public readonly stage: "lookup" | "dispatch";
+  public readonly status?: number;
+  public constructor(stage: "lookup" | "dispatch", status?: number) {
     super(
       `Native creation ${stage} failed${status ? ` (HTTP ${status})` : " before receiving a response"}.`
     );

@@ -27,7 +27,7 @@ createRoot(root).render(
           <MessageVoteActions
             disabled={state.disabled}
             onVote={async () => {
-              /* empty */
+              /* This static fixture does not submit a vote. */
             }}
             vote={state.vote}
           />

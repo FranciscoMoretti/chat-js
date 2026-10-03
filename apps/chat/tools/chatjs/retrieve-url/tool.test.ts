@@ -11,8 +11,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/env", () => ({ env: mocks.env }));
 vi.mock("@mendable/firecrawl-js", () => ({
   default: class {
-    scrapeUrl = mocks.scrape;
-    extract = mocks.extract;
+    public scrapeUrl = mocks.scrape;
+    public extract = mocks.extract;
   },
 }));
 vi.mock("@/lib/logger", () => ({

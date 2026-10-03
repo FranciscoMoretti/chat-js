@@ -237,8 +237,8 @@ export const mcpRouter = createTRPCRouter({
       });
 
       return {
-        hasSession: !!session,
-        isAuthenticated: !!session?.tokens,
+        hasSession: Boolean(session),
+        isAuthenticated: Boolean(session?.tokens),
       };
     }),
 
@@ -447,7 +447,7 @@ export const mcpRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     assertMcpReady();
     const connectors = await getMcpConnectorsByUserId({ userId: ctx.user.id });
-    return connectors.map(publicConnector);
+    return connectors.map((connector) => publicConnector(connector));
   }),
 
   /**

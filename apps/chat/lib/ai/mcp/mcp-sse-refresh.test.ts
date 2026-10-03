@@ -32,9 +32,13 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
       clientInformation: () => ({ client_id: "client" }),
       clientMetadata: { redirect_uris: ["https://app.test/oauth/callback"] },
       codeVerifier: () => "verifier",
-      redirectToAuthorization: () => {},
+      redirectToAuthorization: () => {
+        // This fixture never enters the authorization redirect flow.
+      },
       redirectUrl: "https://app.test/oauth/callback",
-      saveCodeVerifier: () => {},
+      saveCodeVerifier: () => {
+        // This fixture already has a code verifier.
+      },
       saveTokens: (nextTokens) => {
         tokens = nextTokens;
         firstRefreshSaved.resolve(undefined);

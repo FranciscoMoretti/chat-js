@@ -1,14 +1,14 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
 export class ControlledTransport implements ChatTransport<UIMessage> {
-  readonly requests: {
+  public readonly requests: {
     abortSignal: AbortSignal | undefined;
     controller: ReadableStreamDefaultController<UIMessageChunk>;
     options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
   }[] = [];
   #reconnectStream: ReadableStream<UIMessageChunk> | null = null;
 
-  sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
+  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
     Promise.resolve(
       new ReadableStream({
         start: (controller) => {
@@ -29,7 +29,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
       })
     );
 
-  reconnectToStream(
+  public reconnectToStream(
     _options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
   ): Promise<ReadableStream<UIMessageChunk> | null> {
     const stream = this.#reconnectStream;
@@ -37,7 +37,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     return Promise.resolve(stream);
   }
 
-  prepareReconnect() {
+  public prepareReconnect() {
     let controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
     this.#reconnectStream = new ReadableStream({
       start(value) {
@@ -50,19 +50,19 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     return controller;
   }
 
-  emit(requestIndex: number, chunk: UIMessageChunk) {
+  public emit(requestIndex: number, chunk: UIMessageChunk) {
     this.requests[requestIndex]?.controller.enqueue(chunk);
   }
 
-  finish(requestIndex: number) {
+  public finish(requestIndex: number) {
     this.requests[requestIndex]?.controller.close();
   }
 
-  fail(requestIndex: number, error: Error) {
+  public fail(requestIndex: number, error: Error) {
     this.requests[requestIndex]?.controller.error(error);
   }
 
-  emitText(requestIndex: number, messageId: string, text: string) {
+  public emitText(requestIndex: number, messageId: string, text: string) {
     const controller = this.requests[requestIndex]?.controller;
     controller?.enqueue({ messageId, type: "start" });
     controller?.enqueue({ id: "text", type: "text-start" });

@@ -25,7 +25,7 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
   const queryClient = useQueryClient();
 
   const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
+  const isAuthenticated = Boolean(session?.user);
 
   const {
     data: connectors,

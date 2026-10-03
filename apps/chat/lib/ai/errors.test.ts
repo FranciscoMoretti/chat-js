@@ -24,7 +24,9 @@ describe("ChatSDKError", () => {
   });
 
   it("conceals database details from the response while logging them", async () => {
-    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {
+      // The test inspects the captured error without printing it.
+    });
     const error = new ChatSDKError(
       "not_found:database",
       "database unavailable"

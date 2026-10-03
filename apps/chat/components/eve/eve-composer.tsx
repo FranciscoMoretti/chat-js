@@ -65,7 +65,7 @@ export const EveComposer = ({
     retainedModelId,
     modelSelection?.value,
     selected
-  ).map(getModelById);
+  ).map((modelId) => getModelById(modelId));
   const unsupported =
     !props.readOnly && unsupportedAttachments(models, files.attachments);
   const unavailableTool = isUnavailableTool(selectedTool);
@@ -76,7 +76,7 @@ export const EveComposer = ({
       current.filter((file) => file.url !== attachment.url)
     );
   };
-  const uploads = files.composer?.(!!uploadLocked);
+  const uploads = files.composer?.(Boolean(uploadLocked));
   return (
     <div
       {...{
@@ -112,7 +112,7 @@ export const EveComposer = ({
               onClear={() => onToolChange(null)}
             />
             <EveModelPicker
-              disabled={locked || props.readOnly || !!retainedModelId}
+              disabled={locked || props.readOnly || Boolean(retainedModelId)}
               modelSelection={modelSelection}
               retainedModelId={retainedModelId}
               retainedModelIds={retainedModelIds}

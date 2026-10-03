@@ -37,7 +37,7 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
         throw new Error("Invalid generated image count.");
       }
       const fetchedModels = await getActiveGateway().fetchModels();
-      const models = fetchedModels.map(toModelData);
+      const models = fetchedModels.map((model) => toModelData(model));
       const rate = Number(
         models.find((model) => model.id === modelId)?.pricing?.image
       );
@@ -56,7 +56,7 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
         throw new Error("Provider usage is unavailable.");
       }
       const fetchedModels = await getActiveGateway().fetchModels();
-      const models = fetchedModels.map(toModelData);
+      const models = fetchedModels.map((model) => toModelData(model));
       const pricing = models.find((model) => model.id === modelId)?.pricing;
       return (
         tokenCost(tokens.inputTokens, pricing?.input) +

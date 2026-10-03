@@ -55,7 +55,11 @@ for (const page of pages) {
     document.body.innerHTML = source.body.innerHTML;
 
     await Promise.all(
-      [...document.images].map((image) => image.decode().catch(() => {}))
+      [...document.images].map((image) =>
+        image.decode().catch(() => {
+          // Keep capturing the page when an image fails to decode.
+        })
+      )
     );
     await document.fonts.ready;
     await takeSnapshot(page.name);

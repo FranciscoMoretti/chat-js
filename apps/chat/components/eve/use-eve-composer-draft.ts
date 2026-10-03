@@ -47,7 +47,7 @@ export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
       current.current = next;
       setValue(next);
       try {
-        if (next.text || next.attachments.length || next.selectedTool) {
+        if (next.text || next.attachments.length > 0 || next.selectedTool) {
           sessionStorage.setItem(key, JSON.stringify(next));
         } else {
           sessionStorage.removeItem(key);

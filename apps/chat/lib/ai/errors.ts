@@ -117,12 +117,12 @@ const getStatusCodeByType = (type: ErrorType): number => {
 };
 
 export class ChatSDKError extends Error {
-  name = "ChatSDKError";
-  type: ErrorType;
-  surface: Surface;
-  statusCode: number;
+  public name = "ChatSDKError";
+  public type: ErrorType;
+  public surface: Surface;
+  public statusCode: number;
 
-  constructor(errorCode: ErrorCode, cause?: string) {
+  public constructor(errorCode: ErrorCode, cause?: string) {
     super(getMessageByErrorCode(errorCode));
 
     const [type, surface] = errorCode.split(":");
@@ -133,7 +133,7 @@ export class ChatSDKError extends Error {
     this.statusCode = getStatusCodeByType(this.type);
   }
 
-  toResponse() {
+  public toResponse() {
     const code: ErrorCode = `${this.type}:${this.surface}`;
     const visibility = visibilityBySurface[this.surface];
 

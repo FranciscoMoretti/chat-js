@@ -487,7 +487,7 @@ for (const attachment of [
           )
           .map((animation) =>
             animation.finished.catch(() => {
-              /* empty */
+              /* Ignore canceled animations while waiting for screenshot stability. */
             })
           )
       );

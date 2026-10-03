@@ -32,7 +32,7 @@ const validateAttachment = (
 ) => {
   if (
     file.type !== contentType ||
-    !file.size ||
+    file.size === 0 ||
     file.size > config.attachments.maxBytes
   ) {
     throw new Error("This attachment has an unsupported type or size.");

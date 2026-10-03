@@ -209,7 +209,7 @@ export const promptStorage = async (
   const selection = await resolveStorage(source, cwd);
   const keys = selection.definition.configKeys;
   let options = explicitOptions;
-  if (options === undefined && keys.length) {
+  if (options === undefined && keys.length > 0) {
     if (skipPrompt) {
       throw new Error(
         `Storage requires adapter options (${keys.join(", ")}). Pass --storage-config.`

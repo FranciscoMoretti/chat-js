@@ -30,7 +30,7 @@ export const claimExpiredEveGuestFamilies = async () =>
       )
       .limit(1)
       .for("update", { of: eveConversation, skipLocked: true });
-    if (rows.length) {
+    if (rows.length > 0) {
       await tx
         .update(eveConversation)
         .set({ guestCleanupAttemptedAt: sql`now()` })

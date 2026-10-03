@@ -239,7 +239,7 @@ export const withManagedUsageReconciliation = async (
         );
       }
       if (owner.sweepDue) {
-        // now() is transaction start: a long sweep cannot buy another minute of stale evidence.
+        // The now() function uses transaction start: a long sweep cannot buy another minute of stale evidence.
         await tx
           .update(user)
           .set({ eveUsageReconciledAt: sql`now()` })

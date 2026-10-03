@@ -19,7 +19,7 @@ export class RunRegistry<TMessage extends UIMessage> {
   readonly #runsById = new Map<string, RunRecord<TMessage>>();
   #selectedRunId: string | null = null;
 
-  constructor(concurrency: ThreadConcurrency = {}) {
+  public constructor(concurrency: ThreadConcurrency = {}) {
     this.#concurrency = {
       maxActiveRuns: concurrency.maxActiveRuns ?? Number.POSITIVE_INFINITY,
       maxActiveRunsPerMessage:
@@ -27,14 +27,14 @@ export class RunRegistry<TMessage extends UIMessage> {
     };
   }
 
-  add(record: RunRecord<TMessage>) {
+  public add(record: RunRecord<TMessage>) {
     if (this.#runsById.has(record.spec.id)) {
       throw new Error(`Run ${record.spec.id} already exists`);
     }
     this.#runsById.set(record.spec.id, record);
   }
 
-  assertHasCapacity(parentMessageId: string | null) {
+  public assertHasCapacity(parentMessageId: string | null) {
     const activeRuns = this.getActive();
     if (activeRuns.length >= this.#concurrency.maxActiveRuns) {
       throw new Error("Cannot start run: max active runs reached");
@@ -47,29 +47,29 @@ export class RunRegistry<TMessage extends UIMessage> {
     }
   }
 
-  clear() {
+  public clear() {
     this.#selectedRunId = null;
     this.#runIdByApprovalId.clear();
     this.#runIdByToolCallId.clear();
     this.#runsById.clear();
   }
 
-  get(runId: string) {
+  public get(runId: string) {
     return this.#runsById.get(runId);
   }
 
-  getActive() {
+  public getActive() {
     return this.values().filter(
       (run) => run.status === "submitted" || run.status === "streaming"
     );
   }
 
-  findForApproval(approvalId: string) {
+  public findForApproval(approvalId: string) {
     const runId = this.#runIdByApprovalId.get(approvalId);
     return runId ? this.#runsById.get(runId) : undefined;
   }
 
-  getForMessage(messageId: string) {
+  public getForMessage(messageId: string) {
     const runs = this.values().toReversed();
     return (
       runs.find((candidate) => candidate.spec.messageId === messageId) ??
@@ -82,18 +82,18 @@ export class RunRegistry<TMessage extends UIMessage> {
     );
   }
 
-  findForToolCall(toolCallId: string) {
+  public findForToolCall(toolCallId: string) {
     const runId = this.#runIdByToolCallId.get(toolCallId);
     return runId ? this.#runsById.get(runId) : undefined;
   }
 
-  getForResponseMessage(messageId: string) {
+  public getForResponseMessage(messageId: string) {
     return this.values()
       .toReversed()
       .find((candidate) => candidate.spec.messageId === messageId);
   }
 
-  getInsertionIndex({
+  public getInsertionIndex({
     childIds,
     parentMessageId,
     siblingOrder,
@@ -120,7 +120,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     }).length;
   }
 
-  getSnapshot() {
+  public getSnapshot() {
     const runs = this.snapshots();
     const activeRuns = runs.filter(
       (run) => run.status === "submitted" || run.status === "streaming"
@@ -134,7 +134,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     return { activeRuns, runs, status };
   }
 
-  resolveSelected({
+  public resolveSelected({
     cursorId,
     pathIds,
   }: {
@@ -169,7 +169,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     );
   }
 
-  indexMessageOwnership(runId: string, message: TMessage) {
+  public indexMessageOwnership(runId: string, message: TMessage) {
     const toolCallIds: string[] = [];
     const approvalIds: string[] = [];
     for (const part of message.parts) {
@@ -206,11 +206,11 @@ export class RunRegistry<TMessage extends UIMessage> {
     }
   }
 
-  isExplicitlySelected(runId: string) {
+  public isExplicitlySelected(runId: string) {
     return this.#selectedRunId === runId;
   }
 
-  registerToolCall(runId: string, toolCallId: string) {
+  public registerToolCall(runId: string, toolCallId: string) {
     RunRegistry.assertOwnershipAvailable(
       this.#runIdByToolCallId,
       toolCallId,
@@ -220,7 +220,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     this.#runIdByToolCallId.set(toolCallId, runId);
   }
 
-  require(runId: string) {
+  public require(runId: string) {
     const run = this.#runsById.get(runId);
     if (!run) {
       throw new Error(`Unknown run ${runId}`);
@@ -228,7 +228,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     return run;
   }
 
-  reserveId(generateId: () => string) {
+  public reserveId(generateId: () => string) {
     const runId = generateId();
     if (this.#runsById.has(runId)) {
       throw new Error(`Run ${runId} already exists`);
@@ -236,7 +236,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     return runId;
   }
 
-  reserveSiblingOrder(
+  public reserveSiblingOrder(
     parentMessageId: string | null,
     existingChildrenCount: number
   ) {
@@ -247,11 +247,11 @@ export class RunRegistry<TMessage extends UIMessage> {
     return Math.max(existingMessageOrder, ...runOrders) + 1;
   }
 
-  select(runId: string | null) {
+  public select(runId: string | null) {
     this.#selectedRunId = runId;
   }
 
-  setError(runId: string, error: Error | undefined) {
+  public setError(runId: string, error: Error | undefined) {
     const run = this.#runsById.get(runId);
     if (!run) {
       return;
@@ -259,18 +259,18 @@ export class RunRegistry<TMessage extends UIMessage> {
     run.error = error;
   }
 
-  setStatus(runId: string, status: ChatStatus) {
+  public setStatus(runId: string, status: ChatStatus) {
     const run = this.#runsById.get(runId);
     if (run) {
       run.status = status;
     }
   }
 
-  snapshots() {
+  public snapshots() {
     return this.values().map((run) => RunRegistry.toSnapshot(run));
   }
 
-  static toSnapshot<TMessage extends UIMessage>(
+  public static toSnapshot<TMessage extends UIMessage>(
     run: RunRecord<TMessage>
   ): ThreadRun {
     return {
@@ -280,7 +280,7 @@ export class RunRegistry<TMessage extends UIMessage> {
     };
   }
 
-  values() {
+  public values() {
     return [...this.#runsById.values()];
   }
 

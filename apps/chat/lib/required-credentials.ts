@@ -6,13 +6,16 @@ import type { EnvRequirement } from "./config-requirements";
 
 /** Shared explicit failure for installed integrations; never carries secret values. */
 export class MissingCredentialsError extends Error {
-  readonly code = "CHATJS_MISSING_CREDENTIALS";
-  readonly integration: string;
-  readonly requirements: readonly EnvRequirement[];
+  public readonly code = "CHATJS_MISSING_CREDENTIALS";
+  public readonly integration: string;
+  public readonly requirements: readonly EnvRequirement[];
 
-  constructor(integration: string, requirements: readonly EnvRequirement[]) {
+  public constructor(
+    integration: string,
+    requirements: readonly EnvRequirement[]
+  ) {
     super(
-      `Missing credentials for ${integration}: ${requirements.map(formatRequirementDescription).join("; ")}`
+      `Missing credentials for ${integration}: ${requirements.map((requirement) => formatRequirementDescription(requirement)).join("; ")}`
     );
     this.name = "MissingCredentialsError";
     this.integration = integration;
@@ -29,7 +32,7 @@ const missingRequirement = (
       const missing = missingRequirement(group, env);
       return missing ? [missing] : [];
     });
-    return allOf.length ? { ...requirement, allOf } : null;
+    return allOf.length > 0 ? { ...requirement, allOf } : null;
   }
   return isRequirementSatisfied(requirement, env) ? null : requirement;
 };
@@ -43,7 +46,7 @@ export const requireCredentials = (
     const group = missingRequirement(requirement, env);
     return group ? [group] : [];
   });
-  if (missing.length) {
+  if (missing.length > 0) {
     throw new MissingCredentialsError(integration, missing);
   }
 };

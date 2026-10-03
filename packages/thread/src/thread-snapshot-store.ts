@@ -4,12 +4,12 @@ import type { AbstractThread } from "./abstract-thread";
 
 export class SnapshotStore<TMessage extends UIMessage> {
   #snapshot: ReturnType<AbstractThread<TMessage>["getSnapshot"]>;
-  readonly thread: AbstractThread<TMessage>;
-  readonly throttleWaitMs: number | undefined;
+  public readonly thread: AbstractThread<TMessage>;
+  public readonly throttleWaitMs: number | undefined;
 
-  readonly getSnapshot = () => this.#snapshot;
+  public readonly getSnapshot = () => this.#snapshot;
 
-  constructor(
+  public constructor(
     thread: AbstractThread<TMessage>,
     throttleWaitMs: number | undefined
   ) {
@@ -18,7 +18,7 @@ export class SnapshotStore<TMessage extends UIMessage> {
     this.#snapshot = thread.getSnapshot();
   }
 
-  subscribe = (listener: () => void) => {
+  public subscribe = (listener: () => void) => {
     this.#snapshot = this.thread.getSnapshot();
     const { throttleWaitMs } = this;
     const publish = () => {
