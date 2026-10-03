@@ -62,12 +62,25 @@ const install = async (
 };
 test("sync registers direct installs deterministically and preserves custom modules", async () => {
   const root = await project();
+  const emptyTools = await readFile(
+    join(root, "tools/chatjs/tools.ts"),
+    "utf-8"
+  );
+  expect(emptyTools).not.toContain("import { providers }");
+  expect(emptyTools).toContain("const installed = defineToolSet({});");
+  expect(
+    await readFile(join(root, "tools/chatjs/providers.ts"), "utf-8")
+  ).toContain("export const providers = defineToolSet({});");
+  expect(await readFile(join(root, "tools/chatjs/ui.ts"), "utf-8")).toContain(
+    "const installed = {};"
+  );
   await install(root);
   const custom = join(root, "tools/chatjs/custom-tools.ts");
   await writeFile(custom, "export const customTools = { custom: {} };\n");
   await syncTools(root);
   const before = await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8");
   expect(before).toContain('from "./word-count/tool"');
+  expect(before).not.toContain("import { providers }");
   expect(before).toContain("Object.hasOwn");
   await syncTools(root);
   expect(await readFile(join(root, "tools/chatjs/tools.ts"), "utf-8")).toBe(

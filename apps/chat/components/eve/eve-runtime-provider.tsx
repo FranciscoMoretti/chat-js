@@ -191,9 +191,11 @@ export const EveRuntimeProvider = ({
   const [registry] = useState(() => new Map<string, Runtime>());
   const open = useCallback(
     async (request: OpenRequest, navigate = true) => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 fetch API supported by the repository lockfile and fresh scaffolds; migrating to query() requires a coordinated dependency upgrade.
       const identity = await queryClient.fetchQuery(
         trpc.eve.get.queryOptions({ id: request.id })
       );
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 fetch API supported by the repository lockfile and fresh scaffolds; migrating to query() requires a coordinated dependency upgrade.
       const family = await queryClient.fetchQuery({
         ...trpc.eve.branches.queryOptions({ id: identity.chatId }),
         staleTime: 0,

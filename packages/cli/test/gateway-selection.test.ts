@@ -459,6 +459,7 @@ const verifyResearchInstallation = async (
     await Bun.file(join(cwd, "agent/tools/deepResearch.ts")).exists()
   ).toBe(false);
   if (gateway === "vercel") {
+    await run(join(cwd, "electron"), ["bun", "install", "--ignore-scripts"]);
     await run(cwd, ["bun", "run", "lint"]);
     expect(
       await Bun.file(join(cwd, "agent/tools/confirm_note.ts")).exists()
@@ -512,6 +513,7 @@ const verifyResearchInstallation = async (
 };
 
 for (const gateway of [...GATEWAYS, "acme"]) {
+  const electronFlag = gateway === "vercel" ? "--electron" : "--no-electron";
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
     const cwd = join(root, gateway);
     await run(root, [
@@ -523,7 +525,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       gatewaySource(gateway),
       ...storageArguments(gateway),
       "--yes",
-      "--no-electron",
+      electronFlag,
       ...toolArguments(gateway),
     ]);
     await verifyResearchInstallation(cwd, gateway);

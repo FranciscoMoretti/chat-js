@@ -229,6 +229,16 @@ describe("scaffoldFromTemplate", () => {
     expect(tsconfig).not.toContain("@world-postgres-test");
     const lint = await readFile(join(destination, "oxlint.config.ts"), "utf-8");
     expect(lint).not.toContain("tests/eve-fixture");
+    expect(lint.match(/options: \{ typeAware: true \}/gu)).toHaveLength(1);
+    const lintManifest: unknown = JSON.parse(
+      await readFile(join(destination, "package.json"), "utf-8")
+    );
+    expect(lintManifest).toMatchObject({
+      devDependencies: { "oxlint-tsgolint": "7.0.2001" },
+      scripts: {
+        lint: "next typegen . && ultracite check",
+      },
+    });
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
       await readFile(join(destination, "package.json"), "utf-8")
@@ -480,6 +490,22 @@ describe("scaffoldFromTemplate", () => {
       expect(electronTsconfig).toContain('"../electron.d.ts"');
       expect(electronTsconfig).not.toContain("../chat/");
       expect(existsSync(join(projectDir, "electron.d.ts"))).toBe(true);
+      const lintConfig = await readFile(
+        join(projectDir, "oxlint.config.ts"),
+        "utf-8"
+      );
+      expect(lintConfig.match(/options: \{ typeAware: true \}/gu)).toHaveLength(
+        1
+      );
+      const lintManifest: unknown = JSON.parse(
+        await readFile(join(projectDir, "package.json"), "utf-8")
+      );
+      expect(lintManifest).toMatchObject({
+        devDependencies: { "oxlint-tsgolint": "7.0.2001" },
+        scripts: {
+          lint: "next typegen . && ultracite check",
+        },
+      });
 
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const packageJson = JSON.parse(

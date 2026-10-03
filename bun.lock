@@ -155,6 +155,7 @@
         "microsandbox": "^0.6.18",
         "oxfmt": "0.67.0",
         "oxlint": "1.82.0",
+        "oxlint-tsgolint": "7.0.2001",
         "pg": "8.20.0",
         "pino-pretty": "^13.1.1",
         "postcss": "^8",

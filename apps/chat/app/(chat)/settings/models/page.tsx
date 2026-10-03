@@ -46,6 +46,7 @@ const ModelsSettingsHeader = ({
 
 const ModelsSettingsContent = async () => {
   const queryClient = getQueryClient();
+  // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
   await queryClient.prefetchQuery(
     trpc.settings.getModelPreferences.queryOptions()
   );

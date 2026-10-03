@@ -7,7 +7,10 @@ import { loadEveModelDefinition } from "./model-selection";
 export const eveToolModelProvider: ToolModelProvider = {
   createImageModel: (modelId) => {
     const gateway = getActiveGateway();
-    const model = gateway.createImageModel(modelId);
+    const model = gateway.createImageModel(
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #591, #599: Scaffolding replaces InstalledGateway with provider-specific IDs (or never for unsupported media); preserve that generated contract while the null result below handles unsupported models.
+      modelId as Parameters<InstalledGateway["createImageModel"]>[0]
+    );
     if (!model) {
       throw new Error(
         `Gateway '${gateway.type}' does not support dedicated image models. Use a multimodal language model instead.`
@@ -22,7 +25,10 @@ export const eveToolModelProvider: ToolModelProvider = {
     ),
   createVideoModel: (modelId) => {
     const gateway = getActiveGateway();
-    const model = gateway.createVideoModel(modelId);
+    const model = gateway.createVideoModel(
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #591, #599: Scaffolding replaces InstalledGateway with provider-specific IDs (or never for unsupported media); preserve that generated contract while the null result below handles unsupported models.
+      modelId as Parameters<InstalledGateway["createVideoModel"]>[0]
+    );
     if (!model) {
       throw new Error(
         `Gateway '${gateway.type}' does not support video models.`

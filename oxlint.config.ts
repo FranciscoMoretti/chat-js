@@ -89,8 +89,8 @@ export default defineConfig({
     "unicorn/explicit-length-check": "error",
     "unicorn/no-array-callback-reference": "error",
     "unicorn/no-nested-ternary": "error",
-    // Typed APIs (React refs, Promise resolvers and mocks) can require explicit undefined.
     "unicorn/no-process-exit": "error",
+    // Typed APIs (React refs, Promise resolvers and mocks) can require explicit undefined.
     "unicorn/no-useless-undefined": ["error", { checkArguments: false }],
     "unicorn/number-literal-case": "error",
     "unicorn/prefer-global-this": "error",

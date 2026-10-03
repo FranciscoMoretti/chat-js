@@ -245,8 +245,8 @@ const sourceFor = (
         name: item.toolExport,
       })),
       "tool"
-    )}\n\nexport const providers = defineToolSet({\n${orderedProperties(providers.map((item, i) => ({ key: registrationKey(item), value: `tool${i}` })))}\n});\n`,
-    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\nimport { providers } from "./providers";\n${registrationImports(
+    )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, i) => ({ key: registrationKey(item), value: `tool${i}` })))}\n}` : "{}"});\n`,
+    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${ordinary.some((item) => item.provider) ? 'import { providers } from "./providers";\n' : ""}${registrationImports(
       ordinary
         .filter((item) => !item.provider)
         .map((item) => ({
@@ -255,7 +255,7 @@ const sourceFor = (
           name: item.toolExport,
         })),
       "tool"
-    )}\n\nconst installed = defineToolSet({\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
+    )}\n\nconst installed = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n}` : "{}"});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item) => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
       renderers.flatMap((item, i) =>
         item.rendererExport
@@ -263,7 +263,7 @@ const sourceFor = (
           : []
       ),
       "renderer"
-    )}\n\nconst installed = {\n${orderedProperties(renderers.map((item, i) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${i}` })))}\n};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
+    )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, i) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${i}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
   };
 };
 
