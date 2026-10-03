@@ -46,6 +46,7 @@ describe("VercelGateway", () => {
                     { cost: "0.000002", min: 64_000 },
                   ],
                 },
+                tags: ["tool-use", "future-provider-tag"],
                 type: "language",
               },
             ],
@@ -66,6 +67,7 @@ describe("VercelGateway", () => {
           { cost: "0.000002", min: 64_000 },
         ],
       },
+      tags: ["tool-use", "future-provider-tag"],
       type: "language",
     });
   });

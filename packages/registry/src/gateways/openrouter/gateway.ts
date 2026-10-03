@@ -97,8 +97,7 @@ const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
       output: model.pricing?.completion,
       web_search: model.pricing?.web_search,
     },
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-    tags: tags.length > 0 ? (tags as AiGatewayModel["tags"]) : undefined,
+    tags: tags.length > 0 ? tags : undefined,
     type,
   };
 };

@@ -12,6 +12,8 @@ The host supplies environment values, logging, a discovery `fetch` function, and
 
 See [gateway registry authoring](../registry/src/gateways/README.md).
 
+Model `tags` are optional strings. Known capabilities have IDE suggestions, but discovery preserves unknown provider tags for forward compatibility. Consumers should check individual capability tags rather than assume the list is exhaustive.
+
 Verification:
 
 - `bun run test:unit`: adapter model creation, media support and discovery fallback.
