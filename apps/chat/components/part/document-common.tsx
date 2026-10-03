@@ -13,18 +13,15 @@ const hasProp = <T extends string>(
   typeof obj === "object" && obj !== null && prop in obj;
 /* oxlint-enable id-length */
 
-/* oxlint-disable id-length -- isArtifactToolResult: id-length: retain conventional event, index, and generic identifiers in this existing callback contract */
-
 const isArtifactToolResult = (
-  o: unknown
-): o is { id: string; title: string; kind: ArtifactKind } =>
-  hasProp(o, "id") &&
-  typeof o.id === "string" &&
-  hasProp(o, "title") &&
-  typeof o.title === "string" &&
-  hasProp(o, "kind") &&
-  typeof o.kind === "string";
-/* oxlint-enable id-length */
+  value: unknown
+): value is { id: string; title: string; kind: ArtifactKind } =>
+  hasProp(value, "id") &&
+  typeof value.id === "string" &&
+  hasProp(value, "title") &&
+  typeof value.title === "string" &&
+  hasProp(value, "kind") &&
+  typeof value.kind === "string";
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- getActionText: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 

@@ -38,7 +38,6 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Configure the installed source without evaluating it or editing dependencies. */
 const configureStorageProvider = async (
@@ -74,7 +73,9 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
     env = env.slice(0, from) + env.slice(to + end.length);
   }
   const variables = [
-    ...new Set(definition.envRequirements.flatMap((r) => r.options.flat())),
+    ...new Set(
+      definition.envRequirements.flatMap((envReq) => envReq.options.flat())
+    ),
   ];
   env += `\n${start}\n# ${definition.id} storage\n`;
   for (const key of variables) {
@@ -89,7 +90,6 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
   await writeFile(examplePath, env);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable jsdoc/require-param */

@@ -135,7 +135,6 @@ const resolveCreateTarget = (
 };
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -143,8 +142,8 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
   logger.info("Required for your configuration:");
   logger.break();
 
-  for (let i = 0; i < entries.length; i += 1) {
-    const entry = entries[i];
+  for (let entryIndex = 0; entryIndex < entries.length; entryIndex += 1) {
+    const entry = entries[entryIndex];
 
     if (!(typeof entry.oneOfGroup === "string" && entry.oneOfGroup !== "")) {
       logger.log(
@@ -154,20 +153,22 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
     }
 
     logger.log(`  ${highlighter.warn("*")} ${highlighter.dim("One of:")}`);
-    while (i < entries.length && entries[i].oneOfGroup === entry.oneOfGroup) {
-      const option = entries[i];
+    while (
+      entryIndex < entries.length &&
+      entries[entryIndex].oneOfGroup === entry.oneOfGroup
+    ) {
+      const option = entries[entryIndex];
       logger.log(
         `    ${highlighter.warn("*")} ${highlighter.warn(option.vars)} ${highlighter.dim(`- ${option.description}`)}`
       );
-      i += 1;
+      entryIndex += 1;
     }
-    i -= 1;
+    entryIndex -= 1;
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */

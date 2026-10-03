@@ -2,8 +2,7 @@ export interface TextSplitterParams {
   chunkOverlap: number;
   chunkSize: number;
 }
-/* oxlint-disable id-length, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * id-length (#506): TextSplitter uses d as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-statements (#512): TextSplitter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): TextSplitter emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-continue (#515): TextSplitter skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -80,8 +79,8 @@ export abstract class TextSplitter implements TextSplitterParams {
     const currentDoc: string[] = [];
     let total = 0;
     const overlapLimit = separator === "" ? 0 : this.chunkOverlap;
-    for (const d of splits) {
-      const _len = d.length;
+    for (const split of splits) {
+      const _len = split.length;
       if (total + _len > this.chunkSize) {
         if (total > this.chunkSize) {
           console.warn(
@@ -98,11 +97,11 @@ export abstract class TextSplitter implements TextSplitterParams {
           });
         }
       }
-      currentDoc.push(d);
+      currentDoc.push(split);
       total += _len;
     }
     TextSplitter.addCurrentDocToResults({ currentDoc, docs, separator });
     return docs;
   }
 }
-/* oxlint-enable id-length, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null */

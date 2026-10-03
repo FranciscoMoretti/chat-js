@@ -64,19 +64,18 @@ const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
     ) as AppModelDefinition[];
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * id-length (#506): buildChatModels uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): buildChatModels uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): buildChatModels accepts appModels: AppModelDefinition[]; model; a; b; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): buildChatModels accepts appModels: AppModelDefinition[]; model; leftModel; rightModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const buildChatModels = (
   appModels: AppModelDefinition[]
 ): AppModelDefinition[] =>
   appModels
     .filter((model) => model.output.text)
-    .toSorted((a, b) => {
-      const aProviderIndex = PROVIDER_ORDER.indexOf(a.owned_by);
-      const bProviderIndex = PROVIDER_ORDER.indexOf(b.owned_by);
+    .toSorted((leftModel, rightModel) => {
+      const aProviderIndex = PROVIDER_ORDER.indexOf(leftModel.owned_by);
+      const bProviderIndex = PROVIDER_ORDER.indexOf(rightModel.owned_by);
 
       const aIndex =
         aProviderIndex === -1 ? PROVIDER_ORDER.length : aProviderIndex;
@@ -89,7 +88,7 @@ const buildChatModels = (
 
       return 0;
     });
-/* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 const fetchAllAppModels = cache(
   async (): Promise<AppModelDefinition[]> => {
@@ -109,20 +108,20 @@ const fetchChatModels = cache(
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): getAppModelDefinition uses m as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): getAppModelDefinition accepts m; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+typescript/prefer-readonly-parameter-types (#565): getAppModelDefinition accepts candidateModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const getAppModelDefinition = async (
   modelId: AppModelId
 ): Promise<AppModelDefinition> => {
   const models = await fetchAllAppModels();
-  const model = models.find((m) => m.id === modelId);
+  const model = models.find((candidateModel) => candidateModel.id === modelId);
   if (!model) {
     throw new Error(`Model ${modelId} not found`);
   }
   return model;
 };
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns --
  * jsdoc/require-param (#534): snapshotMatchesGateway's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -138,16 +137,15 @@ const snapshotMatchesGateway = (gateway: string): boolean =>
   generatedForGateway === gateway;
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
- * id-length (#506): KNOWN_MODEL_IDS uses m as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/prefer-readonly-parameter-types (#565): KNOWN_MODEL_IDS accepts m; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ *  * typescript/prefer-readonly-parameter-types (#565): KNOWN_MODEL_IDS accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const KNOWN_MODEL_IDS = new Set<string>(
   snapshotMatchesGateway(config.ai.gateway)
-    ? generatedModels.map((m) => m.id)
+    ? generatedModels.map((model) => model.id)
     : []
 );
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): getDefaultEnabledModels's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 jsdoc/require-returns (#535): getDefaultEnabledModels's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

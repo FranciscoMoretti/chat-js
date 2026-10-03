@@ -191,7 +191,6 @@ const copyTemplate = async (destination: string): Promise<void> => {
 /* oxlint-disable eslint/max-statements -- assertSynced: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable unicorn/no-null -- assertSynced: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- assertSynced: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable eslint/id-length -- assertSynced: The local index/OS/library binding retains its conventional API notation. */
 /* oxlint-disable eslint/no-magic-numbers -- assertSynced: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- assertSynced: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- assertSynced: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -220,10 +219,10 @@ const assertSynced = async (
   await rm(tempParent, { force: true, recursive: true });
 
   const expectedEntries = [...expectedSnapshot.entries()].toSorted(
-    (a, b): number => a[0].localeCompare(b[0])
+    (leftEntry, rightEntry): number => leftEntry[0].localeCompare(rightEntry[0])
   );
-  const actualEntries = [...actualSnapshot.entries()].toSorted((a, b): number =>
-    a[0].localeCompare(b[0])
+  const actualEntries = [...actualSnapshot.entries()].toSorted(
+    (leftEntry, rightEntry): number => leftEntry[0].localeCompare(rightEntry[0])
   );
 
   if (JSON.stringify(expectedEntries) !== JSON.stringify(actualEntries)) {
@@ -238,7 +237,6 @@ const assertSynced = async (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */

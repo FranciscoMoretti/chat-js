@@ -204,8 +204,7 @@ const truncateToolResultPart = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * id-length (#506): truncateToolArrayContent uses i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): truncateToolArrayContent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): truncateToolArrayContent uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): truncateToolArrayContent accepts lastMessage: ToolModelMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -218,24 +217,28 @@ const truncateToolArrayContent = (
   const currentMessageTokens = calculateMessagesTokens([lastMessage]);
   let tokensToRemove = currentMessageTokens - availableTokens;
 
-  for (let i = content.length - 1; i >= 0 && tokensToRemove > 0; i -= 1) {
-    const part = content[i];
+  for (
+    let index = content.length - 1;
+    index >= 0 && tokensToRemove > 0;
+    index -= 1
+  ) {
+    const part = content[index];
     const { truncatedPart, tokensRemoved } = truncateToolResultPart(
       part,
       tokensToRemove
     );
 
     if (truncatedPart === null) {
-      content.splice(i, 1);
+      content.splice(index, 1);
     } else {
-      content[i] = truncatedPart;
+      content[index] = truncatedPart;
     }
     tokensToRemove -= tokensRemoved;
   }
 
   return { ...lastMessage, content };
 };
-/* oxlint-enable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): truncateLastMessageIfNeeded uses 0, -1, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

@@ -208,7 +208,6 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -244,7 +243,8 @@ const promptStorage = async (
     if (source === "__external__") {
       const address = await text({
         message: "Storage registry item address:",
-        validate: (v) => (v?.trim() ? undefined : "Enter an item address"),
+        validate: (value) =>
+          value?.trim() ? undefined : "Enter an item address",
       });
       handleCancel(address);
       source = String(address).trim();
@@ -262,9 +262,9 @@ const promptStorage = async (
     const input = await text({
       message: `Non-secret adapter options as JSON (${keys.join(", ")}). Credentials use environment variables.`,
       // oxlint-disable-next-line typescript/consistent-return -- Prompt validation returns an error message for invalid input and no value for accepted input.
-      validate: (v) => {
+      validate: (value) => {
         try {
-          parseStorageOptions(v ?? "");
+          parseStorageOptions(value ?? "");
         } catch {
           return "Enter a JSON object";
         }
@@ -286,9 +286,9 @@ const promptStorage = async (
     selection.definition.envRequirements = getStorageEnvironmentRequirements(
       providerId,
       selection.options
-    ).map((r) => ({
-      description: r.description,
-      options: r.options.flatMap((option) => {
+    ).map((requirement) => ({
+      description: requirement.description,
+      options: requirement.options.flatMap((option) => {
         let alternatives: string[][] = [[]];
         for (const variable of option) {
           alternatives = alternatives.flatMap((alternative) =>
@@ -309,7 +309,6 @@ const promptStorage = async (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -495,7 +494,9 @@ const promptAuth = async (
     return { ...AUTH_DEFAULTS };
   }
 
-  const defaultProviders = AUTH_PROVIDERS.filter((p) => AUTH_DEFAULTS[p]);
+  const defaultProviders = AUTH_PROVIDERS.filter(
+    (provider) => AUTH_DEFAULTS[provider]
+  );
 
   let selectedProviders: AuthProvider[] = [];
 
@@ -504,10 +505,10 @@ const promptAuth = async (
     const selected = await multiselect({
       initialValues: defaultProviders,
       message: `Which ${highlighter.info("auth providers")} would you like to enable? ${highlighter.warn("(at least one required)")} ${highlighter.dim("(space to toggle, enter to submit)")}`,
-      options: AUTH_PROVIDERS.map((p) => ({
-        hint: authEnvRequirements[p].description,
-        label: AUTH_LABELS[p],
-        value: p,
+      options: AUTH_PROVIDERS.map((provider) => ({
+        hint: authEnvRequirements[provider].description,
+        label: AUTH_LABELS[provider],
+        value: provider,
       })),
       required: false,
     });
@@ -546,7 +547,6 @@ const promptElectron = async (
   return wantsElectron;
 };
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
@@ -575,16 +575,14 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "Search tool registry address:",
-    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptCodeExecutionTool = async (
@@ -610,16 +608,14 @@ const promptCodeExecutionTool = async (
   }
   const address = await text({
     message: "Code-execution tool registry address:",
-    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
@@ -643,16 +639,14 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "URL retrieval tool registry address:",
-    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptImageGenerationTool = async (
@@ -678,16 +672,14 @@ const promptImageGenerationTool = async (
   }
   const address = await text({
     message: "image generation tool registry address:",
-    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptVideoGenerationTool = async (
@@ -713,14 +705,13 @@ const promptVideoGenerationTool = async (
   }
   const address = await text({
     message: "video generation tool registry address:",
-    validate: (v) => (v?.trim() ? undefined : "Enter an address"),
+    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
   return String(address).trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // One optional group; new applications never enable telemetry by default.
