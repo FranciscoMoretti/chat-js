@@ -25,7 +25,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     currentCount.current = attachmentCount;
   }, [attachmentCount]);
   const upload = async (files: File[]) => {
-    if (lock.current || !files.length) {
+    if (lock.current || files.length === 0) {
       return;
     }
     if (!session?.user) {
@@ -41,7 +41,10 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     // oxlint-disable-next-line react/todo -- Keep queue cleanup in finally for upload recovery.
     try {
       const result = await processFilesForUpload(files, config.attachments);
-      if (result.stillOversized.length || result.unsupportedFiles.length) {
+      if (
+        result.stillOversized.length > 0 ||
+        result.unsupportedFiles.length > 0
+      ) {
         toast.error(
           "Some files could not be attached. Use images or PDFs within the upload size limit."
         );
@@ -104,7 +107,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
         : {
             ...getRootProps({ role: "group" }),
             onPasteCapture: (event: React.ClipboardEvent<HTMLDivElement>) => {
-              if (event.clipboardData.files.length) {
+              if (event.clipboardData.files.length > 0) {
                 event.preventDefault();
                 event.stopPropagation();
                 upload([...event.clipboardData.files]);

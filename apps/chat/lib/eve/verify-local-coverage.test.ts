@@ -42,7 +42,7 @@ const identity = () => ({
 });
 beforeEach(async () => {
   root = await mkdtemp(nodePath.join(tmpdir(), "eve-coverage-"));
-  // macOS /var is a link; the production verifier compares canonical roots.
+  // On macOS, /var is a link; the production verifier compares canonical roots.
   const { realpath } = await import("node:fs/promises");
   root = await realpath(root);
   await mkdir(nodePath.join(root, ".eve", "sandbox-identities"), {

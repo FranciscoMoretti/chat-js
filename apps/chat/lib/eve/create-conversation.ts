@@ -6,8 +6,8 @@ import type { createConversationInput } from "./contracts";
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 
 export class CreationRejectedError extends Error {
-  readonly projectUnavailable: boolean;
-  constructor(message: string, projectUnavailable = false) {
+  public readonly projectUnavailable: boolean;
+  public constructor(message: string, projectUnavailable = false) {
     super(message);
     this.name = "CreationRejectedError";
     this.projectUnavailable = projectUnavailable;

@@ -255,7 +255,7 @@ export const ShareButton = ({
 } & React.ComponentProps<typeof Button>) => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
+  const isAuthenticated = Boolean(session?.user);
 
   const triggerButton = (
     <Button className={cn("", className)} size="sm" variant="outline">

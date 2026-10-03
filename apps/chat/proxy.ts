@@ -65,7 +65,7 @@ export const proxy = async (req: NextRequest) => {
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
-  const isLoggedIn = !!session?.user;
+  const isLoggedIn = Boolean(session?.user);
   const isDeviceLoginRoute = isDeviceLoginPage(pathname);
   const returnTo = getSafeReturnTo(url);
 
@@ -96,6 +96,6 @@ export const config = {
      * - compare
      * - docs (Blume documentation)
      */
-    "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
+    "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };

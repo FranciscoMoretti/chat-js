@@ -217,7 +217,7 @@ export const planInstallation = async (
   for (const feature of targetFeatures.values()) {
     const missing =
       feature.requiresFeatures?.filter((id) => !featureIds.has(id)) ?? [];
-    if (missing.length) {
+    if (missing.length > 0) {
       throw new Error(
         `${feature.id} requires installed features: ${missing.join(", ")}`
       );

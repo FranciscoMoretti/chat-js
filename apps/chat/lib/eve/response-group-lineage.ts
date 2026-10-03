@@ -56,7 +56,7 @@ export const resolveEveResponseGroupLineage = (
       ? conversationsById.get(current.parentConversationId)
       : undefined;
   }
-  if (!reversedLineage.length || current) {
+  if (reversedLineage.length === 0 || current) {
     return;
   }
   const lineage = reversedLineage.toReversed();
@@ -118,16 +118,17 @@ export const resolveEveResponseGroupLineage = (
     for (const ancestor of queue) {
       for (const child of children.get(ancestor.id) ?? []) {
         if (
-          !valid.has(child.id) &&
-          child.forkKind === "regenerate" &&
-          child.forkMessageId === null &&
-          child.forkTurnId === originalBoundary
+          valid.has(child.id) ||
+          child.forkKind !== "regenerate" ||
+          child.forkMessageId !== null ||
+          child.forkTurnId !== originalBoundary
         ) {
-          valid.add(child.id);
-          queue.push(child);
-          if (laterConversation(child, latest)) {
-            latest = child;
-          }
+          continue;
+        }
+        valid.add(child.id);
+        queue.push(child);
+        if (laterConversation(child, latest)) {
+          latest = child;
         }
       }
     }

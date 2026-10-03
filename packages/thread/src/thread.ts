@@ -7,7 +7,7 @@ import type { ThreadInit } from "./types";
 export class Thread<
   TMessage extends UIMessage = UIMessage,
 > extends AbstractThread<TMessage> {
-  constructor({
+  public constructor({
     initialTree,
     messages,
     ...options

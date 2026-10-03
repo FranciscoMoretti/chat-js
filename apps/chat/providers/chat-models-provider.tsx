@@ -29,7 +29,7 @@ export const ChatModelsProvider = ({
 }) => {
   const trpc = useTRPC();
   const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
+  const isAuthenticated = Boolean(session?.user);
 
   const { data: preferences } = useQuery({
     ...trpc.settings.getModelPreferences.queryOptions(),

@@ -28,14 +28,14 @@ const assertPayloadPurgeReady = async (
   }
   const configured =
     await query`select identifier from workflow.eve_queue_tasks where identifier = ${taskIdentifier}`;
-  if (!configured.length) {
+  if (configured.length === 0) {
     throw new Error("Install the queue fence before purging payloads.");
   }
   const queue = await readEvePostgresQueueInventory(query, {
     runIds: inventory.runIds,
     taskIdentifier,
   });
-  if (queue.jobs.length || queue.unsupportedJobIds.length) {
+  if (queue.jobs.length > 0 || queue.unsupportedJobIds.length > 0) {
     throw new Error("Clear queued payloads before purging native runs.");
   }
 };
@@ -77,9 +77,9 @@ export const purgeEvePostgresSessionPayloads = async (
         retained.map((run) => run.id)
       );
       if (
-        inventory.activeRunIds.length ||
-        inventory.missingRunIds.length ||
-        inventory.ambiguousStreamIds.length
+        inventory.activeRunIds.length > 0 ||
+        inventory.missingRunIds.length > 0 ||
+        inventory.ambiguousStreamIds.length > 0
       ) {
         throw new Error(
           "Resolve active runs and incomplete resource ownership before purging."

@@ -18,16 +18,16 @@ export interface GatewayOptions {
 
 const silentLogger: GatewayLogger = {
   debug: () => {
-    /* intentionally silent */
+    /* Intentionally silent when no logger is provided. */
   },
   error: () => {
-    /* intentionally silent */
+    /* Intentionally silent when no logger is provided. */
   },
   info: () => {
-    /* intentionally silent */
+    /* Intentionally silent when no logger is provided. */
   },
   warn: () => {
-    /* intentionally silent */
+    /* Intentionally silent when no logger is provided. */
   },
 };
 
@@ -37,7 +37,7 @@ export class GatewayRuntime {
   protected readonly getFallbackModels;
   protected readonly log;
 
-  constructor(options: GatewayOptions = {}) {
+  public constructor(options: GatewayOptions = {}) {
     this.env = options.env ?? process.env;
     this.fetch = options.fetch ?? ((...args) => globalThis.fetch(...args));
     this.getFallbackModels = options.getFallbackModels ?? (() => []);

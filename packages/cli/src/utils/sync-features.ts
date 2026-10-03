@@ -22,7 +22,7 @@ export const assertSupportedFeatureInstallation = (
       !["mcp", "attachment-uploads"].includes(feature.id) &&
       !observabilityItems.some((item) => item.name === feature.id)
   );
-  if (unsupported.length) {
+  if (unsupported.length > 0) {
     throw new Error(
       `Feature installation is not supported yet: ${unsupported.map((feature) => feature.id).join(", ")}. Supported features: MCP, attachment uploads, Vercel Analytics, Vercel Speed Insights and Langfuse.`
     );
@@ -203,7 +203,7 @@ const validateAttachmentUploads = async (cwd: string, expected?: boolean) => {
     const missing = attachmentUploadFiles.filter(
       (_, index) => !uploadPresence[index]
     );
-    if (missing.length) {
+    if (missing.length > 0) {
       throw new Error(
         `Attachment uploads installation is incomplete. Missing: ${missing.join(", ")}. Run chat-js add attachment-uploads to restore missing files.`
       );
@@ -300,7 +300,7 @@ export const syncFeatures = async (
     ...(uploads ? ["attachment-uploads"] : []),
     ...observability.ids,
   ];
-  const installedSet = installed.length ? JSON.stringify(installed) : "";
+  const installedSet = installed.length > 0 ? JSON.stringify(installed) : "";
   const installedSource = `export const installedFeatures: ReadonlySet<string> = new Set(${installedSet});`;
   const formattedInstalledSource =
     installedSource.length > 80

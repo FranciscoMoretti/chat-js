@@ -31,7 +31,7 @@ export const classifyEveSandboxRuns = (
     const parents = [...new Set([run.parentId, run.eveParentId])].filter(
       (parent): parent is string => parent !== null
     );
-    if (!parents.length) {
+    if (parents.length === 0) {
       continue;
     }
     remaining.set(run.id, parents.length);

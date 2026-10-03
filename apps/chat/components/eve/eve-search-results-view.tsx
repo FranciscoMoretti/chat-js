@@ -144,7 +144,7 @@ export const EveSearchResultsView = ({
             </Button>
           </div>
         )}
-        {!pending && !error && !searching && !items.length && (
+        {!pending && !error && !searching && items.length === 0 && (
           <p className="text-muted-foreground p-4 text-sm">
             {isSearch
               ? "No chats found. Try different words."

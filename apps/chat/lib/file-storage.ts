@@ -98,7 +98,9 @@ export const listFiles = async () => ({
 export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
   const keys = [
     ...new Set(
-      urls.map(keyFromFileUrl).filter((key): key is string => key !== null)
+      urls
+        .map((url) => keyFromFileUrl(url))
+        .filter((key): key is string => key !== null)
     ),
   ];
   if (keys.length === 0) {
@@ -106,7 +108,7 @@ export const deleteFilesByUrls = async (urls: string[]): Promise<void> => {
   }
 
   const result = await getFiles().delete(
-    await Promise.all(keys.map(storageKeyForFile))
+    await Promise.all(keys.map((key) => storageKeyForFile(key)))
   );
   const errors = "errors" in result ? result.errors : undefined;
   if (errors?.length) {

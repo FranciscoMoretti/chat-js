@@ -90,7 +90,7 @@ const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
   const start = Date.now();
 
   if (t._config.isDev) {
-    // artificial delay in dev
+    // Add an artificial delay in development.
     const waitMs = Math.floor(Math.random() * 400) + 100;
     await sleep(waitMs);
   }
@@ -131,7 +131,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   }
   return next({
     ctx: {
-      // infers the `session` as non-nullable
+      // This narrows `session` to a non-nullable type.
       user: { id, ...rest },
     },
   });

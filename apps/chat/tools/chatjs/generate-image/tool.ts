@@ -364,7 +364,7 @@ const runGenerateImageMultimodal = async ({
 
   log.debug(
     {
-      hasBase64: !!imageFile.base64,
+      hasBase64: Boolean(imageFile.base64),
       mediaType: imageFile.mediaType,
       mode,
     },

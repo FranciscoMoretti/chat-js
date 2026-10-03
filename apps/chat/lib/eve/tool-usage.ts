@@ -5,7 +5,7 @@ import type { ToolOutput, ToolResult } from "./tool-result";
 
 /** Only an explicitly reported domain failure becomes an error receipt. */
 class ExpectedToolFailureError extends Error {
-  override name = "ExpectedToolFailureError";
+  public override name = "ExpectedToolFailureError";
 }
 
 /** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge. */

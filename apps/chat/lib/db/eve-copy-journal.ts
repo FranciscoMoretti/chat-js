@@ -23,7 +23,7 @@ type CopyTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 const hashPattern = /^[a-f0-9]{64}$/u;
 
 export class EveCopySourceChangedError extends CreationConflictError {
-  constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "EveCopySourceChangedError";
   }
@@ -316,7 +316,7 @@ const assertSourceFiles = async (
       )
     ),
   ];
-  if (!keys.length) {
+  if (keys.length === 0) {
     return;
   }
   const rows = await tx
@@ -466,7 +466,7 @@ export const reserveEveCopyOperation = async (
       sourceOwnerId: input.sourceOwnerId,
       sourceSessionId: input.sourceSessionId,
     });
-    if (input.plan.files.length) {
+    if (input.plan.files.length > 0) {
       await tx
         .insert(eveStoredFile)
         .values(input.plan.files.map((file) => ({ key: file.key, ownerId })));

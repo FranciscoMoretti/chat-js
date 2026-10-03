@@ -42,7 +42,7 @@ const snapshotCopyCheckpoints = async (
   const imported = boundaries
     .filter((boundary) => boundary.sourceKind === "imported")
     .map((boundary) => boundary.sourceIndex);
-  if (turns.length && documentIds.length) {
+  if (turns.length > 0 && documentIds.length > 0) {
     const headers = await tx
       .select({ index: eveDocumentCheckpoint.turnIndex })
       .from(eveDocumentCheckpoint)
@@ -77,7 +77,7 @@ const snapshotCopyCheckpoints = async (
       checkpointEntries.set(key, values);
     }
   }
-  if (imported.length && documentIds.length) {
+  if (imported.length > 0 && documentIds.length > 0) {
     const headers = await tx
       .select({ index: eveImportedDocumentCheckpoint.messageIndex })
       .from(eveImportedDocumentCheckpoint)
@@ -114,7 +114,7 @@ const snapshotCopyCheckpoints = async (
   }
   const checkpoints = boundaries.map((boundary) => {
     const key = `${boundary.sourceKind}:${boundary.sourceIndex}`;
-    if (documentIds.length && !checkpointHeaders.has(key)) {
+    if (documentIds.length > 0 && !checkpointHeaders.has(key)) {
       throw new Error("Published document boundary is unavailable.");
     }
     const heads = checkpointEntries.get(key) ?? [];
@@ -177,42 +177,44 @@ export const snapshotPublicEveCopyDocuments = async (
     const documentIds = [
       ...new Set(resources.documentIds.map((id) => id.toLowerCase())),
     ].toSorted();
-    const heads = documentIds.length
-      ? await tx
-          .select({
-            documentId: eveDocumentHead.documentId,
-            revisionId: eveDocumentHead.revisionId,
-          })
-          .from(eveDocumentHead)
-          .where(
-            and(
-              eq(eveDocumentHead.conversationId, conversationId),
-              eq(eveDocumentHead.ownerId, identity.ownerId),
-              inArray(eveDocumentHead.documentId, documentIds)
+    const heads =
+      documentIds.length > 0
+        ? await tx
+            .select({
+              documentId: eveDocumentHead.documentId,
+              revisionId: eveDocumentHead.revisionId,
+            })
+            .from(eveDocumentHead)
+            .where(
+              and(
+                eq(eveDocumentHead.conversationId, conversationId),
+                eq(eveDocumentHead.ownerId, identity.ownerId),
+                inArray(eveDocumentHead.documentId, documentIds)
+              )
             )
-          )
-          .orderBy(eveDocumentHead.documentId)
-      : [];
+            .orderBy(eveDocumentHead.documentId)
+        : [];
     if (heads.length !== documentIds.length) {
       throw new Error("A published document is no longer accessible.");
     }
-    const revisions = heads.length
-      ? await tx
-          .select({
-            content: eveDocumentRevision.content,
-            createdAt: eveDocumentRevision.createdAt,
-            documentId: eveDocumentRevision.documentId,
-            fileIds: eveDocumentRevision.fileIds,
-            id: eveDocumentRevision.id,
-            kind: eveDocumentRevision.kind,
-            parentRevisionId: eveDocumentRevision.parentRevisionId,
-            title: eveDocumentRevision.title,
-          })
-          .from(eveDocumentRevision)
-          .where(
-            inArray(
-              eveDocumentRevision.id,
-              sql`(
+    const revisions =
+      heads.length > 0
+        ? await tx
+            .select({
+              content: eveDocumentRevision.content,
+              createdAt: eveDocumentRevision.createdAt,
+              documentId: eveDocumentRevision.documentId,
+              fileIds: eveDocumentRevision.fileIds,
+              id: eveDocumentRevision.id,
+              kind: eveDocumentRevision.kind,
+              parentRevisionId: eveDocumentRevision.parentRevisionId,
+              title: eveDocumentRevision.title,
+            })
+            .from(eveDocumentRevision)
+            .where(
+              inArray(
+                eveDocumentRevision.id,
+                sql`(
       with recursive ancestry as (
         select "id", "parentRevisionId" from "EveDocumentRevision"
         where ${inArray(
@@ -226,9 +228,9 @@ export const snapshotPublicEveCopyDocuments = async (
           where revision."ownerId" = ${identity.ownerId}
       ) select "id" from ancestry
     )`
+              )
             )
-          )
-      : [];
+        : [];
     const byId = new Map(revisions.map((revision) => [revision.id, revision]));
     for (const id of resources.revisionIds) {
       if (!byId.has(id.toLowerCase())) {

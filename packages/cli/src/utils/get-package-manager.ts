@@ -21,36 +21,48 @@ export const launcherPackageManager = (): PackageManager => {
   return "bun";
 };
 
+const readDeclaredPackageManager = (
+  manifestPath: string
+): PackageManager | undefined => {
+  if (!fs.existsSync(manifestPath)) {
+    return undefined;
+  }
+
+  let manifest: unknown;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return undefined;
+    }
+    throw error;
+  }
+
+  if (
+    !manifest ||
+    typeof manifest !== "object" ||
+    !("packageManager" in manifest) ||
+    typeof manifest.packageManager !== "string"
+  ) {
+    return undefined;
+  }
+
+  const [declared] = manifest.packageManager.split("@");
+  return declared === "bun" ||
+    declared === "npm" ||
+    declared === "pnpm" ||
+    declared === "yarn"
+    ? declared
+    : undefined;
+};
+
 export const inferPackageManager = (cwd = process.cwd()): PackageManager => {
   let currentDir = path.resolve(cwd);
   while (true) {
     const manifestPath = path.join(currentDir, "package.json");
-    if (fs.existsSync(manifestPath)) {
-      try {
-        const manifest: unknown = JSON.parse(
-          fs.readFileSync(manifestPath, "utf-8")
-        );
-        if (
-          manifest &&
-          typeof manifest === "object" &&
-          "packageManager" in manifest &&
-          typeof manifest.packageManager === "string"
-        ) {
-          const [declared] = manifest.packageManager.split("@");
-          if (
-            declared === "bun" ||
-            declared === "npm" ||
-            declared === "pnpm" ||
-            declared === "yarn"
-          ) {
-            return declared;
-          }
-        }
-      } catch (error) {
-        if (!(error instanceof SyntaxError)) {
-          throw error;
-        }
-      }
+    const declared = readDeclaredPackageManager(manifestPath);
+    if (declared) {
+      return declared;
     }
     if (fs.existsSync(path.join(currentDir, "pnpm-lock.yaml"))) {
       return "pnpm";

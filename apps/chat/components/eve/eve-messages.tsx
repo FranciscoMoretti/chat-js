@@ -269,9 +269,11 @@ export const EveMessages = ({
         editDisabled={
           editing
             ? editing.disabled
-            : actionsDisabled || !!editor || !eveUserForkBoundary(message)
+            : actionsDisabled ||
+              Boolean(editor) ||
+              !eveUserForkBoundary(message)
         }
-        isEditing={!!editing}
+        isEditing={Boolean(editing)}
         isLoading={disabled && message.id === messages.at(-1)?.id && !editing}
         onCancelEdit={editing?.onCancel}
         onStartEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
@@ -303,7 +305,7 @@ export const EveMessages = ({
                 <RetryButtonView
                   disabled={
                     actionsDisabled ||
-                    !!editor ||
+                    Boolean(editor) ||
                     !(message.metadata?.turnId || message.metadata?.modelId) ||
                     !(userMessage && eveUserForkBoundary(userMessage))
                   }

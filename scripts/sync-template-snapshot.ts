@@ -20,7 +20,10 @@ class SnapshotIoLimiter {
     activeOperations: number
   ) => void;
 
-  constructor({ concurrency, onActiveOperationsChange }: SnapshotOptions) {
+  public constructor({
+    concurrency,
+    onActiveOperationsChange,
+  }: SnapshotOptions) {
     this.concurrency = concurrency ?? SNAPSHOT_CONCURRENCY;
     if (!Number.isInteger(this.concurrency) || this.concurrency < 1) {
       throw new RangeError("Snapshot concurrency must be a positive integer");
@@ -28,7 +31,7 @@ class SnapshotIoLimiter {
     this.onActiveOperationsChange = onActiveOperationsChange;
   }
 
-  async run<T>(operation: () => Promise<T>): Promise<T> {
+  public async run<T>(operation: () => Promise<T>): Promise<T> {
     if (
       this.activeOperations >= this.concurrency ||
       this.reservedOperations > 0

@@ -31,7 +31,7 @@ const prepareAdd = async (
     replace?: boolean;
   }
 ) => {
-  if (!items.length && !options.gateway && !options.storageProvider) {
+  if (items.length === 0 && !options.gateway && !options.storageProvider) {
     throw new Error(
       "Select at least one tool, feature, gateway or storage provider."
     );

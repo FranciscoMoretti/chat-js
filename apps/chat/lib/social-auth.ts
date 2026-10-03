@@ -21,7 +21,7 @@ export const isSocialAuthProvider = (
   typeof value === "string" && Object.hasOwn(SOCIAL_AUTH_PROVIDER_ORDER, value);
 
 const SOCIAL_AUTH_PROVIDER_IDS = Object.keys(SOCIAL_AUTH_PROVIDER_ORDER)
-  .filter(isSocialAuthProvider)
+  .filter((provider) => isSocialAuthProvider(provider))
   .toSorted(
     (a, b) => SOCIAL_AUTH_PROVIDER_ORDER[a] - SOCIAL_AUTH_PROVIDER_ORDER[b]
   );

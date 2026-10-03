@@ -51,7 +51,7 @@ export const getStorageEnvironmentRequirements = (
   if (required?.length) {
     requirements.push({
       description: `${metadata.name} configuration`,
-      options: [required.map(toVariable)],
+      options: [required.map((variable) => toVariable(variable))],
     });
   }
 
@@ -60,7 +60,7 @@ export const getStorageEnvironmentRequirements = (
   for (const mode of metadata.env.credentialModes ?? []) {
     const variables = mode.vars
       .filter((variable) => variable.readBy === "files-sdk")
-      .map(toVariable);
+      .map((variable) => toVariable(variable));
     if (variables.length > 0) {
       credentialModes.push(variables);
       continue;

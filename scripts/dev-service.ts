@@ -50,7 +50,7 @@ if (action === "start") {
   // Check before writing the plist or stopping an existing healthy service.
   const [node, version] = execFileSync(
     "node",
-    ["-p", "process.execPath + '\\n' + process.versions.node"],
+    ["-p", String.raw`process.execPath + '\n' + process.versions.node`],
     { encoding: "utf-8" }
   )
     .trim()

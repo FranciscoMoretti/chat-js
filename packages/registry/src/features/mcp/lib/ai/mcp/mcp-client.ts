@@ -49,7 +49,7 @@ export class MCPClient {
     oauthClientSecret?: string | null;
   };
 
-  constructor(
+  public constructor(
     id: string,
     name: string,
     serverConfig: {
@@ -100,7 +100,7 @@ export class MCPClient {
     });
   }
 
-  get status(): McpClientStatus {
+  public get status(): McpClientStatus {
     if (this.authorizationUrl) {
       return "authorizing";
     }
@@ -110,15 +110,15 @@ export class MCPClient {
     return this._status;
   }
 
-  getAuthorizationUrl(): URL | undefined {
+  public getAuthorizationUrl(): URL | undefined {
     return this.authorizationUrl;
   }
 
-  get serverInfo() {
+  public get serverInfo() {
     return this.client?.serverInfo;
   }
 
-  async connect(
+  public async connect(
     oauthState?: string,
     abortSignal?: AbortSignal
   ): Promise<McpClientInstance | undefined> {
@@ -217,7 +217,7 @@ export class MCPClient {
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Returns connection status without fetching tools/resources/prompts.
    */
-  async attemptConnection(abortSignal?: AbortSignal): Promise<{
+  public async attemptConnection(abortSignal?: AbortSignal): Promise<{
     status: McpClientStatus;
     needsAuth: boolean;
     error?: string;
@@ -274,7 +274,7 @@ export class MCPClient {
   /**
    * Called after callback receives code to complete the OAuth flow.
    */
-  async finishAuth(code: string, state: string): Promise<void> {
+  public async finishAuth(code: string, state: string): Promise<void> {
     const { generation, oauthProvider } = this;
     // Always adopt the state from the callback to load the session with code verifier
     await oauthProvider.adoptState(state);
@@ -296,7 +296,7 @@ export class MCPClient {
   /**
    * Get tools from the MCP server, already in AI SDK format.
    */
-  async tools(
+  public async tools(
     ...args: Parameters<NonNullable<McpClientInstance>["tools"]>
   ): Promise<Record<string, Tool>> {
     const { client } = this;
@@ -314,7 +314,7 @@ export class MCPClient {
   /**
    * List resources from the MCP server.
    */
-  async listResources(): Promise<ListResourcesResult> {
+  public async listResources(): Promise<ListResourcesResult> {
     const { client } = this;
     if (!client) {
       throw new Error("Client not connected");
@@ -330,7 +330,7 @@ export class MCPClient {
   /**
    * List prompts from the MCP server.
    */
-  async listPrompts(): Promise<ListPromptsResult> {
+  public async listPrompts(): Promise<ListPromptsResult> {
     const { client } = this;
     if (!client) {
       throw new Error("Client not connected");
@@ -346,7 +346,7 @@ export class MCPClient {
   /**
    * Close the connection to the MCP server.
    */
-  async close(): Promise<void> {
+  public async close(): Promise<void> {
     this.generation += 1;
     this.connectionAbort?.abort(new Error("MCP connection was closed"));
     this.connectPromise = undefined;

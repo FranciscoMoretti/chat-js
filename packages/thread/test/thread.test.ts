@@ -94,7 +94,9 @@ describe("Thread", () => {
     const state: ThreadState<UIMessage> = {
       getSnapshot: memory.getSnapshot,
       subscribe: memory.subscribe,
-      update: () => {},
+      update: () => {
+        // This invalid implementation intentionally ignores the state updater.
+      },
     };
 
     expect(() => new StateBackedThread(state)).toThrow(

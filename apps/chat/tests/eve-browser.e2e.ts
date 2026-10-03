@@ -554,7 +554,7 @@ test("reload retains text when the send never reaches the server", async ({
     if (route.request().method() === "POST") {
       await new Promise((resolve) => setTimeout(resolve, 5000));
       await route.abort().catch(() => {
-        /* empty */
+        /* Ignore abort errors when the route has already completed. */
       });
     } else {
       await route.continue();

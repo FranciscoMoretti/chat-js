@@ -3,11 +3,11 @@ import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 import { ControlledTransport } from "./thread-controlled-transport";
 
 export class ResumeTransport extends ControlledTransport {
-  lastReconnectOptions:
+  public lastReconnectOptions:
     | Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
     | undefined;
 
-  override reconnectToStream = (
+  public override reconnectToStream = (
     options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
   ) => {
     this.lastReconnectOptions = options;

@@ -14,7 +14,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const owners: string[] = [];
 afterAll(async () => {
-  if (owners.length) {
+  if (owners.length > 0) {
     await db
       .delete(eveConversation)
       .where(inArray(eveConversation.ownerId, owners));

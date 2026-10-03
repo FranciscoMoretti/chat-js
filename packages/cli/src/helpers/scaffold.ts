@@ -314,7 +314,7 @@ export const scaffoldFromTemplate = async (
       })
     : copyChatTemplateFromRepoSource(destination));
 
-  // npm packing omits nested .gitignore files, so materialize the app's rules.
+  // Packing with npm omits nested .gitignore files, so materialize the app's rules.
   await writeFile(
     join(destination, ".gitignore"),
     "node_modules/\n.next/\n.env*\n!.env.example\n.vercel/\n.devtools/\n*.tsbuildinfo\nelectron/out/\nelectron/dist/\n"

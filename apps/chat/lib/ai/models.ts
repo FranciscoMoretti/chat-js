@@ -34,7 +34,7 @@ const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
 export const fetchModels = unstable_cache(
   async (): Promise<ModelData[]> => {
     const models = await fetchModelsRaw();
-    return models.map(toModelData);
+    return models.map((model) => toModelData(model));
   },
   [`ai-gateway-models-${config.ai.gateway}`],
   {

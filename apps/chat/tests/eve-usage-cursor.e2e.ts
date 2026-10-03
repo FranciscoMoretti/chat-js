@@ -21,7 +21,7 @@ vi.mock("../lib/eve/server", () => ({ assertEveConfigured: vi.fn() }));
 const transport = vi.hoisted(() => ({ stream: vi.fn() }));
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = { attach: () => ({ stream: transport.stream }) };
+    public sessions = { attach: () => ({ stream: transport.stream }) };
   },
 }));
 assertEveTestDatabase(env.DATABASE_URL);

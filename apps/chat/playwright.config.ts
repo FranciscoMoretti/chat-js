@@ -23,7 +23,7 @@ export default defineConfig({
     timeout: 60 * 1000,
   },
   /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
+  forbidOnly: Boolean(process.env.CI),
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Configure projects */

@@ -3,14 +3,14 @@ export interface TextSplitterParams {
   chunkSize: number;
 }
 export abstract class TextSplitter implements TextSplitterParams {
-  chunkSize = 1000;
-  chunkOverlap = 200;
-  constructor(fields?: Partial<TextSplitterParams>) {
+  public chunkSize = 1000;
+  public chunkOverlap = 200;
+  public constructor(fields?: Partial<TextSplitterParams>) {
     this.chunkSize = fields?.chunkSize ?? this.chunkSize;
     this.chunkOverlap = fields?.chunkOverlap ?? this.chunkOverlap;
   }
-  abstract splitText(text: string): string[];
-  createDocuments(texts: string[]): string[] {
+  public abstract splitText(text: string): string[];
+  public createDocuments(texts: string[]): string[] {
     const documents: string[] = [];
     for (const text of texts) {
       if (text === null || text === undefined) {
@@ -22,7 +22,7 @@ export abstract class TextSplitter implements TextSplitterParams {
     }
     return documents;
   }
-  splitDocuments(documents: string[]): string[] {
+  public splitDocuments(documents: string[]): string[] {
     return this.createDocuments(documents);
   }
   private static joinDocs(docs: string[], separator: string): string | null {
@@ -64,7 +64,7 @@ export abstract class TextSplitter implements TextSplitterParams {
     }
     return updatedTotal;
   }
-  mergeSplits(splits: string[], separator: string): string[] {
+  public mergeSplits(splits: string[], separator: string): string[] {
     const docs: string[] = [];
     const currentDoc: string[] = [];
     let total = 0;

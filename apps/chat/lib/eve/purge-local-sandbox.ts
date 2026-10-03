@@ -125,7 +125,7 @@ const readLocalSandboxResources = async (input: {
     }
     snapshots.push(record.snapshotName);
   }
-  if (!sandboxNames.size) {
+  if (sandboxNames.size === 0) {
     // The maintained backend publishes owner.json before entering creation and
     // writes every resource identity before provider I/O. An owner-only directory
     // can therefore be left by a failed admission/setup without a VM to remove.
@@ -141,7 +141,7 @@ const readLocalSandboxResources = async (input: {
     if (
       owner.writeAheadResources !== true ||
       owner.sessionKey !== input.sessionKey ||
-      snapshots.length
+      snapshots.length > 0
     ) {
       throw new Error("Sandbox resource inventory is incomplete.");
     }
@@ -158,7 +158,7 @@ const removeRecordedSnapshots = async (snapshotNames: string[]) => {
   // then retry blocked parents only if another recorded snapshot was removed.
   // Never force deletion or enumerate resources outside this inventory.
   const pending = new Set(snapshotNames);
-  while (pending.size) {
+  while (pending.size > 0) {
     const before = pending.size;
     const errors: unknown[] = [];
     for (const snapshot of pending) {
@@ -194,8 +194,10 @@ export const purgeLocalEveSandboxes = async (
   }[]
 ) => {
   // Validate every member before any provider side effect.
-  const resources = await Promise.all(inputs.map(readLocalSandboxResources));
-  if (!resources.length) {
+  const resources = await Promise.all(
+    inputs.map((input) => readLocalSandboxResources(input))
+  );
+  if (resources.length === 0) {
     return resources;
   }
   const { Sandbox } = await import("microsandbox");

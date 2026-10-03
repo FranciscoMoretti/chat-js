@@ -5,16 +5,16 @@ import type { ThreadState } from "../../src/types";
 
 export class RecordingThreadState implements ThreadState<UIMessage> {
   readonly #state: MemoryThreadState<UIMessage>;
-  updateCount = 0;
+  public updateCount = 0;
 
-  constructor(messages: UIMessage[]) {
+  public constructor(messages: UIMessage[]) {
     this.#state = new MemoryThreadState({ messages });
   }
 
-  getSnapshot = () => this.#state.getSnapshot();
-  subscribe = (listener: () => void) => this.#state.subscribe(listener);
+  public getSnapshot = () => this.#state.getSnapshot();
+  public subscribe = (listener: () => void) => this.#state.subscribe(listener);
 
-  update: ThreadState<UIMessage>["update"] = (updater) => {
+  public update: ThreadState<UIMessage>["update"] = (updater) => {
     this.updateCount += 1;
     this.#state.update(updater);
   };

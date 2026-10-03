@@ -9,9 +9,9 @@ type EveSessionMappingErrorCode =
   | "receipt_unavailable";
 
 export class EveSessionMappingError extends Error {
-  readonly code: EveSessionMappingErrorCode;
+  public readonly code: EveSessionMappingErrorCode;
 
-  constructor(code: EveSessionMappingErrorCode) {
+  public constructor(code: EveSessionMappingErrorCode) {
     super(`Conversation session mapping: ${code}.`);
     this.name = "EveSessionMappingError";
     this.code = code;

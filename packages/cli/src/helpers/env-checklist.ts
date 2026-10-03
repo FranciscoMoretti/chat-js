@@ -163,7 +163,7 @@ export const collectEnvChecklist = (
     input.gatewayRequirements ?? gatewayEnvRequirements[input.gateway] ?? [];
   return [
     ...entries,
-    ...gwReq.flatMap(requirementToEntries),
+    ...gwReq.flatMap((requirement) => requirementToEntries(requirement)),
     ...collectFeatureEntries(input),
     ...collectAuthEntries(input),
   ];

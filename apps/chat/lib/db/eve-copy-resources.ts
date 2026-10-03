@@ -137,10 +137,10 @@ export const writeEveCopyDocuments = async (
         turnIndex: null,
       }))
     );
-    if (revisions.length) {
+    if (revisions.length > 0) {
       await tx.insert(eveDocumentRevision).values(revisions);
     }
-    if (copy.plan.documents.length) {
+    if (copy.plan.documents.length > 0) {
       await tx.insert(eveDocumentHead).values(
         copy.plan.documents.map((document) => ({
           conversationId,
@@ -150,7 +150,7 @@ export const writeEveCopyDocuments = async (
         }))
       );
     }
-    if (copy.plan.documentCheckpoints.length) {
+    if (copy.plan.documentCheckpoints.length > 0) {
       await tx.insert(eveImportedDocumentCheckpoint).values(
         copy.plan.documentCheckpoints.map((checkpoint) => ({
           conversationId,
@@ -166,7 +166,7 @@ export const writeEveCopyDocuments = async (
           ...head,
         }))
       );
-      if (entries.length) {
+      if (entries.length > 0) {
         await tx.insert(eveImportedDocumentCheckpointEntry).values(entries);
       }
     }
@@ -203,24 +203,25 @@ export const acceptEveCopy = async (
       throw new Error("Copied documents are not committed.");
     }
     await assertEveCopySourceAvailable(tx, copy);
-    const heads = copy.plan.sourceHeads.length
-      ? await tx
-          .select({
-            documentId: eveDocumentHead.documentId,
-            revisionId: eveDocumentHead.revisionId,
-          })
-          .from(eveDocumentHead)
-          .where(
-            and(
-              eq(eveDocumentHead.conversationId, copy.sourceConversationId),
-              eq(eveDocumentHead.ownerId, copy.sourceOwnerId),
-              inArray(
-                eveDocumentHead.documentId,
-                copy.plan.sourceHeads.map((head) => head.documentId)
+    const heads =
+      copy.plan.sourceHeads.length > 0
+        ? await tx
+            .select({
+              documentId: eveDocumentHead.documentId,
+              revisionId: eveDocumentHead.revisionId,
+            })
+            .from(eveDocumentHead)
+            .where(
+              and(
+                eq(eveDocumentHead.conversationId, copy.sourceConversationId),
+                eq(eveDocumentHead.ownerId, copy.sourceOwnerId),
+                inArray(
+                  eveDocumentHead.documentId,
+                  copy.plan.sourceHeads.map((head) => head.documentId)
+                )
               )
             )
-          )
-      : [];
+        : [];
     if (
       heads.length !== copy.plan.sourceHeads.length ||
       copy.plan.sourceHeads.some(

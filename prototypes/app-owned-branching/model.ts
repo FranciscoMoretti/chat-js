@@ -103,12 +103,12 @@ export const validatePrefix = (messages: Message[]) => {
         if (item.role !== "tool" || !pending.delete(p.id)) {
           throw new Error("unpaired result");
         }
-      } else if (pending.size && item.role !== "assistant") {
+      } else if (pending.size > 0 && item.role !== "assistant") {
         throw new Error("unresolved tool boundary");
       }
     }
   }
-  if (pending.size) {
+  if (pending.size > 0) {
     throw new Error("unresolved tool boundary");
   }
 };
@@ -119,7 +119,7 @@ const requireResources = async (
   ids: string[],
   kind: "file" | "document"
 ) => {
-  if (!ids.length) {
+  if (ids.length === 0) {
     return;
   }
   const rows =
@@ -232,7 +232,7 @@ export const reserve = async (
       throw new Error("capture barrier");
     }
     const active = await tx`select id from writer where branch=${b.id}`;
-    if (active.length) {
+    if (active.length > 0) {
       throw new Error("writers not drained");
     }
     validatePrefix(await history(tx, input.owner, b.head));
@@ -309,7 +309,7 @@ export const fork = async (
     const prior =
       await tx`select id from child_request where id=${input.child}`;
     const branch = await tx`select id from branch where id=${input.child}`;
-    if (!prior.length && branch.length) {
+    if (prior.length === 0 && branch.length > 0) {
       throw new Error("child already exists");
     }
     await tx`insert into child_request (id,owner,checkpoint) values (${input.child},${input.owner},${c.id}) on conflict do nothing`;
@@ -350,7 +350,7 @@ export const removeBranch = async (sql: Sql, owner: string, branch: string) => {
     await tx`select id from child_request where id=${branch} for update`;
     const b = await ownedBranch(tx, owner, branch);
     const writers = await tx`select id from writer where branch=${b.id}`;
-    if (b.barrier || writers.length) {
+    if (b.barrier || writers.length > 0) {
       throw new Error("branch busy");
     }
     await tx`update child_request set deleted=true where id=${b.id}`;
@@ -373,12 +373,12 @@ export const writeFile = async (
     const b = await ownedBranch(tx, input.owner, input.branch);
     const tokens =
       await tx`select id from writer where id=${input.writer} and branch=${b.id}`;
-    if (b.barrier || !tokens.length) {
+    if (b.barrier || tokens.length === 0) {
       throw new Error("writer not admitted");
     }
     const updated =
       await tx`update provider_vm set files=files || ${tx.json({ [input.path]: input.bytes })} where id=${b.sandbox} and not stopped returning id`;
-    if (!updated.length) {
+    if (updated.length === 0) {
       throw new Error("VM stopped");
     }
   });

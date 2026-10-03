@@ -72,14 +72,14 @@ function request(ownerId: string) {
 }
 
 afterAll(async () => {
-  if (owners.length) {
+  if (owners.length > 0) {
     await db.delete(eveUsage).where(inArray(eveUsage.ownerId, owners));
     await db
       .delete(eveConversation)
       .where(inArray(eveConversation.ownerId, owners));
     await db.delete(user).where(inArray(user.id, owners));
   }
-  if (ips.length) {
+  if (ips.length > 0) {
     await db.delete(eveGuestRate).where(inArray(eveGuestRate.ipHash, ips));
   }
 });

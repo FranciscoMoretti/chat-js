@@ -8,22 +8,22 @@ const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] = () =>
   null;
 
 export class TestRunHost implements ThreadRunHost<UIMessage> {
-  readonly dataPartSchemas = undefined;
-  readonly id = "thread";
-  readonly messageMetadataSchema = undefined;
-  readonly generateMessageId = generateMessageId;
-  readonly spec: ThreadRunSpec;
-  readonly tree: MessageTree<UIMessage>;
-  onData: ThreadRunHost<UIMessage>["onData"];
-  onError: ThreadRunHost<UIMessage>["onError"];
-  onFinish: ThreadRunHost<UIMessage>["onFinish"];
-  onToolCall: ThreadRunHost<UIMessage>["onToolCall"];
-  sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
-  transport: ChatTransport<UIMessage>;
-  status: ChatStatus = "ready";
-  readonly errors: Error[] = [];
+  public readonly dataPartSchemas = undefined;
+  public readonly id = "thread";
+  public readonly messageMetadataSchema = undefined;
+  public readonly generateMessageId = generateMessageId;
+  public readonly spec: ThreadRunSpec;
+  public readonly tree: MessageTree<UIMessage>;
+  public onData: ThreadRunHost<UIMessage>["onData"];
+  public onError: ThreadRunHost<UIMessage>["onError"];
+  public onFinish: ThreadRunHost<UIMessage>["onFinish"];
+  public onToolCall: ThreadRunHost<UIMessage>["onToolCall"];
+  public sendAutomaticallyWhen: ThreadRunHost<UIMessage>["sendAutomaticallyWhen"];
+  public transport: ChatTransport<UIMessage>;
+  public status: ChatStatus = "ready";
+  public readonly errors: Error[] = [];
 
-  constructor(
+  public constructor(
     transport: ChatTransport<UIMessage>,
     initialMessage: UIMessage,
     spec: ThreadRunSpec
@@ -33,21 +33,22 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
     this.tree = new MessageTree({ messages: [initialMessage] });
   }
 
-  getMessagePath = (messageId: string | null) => this.tree.getPath(messageId);
-  updateRunPath = (messages: UIMessage[]) => {
+  public getMessagePath = (messageId: string | null) =>
+    this.tree.getPath(messageId);
+  public updateRunPath = (messages: UIMessage[]) => {
     this.tree.updatePath(messages);
   };
-  registerToolCall = registerToolCall;
-  removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
-  setRunError = (_runId: string, error: Error | undefined) => {
+  public registerToolCall = registerToolCall;
+  public removeMessage = (messageId: string) => this.tree.removeLeaf(messageId);
+  public setRunError = (_runId: string, error: Error | undefined) => {
     if (error) {
       this.errors.push(error);
     }
   };
-  setRunStatus = (_runId: string, status: ChatStatus) => {
+  public setRunStatus = (_runId: string, status: ChatStatus) => {
     this.status = status;
   };
-  writeRunMessage = (_runId: string, message: UIMessage) => {
+  public writeRunMessage = (_runId: string, message: UIMessage) => {
     if (this.spec.messageId && this.spec.messageId !== message.id) {
       throw new Error("Run message identity changed");
     }

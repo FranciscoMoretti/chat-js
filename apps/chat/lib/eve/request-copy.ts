@@ -44,9 +44,13 @@ export const finishPendingEveCopy = (
 };
 
 export class EveCopyRequestError extends Error {
-  readonly retryable: boolean;
-  readonly conversationId?: string;
-  constructor(message: string, retryable = true, conversationId?: string) {
+  public readonly retryable: boolean;
+  public readonly conversationId?: string;
+  public constructor(
+    message: string,
+    retryable = true,
+    conversationId?: string
+  ) {
     super(message);
     this.name = "EveCopyRequestError";
     this.retryable = retryable;

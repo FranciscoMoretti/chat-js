@@ -99,7 +99,7 @@ export class OpenRouterGateway
   extends GatewayRuntime
   implements GatewayProvider<"openrouter", string, never, never>
 {
-  readonly type = "openrouter" as const;
+  public readonly type = "openrouter" as const;
 
   private getProvider() {
     const apiKey = this.getApiKey();
@@ -109,14 +109,14 @@ export class OpenRouterGateway
     return createOpenRouter({ apiKey });
   }
 
-  createLanguageModel(modelId: string): LanguageModelV4 {
+  public createLanguageModel(modelId: string): LanguageModelV4 {
     const provider = this.getProvider();
     return provider.chat(modelId);
   }
 
   // The gateway interface requires an image factory even when unsupported.
   // eslint-disable-next-line class-methods-use-this
-  createImageModel(_modelId: never): ImageModel | null {
+  public createImageModel(_modelId: never): ImageModel | null {
     // OpenRouter routes image generation through multimodal language models.
     // Return null to signal callers should use createLanguageModel instead.
     return null;
@@ -124,7 +124,7 @@ export class OpenRouterGateway
 
   // The gateway interface requires a video factory even when unsupported.
   // eslint-disable-next-line class-methods-use-this
-  createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
+  public createVideoModel(_modelId: never): Experimental_VideoModelV4 | null {
     return null;
   }
 
@@ -138,7 +138,7 @@ export class OpenRouterGateway
     return "https://openrouter.ai/api/v1/models";
   }
 
-  async fetchModels(): Promise<AiGatewayModel[]> {
+  public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
     if (!apiKey) {
@@ -167,7 +167,7 @@ export class OpenRouterGateway
 
       const body = await response.json();
       const models = (body.data ?? []) as OpenRouterModelResponse[];
-      const result = models.map(toAiGatewayModel);
+      const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(
         { modelCount: result.length },

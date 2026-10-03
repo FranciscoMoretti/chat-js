@@ -14,7 +14,7 @@ export default defineAgent({
       throw new Error("Deterministic provider failure");
     }
     if (lastUserMessage === "question") {
-      if (toolResults.length) {
+      if (toolResults.length > 0) {
         return "Answer received.";
       }
       return {
@@ -27,7 +27,7 @@ export default defineAgent({
       };
     }
     if (lastUserMessage?.startsWith("confirm")) {
-      if (toolResults.length) {
+      if (toolResults.length > 0) {
         return "Approval handled.";
       }
       const tool = tools.find((item) => item.name === "confirm_note");

@@ -166,7 +166,7 @@ const handle = async (
     return rejectRequest(request, "Conversation not found.", 404);
   }
   const query = safeStreamQuery(new URL(request.url).searchParams);
-  if (!query || (request.method !== "GET" && query.size)) {
+  if (!query || (request.method !== "GET" && query.size > 0)) {
     return rejectRequest(request, "Invalid command query.", 400);
   }
   const command = await readCommand(
@@ -191,7 +191,7 @@ const handle = async (
     }
     const result = await eveRequest(
       principal.ownerId,
-      `/eve/chat/${path.join("/")}${query.size ? `?${query}` : ""}`,
+      `/eve/chat/${path.join("/")}${query.size > 0 ? `?${query}` : ""}`,
       {
         body,
         method: request.method,

@@ -17,7 +17,7 @@ const WebSearchSchema = TaskUpdateSchema.extend({
         content: z.string(),
         source: z.enum(["web", "academic", "x"]),
         title: z.string(),
-        // tweetId: z.string().optional(),
+        // Optional `tweetId` field, currently disabled.
         url: z.string(),
       })
     )

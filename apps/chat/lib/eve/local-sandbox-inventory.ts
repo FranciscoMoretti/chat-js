@@ -38,7 +38,7 @@ export const readLocalEveSandboxInventory = async (
   const unsupported = backends.filter(
     (entry) => entry.name !== "microsandbox" || !entry.isDirectory()
   );
-  if (unsupported.length) {
+  if (unsupported.length > 0) {
     return {
       owned: [],
       unattributedDirectories: unsupported

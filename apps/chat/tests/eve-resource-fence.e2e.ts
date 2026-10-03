@@ -19,10 +19,10 @@ const runIds: string[] = [];
 const streamIds: string[] = [];
 await installEvePostgresResourceFence(query);
 afterAll(async () => {
-  if (streamIds.length) {
+  if (streamIds.length > 0) {
     await query`delete from workflow.workflow_stream_chunks where stream_id in ${query(streamIds)}`;
   }
-  if (runIds.length) {
+  if (runIds.length > 0) {
     await query`delete from workflow.workflow_runs where id in ${query(runIds)}`;
     await query`delete from workflow.eve_resource_fences where resource in ${query(
       [

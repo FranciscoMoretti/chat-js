@@ -7,9 +7,9 @@ export const checkpointRejectionReason = z.enum([
 
 /** Only durable native rejections that prove this checkpoint never became usable. */
 export class CheckpointRejectedError extends Error {
-  readonly reason: z.infer<typeof checkpointRejectionReason>;
+  public readonly reason: z.infer<typeof checkpointRejectionReason>;
 
-  constructor(reason: z.infer<typeof checkpointRejectionReason>) {
+  public constructor(reason: z.infer<typeof checkpointRejectionReason>) {
     super(
       reason === "source_not_idle"
         ? "The conversation was still running when the comparison was requested. Your draft is saved. Wait for it to finish, then send again."

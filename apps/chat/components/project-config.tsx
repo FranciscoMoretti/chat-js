@@ -21,7 +21,7 @@ export const ProjectConfig = ({
   onEditInstructions: () => void;
   onRenameProject: () => void;
 }) => {
-  const hasInstructions = !!instructions?.trim();
+  const hasInstructions = Boolean(instructions?.trim());
 
   return (
     <div className="flex items-center justify-between gap-4">

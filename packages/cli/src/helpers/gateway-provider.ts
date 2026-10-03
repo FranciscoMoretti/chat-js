@@ -6,7 +6,7 @@ import { preflight } from "../utils/preflight";
 
 const sortJsonKeys = (value: unknown): unknown => {
   if (Array.isArray(value)) {
-    return value.map(sortJsonKeys);
+    return value.map((nestedValue) => sortJsonKeys(nestedValue));
   }
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(

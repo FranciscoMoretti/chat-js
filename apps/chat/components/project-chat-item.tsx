@@ -65,7 +65,7 @@ export const ProjectChatItem = ({
             </div>
           </div>
           <div className="z-20">
-            <DropdownMenu modal={true}>
+            <DropdownMenu modal>
               <DropdownMenuTrigger asChild>
                 <Button
                   className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"

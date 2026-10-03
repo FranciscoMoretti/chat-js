@@ -114,7 +114,7 @@ export const ResearchProgress = ({
         !isComplete && (
           <div className="px-4 pt-1 pb-3">
             {/* We only show the running step in this component */}
-            <ResearchTask isRunning={true} minimal={true} update={lastUpdate} />
+            <ResearchTask isRunning minimal update={lastUpdate} />
           </div>
         )
       )}

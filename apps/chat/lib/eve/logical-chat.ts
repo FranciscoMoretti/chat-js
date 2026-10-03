@@ -81,7 +81,7 @@ const latestMessageTime = (
  * Content remains in the native store; copied prefixes never become writers.
  */
 export class LogicalChat {
-  readonly commands = new LogicalCommands();
+  public readonly commands = new LogicalCommands();
   private branches: LogicalBranch[] = [];
   private agents = new Map<string, NativeChatAgent>();
   private listeners = new Set<() => void>();
@@ -93,8 +93,8 @@ export class LogicalChat {
   private pendingSelection: string | undefined;
   private snapshot: LogicalChatSnapshot;
 
-  readonly chatId: string;
-  constructor(
+  public readonly chatId: string;
+  public constructor(
     chatId: string,
     initialConversationId: string,
     hydrateLatest = false
@@ -116,15 +116,15 @@ export class LogicalChat {
     };
   }
 
-  getSnapshot = () => this.snapshot;
-  subscribe = (listener: () => void) => {
+  public getSnapshot = () => this.snapshot;
+  public subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
     };
   };
 
-  setBranches(branches: readonly LogicalBranch[]) {
+  public setBranches(branches: readonly LogicalBranch[]) {
     this.branches = branches.toSorted(
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() ||
@@ -134,7 +134,7 @@ export class LogicalChat {
     this.publish();
   }
 
-  observe(conversationId: string, agent: NativeChatAgent) {
+  public observe(conversationId: string, agent: NativeChatAgent) {
     const previous = this.agents.get(conversationId);
     if (
       previous?.data === agent.data &&
@@ -148,20 +148,20 @@ export class LogicalChat {
     this.publish();
   }
 
-  setVisible(visible: boolean) {
+  public setVisible(visible: boolean) {
     if (this.visible && !visible) {
       this.leave();
     }
     this.visible = visible;
   }
 
-  leave() {
+  public leave() {
     this.hydrateLatest = false;
     this.follow = false;
     this.pendingSelection = undefined;
   }
 
-  selectBranch(conversationId: string) {
+  public selectBranch(conversationId: string) {
     this.hydrateLatest = false;
     this.follow = true;
     const path = this.snapshot.paths.get(conversationId);
@@ -175,7 +175,7 @@ export class LogicalChat {
     this.publish();
   }
 
-  selectNode(id: string) {
+  public selectNode(id: string) {
     this.hydrateLatest = false;
     let node = this.snapshot.nodes.get(id);
     if (!node) {
@@ -195,11 +195,11 @@ export class LogicalChat {
     this.publish();
   }
 
-  logicalId(conversationId: string, nativeId: string) {
+  public logicalId(conversationId: string, nativeId: string) {
     return this.snapshot.aliases.get(aliasKey(conversationId, nativeId));
   }
 
-  siblings(conversationId: string, nativeId: string) {
+  public siblings(conversationId: string, nativeId: string) {
     const id = this.logicalId(conversationId, nativeId);
     const node = id ? this.snapshot.nodes.get(id) : undefined;
     const ids = node ? (this.snapshot.children.get(node.parentId) ?? []) : [];
@@ -216,7 +216,7 @@ export class LogicalChat {
     const waiting = new Map(this.branches.map((branch) => [branch.id, branch]));
     let error: string | undefined;
     // Parents must be reduced before descendants, regardless of stream arrival.
-    while (waiting.size) {
+    while (waiting.size > 0) {
       let progressed = false;
       for (const [id, branch] of waiting) {
         if (
@@ -426,7 +426,7 @@ const projectBranch = (
   }
   const needsResponse =
     branch.forkKind === "regenerate" ||
-    (!!branch.responseGroupId && branch.forkKind !== "edit");
+    (Boolean(branch.responseGroupId) && branch.forkKind !== "edit");
   const hasLocalMessage = needsResponse
     ? messages
         .slice(prefix.length)
@@ -436,4 +436,4 @@ const projectBranch = (
 };
 
 export const logicalChatBusy = (snapshot: LogicalChatSnapshot) =>
-  [...snapshot.agents.values()].some(busy);
+  [...snapshot.agents.values()].some((agent) => busy(agent));

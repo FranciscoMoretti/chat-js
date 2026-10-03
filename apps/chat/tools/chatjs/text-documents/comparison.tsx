@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/react";
 
 const DiffView = dynamic(
-  // next/dynamic requires a promise projection for named exports.
+  // Named exports need a promise projection for next/dynamic.
   // oxlint-disable-next-line promise/prefer-await-to-then
   () => import("./diffview").then((module) => module.DiffView),
   {

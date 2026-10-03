@@ -157,7 +157,7 @@ export const referenceEveFiles = async (
 /** Preflight rejects invalid initial input before a creation reservation exists. */
 export const assertEveFilesOwned = async (ownerId: string, keys: string[]) => {
   const uniqueKeys = [...new Set(keys)];
-  if (!uniqueKeys.length) {
+  if (uniqueKeys.length === 0) {
     return;
   }
   if (
@@ -257,7 +257,7 @@ export const retainEveDocumentFiles = async (
   if (candidates.some((id) => !isFileStorageKey(id))) {
     throw new Error("Invalid document file reference.");
   }
-  if (!candidates.length) {
+  if (candidates.length === 0) {
     return;
   }
   const files = await tx
@@ -273,7 +273,7 @@ export const retainEveDocumentFiles = async (
   if (files.length !== candidates.length) {
     throw new Error("Document references an unavailable or unowned file.");
   }
-  if (files.length) {
+  if (files.length > 0) {
     await tx
       .insert(eveFileReference)
       .values(files.map(({ key }) => ({ conversationId, key, ownerId })))

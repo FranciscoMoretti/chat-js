@@ -132,7 +132,9 @@ export const EveConversation = ({
         return false;
       }
       const logicalId = controller.logicalId(conversationId, message.id);
-      return !snapshot.cursorId || (!!logicalId && selectedPath.has(logicalId));
+      return (
+        !snapshot.cursorId || Boolean(logicalId && selectedPath.has(logicalId))
+      );
     })
     .map((message) => {
       const id = controller.logicalId(conversationId, message.id);
@@ -144,7 +146,7 @@ export const EveConversation = ({
     messages.find(
       (message) =>
         eveUserForkBoundary(message) === fork.editingBoundary &&
-        !!fork.editingBoundary
+        Boolean(fork.editingBoundary)
     )?.id;
   const responseModels = responseModelReferences(agent.events);
   const modelForMessage = (message: (typeof messages)[number]) => {
@@ -335,9 +337,9 @@ export const EveConversation = ({
                   commandPending ||
                   fork.locked ||
                   !fork.family.data ||
-                  !!snapshot.error ||
+                  Boolean(snapshot.error) ||
                   hasApproval ||
-                  !!pendingMessage
+                  Boolean(pendingMessage)
                 }
                 conversationId={conversationId}
                 disabled={busy || commandPending}
@@ -355,10 +357,10 @@ export const EveConversation = ({
                                 busy ||
                                 commandPending ||
                                 hasApproval ||
-                                !!pendingMessage ||
+                                Boolean(pendingMessage) ||
                                 fork.locked
                               }
-                              readOnly={!!fork.pending}
+                              readOnly={Boolean(fork.pending)}
                               draft={fork.draft}
                               files={fork.files}
                               modelSelection={fork.modelSelection}
@@ -377,7 +379,7 @@ export const EveConversation = ({
                             )}
                           </div>
                         ),
-                        disabled: fork.busy || !!fork.pending,
+                        disabled: fork.busy || Boolean(fork.pending),
                         messageId: editingMessageId,
                         onCancel: fork.cancelEdit,
                       }
@@ -389,7 +391,9 @@ export const EveConversation = ({
                     conversationId={conversationId}
                     messageId={message.id}
                     disabled={
-                      fork.locked || !!editingMessageId || !!pendingMessage
+                      fork.locked ||
+                      Boolean(editingMessageId) ||
+                      Boolean(pendingMessage)
                     }
                   />
                 )}
@@ -398,7 +402,9 @@ export const EveConversation = ({
                     conversationId={conversationId}
                     messageId={message.id}
                     disabled={
-                      fork.locked || !!editingMessageId || !!pendingMessage
+                      fork.locked ||
+                      Boolean(editingMessageId) ||
+                      Boolean(pendingMessage)
                     }
                   />
                 )}
@@ -560,7 +566,7 @@ export const EveConversation = ({
                 commandPending ||
                 cancelPending ||
                 hasApproval ||
-                !!pendingMessage ||
+                Boolean(pendingMessage) ||
                 fork.locked
               }
               draft={draft}
@@ -591,7 +597,7 @@ export const EveConversation = ({
                 })
               }
               onToolChange={handleSelectedToolChange}
-              readOnly={!!comparison}
+              readOnly={Boolean(comparison)}
               retainedModelId={pendingMessage?.modelId}
               retainedModelIds={comparison?.modelIds}
               selectedTool={displayedTool}

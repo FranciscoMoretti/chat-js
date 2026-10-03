@@ -84,7 +84,9 @@ const dispatch = (event: HookEvent, hookContext = context) =>
   search.events?.["*"]?.(event, hookContext);
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {
+    // Keep expected console output out of the test log.
+  });
   mocks.state = [];
   mocks.recovery = false;
   mocks.resolve.mockResolvedValue({

@@ -49,7 +49,7 @@ const REVISION_FIELDS = new Set([
   "parentRevisionId",
 ]);
 export class EveCopyNotReadyError extends Error {
-  constructor() {
+  public constructor() {
     super("Wait for the shared conversation to finish before saving a copy.");
     this.name = "EveCopyNotReadyError";
   }
@@ -256,7 +256,10 @@ export const prepareEveCopyTranscript = (
       };
     }
   );
-  if (!messages.length || messages.some((message) => !message.parts.length)) {
+  if (
+    messages.length === 0 ||
+    messages.some((message) => message.parts.length === 0)
+  ) {
     throw new EveCopyNotReadyError();
   }
   const seed: Seed = { messages };
@@ -389,7 +392,7 @@ const decodeInlineAttachment = (
   }
   const encoded = part.url.slice(prefix.length);
   const bytes = Buffer.from(encoded, "base64");
-  if (!bytes.length || bytes.toString("base64") !== encoded) {
+  if (bytes.length === 0 || bytes.toString("base64") !== encoded) {
     throw new Error("Invalid inline attachment encoding.");
   }
   return {

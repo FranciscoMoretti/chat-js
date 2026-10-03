@@ -36,7 +36,7 @@ vi.mock("./connection-options", () => ({
 vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.save }));
 vi.mock("eve/client", () => ({
   Client: class {
-    sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
+    public sessions = { attach: () => ({ snapshot: mocks.snapshot }) };
   },
 }));
 vi.mock("./shared-messages", () => ({

@@ -133,7 +133,7 @@ test("unmodified replacement works without overwrite and failed registration res
       return file.exists().then((exists) => (exists ? file.text() : null));
     };
     const oldRegistrations = await Promise.all(
-      toolRegistrationTargets.map(registrationContents)
+      toolRegistrationTargets.map((target) => registrationContents(target))
     );
     await expect(
       installPlan(
@@ -157,7 +157,9 @@ test("unmodified replacement works without overwrite and failed registration res
     expect(await readFile(env, "utf-8")).toBe(oldEnv);
     expect(await readFile(config, "utf-8")).toBe(oldConfig);
     expect(
-      await Promise.all(toolRegistrationTargets.map(registrationContents))
+      await Promise.all(
+        toolRegistrationTargets.map((target) => registrationContents(target))
+      )
     ).toEqual(oldRegistrations);
     expect(
       await Bun.file(path.join(root, "tools/chatjs/first/chatjs.json")).exists()

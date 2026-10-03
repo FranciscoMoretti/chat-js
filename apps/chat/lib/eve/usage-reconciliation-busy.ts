@@ -1,6 +1,6 @@
 /** Transient admission backpressure, never a rejected or dispatched command. */
 export class EveUsageReconciliationBusyError extends Error {
-  constructor() {
+  public constructor() {
     super("Usage reconciliation is busy. Retry the same operation shortly.");
     this.name = "EveUsageReconciliationBusyError";
   }

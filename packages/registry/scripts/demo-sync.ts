@@ -50,7 +50,7 @@ const formatted = async (file: string, content: string) => {
     return content;
   }
   const result = await format(file, content, ultracite);
-  if (result.errors.length) {
+  if (result.errors.length > 0) {
     throw new Error(`Could not format demo source: ${file}`);
   }
   return result.code;
@@ -275,7 +275,7 @@ const replaceDemoFiles = async (
         failures.push(rollbackError);
       }
     }
-    if (failures.length) {
+    if (failures.length > 0) {
       retainBackups = true;
       throw new AggregateError(
         [error, ...failures],
@@ -330,13 +330,13 @@ export const syncDemo = async (options: {
       ? hash !== record.files[file]
       : content !== null && content !== expected.get(file);
   });
-  if (edited.length && !discard) {
+  if (edited.length > 0 && !discard) {
     throw new Error(
       `Edited registry-owned demo files:\n${edited.join("\n")}\nMove changes upstream or explicitly regenerate with bun demo:sync --discard.`
     );
   }
   const staleOwnership = files.filter((file) => !expected.has(file));
-  if (staleOwnership.length) {
+  if (staleOwnership.length > 0) {
     throw new Error(
       `Preset removed owned files; removal is outside demo sync scope:\n${staleOwnership.join("\n")}`
     );
@@ -356,7 +356,7 @@ export const syncDemo = async (options: {
   );
   const baselineDrift = previous !== baselineContent;
   if (check) {
-    if (drift.length || baselineDrift) {
+    if (drift.length > 0 || baselineDrift) {
       throw new Error(
         `Demo source drift:\n${drift.join("\n")}${baselineDrift ? `\nBaseline drift: ${baseline}` : ""}\nRun bun demo:sync to update source and its baseline.`
       );

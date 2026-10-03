@@ -46,11 +46,15 @@ type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
 export class CostAccumulator {
   private readonly entries: CostEntry[] = [];
   /** Add LLM cost from generateText/streamText usage */
-  addLLMCost(modelId: AppModelId, usage: UsageInfo, source: string): void {
+  public addLLMCost(
+    modelId: AppModelId,
+    usage: UsageInfo,
+    source: string
+  ): void {
     this.entries.push({ modelId, source, type: "llm", usage });
   }
   /** Dedicated image models are priced per image, in dollars in the gateway catalog. */
-  addImageCost(
+  public addImageCost(
     modelId: string,
     count: number,
     usage: UsageInfo,
@@ -59,13 +63,13 @@ export class CostAccumulator {
     this.entries.push({ count, modelId, source, type: "image", usage });
   }
   /** Add fixed external API cost (in cents) */
-  addAPICost(apiName: string, cost: number): void {
+  public addAPICost(apiName: string, cost: number): void {
     if (cost > 0) {
       this.entries.push({ apiName, cost, type: "api" });
     }
   }
   /** Get total cost in cents, rounded up */
-  async getTotalCost(): Promise<number> {
+  public async getTotalCost(): Promise<number> {
     let total = 0;
     const llmEntries = this.entries.filter(
       (entry): entry is LLMCostEntry => entry.type === "llm"
@@ -117,11 +121,11 @@ export class CostAccumulator {
     return Math.ceil(total);
   }
   /** Get breakdown of all cost entries */
-  getEntries(): CostEntry[] {
+  public getEntries(): CostEntry[] {
     return [...this.entries];
   }
   /** Check if any costs have been recorded */
-  hasEntries(): boolean {
+  public hasEntries(): boolean {
     return this.entries.length > 0;
   }
 }

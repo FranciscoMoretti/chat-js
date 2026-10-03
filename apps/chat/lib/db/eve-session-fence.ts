@@ -29,14 +29,14 @@ export const fenceEvePostgresSession = async (
         sessionId,
         additionalRunIds
       );
-      if (inventory.activeRunIds.length) {
+      if (inventory.activeRunIds.length > 0) {
         throw new Error(
           "Retire all reachable runs before fencing this session."
         );
       }
       if (
-        inventory.missingRunIds.length ||
-        inventory.ambiguousStreamIds.length
+        inventory.missingRunIds.length > 0 ||
+        inventory.ambiguousStreamIds.length > 0
       ) {
         throw new Error(
           "Resolve missing runs and stream ownership before fencing this session."

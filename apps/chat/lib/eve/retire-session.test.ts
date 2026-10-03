@@ -37,10 +37,10 @@ vi.mock("../db/eve-native-purge", () => ({
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.usage }));
 vi.mock("eve/client", () => ({
   Client: class {
-    constructor(options: unknown) {
+    public constructor(options: unknown) {
       mocks.client(options);
     }
-    sessions = {
+    public sessions = {
       attach: () => ({ reset: mocks.reset, snapshot: mocks.snapshot }),
     };
   },

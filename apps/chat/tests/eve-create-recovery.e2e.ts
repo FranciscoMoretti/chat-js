@@ -221,7 +221,7 @@ test("an unresolved project conversation recovers after its project is deleted",
     path: testInfo.outputPath("recovery-error-mobile.png"),
   });
   let releaseRetry: () => void = () => {
-    /* empty */
+    /* The gate is not ready to release before the retry route is intercepted. */
   };
   const retryGate = new Promise<void>((resolve) => {
     releaseRetry = resolve;

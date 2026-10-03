@@ -7,7 +7,7 @@ import { useTRPC } from "@/trpc/react";
 
 export const useGetCredits = () => {
   const { data: session } = useSession();
-  const isAuthenticated = !!session?.user;
+  const isAuthenticated = Boolean(session?.user);
   const trpc = useTRPC();
 
   const { data: creditsData, isLoading: isLoadingCredits } = useQuery({

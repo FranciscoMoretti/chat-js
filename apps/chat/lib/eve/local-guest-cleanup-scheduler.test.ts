@@ -93,7 +93,9 @@ test("remote worker or World and a config disabled after startup cannot sweep", 
 });
 
 test("a failed sweep retries later and stopping in flight prevents rescheduling", async () => {
-  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {
+    // Intentionally silence the expected cleanup failure in this test.
+  });
   mocks.cleanup.mockRejectedValueOnce(new Error("database unavailable"));
   stop = startLocalEveGuestCleanup();
   await vi.advanceTimersByTimeAsync(120_000);

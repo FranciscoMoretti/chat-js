@@ -4,7 +4,7 @@ import { AbstractThread } from "../../src/abstract-thread";
 import type { ThreadState } from "../../src/types";
 
 export class StateBackedThread extends AbstractThread<UIMessage> {
-  constructor(
+  public constructor(
     state: ThreadState<UIMessage>,
     transport?: ChatTransport<UIMessage>
   ) {

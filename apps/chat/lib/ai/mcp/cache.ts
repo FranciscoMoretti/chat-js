@@ -47,9 +47,9 @@ export interface DiscoveryResult {
  * Successful connection status is cached for 60 seconds. Failures are not cached.
  */
 class UncachedConnectionStatusError extends Error {
-  readonly result: ConnectionStatusResult;
+  public readonly result: ConnectionStatusResult;
 
-  constructor(result: ConnectionStatusResult) {
+  public constructor(result: ConnectionStatusResult) {
     super("MCP connection status is unavailable");
     this.name = "UncachedConnectionStatusError";
     this.result = result;

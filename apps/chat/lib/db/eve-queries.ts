@@ -132,7 +132,7 @@ export const listEveConversations = async (
   const matchesProject = projectId
     ? eq(eveChatProject.projectId, projectId)
     : isNull(eveChatProject.projectId);
-  const escapedSearch = search.replaceAll(/[\\%_]/gu, "\\$&");
+  const escapedSearch = search.replaceAll(/[\\%_]/gu, String.raw`\$&`);
   const rows = await db
     .select({
       conversationId: routeConversationId,
@@ -295,8 +295,8 @@ export const getEveChatIdentity = async (ownerId: string, routeId: string) => {
   return identity;
 };
 export class CreationConflictError extends Error {
-  readonly code: "creation_conflict" | "creation_in_progress";
-  constructor(
+  public readonly code: "creation_conflict" | "creation_in_progress";
+  public constructor(
     message?: string,
     options?: ErrorOptions & {
       code?: "creation_conflict" | "creation_in_progress";
@@ -339,7 +339,7 @@ export const getEveCreation = async (ownerId: string, operationId: string) => {
 };
 
 export class CreationProjectNotFoundError extends Error {
-  constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: ErrorOptions) {
     super(message, options);
     this.name = "CreationProjectNotFoundError";
   }
@@ -563,7 +563,7 @@ const reserveEveConversation = async (
             eq(eveFileReference.ownerId, value.ownerId)
           )
         );
-      if (references.length) {
+      if (references.length > 0) {
         await tx.insert(eveFileReference).values(
           references.map(({ key }) => ({
             conversationId: created.id,

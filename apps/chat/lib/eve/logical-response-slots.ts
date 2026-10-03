@@ -70,7 +70,12 @@ export const logicalResponseSlots = (
       selectedPath.includes(attempt.answer)
     );
     const attempt = selectedAttempt ?? attempts.at(-1);
-    return { ...candidate, attempt, original, selected: !!selectedAttempt };
+    return {
+      ...candidate,
+      attempt,
+      original,
+      selected: Boolean(selectedAttempt),
+    };
   });
   return { groupId, slots };
 };

@@ -33,7 +33,7 @@ export const calculateMessagesTokens = (messages: ModelMessage[]): number => {
   return totalTokens;
 };
 
-// trim prompt to maximum context size
+// Trim the prompt to the maximum context size.
 const trimPrompt = (prompt: string, contextSize: number) => {
   if (!prompt) {
     return "";
@@ -45,7 +45,7 @@ const trimPrompt = (prompt: string, contextSize: number) => {
   }
 
   const overflowTokens = length - contextSize;
-  // on average it's 3 characters per token, so multiply by 3 to get a rough estimate of the number of characters
+  // On average, each token uses 3 characters; multiply by 3 to estimate the character count.
   const chunkSize = prompt.length - overflowTokens * 3;
   if (chunkSize < MinChunkSize) {
     return prompt.slice(0, MinChunkSize);
@@ -57,12 +57,12 @@ const trimPrompt = (prompt: string, contextSize: number) => {
   });
   const trimmedPrompt = splitter.splitText(prompt)[0] ?? "";
 
-  // last catch, there's a chance that the trimmed prompt is same length as the original prompt, due to how tokens are split & innerworkings of the splitter, handle this case by just doing a hard cut
+  // As a final check, the trimmed prompt may match the original length; hard cut it in that case.
   if (trimmedPrompt.length === prompt.length) {
     return trimPrompt(prompt.slice(0, chunkSize), contextSize);
   }
 
-  // recursively trim until the prompt is within the context size
+  // Recursively trim until the prompt is within the context size.
   return trimPrompt(trimmedPrompt, contextSize);
 };
 

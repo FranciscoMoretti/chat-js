@@ -1,4 +1,3 @@
-// hooks/use-media-query.ts
 import { useCallback, useSyncExternalStore } from "react";
 
 const getServerSnapshot = () => false;

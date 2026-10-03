@@ -298,7 +298,7 @@ export const AttachmentList = ({
             name: filename,
             url: "",
           }}
-          isUploading={true}
+          isUploading
           // oxlint-disable-next-line react/no-array-index-key -- The queue is an immutable batch until it is cleared; positions disambiguate same-named files.
           key={`${filename}:${index}`}
           variant={variant}

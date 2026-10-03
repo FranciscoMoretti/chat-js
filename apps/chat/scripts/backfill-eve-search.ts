@@ -27,7 +27,7 @@ const main = async () => {
       )
       .orderBy(asc(eveConversation.id))
       .limit(50);
-    if (!batch.length) {
+    if (batch.length === 0) {
       break;
     }
     for (const conversation of batch) {

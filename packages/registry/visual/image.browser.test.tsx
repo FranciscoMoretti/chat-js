@@ -79,7 +79,7 @@ test("image tool loading, success, and unavailable states", async () => {
     }
     await act(() => button.focus());
     const actions = container.querySelector<HTMLElement>(
-      ".group-focus-within\\:opacity-100"
+      String.raw`.group-focus-within\:opacity-100`
     );
     if (!actions) {
       throw new Error("Image actions missing");

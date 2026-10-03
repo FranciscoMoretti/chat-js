@@ -17,10 +17,11 @@ export type EveCopyBoundary = {
 /** Private provenance used only to snapshot application resources, never copied into native history. */
 export const eveCopyBoundaries = (events: readonly MessageStreamEvent[]) => {
   const reducer = defaultMessageReducer();
+  const reduceEvent = reducer.reduce;
   return (
     events
       // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
-      .reduce(reducer.reduce, reducer.initial())
+      .reduce((state, event) => reduceEvent(state, event), reducer.initial())
       .messages.flatMap<EveCopyBoundary>((message, messageIndex) => {
         if (message.role !== "user") {
           return [];

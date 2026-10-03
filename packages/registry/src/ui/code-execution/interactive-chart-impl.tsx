@@ -252,7 +252,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
             </h3>
           )}
           <ReactECharts
-            notMerge={true}
+            notMerge
             option={getChartOptions()}
             style={{ height: "400px", width: "100%" }}
             theme={resolvedTheme === "dark" ? "dark" : undefined}

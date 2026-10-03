@@ -4,7 +4,7 @@ import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
 import { localDeletionAvailable } from "./local-deletion-available";
 
-/** appRoot is the trusted worker directory. Guest and billing identities are retained. */
+/** The appRoot is the trusted worker directory. Guest and billing identities are retained. */
 export const cleanupExpiredEveGuests = async (appRoot: string) => {
   if (!localDeletionAvailable()) {
     return { deletedCount: 0, pendingCount: 0, skipped: true };

@@ -31,13 +31,13 @@ vi.mock("@/lib/db/mcp-queries", () => ({
 }));
 vi.mock("@/lib/ai/mcp/mcp-client", () => ({
   MCPClient: class {
-    constructor(_id: string, _name: string, options: unknown) {
+    public constructor(_id: string, _name: string, options: unknown) {
       mocks.configure(options);
     }
-    status = "connected";
-    connect = mocks.connect;
-    tools = mocks.tools;
-    close = mocks.close;
+    public status = "connected";
+    public connect = mocks.connect;
+    public tools = mocks.tools;
+    public close = mocks.close;
   },
 }));
 

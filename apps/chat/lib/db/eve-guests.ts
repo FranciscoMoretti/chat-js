@@ -282,8 +282,8 @@ type GuestReservationFailure = Exclude<
   { status: "reserved" | "replay" }
 >;
 class GuestBatchRejectedError extends Error {
-  readonly result: GuestReservationFailure;
-  constructor(result: GuestReservationFailure) {
+  public readonly result: GuestReservationFailure;
+  public constructor(result: GuestReservationFailure) {
     super("Guest batch was not admitted.");
     this.name = "GuestBatchRejectedError";
     this.result = result;
@@ -361,7 +361,7 @@ export const commitEveGuestMessage = async (
       )
     )
     .returning();
-  return !!row;
+  return Boolean(row);
 };
 
 const releaseMessage = async (

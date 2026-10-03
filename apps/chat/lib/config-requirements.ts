@@ -74,7 +74,9 @@ export const isRequirementSatisfied = (
   }
   return (
     (requirement.runtimeAuth === "vercel-oidc" && env.VERCEL === "1") ||
-    requirement.options.some((option) => option.every((name) => !!env[name]))
+    requirement.options.some((option) =>
+      option.every((name) => Boolean(env[name]))
+    )
   );
 };
 

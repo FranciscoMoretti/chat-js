@@ -48,7 +48,7 @@ export const fenceLocalEveSandboxMutations = async (
         throw error;
       }
     );
-    if (operations.length) {
+    if (operations.length > 0) {
       throw new Error(
         "Sandbox operations are still pending. Resolve them before cleanup."
       );

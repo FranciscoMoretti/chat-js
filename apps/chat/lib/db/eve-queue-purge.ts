@@ -5,7 +5,7 @@ import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
 
 const removeUnlockedJobs = async (query: TransactionSql, jobIds: string[]) => {
-  if (!jobIds.length) {
+  if (jobIds.length === 0) {
     return [];
   }
   const locked = z
@@ -20,13 +20,14 @@ const removeUnlockedJobs = async (query: TransactionSql, jobIds: string[]) => {
   if (locked.some((job) => job.active)) {
     throw new Error("Wait for active queue workers before cleanup.");
   }
-  const removed = locked.length
-    ? z
-        .array(z.object({ id: z.string() }))
-        .parse(
-          await query`select id::text from graphile_worker.complete_jobs(${query.array(locked.map((job) => job.id))}::bigint[])`
-        )
-    : [];
+  const removed =
+    locked.length > 0
+      ? z
+          .array(z.object({ id: z.string() }))
+          .parse(
+            await query`select id::text from graphile_worker.complete_jobs(${query.array(locked.map((job) => job.id))}::bigint[])`
+          )
+      : [];
   if (removed.length !== locked.length) {
     throw new Error("Queue cleanup did not remove every locked job.");
   }
@@ -63,7 +64,7 @@ export const purgeEvePostgresQueue = async (
       const configured =
         await query`select identifier from workflow.eve_queue_tasks
       where identifier = ${parsed.taskIdentifier}`;
-      if (!configured.length) {
+      if (configured.length === 0) {
         throw new Error("Install the queue fence before removing payloads.");
       }
       const retained = z.array(z.object({ id: z.string() })).parse(
@@ -86,7 +87,7 @@ export const purgeEvePostgresQueue = async (
           runIds: [...known],
           taskIdentifier: parsed.taskIdentifier,
         });
-        if (inventory.unsupportedJobIds.length) {
+        if (inventory.unsupportedJobIds.length > 0) {
           throw new Error("Resolve unsupported queue messages before cleanup.");
         }
         if (inventory.jobs.some((job) => job.locked)) {
@@ -95,7 +96,7 @@ export const purgeEvePostgresQueue = async (
         const newIds = inventory.jobs.flatMap((job) =>
           job.runId && !known.has(job.runId) ? [job.runId] : []
         );
-        if (newIds.length) {
+        if (newIds.length > 0) {
           for (const id of newIds) {
             known.add(id);
           }

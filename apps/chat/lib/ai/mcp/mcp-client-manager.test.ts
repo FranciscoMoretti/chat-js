@@ -10,14 +10,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock("./cache", () => ({ invalidateAllMcpCaches: mocks.invalidate }));
 vi.mock("./mcp-client", () => ({
   MCPClient: class {
-    state = mocks.state;
-    get status() {
+    public state = mocks.state;
+    public get status() {
       return this.state.status;
     }
-    getAuthorizationUrl() {
+    public getAuthorizationUrl() {
       return new URL(this.state.url);
     }
-    close = mocks.close;
+    public close = mocks.close;
   },
 }));
 beforeEach(() => {

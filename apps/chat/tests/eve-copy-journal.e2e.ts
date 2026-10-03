@@ -455,7 +455,7 @@ test("invalid native seeds or document boundaries never reserve resources", asyn
         title: "Invalid seed",
       })
     ).rejects.toThrow(
-      seed.messages.length ? invalidSeedError : invalidBoundaryError
+      seed.messages.length > 0 ? invalidSeedError : invalidBoundaryError
     );
     expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();
   }
