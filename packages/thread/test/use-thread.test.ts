@@ -73,7 +73,7 @@ const renderUseThread = (
   onCommit?: (setMessages: UseThreadHelpers["setMessages"]) => void
 ) => {
   let current: UseThreadHelpers | undefined;
-  // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+  // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
   let renderer: ReactTestRenderer | undefined;
   const render = (options: UseThreadOptions) =>
     createElement(HookHarness, {
@@ -84,9 +84,9 @@ const renderUseThread = (
       options,
     });
 
-  // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+  // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
   act((): void => {
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     renderer = create(render(initialOptions));
   });
 
@@ -98,12 +98,16 @@ const renderUseThread = (
       return current;
     },
     unmount(): void {
-      // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
-      act(() => renderer?.unmount());
+      // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
+      act(() => {
+        renderer?.unmount();
+      });
     },
     update(options: UseThreadOptions): void {
-      // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
-      act(() => renderer?.update(render(options)));
+      // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
+      act(() => {
+        renderer?.update(render(options));
+      });
     },
   };
 };
@@ -145,7 +149,7 @@ describe("useThread", (): void => {
       "user-1",
     ]);
 
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     act((): void => {
       thread.addMessage(user("user-2"), "user-1");
       thread.setCursor("user-2");
@@ -157,12 +161,12 @@ describe("useThread", (): void => {
     ]);
 
     let send: Promise<void> | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       send = hook.current.sendMessage({ text: "user-3" });
       await waitFor((): boolean => transport.requests.length === 1);
     });
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
@@ -228,7 +232,7 @@ describe("useThread", (): void => {
       onError: secondError,
       transport: secondTransport,
     });
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await hook.current.sendMessage({ text: "first request" });
     });
@@ -248,7 +252,7 @@ describe("useThread", (): void => {
     expect(hook.current.messages.map(({ id }): string => id)).toEqual([
       "user-2",
     ]);
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await hook.current.sendMessage({ text: "second request" });
     });
@@ -279,7 +283,7 @@ describe("useThread", (): void => {
     const { setMessages } = hook.current;
 
     hook.update({ thread: second });
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     act((): void => {
       setMessages([user("user-c")]);
     });
@@ -301,7 +305,7 @@ describe("useThread", (): void => {
     });
     const hook = renderUseThread({ resume: true, thread });
 
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
@@ -323,12 +327,12 @@ describe("useThread", (): void => {
     });
     const hook = renderUseThread({ resume: true, thread: first });
 
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
     hook.update({ resume: true, thread: second });
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await Bun.sleep(0);
     });
@@ -350,13 +354,15 @@ describe("useThread", (): void => {
       transport,
     });
 
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
-    act((): void => hook.current.tree.setCursor("user-1"));
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
+    act((): void => {
+      hook.current.tree.setCursor("user-1");
+    });
 
     let run:
       | Awaited<ReturnType<UseThreadHelpers["tree"]["startRun"]>>
       | undefined;
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       run = await hook.current.tree.startRun({ from: "user-1" });
       await waitFor((): boolean => transport.requests.length === 1);
@@ -364,7 +370,7 @@ describe("useThread", (): void => {
     expect(hook.current.status).toBe("submitted");
     expect(hook.current.tree.status).toBe("submitted");
 
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       transport.emit(0, { messageId: "assistant-1", type: "start" });
       transport.emit(0, { id: "text", type: "text-start" });
@@ -381,7 +387,7 @@ describe("useThread", (): void => {
       "user-1",
     ]);
 
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       await Bun.sleep(110);
     });
@@ -392,7 +398,7 @@ describe("useThread", (): void => {
       )
     ).toBe("streaming");
 
-    // oxlint-disable-next-line typescript/no-deprecated -- Exercise the currently supported compatibility contract; replacing the deprecated API would stop testing this path.
+    // oxlint-disable-next-line typescript/no-deprecated -- React 19 deprecates react-test-renderer; this retained harness verifies hook commit, callback replacement, resume and throttling behavior. Harness migration is tracked in #622.
     await act(async (): Promise<void> => {
       transport.finish(0);
       await run?.finished;

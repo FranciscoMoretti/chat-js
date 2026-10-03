@@ -2,16 +2,12 @@ import type { ChatState, ChatStatus, UIMessage } from "ai";
 
 import type { ThreadRunHost, ThreadRunSpec } from "./ai-sdk-run-chat";
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-const cloneSnapshot = <T>(thing: T): T => structuredClone(thing);
-/* oxlint-enable eslint/id-length */
+const cloneSnapshot = <TValue>(thing: TValue): TValue => structuredClone(thing);
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export class ThreadRunState<
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatState requires mutable TMessage[] messages; push/replace operations and resume-prefix merging write message.parts before publishing to the run host. */
+class ThreadRunState<
   TMessage extends UIMessage,
 > implements ChatState<TMessage> {
   #error: Error | undefined;
@@ -28,7 +24,7 @@ export class ThreadRunState<
     this.#spec = spec;
   }
 
-  public get error() {
+  public get error(): Error | undefined {
     return this.#error;
   }
 
@@ -37,7 +33,7 @@ export class ThreadRunState<
     this.#host.setRunError(this.#spec.id, error);
   }
 
-  public get messages() {
+  public get messages(): TMessage[] {
     return this.#messages;
   }
 
@@ -46,7 +42,7 @@ export class ThreadRunState<
     this.#host.updateRunPath(messages);
   }
 
-  public get status() {
+  public get status(): ChatStatus {
     return this.#status;
   }
 
@@ -103,5 +99,5 @@ export class ThreadRunState<
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
+
+export { ThreadRunState };

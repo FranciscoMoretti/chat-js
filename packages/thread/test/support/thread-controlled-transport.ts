@@ -1,9 +1,7 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -15,7 +13,9 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
   }[] = [];
   #reconnectStream: ReadableStream<UIMessageChunk> | null = null;
 
-  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (options) =>
+  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (
+    options
+  ): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
     Promise.resolve(
       new ReadableStream({
         start: (controller): void => {
@@ -44,7 +44,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     return Promise.resolve(stream);
   }
 
-  public prepareReconnect() {
+  public prepareReconnect(): ReadableStreamDefaultController<UIMessageChunk> {
     let controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
     this.#reconnectStream = new ReadableStream({
       start(value): void {
@@ -81,7 +81,5 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-module-boundary-types */

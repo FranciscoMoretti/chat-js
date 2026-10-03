@@ -26,7 +26,7 @@ const useIsomorphicLayoutEffect =
   // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
+/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
 type ThreadHookOptions = {
   experimental_throttle?: number;
   resume?: boolean;
@@ -38,9 +38,8 @@ type ThreadCallbacks<TMessage extends UIMessage> = Pick<
   "onData" | "onError" | "onFinish" | "onToolCall" | "sendAutomaticallyWhen"
 >;
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 class LatestThreadDispatchers<TMessage extends UIMessage> {
   #callbacks: ThreadCallbacks<TMessage>;
@@ -60,50 +59,47 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
 
   public readonly onData = (
     dataPart: Parameters<NonNullable<ThreadCallbacks<TMessage>["onData"]>>[0]
-  ) => this.#callbacks.onData?.(dataPart);
+  ): void => this.#callbacks.onData?.(dataPart);
 
-  public readonly onError = (error: Error) => this.#callbacks.onError?.(error);
+  public readonly onError = (error: Error): void =>
+    this.#callbacks.onError?.(error);
 
   public readonly onFinish = (
     event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onFinish"]>>[0]
-  ) => this.#callbacks.onFinish?.(event);
+  ): void => this.#callbacks.onFinish?.(event);
 
   public readonly onToolCall = (
     event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onToolCall"]>>[0]
-  ) => Promise.resolve(this.#callbacks.onToolCall?.(event));
+  ): Promise<void> => Promise.resolve(this.#callbacks.onToolCall?.(event));
 
   public readonly sendAutomaticallyWhen = (
     event: Parameters<
       NonNullable<ThreadCallbacks<TMessage>["sendAutomaticallyWhen"]>
     >[0]
-  ) => this.#callbacks.sendAutomaticallyWhen?.(event) ?? false;
+  ): boolean | PromiseLike<boolean> =>
+    this.#callbacks.sendAutomaticallyWhen?.(event) ?? false;
 
   public readonly setMessages: UseChatHelpers<TMessage>["setMessages"] = (
     messages
-  ) => this.#thread?.setMessages(messages);
+  ): void => this.#thread?.setMessages(messages);
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
   thread: AbstractThread<TMessage>;
 };
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export type UseThreadOptions<TMessage extends UIMessage = UIMessage> =
+type UseThreadOptions<TMessage extends UIMessage = UIMessage> =
   | ExternalThreadOptions<TMessage>
   | (ThreadHookOptions &
       ThreadInit<TMessage> & {
         thread?: never;
       });
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 const hasSuppliedThread = <TMessage extends UIMessage>(
   options: UseThreadOptions<TMessage>
 ): options is ExternalThreadOptions<TMessage> =>
@@ -111,11 +107,9 @@ const hasSuppliedThread = <TMessage extends UIMessage>(
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
+/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
+type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
   activeRuns: ThreadRun[];
   childrenByParentId: Record<string, string[]>;
   cursorId: string | null;
@@ -146,14 +140,10 @@ export type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
+type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
   UseChatHelpers<TMessage> & {
     sendMessage: (
       message?: Parameters<UseChatHelpers<TMessage>["sendMessage"]>[0],
@@ -163,15 +153,12 @@ export type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
   };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 const useThreadSnapshot = <TMessage extends UIMessage>(
   thread: AbstractThread<TMessage>,
   throttleWaitMs?: number
-) => {
+): ThreadStateSnapshot<TMessage> => {
   const store = useMemo(
     () => new SnapshotStore(thread, throttleWaitMs),
     [thread, throttleWaitMs]
@@ -184,17 +171,15 @@ const useThreadSnapshot = <TMessage extends UIMessage>(
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 const useThreadField = <
   TMessage extends UIMessage,
   TKey extends keyof ThreadStateSnapshot<TMessage>,
 >(
   thread: AbstractThread<TMessage>,
   key: TKey
-) => {
+): ThreadStateSnapshot<TMessage>[TKey] => {
   const subscribe = useCallback(
     (listener: () => void) => thread.subscribe(listener),
     [thread]
@@ -206,14 +191,13 @@ const useThreadField = <
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export const useThread = <TMessage extends UIMessage = UIMessage>(
+const useThread = <TMessage extends UIMessage = UIMessage>(
   options: UseThreadOptions<TMessage> = {}
 ): UseThreadHelpers<TMessage> => {
   const hasExternalThread = hasSuppliedThread(options);
@@ -326,15 +310,19 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
       activeRuns: snapshot.activeRuns,
       childrenByParentId: snapshot.childrenByParentId,
       cursorId: snapshot.cursorId,
-      getChildren: (messageId) => thread.getChildren(messageId),
-      getLeaves: (messageId) => thread.getLeaves(messageId),
-      getMessage: (messageId) => thread.getMessage(messageId),
-      getParent: (messageId) => thread.getParent(messageId),
-      getPath: (messageId) => thread.getPath(messageId),
-      getRun: (runId) => thread.getRun(runId),
-      getRunForMessage: (messageId) => thread.getRunForMessage(messageId),
-      getSiblings: (messageId) => thread.getSiblings(messageId),
-      getSnapshot: () => thread.getTreeSnapshot(),
+      getChildren: (messageId): TMessage[] => thread.getChildren(messageId),
+      getLeaves: (messageId): TMessage[] => thread.getLeaves(messageId),
+      getMessage: (messageId): TMessage | undefined =>
+        thread.getMessage(messageId),
+      getParent: (messageId): TMessage | undefined =>
+        thread.getParent(messageId),
+      getPath: (messageId): TMessage[] => thread.getPath(messageId),
+      getRun: (runId): ThreadRun | undefined => thread.getRun(runId),
+      getRunForMessage: (messageId): ThreadRun | undefined =>
+        thread.getRunForMessage(messageId),
+      getSiblings: (messageId): TMessage[] => thread.getSiblings(messageId),
+      getSnapshot: (): MessageTreeSnapshot<TMessage> =>
+        thread.getTreeSnapshot(),
       messagesById: snapshot.messagesById,
       parentById: snapshot.parentById,
       resumeRun: (runId, requestOptions): Promise<void> =>
@@ -345,7 +333,8 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
       setCursor: (messageId): void => thread.setCursor(messageId),
       setCursorToParentOf: (messageId): void =>
         thread.setCursorToParentOf(messageId),
-      startRun: (runOptions) => thread.startRun(runOptions),
+      startRun: (runOptions): Promise<ThreadRunHandle> =>
+        thread.startRun(runOptions),
       status: treeStatus,
       stopAll: (): Promise<void> => thread.stopAll(),
       stopRun: (runId): Promise<void> => thread.stopRun(runId),
@@ -361,3 +350,7 @@ export const useThread = <TMessage extends UIMessage = UIMessage>(
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+
+export { useThread };
+
+export type { UseThreadOptions, TreeHelpers, UseThreadHelpers };

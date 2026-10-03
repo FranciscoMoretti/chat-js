@@ -8,13 +8,12 @@ import { MessageTree } from "../../src/message-tree";
 /* oxlint-enable import/no-relative-parent-imports */
 
 const generateMessageId = (): string => "client-response";
-const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] = () => {
-  /* This host fixture does not persist tool-call registrations. */
-};
+const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] =
+  (): void => {
+    /* This host fixture does not persist tool-call registrations. */
+  };
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export class TestRunHost implements ThreadRunHost<UIMessage> {
   public readonly dataPartSchemas = undefined;
@@ -42,7 +41,7 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
     this.tree = new MessageTree({ messages: [initialMessage] });
   }
 
-  public getMessagePath = (messageId: string | null) =>
+  public getMessagePath = (messageId: string | null): UIMessage[] =>
     this.tree.getPath(messageId);
   public updateRunPath = (messages: UIMessage[]): void => {
     this.tree.updatePath(messages);
@@ -79,6 +78,4 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
   };
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-module-boundary-types */

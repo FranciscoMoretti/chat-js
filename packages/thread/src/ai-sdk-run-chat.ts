@@ -10,9 +10,8 @@ import type {
 
 import { ThreadRunState } from "./thread-run-state";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-export type ThreadRunSpec = {
+/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
+type ThreadRunSpec = {
   id: string;
   initialPathMessageId: string | null;
   messageId?: string;
@@ -20,11 +19,9 @@ export type ThreadRunSpec = {
   siblingOrder: number;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export interface ThreadRunHost<TMessage extends UIMessage> {
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AbstractChat callbacks and ChatTransport use mutable message/chunk payloads; resume handling updates the owned ThreadRunState before forwarding those SDK objects. */
+interface ThreadRunHost<TMessage extends UIMessage> {
   readonly dataPartSchemas: ChatInit<TMessage>["dataPartSchemas"];
   readonly id: string;
   readonly messageMetadataSchema: ChatInit<TMessage>["messageMetadataSchema"];
@@ -44,24 +41,23 @@ export interface ThreadRunHost<TMessage extends UIMessage> {
   writeRunMessage: (runId: string, message: TMessage) => void;
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AbstractChat callbacks and ChatTransport use mutable message/chunk payloads; resume handling updates the owned ThreadRunState before forwarding those SDK objects. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export class ThreadRunChat<
-  TMessage extends UIMessage,
-> extends AbstractChat<TMessage> {
+class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   readonly #state: ThreadRunState<TMessage>;
 
   public constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
     const responseMessageId = host.generateMessageId();
     const state = new ThreadRunState(host, spec);
     const transport: ChatTransport<TMessage> = {
-      reconnectToStream: async (options) => {
+      reconnectToStream: async (
+        options
+      ): Promise<ReadableStream<UIMessageChunk> | null> => {
         state.resumePrefix = undefined;
         const stream = await host.transport.reconnectToStream(options);
         state.preserveReconnectError =
@@ -107,7 +103,9 @@ export class ThreadRunChat<
           })
         );
       },
-      sendMessages: (options) => {
+      sendMessages: (
+        options
+      ): ReturnType<ChatTransport<TMessage>["sendMessages"]> => {
         state.resumePrefix = undefined;
         return host.transport.sendMessages({
           ...options,
@@ -123,7 +121,7 @@ export class ThreadRunChat<
       generateId: (): string => responseMessageId,
       id: host.id,
       messageMetadataSchema: host.messageMetadataSchema,
-      onData: (event) => host.onData?.(event),
+      onData: (event): void => host.onData?.(event),
       onError: (error): void => {
         host.onError?.(error);
       },
@@ -137,7 +135,7 @@ export class ThreadRunChat<
         host.registerToolCall(spec.id, event.toolCall.toolCallId);
         await host.onToolCall?.(event);
       },
-      sendAutomaticallyWhen: (event) =>
+      sendAutomaticallyWhen: (event): boolean | PromiseLike<boolean> =>
         host.sendAutomaticallyWhen?.(event) ?? false,
       state,
       transport,
@@ -184,3 +182,7 @@ export class ThreadRunChat<
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-lines-per-function */
+
+export { ThreadRunChat };
+
+export type { ThreadRunSpec, ThreadRunHost };

@@ -7,10 +7,9 @@ import type {
   ThreadStateSnapshot,
 } from "./types";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const createThreadStateSnapshot = <TMessage extends UIMessage>({
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadState.update accepts a synchronous snapshot updater and commits its mutable SDK message-array snapshot; constructor inputs are passed to MessageTree using that same contract. */
+const createThreadStateSnapshot = <TMessage extends UIMessage>({
   initialTree,
   messages,
 }: {
@@ -32,13 +31,9 @@ export const createThreadStateSnapshot = <TMessage extends UIMessage>({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export class MemoryThreadState<
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadState.update accepts a synchronous snapshot updater and commits its mutable SDK message-array snapshot; constructor inputs are passed to MessageTree using that same contract. */
+class MemoryThreadState<
   TMessage extends UIMessage = UIMessage,
 > implements ThreadState<TMessage> {
   readonly #listeners = new Set<() => void>();
@@ -53,9 +48,9 @@ export class MemoryThreadState<
     this.#snapshot = createThreadStateSnapshot(options);
   }
 
-  public getSnapshot = () => this.#snapshot;
+  public getSnapshot = (): ThreadStateSnapshot<TMessage> => this.#snapshot;
 
-  public subscribe = (listener: () => void) => {
+  public subscribe = (listener: () => void): (() => void) => {
     this.#listeners.add(listener);
     return (): void => {
       this.#listeners.delete(listener);
@@ -70,6 +65,5 @@ export class MemoryThreadState<
   };
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
+
+export { createThreadStateSnapshot, MemoryThreadState };

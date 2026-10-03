@@ -34,15 +34,11 @@ import type { GatewayProvider } from "./gateway-provider";
 /* oxlint-enable import/max-dependencies */
 import type { GatewayOptions } from "./runtime";
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-const callUnsupportedModel = <T>(
-  method: (modelId: never) => T,
+const callUnsupportedModel = <TValue>(
+  method: (modelId: never) => TValue,
   receiver: object
-  // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-): T => Reflect.apply(method, receiver, ["unsupported-model"]);
-/* oxlint-enable eslint/id-length */
-
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+  // oxlint-disable-next-line typescript/no-unsafe-return -- Reflect.apply deliberately calls the unsupported-capability method with a model ID forbidden by its never parameter; the adapter contract assertions verify the returned null sentinel.
+): TValue => Reflect.apply(method, receiver, ["unsupported-model"]);
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const adapters: {
   name: GatewayType;
@@ -59,26 +55,27 @@ const adapters: {
   video: boolean;
 }[] = [
   {
-    create: (o) => new VercelGateway(o),
-    createImageModel: (o) =>
-      new VercelGateway(o).createImageModel("openai/gpt-image-1"),
-    createLanguageModel: (o) =>
-      new VercelGateway(o).createLanguageModel("openai/gpt-5-mini"),
-    createVideoModel: (o) =>
-      new VercelGateway(o).createVideoModel("google/veo-3"),
+    create: (options) => new VercelGateway(options),
+    createImageModel: (options) =>
+      new VercelGateway(options).createImageModel("openai/gpt-image-1"),
+    createLanguageModel: (options) =>
+      new VercelGateway(options).createLanguageModel("openai/gpt-5-mini"),
+    createVideoModel: (options) =>
+      new VercelGateway(options).createVideoModel("google/veo-3"),
     env: { AI_GATEWAY_API_KEY: "test" },
     image: true,
     name: "vercel",
     video: true,
   },
   {
-    create: (o) => new OpenAIGateway(o),
-    createImageModel: (o) => new OpenAIGateway(o).createImageModel("dall-e-3"),
-    createLanguageModel: (o) =>
-      new OpenAIGateway(o).createLanguageModel("gpt-5-mini"),
-    createVideoModel: (o) => {
-      const gateway = new OpenAIGateway(o);
-      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
+    create: (options) => new OpenAIGateway(options),
+    createImageModel: (options) =>
+      new OpenAIGateway(options).createImageModel("dall-e-3"),
+    createLanguageModel: (options) =>
+      new OpenAIGateway(options).createLanguageModel("gpt-5-mini"),
+    createVideoModel: (options) => {
+      const gateway = new OpenAIGateway(options);
+      // oxlint-disable-next-line typescript/unbound-method -- callUnsupportedModel invokes this extracted method with Reflect.apply and the original gateway receiver; this negative capability test intentionally passes a runtime model ID to a never parameter.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { OPENAI_API_KEY: "test" },
@@ -87,17 +84,17 @@ const adapters: {
     video: false,
   },
   {
-    create: (o) => new OpenRouterGateway(o),
-    createImageModel: (o) => {
-      const gateway = new OpenRouterGateway(o);
-      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
+    create: (options) => new OpenRouterGateway(options),
+    createImageModel: (options) => {
+      const gateway = new OpenRouterGateway(options);
+      // oxlint-disable-next-line typescript/unbound-method -- callUnsupportedModel invokes this extracted method with Reflect.apply and the original gateway receiver; this negative capability test intentionally passes a runtime model ID to a never parameter.
       return callUnsupportedModel(gateway.createImageModel, gateway);
     },
-    createLanguageModel: (o) =>
-      new OpenRouterGateway(o).createLanguageModel("openai/gpt-5-mini"),
-    createVideoModel: (o) => {
-      const gateway = new OpenRouterGateway(o);
-      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
+    createLanguageModel: (options) =>
+      new OpenRouterGateway(options).createLanguageModel("openai/gpt-5-mini"),
+    createVideoModel: (options) => {
+      const gateway = new OpenRouterGateway(options);
+      // oxlint-disable-next-line typescript/unbound-method -- callUnsupportedModel invokes this extracted method with Reflect.apply and the original gateway receiver; this negative capability test intentionally passes a runtime model ID to a never parameter.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { OPENROUTER_API_KEY: "test" },
@@ -106,14 +103,16 @@ const adapters: {
     video: false,
   },
   {
-    create: (o) => new OpenAICompatibleGateway(o),
-    createImageModel: (o) =>
-      new OpenAICompatibleGateway(o).createImageModel("custom-image-model"),
-    createLanguageModel: (o) =>
-      new OpenAICompatibleGateway(o).createLanguageModel("custom-model"),
-    createVideoModel: (o) => {
-      const gateway = new OpenAICompatibleGateway(o);
-      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
+    create: (options) => new OpenAICompatibleGateway(options),
+    createImageModel: (options) =>
+      new OpenAICompatibleGateway(options).createImageModel(
+        "custom-image-model"
+      ),
+    createLanguageModel: (options) =>
+      new OpenAICompatibleGateway(options).createLanguageModel("custom-model"),
+    createVideoModel: (options) => {
+      const gateway = new OpenAICompatibleGateway(options);
+      // oxlint-disable-next-line typescript/unbound-method -- callUnsupportedModel invokes this extracted method with Reflect.apply and the original gateway receiver; this negative capability test intentionally passes a runtime model ID to a never parameter.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { OPENAI_COMPATIBLE_BASE_URL: "https://example.test/v1" },
@@ -122,14 +121,14 @@ const adapters: {
     video: false,
   },
   {
-    create: (o) => new LiteLLMGateway(o),
-    createImageModel: (o) =>
-      new LiteLLMGateway(o).createImageModel("custom-image-model"),
-    createLanguageModel: (o) =>
-      new LiteLLMGateway(o).createLanguageModel("custom-model"),
-    createVideoModel: (o) => {
-      const gateway = new LiteLLMGateway(o);
-      // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
+    create: (options) => new LiteLLMGateway(options),
+    createImageModel: (options) =>
+      new LiteLLMGateway(options).createImageModel("custom-image-model"),
+    createLanguageModel: (options) =>
+      new LiteLLMGateway(options).createLanguageModel("custom-model"),
+    createVideoModel: (options) => {
+      const gateway = new LiteLLMGateway(options);
+      // oxlint-disable-next-line typescript/unbound-method -- callUnsupportedModel invokes this extracted method with Reflect.apply and the original gateway receiver; this negative capability test intentionally passes a runtime model ID to a never parameter.
       return callUnsupportedModel(gateway.createVideoModel, gateway);
     },
     env: { LITELLM_BASE_URL: "https://example.test" },
@@ -139,7 +138,6 @@ const adapters: {
   },
 ];
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
