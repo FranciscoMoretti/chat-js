@@ -26,6 +26,9 @@ export const assetDataUri = async (
   mime: string
 ): Promise<string> => {
   const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Visual harness asset ${url} returned ${response.status}`);
+  }
   const bytes = new Uint8Array(await response.arrayBuffer());
   let binary = "";
   for (const byte of bytes) {
@@ -113,6 +116,12 @@ export const makeCanvasDataUri = (
 const isLooping = (a: Animation): boolean =>
   a.effect?.getComputedTiming().iterations === Number.POSITIVE_INFINITY;
 
+/** Run a synchronous update inside `act` and wait for React to flush it. */
+export const flush = async (update: () => void) => {
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
+  await act(update);
+};
+
 // Resolve after the next animation frame. requestAnimationFrame has no promise
 // form, so wrapping it is the only option.
 const nextFrame = (): Promise<void> =>
@@ -191,7 +200,7 @@ const captureTheme = async (
   });
   const root = createRoot(column);
   try {
-    await act(() =>
+    await flush(() => {
       root.render(
         <ThemeProvider
           attribute="class"
@@ -208,8 +217,8 @@ const captureTheme = async (
             </section>
           ))}
         </ThemeProvider>
-      )
-    );
+      );
+    });
     const sections = [
       ...column.querySelectorAll<HTMLElement>("section[data-story-index]"),
     ];
@@ -241,7 +250,9 @@ const captureTheme = async (
     }
     /* oxlint-enable eslint/no-await-in-loop */
   } finally {
-    await act(() => root.unmount());
+    await flush(() => {
+      root.unmount();
+    });
   }
 };
 

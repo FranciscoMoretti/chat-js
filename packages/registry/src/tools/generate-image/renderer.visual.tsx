@@ -1,7 +1,6 @@
-import { act } from "react";
 import { expect, test } from "vitest";
 
-import { captureChatStory, makeCanvasDataUri } from "../_shared/visual";
+import { captureChatStory, flush, makeCanvasDataUri } from "../_shared/visual";
 import { GenerateImageRenderer } from "./renderer";
 
 const prompt = "A blue-to-purple gradient sky";
@@ -77,7 +76,9 @@ test("generate-image renders every state in the chat", () =>
           throw new Error("generated image or its button missing");
         }
         await img.decode();
-        await act(() => button.focus());
+        await flush(() => {
+          button.focus();
+        });
         const actions = section.querySelector<HTMLElement>(
           String.raw`.group-focus-within\:opacity-100`
         );

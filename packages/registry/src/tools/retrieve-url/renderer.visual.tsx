@@ -1,9 +1,8 @@
-import { act } from "react";
 import { expect, test } from "vitest";
 
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 
-import { captureChatStory } from "../_shared/visual";
+import { captureChatStory, flush } from "../_shared/visual";
 import { RetrieveUrlRenderer } from "./renderer";
 import type { retrievedInput, retrievedResult } from "./schemas";
 
@@ -85,7 +84,7 @@ test("retrieve-url renders every state in the chat", () =>
         if (!details) {
           throw new Error("retrieve-url disclosure missing");
         }
-        await act(() => {
+        await flush(() => {
           details.open = true;
         });
         await expect

@@ -31,6 +31,7 @@ export const svgECharts = async (
         props.onChartReady?.(chart);
       }}
       opts={{ ...props.opts, renderer: "svg" }}
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- echarts-for-react types `option` as any.
       option={{ ...props.option, animation: false }}
     />
   );

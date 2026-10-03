@@ -43,7 +43,8 @@ jobs:
         run: |
           set -euo pipefail
           # workflow_run lists no pull requests for a fork, so look it up by its head.
-          pr=$(gh api "repos/$REPO/pulls?state=open&head=$HEAD_OWNER:$HEAD_BRANCH" --jq '.[0].number // empty')
+          # -f encodes the branch name, which may contain characters like `&`.
+          pr=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f "head=$HEAD_OWNER:$HEAD_BRANCH" --jq '.[0].number // empty')
           {
             echo "pr=$pr"
             echo "branch<<__EOF__"

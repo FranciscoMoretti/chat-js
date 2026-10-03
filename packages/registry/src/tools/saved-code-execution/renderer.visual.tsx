@@ -19,7 +19,7 @@ vi.mock(
 );
 vi.mock("echarts-for-react/lib/index", async (importOriginal) => {
   const { svgECharts } = await import("../_shared/charts");
-  return svgECharts(importOriginal);
+  return await svgECharts(importOriginal);
 });
 
 const savedDocument = {

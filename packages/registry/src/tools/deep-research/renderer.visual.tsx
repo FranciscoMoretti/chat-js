@@ -1,11 +1,10 @@
-import { act } from "react";
 import { expect, test, vi } from "vitest";
 
 import { ArtifactProvider } from "@/hooks/use-artifact";
 import type * as UrlUtils from "@/lib/url-utils";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-import { captureChatStory } from "../_shared/visual";
+import { captureChatStory, flush } from "../_shared/visual";
 import { faviconDataUri } from "../_shared/web-search";
 import { DeepResearchRenderer } from "./renderer";
 
@@ -105,13 +104,13 @@ const pinStepColumns = async (section: HTMLElement) => {
   ].flatMap((connector) =>
     connector.parentElement ? [connector.parentElement] : []
   );
-  await act(() => {
+  await flush(() => {
     for (const column of columns) {
       column.style.height = "";
     }
   });
   const heights = columns.map((column) => column.offsetHeight);
-  await act(() => {
+  await flush(() => {
     for (const [index, column] of columns.entries()) {
       column.style.height = `${heights[index]}px`;
     }
@@ -153,7 +152,9 @@ test("deep-research renders every state in the chat", () =>
         if (!toggle) {
           throw new Error("Research progress toggle missing");
         }
-        await act(() => toggle.click());
+        await flush(() => {
+          toggle.click();
+        });
         await expect
           .poll(() => section.textContent)
           .toContain("Comparing the findings");

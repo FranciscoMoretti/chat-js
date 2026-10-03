@@ -1,7 +1,6 @@
-import { act } from "react";
 import { expect, test } from "vitest";
 
-import { assetDataUri, captureChatStory } from "../_shared/visual";
+import { assetDataUri, captureChatStory, flush } from "../_shared/visual";
 import { GenerateVideoRenderer } from "./renderer";
 
 const prompt = "A calm blue sky";
@@ -69,7 +68,7 @@ test("generate-video renders every state in the chat", async () => {
           throw new Error("video player missing");
         }
         await expect.poll(() => video.readyState).toBeGreaterThanOrEqual(2);
-        await act(() => {
+        await flush(() => {
           video.pause();
           video.currentTime = 0;
         });

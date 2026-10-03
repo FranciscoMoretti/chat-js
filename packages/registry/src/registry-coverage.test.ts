@@ -66,27 +66,21 @@ const exportsName = (source: ts.SourceFile, name: string) =>
   });
 
 // The local name `./renderer`'s export is imported under (it may be aliased).
-const localImportName = (source: ts.SourceFile, name: string) => {
-  for (const statement of source.statements) {
-    if (
-      !ts.isImportDeclaration(statement) ||
-      !ts.isStringLiteral(statement.moduleSpecifier) ||
-      statement.moduleSpecifier.text !== "./renderer"
-    ) {
-      continue;
-    }
-    const bindings = statement.importClause?.namedBindings;
-    if (!bindings || !ts.isNamedImports(bindings)) {
-      continue;
-    }
-    const element = bindings.elements.find(
-      (candidate) => (candidate.propertyName ?? candidate.name).text === name
-    );
-    if (element) {
-      return element.name.text;
-    }
-  }
-};
+const localImportName = (source: ts.SourceFile, name: string) =>
+  source.statements
+    .flatMap((statement) => {
+      if (
+        !ts.isImportDeclaration(statement) ||
+        !ts.isStringLiteral(statement.moduleSpecifier) ||
+        statement.moduleSpecifier.text !== "./renderer"
+      ) {
+        return [];
+      }
+      const bindings = statement.importClause?.namedBindings;
+      return bindings && ts.isNamedImports(bindings) ? bindings.elements : [];
+    })
+    .find((element) => (element.propertyName ?? element.name).text === name)
+    ?.name.text;
 
 const rendersJsx = (source: ts.SourceFile, tagName: string) => {
   let found = false;
