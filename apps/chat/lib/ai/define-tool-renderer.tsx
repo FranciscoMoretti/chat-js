@@ -4,24 +4,18 @@ import React from "react";
 import type { ComponentType } from "react";
 import { z } from "zod";
 
-/* oxlint-disable import/exports-last, import/group-exports -- import/exports-last: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
-import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types. */
-export type ValidatedToolRenderer = ComponentType<{
+type ValidatedToolRenderer = ComponentType<{
   isReadonly: boolean;
   messageId: string;
   tool: unknown;
 }> & { validatedToolRenderer: true };
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports -- import/exports-last: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
-import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types. */
-export const isValidatedToolRenderer = (
+const isValidatedToolRenderer = (
   renderer: unknown
 ): renderer is ValidatedToolRenderer =>
   typeof renderer === "function" &&
   "validatedToolRenderer" in renderer &&
   renderer.validatedToolRenderer === true;
-/* oxlint-enable import/exports-last, import/group-exports */
 
 type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "input-streaming"; input?: Partial<TInput>; output?: never }
@@ -29,16 +23,14 @@ type RenderableTool<TInput, TOutput> = { toolCallId: string } & (
   | { state: "output-available"; input: TInput; output: TOutput }
 );
 
-/* oxlint-disable id-length, import/exports-last, import/group-exports, typescript/consistent-type-definitions -- id-length (#506): ToolRendererProps uses I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-import/exports-last: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
-import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
+/* oxlint-disable id-length, typescript/consistent-type-definitions -- id-length (#506): ToolRendererProps uses I; O as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 typescript/consistent-type-definitions (#559): ToolRendererProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-export type ToolRendererProps<I extends z.ZodType, O extends z.ZodType> = {
+type ToolRendererProps<I extends z.ZodType, O extends z.ZodType> = {
   tool: RenderableTool<z.output<I>, z.output<O>>;
   messageId: string;
   isReadonly: boolean;
 };
-/* oxlint-enable id-length, import/exports-last, import/group-exports, typescript/consistent-type-definitions */
+/* oxlint-enable id-length, typescript/consistent-type-definitions */
 
 const envelope = z.object({
   errorText: z.string().optional(),
@@ -63,7 +55,7 @@ const InvalidResult = (): React.JSX.Element => (
 );
 /* oxlint-enable react/only-export-components */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- import/group-exports: #619: Keep this schema-driven renderer factory and guard directly exported: grouped clauses in Oxlint 1.82 classify factory-local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
+/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- import/group-exports: #619: Keep defineToolRenderer directly exported: grouping the factory in Oxlint 1.82 classifies its local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
 jsdoc/require-param (#534): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 jsdoc/require-returns (#535): defineToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 max-lines-per-function (#510): defineToolRenderer keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -189,3 +181,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
   });
 };
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
+// oxlint-disable-next-line import/group-exports -- Keep defineToolRenderer directly exported to preserve Oxlint Fast Refresh factory classification; group the remaining value export here.
+export { isValidatedToolRenderer };
+export type { ValidatedToolRenderer, ToolRendererProps };

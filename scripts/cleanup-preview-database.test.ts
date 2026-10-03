@@ -8,8 +8,7 @@ const preview = {
   name: "preview/feature",
   parent_id: "br-quiet-pine-za1aryyz",
 };
-/* oxlint-disable typescript/consistent-type-definitions -- RunOptions: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
-type RunOptions = {
+interface RunOptions {
   state?: string;
   repo?: string;
   open?: boolean;
@@ -22,8 +21,7 @@ type RunOptions = {
   pages?: { branches: (typeof preview)[]; pagination: { next: string } }[];
   stateBeforeDelete?: string;
   openBeforeDelete?: boolean;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 /* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
 /* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */

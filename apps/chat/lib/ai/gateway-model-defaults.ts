@@ -2,12 +2,8 @@ import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
 
 import type { Gateway } from "./gateway";
 
-// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
-export const gatewayType = "vercel" satisfies InstanceType<
-  typeof Gateway
->["type"];
-// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
-export const gatewayModelDefaults = {
+const gatewayType = "vercel" satisfies InstanceType<typeof Gateway>["type"];
+const gatewayModelDefaults = {
   anonymousModels: ["google/gemini-2.5-flash-lite", "openai/gpt-5-nano"],
   curatedDefaults: [
     "openai/gpt-5-nano",
@@ -58,11 +54,15 @@ export const gatewayModelDefaults = {
     title: "openai/gpt-5-nano",
   },
 } satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
-// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
-export const gatewayCapabilities = { image: true, video: true };
-// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
-export const gatewayEnvRequirements = [
+const gatewayCapabilities = { image: true, video: true };
+const gatewayEnvRequirements = [
   { options: [["AI_GATEWAY_API_KEY"], ["VERCEL_OIDC_TOKEN"]] },
 ];
-// oxlint-disable-next-line import/group-exports -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
-export const gatewayEnvVariables = ["AI_GATEWAY_API_KEY", "VERCEL_OIDC_TOKEN"];
+const gatewayEnvVariables = ["AI_GATEWAY_API_KEY", "VERCEL_OIDC_TOKEN"];
+export {
+  gatewayType,
+  gatewayModelDefaults,
+  gatewayCapabilities,
+  gatewayEnvRequirements,
+  gatewayEnvVariables,
+};

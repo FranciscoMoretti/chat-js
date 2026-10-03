@@ -35,7 +35,7 @@ const readOptional = async (path: string): Promise<string | null> => {
 };
 /* oxlint-enable unicorn/no-null */
 const generatedSource = (body: string): string => {
-  const normalizedBody = generatedRegistrationSource(body)
+  const normalizedBody = body
     .replace(
       "export type WorkflowTools = {\n\n};",
       "export type WorkflowTools = Record<never, never>;"
@@ -59,7 +59,8 @@ const generatedSource = (body: string): string => {
     )
     .replace(";\n\n\nconst installed", ";\n\nconst installed")
     .replace(";\n\n\nexport const documentUi", ";\n\nexport const documentUi");
-  return `${generated}// Content: ${hash(normalizedBody)}\n${normalizedBody}`;
+  const registrations = generatedRegistrationSource(normalizedBody);
+  return `${generated}// Content: ${hash(registrations)}\n${registrations}`;
 };
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const checkGenerated = (content: string | null, path: string): void => {

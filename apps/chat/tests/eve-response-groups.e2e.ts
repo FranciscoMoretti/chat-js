@@ -5,7 +5,6 @@
 /* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq } from "drizzle-orm";
 import { afterAll, expect, test, vi } from "vitest";
 
@@ -437,9 +436,8 @@ test("owner-only group reads preserve order and rejection recovery without expos
     group.id,
     group.candidates[1].operationId
   );
-  expect(
-    (await getEveResponseGroup(owner, group.id))?.candidates[1].state
-  ).toBe("waiting");
+  const responseCandidates = await getEveResponseGroup(owner, group.id);
+  expect(responseCandidates?.candidates[1].state).toBe("waiting");
   await beginEveConversationDeletion(owner, first.id);
   expect(await getEveResponseGroup(owner, group.id)).toBeUndefined();
   await expect(

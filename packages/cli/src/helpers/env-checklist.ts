@@ -17,12 +17,10 @@ import {
   gatewayEnvRequirements,
 } from "./config-requirements";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type EnvRequirementLike = {
+interface EnvRequirementLike {
   description?: string;
   options: string[][];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
 type EnvVarEntry = {
@@ -37,16 +35,14 @@ type EnvVarEntry = {
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type EnvChecklistInput = {
+interface EnvChecklistInput {
   gateway: Gateway;
   gatewayRequirements?: EnvRequirementLike[];
   coreFeatures: Record<CoreFeatureKey, boolean>;
   builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
   installableToolEnvRequirements?: EnvRequirementLike[];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */

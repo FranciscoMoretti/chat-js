@@ -8,18 +8,12 @@ const APP_TEMPLATE_PATTERN =
 const MIN_PORT = 1024;
 const MAX_PORT = 65_535;
 
-/* oxlint-disable import/exports-last -- WorktreeAppConfig: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- WorktreeAppConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export interface WorktreeAppConfig {
+interface WorktreeAppConfig {
   exports?: Record<string, string>;
   offset: number;
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- WorktreeEnvConfig: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- WorktreeEnvConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export interface WorktreeEnvConfig {
+interface WorktreeEnvConfig {
   apps: Record<string, WorktreeAppConfig>;
   range: {
     base: number;
@@ -31,27 +25,17 @@ export interface WorktreeEnvConfig {
   };
   url: string;
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- ResolvedWorktreeApp: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- ResolvedWorktreeApp: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export interface ResolvedWorktreeApp {
+interface ResolvedWorktreeApp {
   env: Record<string, string>;
   port: number;
   url: string;
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- WorktreeRuntime: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- WorktreeRuntime: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export interface WorktreeRuntime {
+interface WorktreeRuntime {
   apps: Record<string, ResolvedWorktreeApp>;
   slot: number;
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 interface TemplateContext {
   apps: Record<string, { port: number; url: string }>;
@@ -125,12 +109,11 @@ const resolveSlot = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- resolveWorktreeRuntime: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- resolveWorktreeRuntime: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- resolveWorktreeRuntime: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable eslint/no-magic-numbers -- resolveWorktreeRuntime: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- resolveWorktreeRuntime: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-export const resolveWorktreeRuntime = (
+const resolveWorktreeRuntime = (
   config: WorktreeEnvConfig,
   environment: Record<string, string | undefined>
 ): WorktreeRuntime => {
@@ -208,10 +191,8 @@ export const resolveWorktreeRuntime = (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- loadWorktreeConfig: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export const loadWorktreeConfig = async (
+const loadWorktreeConfig = async (
   path = ".worktree-env.json"
 ): Promise<WorktreeEnvConfig> => {
   const configFile = file(path);
@@ -221,4 +202,10 @@ export const loadWorktreeConfig = async (
   // oxlint-disable-next-line typescript/no-unsafe-return -- This repository-owned config is consumed by the runtime resolver; a separate input schema requires a config-format decision.
   return await configFile.json();
 };
-/* oxlint-enable import/group-exports */
+export { loadWorktreeConfig, resolveWorktreeRuntime };
+export type {
+  ResolvedWorktreeApp,
+  WorktreeAppConfig,
+  WorktreeEnvConfig,
+  WorktreeRuntime,
+};

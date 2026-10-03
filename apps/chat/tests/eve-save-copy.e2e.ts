@@ -6,7 +6,6 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -463,9 +462,11 @@ test("an unavailable native lookup leaves acceptance recoverable and never blind
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Native copy lookup is unavailable");
-  expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.copy.phase
-  ).toBe("accepted");
+  const copyOperationAfterLookupFailure = await getEveCopyOperation(
+    ownerId,
+    f.input.operationId
+  );
+  expect(copyOperationAfterLookupFailure?.copy.phase).toBe("accepted");
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(mocks.native.size).toBe(0);
 });
@@ -573,9 +574,11 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Cleanup reply lost");
-  expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.copy.phase
-  ).toBe("rejected");
+  const copyOperationAfterLostCleanupReply = await getEveCopyOperation(
+    ownerId,
+    f.input.operationId
+  );
+  expect(copyOperationAfterLostCleanupReply?.copy.phase).toBe("rejected");
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("copy was rejected");

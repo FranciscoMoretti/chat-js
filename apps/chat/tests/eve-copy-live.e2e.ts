@@ -3,7 +3,6 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { Client } from "eve/client";
@@ -436,7 +435,8 @@ for (const attachment of [
         { intervals: [1000, 2000, 4000], timeout: 90_000 }
       )
       .toBe("deleted");
-    expect((await page.request.get(file.url)).ok()).toBe(false);
+    const downloadedFileResponse = await page.request.get(file.url);
+    expect(downloadedFileResponse.ok()).toBe(false);
     const retained = await page.request.get(copiedUrl);
     expect(retained.ok()).toBe(true);
     expect(await retained.body()).toEqual(attachment.bytes);

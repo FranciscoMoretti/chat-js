@@ -13,9 +13,8 @@ import {
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
 
-/* oxlint-disable typescript/consistent-type-definitions -- BuildOperations: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BuildOperations: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-type BuildOperations = {
+interface BuildOperations {
   openDatabase: (url: string) => {
     close: () => Promise<void>;
     execute: (query: string) => Promise<void>;
@@ -24,9 +23,8 @@ type BuildOperations = {
     command: "db:migrate" | "build",
     env: NodeJS.ProcessEnv
   ) => Promise<void>;
-};
+}
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/consistent-type-definitions */
 
 /* oxlint-disable eslint/no-undefined -- formatBuildFailure: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable typescript/strict-boolean-expressions -- formatBuildFailure: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
