@@ -106,8 +106,8 @@ test("native transcript survives reload; streaming preserves the next draft; can
     response.url().endsWith("/cancel")
   );
   await page.getByRole("button", { exact: true, name: "Stop" }).click();
-  const awaitedMemberValue1 = await cancellation;
-  expect(await awaitedMemberValue1.json()).toMatchObject({
+  const cancellationResponse = await cancellation;
+  expect(await cancellationResponse.json()).toMatchObject({
     ok: true,
     status: "accepted",
   });
@@ -335,8 +335,8 @@ test("exhausted credits block new messages but permit rejecting an approval", as
         response.request().method() === "POST"
     );
     await page.getByRole("button", { exact: true, name: "Send" }).click();
-    const awaitedMemberValue2 = await rejected;
-    expect(awaitedMemberValue2.status()).toBe(402);
+    const creditRejectionResponse = await rejected;
+    expect(creditRejectionResponse.status()).toBe(402);
   } finally {
     await db
       .update(userCredit)
@@ -590,8 +590,8 @@ test("reload during an accepted turn restores the user message and follows the r
     .getByRole("textbox", { exact: true, name: "Message" })
     .fill("slow reload recovery");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
-  const awaitedMemberValue3 = await accepted;
-  expect(awaitedMemberValue3.ok()).toBe(true);
+  const acceptedTurnResponse = await accepted;
+  expect(acceptedTurnResponse.ok()).toBe(true);
   await page.reload();
   await expect(page.getByRole("log")).toContainText("slow reload recovery");
   await expect(

@@ -196,12 +196,12 @@ test("compiled idle capture preserves native history and exact document revision
     if (candidate.state !== "bound") {
       throw new Error("Follow-up did not bind");
     }
-    const awaitedMemberValue1 = await getEveDocumentRevision(
+    const followupDocumentRevision = await getEveDocumentRevision(
       binding.ownerId,
       candidate.conversationId,
       document.documentId
     );
-    expect(awaitedMemberValue1?.id).toBe(original.id);
+    expect(followupDocumentRevision?.id).toBe(original.id);
     await page.goto(`/chat/${candidate.conversationId}`);
     await expect(
       page.getByRole("log").locator(".is-assistant").filter({ hasText: token })

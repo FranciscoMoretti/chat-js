@@ -223,8 +223,11 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
   const before = await getEveConversation(owner, bound.id);
   const activityAt = new Date(Date.now() + 60_000);
   await recordEveConversationActivity("other", bound.sessionId, activityAt);
-  const awaitedMemberValue1 = await getEveConversation(owner, bound.id);
-  expect(awaitedMemberValue1?.updatedAt).toEqual(before?.updatedAt);
+  const conversationBeforeOwnerActivity = await getEveConversation(
+    owner,
+    bound.id
+  );
+  expect(conversationBeforeOwnerActivity?.updatedAt).toEqual(before?.updatedAt);
   await recordEveConversationActivity(owner, bound.sessionId, activityAt);
   await recordEveConversationActivity(
     owner,
@@ -235,15 +238,21 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     isPinned: true,
     title: "renamed",
   });
-  const awaitedMemberValue2 = await getEveConversation(owner, bound.id);
-  expect(awaitedMemberValue2?.updatedAt).toEqual(activityAt);
+  const conversationAfterOwnerActivity = await getEveConversation(
+    owner,
+    bound.id
+  );
+  expect(conversationAfterOwnerActivity?.updatedAt).toEqual(activityAt);
   expect(
     await updateEveConversationMetadata("other", bound.id, {
       title: "intrusion",
     })
   ).toBeUndefined();
-  const awaitedMemberValue3 = await getEveConversation(owner, bound.id);
-  expect(awaitedMemberValue3?.firstMessage).toBe("activity");
+  const conversationAfterMetadataEdit = await getEveConversation(
+    owner,
+    bound.id
+  );
+  expect(conversationAfterMetadataEdit?.firstMessage).toBe("activity");
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
@@ -520,9 +529,11 @@ test.each(["deleting", "deleted"] as const)(
       })
     ).rejects.toThrow("not available");
     expect(starts).toBe(1);
-    const awaitedMemberValue4 = await listEveOwnerBindings(owner);
+    const ownerBindingsAfterDeletion = await listEveOwnerBindings(owner);
     expect(
-      awaitedMemberValue4.some((row) => row.sessionId === bound.sessionId)
+      ownerBindingsAfterDeletion.some(
+        (row) => row.sessionId === bound.sessionId
+      )
     ).toBe(state === "deleting");
   }
 );
@@ -734,10 +745,10 @@ test("final application deletion erases family content, preserves accounting and
     isPinned: false,
     activeConversationId: null,
   });
-  const awaitedMemberValue5 = await getEveCreation(owner, operation);
-  expect(awaitedMemberValue5?.operationId).toBe(operation);
-  const awaitedMemberValue6 = await getEveConversation(owner, unrelated.id);
-  expect(awaitedMemberValue6?.firstMessage).toBe("Keep this");
+  const tombstonedCreationReplay = await getEveCreation(owner, operation);
+  expect(tombstonedCreationReplay?.operationId).toBe(operation);
+  const unrelatedConversation = await getEveConversation(owner, unrelated.id);
+  expect(unrelatedConversation?.firstMessage).toBe("Keep this");
   expect(
     await db
       .select()

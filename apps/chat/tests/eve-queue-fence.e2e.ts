@@ -181,7 +181,7 @@ test("queue purge refuses even an old worker lock and succeeds after explicit re
     await query`select id from graphile_worker._private_jobs where id::text = ${id}`
   ).toHaveLength(1);
   await query`update graphile_worker._private_jobs set locked_at = null, locked_by = null where id::text = ${id}`;
-  const awaitedMemberValue1 = await purgeEvePostgresQueue(query, input);
-  expect(awaitedMemberValue1.removedJobIds).toEqual([id]);
+  const purgeResult = await purgeEvePostgresQueue(query, input);
+  expect(purgeResult.removedJobIds).toEqual([id]);
 });
 /* oxlint-enable no-magic-numbers */

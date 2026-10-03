@@ -462,11 +462,11 @@ test("an unavailable native lookup leaves acceptance recoverable and never blind
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Native copy lookup is unavailable");
-  const awaitedMemberValue1 = await getEveCopyOperation(
+  const copyOperationAfterLookupFailure = await getEveCopyOperation(
     ownerId,
     f.input.operationId
   );
-  expect(awaitedMemberValue1?.copy.phase).toBe("accepted");
+  expect(copyOperationAfterLookupFailure?.copy.phase).toBe("accepted");
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(mocks.native.size).toBe(0);
 });
@@ -574,11 +574,11 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("Cleanup reply lost");
-  const awaitedMemberValue2 = await getEveCopyOperation(
+  const copyOperationAfterLostCleanupReply = await getEveCopyOperation(
     ownerId,
     f.input.operationId
   );
-  expect(awaitedMemberValue2?.copy.phase).toBe("rejected");
+  expect(copyOperationAfterLostCleanupReply?.copy.phase).toBe("rejected");
   await expect(
     saveEveCopyOperation(ownerId, f.input, "https://chatjs.example")
   ).rejects.toThrow("copy was rejected");

@@ -435,8 +435,8 @@ for (const attachment of [
         { intervals: [1000, 2000, 4000], timeout: 90_000 }
       )
       .toBe("deleted");
-    const awaitedMemberValue1 = await page.request.get(file.url);
-    expect(awaitedMemberValue1.ok()).toBe(false);
+    const downloadedFileResponse = await page.request.get(file.url);
+    expect(downloadedFileResponse.ok()).toBe(false);
     const retained = await page.request.get(copiedUrl);
     expect(retained.ok()).toBe(true);
     expect(await retained.body()).toEqual(attachment.bytes);

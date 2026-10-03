@@ -86,8 +86,8 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
       ownerId: registeredOwner,
     },
   ]);
-  const awaitedMemberValue1 = await claimExpiredEveGuestFamilies();
-  expect(awaitedMemberValue1.some((row) => row.ownerId === guest.ownerId)).toBe(
+  const expiredGuestClaims = await claimExpiredEveGuestFamilies();
+  expect(expiredGuestClaims.some((row) => row.ownerId === guest.ownerId)).toBe(
     false
   );
   await db
@@ -124,7 +124,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     .update(eveConversation)
     .set({ guestCleanupAttemptedAt: new Date(0) })
     .where(eq(eveConversation.id, first.id));
-  const awaitedMemberValue2 = await claimExpiredEveGuestFamilies();
-  expect(awaitedMemberValue2.map((row) => row.id)).toContain(first.id);
+  const expiredGuestClaimIds = await claimExpiredEveGuestFamilies();
+  expect(expiredGuestClaimIds.map((row) => row.id)).toContain(first.id);
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

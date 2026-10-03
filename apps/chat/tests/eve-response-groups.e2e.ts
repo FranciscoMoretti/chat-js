@@ -436,8 +436,8 @@ test("owner-only group reads preserve order and rejection recovery without expos
     group.id,
     group.candidates[1].operationId
   );
-  const awaitedMemberValue1 = await getEveResponseGroup(owner, group.id);
-  expect(awaitedMemberValue1?.candidates[1].state).toBe("waiting");
+  const responseCandidates = await getEveResponseGroup(owner, group.id);
+  expect(responseCandidates?.candidates[1].state).toBe("waiting");
   await beginEveConversationDeletion(owner, first.id);
   expect(await getEveResponseGroup(owner, group.id)).toBeUndefined();
   await expect(

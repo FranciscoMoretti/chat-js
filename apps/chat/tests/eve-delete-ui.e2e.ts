@@ -126,10 +126,13 @@ for (const width of [1280, 390]) {
         .click();
       await expect(dialog).toContainText("cleanup is not complete");
       expect(await getEveConversation(owner.id, id)).toBeUndefined();
-      const awaitedMemberValue1 = await listEveConversations(owner.id, {
-        search: title,
-      });
-      expect(awaitedMemberValue1.items.map((item) => item.id)).toContain(id);
+      const conversationMatchesDuringPendingCleanup =
+        await listEveConversations(owner.id, {
+          search: title,
+        });
+      expect(
+        conversationMatchesDuringPendingCleanup.items.map((item) => item.id)
+      ).toContain(id);
       await dialog
         .getByRole("button", { exact: true, name: "Close" })
         .first()
@@ -176,10 +179,13 @@ for (const width of [1280, 390]) {
         .click();
       await expect(dialog).toHaveCount(0);
       expect(deletes).toBe(2);
-      const awaitedMemberValue2 = await listEveConversations(owner.id, {
-        search: title,
-      });
-      expect(awaitedMemberValue2.items).toHaveLength(0);
+      const conversationMatchesAfterCleanup = await listEveConversations(
+        owner.id,
+        {
+          search: title,
+        }
+      );
+      expect(conversationMatchesAfterCleanup.items).toHaveLength(0);
     } finally {
       await db.delete(eveConversation).where(eq(eveConversation.id, id));
     }

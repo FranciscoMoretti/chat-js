@@ -102,8 +102,8 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
       value.request().method() === "POST"
   );
   await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
-  const awaitedMemberValue1 = await retry;
-  expect(awaitedMemberValue1.ok()).toBe(true);
+  const retryResponse = await retry;
+  expect(retryResponse.ok()).toBe(true);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });

@@ -66,8 +66,8 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
         "test-owned removal fixture",
         "text/plain"
       );
-      const awaitedMemberValue1 = await getFileMetadata(key);
-      expect(awaitedMemberValue1.size).toBe(26);
+      const purgedFileMetadata = await getFileMetadata(key);
+      expect(purgedFileMetadata.size).toBe(26);
     }
     await beginEveConversationDeletion(owner, conversation.id);
     expect(await prepareEveFamilyFilePurge(owner, conversation.id)).toEqual(

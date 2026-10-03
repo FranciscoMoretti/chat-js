@@ -36,10 +36,10 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
   });
   const id = new URL(page.url()).pathname.split("/").at(-1);
   const title = `Header parity ${crypto.randomUUID().slice(0, 8)}`;
-  const awaitedMemberValue1 = await page.request.post("/api/trpc/eve.rename", {
+  const renameResponse = await page.request.post("/api/trpc/eve.rename", {
     data: { json: { id, title } },
   });
-  expect(awaitedMemberValue1.ok()).toBe(true);
+  expect(renameResponse.ok()).toBe(true);
   await page.reload();
   const menu = () =>
     page.getByRole("button", { exact: true, name: `Chat menu: ${title}` });
@@ -120,13 +120,13 @@ test("logical header metadata is optimistic, rolls back, and preserves project a
       }),
     })
     .parse(await created.json());
-  const awaitedMemberValue2 = await page.request.post(
+  const projectAssignmentResponse = await page.request.post(
     "/api/trpc/eve.assignProject",
     {
       data: { json: { conversationId: id, projectId: project.id } },
     }
   );
-  expect(awaitedMemberValue2.ok()).toBe(true);
+  expect(projectAssignmentResponse.ok()).toBe(true);
   await page.reload();
   await expect(
     page

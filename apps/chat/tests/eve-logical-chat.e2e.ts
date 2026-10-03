@@ -62,8 +62,8 @@ test("logical chat keeps its URL and native observers across first send, retry, 
       response.request().method() === "POST"
   );
   await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
-  const awaitedMemberValue1 = await retryAccepted;
-  expect(awaitedMemberValue1.ok()).toBe(true);
+  const acceptedRetryResponse = await retryAccepted;
+  expect(acceptedRetryResponse.ok()).toBe(true);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
@@ -99,8 +99,8 @@ test("logical chat keeps its URL and native observers across first send, retry, 
       response.request().method() === "POST"
   );
   await editor.getByRole("button", { exact: true, name: "Send" }).click();
-  const awaitedMemberValue2 = await editAccepted;
-  expect(awaitedMemberValue2.ok()).toBe(true);
+  const acceptedEditResponse = await editAccepted;
+  expect(acceptedEditResponse.ok()).toBe(true);
   await expect(page.getByRole("log")).toContainText("exactly jade");
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
