@@ -6107,6 +6107,7 @@
     "[\"packages/cli/src/utils/install-plan.test.ts\",\"typescript/no-unsafe-member-access\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/cli/src/utils/install-plan.test.ts\",\"max-lines\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/install-plan.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
+    "[\"packages/cli/src/utils/install-plan.ts\",\"import/max-dependencies\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/cli/src/utils/install-plan.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 5,
     "[\"packages/cli/src/utils/install-plan.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 2,
     "[\"packages/cli/src/utils/install-plan.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 3,
@@ -29791,6 +29792,9 @@
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "c33f45838bddaf324c6134ba00eddbd37c66481348ff61369b7ebbe9a40b315d"
+    ],
+    "[\"packages/cli/src/utils/install-plan.ts\",\"import/max-dependencies\",\"oxlint-disable-next-line\"]": [
+      "8f4efbabe2ea32e4284cc0dd7a8a9af0ee6f531ddffa87ffbc1556933bc5ed3d"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "32b1f805265e5c3ead2309612d5c431eec8aafe3c096f870958e47ebd297141b",

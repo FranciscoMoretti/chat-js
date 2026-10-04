@@ -19,6 +19,7 @@ import { prepareDependencyUpdate } from "./installation-dependencies";
 import type { planInstallation } from "./installation-plan";
 import { assertMcpApprovalSchema } from "./mcp-schema";
 import { preflight } from "./preflight";
+// oxlint-disable-next-line import/max-dependencies -- Keep schema checks, provider registration and rollback together at the installation transaction boundary.
 import { toolRegistrationTargets } from "./sync-tools";
 
 type Plan = Awaited<ReturnType<typeof planInstallation>>;
