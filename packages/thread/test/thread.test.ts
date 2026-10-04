@@ -69,7 +69,6 @@ const waitFor = async (
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 describe("Thread", (): void => {
   test("creates a complete initial snapshot for custom state adapters", (): void => {
     const snapshot = createThreadStateSnapshot({
@@ -748,7 +747,7 @@ describe("Thread", (): void => {
     const transport = new ControlledTransport();
     const state = new RecordingThreadState([]);
     const chat = new StateBackedThread(state, transport);
-    chat.sendAutomaticallyWhen = () => {
+    chat.sendAutomaticallyWhen = (): never => {
       throw new Error("application callback failed");
     };
     let publishes = 0;
@@ -1222,7 +1221,6 @@ describe("Thread", (): void => {
     ).toBe("resumed");
   });
 });
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/max-nested-calls */

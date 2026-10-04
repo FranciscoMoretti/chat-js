@@ -218,12 +218,8 @@ class RunRegistry<TMessage extends UIMessage> {
       (run: RunIdentityReader): boolean =>
         run.spec.messageId !== undefined && pathIds.has(run.spec.messageId)
     );
-    if (responseRun) {
+    if (responseRun || !(typeof cursorId === "string" && cursorId !== "")) {
       return responseRun;
-    }
-    if (!(typeof cursorId === "string" && cursorId !== "")) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
     }
 
     return (
