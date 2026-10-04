@@ -72,6 +72,19 @@ const createEveLifecycleProvider = (options: {
       world: options.world,
     };
   }
+  const target = URL.parse(databaseUrl);
+  if (
+    target === null ||
+    !["postgres:", "postgresql:"].includes(target.protocol) ||
+    !["localhost", "127.0.0.1", "[::1]"].includes(target.hostname)
+  ) {
+    return {
+      reason:
+        "Native lifecycle setup and acceptance currently support only loopback PostgreSQL databases.",
+      supported: false,
+      world: options.world,
+    };
+  }
   return createPostgresLifecycle(databaseUrl);
 };
 
