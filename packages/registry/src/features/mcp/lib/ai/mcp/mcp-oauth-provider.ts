@@ -334,11 +334,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (params.get("grant_type") !== "refresh_token") {
       return await mcpFetch(request);
     }
-    const observedAccessToken = McpOAuthClientProvider.decodeStoredCredentials(
-      storedTokensSchema,
-      this.cachedAuthData?.tokens,
-      "tokens"
-    )?.access_token;
+    // Compare the cached fingerprint only; validate the latest credentials under
+    // the lock so a stale malformed cache cannot prevent adopting a repaired row.
+    const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
     return await withMcpOAuthRefreshLock(
       this.config.mcpConnectorId,
       async () => {
