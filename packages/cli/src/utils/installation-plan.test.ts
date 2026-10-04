@@ -158,7 +158,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     );
     expect(
       fresh.replacements.map(({ previous }): string => previous.id)
-    ).toEqual(["first"]);
+    ).toEqual([]);
     const reinstall = await planInstallation(root, {
       features: [],
       tools: [`http://127.0.0.1:${server.port}/first.json`],

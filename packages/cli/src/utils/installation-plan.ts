@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
@@ -26,6 +27,7 @@ import type {
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { itemAddress, readItem } from "../registry/shadcn";
 /* oxlint-enable import/no-relative-parent-imports */
+import { validateProviderRequirements } from "./installation-requirements";
 import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
@@ -61,12 +63,14 @@ export const planInstallation = async (
   options: { fresh?: boolean; replace?: boolean } = {}
 ) => {
   const selection = installationSelectionSchema.parse(input);
-  const installed = await readInstalledTools(cwd);
+  const installed = options.fresh === true ? [] : await readInstalledTools(cwd);
   const expected = new Map<string, ToolDefinition>();
   const sources = new Set<string>();
   const items = new Map<string, ReturnType<typeof readItem>>();
   const features = new Map<string, FeatureDefinition>();
   const providers = new Map<string, string>();
+  // oxlint-disable-next-line eslint/init-declarations -- The optional gateway is assigned only when the selected registry graph contains one.
+  let gateway: GatewayDefinition | undefined;
   const selectProvider = (definition: { kind: string; id: string }): void => {
     const previous = providers.get(definition.kind);
     if (
@@ -121,7 +125,8 @@ export const planInstallation = async (
         break;
       }
       case "gateway": {
-        selectProvider(gatewayDefinitionSchema.parse(item.meta.chatjs));
+        gateway = gatewayDefinitionSchema.parse(item.meta.chatjs);
+        selectProvider(gateway);
         break;
       }
       case "storage": {
@@ -218,34 +223,40 @@ export const planInstallation = async (
     }
   }
   validateToolInstallation(cwd, target());
-  const installedFeatures = await Promise.all(
-    featureIdSchema.options.map(async (id) => {
-      const descriptor = `features/${id}/chatjs.json`;
-      await preflight(cwd, [descriptor]);
-      const content = await readFile(path.join(cwd, descriptor), "utf-8").catch(
-        (error: unknown) => {
-          if (
-            error instanceof Error &&
-            "code" in error &&
-            error.code === "ENOENT"
-          ) {
-            return null;
-          }
-          throw error;
-        }
-      );
-      if (content === null) {
-        return [];
-      }
-      const definition = featureDefinitionSchema.parse(JSON.parse(content));
-      if (definition.id !== id) {
-        throw new Error(
-          `Feature descriptor id must match its directory: ${id}`
+  const installedFeatures =
+    options.fresh === true
+      ? []
+      : await Promise.all(
+          featureIdSchema.options.map(async (id) => {
+            const descriptor = `features/${id}/chatjs.json`;
+            await preflight(cwd, [descriptor]);
+            const content = await readFile(
+              path.join(cwd, descriptor),
+              "utf-8"
+            ).catch((error: unknown) => {
+              if (
+                error instanceof Error &&
+                "code" in error &&
+                error.code === "ENOENT"
+              ) {
+                return null;
+              }
+              throw error;
+            });
+            if (content === null) {
+              return [];
+            }
+            const definition = featureDefinitionSchema.parse(
+              JSON.parse(content)
+            );
+            if (definition.id !== id) {
+              throw new Error(
+                `Feature descriptor id must match its directory: ${id}`
+              );
+            }
+            return [definition];
+          })
         );
-      }
-      return [definition];
-    })
-  );
   const targetFeatures = new Map([
     ...installedFeatures
       .flat()
@@ -263,7 +274,19 @@ export const planInstallation = async (
       );
     }
   }
+  await validateProviderRequirements(cwd, {
+    features: [...targetFeatures.values()],
+    gateway,
+    storage: providers.get("storage"),
+    tools: target(),
+  });
   return {
+    environmentVariables: [
+      ...target().flatMap((tool) => tool.envRequirements),
+      ...[...targetFeatures.values()].flatMap(
+        (feature) => feature.envRequirements ?? []
+      ),
+    ].flatMap((requirement) => requirement.options.flat()),
     expected: [...expected.values()],
     features: [...features.values()],
     items: await Promise.all(items.values()),

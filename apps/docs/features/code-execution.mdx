@@ -5,7 +5,7 @@ description: Secure Python and JavaScript sandbox for running code
 
 ## Overview
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select an external code-execution item that exports a standard AI SDK tool.
+Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select an external code-execution item that exports a native EVE tool.
 
 <Frame>
   <img
@@ -32,23 +32,14 @@ npx @chat-js/cli@latest create my-app --yes \
 
 The fresh template includes only the selected implementation and dependencies. The CLI prints the selected item's credential requirements. Vercel Sandbox needs `VERCEL_OIDC_TOKEN` or the team/project/token credentials described below.
 
-For an existing app, install the item with `chat-js add vercel-code-execution`, then enable it in `chat.config.ts`. When switching implementations, remove the previous provider directory first; only one `codeExecution` item can occupy the slot. Keep generated registration files intact and let `add` or `sync` regenerate them.
+For an existing app, install the item with the CLI. Use `--replace` when switching the exclusive `codeExecution` provider. Modified source requires explicit `--overwrite` after review.
 
 ```bash
-npx @chat-js/cli@latest add vercel-code-execution
+bunx @chat-js/cli@latest add vercel-code-execution
+bunx @chat-js/cli@latest add saved-code-execution
 ```
 
-Enable code execution:
-
-```ts
-ai: {
-  tools: {
-    codeExecution: {
-      enabled: true,
-    },
-  },
-}
-```
+Saved-code execution additionally requires a compatible executor export and code documents. The planner resolves its dependencies. No `ai.tools.codeExecution.enabled` flag is needed. A second independent sandbox adapter and provider-owned resource cleanup remain release acceptance work.
 
 ## Pre-installed Packages
 

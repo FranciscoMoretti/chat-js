@@ -25,9 +25,17 @@ AI_GATEWAY_API_KEY=your_key_here
 
 ### Config
 
-Set the gateway to `"vercel"` (or omit it, since it defaults to `"vercel"`):
+Install the gateway source (add `--replace` when another gateway is installed):
+
+```bash
+bunx @chat-js/cli@latest add --gateway vercel
+```
+
+Then configure runtime model overrides for that installation:
 
 ```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config-schema";
+
 const config: ConfigInput = {
   ai: {
     gateway: "vercel",

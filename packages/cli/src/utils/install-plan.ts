@@ -14,6 +14,8 @@ import { z } from "zod";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
 /* oxlint-enable import/no-relative-parent-imports */
+import { updateEnvironmentExample } from "./environment-example";
+import { prepareDependencyUpdate } from "./installation-dependencies";
 import type { planInstallation } from "./installation-plan";
 import { preflight } from "./preflight";
 import { toolRegistrationTargets } from "./sync-tools";
@@ -142,6 +144,9 @@ const installPlan = async (
     )
   );
   const rollbackTargets = [
+    "package.json",
+    ".env.example",
+    ".chatjs/installed-dependencies.json",
     ...toolRegistrationTargets,
     ...(options.rollbackTargets ?? []),
   ];
@@ -196,6 +201,7 @@ const installPlan = async (
       }
     }
   }
+  const updateDependencies = await prepareDependencyUpdate(cwd, plan);
   const staged: { from: string; to: string }[] = [];
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
   try {
@@ -212,6 +218,12 @@ const installPlan = async (
       staged.push({ from, to });
     }
     await register();
+    await updateEnvironmentExample(
+      cwd,
+      "installed-capabilities",
+      plan.environmentVariables
+    );
+    await updateDependencies();
   } catch (error) {
     // Restore old source even when shadcn or registration failed; new source may need repair.
     const restored = await Promise.allSettled([

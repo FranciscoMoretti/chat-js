@@ -408,7 +408,8 @@ const promptDocumentTypes = async (
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptAssistantTools = async (
   registryItems: RegistryIndexItem[],
-  skipPrompt: boolean
+  skipPrompt: boolean,
+  gateway: GatewayDefinition
 ): Promise<{
   builtInTools: Record<BuiltInToolKey, boolean>;
   installableTools: string[];
@@ -429,7 +430,21 @@ const promptAssistantTools = async (
       !item.meta?.chatjs?.documentRunExport &&
       item.name !== "deep-research"
   );
-  const supportedBuiltInTools = BUILT_IN_TOOL_KEYS;
+  const supportedBuiltInTools = BUILT_IN_TOOL_KEYS.filter((key) => {
+    if (key === "imageGeneration") {
+      return (
+        gateway.capabilities.image &&
+        Boolean(gateway.defaults.tools.image.default)
+      );
+    }
+    if (key === "videoGeneration") {
+      return (
+        gateway.capabilities.video &&
+        Boolean(gateway.defaults.tools.video.default)
+      );
+    }
+    return true;
+  });
 
   if (skipPrompt) {
     return {

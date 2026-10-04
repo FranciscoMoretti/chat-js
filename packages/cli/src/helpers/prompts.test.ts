@@ -23,7 +23,11 @@ it("uses external defaults and every environment group with --yes", async () => 
   ];
   const coreFeatures = await promptCoreFeatures(true, definition);
   const documentTypes = await promptDocumentTypes(true, true);
-  const { builtInTools } = await promptAssistantTools([], true);
+  const { builtInTools } = await promptAssistantTools(
+    [],
+    true,
+    externalGatewayFixture().root.meta.chatjs
+  );
   expect(coreFeatures.mcp).toBe(false);
   expect(coreFeatures.attachments).toBe(false);
   expect(await promptObservability(true)).toEqual([]);
@@ -59,7 +63,11 @@ it("rejects a default for media the gateway cannot support", () => {
 });
 
 it("defaults media tool installation selections to false with --yes", async () => {
-  const { builtInTools } = await promptAssistantTools([], true);
+  const { builtInTools } = await promptAssistantTools(
+    [],
+    true,
+    externalGatewayFixture().root.meta.chatjs
+  );
   expect(builtInTools.imageGeneration).toBe(false);
   expect(builtInTools.videoGeneration).toBe(false);
 });

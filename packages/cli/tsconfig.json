@@ -9,6 +9,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "test/**/*.ts",
     "../../apps/chat/types/**/*.d.ts",
     "../../apps/chat/electron.d.ts"
   ],

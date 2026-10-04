@@ -1,3 +1,4 @@
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { access, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -20,18 +21,18 @@ import { resolveGateway } from "../registry/gateways";
 import { resolveStorage } from "../registry/storage";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { inferPackageManager } from "../utils/get-package-manager";
 import { handleError } from "../utils/handle-error";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installPlan } from "../utils/install-plan";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { planInstallation } from "../utils/installation-plan";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { gatewayConfigEdit } from "../utils/provider-config";
+import { runCommand } from "../utils/run-command";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
@@ -42,6 +43,8 @@ import {
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { syncTools } from "../utils/sync-tools";
 /* oxlint-enable import/no-relative-parent-imports */
+
+/* oxlint-enable import/max-dependencies */
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
@@ -255,7 +258,7 @@ export const add = new Command("add")
             managedTargets: [
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
               ...(selectedStorage && !keepStorageOptions
-                ? ["lib/storage-options.ts", ".env.example"]
+                ? ["lib/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,
@@ -286,6 +289,25 @@ export const add = new Command("add")
               ),
             });
           }
+        );
+        const manager = inferPackageManager(cwd);
+        await runCommand(manager, ["install"], cwd);
+        const formatter = {
+          bun: ["run"],
+          npm: ["exec", "--"],
+          pnpm: ["exec"],
+          yarn: ["run"],
+        }[manager];
+        await runCommand(
+          manager,
+          [
+            ...formatter,
+            "oxfmt",
+            "--write",
+            "package.json",
+            ".chatjs/installed-dependencies.json",
+          ],
+          cwd
         );
         printSetupRequirements(setup);
         log.success(
