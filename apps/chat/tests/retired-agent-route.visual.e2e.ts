@@ -13,7 +13,7 @@ test("retired agent links render the unmatched-route page", async ({
     page.getByRole("heading", { exact: true, name: "404" })
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "This page could not be found." })
+    page.getByRole("heading", { name: "Page Not Found" })
   ).toBeVisible();
   await page.screenshot({
     path: testInfo.outputPath("retired-agent-route.png"),

@@ -25890,7 +25890,7 @@
       "4ab394d9669089e3719b1a89d02658094b25036b529ab32cf9bdcf3d7c20dd3d"
     ],
     "[\"apps/chat/tests/retired-agent-route.visual.e2e.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "c686c6f3acc7a2b8bfafebed42725da036329f7aa2a1845c5dd7cc9a64df1a51"
+      "2a1cda1ec545e36ce27d6f365312ed161f0c3eb9bf2d3ad962db71fa759f9f3f"
     ],
     "[\"apps/chat/tests/retired-agent-route.visual.e2e.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable-next-line\"]": [
       "cb073c956a8d4ee2d2cf687aeed1157bc94f2a1291d35d6799876aa466e15347"
@@ -29131,37 +29131,37 @@
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
       "5d69fd365d4e78e8447f56d91aa69d07e7a22a73d98406ed068c9421acba5c30",
       "3f9de0b973f78e3691701ebb97e6f4f4e4b3d0083519ce948ff94da5c7718a47",
-      "0374f3c52a4146ad195c57c76bce0ddbc72626ac383970b9cbb7623361d70aaa",
-      "df6d7a2ea052b2006911b279dd3b36d3dadd7ceb5cd9c9cc054bcdc5ccbbcd78"
+      "9cfe5f735368dd946d3f08837efb01d9c8f078429d9ddbccaecd5f95db0d75c6",
+      "33e5d0a67b7c7810c29e543aab29bdcdf7ba8834eeb4387f2a97418f02b8c271"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
       "3e4810de6d079d71e4a99347d07dfb4472c9bbd51c3a18d5c04b356506e02c3a",
-      "2e1ee0ad48b90c5bc8566b6772182c752f75eec66ff4ed8c351addd2605b0026"
+      "eea94a04668c39b1a6a872fc57ae3d7a8182d0de8eea9a7111a258ccb7320e2b"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "9220f71e65f7d38ebbb98e517ddce4da3b6ebff72b50685bcc5ed6dab44c33c6",
-      "345dcebfbc39a5b9433aa77fc040ed2f138c85f2529820298c0d79b18eec79ad",
+      "2b6b7d23a5075a7a029828bd473a533c604990a46b511982b556861cfdd6452e",
       "cdb6a9ae5038acdb2ec9d59d2749ee50629a4eabeb0b81dc1d351ede3cfce3aa",
-      "1e433257e9161112e55d46256dabc239244272a492c3741150c242fa7fd3c9d9"
+      "387732cc5eaa43f4a3bf1b4378a0db5c8b2b5b9b97de6d77c425f1ee6f1656d2"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "375d5e7bf7130c0a9ea7379679d21609370ae1550b97abc89da36ae749b7a85f",
-      "e665f9ce08efdc9909604c4c28eab2c59ee3cf207f807f4caea2ee6cf78450aa",
-      "ff78c53a84adf0704d2cf5d8cb198f3bef9507677db18efac6b8c72468c8c7b4"
+      "728afe0117f79fd515a96fe21e1a76ac6155d38cce389cfedb223adcc3b0d108",
+      "d58c2d657caff6d13418cb3aec72769d1e62bd03ee5b605968d018bcebc8aa3f"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
       "1fea7b7944b42b8e0a64657318124b7fcfcc149a6ce4a9f3c5b1df2ea7ff2934",
-      "ac66b133b0667bea4490a6b5d87852c26d5681073a2b91f248ddbb2a65bfbbec",
-      "6feae0f8ae678c0f08bc8b1d26d61bcc6886726a858f01223ae8128278a942c5"
+      "c2f398c6728cc0bc7c50bdacf79273059ad0d04f3b2a823d50c8f658cb6af49f",
+      "ceb9cd4d3074f841a58fc4191bd90d3d712cb3288535a188872270d09b2c0eff"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "ffc8321b53ec5f78363ca1e435f922bb2c475962562b8c965592b71eab08e9ec",
-      "539a427f5ad65ac2dda8d5910286959239de444c65998970f353943fd56ee329"
+      "31fbc0bd37681c21c03b8a4aa8264abaef512497212abb7603ee7fde6ac9411d",
+      "70bf405ffb363b5039be3bbba927c86a5ab7848ee721b6b376654abe641601f0"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"node/no-sync\",\"oxlint-disable\"]": [
-      "e98f3caab27913a681c58bd173680a2dfd060bf4d179bebf27ada18295f5d4a5",
+      "96e3589c13d7080ab8bf9149dee7c178578f64ca18d9ac3f6f53a37f2cb94d9c",
       "908e3e39aac0a89beca835a476e7582e344ad5c7dc1b2b5c81c216ff97319399",
-      "df062a00c6db2c10878ed4246a05c4c482bd510bc280c327358052a65fce2573"
+      "d92bea5252b673cfdb9798fa7002aa32f3c9d4bf4b8debc70fb6f492c72ba021"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"typescript/await-thenable\",\"oxlint-disable-next-line\"]": [
       "00bf7d6033e6a5a52bd2585dee8574ec4d9c278f88e78e2e92a808e4e7bd05a1",
@@ -29208,16 +29208,16 @@
       "5a9e8d0f0265419f5b890cc3664f01fad1687f3fd7fa50f557b98b4d5722b31b"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": [
-      "840410a3de058205f09ab97d04cab4cefe0be25df03b224159c1b8e4bf003ff2"
+      "49904335c8aa3dc7bbbc6424f0579dcc651acc7494a600883e1a4ef7d14930e1"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "51a21f8674c751fb69acc63bdc1582d5fa109714bc1683bbebb3c2db3de2ad0b"
+      "ed2b9c895692eed71f8bd0588fd189a2a66f26d6c0aa8709a039629005a1b23e"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "6ad34d90c4dc44731248dbd98837c7f88c1e19b46a60f1d82d6fec55664fa59f"
+      "3439d6f155c2b94bdfaab9099a5201314a1b076b697855d7c66e2cb5f8ef9d98"
     ],
     "[\"packages/cli/src/helpers/scaffold.test.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "d8cf1461b4db45585052d8777a8ebf5df424038b59e75a2f73c17de3dd31f48c"
+      "84316afe243af4356bbcaf504d61ba6fc603fc916d57f1955ffa9e0ae9b80104"
     ],
     "[\"packages/cli/src/helpers/scaffold.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "1809bf569b44844d50e4866c53e22508b8b20e48444f0a049f928df44ea83b22",
