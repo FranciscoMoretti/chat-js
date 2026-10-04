@@ -1,38 +1,33 @@
 import type { UIMessage } from "ai";
 
 import { MessageTree } from "./message-tree";
-import type {
-  MessageTreeSnapshot,
-  ThreadState,
-  ThreadStateSnapshot,
-} from "./types";
+import type { SnapshotInput } from "./message-tree-readers";
+import type { ThreadState, ThreadStateSnapshot } from "./types";
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadState.update accepts a synchronous snapshot updater and commits its mutable SDK message-array snapshot; constructor inputs are passed to MessageTree using that same contract. */
+// oxlint-disable-next-line eslint/no-undefined -- A ready snapshot has no error; this required field explicitly uses the ThreadStateSnapshot undefined sentinel.
+const NO_THREAD_ERROR = undefined;
+
 const createThreadStateSnapshot = <TMessage extends UIMessage>({
   initialTree,
   messages,
-}: {
-  initialTree?: MessageTreeSnapshot<TMessage>;
-  messages?: TMessage[];
-}): ThreadStateSnapshot<TMessage> => {
+}: Readonly<{
+  initialTree?: SnapshotInput<TMessage>;
+  messages?: readonly TMessage[];
+}>): ThreadStateSnapshot<TMessage> => {
   const tree = new MessageTree({ messages, snapshot: initialTree });
 
   return {
     ...tree.getSnapshot(),
     ...tree.getIndexes(),
     activeRuns: [],
-    error: undefined,
+    error: NO_THREAD_ERROR,
     messages: tree.getPath(),
     runs: [],
     status: "ready",
     treeStatus: "ready",
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadState.update accepts a synchronous snapshot updater and commits its mutable SDK message-array snapshot; constructor inputs are passed to MessageTree using that same contract. */
 class MemoryThreadState<
   TMessage extends UIMessage = UIMessage,
 > implements ThreadState<TMessage> {
@@ -40,10 +35,10 @@ class MemoryThreadState<
   #snapshot: ThreadStateSnapshot<TMessage>;
 
   public constructor(
-    options: {
-      initialTree?: MessageTreeSnapshot<TMessage>;
-      messages?: TMessage[];
-    } = {}
+    options: Readonly<{
+      initialTree?: SnapshotInput<TMessage>;
+      messages?: readonly TMessage[];
+    }> = {}
   ) {
     this.#snapshot = createThreadStateSnapshot(options);
   }
@@ -64,6 +59,5 @@ class MemoryThreadState<
     }
   };
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { createThreadStateSnapshot, MemoryThreadState };

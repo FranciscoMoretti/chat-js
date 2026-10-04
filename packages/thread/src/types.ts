@@ -94,7 +94,6 @@ type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
     treeStatus: ChatStatus;
   };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 interface ThreadState<TMessage extends UIMessage = UIMessage> {
   getSnapshot: () => ThreadStateSnapshot<TMessage>;
   subscribe: (listener: () => void) => () => void;
@@ -104,11 +103,11 @@ interface ThreadState<TMessage extends UIMessage = UIMessage> {
    */
   update: (
     updater: (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The exported updater permits synchronous mutation of its SDK message arrays and returns that same mutable snapshot; readonly collections reject existing updater operations.
       snapshot: ThreadStateSnapshot<TMessage>
     ) => ThreadStateSnapshot<TMessage>
   ) => void;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ThreadInitialState<TMessage extends UIMessage> =
   | { initialTree: MessageTreeSnapshot<TMessage>; messages?: never }

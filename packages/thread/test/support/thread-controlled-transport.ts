@@ -7,7 +7,6 @@ const SDK_PARAMETER_INDEX = 0;
 // oxlint-disable-next-line unicorn/no-null -- The reconnect stream uses the SDK-required null sentinel for its empty state.
 const NO_RECONNECT_STREAM = null;
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: {
     abortSignal: AbortSignal | undefined;
@@ -22,6 +21,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     | ReadableStream<UIMessageChunk>
     | typeof NO_RECONNECT_STREAM = NO_RECONNECT_STREAM;
 
+  // oxlint-disable-next-line typescript/promise-function-async -- Record the request synchronously and return its fulfilled stream promise; async adoption changes settlement and the start callback throw boundary.
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (
     options: ReadonlyDeep<
       Parameters<
@@ -51,6 +51,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
       })
     );
 
+  // oxlint-disable-next-line typescript/promise-function-async -- Consume the saved reconnect stream before returning its fulfilled stream/null promise; an added await defers the SDK reconnect result.
   public reconnectToStream(
     _options: ReadonlyDeep<
       Parameters<
@@ -102,4 +103,3 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     controller?.close();
   }
 }
-/* oxlint-enable typescript/promise-function-async */

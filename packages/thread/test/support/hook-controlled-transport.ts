@@ -2,19 +2,19 @@ import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
 import type { ReadonlyDeep } from "./readonly-types";
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
-  (): Promise<null> =>
+  Promise.resolve.bind<typeof Promise, [null], [], Promise<null>>(
+    Promise,
     // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream requires null when no stream is available.
-    Promise.resolve(null);
-/* oxlint-enable typescript/promise-function-async */
+    null
+  );
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: ReadableStreamDefaultController<UIMessageChunk>[] =
     [];
 
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] =
+    // oxlint-disable-next-line typescript/promise-function-async -- Register the controller synchronously and return its fulfilled stream promise; async adoption defers settlement and converts start callback throws into rejections.
     (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
       Promise.resolve(
         new ReadableStream({
@@ -38,4 +38,3 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.requests[requestIndex]?.close();
   }
 }
-/* oxlint-enable typescript/promise-function-async */

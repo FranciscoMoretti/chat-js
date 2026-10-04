@@ -5,7 +5,6 @@ import { ControlledTransport } from "./thread-controlled-transport";
 
 const SDK_PARAMETER_INDEX = 0;
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class ResumeTransport extends ControlledTransport {
   public lastReconnectOptions:
     | ReadonlyDeep<
@@ -15,6 +14,7 @@ export class ResumeTransport extends ControlledTransport {
       >
     | undefined;
 
+  // oxlint-disable-next-line typescript/promise-function-async -- Capture reconnect options and construct the completed response stream before returning its fulfilled promise; async adoption changes settlement and start callback throws.
   public override reconnectToStream = (
     options: ReadonlyDeep<
       Parameters<
@@ -42,4 +42,3 @@ export class ResumeTransport extends ControlledTransport {
     );
   };
 }
-/* oxlint-enable typescript/promise-function-async */

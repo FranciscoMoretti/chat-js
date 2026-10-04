@@ -12,3 +12,4 @@ const getMessageText = (message: ReadonlyMessageValue<UIMessage>): string =>
     .join("");
 
 export { getMessageText };
+export type { ReadonlyMessageValue };

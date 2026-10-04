@@ -16,6 +16,7 @@ import type {
 import { ThreadRunChat } from "./ai-sdk-run-chat";
 import type { ThreadRunHost, ThreadRunSpec } from "./ai-sdk-run-chat";
 import { MessageTree } from "./message-tree";
+import type { SnapshotInput } from "./message-tree-readers";
 import { RunRegistry } from "./run-registry";
 import type { RunRecord } from "./run-registry";
 import type {
@@ -30,6 +31,7 @@ import type {
 } from "./types";
 
 const FIRST_PARAMETER_INDEX = 0;
+const SECOND_PARAMETER_INDEX = 1;
 const UPDATE_CALL_INCREMENT = 1;
 const EXPECTED_UPDATE_CALL_COUNT = 1;
 const NOT_FOUND_INDEX = -1;
@@ -45,16 +47,22 @@ type AbstractThreadOptions<TMessage extends UIMessage> = Omit<
 
 const ownedThreadStates = new WeakSet<object>();
 
+// Transactions use public tree methods; they do not replace tree properties.
+type TreeTransaction<TMessage extends UIMessage> = Readonly<
+  Pick<MessageTree<TMessage>, keyof MessageTree<TMessage>>
+>;
+
+type RunParent = Readonly<Pick<UIMessage, "id" | "role">>;
+
 type SendMessageInput<TMessage extends UIMessage> = Parameters<
   AbstractChat<TMessage>["sendMessage"]
 >[typeof FIRST_PARAMETER_INDEX];
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
-const getInputMessageId = <TMessage extends UIMessage>(
-  input: NonNullable<SendMessageInput<TMessage>>
-): string | undefined =>
+const getInputMessageId = (input: {
+  readonly id?: string;
+  readonly messageId?: string;
+}): string | undefined =>
   "id" in input ? (input.id ?? input.messageId) : input.messageId;
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
 // Like AI SDK's AbstractChat, construction crosses a generic boundary here:
@@ -338,7 +346,7 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.updateTree((tree): void => tree.removeLeaf(messageId));
   }
 
-  private updateRunPath(messages: TMessage[]): void {
+  private updateRunPath(messages: readonly TMessage[]): void {
     this.updateTree((tree): void => tree.updatePath(messages));
   }
 
@@ -526,12 +534,17 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     this.#runs.registerToolCall(runId, toolCallId);
   }
 
-  private indexMessageOwnership(runId: string, message: TMessage): void {
+  private indexMessageOwnership(
+    runId: string,
+    message: Parameters<
+      RunRegistry<TMessage>["indexMessageOwnership"]
+    >[typeof SECOND_PARAMETER_INDEX]
+  ): void {
     this.#runs.indexMessageOwnership(runId, message);
   }
 
   private buildSnapshot(
-    tree: MessageTree<TMessage>
+    tree: TreeTransaction<TMessage>
   ): ThreadStateSnapshot<TMessage> {
     const treeSnapshot = tree.getSnapshot();
     const indexes = tree.getIndexes();
@@ -550,7 +563,7 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   }
 
   private createTree(
-    snapshot?: ThreadStateSnapshot<TMessage>
+    snapshot?: SnapshotInput<TMessage>
   ): MessageTree<TMessage> {
     const resolvedSnapshot = snapshot ?? this.#state.getSnapshot();
     return new MessageTree<TMessage>({ snapshot: resolvedSnapshot });
@@ -626,13 +639,13 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   }
 
   private readTree<TResult>(
-    reader: (tree: MessageTree<TMessage>) => TResult
+    reader: (tree: TreeTransaction<TMessage>) => TResult
   ): TResult {
     return reader(this.createTree());
   }
 
   private updateTree<TResult>(
-    updater: (tree: MessageTree<TMessage>) => TResult
+    updater: (tree: TreeTransaction<TMessage>) => TResult
   ): TResult {
     const completed: { value: TResult }[] = [];
     this.updateState((snapshot) => {
@@ -665,12 +678,12 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     }
   }
 
-  private assertCanGenerateFrom(parentMessage: TMessage): void {
+  private assertCanGenerateFrom(parentMessage: RunParent): void {
     AbstractThread.assertValidRunParent(parentMessage);
     this.#runs.assertHasCapacity(parentMessage.id);
   }
 
-  private static assertValidRunParent(message: UIMessage): void {
+  private static assertValidRunParent(message: RunParent): void {
     if (message.role === "assistant") {
       throw new Error(
         `Cannot start a new run directly from assistant message ${message.id}; attach an input message first`
@@ -679,7 +692,7 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   }
 
   private getSelectedRunRecord(
-    tree = this.createTree()
+    tree: TreeTransaction<TMessage> = this.createTree()
   ): RunRecord<TMessage> | undefined {
     return this.#runs.resolveSelected({
       cursorId: tree.cursorId,

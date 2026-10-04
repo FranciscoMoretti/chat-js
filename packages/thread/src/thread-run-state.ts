@@ -4,22 +4,38 @@ import type { ThreadRunHost, ThreadRunSpec } from "./ai-sdk-run-chat";
 
 const CURRENT_RESPONSE_OFFSET = 1;
 
+// oxlint-disable-next-line eslint/no-undefined -- An absent resume prefix means that the next SDK message must not merge previously restored parts.
+const NO_RESUME_PREFIX = undefined;
+
+type RunStateHost<TMessage extends UIMessage> = Readonly<
+  Pick<
+    ThreadRunHost<TMessage>,
+    | "getMessagePath"
+    | "updateRunPath"
+    | "removeMessage"
+    | "setRunError"
+    | "setRunStatus"
+    | "writeRunMessage"
+  >
+>;
+
 const cloneSnapshot = <TValue>(thing: TValue): TValue => structuredClone(thing);
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatState requires mutable TMessage[] messages; push/replace operations and resume-prefix merging write message.parts before publishing to the run host. */
 class ThreadRunState<
   TMessage extends UIMessage,
 > implements ChatState<TMessage> {
   #error: Error | undefined;
   public resumePrefix: TMessage | undefined;
   public preserveReconnectError = false;
-  readonly #host: ThreadRunHost<TMessage>;
+  readonly #host: RunStateHost<TMessage>;
   #messages: TMessage[];
-  readonly #spec: ThreadRunSpec;
+  readonly #spec: Readonly<ThreadRunSpec>;
   #status: ChatStatus = "ready";
 
-  public constructor(host: ThreadRunHost<TMessage>, spec: ThreadRunSpec) {
+  public constructor(
+    host: RunStateHost<TMessage>,
+    spec: Readonly<ThreadRunSpec>
+  ) {
     this.#host = host;
     this.#messages = host.getMessagePath(spec.initialPathMessageId);
     this.#spec = spec;
@@ -29,7 +45,7 @@ class ThreadRunState<
     return this.#error;
   }
 
-  public set error(error: Error | undefined) {
+  public set error(error: Readonly<Error> | undefined) {
     this.#error = error;
     this.#host.setRunError(this.#spec.id, error);
   }
@@ -88,7 +104,7 @@ class ThreadRunState<
       // Seed the SDK's response object once, so later tool/approval updates
       // operate on the same restored parts instead of a separate projection.
       message.parts = [...prefix.parts, ...message.parts];
-      this.resumePrefix = undefined;
+      this.resumePrefix = NO_RESUME_PREFIX;
     }
     return message;
   }
@@ -97,7 +113,5 @@ class ThreadRunState<
     this.#host.writeRunMessage(this.#spec.id, message);
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
 
 export { ThreadRunState };

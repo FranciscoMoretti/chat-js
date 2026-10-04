@@ -3,18 +3,18 @@ import type { ChatTransport, UIMessage } from "ai";
 const ZERO_COUNT = 0;
 const COUNT_INCREMENT = 1;
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
-  (): Promise<null> =>
+  Promise.resolve.bind<typeof Promise, [null], [], Promise<null>>(
+    Promise,
     // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream requires null when no stream is available.
-    Promise.resolve(null);
-/* oxlint-enable typescript/promise-function-async */
+    null
+  );
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class RejectingTransport implements ChatTransport<UIMessage> {
   public requests = ZERO_COUNT;
 
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] =
+    // oxlint-disable-next-line typescript/promise-function-async -- Count the request synchronously and return the already-rejected transport failure; async throw conflicts with require-await, while an await adds scheduling.
     (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> => {
       this.requests += COUNT_INCREMENT;
       return Promise.reject(new Error("transport failed"));
@@ -22,4 +22,3 @@ export class RejectingTransport implements ChatTransport<UIMessage> {
 
   public reconnectToStream = reconnectToNoStream;
 }
-/* oxlint-enable typescript/promise-function-async */
