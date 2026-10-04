@@ -55,6 +55,7 @@ const connector = {
   nameId: "server",
   oauthClientId: "secret-id",
   oauthClientSecret: "secret-password",
+  requireApproval: true,
   type: "http",
   updatedAt: new Date(),
   url: "https://secret.mcp.test",
@@ -321,7 +322,7 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-it("requires native owner approval even when remote tools advertise no policy", async () => {
+it("requires native owner approval when the connection setting is enabled", async () => {
   expect(
     await requestEveMcpApproval("connector", "echo", { text: "test" }, context)
   ).toBe("user-approval");
@@ -649,3 +650,48 @@ it("schema conversion cancellation stops later tool conversions after the pendin
 /* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This mcp-tools.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+
+it("runs without a receipt when approval is disabled for this connection", async () => {
+  mocks.get.mockResolvedValue({ ...connector, requireApproval: false });
+  const { approval: _approval, ...unapprovedContext } = context;
+  expect(
+    await requestEveMcpApproval(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext
+    )
+  ).toBe("not-applicable");
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext,
+      []
+    )
+  ).resolves.toMatchObject({ output: "Echo output" });
+});
+
+it("rechecks the connection policy when approval is enabled after request evaluation", async () => {
+  mocks.get.mockResolvedValueOnce({ ...connector, requireApproval: false });
+  const { approval: _approval, ...unapprovedContext } = context;
+  expect(
+    await requestEveMcpApproval(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext
+    )
+  ).toBe("not-applicable");
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
+      unapprovedContext,
+      []
+    )
+  ).rejects.toThrow("owner approval receipt");
+  expect(execute).not.toHaveBeenCalled();
+});

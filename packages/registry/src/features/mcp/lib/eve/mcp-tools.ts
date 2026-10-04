@@ -331,8 +331,11 @@ const executeEveMcpTool = async (
     const tool = tools[remoteName];
     const validatedTool = await validateMcpTool(tool);
     // EVE binds this receipt to the exact session, tool, call and input.
-    // Remote tool metadata cannot waive owner consent.
-    if (context.approval?.responder.principalId !== ownerId) {
+    // Use the current persisted connector policy, not discovered SDK metadata.
+    if (
+      connector.requireApproval &&
+      context.approval?.responder.principalId !== ownerId
+    ) {
       throw new Error("MCP tools require an owner approval receipt.");
     }
     let result: unknown;
@@ -379,7 +382,7 @@ const requestEveMcpApproval = async (
   remoteName: string,
   input: unknown,
   context: Pick<ToolContext, "session" | "abortSignal">
-): Promise<"user-approval"> => {
+): Promise<"user-approval" | "not-applicable"> => {
   const ownerId = context.session.auth.initiator?.principalId;
   if (!(typeof ownerId === "string" && ownerId !== "")) {
     throw new Error("MCP tools require an authenticated owner.");
@@ -397,7 +400,7 @@ const requestEveMcpApproval = async (
       throw new Error("MCP tool is no longer available.");
     }
     await validateMcpInput(await validateMcpTool(tools[remoteName]), input);
-    return "user-approval" as const;
+    return connector.requireApproval ? "user-approval" : "not-applicable";
   });
 };
 /* oxlint-enable typescript/promise-function-async */

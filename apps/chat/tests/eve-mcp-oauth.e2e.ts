@@ -63,6 +63,7 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
       id: connectorId,
       name: "Local OAuth fixture",
       nameId,
+      requireApproval: true,
       type: "http",
       url: fixture.mcpUrl,
       userId: owner.id,
