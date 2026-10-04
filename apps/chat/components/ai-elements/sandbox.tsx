@@ -15,13 +15,12 @@ import { cn } from "@/lib/utils";
 
 import { CodeBlock, CodeBlockCopyButton } from "./code-block";
 import { getStatusBadge } from "./tool";
-/* oxlint-disable import/group-exports -- SandboxRootProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type SandboxRootProps = ComponentProps<typeof Collapsible>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types -- Sandbox: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxRootProps). */
+type SandboxRootProps = ComponentProps<typeof Collapsible>;
 
-export const Sandbox = ({
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Sandbox: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxRootProps). */
+
+const Sandbox = ({
   className,
   ...props
 }: SandboxRootProps): React.JSX.Element => (
@@ -31,19 +30,17 @@ export const Sandbox = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxHeaderProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export interface SandboxHeaderProps {
+interface SandboxHeaderProps {
   title?: string;
   state: ToolUIPart["state"];
   className?: string;
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxHeader: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const SandboxHeader = ({
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+const SandboxHeader = ({
   className,
   title,
   state,
@@ -64,15 +61,13 @@ export const SandboxHeader = ({
     <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxContentProps = ComponentProps<typeof CollapsibleContent>;
 
-export type SandboxContentProps = ComponentProps<typeof CollapsibleContent>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxContentProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxContentProps). */
 
-export const SandboxContent = ({
+const SandboxContent = ({
   className,
   ...props
 }: SandboxContentProps): React.JSX.Element => (
@@ -84,29 +79,25 @@ export const SandboxContent = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxTabsProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxTabsProps = ComponentProps<typeof Tabs>;
 
-export type SandboxTabsProps = ComponentProps<typeof Tabs>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabs: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabs: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsProps). */
 
-export const SandboxTabs = ({
+const SandboxTabs = ({
   className,
   ...props
 }: SandboxTabsProps): React.JSX.Element => (
   <Tabs className={cn("w-full", className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxTabsBarProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxTabsBarProps = ComponentProps<"div">;
 
-export type SandboxTabsBarProps = ComponentProps<"div">;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsBar: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsBarProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsBar: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsBarProps). */
 
-export const SandboxTabsBar = ({
+const SandboxTabsBar = ({
   className,
   ...props
 }: SandboxTabsBarProps): React.JSX.Element => (
@@ -118,15 +109,13 @@ export const SandboxTabsBar = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxTabsListProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxTabsListProps = ComponentProps<typeof TabsList>;
 
-export type SandboxTabsListProps = ComponentProps<typeof TabsList>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsList: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsListProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsListProps). */
 
-export const SandboxTabsList = ({
+const SandboxTabsList = ({
   className,
   ...props
 }: SandboxTabsListProps): React.JSX.Element => (
@@ -135,15 +124,13 @@ export const SandboxTabsList = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxTabsTriggerProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxTabsTriggerProps = ComponentProps<typeof TabsTrigger>;
 
-export type SandboxTabsTriggerProps = ComponentProps<typeof TabsTrigger>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsTrigger: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsTriggerProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabsTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabsTriggerProps). */
 
-export const SandboxTabsTrigger = ({
+const SandboxTabsTrigger = ({
   className,
   ...props
 }: SandboxTabsTriggerProps): React.JSX.Element => (
@@ -155,29 +142,25 @@ export const SandboxTabsTrigger = ({
     {...props}
   />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxTabContentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxTabContentProps = ComponentProps<typeof TabsContent>;
 
-export type SandboxTabContentProps = ComponentProps<typeof TabsContent>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabContentProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxTabContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxTabContentProps). */
 
-export const SandboxTabContent = ({
+const SandboxTabContent = ({
   className,
   ...props
 }: SandboxTabContentProps): React.JSX.Element => (
   <TabsContent className={cn("mt-0 text-sm", className)} {...props} />
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxCodeProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxCodeProps = ComponentProps<typeof CodeBlock>;
 
-export type SandboxCodeProps = ComponentProps<typeof CodeBlock>;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxCode: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxCodeProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxCode: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxCodeProps). */
 
-export const SandboxCode = ({
+const SandboxCode = ({
   className,
   ...props
 }: SandboxCodeProps): React.JSX.Element => (
@@ -188,18 +171,13 @@ export const SandboxCode = ({
     />
   </CodeBlock>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- SandboxOutputProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type SandboxOutputProps = Omit<ComponentProps<typeof CodeBlock>, "language">;
 
-export type SandboxOutputProps = Omit<
-  ComponentProps<typeof CodeBlock>,
-  "language"
->;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxOutput: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxOutputProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SandboxOutput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: SandboxOutputProps). */
 
-export const SandboxOutput = ({
+const SandboxOutput = ({
   className,
   ...props
 }: SandboxOutputProps): React.JSX.Element => (
@@ -214,4 +192,28 @@ export const SandboxOutput = ({
     />
   </CodeBlock>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+export {
+  Sandbox,
+  SandboxCode,
+  SandboxContent,
+  SandboxHeader,
+  SandboxOutput,
+  SandboxTabContent,
+  SandboxTabs,
+  SandboxTabsBar,
+  SandboxTabsList,
+  SandboxTabsTrigger,
+};
+export type {
+  SandboxCodeProps,
+  SandboxContentProps,
+  SandboxHeaderProps,
+  SandboxOutputProps,
+  SandboxRootProps,
+  SandboxTabContentProps,
+  SandboxTabsBarProps,
+  SandboxTabsListProps,
+  SandboxTabsProps,
+  SandboxTabsTriggerProps,
+};

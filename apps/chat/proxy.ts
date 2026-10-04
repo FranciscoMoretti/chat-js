@@ -58,7 +58,7 @@ const getSafeReturnTo = (url: URL): string | null => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): proxy stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/group-exports (#523): Next.js statically discovers the proxy entrypoint and inline config matcher; retain their declaration exports together (#619).
  * max-statements (#512): proxy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/explicit-function-return-type (#560): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep proxy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -99,7 +99,7 @@ export const proxy = async (req: NextRequest) => {
 /* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports --
- * import/group-exports (#523): config stays exported at its declaration so its public contract is visible beside its implementation.
+ * import/group-exports (#523): Next.js extractExportedConstValue requires inline export const config to discover this proxy matcher (#619).
  */
 export const config = {
   matcher: [

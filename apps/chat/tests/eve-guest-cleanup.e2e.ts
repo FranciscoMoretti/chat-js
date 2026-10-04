@@ -2,7 +2,6 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-guest-cleanup"; "../lib/db/eve-guests"; "../lib/db/schema"; "../lib/eve/guest-credential" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, expect, test } from "vitest";
 
@@ -87,11 +86,10 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
       ownerId: registeredOwner,
     },
   ]);
-  expect(
-    (await claimExpiredEveGuestFamilies()).some(
-      (row) => row.ownerId === guest.ownerId
-    )
-  ).toBe(false);
+  const expiredGuestClaims = await claimExpiredEveGuestFamilies();
+  expect(expiredGuestClaims.some((row) => row.ownerId === guest.ownerId)).toBe(
+    false
+  );
   await db
     .update(eveGuest)
     .set({ expiresAt: new Date(0) })
@@ -126,8 +124,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     .update(eveConversation)
     .set({ guestCleanupAttemptedAt: new Date(0) })
     .where(eq(eveConversation.id, first.id));
-  expect((await claimExpiredEveGuestFamilies()).map((row) => row.id)).toContain(
-    first.id
-  );
+  const expiredGuestClaimIds = await claimExpiredEveGuestFamilies();
+  expect(expiredGuestClaimIds.map((row) => row.id)).toContain(first.id);
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

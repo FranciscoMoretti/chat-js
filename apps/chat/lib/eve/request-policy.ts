@@ -80,7 +80,7 @@ const parseSessionRequest = (path: string, method: string) => {
   };
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): safeStreamQuery accepts params: URLSearchParams; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): safeStreamQuery preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -104,8 +104,8 @@ const safeStreamQuery = (params: URLSearchParams): URLSearchParams | null => {
   }
   return result;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null*/
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/prefer-readonly-parameter-types (#565): sameOrigin accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): sameOrigin intentionally keeps the existing falsy-value behavior of supplied; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -116,6 +116,6 @@ const sameOrigin = (request: Request, origin: string): boolean => {
     : request.method === "GET" &&
         request.headers.get("sec-fetch-site") !== "cross-site";
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
 
 export { parseSessionRequest, safeStreamQuery, sameOrigin };

@@ -20,21 +20,18 @@ import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 import type { EveMessageInput } from "./message-input";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): admitGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): admitGuestMessage uses 400, 403, 503, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): admitGuestMessage accepts request: Request; input: { message: EveMessageInput; modelId?: string; selectedTool?: UiToolName; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+jsdoc/require-param (#534): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-params (#511): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): admitGuestMessage uses 400, 403, 503, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): admitGuestMessage accepts request: Request; input: { message: EveMessageInput; modelId?: string; selectedTool?: UiToolName; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Only the first reservation may dispatch: eve's session POST has no replay key. */
-export const admitGuestMessage = async (
+const admitGuestMessage = async (
   request: Request,
   ownerId: string,
   sessionId: string,
@@ -99,14 +96,11 @@ export const admitGuestMessage = async (
     429
   );
 };
-/* oxlint-enable import/group-exports, init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): settleGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): settleGuestMessage accepts response: Response; admission: { operationId: string; reservationId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const settleGuestMessage = async (
+/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null -- no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): settleGuestMessage accepts response: Response; admission: { operationId: string; reservationId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const settleGuestMessage = async (
   response: Response,
   ownerId: string,
   admission: {
@@ -139,4 +133,5 @@ export const settleGuestMessage = async (
     );
   }
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+export { admitGuestMessage, settleGuestMessage };

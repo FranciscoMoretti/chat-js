@@ -6,34 +6,20 @@ import type {
   GatewayType,
 } from "./gateways/registry";
 
-/* oxlint-disable id-length, import/group-exports --
- * id-length (#506): ActiveGatewayType uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): ActiveGatewayType stays exported at its declaration so its public contract is visible beside its implementation.
- */
+/* oxlint-disable id-length -- id-length (#506): ActiveGatewayType uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 /** The gateway type actively selected in chat.config.ts */
-export type ActiveGatewayType = typeof chatConfig extends {
+type ActiveGatewayType = typeof chatConfig extends {
   ai: { gateway: infer G extends GatewayType };
 }
   ? G
   : GatewayType;
-/* oxlint-enable id-length, import/group-exports */
+/* oxlint-enable id-length */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): ModelId stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /** Runtime model ID — narrowed to the active gateway */
-export type ModelId = GatewayModelIdMap[ActiveGatewayType];
-/* oxlint-enable import/group-exports */
+type ModelId = GatewayModelIdMap[ActiveGatewayType];
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): AppModelId stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /** App-level model ID (same as ModelId; autocomplete comes from ConfigInput) */
-export type AppModelId = ModelId;
-/* oxlint-enable import/group-exports */
+type AppModelId = ModelId;
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): ImageModelId stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type ImageModelId = GatewayImageModelIdMap[ActiveGatewayType];
-/* oxlint-enable import/group-exports */
+type ImageModelId = GatewayImageModelIdMap[ActiveGatewayType];
+export type { ActiveGatewayType, AppModelId, ImageModelId, ModelId };

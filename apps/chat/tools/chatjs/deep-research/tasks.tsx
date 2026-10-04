@@ -67,13 +67,12 @@ const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
+const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
   <div className="relative">
     {updates.map((update, index) => (
       <StepWrapper
@@ -99,10 +98,10 @@ export const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react/no-multi-comp */
-/* oxlint-enable import/exports-last */
 
 interface StepWrapperProps {
   children: ReactNode;
   isLast: boolean;
   update: ResearchUpdate;
 }
+export { ResearchTasks };

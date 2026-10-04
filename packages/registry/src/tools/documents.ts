@@ -55,8 +55,7 @@ const bundles = [
   },
 ] as const;
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const documentItems: RegistryItem[] = [
+const documentItems: RegistryItem[] = [
   {
     description:
       "Remove a document from this conversation with explicit owner approval",
@@ -132,10 +131,8 @@ export const documentItems: RegistryItem[] = [
     type: "registry:item" as const,
   })),
 ];
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const savedCodeExecutionItem: RegistryItem = {
+const savedCodeExecutionItem: RegistryItem = {
   description: "Run saved code revisions with a compatible installed executor",
   files: documentFiles("saved-code-execution", [
     "tool.ts",
@@ -162,10 +159,8 @@ export const savedCodeExecutionItem: RegistryItem = {
   registryDependencies: ["@chatjs/code-documents", "@chatjs/code-execution-ui"],
   type: "registry:item",
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const codeExecutionUiItem: RegistryItem = {
+const codeExecutionUiItem: RegistryItem = {
   dependencies: ["echarts", "echarts-for-react", "motion"],
   description: "Shared chart renderer for installed code execution tools",
   files: [
@@ -180,4 +175,4 @@ export const codeExecutionUiItem: RegistryItem = {
   name: "code-execution-ui",
   type: "registry:item",
 };
-/* oxlint-enable import/group-exports */
+export { codeExecutionUiItem, documentItems, savedCodeExecutionItem };

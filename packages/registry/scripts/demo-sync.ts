@@ -58,10 +58,8 @@ import { demoInstallation } from "../installation";
 import { registry } from "../registry";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 // Explicit demo exceptions, scoped to one value/import. Everything else is checked.
-export const demoSource = (file: string, source: string): string => {
+const demoSource = (file: string, source: string): string => {
   if (file === "lib/ai/gateway-model-defaults.ts") {
     // Keep the demo's existing chat model rather than the fresh scaffold default.
     return source.replace(
@@ -71,20 +69,12 @@ export const demoSource = (file: string, source: string): string => {
   }
   return source;
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 const registryRoot = path.resolve(import.meta.dir, "..");
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const demoRoot = path.resolve(registryRoot, "../../apps/chat");
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const baselinePath = path.join(registryRoot, "demo-baseline.json");
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
+
+const demoRoot = path.resolve(registryRoot, "../../apps/chat");
+
+const baselinePath = path.join(registryRoot, "demo-baseline.json");
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const formatted = async (file: string, content: string): Promise<string> => {
@@ -134,8 +124,6 @@ const filesBelow = async (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -143,7 +131,7 @@ const filesBelow = async (
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Install canonical sources through the CLI's planner and shadcn transforms. */
-export const generateDemo = async (): Promise<Map<string, string>> => {
+const generateDemo = async (): Promise<Map<string, string>> => {
   const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-demo-"));
   let stopServer: (() => void) | undefined;
   try {
@@ -290,8 +278,6 @@ export const generateDemo = async (): Promise<Map<string, string>> => {
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 const DEMO_BASELINE_VERSION = 1;
 
@@ -386,8 +372,6 @@ const replaceDemoFiles = async (
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
@@ -396,7 +380,7 @@ const replaceDemoFiles = async (
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /** Check all files before writing any: a failed protection check never partially syncs. */
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The read-only expected map uses standard-library iterator tuple types; syncDemo only reads entries and never changes the caller map.
-export const syncDemo = async (options: {
+const syncDemo = async (options: {
   readonly root: string;
   readonly baseline: string;
   readonly expected: ReadonlyMap<string, string>;
@@ -481,8 +465,6 @@ export const syncDemo = async (options: {
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 if (import.meta.main) {
@@ -504,3 +486,4 @@ if (import.meta.main) {
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 /* oxlint-enable eslint/no-magic-numbers */
+export { baselinePath, demoRoot, demoSource, generateDemo, syncDemo };

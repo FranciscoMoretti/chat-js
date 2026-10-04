@@ -37,16 +37,14 @@ import { cn } from "@/lib/utils";
 import "streamdown/styles.css";
 
 const plugins = { code, math, mermaid };
-/* oxlint-disable import/exports-last, import/group-exports -- MessageProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type MessageProps = HTMLAttributes<HTMLDivElement> & {
+type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types -- Message: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, from, ...props }: MessageProps). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Message: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, from, ...props }: MessageProps). */
 
-export const Message = ({
+const Message = ({
   className,
   from,
   ...props
@@ -60,16 +58,13 @@ export const Message = ({
     {...props}
   />
 );
-/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageContentProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 
-export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: MessageContentProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: MessageContentProps). */
-
-export const MessageContent = ({
+const MessageContent = ({
   children,
   className,
   ...props
@@ -86,16 +81,13 @@ export const MessageContent = ({
     {children}
   </div>
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageActionsProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageActionsProps = ComponentProps<"div">;
 
-export type MessageActionsProps = ComponentProps<"div">;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageActions: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: MessageActionsProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageActions: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: MessageActionsProps). */
-
-export const MessageActions = ({
+const MessageActions = ({
   className,
   children,
   ...props
@@ -104,19 +96,16 @@ export const MessageActions = ({
     {children}
   </div>
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageActionProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type MessageActionProps = ComponentProps<typeof Button> & {
+type MessageActionProps = ComponentProps<typeof Button> & {
   tooltip?: string;
   label?: string;
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- MessageAction: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- MessageAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
 
-export const MessageAction = ({
+const MessageAction = ({
   tooltip,
   children,
   label,
@@ -147,7 +136,7 @@ export const MessageAction = ({
 
   return button;
 };
-/* oxlint-enable import/exports-last, import/group-exports, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- MessageBranchContextType: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including branches: ReactElement[]). */
 
@@ -181,17 +170,15 @@ const useMessageBranch = () => {
   return context;
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/exports-last, import/group-exports -- MessageBranchProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type MessageBranchProps = HTMLAttributes<HTMLDivElement> & {
+type MessageBranchProps = HTMLAttributes<HTMLDivElement> & {
   defaultBranch?: number;
   onBranchChange?: (branchIndex: number) => void;
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranch: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranch: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const MessageBranch = ({
+const MessageBranch = ({
   defaultBranch = 0,
   onBranchChange,
   className,
@@ -241,16 +228,13 @@ export const MessageBranch = ({
     </MessageBranchContext.Provider>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageBranchContentProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageBranchContentProps = HTMLAttributes<HTMLDivElement>;
 
-export type MessageBranchContentProps = HTMLAttributes<HTMLDivElement>;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchContent: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: MessageBranchContentProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchContent: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: MessageBranchContentProps). */
-
-export const MessageBranchContent = ({
+const MessageBranchContent = ({
   children,
   ...props
 }: MessageBranchContentProps) => {
@@ -284,18 +268,15 @@ export const MessageBranchContent = ({
     </div>
   ));
 };
-/* oxlint-enable import/exports-last, import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageBranchSelectorProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
-
-export type MessageBranchSelectorProps = HTMLAttributes<HTMLDivElement> & {
+type MessageBranchSelectorProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- MessageBranchSelector: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- MessageBranchSelector: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const MessageBranchSelector = ({
+const MessageBranchSelector = ({
   className: _className,
   from: _from,
   ...props
@@ -315,16 +296,13 @@ export const MessageBranchSelector = ({
     />
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageBranchPreviousProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageBranchPreviousProps = ComponentProps<typeof Button>;
 
-export type MessageBranchPreviousProps = ComponentProps<typeof Button>;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchPrevious: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: MessageBranchPreviousProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchPrevious: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: MessageBranchPreviousProps). */
-
-export const MessageBranchPrevious = ({
+const MessageBranchPrevious = ({
   children,
   ...props
 }: MessageBranchPreviousProps) => {
@@ -344,16 +322,13 @@ export const MessageBranchPrevious = ({
     </Button>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageBranchNextProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageBranchNextProps = ComponentProps<typeof Button>;
 
-export type MessageBranchNextProps = ComponentProps<typeof Button>;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchNext: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchNext: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-export const MessageBranchNext = ({
+const MessageBranchNext = ({
   children,
   className: _className,
   ...props
@@ -374,19 +349,13 @@ export const MessageBranchNext = ({
     </Button>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageBranchPageProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageBranchPageProps = HTMLAttributes<HTMLSpanElement>;
 
-export type MessageBranchPageProps = HTMLAttributes<HTMLSpanElement>;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchPage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: MessageBranchPageProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchPage: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: MessageBranchPageProps). */
-
-export const MessageBranchPage = ({
-  className,
-  ...props
-}: MessageBranchPageProps) => {
+const MessageBranchPage = ({ className, ...props }: MessageBranchPageProps) => {
   const { currentBranch, totalBranches } = useMessageBranch();
 
   return (
@@ -401,16 +370,13 @@ export const MessageBranchPage = ({
     </ButtonGroupText>
   );
 };
-/* oxlint-enable import/exports-last, import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/exports-last, import/group-exports -- MessageResponseProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
-/* oxlint-enable import/exports-last, import/group-exports */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageResponse: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: MessageResponseProps). */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageResponse: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: MessageResponseProps). */
-
-export const MessageResponse = memo(
+const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps): React.JSX.Element => (
     <Streamdown
       className={cn(
@@ -423,20 +389,19 @@ export const MessageResponse = memo(
   ),
   (prevProps, nextProps) => prevProps.children === nextProps.children
 );
-/* oxlint-enable import/exports-last, import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 MessageResponse.displayName = "MessageResponse";
-/* oxlint-disable import/group-exports -- MessageAttachmentProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
 
-export type MessageAttachmentProps = HTMLAttributes<HTMLDivElement> & {
+type MessageAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   data: FileUIPart;
   className?: string;
   onRemove?: () => void;
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-disable id-length, import/group-exports, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- MessageAttachment: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including data.filename). */
 
-export const MessageAttachment = ({
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- MessageAttachment: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including data.filename). */
+
+const MessageAttachment = ({
   data,
   className,
   onRemove,
@@ -471,8 +436,8 @@ export const MessageAttachment = ({
             <Button
               aria-label="Remove attachment"
               className="bg-background/80 hover:bg-background absolute top-2 right-2 size-6 rounded-full p-0 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 [&>svg]:size-3"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 onRemove();
               }}
               type="button"
@@ -499,8 +464,8 @@ export const MessageAttachment = ({
             <Button
               aria-label="Remove attachment"
               className="hover:bg-accent size-6 shrink-0 rounded-full p-0 opacity-0 transition-opacity group-hover:opacity-100 [&>svg]:size-3"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={(event) => {
+                event.stopPropagation();
                 onRemove();
               }}
               type="button"
@@ -515,15 +480,13 @@ export const MessageAttachment = ({
     </div>
   );
 };
-/* oxlint-enable id-length, import/group-exports, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports -- MessageAttachmentsProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageAttachmentsProps = ComponentProps<"div">;
 
-export type MessageAttachmentsProps = ComponentProps<"div">;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- MessageAttachments: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: MessageAttachmentsProps); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- MessageAttachments: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: MessageAttachmentsProps); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const MessageAttachments = ({
+const MessageAttachments = ({
   children,
   className,
   ...props
@@ -544,15 +507,13 @@ export const MessageAttachments = ({
     </div>
   );
 };
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports -- MessageToolbarProps: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers;  */
+type MessageToolbarProps = ComponentProps<"div">;
 
-export type MessageToolbarProps = ComponentProps<"div">;
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageToolbar: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: MessageToolbarProps). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageToolbar: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: MessageToolbarProps). */
 
-export const MessageToolbar = ({
+const MessageToolbar = ({
   className,
   children,
   ...props
@@ -567,6 +528,38 @@ export const MessageToolbar = ({
     {children}
   </div>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- message keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
+export {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageAttachment,
+  MessageAttachments,
+  MessageBranch,
+  MessageBranchContent,
+  MessageBranchNext,
+  MessageBranchPage,
+  MessageBranchPrevious,
+  MessageBranchSelector,
+  MessageContent,
+  MessageResponse,
+  MessageToolbar,
+};
+export type {
+  MessageActionProps,
+  MessageActionsProps,
+  MessageAttachmentProps,
+  MessageAttachmentsProps,
+  MessageBranchContentProps,
+  MessageBranchNextProps,
+  MessageBranchPageProps,
+  MessageBranchPreviousProps,
+  MessageBranchProps,
+  MessageBranchSelectorProps,
+  MessageContentProps,
+  MessageProps,
+  MessageResponseProps,
+  MessageToolbarProps,
+};

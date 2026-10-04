@@ -1,11 +1,7 @@
 import React from "react";
-/* oxlint-disable import/group-exports, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- GitIcon: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
+/* oxlint-disable no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- GitIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
 
-export const GitIcon = ({
-  size = 16,
-}: {
-  size?: number;
-}): React.JSX.Element => (
+const GitIcon = ({ size = 16 }: { size?: number }): React.JSX.Element => (
   <svg
     strokeLinejoin="round"
     style={{ color: "currentcolor", height: size, width: size }}
@@ -27,15 +23,11 @@ export const GitIcon = ({
     </defs>
   </svg>
 );
-/* oxlint-enable import/group-exports, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SummarizeIcon: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SummarizeIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
 
-export const SummarizeIcon = ({
-  size = 16,
-}: {
-  size?: number;
-}): React.JSX.Element => (
+const SummarizeIcon = ({ size = 16 }: { size?: number }): React.JSX.Element => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -52,4 +44,5 @@ export const SummarizeIcon = ({
     />
   </svg>
 );
-/* oxlint-enable import/group-exports, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+export { GitIcon, SummarizeIcon };

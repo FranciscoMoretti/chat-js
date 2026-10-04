@@ -21,10 +21,6 @@ import { ZodError } from "zod";
 import { auth } from "@/lib/auth";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): createTRPCContext is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): createTRPCContext stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /**
  * 1. CONTEXT
  *
@@ -37,24 +33,18 @@ import { auth } from "@/lib/auth";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = cache(async () => {
+const createTRPCContext = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   return {
     user: session?.user,
   };
 });
-/* oxlint-enable import/exports-last, import/group-exports */
 
-/* oxlint-disable import/exports-last --
- * import/exports-last (#522): Context is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- */
-export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
-/* oxlint-enable import/exports-last */
+type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * id-length (#506): t uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/prefer-readonly-parameter-types (#565): t accepts { shape, error }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): t preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
+ * typescript/prefer-readonly-parameter-types (#565): trpc accepts { shape, error }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * unicorn/no-null (#570): trpc preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /**
  * 2. INITIALIZATION
@@ -63,7 +53,7 @@ export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
  * ZodErrors so that you get typesafety on the frontend if your procedure fails due to validation
  * errors on the backend.
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
+const trpc = initTRPC.context<typeof createTRPCContext>().create({
   errorFormatter({ shape, error }) {
     return {
       ...shape,
@@ -77,24 +67,15 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   },
   transformer: superjson,
 });
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): { createCallerFactory } is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): { createCallerFactory } stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /**
  * Create a server-side caller.
  *
  * @see https://trpc.io/docs/server/server-side-calls
  */
-export const { createCallerFactory } = t;
-/* oxlint-enable import/exports-last, import/group-exports */
+const { createCallerFactory } = trpc;
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): createTRPCRouter is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): createTRPCRouter stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
  *
@@ -107,8 +88,7 @@ export const { createCallerFactory } = t;
  *
  * @see https://trpc.io/docs/router
  */
-export const createTRPCRouter = t.router;
-/* oxlint-enable import/exports-last, import/group-exports */
+const createTRPCRouter = trpc.router;
 
 /* oxlint-disable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types --
  * no-console (#514): timingMiddleware emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -122,10 +102,10 @@ export const createTRPCRouter = t.router;
  * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
  * network latency that would occur in production but not in local development.
  */
-const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
+const timingMiddleware = trpc.middleware(async ({ next: runNext, path }) => {
   const start = Date.now();
 
-  if (t._config.isDev) {
+  if (trpc._config.isDev) {
     // Add an artificial delay in development.
     const waitMs = Math.floor(Math.random() * 400) + 100;
     await sleep(waitMs);
@@ -140,9 +120,6 @@ const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
 });
 /* oxlint-enable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): publicProcedure stays exported at its declaration so its public contract is visible beside its implementation.
- */
 /**
  * Public (unauthenticated) procedure
  *
@@ -150,15 +127,11 @@ const timingMiddleware = t.middleware(async ({ next: runNext, path }) => {
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
-/* oxlint-enable import/group-exports */
+const publicProcedure = trpc.procedure.use(timingMiddleware);
 
-/* oxlint-disable import/group-exports, no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * import/group-exports (#523): protectedProcedure stays exported at its declaration so its public contract is visible beside its implementation.
- * no-console (#514): protectedProcedure emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/prefer-readonly-parameter-types (#565): protectedProcedure accepts { ctx, next }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): protectedProcedure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- no-console (#514): protectedProcedure emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+typescript/prefer-readonly-parameter-types (#565): protectedProcedure accepts { ctx, next }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): protectedProcedure preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /**
  * Protected (authenticated) procedure
  *
@@ -167,7 +140,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+const protectedProcedure = trpc.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
@@ -183,4 +156,12 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     },
   });
 });
-/* oxlint-enable import/group-exports, no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+export {
+  createCallerFactory,
+  createTRPCContext,
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+};
+export type { Context };

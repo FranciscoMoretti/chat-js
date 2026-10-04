@@ -52,17 +52,11 @@ const deletionStatus = (state: string) => {
 };
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): GET stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): GET accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/prefer-readonly-parameter-types (#565): GET accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Status only; reading never resumes deletion or exposes conversation payloads. */
-export const GET = async (
-  request: Request,
-  context: Context
-): Promise<Response> => {
+const GET = async (request: Request, context: Context): Promise<Response> => {
   const result = await authorize(request, context);
   if (result instanceof Response) {
     return result;
@@ -75,19 +69,16 @@ export const GET = async (
     { headers }
   );
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): DELETE stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): DELETE accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): DELETE preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/prefer-readonly-parameter-types (#565): DELETE accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): DELETE preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** Erases the conversation family through the verified local-provider coordinator. */
-export const DELETE = async (
+const DELETE = async (
   request: Request,
   context: Context
 ): Promise<Response> => {
@@ -160,4 +151,5 @@ export const DELETE = async (
     );
   }
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+export { DELETE, GET };

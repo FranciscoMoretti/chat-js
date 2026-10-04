@@ -44,7 +44,6 @@ const sortJsonKeys = (value: unknown): unknown => {
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Wire the installed gateway; source and dependencies are installed by shadcn. */
 export const configureGatewayProvider = async (
@@ -86,7 +85,7 @@ export const gatewayType = ${JSON.stringify(definition.id)} satisfies InstanceTy
 export const gatewayModelDefaults = ${JSON.stringify(sortJsonKeys(definition.defaults), null, 2)} satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
 export const gatewayCapabilities = ${JSON.stringify(definition.capabilities)};
 export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirements)};
-export const gatewayEnvVariables = ${JSON.stringify([...new Set([...definition.envRequirements.flatMap((r) => r.options.flat()), ...definition.optionalEnv])])};
+export const gatewayEnvVariables = ${JSON.stringify([...new Set([...definition.envRequirements.flatMap((requirement) => requirement.options.flat()), ...definition.optionalEnv])])};
 `)
   );
   if (
@@ -103,7 +102,9 @@ export const models: readonly AiGatewayModel[] = [];
     );
   }
   for (const name of new Set(
-    definition.envRequirements.flatMap((r) => r.options.flat())
+    definition.envRequirements.flatMap((requirement) =>
+      requirement.options.flat()
+    )
   )) {
     if (!new RegExp(`^${name}=`, "mu").test(env)) {
       env += `\n${name}=\n`;
@@ -112,7 +113,6 @@ export const models: readonly AiGatewayModel[] = [];
   await writeFile(example, env);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */

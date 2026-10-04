@@ -261,32 +261,26 @@ const dynamicToolPartSchema = z.union([
   dynamicToolPartOutputDeniedSchema,
 ]);
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): validateToolPart stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): validateToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): validateToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep validateToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep validateToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): validateToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): validateToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep validateToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep validateToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /**
  * Validates a tool part and returns the result
  * Returns result with success flag - if validation fails, the part should be skipped
  */
-export const validateToolPart = (part: unknown) =>
-  toolPartSchema.safeParse(part);
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+const validateToolPart = (part: unknown) => toolPartSchema.safeParse(part);
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): validateDynamicToolPart stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): validateDynamicToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): validateDynamicToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep validateDynamicToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep validateDynamicToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): validateDynamicToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): validateDynamicToolPart's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep validateDynamicToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep validateDynamicToolPart's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /**
  * Validates a dynamic tool part and returns the result
  * Returns result with success flag - if validation fails, the part should be skipped
  */
-export const validateDynamicToolPart = (part: unknown) =>
+const validateDynamicToolPart = (part: unknown) =>
   dynamicToolPartSchema.safeParse(part);
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+export { validateDynamicToolPart, validateToolPart };

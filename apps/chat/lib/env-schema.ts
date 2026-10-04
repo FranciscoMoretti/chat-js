@@ -40,17 +40,14 @@ const postgresUrl = z.url().refine(
   { message: "Must use a postgres:// or postgresql:// URL" }
 );
 
-/* oxlint-disable import/exports-last, import/group-exports, max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): getEveRuntimeEnvOptions is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): getEveRuntimeEnvOptions stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): getEveRuntimeEnvOptions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): getEveRuntimeEnvOptions uses 0, 32 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * node/no-process-env (#537): getEveRuntimeEnvOptions reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/explicit-function-return-type (#560): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): getEveRuntimeEnvOptions accepts environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const getEveRuntimeEnvOptions = (
+/* oxlint-disable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+max-lines-per-function (#510): getEveRuntimeEnvOptions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): getEveRuntimeEnvOptions uses 0, 32 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+node/no-process-env (#537): getEveRuntimeEnvOptions reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+typescript/explicit-function-return-type (#560): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): getEveRuntimeEnvOptions accepts environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const getEveRuntimeEnvOptions = (
   environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env
 ) => ({
   EVE_GATEWAY_SECRET: z
@@ -124,19 +121,14 @@ export const getEveRuntimeEnvOptions = (
             "Local/self-hosted workflow database override; defaults to DATABASE_URL. Unused on Vercel"
           ),
 });
-/* oxlint-enable import/exports-last, import/group-exports, max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): clientEnvSchema is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): clientEnvSchema stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const clientEnvSchema = {
+const clientEnvSchema = {
   NEXT_PUBLIC_REACT_QUERY_DEVTOOLS: z.enum(["0", "1"]).optional(),
   NEXT_PUBLIC_REACT_SCAN: z.enum(["0", "1"]).optional(),
 };
-/* oxlint-enable import/exports-last, import/group-exports */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type --
  * no-undefined (#519): playwrightDefault uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -149,12 +141,9 @@ const playwrightDefault = (value: unknown, fallback: string) =>
     : value;
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, node/no-process-env --
- * import/group-exports (#523): serverEnvSchema stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): serverEnvSchema uses 1, 44 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): serverEnvSchema uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * node/no-process-env (#537): serverEnvSchema reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- */
+/* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env -- no-magic-numbers (#517): serverEnvSchema uses 1, 44 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): serverEnvSchema uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+node/no-process-env (#537): serverEnvSchema reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
 /**
  * Server environment variable schemas with descriptions.
  *
@@ -165,7 +154,7 @@ const playwrightDefault = (value: unknown, fallback: string) =>
  * Exported separately from `env.ts` so the CLI can import
  * without triggering `createEnv` runtime validation.
  */
-export const serverEnvSchema = {
+const serverEnvSchema = {
   // AI Gateway keys (one required depending on config.ai.gateway)
   AI_GATEWAY_API_KEY: z
     .string()
@@ -333,4 +322,5 @@ export const serverEnvSchema = {
     eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
   ),
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, node/no-process-env */
+/* oxlint-enable no-magic-numbers, no-undefined, node/no-process-env */
+export { clientEnvSchema, getEveRuntimeEnvOptions, serverEnvSchema };

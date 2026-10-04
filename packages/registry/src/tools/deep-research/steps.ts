@@ -11,11 +11,10 @@ import { researchAvailable } from "./availability";
 import { getDeepResearchConfig } from "./configuration";
 import { researchReport } from "./schemas";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export async function prepareResearch(context: WorkflowToolContext) {
+async function prepareResearch(context: WorkflowToolContext) {
   "use step";
   const owner = context.session.auth.initiator;
   if (!owner || !researchAvailable(context.session)) {
@@ -54,13 +53,11 @@ export async function prepareResearch(context: WorkflowToolContext) {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export async function saveResearchReport(
+async function saveResearchReport(
   context: WorkflowToolContext,
   report: { title: string; content: string }
 ) {
@@ -81,12 +78,11 @@ export async function saveResearchReport(
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 // oxlint-disable-next-line eslint/require-await -- Durable steps must be async even for a clock read.
-export async function researchCompletionTime(): Promise<number> {
+async function researchCompletionTime(): Promise<number> {
   "use step";
   return Date.now();
 }
-/* oxlint-enable import/group-exports */
+
+export { prepareResearch, saveResearchReport, researchCompletionTime };

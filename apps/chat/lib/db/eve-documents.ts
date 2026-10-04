@@ -44,23 +44,20 @@ const revisionInput = z.object({
 type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): purgeEveFamilyDocuments is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): purgeEveFamilyDocuments stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): purgeEveFamilyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): purgeEveFamilyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): purgeEveFamilyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): purgeEveFamilyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): purgeEveFamilyDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): purgeEveFamilyDocuments accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): purgeEveFamilyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): purgeEveFamilyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): purgeEveFamilyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): purgeEveFamilyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): purgeEveFamilyDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): purgeEveFamilyDocuments accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Erase document rows after retirement and resource inventory have completed.
  * The deletion coordinator must retain file references before calling this.
  * This does not erase native history, blobs, metadata, or accounting, and never
  * marks the conversation deleted.
  */
-export const purgeEveFamilyDocuments = async (
+const purgeEveFamilyDocuments = async (
   ownerId: string,
   rootId: string
 ): Promise<void> =>
@@ -160,7 +157,7 @@ export const purgeEveFamilyDocuments = async (
         )
       );
   });
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep ancestorIds's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -334,22 +331,19 @@ const prepareManualRevision = async (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/exports-last (#522): saveEveDocumentRevision is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): saveEveDocumentRevision stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): saveEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): saveEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): saveEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep saveEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep saveEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): saveEveDocumentRevision accepts value: z.input<typeof revisionInput>; signal?: AbortSignal; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): saveEveDocumentRevision intentionally keeps the existing falsy-value behavior of conversation; replay; head; previous; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): saveEveDocumentRevision preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): saveEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): saveEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): saveEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep saveEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep saveEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): saveEveDocumentRevision accepts value: z.input<typeof revisionInput>; signal?: AbortSignal; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): saveEveDocumentRevision intentionally keeps the existing falsy-value behavior of conversation; replay; head; previous; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/no-null (#570): saveEveDocumentRevision preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** Save a revision and move only this conversation's head, atomically and replay-safely. */
-export const saveEveDocumentRevision = async (
+const saveEveDocumentRevision = async (
   value: z.input<typeof revisionInput>,
   signal?: AbortSignal,
   historicalTurns?: readonly number[]
@@ -467,19 +461,16 @@ export const saveEveDocumentRevision = async (
     return revision;
   });
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): getEveDocumentHistory is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): getEveDocumentHistory stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): getEveDocumentHistory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getEveDocumentHistory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep getEveDocumentHistory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveDocumentHistory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): getEveDocumentHistory intentionally keeps the existing falsy-value behavior of head; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): getEveDocumentHistory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): getEveDocumentHistory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep getEveDocumentHistory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveDocumentHistory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): getEveDocumentHistory intentionally keeps the existing falsy-value behavior of head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Traverse the selected revision's ancestry, never all revisions with the same document ID. */
-export const getEveDocumentHistory = async (
+const getEveDocumentHistory = async (
   ownerId: string,
   conversationId: string,
   documentId: string
@@ -522,7 +513,7 @@ export const getEveDocumentHistory = async (
     );
   return orderRevisionHistory(revisions, head.revisionId);
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * max-params (#511): inheritImportedDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -786,19 +777,16 @@ const initializeNamedForkDocuments = async (
 };
 /* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): initializeEveForkDocuments is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): initializeEveForkDocuments stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): initializeEveForkDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): initializeEveForkDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): initializeEveForkDocuments uses 13, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): initializeEveForkDocuments accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): initializeEveForkDocuments intentionally keeps the existing falsy-value behavior of target?.parentConversationId; target.forkMessageId; target.forkCheckpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): initializeEveForkDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): initializeEveForkDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): initializeEveForkDocuments uses 13, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): initializeEveForkDocuments accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): initializeEveForkDocuments intentionally keeps the existing falsy-value behavior of target?.parentConversationId; target.forkMessageId; target.forkCheckpointId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Call before exposing a newly bound fork; source edits after its boundary stay excluded. */
-export const initializeEveForkDocuments = async (
+const initializeEveForkDocuments = async (
   ownerId: string,
   conversationId: string
 ): Promise<void> =>
@@ -936,19 +924,15 @@ export const initializeEveForkDocuments = async (
       }
     }
   });
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): captureEveDocumentCheckpoint is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): captureEveDocumentCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): captureEveDocumentCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): captureEveDocumentCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): captureEveDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): captureEveDocumentCheckpoint accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): captureEveDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): captureEveDocumentCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+no-magic-numbers (#517): captureEveDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): captureEveDocumentCheckpoint accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): captureEveDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Capture once before model execution; even an empty manifest is a durable checkpoint. */
-export const captureEveDocumentCheckpoint = async (
+const captureEveDocumentCheckpoint = async (
   ownerId: string,
   conversationId: string,
   turnIndex: number
@@ -996,21 +980,18 @@ export const captureEveDocumentCheckpoint = async (
     }
   });
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
 
-/* oxlint-disable import/exports-last, import/group-exports, jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/exports-last (#522): captureEveNamedDocumentCheckpoint is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): captureEveNamedDocumentCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): captureEveNamedDocumentCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): captureEveNamedDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): captureEveNamedDocumentCheckpoint accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): captureEveNamedDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
+jsdoc/require-param (#534): captureEveNamedDocumentCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-params (#511): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): captureEveNamedDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): captureEveNamedDocumentCheckpoint accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): captureEveNamedDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Native serialized capture calls this before publishing its named checkpoint. */
-export const captureEveNamedDocumentCheckpoint = async (
+const captureEveNamedDocumentCheckpoint = async (
   ownerId: string,
   conversationId: string,
   checkpointId: string,
@@ -1077,7 +1058,7 @@ export const captureEveNamedDocumentCheckpoint = async (
     }
   });
 };
-/* oxlint-enable import/exports-last, import/group-exports, jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type --
  * jsdoc/require-param (#534): readDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -1102,19 +1083,16 @@ const readDocumentRevision =
   };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): getEveDocumentRevision stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): getEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-params (#511): getEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): getEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep getEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): getEveDocumentRevision accepts revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): getEveDocumentRevision intentionally keeps the existing falsy-value behavior of revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): getEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): getEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-params (#511): getEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): getEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep getEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): getEveDocumentRevision accepts revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): getEveDocumentRevision intentionally keeps the existing falsy-value behavior of revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Content is loaded only for the selected, accessible revision. */
-export const getEveDocumentRevision = async (
+const getEveDocumentRevision = async (
   ownerId: string,
   conversationId: string,
   documentId: string,
@@ -1134,24 +1112,21 @@ export const getEveDocumentRevision = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDocumentRevision has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): getAccessibleEveDocument stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): getAccessibleEveDocument's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getAccessibleEveDocument's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): getAccessibleEveDocument uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): getAccessibleEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep getAccessibleEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getAccessibleEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): getAccessibleEveDocument accepts item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): getAccessibleEveDocument intentionally keeps the existing falsy-value behavior of conversation; revisionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): getAccessibleEveDocument's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): getAccessibleEveDocument's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-params (#511): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): getAccessibleEveDocument uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): getAccessibleEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/explicit-function-return-type (#560): Keep getAccessibleEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getAccessibleEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): getAccessibleEveDocument accepts item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): getAccessibleEveDocument intentionally keeps the existing falsy-value behavior of conversation; revisionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Public readers receive document content, never storage ownership or operation metadata. */
-export const getAccessibleEveDocument = async (
+const getAccessibleEveDocument = async (
   viewerId: string | undefined,
   conversationId: string,
   documentId: string,
@@ -1216,21 +1191,18 @@ export const getAccessibleEveDocument = async (
     },
   };
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): removeEveDocumentFromConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): removeEveDocumentFromConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): removeEveDocumentFromConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep removeEveDocumentFromConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep removeEveDocumentFromConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): removeEveDocumentFromConversation accepts input: { documentId: string; expectedRevisionId: string; title: string }; scope: { ownerId: string; conversationId: string }; signal: AbortSignal; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): removeEveDocumentFromConversation intentionally keeps the existing falsy-value behavior of conversation; revision; head; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): removeEveDocumentFromConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): removeEveDocumentFromConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/explicit-function-return-type (#560): Keep removeEveDocumentFromConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep removeEveDocumentFromConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): removeEveDocumentFromConversation accepts input: { documentId: string; expectedRevisionId: string; title: string }; scope: { ownerId: string; conversationId: string }; signal: AbortSignal; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): removeEveDocumentFromConversation intentionally keeps the existing falsy-value behavior of conversation; revision; head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Remove only this conversation's current pointer; snapshots and other branches retain their revisions. */
-export const removeEveDocumentFromConversation = async (
+const removeEveDocumentFromConversation = async (
   input: { documentId: string; expectedRevisionId: string; title: string },
   scope: { ownerId: string; conversationId: string },
   signal: AbortSignal
@@ -1305,6 +1277,17 @@ export const removeEveDocumentFromConversation = async (
       title: revision.title,
     };
   });
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-documents.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+export {
+  captureEveDocumentCheckpoint,
+  captureEveNamedDocumentCheckpoint,
+  getAccessibleEveDocument,
+  getEveDocumentHistory,
+  getEveDocumentRevision,
+  initializeEveForkDocuments,
+  purgeEveFamilyDocuments,
+  removeEveDocumentFromConversation,
+  saveEveDocumentRevision,
+};

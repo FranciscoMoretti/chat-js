@@ -12,23 +12,21 @@ const state = vi.hoisted(() => ({
   update: vi.fn<(update: () => ReturnType<typeof eveImageContext>) => void>(),
 }));
 vi.mock("./tool-image-context", () => ({ eveToolImageContext: state }));
-/* oxlint-disable id-length --
- * id-length (#506): definitions uses z as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
+
 const definitions = await vi.hoisted(async () => {
   const { defineTool } = await import("eve/tools");
-  const { z } = await import("zod");
+  const { z: zod } = await import("zod");
   return {
     customEcho: defineTool({
       approval: () => "user-approval",
       description: "Custom echo",
       execute: ({ text }): string => text,
-      inputSchema: z.object({ text: z.string() }),
+      inputSchema: zod.object({ text: zod.string() }),
       toModelOutput: (text) => ({ type: "text" as const, value: text }),
     }),
   };
 });
-/* oxlint-enable id-length */
+
 vi.mock("../../tools/chatjs/tools", () => ({ tools: definitions }));
 /* oxlint-disable id-length, typescript/explicit-function-return-type --
  * id-length (#506): vi.mock("./turn-tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.

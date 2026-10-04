@@ -21,12 +21,11 @@ import { installedFeatures } from "@/features/installed";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 
@@ -34,7 +33,7 @@ import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
+const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -69,8 +68,10 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
           if (!old) {
             return old;
           }
-          return old.map((c) =>
-            c.id === newData.id ? { ...c, enabled: newData.enabled } : c
+          return old.map((connector) =>
+            connector.id === newData.id
+              ? { ...connector, enabled: newData.enabled }
+              : connector
           );
         });
         return { prev };
@@ -143,11 +144,11 @@ export const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
 
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/id-length */
+
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/exports-last */
 
 ConnectorsControl.isAvailable = (): boolean => installedFeatures.has("mcp");
+export { ConnectorsControl };

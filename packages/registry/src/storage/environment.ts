@@ -1,29 +1,21 @@
 import { getProvider } from "files-sdk/providers";
 import type { ProviderSlug } from "files-sdk/providers";
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-export type StorageEnvironmentVariable = {
+type StorageEnvironmentVariable = {
   aliases: readonly string[];
   description: string;
   key: string;
   secret: boolean;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-export type StorageEnvironmentRequirement = {
+type StorageEnvironmentRequirement = {
   description: string;
   options: StorageEnvironmentVariable[][];
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 const STORAGE_OPTION_HINT = /(?:or )?pass `(?<option>[^`]+)`/u;
 
@@ -48,7 +40,7 @@ const toVariable = (variable: {
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const getStorageEnvironmentRequirements = (
+const getStorageEnvironmentRequirements = (
   provider: ProviderSlug,
   adapterOptions: Record<string, unknown> = {}
 ): StorageEnvironmentRequirement[] => {
@@ -108,3 +100,5 @@ export const getStorageEnvironmentRequirements = (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+export { getStorageEnvironmentRequirements };
+export type { StorageEnvironmentRequirement, StorageEnvironmentVariable };

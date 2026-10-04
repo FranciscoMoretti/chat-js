@@ -35,7 +35,7 @@ const readOptional = async (path: string): Promise<string | null> => {
 };
 /* oxlint-enable unicorn/no-null */
 const generatedSource = (body: string): string => {
-  const normalizedBody = generatedRegistrationSource(body)
+  const normalizedBody = body
     .replace(
       "export type WorkflowTools = {\n\n};",
       "export type WorkflowTools = Record<never, never>;"
@@ -59,7 +59,8 @@ const generatedSource = (body: string): string => {
     )
     .replace(";\n\n\nconst installed", ";\n\nconst installed")
     .replace(";\n\n\nexport const documentUi", ";\n\nexport const documentUi");
-  return `${generated}// Content: ${hash(normalizedBody)}\n${normalizedBody}`;
+  const registrations = generatedRegistrationSource(normalizedBody);
+  return `${generated}// Content: ${hash(registrations)}\n${registrations}`;
 };
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const checkGenerated = (content: string | null, path: string): void => {
@@ -262,29 +263,28 @@ const validateSelections = (definitions: ToolDefinition[]): void => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const orderedProperties = (
-  properties: { key: string; value: string }[]
+  properties: readonly { readonly key: string; readonly value: string }[]
 ): string =>
   properties
-    .toSorted((a, b) => {
-      if (a.key === b.key) {
+    .toSorted((leftProperty, rightProperty) => {
+      if (leftProperty.key === rightProperty.key) {
         return 0;
       }
-      return a.key < b.key ? -1 : 1;
+      return leftProperty.key < rightProperty.key ? -1 : 1;
     })
     .map(({ key, value }): string => `  ${key}: ${value},`)
     .join("\n");
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const registrationImports = (
-  entries: { id: string; name: string; alias: string }[],
+  entries: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly alias: string;
+  }[],
   file: "tool" | "renderer"
 ): string => {
   const groups = new Map<string, string[]>();
@@ -294,17 +294,15 @@ const registrationImports = (
     groups.set(item.id, names);
   }
   return [...groups]
-    .map(([id, names]): string =>
+    .map(([id, names]: readonly [string, readonly string[]]): string =>
       names.length === 1
         ? `import { ${names[0]} } from "./${id}/${file}";`
         : `import {\n${names.map((name): string => `  ${name},`).join("\n")}\n} from "./${id}/${file}";`
     )
     .join("\n");
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -316,13 +314,13 @@ const sourceFor = (
   const ordinary = registrations.filter((item): boolean => !item.workflow);
   return {
     providerBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n${registrationImports(
-      providers.map((item, i) => ({
-        alias: `tool${i}`,
+      providers.map((item, registrationIndex) => ({
+        alias: `tool${registrationIndex}`,
         id: item.id,
         name: item.toolExport,
       })),
       "tool"
-    )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, i) => ({ key: registrationKey(item), value: `tool${i}` })))}\n}` : "{}"});\n`,
+    )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: `tool${registrationIndex}` })))}\n}` : "{}"});\n`,
     toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${ordinary.some((item): boolean => item.provider) ? 'import { providers } from "./providers";\n' : ""}${registrationImports(
       ordinary
         .filter((item): boolean => !item.provider)
@@ -334,19 +332,24 @@ const sourceFor = (
       "tool"
     )}\n\nconst installed = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n}` : "{}"});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item): string => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
-      renderers.flatMap((item, i) =>
+      renderers.flatMap((item, registrationIndex) =>
         typeof item.rendererExport === "string" && item.rendererExport !== ""
-          ? [{ alias: `renderer${i}`, id: item.id, name: item.rendererExport }]
+          ? [
+              {
+                alias: `renderer${registrationIndex}`,
+                id: item.id,
+                name: item.rendererExport,
+              },
+            ]
           : []
       ),
       "renderer"
-    )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, i) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${i}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
+    )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, registrationIndex) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${registrationIndex}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
   };
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -389,8 +392,7 @@ const validateToolDependencies = (definitions: ToolDefinition[]): void => {
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const toolRegistrationTargets = [
+const toolRegistrationTargets = [
   "tools.ts",
   "ui.ts",
   "document-ui.ts",
@@ -404,16 +406,11 @@ export const toolRegistrationTargets = [
   "custom-tools.ts",
   "custom-ui.ts",
 ].map((file): string => `tools/chatjs/${file}`);
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const readInstalledTools = async (
-  cwd: string
-): Promise<ToolDefinition[]> => {
+const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
   const directory = "tools/chatjs";
   await preflight(cwd, toolRegistrationTargets);
   const dir = pathModule.join(cwd, directory);
@@ -468,17 +465,16 @@ export const readInstalledTools = async (
       `Missing descriptor for previously registered tool: ${missing}. Restore chatjs.json before syncing.`
     );
   }
-  return definitions.toSorted((a, b): number => a.id.localeCompare(b.id));
+  return definitions.toSorted((leftDefinition, rightDefinition): number =>
+    leftDefinition.id.localeCompare(rightDefinition.id)
+  );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const validateToolInstallation = (
+const validateToolInstallation = (
   cwd: string,
   definitions: ToolDefinition[]
 ): void => {
@@ -500,16 +496,13 @@ export const validateToolInstallation = (
   validateToolDependencies(definitions);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const syncTools = async (
+const syncTools = async (
   cwd: string,
   options: { checkOnly?: boolean; expected?: ToolDefinition[] } = {}
 ): Promise<ToolDefinition[]> => {
@@ -567,7 +560,9 @@ export const syncTools = async (
   );
   const composerTools = registrations
     .filter((item) => item.composer)
-    .toSorted((a, b): number => a.key.localeCompare(b.key));
+    .toSorted((leftRegistration, rightRegistration): number =>
+      leftRegistration.key.localeCompare(rightRegistration.key)
+    );
   await writeFile(
     pathModule.join(dir, "composer-tools.ts"),
     generatedSource(
@@ -596,14 +591,14 @@ export const syncTools = async (
   await writeFile(
     pathModule.join(dir, "workflow-types.ts"),
     generatedSource(
-      `${workflows.map((item, i): string => `import type { ${item.toolExport} as workflow${i} } from "./${item.id}/tool";`).join("\n")}\n\nexport type WorkflowTools = {\n${workflows.map((item, i): string => `  ${item.key}: typeof workflow${i};`).join("\n")}\n};\n`
+      `${workflows.map((item, registrationIndex): string => `import type { ${item.toolExport} as workflow${registrationIndex} } from "./${item.id}/tool";`).join("\n")}\n\nexport type WorkflowTools = {\n${workflows.map((item, registrationIndex): string => `  ${item.key}: typeof workflow${registrationIndex};`).join("\n")}\n};\n`
     )
   );
   const availability = definitions.filter((item) => item.availabilityExport);
   await writeFile(
     pathModule.join(dir, "tool-availability.ts"),
     generatedSource(
-      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item, i): string => `import { ${item.availabilityExport} as available${i} } from "./${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item, i) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${i},`)).join("\n")}\n};\n`
+      `import type { ToolAvailability } from "@/lib/eve/tool-availability";\n${availability.map((item, registrationIndex): string => `import { ${item.availabilityExport} as available${registrationIndex} } from "./${item.id}/availability";`).join("\n")}\n\nexport const toolAvailability: Record<string, ToolAvailability> = {\n${availability.flatMap((item, registrationIndex) => item.tools.map((tool): string => `  ${item.slot ?? tool.toolExport}: available${registrationIndex},`)).join("\n")}\n};\n`
     )
   );
   await writeFile(toolsPath, generatedSource(toolBody));
@@ -613,9 +608,13 @@ export const syncTools = async (
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+export {
+  readInstalledTools,
+  syncTools,
+  toolRegistrationTargets,
+  validateToolInstallation,
+};

@@ -15,15 +15,13 @@ import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Branding: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
-type Branding = {
+interface Branding {
   appName: string;
   appPrefix: string;
   appUrl: string;
   orgName?: string;
   orgEmail?: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 // oxlint-disable-next-line unicorn/prefer-module -- Electron Forge loads this configuration through its CommonJS TypeScript loader.
 const appRoot = __dirname;

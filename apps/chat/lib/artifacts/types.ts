@@ -1,15 +1,8 @@
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): ArtifactMetadata stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type ArtifactMetadata = object | null;
-/* oxlint-enable import/group-exports */
+type ArtifactMetadata = object | null;
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): UIArtifact stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export interface UIArtifact {
+interface UIArtifact {
   content: string;
   conversationId?: string;
   followLive?: boolean;
@@ -23,4 +16,4 @@ export interface UIArtifact {
   status: "streaming" | "idle";
   title: string;
 }
-/* oxlint-enable import/group-exports */
+export type { ArtifactMetadata, UIArtifact };

@@ -3,9 +3,9 @@ import React from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types -- SettingsPage: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SettingsPage: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const SettingsPage = ({
+const SettingsPage = ({
   children,
   className,
 }: {
@@ -21,11 +21,11 @@ export const SettingsPage = ({
     {children}
   </div>
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageHeader: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const SettingsPageHeader = ({
+const SettingsPageHeader = ({
   children,
   className,
 }: {
@@ -34,11 +34,11 @@ export const SettingsPageHeader = ({
 }): React.JSX.Element => (
   <div className={cn("shrink-0", className)}>{children}</div>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageContent: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const SettingsPageContent = ({
+const SettingsPageContent = ({
   children,
   className,
 }: {
@@ -51,11 +51,11 @@ export const SettingsPageContent = ({
     {children}
   </div>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageScrollArea: import/group-exports: preserve direct declaration exports used by the existing component and hook consumers; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsPageScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
-export const SettingsPageScrollArea = ({
+const SettingsPageScrollArea = ({
   children,
   className,
 }: {
@@ -64,4 +64,10 @@ export const SettingsPageScrollArea = ({
 }): React.JSX.Element => (
   <ScrollArea className={className}>{children}</ScrollArea>
 );
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+export {
+  SettingsPage,
+  SettingsPageContent,
+  SettingsPageHeader,
+  SettingsPageScrollArea,
+};

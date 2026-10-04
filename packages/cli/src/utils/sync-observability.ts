@@ -24,7 +24,6 @@ const exists = async (file: string): Promise<boolean> => {
   }
 };
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -33,7 +32,7 @@ const exists = async (file: string): Promise<boolean> => {
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Validate every installed implementation before sync writes any registrations.
-export const planObservability = async (cwd: string) => {
+const planObservability = async (cwd: string) => {
   const installed = await Promise.all(
     observabilityItems.map(async (item) => {
       const descriptor = path.join(cwd, `features/${item.name}/chatjs.json`);
@@ -106,15 +105,13 @@ export const planObservability = async (cwd: string) => {
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 // Creation only: reset demo selections. Sync/add never remove implementations.
-export const initializeObservability = async (cwd: string): Promise<void> => {
+const initializeObservability = async (cwd: string): Promise<void> => {
   await Promise.all(
     observabilityItems.map((item): Promise<void> =>
       rm(path.join(cwd, "features", item.name), {
@@ -145,4 +142,4 @@ export const initializeObservability = async (cwd: string): Promise<void> => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable import/group-exports */
+export { initializeObservability, planObservability };

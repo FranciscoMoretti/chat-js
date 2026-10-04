@@ -15,9 +15,8 @@ import {
 } from "./src/tools/documents";
 import { researchItem } from "./src/tools/research";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const toolItems = [
+const toolItems = [
   {
     dependencies: ["ai", "zod"],
     description: "Generate videos using the selected gateway and storage",
@@ -93,11 +92,9 @@ export const toolItems = [
     }) satisfies RegistryItem
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const searchToolItems = [
+const searchToolItems = [
   { dependency: "@tavily/core", id: "tavily-search", key: "TAVILY_API_KEY" },
   {
     dependency: "@mendable/firecrawl-js",
@@ -153,10 +150,8 @@ export const searchToolItems = [
   type: "registry:item" as const,
 }));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const codeExecutionItem = {
+const codeExecutionItem = {
   dependencies: [
     "ai",
     "zod",
@@ -201,10 +196,8 @@ export const codeExecutionItem = {
   registryDependencies: ["@chatjs/code-execution-ui"],
   type: "registry:item",
 } satisfies RegistryItem;
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const registry = registrySchema.parse({
+const registry = registrySchema.parse({
   homepage: "https://chatjs.dev",
   items: [
     mcpItem,
@@ -222,4 +215,4 @@ export const registry = registrySchema.parse({
   ],
   name: "chatjs",
 });
-/* oxlint-enable import/group-exports */
+export { codeExecutionItem, registry, searchToolItems, toolItems };

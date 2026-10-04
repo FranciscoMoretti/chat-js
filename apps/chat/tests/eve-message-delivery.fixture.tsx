@@ -20,9 +20,8 @@ const event = (operationId: string): MessageStreamEvent => ({
 });
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react-perf/jsx-no-new-function-as-prop (#557): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): Fixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.
  * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
  * typescript/prefer-readonly-parameter-types (#565): Fixture accepts change; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -125,7 +124,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
 
 const root = document.querySelector("#root");
 if (!root) {

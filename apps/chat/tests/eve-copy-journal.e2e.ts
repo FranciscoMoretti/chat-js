@@ -6,7 +6,6 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { createHash, randomBytes } from "node:crypto";
 
 import { eq, inArray } from "drizzle-orm";
@@ -218,57 +217,65 @@ async function fixture() {
   };
 }
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
- * id-length (#506): prepare uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): prepare accepts f: Awaited<ReturnType<typeof fixture>>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
-async function prepare(f: Awaited<ReturnType<typeof fixture>>): Promise<void> {
+async function prepare(
+  ctx: Awaited<ReturnType<typeof fixture>>
+): Promise<void> {
   await writeEveCopyFile(
     ownerId,
-    f.saved.conversation.id,
-    f.targetKey,
-    f.storage
+    ctx.saved.conversation.id,
+    ctx.targetKey,
+    ctx.storage
   );
-  await writeEveCopyDocuments(ownerId, f.saved.conversation.id);
+  await writeEveCopyDocuments(ownerId, ctx.saved.conversation.id);
 }
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
- * id-length (#506): test("reserves one immutable root and destination resources before writes, rejecting  uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * max-statements (#512): test("reserves one immutable root and destination resources before writes, rejecting  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): test("reserves one immutable root and destination resources before writes, rejecting  accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("reserves one immutable root and destination resources before writes, rejecting  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test("reserves one immutable root and destination resources before writes, rejecting  preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("reserves one immutable root and destination resources before writes, rejecting changed intent and cross-kind replay", async () => {
-  const f = await fixture();
+  const ctx = await fixture();
   const replay = await Promise.all(
-    Array.from({ length: 3 }, () => reserveEveCopyOperation(ownerId, f.input))
+    Array.from({ length: 3 }, () => reserveEveCopyOperation(ownerId, ctx.input))
   );
   expect(replay.map((row) => row.conversation.id)).toEqual(
-    Array.from({ length: 3 }, () => f.saved.conversation.id)
+    Array.from({ length: 3 }, () => ctx.saved.conversation.id)
   );
-  expect(f.saved.conversation).toMatchObject({
+  expect(ctx.saved.conversation).toMatchObject({
     creationKind: "copy",
     parentConversationId: null,
     rootConversationId: null,
     sessionId: null,
   });
-  expect(f.storage.writeDestinationFile).not.toHaveBeenCalled();
+  expect(ctx.storage.writeDestinationFile).not.toHaveBeenCalled();
   const [reference] = await db
     .select()
     .from(eveFileReference)
-    .where(eq(eveFileReference.conversationId, f.saved.conversation.id));
-  expect(reference).toMatchObject({ key: f.targetKey, ownerId });
+    .where(eq(eveFileReference.conversationId, ctx.saved.conversation.id));
+  expect(reference).toMatchObject({ key: ctx.targetKey, ownerId });
   await expect(
     reserveEveCopyOperation(ownerId, {
-      ...f.input,
-      plan: { ...f.input.plan, seed: { ...f.input.plan.seed, messages: [] } },
+      ...ctx.input,
+      plan: {
+        ...ctx.input.plan,
+        seed: { ...ctx.input.plan.seed, messages: [] },
+      },
     })
   ).rejects.toThrow();
   const create = vi.fn(() => Promise.resolve("wrong namespace"));
   await expect(
-    createEveConversation(ownerId, f.input.operationId, f.input.title, create)
+    createEveConversation(
+      ownerId,
+      ctx.input.operationId,
+      ctx.input.title,
+      create
+    )
   ).rejects.toThrow();
   expect(create).not.toHaveBeenCalled();
   const messageOperation = crypto.randomUUID();
@@ -277,21 +284,20 @@ test("reserves one immutable root and destination resources before writes, rejec
   );
   await expect(
     reserveEveCopyOperation(ownerId, {
-      ...f.input,
+      ...ctx.input,
       operationId: messageOperation,
     })
   ).rejects.toThrow("ordinary message");
 });
-/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, typescript/promise-function-async --
- * id-length (#506): test("cannot accept or expose a native seed before file and document receipts commit" uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): test("cannot accept or expose a native seed before file and document receipts commit" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/promise-function-async (#606): test("cannot accept or expose a native seed before file and document receipts commit" preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("cannot accept or expose a native seed before file and document receipts commit", async () => {
-  const f = await fixture();
-  const { id } = f.saved.conversation;
+  const ctx = await fixture();
+  const { id } = ctx.saved.conversation;
   await expect(acceptEveCopy(ownerId, id)).rejects.toThrow("documents");
   await expect(resolveAcceptedEveCopySeed(ownerId, id)).rejects.toThrow();
   const create = vi.fn(() => Promise.resolve("not allowed"));
@@ -299,92 +305,94 @@ test("cannot accept or expose a native seed before file and document receipts co
   expect(create).not.toHaveBeenCalled();
   await writeEveCopyDocuments(ownerId, id);
   await expect(acceptEveCopy(ownerId, id)).rejects.toThrow("file writes");
-  f.storage.readSourceFile.mockResolvedValueOnce(
+  ctx.storage.readSourceFile.mockResolvedValueOnce(
     new Blob(["changed bytes"], { type: "image/png" })
   );
   await expect(
-    writeEveCopyFile(ownerId, id, f.targetKey, f.storage)
+    writeEveCopyFile(ownerId, id, ctx.targetKey, ctx.storage)
   ).rejects.toThrow("changed after preparation");
-  expect(f.storage.writeDestinationFile).not.toHaveBeenCalled();
-  await prepare(f);
+  expect(ctx.storage.writeDestinationFile).not.toHaveBeenCalled();
+  await prepare(ctx);
   expect(await acceptEveCopy(ownerId, id)).toBe("accepted");
   expect(await resolveAcceptedEveCopySeed(ownerId, id)).toEqual(
-    f.input.plan.seed
+    ctx.input.plan.seed
   );
-  expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.copy.plan
-  ).toBeNull();
+  const unplanned = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  expect(unplanned?.copy.plan).toBeNull();
 });
-/* oxlint-enable id-length, max-statements, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * id-length (#506): test("an uncertain file write retries the same allocated key and records completion o uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): test("an uncertain file write retries the same allocated key and records completion o uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("an uncertain file write retries the same allocated key and records completion o accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("an uncertain file write retries the same allocated key and records completion once", async () => {
-  const f = await fixture();
-  f.storage.writeDestinationFile.mockRejectedValueOnce(
+  const ctx = await fixture();
+  ctx.storage.writeDestinationFile.mockRejectedValueOnce(
     new Error("Lost storage response")
   );
   await expect(
-    writeEveCopyFile(ownerId, f.saved.conversation.id, f.targetKey, f.storage)
+    writeEveCopyFile(
+      ownerId,
+      ctx.saved.conversation.id,
+      ctx.targetKey,
+      ctx.storage
+    )
   ).rejects.toThrow("Lost storage");
   const [pending] = await db
     .select()
     .from(eveConversationCopyFile)
-    .where(eq(eveConversationCopyFile.conversationId, f.saved.conversation.id));
+    .where(
+      eq(eveConversationCopyFile.conversationId, ctx.saved.conversation.id)
+    );
   expect(pending.writtenAt).toBeNull();
   await writeEveCopyFile(
     ownerId,
-    f.saved.conversation.id,
-    f.targetKey,
-    f.storage
+    ctx.saved.conversation.id,
+    ctx.targetKey,
+    ctx.storage
   );
   await writeEveCopyFile(
     ownerId,
-    f.saved.conversation.id,
-    f.targetKey,
-    f.storage
+    ctx.saved.conversation.id,
+    ctx.targetKey,
+    ctx.storage
   );
   expect(
-    f.storage.writeDestinationFile.mock.calls.map((call) => call[0])
-  ).toEqual([f.targetKey, f.targetKey]);
+    ctx.storage.writeDestinationFile.mock.calls.map((call) => call[0])
+  ).toEqual([ctx.targetKey, ctx.targetKey]);
 });
-/* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, max-statements, typescript/promise-function-async, unicorn/no-null --
- * id-length (#506): test("accepted copies recover after source revocation and a lost native reply, then d uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, typescript/promise-function-async, unicorn/no-null --
  * max-statements (#512): test("accepted copies recover after source revocation and a lost native reply, then d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/promise-function-async (#606): test("accepted copies recover after source revocation and a lost native reply, then d preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test("accepted copies recover after source revocation and a lost native reply, then d preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 test("accepted copies recover after source revocation and a lost native reply, then discard temporary transcript data", async () => {
-  const f = await fixture();
-  await prepare(f);
-  await acceptEveCopy(ownerId, f.saved.conversation.id);
+  const ctx = await fixture();
+  await prepare(ctx);
+  await acceptEveCopy(ownerId, ctx.saved.conversation.id);
   await db
     .update(eveConversation)
     .set({ state: "deleting", visibility: "private" })
-    .where(eq(eveConversation.id, f.sourceId));
+    .where(eq(eveConversation.id, ctx.sourceId));
   const nativeId = crypto.randomUUID();
   const operations: string[] = [];
   await expect(
-    dispatchEveCopy(ownerId, f.saved.conversation.id, (operation) => {
+    dispatchEveCopy(ownerId, ctx.saved.conversation.id, (operation) => {
       operations.push(operation);
       return Promise.reject(new Error("Lost native response"));
     })
   ).rejects.toThrow("Lost native");
+  const uncertain = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  expect(uncertain?.conversation.state).toBe("uncertain");
   expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.conversation
-      .state
-  ).toBe("uncertain");
-  expect(
-    await resolveAcceptedEveCopySeed(ownerId, f.saved.conversation.id)
-  ).toEqual(f.input.plan.seed);
+    await resolveAcceptedEveCopySeed(ownerId, ctx.saved.conversation.id)
+  ).toEqual(ctx.input.plan.seed);
   const bound = await dispatchEveCopy(
     ownerId,
-    f.saved.conversation.id,
+    ctx.saved.conversation.id,
     (operation) => {
       operations.push(operation);
       return Promise.resolve(nativeId);
@@ -392,81 +400,87 @@ test("accepted copies recover after source revocation and a lost native reply, t
   );
   const noDispatch = vi.fn(() => Promise.resolve("duplicate"));
   expect(
-    await dispatchEveCopy(ownerId, f.saved.conversation.id, noDispatch)
+    await dispatchEveCopy(ownerId, ctx.saved.conversation.id, noDispatch)
   ).toEqual(bound);
   expect(noDispatch).not.toHaveBeenCalled();
   expect(operations).toEqual([
-    f.saved.conversation.id,
-    f.saved.conversation.id,
+    ctx.saved.conversation.id,
+    ctx.saved.conversation.id,
   ]);
-  expect(
-    (await getEveCopyOperation(ownerId, f.input.operationId))?.copy
-  ).toMatchObject({ phase: "bound", plan: null, seed: null });
+  const journal = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  expect(journal?.copy).toMatchObject({
+    phase: "bound",
+    plan: null,
+    seed: null,
+  });
   await expect(
-    rejectUnacceptedEveCopy(ownerId, f.saved.conversation.id)
+    rejectUnacceptedEveCopy(ownerId, ctx.saved.conversation.id)
   ).rejects.toThrow("Accepted copies");
 });
-/* oxlint-enable id-length, max-statements, typescript/promise-function-async, unicorn/no-null */
+/* oxlint-enable max-statements, typescript/promise-function-async, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, typescript/promise-function-async --
- * id-length (#506): test("revocation before acceptance prevents dispatch and permits a never-dispatched c uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): test("revocation before acceptance prevents dispatch and permits a never-dispatched c keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/promise-function-async (#606): test("revocation before acceptance prevents dispatch and permits a never-dispatched c preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("revocation before acceptance prevents dispatch and permits a never-dispatched cleanup", async () => {
-  const f = await fixture();
-  await prepare(f);
+  const ctx = await fixture();
+  await prepare(ctx);
   await db
     .update(eveConversation)
     .set({ visibility: "private" })
-    .where(eq(eveConversation.id, f.sourceId));
-  await expect(acceptEveCopy(ownerId, f.saved.conversation.id)).rejects.toThrow(
-    "revoked"
-  );
-  expect(
-    await rejectUnacceptedEveCopy(ownerId, f.saved.conversation.id)
-  ).toEqual({ id: f.saved.conversation.id, neverDispatched: true });
+    .where(eq(eveConversation.id, ctx.sourceId));
   await expect(
-    writeEveCopyFile(ownerId, f.saved.conversation.id, f.targetKey, f.storage)
+    acceptEveCopy(ownerId, ctx.saved.conversation.id)
+  ).rejects.toThrow("revoked");
+  expect(
+    await rejectUnacceptedEveCopy(ownerId, ctx.saved.conversation.id)
+  ).toEqual({ id: ctx.saved.conversation.id, neverDispatched: true });
+  await expect(
+    writeEveCopyFile(
+      ownerId,
+      ctx.saved.conversation.id,
+      ctx.targetKey,
+      ctx.storage
+    )
   ).rejects.toThrow("unavailable");
   await expect(
-    dispatchEveCopy(ownerId, f.saved.conversation.id, () =>
+    dispatchEveCopy(ownerId, ctx.saved.conversation.id, () =>
       Promise.resolve("forbidden")
     )
   ).rejects.toThrow();
-  await purgeEveFamilyDocuments(ownerId, f.saved.conversation.chatId);
+  await purgeEveFamilyDocuments(ownerId, ctx.saved.conversation.chatId);
   await db
     .delete(eveFileReference)
-    .where(eq(eveFileReference.conversationId, f.saved.conversation.id));
-  await completeEveConversationDeletion(ownerId, f.saved.conversation.id);
+    .where(eq(eveFileReference.conversationId, ctx.saved.conversation.id));
+  await completeEveConversationDeletion(ownerId, ctx.saved.conversation.id);
   expect(
     await db
       .select()
       .from(eveConversationCopy)
-      .where(eq(eveConversationCopy.conversationId, f.saved.conversation.id))
+      .where(eq(eveConversationCopy.conversationId, ctx.saved.conversation.id))
   ).toEqual([]);
   const [tombstone] = await db
     .select()
     .from(eveConversation)
-    .where(eq(eveConversation.id, f.saved.conversation.id));
+    .where(eq(eveConversation.id, ctx.saved.conversation.id));
   expect(tombstone).toMatchObject({
     creationKind: "copy",
     firstMessage: "",
     state: "deleted",
   });
-  await expect(reserveEveCopyOperation(ownerId, f.input)).rejects.toThrow();
+  await expect(reserveEveCopyOperation(ownerId, ctx.input)).rejects.toThrow();
 });
-/* oxlint-enable id-length, max-statements, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable id-length, typescript/promise-function-async --
- * id-length (#506): test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a c uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a c preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("foreign owners cannot write resources, accept, reject, resolve, or dispatch a copy", async () => {
-  const f = await fixture();
-  const { id } = f.saved.conversation;
+  const ctx = await fixture();
+  const { id } = ctx.saved.conversation;
   await expect(
-    writeEveCopyFile(sourceOwnerId, id, f.targetKey, f.storage)
+    writeEveCopyFile(sourceOwnerId, id, ctx.targetKey, ctx.storage)
   ).rejects.toThrow("not found");
   await expect(writeEveCopyDocuments(sourceOwnerId, id)).rejects.toThrow(
     "not found"
@@ -481,9 +495,9 @@ test("foreign owners cannot write resources, accept, reject, resolve, or dispatc
   await expect(
     dispatchEveCopy(sourceOwnerId, id, () => Promise.resolve("forbidden"))
   ).rejects.toThrow("not found");
-  expect(f.storage.writeDestinationFile).not.toHaveBeenCalled();
+  expect(ctx.storage.writeDestinationFile).not.toHaveBeenCalled();
 });
-/* oxlint-enable id-length, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("invalid native seeds or document boundaries never reserve resources") uses 8, 1024, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -528,77 +542,69 @@ test("invalid native seeds or document boundaries never reserve resources", asyn
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable id-length --
- * id-length (#506): test("document changes before acceptance leave the copy rejectable") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 test("document changes before acceptance leave the copy rejectable", async () => {
-  const f = await fixture();
-  await prepare(f);
+  const ctx = await fixture();
+  await prepare(ctx);
   const nextRevision = crypto.randomUUID();
   await db.insert(eveDocumentRevision).values({
     content: "New published revision",
-    conversationId: f.sourceId,
-    documentId: f.sourceDocumentId,
+    conversationId: ctx.sourceId,
+    documentId: ctx.sourceDocumentId,
     id: nextRevision,
     kind: "text",
     operationId: "changed",
     ownerId: sourceOwnerId,
-    parentRevisionId: f.sourceRevisionId,
+    parentRevisionId: ctx.sourceRevisionId,
     title: "Changed",
   });
   await db
     .update(eveDocumentHead)
     .set({ revisionId: nextRevision })
-    .where(eq(eveDocumentHead.documentId, f.sourceDocumentId));
-  await expect(acceptEveCopy(ownerId, f.saved.conversation.id)).rejects.toThrow(
-    "Published document history changed"
-  );
+    .where(eq(eveDocumentHead.documentId, ctx.sourceDocumentId));
   await expect(
-    rejectUnacceptedEveCopy(ownerId, f.saved.conversation.id)
+    acceptEveCopy(ownerId, ctx.saved.conversation.id)
+  ).rejects.toThrow("Published document history changed");
+  await expect(
+    rejectUnacceptedEveCopy(ownerId, ctx.saved.conversation.id)
   ).resolves.toMatchObject({ neverDispatched: true });
 });
-/* oxlint-enable id-length */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
- * id-length (#506): test("concurrent accepted retries dispatch once and return the same binding") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-statements (#512): test("concurrent accepted retries dispatch once and return the same binding") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("concurrent accepted retries dispatch once and return the same binding") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("concurrent accepted retries dispatch once and return the same binding") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/promise-function-async (#606): test("concurrent accepted retries dispatch once and return the same binding") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("concurrent accepted retries dispatch once and return the same binding", async () => {
-  const f = await fixture();
-  await prepare(f);
-  await acceptEveCopy(ownerId, f.saved.conversation.id);
+  const ctx = await fixture();
+  await prepare(ctx);
+  await acceptEveCopy(ownerId, ctx.saved.conversation.id);
   const started = Promise.withResolvers<undefined>();
   const finish = Promise.withResolvers<string>();
   const create = vi.fn(() => {
     started.resolve(undefined);
     return finish.promise;
   });
-  const first = dispatchEveCopy(ownerId, f.saved.conversation.id, create);
+  const first = dispatchEveCopy(ownerId, ctx.saved.conversation.id, create);
   await started.promise;
   try {
     await expect(
-      dispatchEveCopy(ownerId, f.saved.conversation.id, create)
+      dispatchEveCopy(ownerId, ctx.saved.conversation.id, create)
     ).rejects.toThrow("Copy creation is still in progress");
   } finally {
     finish.resolve("concurrent-native-session");
   }
   const bound = await first;
   expect(
-    await dispatchEveCopy(ownerId, f.saved.conversation.id, create)
+    await dispatchEveCopy(ownerId, ctx.saved.conversation.id, create)
   ).toEqual(bound);
   expect(create).toHaveBeenCalledTimes(1);
 });
-/* oxlint-enable id-length, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 
-/* oxlint-disable id-length --
- * id-length (#506): test("commits an empty imported document boundary together with copied resources") uses f as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 test("commits an empty imported document boundary together with copied resources", async () => {
-  const f = await fixture();
-  await prepare(f);
+  const ctx = await fixture();
+  await prepare(ctx);
   expect(
     await db
       .select()
@@ -606,11 +612,15 @@ test("commits an empty imported document boundary together with copied resources
       .where(
         eq(
           eveImportedDocumentCheckpoint.conversationId,
-          f.saved.conversation.id
+          ctx.saved.conversation.id
         )
       )
   ).toEqual([
-    { conversationId: f.saved.conversation.id, messageIndex: 0, ownerId },
+    {
+      conversationId: ctx.saved.conversation.id,
+      messageIndex: 0,
+      ownerId,
+    },
   ]);
   expect(
     await db
@@ -619,11 +629,10 @@ test("commits an empty imported document boundary together with copied resources
       .where(
         eq(
           eveImportedDocumentCheckpointEntry.conversationId,
-          f.saved.conversation.id
+          ctx.saved.conversation.id
         )
       )
   ).toEqual([]);
 });
-/* oxlint-enable id-length */
 
 /* oxlint-disable max-lines -- #509: This eve-copy-journal.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

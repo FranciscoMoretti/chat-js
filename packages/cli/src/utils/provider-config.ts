@@ -62,15 +62,11 @@ const activeProperty = (object: ts.ObjectLiteralExpression, name: string) => {
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const readProviderId = async (
-  cwd: string,
-  kind: "gateway" | "storage"
-) => {
+const readProviderId = async (cwd: string, kind: "gateway" | "storage") => {
   const file =
     kind === "gateway"
       ? "lib/ai/gateway-model-defaults.ts"
@@ -114,9 +110,7 @@ export const readProviderId = async (
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -126,7 +120,7 @@ export const readProviderId = async (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /** Change the discriminator; preserve editable model/parameter selections for the user's new gateway. */
-export const gatewayConfigEdit = async (
+const gatewayConfigEdit = async (
   cwd: string,
   selection: GatewaySelection
 ): Promise<string> => {
@@ -214,4 +208,4 @@ export const gatewayConfigEdit = async (
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
+export { gatewayConfigEdit, readProviderId };

@@ -13,14 +13,12 @@ import { createModuleLogger } from "@/lib/logger";
 const log = createModuleLogger("mcp-queries");
 
 // Full client information includes both metadata and registration response
-export type OAuthClientInformationFull = OAuthClientMetadata &
-  OAuthClientInformation;
+type OAuthClientInformationFull = OAuthClientMetadata & OAuthClientInformation;
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // MCP Connector queries
 
-export const getMcpConnectorsByUserId = async ({
+const getMcpConnectorsByUserId = async ({
   userId,
 }: {
   userId: string;
@@ -37,11 +35,9 @@ export const getMcpConnectorsByUserId = async ({
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const getMcpConnectorById = async ({
+const getMcpConnectorById = async ({
   id,
 }: {
   id: string;
@@ -61,11 +57,9 @@ export const getMcpConnectorById = async ({
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const getMcpConnectorByNameId = async ({
+const getMcpConnectorByNameId = async ({
   userId,
   nameId,
   excludeId,
@@ -98,12 +92,10 @@ export const getMcpConnectorByNameId = async ({
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const createMcpConnector = async ({
+const createMcpConnector = async ({
   userId,
   name,
   nameId,
@@ -141,11 +133,9 @@ export const createMcpConnector = async ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const updateMcpConnector = async ({
+const updateMcpConnector = async ({
   id,
   updates,
 }: {
@@ -174,15 +164,9 @@ export const updateMcpConnector = async ({
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const deleteMcpConnector = async ({
-  id,
-}: {
-  id: string;
-}): Promise<void> => {
+const deleteMcpConnector = async ({ id }: { id: string }): Promise<void> => {
   try {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
   } catch (error) {
@@ -191,14 +175,12 @@ export const deleteMcpConnector = async ({
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // MCP OAuth Session queries
 
-export const getAuthenticatedSession = async ({
+const getAuthenticatedSession = async ({
   mcpConnectorId,
 }: {
   mcpConnectorId: string;
@@ -218,11 +200,9 @@ export const getAuthenticatedSession = async ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const getSessionByState = async ({
+const getSessionByState = async ({
   state,
 }: {
   state: string;
@@ -238,11 +218,9 @@ export const getSessionByState = async ({
   return session;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const createOAuthSession = async ({
+const createOAuthSession = async ({
   mcpConnectorId,
   serverUrl,
   state,
@@ -285,12 +263,10 @@ export const createOAuthSession = async ({
   return session;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const setOAuthCodeVerifierOnceByState = async ({
+const setOAuthCodeVerifierOnceByState = async ({
   state,
   codeVerifier,
 }: {
@@ -323,12 +299,10 @@ export const setOAuthCodeVerifierOnceByState = async ({
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const setOAuthClientInfoOnceByState = async ({
+const setOAuthClientInfoOnceByState = async ({
   state,
   clientInfo,
 }: {
@@ -358,14 +332,12 @@ export const setOAuthClientInfoOnceByState = async ({
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const updateSessionByState = async ({
+const updateSessionByState = async ({
   state,
   updates,
 }: {
@@ -406,12 +378,10 @@ export const updateSessionByState = async ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const saveTokensAndCleanup = async ({
+const saveTokensAndCleanup = async ({
   state,
   mcpConnectorId,
   tokens,
@@ -452,20 +422,14 @@ export const saveTokensAndCleanup = async ({
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Remove only an unfinished OAuth attempt, atomically preserving any token winner. */
-export const deletePendingSessionByState = async ({
-  state,
-}: {
-  state: string;
-}) => {
+const deletePendingSessionByState = async ({ state }: { state: string }) => {
   const [session] = await db
     .delete(mcpOAuthSession)
     .where(
@@ -479,11 +443,9 @@ export const deletePendingSessionByState = async ({
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const deleteSessionByState = async ({
+const deleteSessionByState = async ({
   state,
 }: {
   state: string;
@@ -491,11 +453,9 @@ export const deleteSessionByState = async ({
   await db.delete(mcpOAuthSession).where(eq(mcpOAuthSession.state, state));
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const deleteSessionsByConnectorId = async ({
+const deleteSessionsByConnectorId = async ({
   mcpConnectorId,
 }: {
   mcpConnectorId: string;
@@ -505,6 +465,24 @@ export const deleteSessionsByConnectorId = async ({
     .where(eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId));
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+export {
+  createMcpConnector,
+  createOAuthSession,
+  deleteMcpConnector,
+  deletePendingSessionByState,
+  deleteSessionByState,
+  deleteSessionsByConnectorId,
+  getAuthenticatedSession,
+  getMcpConnectorById,
+  getMcpConnectorByNameId,
+  getMcpConnectorsByUserId,
+  getSessionByState,
+  saveTokensAndCleanup,
+  setOAuthClientInfoOnceByState,
+  setOAuthCodeVerifierOnceByState,
+  updateMcpConnector,
+  updateSessionByState,
+};
+export type { OAuthClientInformationFull };

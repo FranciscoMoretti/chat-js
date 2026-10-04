@@ -19,14 +19,7 @@ import { isAbortedRequest } from "./is-aborted-request";
 import { makeQueryClient } from "./query-client";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/only-export-components --
- * import/exports-last (#522): { TRPCProvider, useTRPC, useTRPCClient } is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): { TRPCProvider, useTRPC, useTRPCClient } stays exported at its declaration so its public contract is visible beside its implementation.
- * react/only-export-components (#553): { TRPCProvider, useTRPC, useTRPCClient } is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
-export const { TRPCProvider, useTRPC, useTRPCClient } =
-  createTRPCContext<AppRouter>();
-/* oxlint-enable import/exports-last, import/group-exports, react/only-export-components */
+const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 
 /* oxlint-disable init-declarations --
  * init-declarations (#507): browserQueryClient assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -69,13 +62,10 @@ const getUrl = (): string => {
   return `${base}/api/trpc`;
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable import/group-exports, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): TRPCReactProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * node/no-process-env (#537): TRPCReactProvider reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/prefer-readonly-parameter-types (#565): TRPCReactProvider accepts props: { children: React.ReactNode }; op; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): TRPCReactProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const TRPCReactProvider = (props: {
+/* oxlint-disable node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null -- node/no-process-env (#537): TRPCReactProvider reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+typescript/prefer-readonly-parameter-types (#565): TRPCReactProvider accepts props: { children: React.ReactNode }; op; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): TRPCReactProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const TRPCReactProvider = (props: {
   children: React.ReactNode;
 }): React.JSX.Element => {
   const queryClient = getQueryClient();
@@ -120,4 +110,7 @@ export const TRPCReactProvider = (props: {
     </QueryClientProvider>
   );
 };
-/* oxlint-enable import/group-exports, node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable react/only-export-components -- #619: Consumers import TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
+export { TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient };
+/* oxlint-enable react/only-export-components */

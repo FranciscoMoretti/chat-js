@@ -8,15 +8,12 @@ import { registryItemSchema } from "shadcn/schema";
 
 import { withRegistryTransport } from "./transport";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const registryUrl =
-  "https://unpkg.com/@chat-js/registry@1/dist/r/{name}.json";
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+const registryUrl = "https://unpkg.com/@chat-js/registry@1/dist/r/{name}.json";
+
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-export const registryConfig = async (cwd: string) => {
+const registryConfig = async (cwd: string) => {
   const config = await getRegistriesConfig(cwd);
   return {
     registries: {
@@ -28,9 +25,8 @@ export const registryConfig = async (cwd: string) => {
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const itemAddress = (
+
+const itemAddress = (
   source: string,
   kind: "gateway" | "tool" | "storage"
 ): string => {
@@ -43,11 +39,10 @@ export const itemAddress = (
   }
   return source;
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-export const readItem = async (source: string, cwd: string) => {
+const readItem = async (source: string, cwd: string) => {
   const [item] = await withRegistryTransport(
     async () =>
       await getRegistryItems([source], { config: await registryConfig(cwd) })
@@ -56,12 +51,11 @@ export const readItem = async (source: string, cwd: string) => {
 };
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const listTools = async (cwd: string) => {
+const listTools = async (cwd: string) => {
   const catalog = await withRegistryTransport(
     async () =>
       await getRegistry("@chatjs", { config: await registryConfig(cwd) })
@@ -74,10 +68,9 @@ export const listTools = async (cwd: string) => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const installItems = async (
+const installItems = async (
   sources: string[],
   cwd: string,
   overwrite = false
@@ -93,4 +86,11 @@ export const installItems = async (
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
+export {
+  installItems,
+  itemAddress,
+  listTools,
+  readItem,
+  registryConfig,
+  registryUrl,
+};

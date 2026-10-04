@@ -16,20 +16,17 @@ const savedSchema = z.object({
   sessionIds: z.array(z.string()),
 });
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): verifyEveSandboxCoverage stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): verifyEveSandboxCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): verifyEveSandboxCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep verifyEveSandboxCoverage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep verifyEveSandboxCoverage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage accepts connection: Sql; input: { sessionId: string; runIds: string[]; appRoot: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): verifyEveSandboxCoverage intentionally keeps the existing falsy-value behavior of raw; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): verifyEveSandboxCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): verifyEveSandboxCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep verifyEveSandboxCoverage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep verifyEveSandboxCoverage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage accepts connection: Sql; input: { sessionId: string; runIds: string[]; appRoot: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): verifyEveSandboxCoverage intentionally keeps the existing falsy-value behavior of raw; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Internal: caller authorizes the deleting family and canonical worker root. */
-export const verifyEveSandboxCoverage = async (
+const verifyEveSandboxCoverage = async (
   connection: Sql,
   input: {
     sessionId: string;
@@ -104,17 +101,14 @@ export const verifyEveSandboxCoverage = async (
     }
   );
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): isFencedEveDescendant stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): isFencedEveDescendant's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): isFencedEveDescendant's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): isFencedEveDescendant accepts query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): isFencedEveDescendant's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): isFencedEveDescendant's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): isFencedEveDescendant accepts query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Only call after authorizing the owner of rootSessionId's deleting binding. */
-export const isFencedEveDescendant = async (
+const isFencedEveDescendant = async (
   databaseUrl: string,
   rootSessionId: string,
   sessionId: string
@@ -152,4 +146,5 @@ export const isFencedEveDescendant = async (
     await connection.end();
   }
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+export { isFencedEveDescendant, verifyEveSandboxCoverage };

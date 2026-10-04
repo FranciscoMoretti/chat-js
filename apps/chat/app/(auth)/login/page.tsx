@@ -19,13 +19,10 @@ import {
 import { cn } from "@/lib/utils";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable import/exports-last, react/only-export-components -- * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
-export const metadata: Metadata = {
+const metadata: Metadata = {
   description: "Login to your account",
   title: "Login",
 };
-/* oxlint-enable import/exports-last, react/only-export-components */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- * react-perf/jsx-no-jsx-as-prop (#555): LoginPageContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * typescript/explicit-function-return-type (#560): Keep LoginPageContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -100,6 +97,9 @@ const LoginPage = ({
 );
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/no-default-export -- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract. */
+/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
+export { metadata };
+/* oxlint-enable react/only-export-components */
+/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default LoginPage;
 /* oxlint-enable import/no-default-export */

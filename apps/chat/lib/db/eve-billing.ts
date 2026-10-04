@@ -65,20 +65,17 @@ const debitTurnUsage = async (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/group-exports (#523): recordEveUsage stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): recordEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): recordEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): recordEveUsage uses 0, 12 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): recordEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): recordEveUsage accepts input: { eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): recordEveUsage intentionally keeps the existing falsy-value behavior of settled; guest; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): recordEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): recordEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): recordEveUsage uses 0, 12 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): recordEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/prefer-readonly-parameter-types (#565): recordEveUsage accepts input: { eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): recordEveUsage intentionally keeps the existing falsy-value behavior of settled; guest; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
+unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** A replay can arrive concurrently with the hook. Both use the same durable event ID. */
-export const recordEveUsage = async (input: {
+const recordEveUsage = async (input: {
   eventId: string;
   sessionId: string;
   turnId: string;
@@ -169,16 +166,13 @@ export const recordEveUsage = async (input: {
     return recordedCost !== null && recordedCost !== undefined;
   });
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions --
- * import/group-exports (#523): getEveUsageCursor stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): getEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/strict-boolean-expressions (#610): getEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): getEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): getEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/strict-boolean-expressions (#610): getEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** This cursor is billing progress, never a second copy of the transcript. */
-export const getEveUsageCursor = async (
+const getEveUsageCursor = async (
   ownerId: string,
   sessionId: string
 ): Promise<number> => {
@@ -197,16 +191,13 @@ export const getEveUsageCursor = async (
   }
   return row.streamIndex;
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions --
- * import/group-exports (#523): advanceEveUsageCursor stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): advanceEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): advanceEveUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): advanceEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): advanceEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+no-magic-numbers (#517): advanceEveUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/strict-boolean-expressions (#610): advanceEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Advance only after durable ingestion; concurrent older readers cannot rewind it. */
-export const advanceEveUsageCursor = async (
+const advanceEveUsageCursor = async (
   ownerId: string,
   sessionId: string,
   streamIndex: number
@@ -231,19 +222,16 @@ export const advanceEveUsageCursor = async (
     throw new Error("Conversation not found.");
   }
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): withManagedUsageReconciliation stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): withManagedUsageReconciliation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): withManagedUsageReconciliation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): withManagedUsageReconciliation accepts unpricedSessions: Set<string>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation intentionally keeps the existing falsy-value behavior of owner; unpriced; error.cause; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): withManagedUsageReconciliation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): withManagedUsageReconciliation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): withManagedUsageReconciliation accepts unpricedSessions: Set<string>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation intentionally keeps the existing falsy-value behavior of owner; unpriced; error.cause; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Serialize managed fallback sweeps across deployments, without locking credit debits. */
-export const withManagedUsageReconciliation = async (
+const withManagedUsageReconciliation = async (
   ownerId: string,
   reconcile: (sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>
 ): Promise<void> => {
@@ -307,4 +295,10 @@ export const withManagedUsageReconciliation = async (
     await connection.end();
   }
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+export {
+  advanceEveUsageCursor,
+  getEveUsageCursor,
+  recordEveUsage,
+  withManagedUsageReconciliation,
+};

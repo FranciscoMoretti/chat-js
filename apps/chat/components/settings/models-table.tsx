@@ -11,7 +11,7 @@ import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
 
 import { ModelRow } from "./model-row";
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ModelsTable: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _err). */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ModelsTable: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _err). */
 
 export const ModelsTable = ({
   search,
@@ -46,7 +46,9 @@ export const ModelsTable = ({
           if (!old) {
             return old;
           }
-          const idx = old.findIndex((p) => p.modelId === newData.modelId);
+          const idx = old.findIndex(
+            (preference) => preference.modelId === newData.modelId
+          );
           if (idx !== -1) {
             return old.with(idx, { ...old[idx], enabled: newData.enabled });
           }
@@ -88,32 +90,32 @@ export const ModelsTable = ({
   const sortedModels = useMemo(() => {
     if (initialSortRef.current === null) {
       // First render: enabled models first, then the rest
-      const enabledSet = new Set(enabledModels.map((m) => m.id));
+      const enabledSet = new Set(enabledModels.map((model) => model.id));
       const sorted = [
         ...enabledModels,
-        ...allModels.filter((m) => !enabledSet.has(m.id)),
+        ...allModels.filter((model) => !enabledSet.has(model.id)),
       ];
-      initialSortRef.current = sorted.map((m) => m.id);
+      initialSortRef.current = sorted.map((model) => model.id);
       return sorted;
     }
     // Subsequent renders: maintain original order
-    const modelMap = new Map(allModels.map((m) => [m.id, m]));
+    const modelMap = new Map(allModels.map((model) => [model.id, model]));
     // oxlint-disable-next-line react/refs -- Read the stable ordering captured on first render.
     return initialSortRef.current
       .map((id) => modelMap.get(id))
-      .filter((m) => m !== undefined);
+      .filter((model) => model !== undefined);
   }, [allModels, enabledModels, initialSortRef]);
 
   const filteredModels = useMemo(() => {
     if (!search.trim()) {
       return sortedModels;
     }
-    const q = search.toLowerCase();
+    const query = search.toLowerCase();
     return sortedModels.filter(
-      (m) =>
-        m.name.toLowerCase().includes(q) ||
-        m.owned_by?.toLowerCase().includes(q) ||
-        m.id.toLowerCase().includes(q)
+      (model) =>
+        model.name.toLowerCase().includes(query) ||
+        model.owned_by?.toLowerCase().includes(query) ||
+        model.id.toLowerCase().includes(query)
     );
   }, [sortedModels, search]);
 
@@ -130,8 +132,8 @@ export const ModelsTable = ({
   if (prefsLoading) {
     return (
       <div className="animate-pulse space-y-1">
-        {[1, 2, 3, 4, 5].map((i): React.JSX.Element => (
-          <div className="bg-muted/50 h-11 rounded" key={i} />
+        {[1, 2, 3, 4, 5].map((placeholderId): React.JSX.Element => (
+          <div className="bg-muted/50 h-11 rounded" key={placeholderId} />
         ))}
       </div>
     );
@@ -163,4 +165,4 @@ export const ModelsTable = ({
     </>
   );
 };
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

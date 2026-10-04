@@ -30,12 +30,9 @@ interface DefaultModelClientProviderProps {
   defaultModel: AppModelId;
 }
 
-/* oxlint-disable import/group-exports, no-console, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): DefaultModelProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * no-console (#514): DefaultModelProvider emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/prefer-readonly-parameter-types (#565): DefaultModelProvider accepts { children, defaultModel: initialModel, }: DefaultModelClientProviderProps; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const DefaultModelProvider = ({
+/* oxlint-disable no-console, typescript/prefer-readonly-parameter-types -- no-console (#514): DefaultModelProvider emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+typescript/prefer-readonly-parameter-types (#565): DefaultModelProvider accepts { children, defaultModel: initialModel, }: DefaultModelClientProviderProps; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const DefaultModelProvider = ({
   children,
   defaultModel: initialModel,
 }: DefaultModelClientProviderProps): React.JSX.Element => {
@@ -79,16 +76,13 @@ export const DefaultModelProvider = ({
     </DefaultModelContext.Provider>
   );
 };
-/* oxlint-enable import/group-exports, no-console, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-console, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): useDefaultModel stays exported at its declaration so its public contract is visible beside its implementation.
- * no-undefined (#519): useDefaultModel uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react/only-export-components (#553): useDefaultModel is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- * typescript/explicit-function-return-type (#560): Keep useDefaultModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep useDefaultModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const useDefaultModel = () => {
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- no-undefined (#519): useDefaultModel uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ splitting exports requires an API and Fast Refresh boundary decision.
+typescript/explicit-function-return-type (#560): Keep useDefaultModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep useDefaultModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const useDefaultModel = () => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -97,16 +91,13 @@ export const useDefaultModel = () => {
   }
   return context.defaultModel;
 };
-/* oxlint-enable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): useModelChange stays exported at its declaration so its public contract is visible beside its implementation.
- * no-undefined (#519): useModelChange uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * react/only-export-components (#553): useModelChange is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- * typescript/explicit-function-return-type (#560): Keep useModelChange's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep useModelChange's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const useModelChange = () => {
+/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- no-undefined (#519): useModelChange uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ splitting exports requires an API and Fast Refresh boundary decision.
+typescript/explicit-function-return-type (#560): Keep useModelChange's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep useModelChange's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const useModelChange = () => {
   const context = useContext(DefaultModelContext);
   if (context === undefined) {
     throw new Error(
@@ -115,4 +106,7 @@ export const useModelChange = () => {
   }
   return context.changeModel;
 };
-/* oxlint-enable import/group-exports, no-undefined, react/only-export-components, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-disable react/only-export-components -- #620: Consumers import DefaultModelProvider, useDefaultModel, useModelChange from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
+export { DefaultModelProvider, useDefaultModel, useModelChange };
+/* oxlint-enable react/only-export-components */

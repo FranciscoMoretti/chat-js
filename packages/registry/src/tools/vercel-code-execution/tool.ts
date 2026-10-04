@@ -35,7 +35,6 @@ const observeCleanup = async (pending: Promise<void>): Promise<void> => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -44,7 +43,7 @@ const observeCleanup = async (pending: Promise<void>): Promise<void> => {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-export const executeCode: CodeExecutor = ({ code, title, language }, context) =>
+const executeCode: CodeExecutor = ({ code, title, language }, context) =>
   executeWithToolUsage(context, async (usage) => {
     const { abortSignal } = context;
     const sandboxOwnership = eveCodeSandboxOwnership(context);
@@ -120,10 +119,8 @@ export const executeCode: CodeExecutor = ({ code, title, language }, context) =>
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const codeExecution = withCodeSandboxCleanup(
+const codeExecution = withCodeSandboxCleanup(
   defineTool({
     description: `Sandboxed code execution for Python and JavaScript.
 
@@ -172,4 +169,4 @@ Output rules:
   }),
   codeSandboxCleanupCapability
 );
-/* oxlint-enable import/group-exports */
+export { codeExecution, executeCode };

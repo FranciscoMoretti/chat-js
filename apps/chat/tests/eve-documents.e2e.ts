@@ -8,7 +8,6 @@
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import assert from "node:assert/strict";
 
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -189,14 +188,14 @@ test("document purge requires the owned family fence, erases inherited revisions
   expect(
     await getEveDocumentRevision(owner, unrelated.id, surviving.documentId)
   ).toEqual(surviving);
-  expect(
-    (
-      await db
-        .select({ state: eveConversation.state })
-        .from(eveConversation)
-        .where(inArray(eveConversation.id, [root.id, child.id]))
-    ).map((row) => row.state)
-  ).toEqual(["deleting", "deleting"]);
+  const familyConversationStates = await db
+    .select({ state: eveConversation.state })
+    .from(eveConversation)
+    .where(inArray(eveConversation.id, [root.id, child.id]));
+  expect(familyConversationStates.map((row) => row.state)).toEqual([
+    "deleting",
+    "deleting",
+  ]);
   await expect(
     saveEveDocumentRevision({
       ...input,
@@ -303,9 +302,12 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
-  expect(
-    (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id
-  ).toBe(original.id);
+  const earlierBranchRevision = await getEveDocumentRevision(
+    owner,
+    earlier.id,
+    input.documentId
+  );
+  expect(earlierBranchRevision?.id).toBe(original.id);
 });
 /* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null */
 
@@ -337,12 +339,18 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     operationId: crypto.randomUUID(),
     turnIndex: 2,
   });
-  expect(
-    (await saveEveDocumentRevision(manualInput, undefined, [0, 1, 2])).id
-  ).toBe(manual.id);
-  expect(
-    (await getEveDocumentRevision(owner, chat.id, input.documentId))?.id
-  ).toBe(generated.id);
+  const manualReplayRevision = await saveEveDocumentRevision(
+    manualInput,
+    undefined,
+    [0, 1, 2]
+  );
+  expect(manualReplayRevision.id).toBe(manual.id);
+  const chatRevisionAfterManualEdit = await getEveDocumentRevision(
+    owner,
+    chat.id,
+    input.documentId
+  );
+  expect(chatRevisionAfterManualEdit?.id).toBe(generated.id);
   const child = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -350,9 +358,12 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_2", conversationId: chat.id } }
   );
-  expect(
-    (await getEveDocumentRevision(owner, child.id, input.documentId))?.content
-  ).toBe("Manual content");
+  const childRevisionAfterManualEdit = await getEveDocumentRevision(
+    owner,
+    child.id,
+    input.documentId
+  );
+  expect(childRevisionAfterManualEdit?.content).toBe("Manual content");
   const earlier = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -360,9 +371,12 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
-  expect(
-    (await getEveDocumentRevision(owner, earlier.id, input.documentId))?.id
-  ).toBe(original.id);
+  const earlierNestedBranchRevision = await getEveDocumentRevision(
+    owner,
+    earlier.id,
+    input.documentId
+  );
+  expect(earlierNestedBranchRevision?.id).toBe(original.id);
   await expect(
     saveEveDocumentRevision(
       {
@@ -374,9 +388,12 @@ test("manual edits backfill old native boundaries and stay isolated across neste
       [0, 1, 2, 3]
     )
   ).rejects.toThrow("checkpoint is not ready");
-  expect(
-    (await getEveDocumentRevision(owner, chat.id, input.documentId))?.id
-  ).toBe(generated.id);
+  const chatHeadAfterRejectedReplay = await getEveDocumentRevision(
+    owner,
+    chat.id,
+    input.documentId
+  );
+  expect(chatHeadAfterRejectedReplay?.id).toBe(generated.id);
   await expect(
     saveEveDocumentRevision({
       ...manualInput,
@@ -428,14 +445,18 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_1", conversationId: laterBranch.id } }
   );
-  expect(
-    (await getEveDocumentRevision(owner, laterBranch.id, input.documentId))
-      ?.content
-  ).toBe("Later content");
-  expect(
-    (await getEveDocumentRevision(owner, earlierBranch.id, input.documentId))
-      ?.id
-  ).toBe(first.id);
+  const laterBranchRevision = await getEveDocumentRevision(
+    owner,
+    laterBranch.id,
+    input.documentId
+  );
+  expect(laterBranchRevision?.content).toBe("Later content");
+  const earlierBranchRevisionAtFork = await getEveDocumentRevision(
+    owner,
+    earlierBranch.id,
+    input.documentId
+  );
+  expect(earlierBranchRevisionAtFork?.id).toBe(first.id);
   for (const beforeTurnId of ["turn_0", "turn_1"]) {
     const child = await createEveConversation(
       owner,
@@ -502,7 +523,8 @@ test("a document save cancelled while waiting for its lock never writes", async 
     await locker;
     await saving;
   }
-  expect((await saving)[0].status).toBe("rejected");
+  const cancelledSaveResults = await saving;
+  expect(cancelledSaveResults[0].status).toBe("rejected");
   expect(await getEveDocumentHistory(owner, chat.id, input.documentId)).toEqual(
     []
   );
@@ -688,10 +710,14 @@ test("concurrent replays create one revision and old replays never rewind the he
     operationId: crypto.randomUUID(),
     turnIndex: 1,
   });
-  expect((await saveEveDocumentRevision(input)).id).toBe(revisions[0].id);
-  expect(
-    (await getEveDocumentHistory(owner, chat.id, input.documentId)).at(-1)?.id
-  ).toBe(second.id);
+  const replayedRevision = await saveEveDocumentRevision(input);
+  expect(replayedRevision.id).toBe(revisions[0].id);
+  const latestDocumentHistory = await getEveDocumentHistory(
+    owner,
+    chat.id,
+    input.documentId
+  );
+  expect(latestDocumentHistory.at(-1)?.id).toBe(second.id);
   await expect(
     saveEveDocumentRevision({ ...input, content: "Changed replay" })
   ).rejects.toThrow("replay");
@@ -791,11 +817,12 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
-  expect(
-    (await getEveDocumentHistory(owner, child.id, input.documentId)).map(
-      (revision) => revision.id
-    )
-  ).toEqual([first.id]);
+  const childHistoryAtFork = await getEveDocumentHistory(
+    owner,
+    child.id,
+    input.documentId
+  );
+  expect(childHistoryAtFork.map((revision) => revision.id)).toEqual([first.id]);
   const childEdit = await saveEveDocumentRevision({
     ...input,
     content: "Child",
@@ -812,12 +839,18 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     turnIndex: 2,
   });
   await initializeEveForkDocuments(owner, child.id);
-  expect(
-    (await getEveDocumentHistory(owner, child.id, input.documentId)).at(-1)?.id
-  ).toBe(childEdit.id);
-  expect(
-    (await getEveDocumentRevision(owner, chat.id, input.documentId))?.content
-  ).toBe("Parent newest");
+  const childHistoryAfterEdit = await getEveDocumentHistory(
+    owner,
+    child.id,
+    input.documentId
+  );
+  expect(childHistoryAfterEdit.at(-1)?.id).toBe(childEdit.id);
+  const parentRevisionHistory = await getEveDocumentRevision(
+    owner,
+    chat.id,
+    input.documentId
+  );
+  expect(parentRevisionHistory?.content).toBe("Parent newest");
   const nested = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -825,11 +858,14 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
-  expect(
-    (await getEveDocumentHistory(owner, nested.id, input.documentId)).map(
-      (revision) => revision.id
-    )
-  ).toEqual([first.id]);
+  const nestedBranchHistory = await getEveDocumentHistory(
+    owner,
+    nested.id,
+    input.documentId
+  );
+  expect(nestedBranchHistory.map((revision) => revision.id)).toEqual([
+    first.id,
+  ]);
   expect(
     await db
       .select()
@@ -901,9 +937,12 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_500", conversationId: chat.id } }
   );
-  expect(
-    (await getEveDocumentHistory(owner, child.id, input.documentId)).at(-1)?.id
-  ).toBe(ids[498]);
+  const longChildHistory = await getEveDocumentHistory(
+    owner,
+    child.id,
+    input.documentId
+  );
+  expect(longChildHistory.at(-1)?.id).toBe(ids[498]);
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
   ).toBeUndefined();
@@ -951,16 +990,13 @@ test("document references protect owned files across families and revision histo
     throw new Error("Missing source family deletion");
   }
   expect(await prepareEveFamilyFilePurge(owner, deletion.rootId)).toEqual([]);
-  expect(
-    (
-      await getEveDocumentRevision(
-        owner,
-        destination.id,
-        input.documentId,
-        revision.id
-      )
-    )?.content
-  ).toBe(input.content);
+  const copiedDocumentRevision = await getEveDocumentRevision(
+    owner,
+    destination.id,
+    input.documentId,
+    revision.id
+  );
+  expect(copiedDocumentRevision?.content).toBe(input.content);
 });
 /* oxlint-enable max-statements, no-magic-numbers */
 
@@ -1017,9 +1053,12 @@ test("named idle snapshots preserve manual edits across retries without changing
     async () => crypto.randomUUID(),
     { fork }
   );
-  expect(
-    (await getEveDocumentRevision(owner, child.id, input.documentId))?.id
-  ).toBe(manual.id);
+  const namedChildRevision = await getEveDocumentRevision(
+    owner,
+    child.id,
+    input.documentId
+  );
+  expect(namedChildRevision?.id).toBe(manual.id);
   const ordinary = await createEveConversation(
     owner,
     crypto.randomUUID(),
@@ -1027,9 +1066,12 @@ test("named idle snapshots preserve manual edits across retries without changing
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_1", conversationId: chat.id } }
   );
-  expect(
-    (await getEveDocumentRevision(owner, ordinary.id, input.documentId))?.id
-  ).toBe(original.id);
+  const ordinaryChildRevision = await getEveDocumentRevision(
+    owner,
+    ordinary.id,
+    input.documentId
+  );
+  expect(ordinaryChildRevision?.id).toBe(original.id);
   await captureEveDocumentCheckpoint(owner, child.id, 1);
   const grandchild = await createEveConversation(
     owner,
@@ -1038,9 +1080,12 @@ test("named idle snapshots preserve manual edits across retries without changing
     async () => crypto.randomUUID(),
     { fork: { beforeTurnId: "turn_1", conversationId: child.id } }
   );
-  expect(
-    (await getEveDocumentRevision(owner, grandchild.id, input.documentId))?.id
-  ).toBe(manual.id);
+  const grandchildRevision = await getEveDocumentRevision(
+    owner,
+    grandchild.id,
+    input.documentId
+  );
+  expect(grandchildRevision?.id).toBe(manual.id);
   await expect(
     createEveConversation(
       owner,
@@ -1404,9 +1449,12 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   expect(
     await getEveDocumentRevision(owner, root.id, input.documentId)
   ).toBeUndefined();
-  expect(
-    (await getEveDocumentRevision(owner, child.id, input.documentId))?.id
-  ).toBe(original.id);
+  const childRevisionAfterDeletion = await getEveDocumentRevision(
+    owner,
+    child.id,
+    input.documentId
+  );
+  expect(childRevisionAfterDeletion?.id).toBe(original.id);
   await captureEveDocumentCheckpoint(owner, root.id, 2);
   const later = await createEveConversation(
     owner,
@@ -1429,9 +1477,12 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   await expect(
     removeEveDocumentFromConversation(currentDeletion, scope, signal)
   ).rejects.toThrow("Document changed");
-  expect(
-    (await getEveDocumentRevision(owner, root.id, input.documentId))?.id
-  ).toBe(replacement.id);
+  const rootRevisionAfterDeletion = await getEveDocumentRevision(
+    owner,
+    root.id,
+    input.documentId
+  );
+  expect(rootRevisionAfterDeletion?.id).toBe(replacement.id);
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 

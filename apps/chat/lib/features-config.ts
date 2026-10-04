@@ -11,10 +11,7 @@ interface FeatureConfig {
   order: number;
 }
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): AVAILABLE_FEATURES stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
+const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
   audioInput: {
     category: "input",
     description: "Supports audio input",
@@ -79,17 +76,14 @@ export const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
     order: 0,
   },
 } as const;
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): getEnabledFeatures stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/explicit-function-return-type (#560): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): getEnabledFeatures accepts feature; left; right; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): getEnabledFeatures accepts feature; left; right; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Get only enabled features
-export const getEnabledFeatures = () =>
+const getEnabledFeatures = () =>
   Object.values(AVAILABLE_FEATURES)
     .filter((feature) => feature.enabled)
     .toSorted((left, right) => left.order - right.order);
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+export { AVAILABLE_FEATURES, getEnabledFeatures };

@@ -16,19 +16,16 @@ import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): retireEveSessionForDeletion stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): retireEveSessionForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): retireEveSessionForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-statements (#512): retireEveSessionForDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): retireEveSessionForDeletion uses 30_000, 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep retireEveSessionForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep retireEveSessionForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): retireEveSessionForDeletion accepts event; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): retireEveSessionForDeletion intentionally keeps the existing falsy-value behavior of await getDeletingEveConversationForSession(ownerId, sessionId); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): retireEveSessionForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): retireEveSessionForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+max-statements (#512): retireEveSessionForDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): retireEveSessionForDeletion uses 30_000, 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/explicit-function-return-type (#560): Keep retireEveSessionForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep retireEveSessionForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): retireEveSessionForDeletion accepts event; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): retireEveSessionForDeletion intentionally keeps the existing falsy-value behavior of await getDeletingEveConversationForSession(ownerId, sessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Retirement and cost settlement precede erasure; this never marks deletion complete. */
-export const retireEveSessionForDeletion = async (
+const retireEveSessionForDeletion = async (
   ownerId: string,
   sessionId: string
 ) => {
@@ -74,18 +71,15 @@ export const retireEveSessionForDeletion = async (
   }
   return snapshot;
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): retireEveFamilyForDeletion stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): retireEveFamilyForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): retireEveFamilyForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep retireEveFamilyForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep retireEveFamilyForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): retireEveFamilyForDeletion intentionally keeps the existing falsy-value behavior of databaseUrl; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): retireEveFamilyForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): retireEveFamilyForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep retireEveFamilyForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep retireEveFamilyForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/strict-boolean-expressions (#610): retireEveFamilyForDeletion intentionally keeps the existing falsy-value behavior of databaseUrl; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Revoke family access and settle every bound member before resource erasure starts. */
-export const retireEveFamilyForDeletion = async (
+const retireEveFamilyForDeletion = async (
   ownerId: string,
   conversationId: string
 ) => {
@@ -115,4 +109,5 @@ export const retireEveFamilyForDeletion = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return family;
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+export { retireEveFamilyForDeletion, retireEveSessionForDeletion };

@@ -1,27 +1,22 @@
 import type { MessageStreamEvent } from "eve/client";
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): MAX_SEARCH_QUERY_LENGTH stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const MAX_SEARCH_QUERY_LENGTH = 255;
-/* oxlint-enable import/group-exports */
+const MAX_SEARCH_QUERY_LENGTH = 255;
 
-export interface EveSearchText {
+interface EveSearchText {
   key: string;
   text: string;
 }
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveSeedSearchText stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): eveSeedSearchText accepts messages: readonly { role: string; parts: readonly { type: string; text?: string }[];; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
 /** Index display text only: never reasoning, tool payloads, files, or auth metadata. */
-export const eveSeedSearchText = (
+const eveSeedSearchText = (
   messages: readonly {
-    role: string;
-    parts: readonly { type: string; text?: string }[];
+    readonly role: string;
+    readonly parts: readonly {
+      readonly type: string;
+      readonly text?: string;
+    }[];
   }[]
 ): EveSearchText[] =>
   messages.flatMap((message, index) => {
@@ -34,19 +29,14 @@ export const eveSeedSearchText = (
       ? [{ key: `seed:${index}`, text }]
       : [];
   });
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): eveEventSearchText stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): eveEventSearchText intentionally keeps the existing falsy-value behavior of event.data.message?.trim(); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): eveEventSearchText intentionally keeps the existing falsy-value behavior of event.data.message?.trim(); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** Immutable event identities make live delivery, restored prefixes and backfills idempotent. */
-export const eveEventSearchText = (
-  event: MessageStreamEvent
-): EveSearchText[] => {
+const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
   if (event.type === "history.seeded") {
     return eveSeedSearchText(event.data.messages);
   }
@@ -67,4 +57,6 @@ export const eveEventSearchText = (
   }
   return [];
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+export { eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH };
+export type { EveSearchText };
