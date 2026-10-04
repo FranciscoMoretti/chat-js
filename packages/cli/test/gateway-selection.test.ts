@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import {
   mkdir,
   mkdtemp,
@@ -8,16 +7,9 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import pathModule from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { fileURLToPath } from "node:url";
-/* oxlint-enable import/no-nodejs-modules */
 
 import gatewayPackage from "@chat-js/gateways/package.json";
 

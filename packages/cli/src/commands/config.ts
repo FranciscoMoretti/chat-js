@@ -1,12 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { spawn } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { once } from "node:events";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { Command } from "commander";
 

@@ -20,7 +20,7 @@ const countMatches = (value: string, pattern: RegExp): number =>
 /* oxlint-disable no-magic-numbers -- countStandaloneMarkers: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1). */
 
 const countStandaloneMarkers = (value: string, marker: string): number => {
-  // oxlint-disable-next-line typescript/no-misused-spread -- #586: This transformation intentionally iterates Unicode code points; changing to graphemes or UTF-16 units would alter its existing text contract.
+  // oxlint-disable-next-line typescript/no-misused-spread -- #586: The string iterator supplies code-point entries for neighboring ASCII marker checks; Array.from uses the same iterator but conflicts with prefer-spread.
   const characters = [...value];
   let count = 0;
 

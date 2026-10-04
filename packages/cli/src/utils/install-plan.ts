@@ -1,7 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { createHash, randomUUID } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import {
   mkdir,
   readFile,
@@ -10,10 +7,7 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { z } from "zod";
 

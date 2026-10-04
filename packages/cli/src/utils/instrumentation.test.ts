@@ -1,10 +1,6 @@
 import { expect, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { readFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { runInNewContext } from "node:vm";
-/* oxlint-enable import/no-nodejs-modules */
 
 import ts from "typescript";
 

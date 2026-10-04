@@ -1,6 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { writeFileSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { config } from "@/lib/config";
 

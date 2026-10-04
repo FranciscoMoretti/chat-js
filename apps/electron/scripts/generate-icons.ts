@@ -1,12 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:url import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { fileURLToPath } from "node:url";
-/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable import/no-namespace -- the png2icons import: The library namespace is the existing primitive/type API; replacing it requires changing its consumers and type references. */
 import * as png2icons from "png2icons";

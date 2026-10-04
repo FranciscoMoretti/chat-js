@@ -1,21 +1,9 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { execFileSync } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:crypto import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { createHash } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:os import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { homedir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import nodePath from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:timers/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { setTimeout as delay } from "node:timers/promises";
-/* oxlint-enable import/no-nodejs-modules */
 
 if (process.platform !== "darwin") {
   throw new Error("This local service uses macOS launchd.");

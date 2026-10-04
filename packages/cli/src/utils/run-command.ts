@@ -1,6 +1,4 @@
-/* oxlint-disable import/no-nodejs-modules -- The published CLI targets Node; subprocess creation uses its child_process API rather than a Bun-only process API. */
 import { spawn } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
 
 const EXIT_SUCCESS = 0;
 

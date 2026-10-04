@@ -1,12 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { spawnSync } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { existsSync, readFileSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerDMG } from "@electron-forge/maker-dmg";

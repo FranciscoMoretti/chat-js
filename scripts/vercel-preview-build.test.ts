@@ -1,7 +1,5 @@
 import { expect, it } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- the node:timers/promises import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { setTimeout as delay } from "node:timers/promises";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { runMaintainerBuild } from "./vercel-preview-build";
 

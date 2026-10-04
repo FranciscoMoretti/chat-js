@@ -3,16 +3,20 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { GET } from "./route";
 
-const mocks = vi.hoisted(() => ({
-  cleanupEve: vi.fn(),
-  cleanupGuests: vi.fn(),
-  env: {
-    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- #591: This controlled fixture models the mocked boundary explicitly; changing its widening or coercion requires preserving the exercised failure scenario.
-    CRON_SECRET: "fixture-secret" as string | undefined,
-
+const mocks = vi.hoisted(() => {
+  const env: {
+    CRON_SECRET: string | undefined;
+    WORKFLOW_POSTGRES_URL: string;
+  } = {
+    CRON_SECRET: "fixture-secret",
     WORKFLOW_POSTGRES_URL: "postgresql://localhost/eve-test",
-  },
-}));
+  };
+  return {
+    cleanupEve: vi.fn(),
+    cleanupGuests: vi.fn(),
+    env,
+  };
+});
 vi.mock("@/lib/env", () => ({
   env: mocks.env,
 }));
