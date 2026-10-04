@@ -42,7 +42,7 @@
     "features/vercel-speed-insights/chatjs.json": "14999981e792d77828d643c0ef69dbbfb4fbca2ffd9f9f168f6a4a4493352e3c",
     "features/vercel-speed-insights/component.tsx": "b9690cf41f9d9387f66e249aad05aea6a58131176c0bb9ce62f86284871c779d",
     "lib/ai/gateway-model-defaults.ts": "dd7defb096e7cce748ee3303a7fc4f339061ced71af7269db158c6322c924901",
-    "lib/ai/gateway.ts": "946d57f217486db241ac80350cb4ebda870b7d095bce3bd2f5c21cb612ce7289",
+    "lib/ai/gateway.ts": "4074df68406bfd51d6337f47b4e9c727798e0f615c3b3fa8b6f1ca005065bbaa",
     "lib/ai/mcp/cache.ts": "2c6bac723726293c9d587568b2a7ae09d800e16fd8e6ec3704b9de981ff64cb5",
     "lib/ai/mcp/mcp-client-manager.ts": "9b4aa2e716c8e8fa3814bd256b32e5e24e61947509fd87a6cfc09a7239e01d74",
     "lib/ai/mcp/mcp-client.ts": "d9a2ed2c8d980621f5f3254300cf2885ffe261741877c5f095a8a246153f994c",

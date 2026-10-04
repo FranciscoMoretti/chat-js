@@ -22,6 +22,29 @@ interface RunOptions {
   stateBeforeDelete?: string;
   openBeforeDelete?: boolean;
 }
+const expectRejection = async (
+  operation: Readonly<Promise<unknown>>,
+  messageFragment?: string
+): Promise<void> => {
+  try {
+    await operation;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        typeof messageFragment === "string" &&
+        !error.message.includes(messageFragment)
+      ) {
+        throw new Error(`Unexpected rejection: ${error.message}`, {
+          cause: error,
+        });
+      }
+      return;
+    }
+    throw new Error(`Unexpected rejection: ${String(error)}`, { cause: error });
+  }
+  throw new Error("Expected the operation to reject.");
+};
+
 /* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
 /* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -146,24 +169,24 @@ describe("preview database cleanup", (): void => {
     expect(result).toContain("Deleted");
   });
   it("checks uniqueness across all pages and rejects looping pagination", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(
+    await expectRejection(
       run({
         pages: [
           { branches: [preview], pagination: { next: "page2" } },
           { branches: [preview], pagination: { next: "" } },
         ],
-      })
-    ).rejects.toThrow("ambiguous");
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(
+      }),
+      "ambiguous"
+    );
+    await expectRejection(
       run({
         pages: [
           { branches: [preview], pagination: { next: "page2" } },
           { branches: [], pagination: { next: "page2" } },
         ],
-      })
-    ).rejects.toThrow("repeated");
+      }),
+      "repeated"
+    );
   });
   it("treats a missing branch or concurrent deletion as successful cleanup", async (): Promise<void> => {
     const absent = await run({ branches: [] });
@@ -180,19 +203,12 @@ describe("preview database cleanup", (): void => {
   ])(
     "refuses protected or unrelated branches %j",
     async (branch): Promise<void> => {
-      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-      await expect(run({ branches: [branch] })).rejects.toThrow("Refusing");
+      await expectRejection(run({ branches: [branch] }), "Refusing");
     }
   );
   it("rejects ambiguous branch names and reports API failure", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(run({ branches: [preview, preview] })).rejects.toThrow(
-      "ambiguous"
-    );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(run({ deleteStatus: 403 })).rejects.toThrow(
-      "deletion failed (403)"
-    );
+    await expectRejection(run({ branches: [preview, preview] }), "ambiguous");
+    await expectRejection(run({ deleteStatus: 403 }), "deletion failed (403)");
   });
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

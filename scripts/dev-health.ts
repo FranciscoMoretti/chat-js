@@ -1,6 +1,7 @@
-/* oxlint-disable eslint/no-magic-numbers -- checkHealth: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
+const HEALTH_CHECK_TIMEOUT_MS = 6000;
+
 const checkHealth = async (origin: string): Promise<void> => {
-  const signal = AbortSignal.timeout(6000);
+  const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
   await Promise.all([
     (async (): Promise<void> => {
       const response = await fetch(new URL("/api/health", origin), {
@@ -38,7 +39,6 @@ const checkHealth = async (origin: string): Promise<void> => {
     })(),
   ]);
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable node/no-process-env -- dev-health.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 /* oxlint-disable eslint/no-console -- dev-health.ts: This command or desktop boundary reports startup, progress and failures to its operator. */

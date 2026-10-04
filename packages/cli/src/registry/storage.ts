@@ -1,7 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- Storage descriptors are validated by the canonical registry metadata schema; the CLI Bun build bundles this sibling-package source, whose package exposes only generated registry JSON subpaths. */
 import { storageDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- StorageSelection preserves the descriptor type inferred from the canonical registry schema; the registry package exports generated JSON only, with no metadata type subpath. */
 import type { StorageDefinition } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 import { itemAddress, readItem } from "./shadcn";
@@ -12,8 +12,6 @@ export interface StorageSelection {
   options: Record<string, unknown>;
 }
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const resolveStorage = async (
   source: string,
   cwd = process.cwd()
@@ -25,7 +23,10 @@ export const resolveStorage = async (
   }
   const definition = storageDefinitionSchema.parse(item.meta?.chatjs);
   if (
-    !item.files?.some((file) => file.target === "~/lib/storage-provider.ts")
+    item.files?.some(
+      (file: { readonly target?: string }) =>
+        file.target === "~/lib/storage-provider.ts"
+    ) !== true
   ) {
     throw new Error(
       "Storage must install lib/storage-provider.ts exporting createStorageAdapter."
@@ -33,5 +34,3 @@ export const resolveStorage = async (
   }
   return { definition, options: {}, source: address };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/strict-boolean-expressions */

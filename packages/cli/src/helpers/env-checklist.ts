@@ -1,7 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { BUILT_IN_TOOL_KEYS, CORE_FEATURE_KEYS } from "../types";
+/* oxlint-disable import/no-relative-parent-imports -- The CLI shares auth/tool key constants from its sibling types module; the published Bun bundle includes this import, and the existing @ alias points to apps/chat. */
+import {
+  AUTH_PROVIDERS,
+  BUILT_IN_TOOL_KEYS,
+  CORE_FEATURE_KEYS,
+} from "../types";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- EnvChecklistInput uses the closed key unions declared in the CLI types module; the application @ alias cannot resolve this package-local type boundary. */
 import type {
   AuthProvider,
   BuiltInToolKey,
@@ -18,8 +22,8 @@ import {
 } from "./config-requirements";
 
 interface EnvRequirementLike {
-  description?: string;
-  options: string[][];
+  readonly description?: string;
+  readonly options: readonly (readonly string[])[];
 }
 
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
@@ -34,63 +38,59 @@ type EnvVarEntry = {
 /* oxlint-enable typescript/consistent-type-definitions */
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
+const singleAlternative = 1;
 
 interface EnvChecklistInput {
-  gateway: Gateway;
-  gatewayRequirements?: EnvRequirementLike[];
-  coreFeatures: Record<CoreFeatureKey, boolean>;
-  builtInTools: Record<BuiltInToolKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
-  installableToolEnvRequirements?: EnvRequirementLike[];
+  readonly gateway: Gateway;
+  readonly gatewayRequirements?: readonly EnvRequirementLike[];
+  readonly coreFeatures: Readonly<Record<CoreFeatureKey, boolean>>;
+  readonly builtInTools: Readonly<Record<BuiltInToolKey, boolean>>;
+  readonly auth: Readonly<Record<AuthProvider, boolean>>;
+  readonly installableToolEnvRequirements?: readonly EnvRequirementLike[];
 }
 
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
  * Expand an EnvRequirement into one or more EnvVarEntries, pulling
  * descriptions from the Zod schema.
+ * @param requirement The alternatives to expand without modifying their catalog.
+ * @returns One checklist entry per credential alternative.
  */
 const requirementToEntries = (
   requirement: EnvRequirementLike
 ): EnvVarEntry[] => {
   const oneOfGroup =
-    requirement.options.length > 1
+    requirement.options.length > singleAlternative
       ? requirement.options
           .map((group) => group.map(String).join("+"))
           .join("|")
-      : undefined;
+      : // oxlint-disable-next-line eslint/no-undefined -- Preserve the own oneOfGroup property as undefined for a single credential alternative.
+        undefined;
 
   return requirement.options.map((group) => {
-    const description = group
+    let description = group
       .map((variableName) => envDescriptions.get(variableName) ?? variableName)
       .join(", ");
 
+    if (description === "") {
+      const fallbackDescription = requirement.description;
+      description =
+        typeof fallbackDescription === "string" && fallbackDescription !== ""
+          ? fallbackDescription
+          : "Required environment variable";
+    }
     return {
-      description:
-        description ||
-        // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-        requirement.description ||
-        "Required environment variable",
+      description,
       oneOfGroup,
       vars: group.map(String).join(" + "),
     };
   });
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable jsdoc/require-returns */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const addRequirementEntries = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This caller-owned output array is appended to; copying would lose entries collected for subsequent feature requirements.
   entries: EnvVarEntry[],
   requirement: EnvRequirementLike | undefined,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This caller-owned set records deduplication across successive requirements; a copy would allow duplicate checklist entries.
   seen: Set<string>
 ): void => {
   if (!requirement) {
@@ -99,7 +99,7 @@ const addRequirementEntries = (
   const dedupeKey = JSON.stringify(
     requirement.options
       .map((group) => group.toSorted())
-      .toSorted((leftEntry, rightEntry) =>
+      .toSorted((leftEntry: readonly string[], rightEntry: readonly string[]) =>
         JSON.stringify(leftEntry).localeCompare(JSON.stringify(rightEntry))
       )
   );
@@ -110,11 +110,9 @@ const addRequirementEntries = (
   seen.add(dedupeKey);
   entries.push(...requirementToEntries(requirement));
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const featureItems: EnvVarEntry[] = [];
   const seen = new Set<string>();
@@ -140,13 +138,7 @@ const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
       continue;
     }
 
-    addRequirementEntries(
-      featureItems,
-      builtInToolEnvRequirements[
-        tool as keyof typeof builtInToolEnvRequirements
-      ],
-      seen
-    );
+    addRequirementEntries(featureItems, builtInToolEnvRequirements[tool], seen);
   }
 
   for (const requirement of input.installableToolEnvRequirements ?? []) {
@@ -155,16 +147,19 @@ const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
 
   return featureItems;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const authItems: EnvVarEntry[] = [];
 
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Keys come from the closed auth-provider requirements catalog; this cast retains that mapped key union.
-  for (const provider of Object.keys(authEnvRequirements) as AuthProvider[]) {
+  // Filtering preserves Object.keys insertion order while narrowing the closed
+  // provider contract without assuming Object.keys returns that union.
+  const providers = Object.keys(authEnvRequirements).filter(
+    (provider): provider is AuthProvider =>
+      AUTH_PROVIDERS.some((candidate) => candidate === provider)
+  );
+  for (const provider of providers) {
     if (input.auth[provider]) {
       authItems.push(...requirementToEntries(authEnvRequirements[provider]));
     }
@@ -172,9 +167,7 @@ const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
 
   return authItems;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
   const entries: EnvVarEntry[] = [
     {
@@ -196,6 +189,5 @@ const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
     ...collectAuthEntries(input),
   ];
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { collectEnvChecklist };
 export type { EnvVarEntry };

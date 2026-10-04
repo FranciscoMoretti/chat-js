@@ -17,6 +17,21 @@ const preview = {
 const lockQuery =
   "SELECT pg_advisory_lock(hashtextextended('chatjs-preview-migrations', 0))";
 
+const expectRejection = async (
+  operation: Readonly<Promise<unknown>>,
+  messageFragment: string
+): Promise<void> => {
+  try {
+    await operation;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes(messageFragment)) {
+      return;
+    }
+    throw new Error(`Unexpected rejection: ${String(error)}`, { cause: error });
+  }
+  throw new Error("Expected the operation to reject.");
+};
+
 /* oxlint-disable eslint/max-params -- harness: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- harness: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- harness: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
@@ -105,13 +120,13 @@ it.each(["production", "development"])(
 
 it("rejects invalid configuration before opening a connection or invoking a command", async (): Promise<void> => {
   const test = harness();
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-  await expect(
+  await expectRejection(
     runMaintainerBuild(
       { ...preview, CHATJS_PREVIEW_PARENT_HOST: "EP-CHILD.EU.NEON.TECH" },
       test.operations
-    )
-  ).rejects.toThrow("during validation");
+    ),
+    "during validation"
+  );
   expect(test.events).toEqual([]);
 });
 
@@ -176,8 +191,8 @@ it.each([
   "only includes safe error codes: %s",
   async (code, suffix): Promise<void> => {
     const test = harness("SELECT 1", false, code);
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(runMaintainerBuild(preview, test.operations)).rejects.toThrow(
+    await expectRejection(
+      runMaintainerBuild(preview, test.operations),
       `Maintainer build failed during connection${suffix}.`
     );
   }

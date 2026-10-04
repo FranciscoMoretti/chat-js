@@ -170,7 +170,6 @@ const litellmDefaults = {
   },
 } satisfies GatewayModelDefaults<Gateways["litellm"]>;
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 // Record ensures a compile error if a new gateway is added but not here.
 export const GATEWAY_MODEL_DEFAULTS = {
   litellm: litellmDefaults,
@@ -178,5 +177,6 @@ export const GATEWAY_MODEL_DEFAULTS = {
   "openai-compatible": openaiCompatibleDefaults,
   openrouter: openrouterDefaults,
   vercel: vercelDefaults,
-} satisfies { [G in GatewayType]: GatewayModelDefaults<Gateways[G]> };
-/* oxlint-enable eslint/id-length */
+} satisfies {
+  [Gateway in GatewayType]: GatewayModelDefaults<Gateways[Gateway]>;
+};

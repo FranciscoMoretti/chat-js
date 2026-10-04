@@ -3,14 +3,14 @@ import { afterEach, expect, test } from "bun:test";
 import { checkHealth } from "./dev-health";
 
 const servers: ReturnType<typeof Bun.serve>[] = [];
-/* oxlint-disable eslint/no-magic-numbers -- dev-health.test.ts: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
+const OS_ASSIGNED_PORT = 0;
+const FIRST_SERVER_INDEX = 0;
 afterEach(async (): Promise<void> => {
-  for (const server of servers.splice(0)) {
+  for (const server of servers.splice(FIRST_SERVER_INDEX)) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Finish stopping each test server before the next test starts.
     await server.stop(true);
   }
 });
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- fixture: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 const fixture = (
   auth: () => Response,
@@ -23,7 +23,7 @@ const fixture = (
         : auth();
     },
     hostname: "127.0.0.1",
-    port: 0,
+    port: OS_ASSIGNED_PORT,
   });
   servers.push(server);
   return server.url.origin;

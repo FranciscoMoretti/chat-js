@@ -9,6 +9,8 @@ import {
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
 
+const EMPTY_MESSAGE_LENGTH = 0;
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BuildOperations: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 interface BuildOperations {
   openDatabase: (url: string) => {
@@ -23,13 +25,12 @@ interface BuildOperations {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/no-undefined -- formatBuildFailure: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable typescript/strict-boolean-expressions -- formatBuildFailure: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const formatBuildFailure = (phase: string, error: unknown): string => {
   if (phase === "validation" && error instanceof PreviewConfigurationError) {
     return `Maintainer build failed during validation: ${error.message}`;
   }
   const code =
-    error && typeof error === "object" && "code" in error
+    error !== null && typeof error === "object" && "code" in error
       ? error.code
       : undefined;
   // Only known code formats are safe to log; provider messages may contain URLs.
@@ -40,13 +41,11 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
     );
   return `Maintainer build failed during ${phase}${safeCode ? ` (${code})` : ""}.`;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/max-statements -- runMaintainerBuild: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/init-declarations -- runMaintainerBuild: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- runMaintainerBuild: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-/* oxlint-disable typescript/strict-boolean-expressions -- runMaintainerBuild: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const runMaintainerBuild = async (
   source: NodeJS.ProcessEnv,
   operations: BuildOperations
@@ -83,7 +82,10 @@ const runMaintainerBuild = async (
         }
       }
     }
-    if (!failureMessage) {
+    if (
+      typeof failureMessage !== "string" ||
+      failureMessage.length === EMPTY_MESSAGE_LENGTH
+    ) {
       phase = "build";
       await operations.run("build", env);
     }
@@ -91,11 +93,13 @@ const runMaintainerBuild = async (
     // Never attach provider errors as a cause: they can contain credentials.
     failureMessage = formatBuildFailure(phase, error);
   }
-  if (failureMessage) {
+  if (
+    typeof failureMessage === "string" &&
+    failureMessage.length > EMPTY_MESSAGE_LENGTH
+  ) {
     throw new Error(failureMessage);
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-statements */

@@ -27,14 +27,16 @@ interface OpenAIModelResponse {
   owned_by: string;
 }
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
-  context_window: 0,
-  created: model.created ?? 0,
+const UNKNOWN_MODEL_LIMIT = 0;
+const UNKNOWN_MODEL_TIMESTAMP = 0;
+const toAiGatewayModel = (
+  model: Readonly<OpenAIModelResponse>
+): AiGatewayModel => ({
+  context_window: UNKNOWN_MODEL_LIMIT,
+  created: model.created ?? UNKNOWN_MODEL_TIMESTAMP,
   description: "",
   id: model.id,
-  max_tokens: 0,
+  max_tokens: UNKNOWN_MODEL_LIMIT,
   name: model.id,
   object: "model",
   owned_by:
@@ -42,13 +44,9 @@ const toAiGatewayModel = (model: OpenAIModelResponse): AiGatewayModel => ({
   pricing: {},
   type: "language",
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 class OpenAIGateway
   extends GatewayRuntime
   implements
@@ -56,7 +54,7 @@ class OpenAIGateway
 {
   public readonly type = "openai" as const;
 
-  private getProvider() {
+  private getProvider(): ReturnType<typeof createOpenAI> {
     const apiKey = this.getApiKey();
     if (!(typeof apiKey === "string" && apiKey !== "")) {
       throw new Error("OPENAI_API_KEY is not configured");
@@ -114,7 +112,8 @@ class OpenAIGateway
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
       const body = await response.json();
       // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ?? []) as OpenAIModelResponse[];
+      const models = (body.data ??
+        []) as readonly Readonly<OpenAIModelResponse>[];
       const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(
@@ -131,8 +130,6 @@ class OpenAIGateway
     }
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 export { OpenAIGateway as Gateway, OpenAIGateway };

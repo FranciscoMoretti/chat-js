@@ -1,40 +1,65 @@
 import type { GatewayProvider } from "./gateway-provider.ts";
 
+const MODEL_ID_PARAMETER_INDEX = 0;
+
 type AnyGatewayProvider = GatewayProvider<string, never, never, never>;
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 interface VideoDefault<TGateway extends AnyGatewayProvider> {
-  default?: Parameters<TGateway["createVideoModel"]>[0];
+  default?: Parameters<
+    TGateway["createVideoModel"]
+  >[typeof MODEL_ID_PARAMETER_INDEX];
 }
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 interface ImageDefault<TGateway extends AnyGatewayProvider> {
-  default?: Parameters<TGateway["createImageModel"]>[0];
+  default?: Parameters<
+    TGateway["createImageModel"]
+  >[typeof MODEL_ID_PARAMETER_INDEX];
 }
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 interface GatewayModelDefaults<TGateway extends AnyGatewayProvider> {
-  anonymousModels: Parameters<TGateway["createLanguageModel"]>[0][];
-  curatedDefaults: Parameters<TGateway["createLanguageModel"]>[0][];
-  disabledModels: Parameters<TGateway["createLanguageModel"]>[0][];
+  anonymousModels: Parameters<
+    TGateway["createLanguageModel"]
+  >[typeof MODEL_ID_PARAMETER_INDEX][];
+  curatedDefaults: Parameters<
+    TGateway["createLanguageModel"]
+  >[typeof MODEL_ID_PARAMETER_INDEX][];
+  disabledModels: Parameters<
+    TGateway["createLanguageModel"]
+  >[typeof MODEL_ID_PARAMETER_INDEX][];
   providerOrder: string[];
   tools: {
     followupSuggestions: {
       enabled: boolean;
-      default: Parameters<TGateway["createLanguageModel"]>[0];
+      default: Parameters<
+        TGateway["createLanguageModel"]
+      >[typeof MODEL_ID_PARAMETER_INDEX];
     };
-    text: { polish: Parameters<TGateway["createLanguageModel"]>[0] };
+    text: {
+      polish: Parameters<
+        TGateway["createLanguageModel"]
+      >[typeof MODEL_ID_PARAMETER_INDEX];
+    };
     sheet: {
-      format: Parameters<TGateway["createLanguageModel"]>[0];
-      analyze: Parameters<TGateway["createLanguageModel"]>[0];
+      format: Parameters<
+        TGateway["createLanguageModel"]
+      >[typeof MODEL_ID_PARAMETER_INDEX];
+      analyze: Parameters<
+        TGateway["createLanguageModel"]
+      >[typeof MODEL_ID_PARAMETER_INDEX];
     };
-    code: { edits: Parameters<TGateway["createLanguageModel"]>[0] };
+    code: {
+      edits: Parameters<
+        TGateway["createLanguageModel"]
+      >[typeof MODEL_ID_PARAMETER_INDEX];
+    };
     image: ImageDefault<TGateway>;
     video: VideoDefault<TGateway>;
     deepResearch: {
-      defaultModel: Parameters<TGateway["createLanguageModel"]>[0];
-      finalReportModel: Parameters<TGateway["createLanguageModel"]>[0];
+      defaultModel: Parameters<
+        TGateway["createLanguageModel"]
+      >[typeof MODEL_ID_PARAMETER_INDEX];
+      finalReportModel: Parameters<
+        TGateway["createLanguageModel"]
+      >[typeof MODEL_ID_PARAMETER_INDEX];
       allowClarification: boolean;
       maxResearcherIterations: number;
       maxConcurrentResearchUnits: number;
@@ -42,12 +67,19 @@ interface GatewayModelDefaults<TGateway extends AnyGatewayProvider> {
     };
   };
   workflows: {
-    chat: Parameters<TGateway["createLanguageModel"]>[0];
-    title: Parameters<TGateway["createLanguageModel"]>[0];
-    pdf: Parameters<TGateway["createLanguageModel"]>[0];
-    chatImageCompatible: Parameters<TGateway["createLanguageModel"]>[0];
+    chat: Parameters<
+      TGateway["createLanguageModel"]
+    >[typeof MODEL_ID_PARAMETER_INDEX];
+    title: Parameters<
+      TGateway["createLanguageModel"]
+    >[typeof MODEL_ID_PARAMETER_INDEX];
+    pdf: Parameters<
+      TGateway["createLanguageModel"]
+    >[typeof MODEL_ID_PARAMETER_INDEX];
+    chatImageCompatible: Parameters<
+      TGateway["createLanguageModel"]
+    >[typeof MODEL_ID_PARAMETER_INDEX];
   };
 }
-/* oxlint-enable eslint/no-magic-numbers */
 
 export type { GatewayModelDefaults };

@@ -16,25 +16,21 @@ import type { StrictLiterals } from "@chat-js/gateways/provider-types";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type VercelImageModelId = Parameters<(typeof gateway)["imageModel"]>[0];
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type VercelVideoModelId = Parameters<(typeof gateway)["videoModel"]>[0];
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const MODEL_ID_PARAMETER_INDEX = 0;
+type VercelImageModelId = Parameters<
+  (typeof gateway)["imageModel"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
+type VercelVideoModelId = Parameters<
+  (typeof gateway)["videoModel"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
 type VercelLanguageModelId = StrictLiterals<
-  Parameters<(typeof gateway)["languageModel"]>[0]
+  Parameters<(typeof gateway)["languageModel"]>[typeof MODEL_ID_PARAMETER_INDEX]
 >;
-/* oxlint-enable eslint/no-magic-numbers */
+
+const EMPTY_MODEL_TYPE_COUNT = 0;
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 class VercelGateway
   extends GatewayRuntime
   implements
@@ -51,26 +47,26 @@ class VercelGateway
     return this.getProvider()(modelId);
   }
 
-  public createImageModel(modelId: VercelImageModelId): ImageModel {
+  public createImageModel(modelId: string): ImageModel {
     return this.getProvider().imageModel(modelId);
   }
 
-  public createVideoModel(
-    modelId: VercelVideoModelId
-  ): Experimental_VideoModelV4 {
+  public createVideoModel(modelId: string): Experimental_VideoModelV4 {
     return this.getProvider().videoModel(modelId);
   }
 
   private provider?: ReturnType<typeof createGateway>;
 
-  private getProvider() {
+  private getProvider(): ReturnType<typeof createGateway> {
     this.provider ??= createGateway({ apiKey: this.env.AI_GATEWAY_API_KEY });
     return this.provider;
   }
 
   private getApiKey(): string | undefined {
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- Empty strings intentionally select the fallback value here; nullish coalescing would preserve an unusable empty value.
-    return this.env.AI_GATEWAY_API_KEY || this.env.VERCEL_OIDC_TOKEN;
+    const apiKey = this.env.AI_GATEWAY_API_KEY;
+    return typeof apiKey === "string" && apiKey !== ""
+      ? apiKey
+      : this.env.VERCEL_OIDC_TOKEN;
   }
 
   public async fetchModels(): Promise<AiGatewayModel[]> {
@@ -107,15 +103,15 @@ class VercelGateway
 
       for (const candidate of body.data) {
         const { type } = aiGatewayModelDiscriminatorSchema.parse(candidate);
-        if (!isAiGatewayModelType(type)) {
+        if (isAiGatewayModelType(type)) {
+          const model = aiGatewayModelSchema.parse(candidate);
+          models.push({ ...model, type });
+        } else {
           unsupportedTypes.add(type);
-          continue;
         }
-        const model = aiGatewayModelSchema.parse(candidate);
-        models.push({ ...model, type });
       }
 
-      if (unsupportedTypes.size > 0) {
+      if (unsupportedTypes.size > EMPTY_MODEL_TYPE_COUNT) {
         this.log.warn(
           {
             modelCount: body.data.length,
@@ -140,11 +136,6 @@ class VercelGateway
     }
   }
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 export { VercelGateway as Gateway, VercelGateway };

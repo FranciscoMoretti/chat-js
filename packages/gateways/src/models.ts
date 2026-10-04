@@ -33,13 +33,13 @@ const aiGatewayModelTypeInputSchema = z.union([
   z.string(),
 ]);
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const MIN_PRICING_TIER_BOUND = 0;
+
 const pricingTierSchema = z.object({
   cost: z.string(),
   max: z.number().optional(),
-  min: z.number().default(0),
+  min: z.number().default(MIN_PRICING_TIER_BOUND),
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
 // Single model schema
 const aiGatewayModelSchema = z.object({

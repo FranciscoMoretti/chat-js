@@ -15,37 +15,33 @@ interface OpenAICompatibleModelResponse {
   owned_by: string;
 }
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const UNKNOWN_MODEL_LIMIT = 0;
+const UNKNOWN_MODEL_TIMESTAMP = 0;
 const toAiGatewayModel = (
-  model: OpenAICompatibleModelResponse
+  model: Readonly<OpenAICompatibleModelResponse>
 ): AiGatewayModel => ({
-  context_window: 0,
-  created: model.created ?? 0,
+  context_window: UNKNOWN_MODEL_LIMIT,
+  created: model.created ?? UNKNOWN_MODEL_TIMESTAMP,
   description: "",
   id: model.id,
-  max_tokens: 0,
+  max_tokens: UNKNOWN_MODEL_LIMIT,
   name: model.id,
   object: "model",
   owned_by: model.owned_by ?? "unknown",
   pricing: {},
   type: "language",
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 class OpenAICompatibleGateway
   extends GatewayRuntime
   implements GatewayProvider<"openai-compatible", string, string, never>
 {
   public readonly type = "openai-compatible" as const;
 
-  private getProvider() {
+  private getProvider(): ReturnType<typeof createOpenAICompatible> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
     if (!(typeof baseURL === "string" && baseURL !== "")) {
@@ -119,7 +115,8 @@ class OpenAICompatibleGateway
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
       const body = await response.json();
       // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ?? []) as OpenAICompatibleModelResponse[];
+      const models = (body.data ??
+        []) as readonly Readonly<OpenAICompatibleModelResponse>[];
       const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(
@@ -136,9 +133,7 @@ class OpenAICompatibleGateway
     }
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 export { OpenAICompatibleGateway as Gateway, OpenAICompatibleGateway };

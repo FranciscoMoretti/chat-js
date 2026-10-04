@@ -4,9 +4,9 @@ const BACKOFF_MULTIPLIER = 2;
 const MAX_BACKOFF_EXPONENT = 2;
 const READY_FAILURE_GRACE_MS = 120_000;
 const MIN_READINESS_FAILURES = 3;
+const NO_PREVIOUS_START_FAILURES = 0;
 
 /* oxlint-disable eslint/max-params -- shouldRestartAfterReadinessFailures: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable eslint/no-magic-numbers -- shouldRestartAfterReadinessFailures: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /**
  * Allow cold compilation and brief resource contention before replacing a runtime.
  * @param consecutiveFailures - Number of consecutive failed readiness probes.
@@ -19,7 +19,7 @@ export const shouldRestartAfterReadinessFailures = (
   consecutiveFailures: number,
   unreadyForMs: number,
   hasBeenReady: boolean,
-  failedStartups = 0
+  failedStartups = NO_PREVIOUS_START_FAILURES
 ): boolean => {
   const startupGraceMs = Math.min(
     MAX_STARTUP_GRACE_MS,
@@ -31,5 +31,4 @@ export const shouldRestartAfterReadinessFailures = (
     unreadyForMs >= (hasBeenReady ? READY_FAILURE_GRACE_MS : startupGraceMs)
   );
 };
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
