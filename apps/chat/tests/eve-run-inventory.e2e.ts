@@ -1,5 +1,5 @@
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-run-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-run-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 
@@ -9,7 +9,8 @@ import { afterAll, expect, test } from "vitest";
 import {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
-} from "../lib/db/eve-run-inventory";
+} from "@/lib/eve/lifecycle/postgres/eve-run-inventory";
+
 import { env } from "../lib/env";
 /* oxlint-enable import/no-relative-parent-imports */
 

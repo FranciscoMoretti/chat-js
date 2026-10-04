@@ -1,7 +1,8 @@
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-native-purge"; "../env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-native-purge"; "../env" dependency within this package instead of introducing an alias or barrel API.
  */
-import { prepareEveNativeSessionPurge } from "../db/eve-native-purge";
+import { prepareEveNativeSessionPurge } from "@/lib/eve/lifecycle/postgres/eve-native-purge";
+
 import { env } from "../env";
 import {
   retireEveFamilyForDeletion,

@@ -35,7 +35,7 @@ vi.mock("../db/eve-queries", () => ({
   beginEveConversationDeletion: mocks.begin,
   getDeletingEveConversationForSession: mocks.deleting,
 }));
-vi.mock("../db/eve-native-purge", () => ({
+vi.mock("@/lib/eve/lifecycle/postgres/eve-native-purge", () => ({
   retireEveNativeSessions: mocks.retireMany,
 }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.usage }));

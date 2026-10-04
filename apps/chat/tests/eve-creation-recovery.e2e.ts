@@ -49,7 +49,7 @@ vi.mock("../lib/db/credits", () => ({
   canSpend: (): Promise<boolean> => Promise.resolve(true),
 }));
 /* oxlint-enable typescript/promise-function-async */
-vi.mock("../lib/db/eve-stream-positions", () => ({
+vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
   getEvePostgresStreamPositions: native.positions,
 }));
 
