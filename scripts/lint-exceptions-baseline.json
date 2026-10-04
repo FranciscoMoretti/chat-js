@@ -1138,23 +1138,6 @@
     "[\"apps/chat/components/message-vote-actions.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/model-selector-logo.tsx\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/model-selector-logo.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 4,
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/components/model-selector.tsx\",\"no-magic-numbers\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/components/model-selector.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/components/model-selector.tsx\",\"no-undefined\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-new-function-as-prop\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/components/model-selector.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/components/model-selector.tsx\",\"init-declarations\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"max-statements\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-jsx-as-prop\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"react/refs\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": 2,
-    "[\"apps/chat/components/model-selector.tsx\",\"max-lines\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/model-toolbar-visual-fixture.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/model-toolbar-visual-fixture.tsx\",\"react-perf/jsx-no-new-function-as-prop\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/model-toolbar-visual-fixture.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": 1,
@@ -6686,6 +6669,23 @@
     "[\"scripts/vercel-preview-build.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"scripts/vercel-preview-build.ts\",\"typescript/no-unsafe-assignment\",\"oxlint-disable-next-line\"]": 1,
     "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 4,
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 3,
+    "[\"apps/chat/components/model-selector.tsx\",\"no-magic-numbers\",\"oxlint-disable\"]": 3,
+    "[\"apps/chat/components/model-selector.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/components/model-selector.tsx\",\"no-undefined\",\"oxlint-disable\"]": 3,
+    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-new-function-as-prop\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/components/model-selector.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/components/model-selector.tsx\",\"init-declarations\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"max-statements\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-jsx-as-prop\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"react/refs\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/chat/components/model-selector.tsx\",\"max-lines\",\"oxlint-disable\"]": 1,
     "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/electron/scripts/write-branding.ts\",\"eslint/no-console\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": 1,
@@ -10726,70 +10726,6 @@
     ],
     "[\"apps/chat/components/model-selector-logo.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": [
       "07fa125ba7e7bdc549323186788500ba6bf1a669963b5f88107a673ac139c246"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "b963c36560baf4d3a620451bc7bd2cbf73f17237378261f6dcf7fb4b24ea21b0"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "60dbd366183664f4451deaca2f3fab97673d14168744a34f7d671a9807f732f0"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "60dbd366183664f4451deaca2f3fab97673d14168744a34f7d671a9807f732f0",
-      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
-      "d242138af28a7af878a49821d589016ff971477f249aa336fc937319496a8382",
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "60dbd366183664f4451deaca2f3fab97673d14168744a34f7d671a9807f732f0",
-      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "2c2aca61680eda9b692bfda2104539b401f0eb1bb7128cad440f8404925746b8",
-      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"no-undefined\",\"oxlint-disable\"]": [
-      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
-      "d242138af28a7af878a49821d589016ff971477f249aa336fc937319496a8382",
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-new-function-as-prop\",\"oxlint-disable\"]": [
-      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": [
-      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"init-declarations\",\"oxlint-disable\"]": [
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"max-statements\",\"oxlint-disable\"]": [
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-jsx-as-prop\",\"oxlint-disable\"]": [
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": [
-      "642c4f5e4fcbf088b46095e7151bae31ab6a30c5dd4f0b80f47fff1623934ba7"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "da75ef167add72d98d9870bfc12f42f86ab3734f563ab96188e68836cee77f28"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"react/refs\",\"oxlint-disable-next-line\"]": [
-      "1a5e315d1b841c677fed1882896188232593773e56436c67853c27f5a4409c23"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": [
-      "b6b0c9a25cec1d6f678b9f963b982a19650860767de47475b8dc1f46112f146d",
-      "b5a53ed1f7df5113d928f46e14b132cdfc486a1d74bc4cfd5283fa3a6eb6352c"
-    ],
-    "[\"apps/chat/components/model-selector.tsx\",\"max-lines\",\"oxlint-disable\"]": [
-      "8423b83437030b5f73cb957ae8ecd3aa192c4faa3e4c90af932e3870609195bf"
     ],
     "[\"apps/chat/components/model-toolbar-visual-fixture.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "aa3ccc88e46314d3e016bbc2a5843392ff44ee7a60b65d1016f0adbfadc4174b"
@@ -31182,6 +31118,70 @@
     ],
     "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": [
       "844e34a0a4cc4d1aa34f45a88b057d41e0dd0759e4791c10f69ce8b99c7f8269"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"import/max-dependencies\",\"oxlint-disable\"]": [
+      "6cda0d6eea6fe98afc21d55e80a4af58fccc1b610ac4bb69934ba614a44fb436"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
+      "60dbd366183664f4451deaca2f3fab97673d14168744a34f7d671a9807f732f0"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "60dbd366183664f4451deaca2f3fab97673d14168744a34f7d671a9807f732f0",
+      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
+      "d242138af28a7af878a49821d589016ff971477f249aa336fc937319496a8382",
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
+      "60dbd366183664f4451deaca2f3fab97673d14168744a34f7d671a9807f732f0",
+      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"no-magic-numbers\",\"oxlint-disable\"]": [
+      "2c2aca61680eda9b692bfda2104539b401f0eb1bb7128cad440f8404925746b8",
+      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": [
+      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"no-undefined\",\"oxlint-disable\"]": [
+      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
+      "d242138af28a7af878a49821d589016ff971477f249aa336fc937319496a8382",
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-new-function-as-prop\",\"oxlint-disable\"]": [
+      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": [
+      "5d4ed0c84b1c2834c743f2d316f89c066f75cc5be13b5320329a2bd18093783f",
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"init-declarations\",\"oxlint-disable\"]": [
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"max-statements\",\"oxlint-disable\"]": [
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"react-perf/jsx-no-jsx-as-prop\",\"oxlint-disable\"]": [
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": [
+      "356c43e9e0ba11a32b95f56abdb1cac2132dc2ab9db75847cefceff756ecb4b5"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": [
+      "e1bc0d11413a7966abf29311fa988dbaf8b3744c8718764fade08cdac833ae22"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"react/refs\",\"oxlint-disable-next-line\"]": [
+      "1a5e315d1b841c677fed1882896188232593773e56436c67853c27f5a4409c23"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": [
+      "b6b0c9a25cec1d6f678b9f963b982a19650860767de47475b8dc1f46112f146d",
+      "b5a53ed1f7df5113d928f46e14b132cdfc486a1d74bc4cfd5283fa3a6eb6352c"
+    ],
+    "[\"apps/chat/components/model-selector.tsx\",\"max-lines\",\"oxlint-disable\"]": [
+      "3bd47ecc024069248349f588e97e9e962e8468962ec7ca6f4cc8a9b1ba1c43a9"
     ],
     "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
       "50ef426e6f0294edd14b6efcdc28336561c6d3961a630f3ed9d2dfed3566110f"

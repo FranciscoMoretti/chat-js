@@ -450,7 +450,9 @@ const PureModelSelector = ({
         if (isAlreadySelected) {
           const remaining = Object.entries(currentCounts).filter(
             ([candidateId, selectionCount]) =>
-              candidateId !== id && selectionCount > 0
+              candidateId !== id &&
+              typeof selectionCount === "number" &&
+              selectionCount > 0
           );
           if (remaining.length === 0) {
             return;
@@ -480,7 +482,9 @@ const PureModelSelector = ({
         if (newCount <= 0) {
           const remaining = Object.entries(currentCounts).filter(
             ([candidateId, selectionCount]) =>
-              candidateId !== id && selectionCount > 0
+              candidateId !== id &&
+              typeof selectionCount === "number" &&
+              selectionCount > 0
           );
           if (remaining.length === 0) {
             return;
