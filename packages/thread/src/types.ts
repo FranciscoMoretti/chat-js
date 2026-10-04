@@ -6,22 +6,27 @@ import type {
   UIMessage,
 } from "ai";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadRun = {
+const FIRST_PARAMETER_INDEX = 0;
+const TREE_SNAPSHOT_VERSION = 1;
+
+// Keep exported aliases closed and implicitly assignable to dictionary readers.
+// Pick copies the private interface shape without exposing declaration merging.
+interface ThreadRunShape {
   error: Error | undefined;
   id: string;
   status: ChatStatus;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadRunHandle = {
+type ThreadRun = Pick<ThreadRunShape, keyof ThreadRunShape>;
+
+interface ThreadRunHandleShape {
   readonly finished: Promise<void>;
   readonly id: string;
   getSnapshot: () => ThreadRun | undefined;
   stop: () => Promise<void>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
+
+type ThreadRunHandle = Pick<ThreadRunHandleShape, keyof ThreadRunHandleShape>;
 
 type TreeSendOptions = ChatRequestOptions & {
   tree?: {
@@ -30,40 +35,50 @@ type TreeSendOptions = ChatRequestOptions & {
   };
 };
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type ThreadStartRunOptions<TMessage extends UIMessage = UIMessage> = {
+interface ThreadStartRunOptionsShape<TMessage extends UIMessage> {
   follow?: boolean;
   from?: string | null;
-  message?: Parameters<AbstractChat<TMessage>["sendMessage"]>[0];
+  message?: Parameters<
+    AbstractChat<TMessage>["sendMessage"]
+  >[typeof FIRST_PARAMETER_INDEX];
   request?: ChatRequestOptions;
-};
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadConcurrency = {
+type ThreadStartRunOptions<TMessage extends UIMessage = UIMessage> = Pick<
+  ThreadStartRunOptionsShape<TMessage>,
+  keyof ThreadStartRunOptionsShape<TMessage>
+>;
+
+interface ThreadConcurrencyShape {
   maxActiveRuns?: number;
   maxActiveRunsPerMessage?: number;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type MessageTreeNode<TMessage extends UIMessage = UIMessage> = {
+type ThreadConcurrency = Pick<
+  ThreadConcurrencyShape,
+  keyof ThreadConcurrencyShape
+>;
+
+interface MessageTreeNodeShape<TMessage extends UIMessage> {
   message: TMessage;
   parentId: string | null;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type MessageTreeSnapshot<TMessage extends UIMessage = UIMessage> = {
+type MessageTreeNode<TMessage extends UIMessage = UIMessage> = Pick<
+  MessageTreeNodeShape<TMessage>,
+  keyof MessageTreeNodeShape<TMessage>
+>;
+
+interface MessageTreeSnapshotShape<TMessage extends UIMessage> {
   cursorId: string | null;
   nodes: MessageTreeNode<TMessage>[];
-  version: 1;
-};
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/consistent-type-definitions */
+  version: typeof TREE_SNAPSHOT_VERSION;
+}
+
+type MessageTreeSnapshot<TMessage extends UIMessage = UIMessage> = Pick<
+  MessageTreeSnapshotShape<TMessage>,
+  keyof MessageTreeSnapshotShape<TMessage>
+>;
 
 type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
   MessageTreeSnapshot<TMessage> & {

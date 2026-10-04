@@ -22,6 +22,8 @@ import type {
   TreeSendOptions,
 } from "./types";
 
+const FIRST_PARAMETER_INDEX = 0;
+
 const useIsomorphicLayoutEffect =
   // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -36,7 +38,6 @@ type ThreadCallbacks<TMessage extends UIMessage> = Pick<
   "onData" | "onError" | "onFinish" | "onToolCall" | "sendAutomaticallyWhen"
 >;
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 class LatestThreadDispatchers<TMessage extends UIMessage> {
@@ -56,24 +57,30 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
   }
 
   public readonly onData = (
-    dataPart: Parameters<NonNullable<ThreadCallbacks<TMessage>["onData"]>>[0]
+    dataPart: Parameters<
+      NonNullable<ThreadCallbacks<TMessage>["onData"]>
+    >[typeof FIRST_PARAMETER_INDEX]
   ): void => this.#callbacks.onData?.(dataPart);
 
   public readonly onError = (error: Error): void =>
     this.#callbacks.onError?.(error);
 
   public readonly onFinish = (
-    event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onFinish"]>>[0]
+    event: Parameters<
+      NonNullable<ThreadCallbacks<TMessage>["onFinish"]>
+    >[typeof FIRST_PARAMETER_INDEX]
   ): void => this.#callbacks.onFinish?.(event);
 
   public readonly onToolCall = (
-    event: Parameters<NonNullable<ThreadCallbacks<TMessage>["onToolCall"]>>[0]
+    event: Parameters<
+      NonNullable<ThreadCallbacks<TMessage>["onToolCall"]>
+    >[typeof FIRST_PARAMETER_INDEX]
   ): Promise<void> => Promise.resolve(this.#callbacks.onToolCall?.(event));
 
   public readonly sendAutomaticallyWhen = (
     event: Parameters<
       NonNullable<ThreadCallbacks<TMessage>["sendAutomaticallyWhen"]>
-    >[0]
+    >[typeof FIRST_PARAMETER_INDEX]
   ): boolean | PromiseLike<boolean> =>
     this.#callbacks.sendAutomaticallyWhen?.(event) ?? false;
 
@@ -83,7 +90,6 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {
   thread: AbstractThread<TMessage>;
@@ -105,9 +111,8 @@ const hasSuppliedThread = <TMessage extends UIMessage>(
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable typescript/consistent-type-definitions -- TreeHelpers is the published tree-helper return contract composed into the SDK-compatible UseThreadHelpers alias; public helper type-form changes remain deferred to the API audit in #622. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
-type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
+interface TreeHelpersShape<TMessage extends UIMessage> {
   activeRuns: ThreadRun[];
   childrenByParentId: Record<string, string[]>;
   cursorId: string | null;
@@ -135,22 +140,26 @@ type TreeHelpers<TMessage extends UIMessage = UIMessage> = {
   stopAll: () => Promise<void>;
   stopRun: (runId: string) => Promise<void>;
   stopRunForMessage: (messageId: string) => Promise<void>;
-};
+}
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+type TreeHelpers<TMessage extends UIMessage = UIMessage> = Pick<
+  TreeHelpersShape<TMessage>,
+  keyof TreeHelpersShape<TMessage>
+>;
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 type UseThreadHelpers<TMessage extends UIMessage = UIMessage> =
   UseChatHelpers<TMessage> & {
     sendMessage: (
-      message?: Parameters<UseChatHelpers<TMessage>["sendMessage"]>[0],
+      message?: Parameters<
+        UseChatHelpers<TMessage>["sendMessage"]
+      >[typeof FIRST_PARAMETER_INDEX],
       options?: TreeSendOptions
     ) => Promise<void>;
     tree: TreeHelpers<TMessage>;
   };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- The hook forwards ChatInit callbacks and mutable SDK message arrays to Thread and synchronous setMessages updaters; its callback signatures retain the AI SDK generic specialization. */
 const useThreadSnapshot = <TMessage extends UIMessage>(

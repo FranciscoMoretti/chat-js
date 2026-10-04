@@ -1,11 +1,9 @@
 import type { ChatStatus, ChatTransport, UIMessage } from "ai";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- ThreadRunHost and ThreadRunSpec are module-internal types, not package-entrypoint exports.
 import type { ThreadRunHost, ThreadRunSpec } from "../../src/ai-sdk-run-chat";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- MessageTree is a module-internal class, not a package-entrypoint export.
 import { MessageTree } from "../../src/message-tree";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const generateMessageId = (): string => "client-response";
 const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] =

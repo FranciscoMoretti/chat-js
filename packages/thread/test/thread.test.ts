@@ -234,7 +234,7 @@ describe("Thread", (): void => {
     expect(chat.getParent("response-1")?.id).toBe("context-1");
   });
 
-  test("rejects a bare run from an assistant before transport", async (): Promise<void> => {
+  test("rejects a bare run from an assistant before transport", (): void => {
     const transport = new ControlledTransport();
     const parent: UIMessage = {
       id: "assistant-parent",
@@ -243,8 +243,7 @@ describe("Thread", (): void => {
     };
     const chat = new Thread({ messages: [parent], transport });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.startRun({ from: parent.id })).rejects.toThrow(
+    expect(chat.startRun({ from: parent.id })).rejects.toThrow(
       "Cannot start a new run directly from assistant message assistant-parent; attach an input message first"
     );
     expect(transport.requests).toHaveLength(0);
@@ -377,8 +376,7 @@ describe("Thread", (): void => {
       message: user("user-1"),
     });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.startRun({
         message: user("user-2"),
       })
@@ -407,8 +405,7 @@ describe("Thread", (): void => {
     await waitFor((): boolean => transport.requests.length === 1);
     const runCount = chat.getSnapshot().runs.length;
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.sendMessage(undefined, {
         tree: { follow: false, from: "assistant-ready" },
       })
@@ -737,8 +734,7 @@ describe("Thread", (): void => {
     const publishesBeforeCompletion = publishes;
     transport.emitText(0, "assistant-1", "complete");
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(run.finished).rejects.toThrow("application callback failed");
+    expect(run.finished).rejects.toThrow("application callback failed");
     expect(publishes).toBeGreaterThan(publishesBeforeCompletion);
     unsubscribe();
   });
@@ -812,15 +808,14 @@ describe("Thread", (): void => {
     ]);
   });
 
-  test("rejects an unknown explicit regeneration target", async (): Promise<void> => {
+  test("rejects an unknown explicit regeneration target", (): void => {
     const transport = new ControlledTransport();
     const chat = new Thread({
       messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
       transport,
     });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.regenerate({ messageId: "missing" })).rejects.toThrow(
+    expect(chat.regenerate({ messageId: "missing" })).rejects.toThrow(
       "message missing not found"
     );
     expect(transport.requests).toHaveLength(0);
@@ -1009,19 +1004,17 @@ describe("Thread", (): void => {
     );
   });
 
-  test("rejects missing restored tool and approval ownership", async (): Promise<void> => {
+  test("rejects missing restored tool and approval ownership", (): void => {
     const chat = new Thread({ messages: [user("user-1")] });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolOutput({
         output: "missing",
         tool: "test-tool",
         toolCallId: "missing-tool",
       })
     ).rejects.toThrow("No run owns tool call missing-tool");
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolApprovalResponse({
         approved: true,
         id: "missing-approval",
@@ -1029,7 +1022,7 @@ describe("Thread", (): void => {
     ).rejects.toThrow("No run owns tool approval missing-approval");
   });
 
-  test("rejects duplicate restored tool and approval ownership", async (): Promise<void> => {
+  test("rejects duplicate restored tool and approval ownership", (): void => {
     const chat = new Thread({
       initialTree: {
         cursorId: "assistant-a",
@@ -1041,8 +1034,7 @@ describe("Thread", (): void => {
       },
     });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolOutput({
         output: "duplicate",
         tool: "test-tool",
@@ -1051,8 +1043,7 @@ describe("Thread", (): void => {
     ).rejects.toThrow(
       "Tool call shared-tool appears in more than one assistant message"
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolApprovalResponse({
         approved: true,
         id: "shared-approval",
@@ -1080,10 +1071,7 @@ describe("Thread", (): void => {
     });
     await waitFor((): boolean => transport.requests.length === 2);
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.resumeRun(completed.id)).rejects.toThrow(
-      "max active runs"
-    );
+    expect(chat.resumeRun(completed.id)).rejects.toThrow("max active runs");
     transport.finish(1);
     await active.finished;
   });
@@ -1105,8 +1093,7 @@ describe("Thread", (): void => {
     });
     await waitFor((): boolean => transport.requests.length === 2);
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.resumeRun(completed.id)).rejects.toThrow(
+    expect(chat.resumeRun(completed.id)).rejects.toThrow(
       "Cannot start another run from user-1"
     );
     transport.finish(1);

@@ -1,14 +1,15 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
-  (): Promise<null> => Promise.resolve(null);
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable unicorn/no-null */
+import type { ReadonlyDeep } from "./readonly-types";
 
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
+  (): Promise<null> =>
+    // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream requires null when no stream is available.
+    Promise.resolve(null);
+/* oxlint-enable typescript/promise-function-async */
+
+/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: ReadableStreamDefaultController<UIMessageChunk>[] =
     [];
@@ -17,7 +18,11 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
       Promise.resolve(
         new ReadableStream({
-          start: (controller): void => {
+          start: (
+            controller: Readonly<
+              ReadableStreamDefaultController<UIMessageChunk>
+            >
+          ): void => {
             this.requests.push(controller);
           },
         })
@@ -25,7 +30,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
 
   public reconnectToStream = reconnectToNoStream;
 
-  public emit(requestIndex: number, chunk: UIMessageChunk): void {
+  public emit(requestIndex: number, chunk: ReadonlyDeep<UIMessageChunk>): void {
     this.requests[requestIndex]?.enqueue(chunk);
   }
 
@@ -33,5 +38,4 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.requests[requestIndex]?.close();
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */

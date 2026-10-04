@@ -10,6 +10,9 @@ import type {
 
 import { ThreadRunState } from "./thread-run-state";
 
+const FIRST_PARAMETER_INDEX = 0;
+const LAST_MESSAGE_INDEX = -1;
+
 interface ThreadRunSpec {
   id: string;
   initialPathMessageId: string | null;
@@ -43,7 +46,6 @@ interface ThreadRunHost<TMessage extends UIMessage> {
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AbstractChat callbacks and ChatTransport use mutable message/chunk payloads; resume handling updates the owned ThreadRunState before forwarding those SDK objects. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
@@ -63,7 +65,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         if (!stream) {
           return null;
         }
-        const lastMessage = state.messages.at(-1);
+        const lastMessage = state.messages.at(LAST_MESSAGE_INDEX);
         let first = true;
         return stream.pipeThrough(
           new TransformStream<UIMessageChunk, UIMessageChunk>({
@@ -161,7 +163,11 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   }
 
   public startWithMessage(
-    message: NonNullable<Parameters<AbstractChat<TMessage>["sendMessage"]>[0]>,
+    message: NonNullable<
+      Parameters<
+        AbstractChat<TMessage>["sendMessage"]
+      >[typeof FIRST_PARAMETER_INDEX]
+    >,
     options?: ChatRequestOptions
   ): Promise<void> {
     return this.sendMessage(message, options);
@@ -176,7 +182,6 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-lines-per-function */

@@ -1,24 +1,39 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+import type { ReadonlyDeep } from "./readonly-types";
+
+const SDK_PARAMETER_INDEX = 0;
+
+// oxlint-disable-next-line unicorn/no-null -- The reconnect stream uses the SDK-required null sentinel for its empty state.
+const NO_RECONNECT_STREAM = null;
+
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: {
     abortSignal: AbortSignal | undefined;
     controller: ReadableStreamDefaultController<UIMessageChunk>;
-    options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
+    options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["sendMessages"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >;
   }[] = [];
-  #reconnectStream: ReadableStream<UIMessageChunk> | null = null;
+  #reconnectStream:
+    | ReadableStream<UIMessageChunk>
+    | typeof NO_RECONNECT_STREAM = NO_RECONNECT_STREAM;
 
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (
-    options
+    options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["sendMessages"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >
   ): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
     Promise.resolve(
       new ReadableStream({
-        start: (controller): void => {
+        start: (
+          controller: Readonly<ReadableStreamDefaultController<UIMessageChunk>>
+        ): void => {
           this.requests.push({
             abortSignal: options.abortSignal,
             controller,
@@ -37,27 +52,36 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     );
 
   public reconnectToStream(
-    _options: Parameters<ChatTransport<UIMessage>["reconnectToStream"]>[0]
+    _options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["reconnectToStream"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >
   ): Promise<ReadableStream<UIMessageChunk> | null> {
     const stream = this.#reconnectStream;
-    this.#reconnectStream = null;
+    this.#reconnectStream = NO_RECONNECT_STREAM;
     return Promise.resolve(stream);
   }
 
   public prepareReconnect(): ReadableStreamDefaultController<UIMessageChunk> {
-    let controller: ReadableStreamDefaultController<UIMessageChunk> | undefined;
+    const holder: {
+      controller?: Readonly<ReadableStreamDefaultController<UIMessageChunk>>;
+    } = {};
     this.#reconnectStream = new ReadableStream({
-      start(value): void {
-        controller = value;
+      start(
+        value: Readonly<ReadableStreamDefaultController<UIMessageChunk>>
+      ): void {
+        holder.controller = value;
       },
     });
+    const { controller } = holder;
     if (!controller) {
       throw new Error("Expected reconnect controller");
     }
     return controller;
   }
 
-  public emit(requestIndex: number, chunk: UIMessageChunk): void {
+  public emit(requestIndex: number, chunk: ReadonlyDeep<UIMessageChunk>): void {
     this.requests[requestIndex]?.controller.enqueue(chunk);
   }
 
@@ -65,7 +89,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.requests[requestIndex]?.controller.close();
   }
 
-  public fail(requestIndex: number, error: Error): void {
+  public fail(requestIndex: number, error: Readonly<Error>): void {
     this.requests[requestIndex]?.controller.error(error);
   }
 
@@ -79,7 +103,3 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
   }
 }
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */

@@ -1,33 +1,50 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+import type { ReadonlyDeep } from "./readonly-types";
+
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
-  (): Promise<null> => Promise.resolve(null);
+  (): Promise<null> =>
+    // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream requires null when no stream is available.
+    Promise.resolve(null);
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const SDK_PARAMETER_INDEX = 0;
+const LAST_REQUEST_INDEX = -1;
+
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: {
     controller: ReadableStreamDefaultController<UIMessageChunk>;
-    options: Parameters<ChatTransport<UIMessage>["sendMessages"]>[0];
+    options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["sendMessages"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >;
   }[] = [];
 
   public get request():
-    | Parameters<ChatTransport<UIMessage>["sendMessages"]>[0]
+    | ReadonlyDeep<
+        Parameters<
+          ChatTransport<UIMessage>["sendMessages"]
+        >[typeof SDK_PARAMETER_INDEX]
+      >
     | undefined {
-    return this.requests.at(-1)?.options;
+    return this.requests.at(LAST_REQUEST_INDEX)?.options;
   }
 
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (
-    options
+    options: ReadonlyDeep<
+      Parameters<
+        ChatTransport<UIMessage>["sendMessages"]
+      >[typeof SDK_PARAMETER_INDEX]
+    >
   ): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
     Promise.resolve(
       new ReadableStream({
-        start: (controller): void => {
+        start: (
+          controller: Readonly<ReadableStreamDefaultController<UIMessageChunk>>
+        ): void => {
           this.requests.push({ controller, options });
         },
       })
@@ -35,20 +52,18 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
 
   public reconnectToStream = reconnectToNoStream;
 
-  public emit(...chunks: UIMessageChunk[]): void {
+  public emit(...chunks: readonly ReadonlyDeep<UIMessageChunk>[]): void {
     for (const chunk of chunks) {
-      this.requests.at(-1)?.controller.enqueue(chunk);
+      this.requests.at(LAST_REQUEST_INDEX)?.controller.enqueue(chunk);
     }
   }
 
   public finish(): void {
-    this.requests.at(-1)?.controller.close();
+    this.requests.at(LAST_REQUEST_INDEX)?.controller.close();
   }
 
-  public fail(error: Error): void {
-    this.requests.at(-1)?.controller.error(error);
+  public fail(error: Readonly<Error>): void {
+    this.requests.at(LAST_REQUEST_INDEX)?.controller.error(error);
   }
 }
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */

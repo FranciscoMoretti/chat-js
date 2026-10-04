@@ -29,6 +29,12 @@ import type {
   TreeSendOptions,
 } from "./types";
 
+const FIRST_PARAMETER_INDEX = 0;
+const UPDATE_CALL_INCREMENT = 1;
+const EXPECTED_UPDATE_CALL_COUNT = 1;
+const NOT_FOUND_INDEX = -1;
+const EMPTY_ACTIVE_RUN_COUNT = 0;
+
 type AbstractThreadOptions<TMessage extends UIMessage> = Omit<
   ChatInit<TMessage>,
   "messages"
@@ -39,11 +45,9 @@ type AbstractThreadOptions<TMessage extends UIMessage> = Omit<
 
 const ownedThreadStates = new WeakSet<object>();
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 type SendMessageInput<TMessage extends UIMessage> = Parameters<
   AbstractChat<TMessage>["sendMessage"]
->[0];
-/* oxlint-enable eslint/no-magic-numbers */
+>[typeof FIRST_PARAMETER_INDEX];
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
 const getInputMessageId = <TMessage extends UIMessage>(
@@ -105,7 +109,6 @@ const createMessageFromInput = async <TMessage extends UIMessage>({
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatInit/ThreadState/ChatTransport boundaries use mutable TMessage arrays and SDK callback payloads; atomic snapshot updates retain those types. Reader-only parameter narrowing is tracked in #622. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -652,10 +655,10 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   ): void {
     let calls = 0;
     this.#state.update((snapshot) => {
-      calls += 1;
+      calls += UPDATE_CALL_INCREMENT;
       return updater(snapshot);
     });
-    if (calls !== 1) {
+    if (calls !== EXPECTED_UPDATE_CALL_COUNT) {
       throw new Error(
         "ThreadState.update must invoke its updater exactly once and synchronously"
       );
@@ -781,7 +784,7 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
     const siblingOrder = tree
       .getChildren(parentMessageId)
       .findIndex((child): boolean => child.id === messageId);
-    if (siblingOrder === -1) {
+    if (siblingOrder === NOT_FOUND_INDEX) {
       throw new Error(`Message ${messageId} is missing from its sibling order`);
     }
 
@@ -809,7 +812,7 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
   }
 
   private assertCanResetTree(): void {
-    if (this.#runs.getActive().length > 0) {
+    if (this.#runs.getActive().length > EMPTY_ACTIVE_RUN_COUNT) {
       throw new Error("Cannot replace the tree while runs are active");
     }
   }
@@ -986,7 +989,6 @@ abstract class AbstractThread<TMessage extends UIMessage = UIMessage> {
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-continue */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-lines-per-function */
