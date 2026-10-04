@@ -7,6 +7,8 @@ jobs:
   gate:
     name: Required
     runs-on: ubuntu-22.04
+    permissions:
+      checks: read
     steps:
       - name: Wait for required workflows
         uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4
