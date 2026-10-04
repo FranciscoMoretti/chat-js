@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { z } from "zod";
 
 import { frontendToolsSchema } from "@/lib/ai/types";
@@ -22,10 +22,26 @@ type Draft = z.infer<typeof composerDraft>;
 
 const emptyDraft: Draft = { attachments: [], selectedTool: null, text: "" };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useEveComposerDraft: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: Draft); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+type ComposerDraftState = Draft & {
+  error: string | undefined;
+  loaded: boolean;
+  setAttachments: Dispatch<SetStateAction<DraftAttachment[]>>;
+  setSelectedTool: Dispatch<SetStateAction<UiToolName | null>>;
+  setText: Dispatch<SetStateAction<string>>;
+};
 
-/** Persist unsent input synchronously, before a response-card navigation can unmount it. */
-export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useEveComposerDraft: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: Draft); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+/**
+ * Persist unsent input synchronously, before response navigation can unmount it.
+ * @param ownerId The owner whose drafts remain isolated in this tab.
+ * @param scopeId The conversation or response scope that owns this input.
+ * @returns Draft fields, restore and save status, and React-compatible setters.
+ */
+export const useEveComposerDraft = (
+  ownerId: string,
+  scopeId: string
+): ComposerDraftState => {
   const key = `chatjs.eve.composer:${ownerId}:${scopeId}`;
   const current = useRef<Draft>(emptyDraft);
   const [value, setValue] = useState(emptyDraft);
@@ -50,7 +66,7 @@ export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
     setLoaded(true);
   }, [key]);
   const update = useCallback(
-    (change: (draft: Draft) => Draft) => {
+    (change: (draft: Draft) => Draft): void => {
       const next = change(current.current);
       current.current = next;
       setValue(next);
@@ -70,7 +86,7 @@ export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
     [key]
   );
   const setText = useCallback(
-    (text: SetStateAction<string>) =>
+    (text: SetStateAction<string>): void =>
       update((draft) => ({
         ...draft,
         text: typeof text === "function" ? text(draft.text) : text,
@@ -78,7 +94,7 @@ export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
     [update]
   );
   const setAttachments = useCallback(
-    (attachments: SetStateAction<DraftAttachment[]>) =>
+    (attachments: SetStateAction<DraftAttachment[]>): void =>
       update((draft) => ({
         ...draft,
         attachments:
@@ -89,7 +105,7 @@ export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
     [update]
   );
   const setSelectedTool = useCallback(
-    (tool: SetStateAction<UiToolName | null>) =>
+    (tool: SetStateAction<UiToolName | null>): void =>
       update((draft) => ({
         ...draft,
         selectedTool:
@@ -99,4 +115,4 @@ export const useEveComposerDraft = (ownerId: string, scopeId: string) => {
   );
   return { ...value, error, loaded, setAttachments, setSelectedTool, setText };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */

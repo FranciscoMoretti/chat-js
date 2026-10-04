@@ -62,9 +62,19 @@ const FormItemContext = reactCreateContext<FormItemContextValue>(
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
   {} as FormItemContextValue
 );
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- useFormField: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including fieldContext). */
+type FormFieldState = ReturnType<
+  ReturnType<typeof useFormContext>["getFieldState"]
+> & {
+  formDescriptionId: string;
+  formItemId: string;
+  formMessageId: string;
+  id: string;
+  name: FormFieldContextValue["name"];
+};
 
-const useFormField = () => {
+/* oxlint-disable typescript/strict-boolean-expressions -- useFormField:; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including fieldContext). */
+
+const useFormField = (): FormFieldState => {
   const fieldContext = useReactContext(FormFieldContext);
   const itemContext = useReactContext(FormItemContext);
   const { getFieldState } = useFormContext();
@@ -86,7 +96,7 @@ const useFormField = () => {
     ...fieldState,
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- FormItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 const FormItem = ({
