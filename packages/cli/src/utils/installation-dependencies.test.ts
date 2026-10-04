@@ -48,6 +48,12 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     await writeFile(manifest, JSON.stringify({ dependencies, private: true }));
     await first();
     await writeFile(path.join(cwd, "custom.ts"), 'import "custom";');
+    await mkdir(path.join(cwd, "public"));
+    const largeSourceBytes = 1_048_577;
+    await writeFile(
+      path.join(cwd, "public/photo.png"),
+      Buffer.alloc(largeSourceBytes)
+    );
     await writeFile(
       path.join(cwd, "component.vue"),
       '<script>import "customVue";</script>'
@@ -76,6 +82,11 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
       providerChanges: [],
       replacements: [{ next, previous }],
     });
+    const unknownSource = path.join(cwd, "huge.custom-source");
+    await writeFile(unknownSource, Buffer.alloc(largeSourceBytes));
+    await replace();
+    expect(await readFile(manifest, "utf-8")).toContain('"retired": "1"');
+    await rm(unknownSource);
     await replace();
     expect(JSON.parse(await readFile(manifest, "utf-8"))).toEqual({
       dependencies: {

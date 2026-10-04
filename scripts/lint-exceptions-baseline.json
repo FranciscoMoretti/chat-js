@@ -6129,7 +6129,7 @@
     "[\"packages/cli/src/utils/installation-dependencies.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/cli/src/utils/installation-dependencies.ts\",\"eslint/max-statements\",\"oxlint-disable-next-line\"]": 3,
     "[\"packages/cli/src/utils/installation-dependencies.ts\",\"eslint/no-continue\",\"oxlint-disable-next-line\"]": 1,
-    "[\"packages/cli/src/utils/installation-dependencies.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 3,
+    "[\"packages/cli/src/utils/installation-dependencies.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 4,
     "[\"packages/cli/src/utils/installation-dependencies.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/cli/src/utils/installation-dependencies.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/cli/src/utils/installation-dependencies.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 2,
@@ -29870,13 +29870,13 @@
       "5c4f402f45dff4591d9f509fa69adbe0989a08de0b3f6ede657c1c5ee5afcdb2"
     ],
     "[\"packages/cli/src/utils/installation-dependencies.test.ts\",\"eslint/max-statements\",\"oxlint-disable-next-line\"]": [
-      "4dccc5b80ccc86b10835252907c824ac0cfae16002524be7b04695e30c1b8855"
+      "dd44b52583355b4f15aa4397010e17a9f6669b7f8b21430e044593bfb5288280"
     ],
     "[\"packages/cli/src/utils/installation-dependencies.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable-next-line\"]": [
-      "4dccc5b80ccc86b10835252907c824ac0cfae16002524be7b04695e30c1b8855"
+      "dd44b52583355b4f15aa4397010e17a9f6669b7f8b21430e044593bfb5288280"
     ],
     "[\"packages/cli/src/utils/installation-dependencies.ts\",\"eslint/max-statements\",\"oxlint-disable-next-line\"]": [
-      "1d90bd31b7ead91533cec5f254d8dbae01ff4b3e9fd71ad5302b03fb6e6b4d14",
+      "b176409fc5bb02076d660f15315a2d2165e0fed97f0f6da5d0ddd6691ae597d4",
       "8ea376b561cf2de4d4a39ac54f9a4f64fc5e6387e3cb639f4f5793a4b5876fdb",
       "6782d45c2f6b7a1fc70d7f17d98a653e6db7068ad3f360bd264925a671a235e3"
     ],
@@ -29885,6 +29885,7 @@
     ],
     "[\"packages/cli/src/utils/installation-dependencies.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "08c4aca5bedb707cd55b9624a56cbdd099117282244681679f526211122a0da8",
+      "df3bdb0fe2275c7cf48ae20f10c37c8030c0e7fcee52396d2d739f0cd7ac16a5",
       "d6d919573293618b3a5a2b11615d9737f301115052d9216f7faf1c469d0193b3",
       "de6a5acc291c39dbf74875c4a81c99e65b1df9cc3a27e91c6a007c35b46a2396"
     ],

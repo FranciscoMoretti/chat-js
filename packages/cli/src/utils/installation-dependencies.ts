@@ -1,4 +1,4 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { z } from "zod";
@@ -44,6 +44,32 @@ const ignored = new Set([
   "pnpm-lock.yaml",
   "yarn.lock",
 ]);
+const binaryAssets = new Set([
+  ".avif",
+  ".br",
+  ".eot",
+  ".gif",
+  ".gz",
+  ".ico",
+  ".jpeg",
+  ".jpg",
+  ".mov",
+  ".mp3",
+  ".mp4",
+  ".ogg",
+  ".otf",
+  ".pdf",
+  ".png",
+  ".tgz",
+  ".ttf",
+  ".wav",
+  ".webm",
+  ".webp",
+  ".woff",
+  ".woff2",
+  ".zip",
+]);
+const maxSourceBytes = 1_048_576;
 
 // Conservative protection for dependencies used by source outside registry items.
 // oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
@@ -53,7 +79,9 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
     if (
       ignored.has(entry.name) ||
       entry.name === "package.json" ||
-      entry.name.endsWith(".tsbuildinfo")
+      entry.name.endsWith(".tsbuildinfo") ||
+      (entry.isFile() &&
+        binaryAssets.has(path.extname(entry.name).toLowerCase()))
     ) {
       // oxlint-disable-next-line eslint/no-continue -- Skip ignored directories before examining their files.
       continue;
@@ -69,6 +97,12 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
         return true;
       }
     } else if (entry.isFile()) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Bound memory before reading each user-authored file.
+      const metadata = await stat(file);
+      if (metadata.size > maxSourceBytes) {
+        // Unknown oversized source cannot prove that a dependency is unused.
+        return true;
+      }
       // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
       const content = await readFile(file);
       if (content.includes(name)) {
