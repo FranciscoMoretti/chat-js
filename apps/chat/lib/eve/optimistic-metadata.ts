@@ -11,11 +11,10 @@ import type {
 
 type Identity = Awaited<ReturnType<typeof getEveChatIdentity>>;
 type History = InfiniteData<Awaited<ReturnType<typeof listEveConversations>>>;
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): Metadata preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type Metadata = { title: string; isPinned: boolean };
-/* oxlint-enable typescript/consistent-type-definitions */
+interface Metadata {
+  title: string;
+  isPinned: boolean;
+}
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
 jsdoc/require-param (#534): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

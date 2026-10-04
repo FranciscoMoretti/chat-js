@@ -26,10 +26,7 @@ const rpcInput = z.object({
 
 const eveOAuthMcpTokenResultMarker = "EVE_OAUTH_MCP_TOKEN";
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): EveOAuthMcpServer preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type EveOAuthMcpServer = {
+interface EveOAuthMcpServer {
   origin: string;
   mcpUrl: string;
   tokenResult: string;
@@ -43,35 +40,22 @@ type EveOAuthMcpServer = {
     toolCalls: number;
     authenticatedInitializations: number;
   };
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): RegisteredClient preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type RegisteredClient = {
+interface RegisteredClient {
   redirectUris: string[];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): AuthorizationCode preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type AuthorizationCode = {
+interface AuthorizationCode {
   clientId: string;
   codeChallenge: string;
   redirectUri: string;
   used: boolean;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): RefreshGrant preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type RefreshGrant = {
+interface RefreshGrant {
   clientId: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 function pkceChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");

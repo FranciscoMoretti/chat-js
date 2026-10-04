@@ -1,11 +1,10 @@
 import type { HookEvent } from "eve/hooks";
 
 const MAX_CONTEXT_CHARACTERS = 12_000;
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): FollowupContext preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-export type FollowupContext = { user: string; assistant: string };
-/* oxlint-enable typescript/consistent-type-definitions */
+export interface FollowupContext {
+  user: string;
+  assistant: string;
+}
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): followupContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

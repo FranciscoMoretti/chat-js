@@ -90,7 +90,7 @@ const indexEveSearchText = async (
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): EveSearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+ * typescript/consistent-type-definitions (#559): db.execute<EveSearchResult> requires Record<string, unknown>; this object alias supplies implicit index assignability that an equivalent interface lacks.
  */
 type EveSearchResult = {
   id: string;

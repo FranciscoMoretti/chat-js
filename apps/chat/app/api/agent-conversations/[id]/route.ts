@@ -10,11 +10,9 @@ import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 
 const headers = { "cache-control": "no-store" };
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): Context preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type Context = { params: Promise<{ id: string }> };
-/* oxlint-enable typescript/consistent-type-definitions */
+interface Context {
+  params: Promise<{ id: string }>;
+}
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep authorize's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

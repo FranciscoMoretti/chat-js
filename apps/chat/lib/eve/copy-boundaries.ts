@@ -12,15 +12,11 @@ const importedMessage = z
   .string()
   .regex(/^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u);
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): EveCopyBoundary preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-export type EveCopyBoundary = {
+export interface EveCopyBoundary {
   messageIndex: number;
   sourceKind: "turn" | "imported";
   sourceIndex: number;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): eveCopyBoundaries's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
