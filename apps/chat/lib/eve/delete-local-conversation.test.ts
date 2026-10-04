@@ -14,7 +14,7 @@ vi.mock("../env", () => ({
 vi.mock("../db/eve-deletion", () => ({
   completeEveConversationDeletion: mocks.complete,
 }));
-vi.mock("../db/eve-native-purge", () => ({
+vi.mock("@/lib/eve/lifecycle/postgres/eve-native-purge", () => ({
   purgeEveNativeSession: mocks.native,
 }));
 vi.mock("./purge-local-resources", () => ({

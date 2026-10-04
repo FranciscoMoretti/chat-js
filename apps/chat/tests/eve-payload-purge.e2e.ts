@@ -1,5 +1,5 @@
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-native-purge"; "../lib/db/eve-payload-purge"; "../lib/db/eve-queue-fence"; "../lib/db/eve-queue-purge"; "../lib/db/eve-resource-fence" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-native-purge"; "@/lib/eve/lifecycle/postgres/eve-payload-purge"; "@/lib/eve/lifecycle/postgres/eve-queue-fence"; "@/lib/eve/lifecycle/postgres/eve-queue-purge"; "@/lib/eve/lifecycle/postgres/eve-resource-fence" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -11,16 +11,17 @@ import {
   prepareEveNativeSessionPurge,
   purgeEveNativeSession,
   retireEveNativeSessions,
-} from "../lib/db/eve-native-purge";
-import { purgeEvePostgresSessionPayloads } from "../lib/db/eve-payload-purge";
-import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
-import { purgeEvePostgresQueue } from "../lib/db/eve-queue-purge";
-import { installEvePostgresResourceFence } from "../lib/db/eve-resource-fence";
+} from "@/lib/eve/lifecycle/postgres/eve-native-purge";
+import { purgeEvePostgresSessionPayloads } from "@/lib/eve/lifecycle/postgres/eve-payload-purge";
+import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
+import { purgeEvePostgresQueue } from "@/lib/eve/lifecycle/postgres/eve-queue-purge";
+import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
 import {
   isFencedEveDescendant,
   verifyEveSandboxCoverage,
-} from "../lib/db/eve-sandbox-coverage-proof";
-import { fenceEvePostgresSession } from "../lib/db/eve-session-fence";
+} from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
+import { fenceEvePostgresSession } from "@/lib/eve/lifecycle/postgres/eve-session-fence";
+
 import { env } from "../lib/env";
 /* oxlint-enable import/no-relative-parent-imports */
 

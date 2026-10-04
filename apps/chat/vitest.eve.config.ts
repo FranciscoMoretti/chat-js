@@ -7,7 +7,10 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
+    // Fixtures install/drop shared provider triggers and inspect queue-wide state.
+    fileParallelism: false,
     include: [
+      "tests/eve-lifecycle-provider.e2e.ts",
       "tests/eve-creation-recovery.e2e.ts",
       "tests/eve-guests.e2e.ts",
       "tests/eve-guest-cleanup.e2e.ts",

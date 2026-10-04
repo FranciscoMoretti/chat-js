@@ -15,6 +15,6 @@ jobs:
           # ============================================
           # REQUIRED CHECKS - Add/remove check names here
           # ============================================
-          check-regexp: ^(Docs|Lint|Typecheck|Unit|Playwright|CLI Scaffold)$
+          check-regexp: ^(Docs|Lint|Typecheck|Unit|Playwright|CLI Scaffold|Native Lifecycle)$
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10

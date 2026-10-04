@@ -1,0 +1,60 @@
+name: Native Lifecycle
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-lifecycle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Native Lifecycle
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: chatjs_native
+          POSTGRES_USER: chatjs
+          POSTGRES_PASSWORD: chatjs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chatjs -d chatjs_native" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Public fixture credentials; every run owns a fresh service database.
+      DATABASE_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_native
+      WORKFLOW_POSTGRES_URL: postgres://chatjs:chatjs@127.0.0.1:5432/chatjs_native
+      AUTH_SECRET: native-lifecycle-isolated-auth-secret
+      EVE_GATEWAY_SECRET: native-lifecycle-isolated-gateway-secret
+      EVE_INTERNAL_ORIGIN: http://127.0.0.1:3000
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - run: bun install --frozen-lockfile
+      - name: Migrate isolated application database
+        run: bun run --cwd apps/chat db:migrate
+      - name: Bootstrap provider schema and lifecycle fences
+        run: bun run --cwd apps/chat eve:setup
+      - name: Verify provider setup
+        run: bun run --cwd apps/chat eve:check
+      - name: Test native lifecycle contracts
+        run: bun run --cwd apps/chat test:native --reporter=default --reporter=junit --outputFile.junit=native-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: native-lifecycle-results
+          path: apps/chat/native-results.xml
+          retention-days: 7

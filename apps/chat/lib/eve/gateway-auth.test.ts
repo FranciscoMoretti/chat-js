@@ -31,7 +31,7 @@ vi.mock("../db/eve-queries", () => ({
   ownsEveSession: mocks.owns,
   readEveSessionMapping: mocks.mapping,
 }));
-vi.mock("../db/eve-sandbox-coverage-proof", () => ({
+vi.mock("@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof", () => ({
   isFencedEveDescendant: mocks.descendant,
 }));
 vi.mock("./model-selection", () => ({ loadEveModelDefinition: mocks.model }));
