@@ -19,6 +19,39 @@ chat-js add mcp
 
 Installation adds the connector settings pages, OAuth callback, router and composer control. Installed registrations determine availability. You can create an app with `--no-mcp` to omit these files.
 
+### Upgrading an existing app
+
+Before adding or updating MCP in an older generated app, check the `mcpConnector` columns in `lib/db/schema.ts`. The current MCP feature requires this field:
+
+```ts
+requireApproval: boolean("requireApproval").notNull().default(false),
+```
+
+If it is missing, add it to the connector columns and run your app's `db:generate` script using its package manager. This generates a migration against your app's own migration history.
+
+| Package manager | Generate migration     | Apply reviewed migration |
+| --------------- | ---------------------- | ------------------------ |
+| Bun             | `bun run db:generate`  | `bun run db:migrate`     |
+| npm             | `npm run db:generate`  | `npm run db:migrate`     |
+| pnpm            | `pnpm run db:generate` | `pnpm run db:migrate`    |
+| Yarn            | `yarn run db:generate` | `yarn run db:migrate`    |
+
+Review the generated migration. For an existing `McpConnector` table, the approval change should add this column:
+
+```sql
+ALTER TABLE "McpConnector" ADD COLUMN "requireApproval" boolean DEFAULT false NOT NULL;
+```
+
+Run `db:migrate` with your package manager to apply the reviewed migration to your intended database. Then install the updated MCP code:
+
+```bash
+chat-js add mcp
+```
+
+Use your app's generated migration rather than copying a numbered migration from the ChatJS repository. The CLI checks for the schema field before installing MCP, but it does not connect to your database or apply migrations. These steps also apply when installing the registry item directly through shadcn. New scaffolds already include the schema and migration.
+
+### Encryption key
+
 Generate an encryption key (must be exactly 44 characters):
 
 ```bash
@@ -92,6 +125,7 @@ From the Connectors settings page you can:
 
 - **View** all connected servers and their status
 - **Enable/Disable** individual connectors without deleting them
+- **Require approval** before tools from an owned connection run. This setting defaults to off and is saved per connection. Shared connectors are read-only.
 - **Update** connector settings (name, URL, type, OAuth credentials)
 - **Delete** connectors (removes the connection and all associated data)
 - **Disconnect** OAuth sessions if authentication fails

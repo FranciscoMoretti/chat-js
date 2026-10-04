@@ -9,13 +9,8 @@ const ELECTRON_AUTH_CALLBACK_PATH = "/auth/callback";
 
 const ELECTRON_APP_SCHEME = config.appPrefix;
 
-// @better-auth/electron uses `${scheme}:/...` for its synthetic Origin header
-// and deep-link callback URLs. Keep the legacy `scheme://` form alongside it so
-// existing packaged registrations continue to validate too.
-const ELECTRON_TRUSTED_ORIGINS = [
-  `${ELECTRON_APP_SCHEME}:/`,
-  `${ELECTRON_APP_SCHEME}://`,
-] as const;
+// @better-auth/electron sends this synthetic Origin for the current protocol.
+const ELECTRON_TRUSTED_ORIGINS = [`${ELECTRON_APP_SCHEME}:/`] as const;
 
 const isDesktopAppEnabled = (): boolean => config.desktopApp.enabled;
 

@@ -17,6 +17,7 @@ import { installItems } from "../registry/shadcn";
 import { updateEnvironmentExample } from "./environment-example";
 import { prepareDependencyUpdate } from "./installation-dependencies";
 import type { planInstallation } from "./installation-plan";
+import { assertMcpApprovalSchema } from "./mcp-schema";
 import { preflight } from "./preflight";
 import { toolRegistrationTargets } from "./sync-tools";
 
@@ -138,6 +139,9 @@ const installPlan = async (
   },
   register: () => Promise<void>
 ): Promise<void> => {
+  if (plan.features.some((feature): boolean => feature.id === "mcp")) {
+    await assertMcpApprovalSchema(cwd);
+  }
   const targets = [...sourceTargets(plan), ...(options.managedTargets ?? [])];
   const retired = await Promise.all(
     plan.replacements.map(({ previous }) =>

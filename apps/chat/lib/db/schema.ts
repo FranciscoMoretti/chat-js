@@ -279,6 +279,7 @@ const mcpConnector = pgTable(
     nameId: varchar("nameId", { length: 256 }).notNull(),
     oauthClientId: text("oauthClientId"),
     oauthClientSecret: encryptedText("oauthClientSecret"),
+    requireApproval: boolean("requireApproval").notNull().default(false),
     type: varchar("type", { enum: ["http", "sse"] })
       .notNull()
       .default("http"),

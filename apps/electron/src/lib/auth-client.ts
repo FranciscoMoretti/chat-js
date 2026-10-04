@@ -42,7 +42,7 @@ const electronAuthStorage =
   process.env.NODE_ENV === "production" ? storage() : memoryStorage();
 /* oxlint-enable node/no-process-env */
 
-const authClient = createAuthClient({
+const electronAuthClient = createAuthClient({
   baseURL: APP_URL,
   plugins: [
     electronClient({
@@ -59,20 +59,4 @@ const authClient = createAuthClient({
   ],
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ElectronAuthClient: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-type ElectronAuthClient = typeof authClient & {
-  authenticate: (data: { token: string }) => Promise<unknown>;
-  getCookie: () => string;
-  getSession: () => Promise<{ data?: { user?: unknown } | null }>;
-  requestAuth: (options?: { provider?: string }) => Promise<void>;
-  signOut: () => Promise<unknown>;
-  setupMain: (cfg?: {
-    getWindow?: () => Electron.BrowserWindow | null;
-    scheme?: boolean;
-  }) => void;
-};
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-const electronAuthClient: ElectronAuthClient = authClient;
-export { authClient, electronAuthClient };
-export type { ElectronAuthClient };
+export { electronAuthClient };
