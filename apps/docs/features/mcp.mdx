@@ -19,6 +19,37 @@ chat-js add mcp
 
 Installation adds the connector settings pages, OAuth callback, router and composer control. Installed registrations determine availability. You can create an app with `--no-mcp` to omit these files.
 
+### Upgrading an existing app
+
+Before adding or updating MCP in an older generated app, check the `mcpConnector` columns in `lib/db/schema.ts`. The current MCP feature requires this field:
+
+```ts
+requireApproval: boolean("requireApproval").notNull().default(false),
+```
+
+If it is missing, add it to the connector columns and generate a migration using your app's own migration history:
+
+```bash
+bun db:generate
+```
+
+Review the generated migration. For an existing `McpConnector` table, the approval change should add this column:
+
+```sql
+ALTER TABLE "McpConnector" ADD COLUMN "requireApproval" boolean DEFAULT false NOT NULL;
+```
+
+Apply the migration to your intended database before installing the updated MCP code:
+
+```bash
+bun db:migrate
+chat-js add mcp
+```
+
+Use your app's generated migration rather than copying a numbered migration from the ChatJS repository. The CLI checks for the schema field before installing MCP, but it does not connect to your database or apply migrations. These steps also apply when installing the registry item directly through shadcn. New scaffolds already include the schema and migration.
+
+### Encryption key
+
 Generate an encryption key (must be exactly 44 characters):
 
 ```bash
@@ -92,6 +123,7 @@ From the Connectors settings page you can:
 
 - **View** all connected servers and their status
 - **Enable/Disable** individual connectors without deleting them
+- **Require approval** before tools from an owned connection run. This setting defaults to off and is saved per connection. Shared connectors are read-only.
 - **Update** connector settings (name, URL, type, OAuth credentials)
 - **Delete** connectors (removes the connection and all associated data)
 - **Disconnect** OAuth sessions if authentication fails

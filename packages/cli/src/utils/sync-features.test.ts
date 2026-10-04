@@ -14,7 +14,11 @@ import { scaffoldFromTemplate } from "../helpers/scaffold";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
 /* oxlint-enable import/no-relative-parent-imports */
+import { installPlan } from "./install-plan";
+import { planInstallation } from "./installation-plan";
+/* oxlint-disable import/max-dependencies -- The feature installation contract exercises the real planner, installer, registry and scaffold together. */
 import { initializeFeatureUi, syncFeatures } from "./sync-features";
+/* oxlint-enable import/max-dependencies */
 
 const roots: string[] = [];
 const demo = path.resolve(import.meta.dir, "../../../../apps/chat");
@@ -148,7 +152,7 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-test("shadcn installs MCP into a core-only scaffold with no duplicate demo source", async (): Promise<void> => {
+test("MCP installation requires the approval schema before changing an older scaffold", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-mcp-install-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
@@ -186,8 +190,34 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
     port: 0,
   });
   try {
-    await installItems([`http://127.0.0.1:${server.port}/mcp.json`], root);
-    await syncFeatures(root, { addUi: true, expectedMcp: true });
+    const schemaFile = path.join(root, "lib/db/schema.ts");
+    const schema = await readFile(schemaFile, "utf-8");
+    const oldSchema = schema.replace(
+      '    requireApproval: boolean("requireApproval").notNull().default(false),\n',
+      ""
+    );
+    expect(oldSchema).not.toContain("requireApproval");
+    await writeFile(schemaFile, oldSchema);
+    const plan = await planInstallation(root, {
+      features: [],
+      tools: [`http://127.0.0.1:${server.port}/mcp.json`],
+    });
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before checking for writes.
+    await expect(
+      installPlan(root, plan, { overwrite: true }, (): Promise<void> =>
+        Promise.reject(
+          new Error("registration must not run before the schema upgrade")
+        )
+      )
+    ).rejects.toThrow("bun db:generate");
+    expect(
+      await Bun.file(path.join(root, "trpc/routers/mcp.router.ts")).exists()
+    ).toBe(false);
+    expect(await readFile(schemaFile, "utf-8")).toBe(oldSchema);
+    await writeFile(schemaFile, schema);
+    await installPlan(root, plan, {}, async (): Promise<void> => {
+      await syncFeatures(root, { addUi: true, expectedMcp: true });
+    });
     const installed = await Promise.all(
       mcpFiles.map((file): Promise<boolean> =>
         Bun.file(path.join(root, file)).exists()

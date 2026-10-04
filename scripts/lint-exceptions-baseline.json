@@ -6147,6 +6147,8 @@
     "[\"packages/cli/src/utils/instrumentation.test.ts\",\"typescript/no-confusing-void-expression\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/cli/src/utils/is-safe-target.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/logger.ts\",\"eslint/no-console\",\"oxlint-disable\"]": 1,
+    "[\"packages/cli/src/utils/mcp-schema.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"packages/cli/src/utils/mcp-schema.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/cli/src/utils/preflight.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/preflight.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/preflight.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
@@ -6178,13 +6180,14 @@
     "[\"packages/cli/src/utils/run-command.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/spinner.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 4,
+    "[\"packages/cli/src/utils/sync-features.test.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 6,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 5,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 4,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 3,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 5,
-    "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/await-thenable\",\"oxlint-disable-next-line\"]": 5,
-    "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/no-confusing-void-expression\",\"oxlint-disable-next-line\"]": 5,
+    "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/await-thenable\",\"oxlint-disable-next-line\"]": 6,
+    "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/no-confusing-void-expression\",\"oxlint-disable-next-line\"]": 6,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"oxc/no-map-spread\",\"oxlint-disable-next-line\"]": 2,
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/no-floating-promises\",\"oxlint-disable-next-line\"]": 2,
@@ -29759,7 +29762,7 @@
       "f52587c768c0729a85cf399bf705e794c8100e699e25da0797eade3805dd525e",
       "44e78c51f72c6a6dc76f6ad7d41357ad7aed2534fe1dc61f848f4b8e109e4d0e",
       "9d5020c79b38a31907c3adaa4ce54146a2ecc1a5064b85d06eaebc6218643a7d",
-      "af3075107eb22a2d1f0a2530b3fe86bb7b88e128e74038f5b976ab85b4964091"
+      "24d180791e7d612e747b19d332c683bd44cfabb2143483cbec701dc0054fc534"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
       "132e42af21db47afd6a4f457b74b0542b78f9bb5bfe6c09d9c2022aae6bc2bad",
@@ -29768,15 +29771,15 @@
     "[\"packages/cli/src/utils/install-plan.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "7c7df26d3c6f1c17154095d716ca8e0e068d5add4394024449371af0c5e7f719",
       "681a62b3c0d5a172525c7d83a6955c871abedd7cda4229cfcb3d6f66ab4938dc",
-      "45c47eda24b8a6f5ebc0b6b664adeac2b564673177fedc621ee2a3a4da3ba721"
+      "3e45d36568763d2223a75c757a67024cf3727cb35623a914116bf64f75f139e0"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "a1b8fa74b05ea8ffd786b85bb51f929f1547e48a45170ce53ecc8ac7df2e9fd6",
-      "e0c1959faaa6758edda932ff12d366632b1140f55ba024f72f38cc05f9a1d711"
+      "60594c9d17c8af6285d107b83f87288288151cb0817267aae3942140a9317b5e"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
       "5ff3fc1e7c5e8d17ec14a4cf8113d934cf5c6419bfada66977bd703f5564eb5c",
-      "2ad8ad1e43421689b2dd9b137f3e46c7726233d4c257c5bd8b32ba8a1a7ddabc"
+      "6a87fb950981334f87d42b201d78f4cd558ec6ba7dc58d31f3142a37a934f4fd"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "d1f2840ef662b97f66383a19296121d4f7cf02b826c4b748b38f8e2eed1c0119",
@@ -29784,16 +29787,16 @@
       "2c3f5fc2d8e77febe2f2a3e1e37b8c83902582a171f228dce6530b7b33f69c0f"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "f13d619162afec31501d1047bb07e17748e34f11d9d1e8838a2cb4303fcc26ed"
+      "3efc84f3618ad1bc86ace2248b4ceaf87d8e29704cf6b96dc67506087a0fc81a"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "d708f68413e9b9fe031fc7b4770c0e50539171c84158f64e19af6745632cee44"
+      "5581129b153325fcc5a60388d4187f5a289db6487da2c740beb8c704c028588f"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"eslint/max-params\",\"oxlint-disable\"]": [
-      "a4cf202ae3735df57ccac0f6ac6196d416135478490282be0cf4fe9165c303f5"
+      "1fa5905c5babfe5064ce4123ceb26a29aa52cea369a906b5e8b9afe3afc354d1"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
-      "adce5c9cbf8ed67bddd23e2a928b377c82e31c41f938014121226e17766a8375"
+      "5dfacdf3f87c70970518018b64696ed92f6b20062b546f270f72929fb37a04ca"
     ],
     "[\"packages/cli/src/utils/install-plan.ts\",\"typescript/no-unsafe-member-access\",\"oxlint-disable-next-line\"]": [
       "4cf572390957d627fd4a19822942d817d17a56bfc80729bbd1ba6aeeea777fc7",
@@ -29923,6 +29926,12 @@
     "[\"packages/cli/src/utils/logger.ts\",\"eslint/no-console\",\"oxlint-disable\"]": [
       "90cbb2c0aac34a77e39c50ac66ca0ff8df0547e92493a8fadbfa3a83ecb39066"
     ],
+    "[\"packages/cli/src/utils/mcp-schema.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "8c8c75c721642c4c7f789e27555610680232816f21f14df1f5605d977ba0333f"
+    ],
+    "[\"packages/cli/src/utils/mcp-schema.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": [
+      "3b822d6ace239df08dc3f0ef626fcd07177ca5851333768977ac78c2c1b40b97"
+    ],
     "[\"packages/cli/src/utils/preflight.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "fad3d1fda440e767d7aa2f4e88c3c57a521148edb005cf0b04d43b7293815307"
     ],
@@ -30038,10 +30047,13 @@
       "c33f45838bddaf324c6134ba00eddbd37c66481348ff61369b7ebbe9a40b315d",
       "42a4362a74c740156437c8140ca6ddeddfe530fe3117f25ad89fdde614859fc8"
     ],
+    "[\"packages/cli/src/utils/sync-features.test.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
+      "36e4222f73fd19a6bc44b7de197c9eb4e2f17f23b53a72cb91bb37343fc7a57d"
+    ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "f6a1653f43c5085aab81d66745ff5fa7f6950835f799837a5cc4dc3c8d90ad32",
       "aa86305b356a7624eb2fa4713e44c6baa7ca042f229288430ba5bb1b455fd92b",
-      "80a97b21d86d0c0e793cd7421706137cbaf87083dfc0ec96d96f0123cb30bbc5",
+      "9705b39f38984d9c080fb99054cf1176809e342d876bbd4cb28f15b94c623837",
       "2d72ee36207f780a9f380908b28b1bbde6754a6e26255755a59f7f08ef968ec8",
       "5c4ab39118fb86eca7fc53062bc9a3b43cbf717fa4e84af05c5dddefac776815",
       "a4481d0fe54646133f0ff8b97ef8f666a432e315141217fbc824a50b0fb1eb41"
@@ -30049,19 +30061,19 @@
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "9cc9982ba0a80109a9dbde63ce5bc93e985ffabbe121e4ee31ff42ee6af9682f",
       "94480dc7e8de3b552ec91d43d57fad492d03ac958968ca04ce90cb26a3a6ca51",
-      "d7090115e8fba577ad3c9671bd070c0d90cf2aafe5d0d581e7dc72ddf17e6bdd",
+      "43519d71dc5672ab38625626364261d009210732f1727b590043542068f4afe5",
       "e16304b786ab48d0bf419ca74fc9075b10d51ba7437ed833fec278e119b73885",
       "5ee73a7a2991a3cbbf54249fc14bfe40d0112d7d8d4beb0684e77d5ef5881c69"
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "75863913e966e10df7e4e6de1cb086592b0ac96e7dd2164c7fc21154ceab638c",
-      "53857efc5a684c182f43e308ceb5a0e458ca3cab335ad9f0a1a3a633364c74a1",
+      "9d4451ddddc0b9a52c494dcf0f94696bdd120be6c28d0bed17c883e1b9d55fa3",
       "c9f2d7b1439d2f8faa5c0ecb1f9a2c1bcfd22369ad093dad4baad147d2d35d99",
       "55379984b30143b0e98385d2a7f43981fcc5d0cf02213901221513f7668d0079"
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
       "9fe1666dfb1fcf6239d1cebac47dd57d4294339638851c5b120eab7b98961902",
-      "855f7d1450ecf006568d1a3a8537162003ce64f7467bbe8e189105ad46637cce",
+      "37d29ce6fa4f5708db9122fcf55f6b23ec3bd0b25f82d7da157292acee55b1f5",
       "d1863a69c8a6bd1267c424cd9a55c9676f1c8dec2b9a854c1c35618dbdb9ade6"
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": [
@@ -30073,6 +30085,7 @@
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/await-thenable\",\"oxlint-disable-next-line\"]": [
       "6f8fc0b923139c25b019c2a0cd193c8bb79f26667a58f1c7884246ae1c18dbcf",
+      "6d5412de0f8cb4b86de5598f42b7151dc6b3fd9364c5817eaa345bd439704c0b",
       "c4b3f7988d97f8721e57355d52f08625d2aacde4c5e9ef9a8572d5cbafef136e",
       "c657fe37bd123ca59a2166d23b2f98255c3d6757f278b1f0162752d9d25909c5",
       "2f59fcbf6c3a68930808ba97586556cb9adf823f9e53b0837df5be8a1f576b21",
@@ -30080,13 +30093,14 @@
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/no-confusing-void-expression\",\"oxlint-disable-next-line\"]": [
       "6f8fc0b923139c25b019c2a0cd193c8bb79f26667a58f1c7884246ae1c18dbcf",
+      "6d5412de0f8cb4b86de5598f42b7151dc6b3fd9364c5817eaa345bd439704c0b",
       "c4b3f7988d97f8721e57355d52f08625d2aacde4c5e9ef9a8572d5cbafef136e",
       "c657fe37bd123ca59a2166d23b2f98255c3d6757f278b1f0162752d9d25909c5",
       "2f59fcbf6c3a68930808ba97586556cb9adf823f9e53b0837df5be8a1f576b21",
       "2d6c0059f4e1e96b1c340b0d0355cc2d01b6242463d1c2e93058c1b4c297804b"
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "686ffc0c46e09b6218c5697671ec3851312cdba8dad93f9ee39d331710491e87",
+      "f545ea53c05f26e6b8d5c1527a6a9a6b2ff2e0dbd130f02809a4765943a1afcd",
       "ba006037dc91557bb209716859e66afd6fbc4e1dc6e4b69050e36a477aff8aa6"
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"oxc/no-map-spread\",\"oxlint-disable-next-line\"]": [
@@ -30098,7 +30112,7 @@
       "27b335ccd7b183b1b8f57c788e9dd24825d9c25344eded45733efc7f905e0b64"
     ],
     "[\"packages/cli/src/utils/sync-features.test.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "ce1348a39b0609142ac5eb4b4adfae6a8db4bc363f3897d570041150e7ba8a96"
+      "353e01d97a2787e1996907d4ca85e6d22894595d526ee61458c1c96b9c383aaa"
     ],
     "[\"packages/cli/src/utils/sync-features.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "3057cf0e19f22a26b3418ee9f90c465430309c3f656238bb577fafd441c5a387",
