@@ -42,18 +42,16 @@ const message = z
 
 type Message = z.infer<typeof message>;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Branch: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
-type Branch = {
+interface Branch {
   id: string;
   owner: string;
   head: string | null;
   documents: Record<string, string>;
   sandbox: string;
   barrier: string | null;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable typescript/consistent-type-definitions -- Checkpoint: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
-type Checkpoint = {
+}
+
+interface Checkpoint {
   id: string;
   owner: string;
   source: string | null;
@@ -62,8 +60,8 @@ type Checkpoint = {
   documents: Record<string, string>;
   sandbox: string;
   status: "pending" | "ready" | "failed";
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
+
 type DB = Sql | TransactionSql;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ownedBranch: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */

@@ -1,6 +1,6 @@
 /* oxlint-disable import/no-nodejs-modules -- { spawnSync }: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
-// This explicit .cjs entrypoint must retain CommonJS startup semantics.
-/* oxlint-disable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires -- Electron Forge is launched from this explicit CommonJS entrypoint; require and __dirname preserve its Node startup contract. */
+// The package command launches this .cjs entrypoint with CommonJS globals.
+/* oxlint-disable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires -- apps/electron/package.json runs this .cjs wrapper with Node; these three builtin require calls and __dirname retain its CommonJS startup contract. */
 const { spawnSync } = require("node:child_process");
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- fs: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
@@ -9,6 +9,7 @@ const fs = require("node:fs");
 /* oxlint-disable import/no-nodejs-modules -- path: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 const path = require("node:path");
 /* oxlint-enable import/no-nodejs-modules */
+/* oxlint-enable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires */
 
 const candidates = [
   path.resolve(
