@@ -54,6 +54,10 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     );
     await writeFile(path.join(cwd, "yarn.lock"), 'retired@1:\n  version "1"\n');
     await writeFile(
+      path.join(cwd, "tsconfig.tsbuildinfo"),
+      '"node_modules/retired/index.d.ts"'
+    );
+    await writeFile(
       manifest,
       JSON.stringify({
         dependencies: { ...dependencies, pinned: "2" },

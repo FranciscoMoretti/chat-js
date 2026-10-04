@@ -90,7 +90,7 @@ const registryServer = Bun.serve({
     }
     if (path === "/external-storage.json") {
       return Response.json({
-        dependencies: ["files-sdk@2.1.0"],
+        dependencies: ["files-sdk@2.5.0"],
         files: [
           {
             content: `import { memory } from "files-sdk/memory";

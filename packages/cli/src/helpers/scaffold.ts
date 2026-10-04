@@ -189,19 +189,6 @@ const applyChatTemplateSourceTransforms = async (
   await vendorPatchedPackage({
     destination,
     packageDir: await resolvePackageDirectory(
-      "@ai-sdk/mcp",
-      pathModule.join(getRepoRoot(), "apps", "chat")
-    ),
-    packageName: "@ai-sdk/mcp",
-    patchPath: pathModule.join(
-      getRepoRoot(),
-      "patches",
-      "ai-sdk-mcp@2.0.52.patch"
-    ),
-  });
-  await vendorPatchedPackage({
-    destination,
-    packageDir: await resolvePackageDirectory(
       "@workflow/world-postgres",
       pathModule.join(getRepoRoot(), "apps", "chat")
     ),

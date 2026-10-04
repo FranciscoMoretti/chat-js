@@ -35,6 +35,7 @@ const ignored = new Set([
   ".next",
   ".eve",
   ".output",
+  ".turbo",
   "dist",
   "package-lock.json",
   "npm-shrinkwrap.json",
@@ -49,7 +50,11 @@ const ignored = new Set([
 const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
   const entries = await readdir(cwd, { withFileTypes: true });
   for (const entry of entries) {
-    if (ignored.has(entry.name) || entry.name === "package.json") {
+    if (
+      ignored.has(entry.name) ||
+      entry.name === "package.json" ||
+      entry.name.endsWith(".tsbuildinfo")
+    ) {
       // oxlint-disable-next-line eslint/no-continue -- Skip ignored directories before examining their files.
       continue;
     }
