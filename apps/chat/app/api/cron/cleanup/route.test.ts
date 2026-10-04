@@ -3,6 +3,8 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { GET } from "./route";
 
+const SERVICE_UNAVAILABLE = 503;
+
 const mocks = vi.hoisted(() => {
   const env: {
     CRON_SECRET: string | undefined;
@@ -136,3 +138,58 @@ test("pending guest deletion is retryable failure after attachment cleanup runs"
   expect(await response.json()).toMatchObject({ success: false });
 });
 /* oxlint-enable no-magic-numbers */
+
+test("unsupported guest cleanup never reports cron success or an empty backlog", async () => {
+  const unsupported = {
+    deletedCount: 0,
+    reason: "unsupported_runtime",
+    skipped: true,
+  };
+  mocks.cleanupGuests.mockResolvedValueOnce(unsupported);
+  const response = await GET(
+    new NextRequest("http://localhost/api/cron/cleanup", {
+      headers: { authorization: "Bearer fixture-secret" },
+    })
+  );
+  expect(response.status).toBe(SERVICE_UNAVAILABLE);
+  expect(mocks.cleanupEve).toHaveBeenCalledOnce();
+  expect(await response.json()).toMatchObject({
+    results: { expiredGuests: unsupported },
+    success: false,
+  });
+});
+
+test("a skipped cleanup cannot become successful through a zero pending count", async () => {
+  mocks.cleanupGuests.mockResolvedValueOnce({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: true,
+  });
+  const response = await GET(
+    new NextRequest("http://localhost/api/cron/cleanup", {
+      headers: { authorization: "Bearer fixture-secret" },
+    })
+  );
+  expect(response.status).toBe(SERVICE_UNAVAILABLE);
+  expect(await response.json()).toMatchObject({ success: false });
+});
+
+test("guest inventory failure reports retry while attachment cleanup still runs", async () => {
+  mocks.cleanupGuests.mockRejectedValueOnce(
+    new Error("private database details")
+  );
+  const response = await GET(
+    new NextRequest("http://localhost/api/cron/cleanup", {
+      headers: { authorization: "Bearer fixture-secret" },
+    })
+  );
+  expect(response.status).toBe(SERVICE_UNAVAILABLE);
+  expect(mocks.cleanupEve).toHaveBeenCalledOnce();
+  expect(await response.json()).toMatchObject({
+    results: {
+      expiredGuests: { error: "Guest cleanup failed; retry required." },
+      orphanedAttachments: { deletedCount: 0, skipped: false },
+    },
+    success: false,
+  });
+});

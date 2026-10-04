@@ -40,7 +40,9 @@ export const GET = async (request: NextRequest) => {
     ]);
     const success =
       attachments.status === "fulfilled" &&
+      !attachments.value.skipped &&
       guests.status === "fulfilled" &&
+      !guests.value.skipped &&
       guests.value.pendingCount === 0;
     return NextResponse.json(
       {
