@@ -22,13 +22,19 @@ const isAsyncIterable = <T>(
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+/** Isolate legacy approval metadata while preserving its boolean or predicate contract. */
+const splitMcpToolApproval = <TInput, TOutput>(tool: Tool<TInput, TOutput>) => {
+  // oxlint-disable-next-line typescript/no-deprecated -- Preserve existing boolean and conditional MCP policies until their producers migrate off needsApproval; keep the compatibility read isolated here.
+  const { needsApproval: approval, ...definition } = tool;
+  return { approval, definition };
+};
+
 /** Describe discovered MCP tools; approval and output policies are handled by the MCP integration. */
 const describeMcpTool = async <TInput, TOutput>(
   definition: Tool<TInput, TOutput>
 ) => {
   if (
-    // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
-    definition.needsApproval ||
+    splitMcpToolApproval(definition).approval ||
     definition.toModelOutput ||
     definition.type === "provider" ||
     typeof definition.description === "function"
@@ -102,4 +108,4 @@ const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-export { describeMcpTool, executeMcpTool };
+export { describeMcpTool, executeMcpTool, splitMcpToolApproval };
