@@ -457,7 +457,7 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
       },
       tools: toolSources,
     },
-    { fresh: true }
+    { documents: options.documents, fresh: true }
   );
 
   return {

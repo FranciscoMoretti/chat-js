@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { builtInStorage } from "../../../registry/src/storage/catalog";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { StorageSelection } from "../registry/storage";
+import { updateEnvironmentExample } from "../utils/environment-example";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- The provider generator shares the package-local registration emitter in formatter order. */
 import { generatedRegistrationSource } from "../utils/generated-registration-source";
@@ -54,36 +55,12 @@ export const storageId = ${JSON.stringify(definition.id)};
 export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definition.envRequirements, null, 2)};
 `)
   );
-  const examplePath = path.join(destination, ".env.example");
-  let env = await readFile(examplePath, "utf-8").catch((error: unknown) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return "";
-    }
-    throw error;
-  });
-  const start = "# <chatjs-storage-provider>";
-  const end = "# </chatjs-storage-provider>";
-  const from = env.indexOf(start);
-  const to = env.indexOf(end);
-  if (from !== -1 && to >= from) {
-    env = env.slice(0, from) + env.slice(to + end.length);
-  }
-  const variables = [
-    ...new Set(
-      definition.envRequirements.flatMap((envReq) => envReq.options.flat())
+  await updateEnvironmentExample(destination, "storage-provider", [
+    ...definition.envRequirements.flatMap((requirement) =>
+      requirement.options.flat()
     ),
-  ];
-  env += `\n${start}\n# ${definition.id} storage\n`;
-  for (const key of variables) {
-    if (!new RegExp(`^${key}=`, "mu").test(env)) {
-      env += `${key}=\n`;
-    }
-  }
-  for (const key of definition.optionalEnv) {
-    env += `# ${key}=\n`;
-  }
-  env += `${end}\n`;
-  await writeFile(examplePath, env);
+    ...definition.optionalEnv,
+  ]);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

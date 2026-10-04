@@ -60,7 +60,7 @@ const validateRequestedKind = (
 export const planInstallation = async (
   cwd: string,
   input: InstallationSelection,
-  options: { fresh?: boolean; replace?: boolean } = {}
+  options: { fresh?: boolean; replace?: boolean; documents?: boolean } = {}
 ) => {
   const selection = installationSelectionSchema.parse(input);
   const installed = options.fresh === true ? [] : await readInstalledTools(cwd);
@@ -221,6 +221,14 @@ export const planInstallation = async (
       // oxlint-disable-next-line eslint/no-await-in-loop -- Each provider is resolved before validating the final installation.
       await visit(itemAddress(provider, "tool"));
     }
+  }
+  if (
+    options.documents === false &&
+    target().some((tool) => typeof tool.documentKind === "string")
+  ) {
+    throw new Error(
+      "The selected tools require documents. Omit --no-documents or omit document-dependent tools."
+    );
   }
   validateToolInstallation(cwd, target());
   const installedFeatures =

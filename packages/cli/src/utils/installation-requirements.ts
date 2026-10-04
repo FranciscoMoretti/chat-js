@@ -24,6 +24,21 @@ const toolsSchema = z.object({ image: mediaSchema, video: mediaSchema });
 const mediaDefaultsSchema = z.object({ tools: toolsSchema });
 const noConsumers = 0;
 
+// These built-in IDs predate declarative requirements in installed descriptors.
+const requiredMedia = (tool: MediaConsumer): readonly MediaKind[] => {
+  if (tool.requiresGateway) {
+    return tool.requiresGateway;
+  }
+  if (tool.id === "generate-image") {
+    return ["image"];
+  }
+  return tool.id === "generate-video" ? ["video"] : [];
+};
+
+const requiresStorage = (item: StorageConsumer): boolean =>
+  item.requiresStorage === true ||
+  ["generate-image", "generate-video", "attachment-uploads"].includes(item.id);
+
 const validateStorage = async (
   cwd: string,
   consumers: readonly StorageConsumer[],
@@ -63,7 +78,7 @@ const validateMedia = (
   gateway: MediaGateway
 ): void => {
   for (const tool of tools) {
-    for (const kind of tool.requiresGateway ?? []) {
+    for (const kind of requiredMedia(tool)) {
       const model = gateway.defaults.tools[kind].default;
       if (
         !gateway.capabilities[kind] ||
@@ -87,12 +102,12 @@ export const validateProviderRequirements = async (
     readonly features: readonly StorageConsumer[];
   }
 ): Promise<void> => {
-  const fileConsumers = [...target.tools, ...target.features].filter(
-    (item) => item.requiresStorage === true
+  const fileConsumers = [...target.tools, ...target.features].filter((item) =>
+    requiresStorage(item)
   );
   await validateStorage(cwd, fileConsumers, target.storage);
   const mediaConsumers = target.tools.filter(
-    (item) => (item.requiresGateway?.length ?? noConsumers) > noConsumers
+    (item) => requiredMedia(item).length > noConsumers
   );
   if (mediaConsumers.length > noConsumers) {
     const gateway = target.gateway ?? (await installedMediaGateway(cwd));

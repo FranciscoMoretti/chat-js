@@ -15,6 +15,7 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     const manifest = path.join(cwd, "package.json");
     const dependencies = {
       custom: "1",
+      customVue: "1",
       pinned: "1",
       preexisting: "1",
       retired: "1",
@@ -48,6 +49,11 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     await first();
     await writeFile(path.join(cwd, "custom.ts"), 'import "custom";');
     await writeFile(
+      path.join(cwd, "component.vue"),
+      '<script>import "customVue";</script>'
+    );
+    await writeFile(path.join(cwd, "yarn.lock"), 'retired@1:\n  version "1"\n');
+    await writeFile(
       manifest,
       JSON.stringify({
         dependencies: { ...dependencies, pinned: "2" },
@@ -68,7 +74,13 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     });
     await replace();
     expect(JSON.parse(await readFile(manifest, "utf-8"))).toEqual({
-      dependencies: { custom: "1", pinned: "2", preexisting: "1", shared: "1" },
+      dependencies: {
+        custom: "1",
+        customVue: "1",
+        pinned: "2",
+        preexisting: "1",
+        shared: "1",
+      },
       private: true,
     });
   } finally {

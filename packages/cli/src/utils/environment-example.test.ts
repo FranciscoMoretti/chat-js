@@ -34,3 +34,33 @@ test("replacement updates owned credential examples while preserving user entrie
     await rm(cwd, { force: true, recursive: true });
   }
 });
+
+// oxlint-disable-next-line eslint/max-statements -- Exercise both independent provider replacements and legacy user ownership in one sequence.
+test("independent provider sections retain shared credentials and preserve unmarked legacy entries", async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-shared-env-"));
+  const file = path.join(cwd, ".env.example");
+  try {
+    await writeFile(file, "OPENAI_API_KEY=legacy-example\n");
+    await updateEnvironmentExample(cwd, "storage-provider", [
+      "VERCEL_OIDC_TOKEN",
+      "BLOB_STORE_ID",
+    ]);
+    await updateEnvironmentExample(cwd, "gateway-provider", [
+      "VERCEL_OIDC_TOKEN",
+      "AI_GATEWAY_API_KEY",
+    ]);
+    await updateEnvironmentExample(cwd, "storage-provider", ["AWS_REGION"]);
+    expect(await readFile(file, "utf-8")).toContain("VERCEL_OIDC_TOKEN=");
+    await updateEnvironmentExample(cwd, "storage-provider", [
+      "VERCEL_OIDC_TOKEN",
+      "BLOB_STORE_ID",
+    ]);
+    await updateEnvironmentExample(cwd, "gateway-provider", ["OPENAI_API_KEY"]);
+    const result = await readFile(file, "utf-8");
+    expect(result).toContain("VERCEL_OIDC_TOKEN=");
+    expect(result).not.toContain("AI_GATEWAY_API_KEY=");
+    expect(result).toStartWith("OPENAI_API_KEY=legacy-example\n");
+  } finally {
+    await rm(cwd, { force: true, recursive: true });
+  }
+});

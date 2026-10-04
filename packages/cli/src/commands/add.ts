@@ -255,6 +255,27 @@ export const add = new Command("add")
           cwd,
           plan,
           {
+            finalize: async (): Promise<void> => {
+              const manager = inferPackageManager(cwd);
+              await runCommand(manager, ["install"], cwd);
+              const formatter = {
+                bun: ["run"],
+                npm: ["exec", "--"],
+                pnpm: ["exec"],
+                yarn: ["run"],
+              }[manager];
+              await runCommand(
+                manager,
+                [
+                  ...formatter,
+                  "oxfmt",
+                  "--write",
+                  "package.json",
+                  ".chatjs/installed-dependencies.json",
+                ],
+                cwd
+              );
+            },
             managedTargets: [
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
               ...(selectedStorage && !keepStorageOptions
@@ -289,25 +310,6 @@ export const add = new Command("add")
               ),
             });
           }
-        );
-        const manager = inferPackageManager(cwd);
-        await runCommand(manager, ["install"], cwd);
-        const formatter = {
-          bun: ["run"],
-          npm: ["exec", "--"],
-          pnpm: ["exec"],
-          yarn: ["run"],
-        }[manager];
-        await runCommand(
-          manager,
-          [
-            ...formatter,
-            "oxfmt",
-            "--write",
-            "package.json",
-            ".chatjs/installed-dependencies.json",
-          ],
-          cwd
         );
         printSetupRequirements(setup);
         log.success(

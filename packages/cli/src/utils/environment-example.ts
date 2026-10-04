@@ -9,7 +9,7 @@ const startOfFile = 0;
 // oxlint-disable-next-line eslint/max-statements -- Preserve the owned section boundary and verify unrelated user configuration in the same ordered operation.
 export const updateEnvironmentExample = async (
   cwd: string,
-  section: "gateway-provider" | "installed-capabilities",
+  section: "gateway-provider" | "storage-provider" | "installed-capabilities",
   variables: readonly string[]
 ): Promise<void> => {
   await preflight(cwd, [".env.example"]);
@@ -24,10 +24,12 @@ export const updateEnvironmentExample = async (
   const end = `# </chatjs-${section}>`;
   const from = original.indexOf(start);
   const to = original.indexOf(end);
-  const preserved =
-    from !== notFound && to >= from
-      ? original.slice(startOfFile, from) + original.slice(to + end.length)
-      : original;
+  // Each independently replaced section must retain its own shared credentials.
+  // Only user-owned entries outside all managed sections can suppress duplicates.
+  const preserved = original.replaceAll(
+    /^# <chatjs-(?<section>gateway-provider|storage-provider|installed-capabilities)>\r?\n[\s\S]*?^# <\/chatjs-\k<section>>\r?$/gmu,
+    ""
+  );
   const entries = [...new Set(variables)]
     .filter((name) => !new RegExp(`^${name}=`, "mu").test(preserved))
     .map((name) => `${name}=`);

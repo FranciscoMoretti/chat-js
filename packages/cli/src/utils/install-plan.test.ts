@@ -146,81 +146,113 @@ test("explicit provider replacement preserves unrelated installations and refuse
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-test("unmodified replacement works without overwrite and failed registration restores previous source", async (): Promise<void> => {
-  const root = await fixture();
-  const registry = server();
-  const source = (id: string): string =>
-    `http://127.0.0.1:${registry.port}/${id}.json`;
-  try {
-    const first = await planInstallation(root, {
-      features: [],
-      tools: [source("first")],
-    });
-    await installPlan(root, first, {}, async (): Promise<void> => {
-      await syncTools(root);
-    });
-    const plan = await planInstallation(
-      root,
-      { features: [], tools: [source("second")] },
-      { replace: true }
-    );
-    const env = path.join(root, ".env.example");
-    const config = path.join(root, "chat.config.ts");
-    const oldEnv = await readFile(env, "utf-8");
-    const oldConfig = await readFile(config, "utf-8");
-    await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
-    const registrationContents = (target: string) => {
-      const file = Bun.file(path.join(root, target));
-      return file.exists().then((exists) => (exists ? file.text() : null));
-    };
-    const oldRegistrations = await Promise.all(
-      toolRegistrationTargets.map((target) => registrationContents(target))
-    );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
-      installPlan(
+test.each(["registration", "finalization"] as const)(
+  "failed %s restores previous provider source, manifest, receipts and lockfiles",
+  async (phase): Promise<void> => {
+    const root = await fixture();
+    const registry = server();
+    const source = (id: string): string =>
+      `http://127.0.0.1:${registry.port}/${id}.json`;
+    try {
+      const first = await planInstallation(root, {
+        features: [],
+        tools: [source("first")],
+      });
+      await installPlan(root, first, {}, async (): Promise<void> => {
+        await syncTools(root);
+      });
+      const plan = await planInstallation(
+        root,
+        { features: [], tools: [source("second")] },
+        { replace: true }
+      );
+      const env = path.join(root, ".env.example");
+      const config = path.join(root, "chat.config.ts");
+      const manifest = path.join(root, "package.json");
+      const dependencies = path.join(
+        root,
+        ".chatjs/installed-dependencies.json"
+      );
+      const lockfile = path.join(root, "bun.lock");
+      await writeFile(lockfile, "original lockfile");
+      const oldManifest = await readFile(manifest, "utf-8");
+      const oldDependencies = await readFile(dependencies, "utf-8");
+      const oldEnv = await readFile(env, "utf-8");
+      const oldConfig = await readFile(config, "utf-8");
+      await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
+      const registrationContents = (target: string) => {
+        const file = Bun.file(path.join(root, target));
+        return file.exists().then((exists) => (exists ? file.text() : null));
+      };
+      const oldRegistrations = await Promise.all(
+        toolRegistrationTargets.map((target) => registrationContents(target))
+      );
+      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
+      await expect(
+        installPlan(
+          root,
+          plan,
+          {
+            finalize: async (): Promise<void> => {
+              await writeFile(manifest, "{}");
+              await writeFile(lockfile, "partial dependency install");
+              throw new Error("fixture finalization failed");
+            },
+            rollbackTargets: [".env.example", "chat.config.ts"],
+          },
+          async () => {
+            await writeFile(env, "MODIFIED=1\n");
+            await writeFile(config, "// partial config\n");
+            await syncTools(root, { expected: plan.expected });
+            expect(
+              await readFile(
+                path.join(root, "tools/chatjs/providers.ts"),
+                "utf-8"
+              )
+            ).toContain("./second/tool");
+            if (phase === "registration") {
+              throw new Error("fixture registration failed");
+            }
+          }
+        )
+      ).rejects.toThrow(`fixture ${phase} failed`);
+      expect(await readFile(manifest, "utf-8")).toBe(oldManifest);
+      expect(await readFile(dependencies, "utf-8")).toBe(oldDependencies);
+      expect(await readFile(lockfile, "utf-8")).toBe("original lockfile");
+      expect(
+        await Bun.file(
+          path.join(root, "tools/chatjs/second/chatjs.json")
+        ).exists()
+      ).toBe(false);
+      expect(await readFile(env, "utf-8")).toBe(oldEnv);
+      expect(await readFile(config, "utf-8")).toBe(oldConfig);
+      expect(
+        await Promise.all(
+          toolRegistrationTargets.map((target) => registrationContents(target))
+        )
+      ).toEqual(oldRegistrations);
+      expect(
+        await Bun.file(
+          path.join(root, "tools/chatjs/first/chatjs.json")
+        ).exists()
+      ).toBe(true);
+      await installPlan(
         root,
         plan,
-        { rollbackTargets: [".env.example", "chat.config.ts"] },
-        async () => {
-          await writeFile(env, "MODIFIED=1\n");
-          await writeFile(config, "// partial config\n");
-          await syncTools(root, { expected: plan.expected });
-          expect(
-            await readFile(
-              path.join(root, "tools/chatjs/providers.ts"),
-              "utf-8"
-            )
-          ).toContain("./second/tool");
-          throw new Error("fixture registration failed");
+        { overwrite: true },
+        async (): Promise<void> => {
+          await syncTools(root);
         }
-      )
-    ).rejects.toThrow("fixture registration failed");
-    expect(await readFile(env, "utf-8")).toBe(oldEnv);
-    expect(await readFile(config, "utf-8")).toBe(oldConfig);
-    expect(
-      await Promise.all(
-        toolRegistrationTargets.map((target) => registrationContents(target))
-      )
-    ).toEqual(oldRegistrations);
-    expect(
-      await Bun.file(path.join(root, "tools/chatjs/first/chatjs.json")).exists()
-    ).toBe(true);
-    await installPlan(
-      root,
-      plan,
-      { overwrite: true },
-      async (): Promise<void> => {
-        await syncTools(root);
-      }
-    );
-    const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool): string => tool.id)).toEqual(["second"]);
-  } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    registry.stop(true);
-  }
-}, 30_000);
+      );
+      const tools = await syncTools(root, { checkOnly: true });
+      expect(tools.map((tool): string => tool.id)).toEqual(["second"]);
+    } finally {
+      // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
+      registry.stop(true);
+    }
+  },
+  30_000
+);
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */

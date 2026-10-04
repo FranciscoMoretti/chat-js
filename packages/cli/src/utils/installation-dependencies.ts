@@ -38,16 +38,10 @@ const ignored = new Set([
   "dist",
   "package-lock.json",
   "npm-shrinkwrap.json",
-]);
-const sourceExtensions = new Set([
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".mjs",
-  ".cjs",
-  ".json",
-  ".mdx",
+  "bun.lock",
+  "bun.lockb",
+  "pnpm-lock.yaml",
+  "yarn.lock",
 ]);
 
 // Conservative protection for dependencies used by source outside registry items.
@@ -55,13 +49,13 @@ const sourceExtensions = new Set([
 const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
   const entries = await readdir(cwd, { withFileTypes: true });
   for (const entry of entries) {
-    if (
-      ignored.has(entry.name) ||
-      entry.isSymbolicLink() ||
-      entry.name === "package.json"
-    ) {
+    if (ignored.has(entry.name) || entry.name === "package.json") {
       // oxlint-disable-next-line eslint/no-continue -- Skip ignored directories before examining their files.
       continue;
+    }
+    if (entry.isSymbolicLink()) {
+      // Unknown source behind a symlink cannot prove a dependency is unused.
+      return true;
     }
     const file = path.join(cwd, entry.name);
     if (entry.isDirectory()) {
@@ -69,9 +63,9 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
       if (await sourceUses(file, name)) {
         return true;
       }
-    } else if (sourceExtensions.has(path.extname(entry.name))) {
+    } else if (entry.isFile()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
-      const content = await readFile(file, "utf-8");
+      const content = await readFile(file);
       if (content.includes(name)) {
         return true;
       }

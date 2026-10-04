@@ -134,6 +134,7 @@ const installPlan = async (
     fresh?: boolean;
     managedTargets?: string[];
     rollbackTargets?: string[];
+    finalize?: () => Promise<void>;
   },
   register: () => Promise<void>
 ): Promise<void> => {
@@ -147,6 +148,12 @@ const installPlan = async (
     "package.json",
     ".env.example",
     ".chatjs/installed-dependencies.json",
+    "bun.lock",
+    "bun.lockb",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
     ...toolRegistrationTargets,
     ...(options.rollbackTargets ?? []),
   ];
@@ -224,16 +231,15 @@ const installPlan = async (
       plan.environmentVariables
     );
     await updateDependencies();
+    await options.finalize?.();
   } catch (error) {
     // Restore old source even when shadcn or registration failed; new source may need repair.
     const restored = await Promise.allSettled([
       ...staged.map(({ from, to }): Promise<void> => rename(to, from)),
       ...[...existing].map(async ([target, content]): Promise<void> => {
-        if (content) {
-          await writeFile(path.join(cwd, target), content);
-        } else if (rollbackTargets.includes(target)) {
-          await rm(path.join(cwd, target), { force: true });
-        }
+        await (content
+          ? writeFile(path.join(cwd, target), content)
+          : rm(path.join(cwd, target), { force: true }));
       }),
     ]);
     const restorationErrors = restored.flatMap((result) =>

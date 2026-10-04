@@ -34,6 +34,40 @@ const media = (
     tools: [{ toolExport: "generateMedia" }],
   });
 
+test("legacy built-in descriptors retain mandatory media and storage requirements", async () => {
+  const gateway = externalGatewayFixture().root.meta.chatjs;
+  const video = media("video");
+  delete video.requiresGateway;
+  delete video.requiresStorage;
+  gateway.capabilities.video = false;
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before advancing the fixture.
+  await expect(
+    validateProviderRequirements(tmpdir(), {
+      features: [],
+      gateway,
+      storage: "s3",
+      tools: [video],
+    })
+  ).rejects.toThrow("supporting video");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before advancing the fixture.
+  await expect(
+    validateProviderRequirements(tmpdir(), {
+      features: [],
+      gateway,
+      storage: "memory",
+      tools: [video],
+    })
+  ).rejects.toThrow("persistent storage");
+  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before advancing the fixture.
+  await expect(
+    validateProviderRequirements(tmpdir(), {
+      features: [{ id: "attachment-uploads" }],
+      storage: "memory",
+      tools: [],
+    })
+  ).rejects.toThrow("persistent storage");
+});
+
 test.each(["image", "video"] as const)(
   "rejects %s without gateway capability or model, including external gateways",
   async (kind) => {
