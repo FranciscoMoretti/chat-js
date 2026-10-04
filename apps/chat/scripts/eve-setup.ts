@@ -1,14 +1,15 @@
 /* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queue-fence"; "../lib/db/eve-resource-fence"; "../lib/eve/environment"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-queue-fence"; "@/lib/eve/lifecycle/postgres/eve-resource-fence"; "../lib/eve/environment"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
  */
 import { execFileSync } from "node:child_process";
 
 import { config } from "dotenv";
 import postgres from "postgres";
 
-import { installEvePostgresQueueFence } from "../lib/db/eve-queue-fence";
-import { installEvePostgresResourceFence } from "../lib/db/eve-resource-fence";
+import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
+import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
+
 import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 import { resolveEveSetup } from "./eve-setup-config";

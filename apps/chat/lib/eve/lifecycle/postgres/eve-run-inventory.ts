@@ -1,7 +1,7 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
-import { classifyEveSandboxRuns } from "./eve-sandbox-run-coverage";
+import { classifyEveSandboxRuns } from "@/lib/db/eve-sandbox-run-coverage";
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): runRow uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

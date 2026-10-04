@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   positions: vi.fn(),
 }));
 vi.mock("../env", () => ({ env: mocks.env }));
-vi.mock("../db/eve-stream-positions", () => ({
+vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
   getEvePostgresStreamPositions: mocks.positions,
 }));
 
