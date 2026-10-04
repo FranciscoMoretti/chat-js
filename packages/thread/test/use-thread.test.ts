@@ -1,4 +1,12 @@
-import { afterAll, afterEach, describe, expect, mock, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 
 import type { UIMessage } from "ai";
 import { act, createElement } from "react";
@@ -36,6 +44,7 @@ const dom = createHookDom();
 const { useThread } = await import("../src/use-thread");
 /* oxlint-enable import/no-relative-parent-imports */
 const roots = new Set<Root>();
+const NO_ERRORS = 0;
 
 // Use React's asynchronous act path even for synchronous actions. The microtask
 // boundary lets act flush effects and any updates scheduled by the commit.
@@ -47,13 +56,24 @@ const commit = async (action: () => void): Promise<void> => {
 };
 
 afterEach(async (): Promise<void> => {
-  await commit((): void => {
-    for (const root of roots) {
-      root.unmount();
-    }
+  try {
+    await commit((): void => {
+      const errors: unknown[] = [];
+      for (const root of roots) {
+        try {
+          root.unmount();
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length > NO_ERRORS) {
+        throw new AggregateError(errors, "Failed to unmount hook test roots");
+      }
+    });
+  } finally {
     roots.clear();
-  });
-  globalThis.document.body.replaceChildren();
+    globalThis.document.body.replaceChildren();
+  }
 });
 
 afterAll(async (): Promise<void> => {
@@ -125,11 +145,14 @@ const renderUseThread = async (
       return current;
     },
     async unmount(): Promise<void> {
-      await commit((): void => {
-        renderer.unmount();
-      });
-      roots.delete(renderer);
-      container.remove();
+      try {
+        await commit((): void => {
+          renderer.unmount();
+        });
+      } finally {
+        roots.delete(renderer);
+        container.remove();
+      }
     },
     async update(options: UseThreadOptions): Promise<void> {
       await commit((): void => {
@@ -459,19 +482,26 @@ describe("useThread", (): void => {
     thread.getSnapshot = getSnapshot;
     const hook = await renderUseThread({ experimental_throttle: 100, thread });
 
-    await commit((): void => {
-      thread.setMessages([user("user-b")]);
-    });
-    expect(hook.current.messages.map(({ id }): string => id)).toEqual([
-      "user-b",
-    ]);
-    await commit((): void => {
-      thread.setMessages([user("user-c")]);
-    });
-    expect(hook.current.messages.map(({ id }): string => id)).toEqual([
-      "user-b",
-    ]);
-    await hook.unmount();
+    const now = spyOn(Date, "now").mockReturnValue(1000);
+    try {
+      await commit((): void => {
+        thread.setMessages([user("user-b")]);
+      });
+      expect(hook.current.messages.map(({ id }): string => id)).toEqual([
+        "user-b",
+      ]);
+      await act(async (): Promise<void> => {
+        // Freeze elapsed time and unmount before yielding so a slow runner
+        // cannot publish the second snapshot or run its pending timer first.
+        thread.setMessages([user("user-c")]);
+        expect(hook.current.messages.map(({ id }): string => id)).toEqual([
+          "user-b",
+        ]);
+        await hook.unmount();
+      });
+    } finally {
+      now.mockRestore();
+    }
     expect(listeners.size).toBe(0);
     getSnapshot.mockClear();
 

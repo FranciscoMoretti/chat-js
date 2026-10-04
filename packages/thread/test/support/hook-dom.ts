@@ -22,12 +22,15 @@ const createHookDom = (): { close: () => Promise<void> } => {
   }
   return {
     async close(): Promise<void> {
-      await window.happyDOM.abort();
-      for (const [key, descriptor] of originals) {
-        if (descriptor) {
-          Object.defineProperty(globalThis, key, descriptor);
-        } else {
-          Reflect.deleteProperty(globalThis, key);
+      try {
+        await window.happyDOM.abort();
+      } finally {
+        for (const [key, descriptor] of originals) {
+          if (descriptor) {
+            Object.defineProperty(globalThis, key, descriptor);
+          } else {
+            Reflect.deleteProperty(globalThis, key);
+          }
         }
       }
     },
