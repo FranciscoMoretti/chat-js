@@ -21,7 +21,7 @@ export const deleteLocalEveConversationFamily = async (
   conversationId: string,
   appRoot: string
 ) => {
-  const lifecycle = await requireEveDeletionLifecycle();
+  const lifecycle = requireEveDeletionLifecycle();
   // Retirement receipts make this replayable even after some native payloads were erased.
   const family = await purgeLocalEveFamilyResources(
     ownerId,

@@ -144,16 +144,6 @@ test("an already deleted family is idempotent without resetting native sessions"
   expect(mocks.retire).not.toHaveBeenCalled();
 });
 
-test("incompatible provider blocks resource cleanup and the final tombstone", async () => {
-  mocks.check.mockRejectedValueOnce(new Error("workflow fences missing"));
-  await expect(
-    deleteLocalEveConversationFamily("owner", "root", "/app")
-  ).rejects.toThrow("workflow fences missing");
-  expect(mocks.resources).not.toHaveBeenCalled();
-  expect(mocks.native).not.toHaveBeenCalled();
-  expect(mocks.complete).not.toHaveBeenCalled();
-});
-
 test("unsupported native lifecycle cannot enter the local resource coordinator", async () => {
   mocks.provider.mockReturnValue({
     reason: "unverified erasure",

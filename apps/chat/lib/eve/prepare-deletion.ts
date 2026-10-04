@@ -18,7 +18,7 @@ export const prepareEveFamilyDeletion = async (
   ownerId: string,
   conversationId: string
 ) => {
-  const lifecycle = await requireEveDeletionLifecycle();
+  const lifecycle = requireEveDeletionLifecycle();
   const family = await retireEveFamilyForDeletion(ownerId, conversationId);
   if (!family) {
     return;

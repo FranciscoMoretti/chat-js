@@ -49,12 +49,11 @@ test("unsupported lifecycle cannot retire a family", async () => {
   expect(mocks.prepare).not.toHaveBeenCalled();
 });
 
-test("failed compatibility preflight cannot retire a family", async () => {
-  mocks.check.mockRejectedValueOnce(new Error("workflow fences missing"));
+test("failed retirement prevents native preparation", async () => {
+  mocks.family.mockRejectedValueOnce(new Error("workflow fences missing"));
   await expect(prepareEveFamilyDeletion("owner", "child")).rejects.toThrow(
     "workflow fences missing"
   );
-  expect(mocks.family).not.toHaveBeenCalled();
   expect(mocks.prepare).not.toHaveBeenCalled();
 });
 

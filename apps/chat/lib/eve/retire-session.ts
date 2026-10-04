@@ -82,7 +82,8 @@ const retireEveFamilyForDeletion = async (
   conversationId: string
 ) => {
   assertEveConfigured();
-  const lifecycle = await requireEveDeletionLifecycle();
+  const lifecycle = requireEveDeletionLifecycle();
+  await lifecycle.check();
   const family = await beginEveConversationDeletion(ownerId, conversationId);
   if (!family) {
     return;
