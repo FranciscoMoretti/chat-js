@@ -1,12 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { execFileSync } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { readFile, writeFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 const root = path.resolve(import.meta.dir, "..");
 /* oxlint-disable eslint/no-magic-numbers -- [argument]: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */

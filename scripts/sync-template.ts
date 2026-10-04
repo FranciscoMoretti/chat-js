@@ -1,13 +1,7 @@
 #!/usr/bin/env bun
-/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:os import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/resolve-package-directory import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";

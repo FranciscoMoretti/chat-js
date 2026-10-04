@@ -1,9 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { execFileSync, spawn } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:timers/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { setTimeout as delay } from "node:timers/promises";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { checkHealth } from "./dev-health";
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";

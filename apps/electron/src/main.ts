@@ -1,9 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:timers/promises import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { setTimeout as sleep } from "node:timers/promises";
-/* oxlint-enable import/no-nodejs-modules */
 
 import {
   app,

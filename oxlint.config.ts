@@ -17,6 +17,20 @@ export default defineConfig({
   ],
   options: { typeAware: true },
   overrides: [
+    // #529: CLI, build scripts and Electron main run with Node/Bun capabilities.
+    // Preload, renderer code and generated app payloads keep the browser restriction.
+    {
+      files: [
+        "packages/cli/src/**",
+        "packages/cli/test/**",
+        "packages/cli/scripts/**",
+        "scripts/**",
+        "apps/electron/src/main.ts",
+        "apps/electron/scripts/**",
+        "apps/electron/forge.config.ts",
+      ],
+      rules: { "import/no-nodejs-modules": "off" },
+    },
     // Typed primitive wrappers forward the supported events, refs and accessibility props.
     {
       files: [

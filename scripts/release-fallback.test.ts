@@ -1,13 +1,7 @@
 import { expect, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { mkdtemp, rm } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:os import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { tmpdir } from "node:os";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 // Exercise the actual workflow function with fake external services. No credentials,
 // npm publication, GitHub writes, or changes to the checkout are involved.

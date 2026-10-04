@@ -1,12 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { spawnSync } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { existsSync, readFileSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerDMG } from "@electron-forge/maker-dmg";
@@ -118,15 +112,15 @@ const createForgeConfig = (): ForgeConfig => {
 
   return {
     hooks: {
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       generateAssets: async () => {
         ensurePrebuild();
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       prePackage: async () => {
         runBunScript("build", { NODE_ENV: "production" });
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       preStart: async () => {
         runBunScript("build", { NODE_ENV: "development" });
       },

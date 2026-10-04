@@ -7,20 +7,27 @@ import { MissingCredentialsError } from "@/lib/required-credentials";
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): mocks preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-const mocks = vi.hoisted(() => ({
-  deleteSession: vi.fn(),
-  getSession: vi.fn(),
-  invalidate: vi.fn(),
-  params: {
-    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- #591: This controlled fixture models the mocked boundary explicitly; changing its widening or coercion requires preserving the exercised failure scenario.
-    code: "code" as string | null,
-    error: null as string | null,
-    error_description: null as string | null,
+const mocks = vi.hoisted(() => {
+  const params: {
+    code: string | null;
+    error: string | null;
+    error_description: string | null;
+    state: string;
+  } = {
+    code: "code",
+    error: null,
+    error_description: null,
     state: "state",
-  },
-  removeClient: vi.fn(),
-  requireCredentials: vi.fn(),
-}));
+  };
+  return {
+    deleteSession: vi.fn(),
+    getSession: vi.fn(),
+    invalidate: vi.fn(),
+    params,
+    removeClient: vi.fn(),
+    requireCredentials: vi.fn(),
+  };
+});
 /* oxlint-enable unicorn/no-null */
 vi.mock("@/features/mcp/setup", () => ({
   requireMcpCredentials: mocks.requireCredentials,

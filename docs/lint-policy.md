@@ -1,6 +1,6 @@
 # Practical lint policy
 
-This policy replaces enable-all adoption as the completion criterion for the [Oxlint audit #503](https://github.com/FranciscoMoretti/chat-js/issues/503). Of the 110 audited rules with findings, 11 are deliberately disabled below and 99 remain enforced, with the UI scopes/options described below. Enabling a rule while suppressing its findings does not establish that the underlying work is complete. Existing retained waivers remain unreviewed until they have a concrete contract justification or linked deferred work.
+This policy replaces enable-all adoption as the completion criterion for the [Oxlint audit #503](https://github.com/FranciscoMoretti/chat-js/issues/503). Of the 110 audited rules with findings, 11 are deliberately disabled below and 99 remain enforced, with the runtime/UI scopes and options described below. Enabling a rule while suppressing its findings does not establish that the underlying work is complete. Existing retained waivers remain unreviewed until they have a concrete contract justification or linked deferred work.
 
 ## Deliberately disabled rules
 
@@ -19,6 +19,16 @@ This policy replaces enable-all adoption as the completion criterion for the [Ox
 | `react/jsx-no-literals` | Chat and registry UI have no translation-layer contract. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-no-literals) accepts expression-wrapped copy without providing localization; accessible text such as MessageAttachment's “Remove” remains ordinary UI content. |
 
 These are policy decisions, not deferred violations. Broader relaxations require their own evidence and decision.
+
+## Node runtime boundaries
+
+`import/no-nodejs-modules` remains enforced outside the Node/Bun boundaries reviewed in [#529](https://github.com/FranciscoMoretti/chat-js/issues/529). The root config permits built-in imports only in `packages/cli/src/**`, `packages/cli/test/**`, `packages/cli/scripts/**`, root `scripts/**`, `apps/electron/src/main.ts`, `apps/electron/scripts/**`, and `apps/electron/forge.config.ts`. This scoped decision does not add a globally disabled rule.
+
+The CLI package publishes the `chat-js` executable, builds it with `--target=node`, and verifies its published entrypoint with `node ./dist/index.js --help`. Its tests and utilities own filesystem, subprocess and package-resolution work. Root scripts run Bun/Node development, deployment and repository tooling. Electron's package entrypoint is `dist/main.js`, built for Node; Forge and packaging scripts also run in Node/Bun. These are supported runtime capabilities rather than import-by-import exceptions.
+
+Electron preload remains protected: it is built with `--target=browser`, exposes a restricted `contextBridge`, and belongs to a BrowserWindow with `nodeIntegration: false`. Renderer files, browser app/template payloads, shared packages and mixed app directories receive no relaxation; only the explicitly named Electron paths below are permitted in copied desktop templates. Scaffolding copies Electron into `electron/` beneath the standalone app. Its Chat config therefore mirrors the Node permissions as `electron/src/main.ts`, `electron/scripts/**`, and `electron/forge.config.ts`, while retaining error severity for preload, renderer and components. New browser exports, template directories or desktop entrypoints require a separate boundary review.
+
+At merged baseline `cf629c56`, this rule has 292 suppression entries: 290 canonical and two generated mirrors. The reviewed boundaries cover 170 canonical entries (CLI 130, Electron 15, root scripts 25); 122 outside entries (120 canonical and two mirrors) retain their existing review requirements. These counts describe rule entries, not unique imports. The isolated positive/negative import probes load the actual root config and pass from root, CLI and Electron working directories: all seven allowed patterns permit Node imports, while preload, renderer, CLI templates, Chat components and registry sources still report the rule. Effective-config checks from those working directories agree; standalone probes from the app root and nested Electron working directory confirm the three permitted paths and protected preload/renderer/components. The non-typed import probes disable type-aware execution only in their temporary harness. Required repository lint/type/test checks verify the implementation batch separately.
 
 ## UI scopes and performance options
 
@@ -93,7 +103,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `import/no-default-export` | Enforced | [#526](https://github.com/FranciscoMoretti/chat-js/issues/526) |
 | `import/no-named-export` | Off — policy | [#527](https://github.com/FranciscoMoretti/chat-js/issues/527) |
 | `import/no-namespace` | Enforced | [#528](https://github.com/FranciscoMoretti/chat-js/issues/528) |
-| `import/no-nodejs-modules` | Enforced | [#529](https://github.com/FranciscoMoretti/chat-js/issues/529) |
+| `import/no-nodejs-modules` | Enforced outside reviewed Node/Bun boundaries | [#529](https://github.com/FranciscoMoretti/chat-js/issues/529) |
 | `import/no-relative-parent-imports` | Enforced | [#530](https://github.com/FranciscoMoretti/chat-js/issues/530) |
 | `import/no-unassigned-import` | Enforced | [#531](https://github.com/FranciscoMoretti/chat-js/issues/531) |
 | `import/prefer-default-export` | Off — policy | [#532](https://github.com/FranciscoMoretti/chat-js/issues/532) |

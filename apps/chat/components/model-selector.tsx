@@ -501,11 +501,7 @@ const PureModelSelector = ({
           if (remaining.length === 0) {
             return;
           }
-          // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #591: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types. #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-          nextSelection = Object.fromEntries(remaining) as Record<
-            AppModelId,
-            number
-          >;
+          nextSelection = Object.fromEntries(remaining);
         } else {
           nextSelection = { ...currentCounts, [id]: newCount };
         }

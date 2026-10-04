@@ -1,7 +1,5 @@
 import { expect, test } from "bun:test";
-// oxlint-disable-next-line import/no-nodejs-modules -- The CLI integration fixture creates and removes its own isolated temporary Git repository.
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The isolated CLI fixture uses the operating system temporary directory.
 import { tmpdir } from "node:os";
 
 import {

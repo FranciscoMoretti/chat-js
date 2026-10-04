@@ -1,9 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:module import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { createRequire } from "node:module";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:url import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { fileURLToPath } from "node:url";
-/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable import/no-relative-parent-imports -- the ../apps/chat/node_modules/postgres import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import type postgresType from "../apps/chat/node_modules/postgres";

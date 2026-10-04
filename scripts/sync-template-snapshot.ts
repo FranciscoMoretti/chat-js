@@ -1,12 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:crypto import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { createHash } from "node:crypto";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { readdir, readFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 const join = (...segments: readonly string[]): string => path.join(...segments);
 

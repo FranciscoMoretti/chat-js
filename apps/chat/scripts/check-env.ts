@@ -234,7 +234,7 @@ const checkGatewaySnapshot = (): string | null => {
   if (config.ai.gateway === generatedForGateway) {
     return null;
   }
-  // oxlint-disable-next-line typescript/restrict-template-expressions -- #608: Environment checks enumerate typed configuration keys and report a mismatched snapshot; preserving legacy config diagnostics requires runtime config-schema migration.
+  // oxlint-disable-next-line typescript/restrict-template-expressions -- #608: Matching configured/generated gateway literals narrow this mismatch branch to never; keep its diagnostic for scaffolded configurations with a stale model snapshot.
   return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
 };
 /* oxlint-enable unicorn/no-null */

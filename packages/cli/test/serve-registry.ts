@@ -1,10 +1,6 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 // Serve the built registry against the locally packed, not-yet-published contracts.
 import { rename, writeFile } from "node:fs/promises";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import pathModule from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const [archive, addressFile] = process.argv.slice(2);

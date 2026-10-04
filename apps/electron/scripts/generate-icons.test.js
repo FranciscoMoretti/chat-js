@@ -1,13 +1,7 @@
 import { describe, expect, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- the node:child_process import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { spawnSync } from "node:child_process";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import { existsSync, rmSync } from "node:fs";
-/* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: Electron main/preload and packaging code requires this Node API at the desktop boundary. */
 import path from "node:path";
-/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable import/no-relative-parent-imports -- the ../forge.config import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import forgeConfig from "../forge.config";
