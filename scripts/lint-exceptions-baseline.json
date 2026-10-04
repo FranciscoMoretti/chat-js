@@ -6389,7 +6389,6 @@
     "[\"packages/gateways/src/litellm.test.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/gateways/src/litellm.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/gateways/src/litellm.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
-    "[\"packages/gateways/src/models.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/gateways/src/models.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/gateways/src/provider-options.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/gateways/src/provider-options.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
@@ -6765,7 +6764,7 @@
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 2,
+    "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"class-methods-use-this\",\"eslint-disable-next-line\"]": 3,
@@ -31133,9 +31132,6 @@
     "[\"packages/gateways/src/litellm.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
       "28d7ab5379d07d88bfe6ebd3500fd88eca55d835c0e7f0f9e2fd820a2e5d6f02"
     ],
-    "[\"packages/gateways/src/models.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": [
-      "801ea97f86954b5d2c23e85cb3f7e442d30da0ad497545e1e0067a2d215da091"
-    ],
     "[\"packages/gateways/src/models.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "3c4ed5e002f9a5f776fb1ed368884e3e64f174292babedc0ae2da2b499856443"
     ],
@@ -31159,13 +31155,13 @@
       "86970b873de4a5253abca36fdef8beb07f47a4dbe65408312ee6c2b103c27144"
     ],
     "[\"packages/gateways/src/vercel.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "1e7c8642dde72815a3cf3118eb5edb99c27d0d486c017616fd2695708857144c"
+      "2734d535cc10cd7dfbac5dd1c339991fecee76626331da87daf69e75d23ab790"
     ],
     "[\"packages/gateways/src/vercel.test.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "694ef1ff2e4e2ab40cc879e25f867d4cd695a6637745bfb2e93303de152de239"
+      "764c64ff7fd0877ec267efe3c8775ff04665e730dd5f8fde5049408dd58694a3"
     ],
     "[\"packages/gateways/src/vercel.test.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
-      "5b4949da740e3c1863090838963b54294b1781ffd32495f7139f51f206439ea0"
+      "07cd0fef22300f10c69923810884dce9e2c6e778e2c0775f089bc6f28112d8f6"
     ],
     "[\"packages/registry/build.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "5abe9abab9a5cd6f72f2060b4a9e3fad4243114f262d0c9a5b4e6505231b76bb",
@@ -32509,17 +32505,16 @@
     ],
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "295c10e248f0d9c15a8ced216e31759a0506382f9e5e36b9ca7e19aecd0546f1",
-      "5140ef6c111dc1dbdd8ebfdfea17b5000134c2b714d03671e27618ab4f1a6bdd",
+      "5346c1d927337400695156497e13368285d9fa26ee2691fbe9f0f22417be8aab",
       "f1e93aae69df8e2ea1e5c4acb8dd88ce56b39eb884dd98b365dfdccda7d239aa"
     ],
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "fecbc3749cf7f784d1e1ca90dc0b2220c44cff81ee2586bd51c34c7d19a7dd5d"
+      "c86bb689b8e26d42b27bcd4d34120652ae2072edd156fbc2f298ed4550baeb67"
     ],
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "115c27d54333175202d54c2fcf8ae3bcc3740815efeb840d03041b0c141cc08f"
+      "6c37631b472f02d0982fbd0a15ac7f176d6e41ec3a86bdbf689fb3eeb35dcc37"
     ],
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": [
-      "b93e17d5f31c539c184268715d30f1ba6c20993c846da807d0dcaeaf3b84711d",
       "6d6111472118236369405476a3c3071156aca6ce519b0d6a09d69949e430e597"
     ],
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [

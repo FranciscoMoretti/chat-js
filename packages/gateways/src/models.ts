@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Known tags for IDE hints (accepts any string for forward compatibility)
+// Known tags provide IDE hints; providers may introduce other string tags.
 type KnownTag =
   | "reasoning"
   | "tool-use"
@@ -9,8 +9,9 @@ type KnownTag =
   | "image-generation"
   | "implicit-caching";
 
-// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Deferred contract debt (#622): the schema accepts any string but KnownTag is closed; review open-tag typing separately without changing runtime parsing in this lint cleanup.
-const tagSchema = z.string() as z.ZodType<KnownTag>;
+type ModelTag = KnownTag | (string & Record<never, never>);
+
+const tagSchema: z.ZodType<ModelTag> = z.string();
 
 const supportedAiGatewayModelTypes = [
   "language",
