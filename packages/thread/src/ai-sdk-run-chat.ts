@@ -184,7 +184,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
           })
         );
       },
-      // oxlint-disable-next-line typescript/promise-function-async -- Reset the resume prefix before forwarding the current transport promise; keep its identity and synchronous throw boundary.
+      // oxlint-disable-next-line typescript/promise-function-async -- Custom ChatTransport.sendMessages may throw before returning a promise. Direct forwarding lets SDK makeRequest invoke the public onError callback synchronously during Thread.regenerate; async+await defers that observable callback.
       sendMessages: (
         // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the SDK message array to the current transport without changing its mutable array contract or cloning its identity.
         options
@@ -218,13 +218,11 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     this.#state.refreshPath();
   }
 
-  // oxlint-disable-next-line typescript/promise-function-async -- Return the exact SDK send promise and preserve synchronous errors before it is created.
-  public start(options?: RequestReader): Promise<void> {
-    return this.sendMessage(NO_VALUE, options);
+  public async start(options?: RequestReader): Promise<void> {
+    await this.sendMessage(NO_VALUE, options);
   }
 
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the exact SDK send promise and synchronous throw boundary without async adoption.
-  public startWithMessage(
+  public async startWithMessage(
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AbstractChat.sendMessage accepts mutable parts arrays and native FileList input; readonly parts cannot be passed to that SDK method.
     message: NonNullable<
       Parameters<
@@ -233,18 +231,17 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     >,
     options?: RequestReader
   ): Promise<void> {
-    return this.sendMessage(message, options);
+    await this.sendMessage(message, options);
   }
 
-  // oxlint-disable-next-line typescript/promise-function-async -- Forward the exact SDK regenerate promise and synchronous throw boundary without async adoption.
-  public regenerateMessage(
+  public async regenerateMessage(
     messageId: string,
     options?: RequestReader
   ): Promise<void> {
-    return this.regenerate({ ...options, messageId });
+    await this.regenerate({ ...options, messageId });
   }
 }
 
 export { ThreadRunChat };
 
-export type { ThreadRunSpec, ThreadRunHost };
+export type { ThreadRunSpec, ThreadRunHost, RequestReader };

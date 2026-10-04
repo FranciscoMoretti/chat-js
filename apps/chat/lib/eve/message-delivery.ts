@@ -41,26 +41,27 @@ type DeliveryStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 const storageKey = (sessionId: string): string =>
   `chatjs.eve.pending-message:${sessionId}`;
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type --
+/* oxlint-disable id-length --
  * id-length (#506): write uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep write's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 const write = <T extends PendingEveMessage>(
   storage: DeliveryStorage,
   sessionId: string,
   value: T
-) => {
+): T => {
   storage.setItem(storageKey(sessionId), JSON.stringify(value));
   return value;
 };
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
+/* oxlint-enable id-length */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep read's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): read intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): read preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const read = (storage: DeliveryStorage, sessionId: string) => {
+const read = (
+  storage: DeliveryStorage,
+  sessionId: string
+): PendingEveMessage | null => {
   const stored = storage.getItem(storageKey(sessionId));
   if (!stored) {
     return null;
@@ -76,12 +77,10 @@ const read = (storage: DeliveryStorage, sessionId: string) => {
   storage.removeItem(storageKey(sessionId));
   return null;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): eveMessageDelivery uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): eveMessageDelivery accepts pending: PendingEveMessage; event: MessageStreamEvent; input: NewPendingEveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
@@ -132,7 +131,8 @@ const eveMessageDelivery = {
     pending: PendingEveMessage,
     rejection: string,
     retryable = false
-  ) => write(storage, sessionId, { ...pending, rejection, retryable }),
+  ): PendingEveMessage & { rejection: string; retryable: boolean } =>
+    write(storage, sessionId, { ...pending, rejection, retryable }),
   retry: (
     storage: DeliveryStorage,
     sessionId: string,
@@ -155,7 +155,7 @@ const eveMessageDelivery = {
     });
   },
 };
-/* oxlint-enable max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /**
  * The proxy owns this metadata so caller input cannot forge an acknowledgement.

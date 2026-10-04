@@ -1,87 +1,32 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- This Bun integration test creates and removes real temporary files and Git fixture directories using the Node filesystem/path APIs. */
+import { afterAll, expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- Create, snapshot, and remove a real temporary Git repository; Bun.file alone does not allocate temporary directories or create/remove directory trees. */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This Bun integration test creates and removes real temporary files and Git fixture directories using the Node filesystem/path APIs. */
+/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This Bun integration test creates and removes real temporary files and Git fixture directories using the Node filesystem/path APIs. */
+/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
+import { runTestProcess } from "./features/test-runtime";
 import {
-  jsonArray,
   jsonObject,
   jsonString,
+  taskList,
+  parseAffectedTaskNames,
+  findTask,
   parseJsonObject,
 } from "./test-json";
+import type { TaskPlan } from "./test-json";
 
-const taskList = (
-  source: string
-): readonly Readonly<Record<string, unknown>>[] =>
-  jsonArray(parseJsonObject(source).tasks).map((item) => jsonObject(item));
-
-const findTask = (
-  tasks: readonly Readonly<Record<string, unknown>>[],
-  taskId: string
-): Readonly<Record<string, unknown>> => {
-  const task = tasks.find((item) => item.taskId === taskId);
-  if (!task) {
-    throw new Error(`Missing Turbo task: ${taskId}`);
-  }
-  return task;
-};
-
-const taskDefinition = (
-  tasks: readonly Readonly<Record<string, unknown>>[],
-  taskId: string
-): Readonly<Record<string, unknown>> =>
-  jsonObject(findTask(tasks, taskId).resolvedTaskDefinition);
+const SUCCESS_EXIT_CODE = 0;
+const EXPECTED_AFFECTED_EXIT = 1;
+const EXPECTED_DEMO_CHECK_TASKS = 1;
 
 const repoRoot = path.resolve(import.meta.dir, "../../..");
 const turbo = path.join(repoRoot, "node_modules/.bin/turbo");
-/* oxlint-disable eslint/init-declarations -- beforeAll assigns the temporary repository path before any subprocess test runs; an initial working-directory fallback would target the wrong repository. */
-let fixture: string;
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-disable node/no-sync -- Each Turbo/git subprocess must finish before this shared fixture advances to its next commit, hash, or affected-task assertion. */
-/* oxlint-disable eslint/no-magic-numbers -- Compare documented Git/Turbo exit statuses directly in this fixture; numeric assertions are the observable CLI contract. */
-const git = (...args: readonly string[]): string => {
-  const result = Bun.spawnSync(["git", ...args], { cwd: fixture });
-  if (result.exitCode !== 0) {
-    throw new Error(result.stderr.toString());
-  }
-  return result.stdout.toString().trim();
-};
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
-
-/* oxlint-disable node/no-sync -- Each Turbo/git subprocess must finish before this shared fixture advances to its next commit, hash, or affected-task assertion. */
-/* oxlint-disable node/no-process-env -- Pass the inherited environment while explicitly controlling Turbo SCM base/head for this temporary Git fixture. */
-/* oxlint-disable eslint/no-magic-numbers -- Compare documented Git/Turbo exit statuses directly in this fixture; numeric assertions are the observable CLI contract. */
-const run = (
-  ...args: readonly string[]
-): {
-  readonly tasks: readonly Readonly<Record<string, unknown>>[];
-} => {
-  const result = Bun.spawnSync([turbo, "run", ...args, "--dry=json"], {
-    cwd: fixture,
-    env: { ...process.env, TURBO_SCM_BASE: "", TURBO_SCM_HEAD: "" },
-  });
-  if (result.exitCode !== 0) {
-    throw new Error(result.stderr.toString());
-  }
-  return { tasks: taskList(result.stdout.toString()) };
-};
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */
-
-/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for the full temporary Git fixture setup together so the transaction and cleanup remain visible in one test. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep setup, side effects, and assertions for the full temporary Git fixture setup together so the transaction and cleanup remain visible in one test. */
-/* oxlint-disable node/no-sync -- Each Turbo/git subprocess must finish before this shared fixture advances to its next commit, hash, or affected-task assertion. */
-/* oxlint-disable eslint/no-magic-numbers -- Compare documented Git/Turbo exit statuses directly in this fixture; numeric assertions are the observable CLI contract. */
-beforeAll(async () => {
-  fixture = await mkdtemp(path.join(tmpdir(), "chatjs-demo-turbo-"));
+const copyFixtureFiles = async (directory: string): Promise<void> => {
   const files = [
     "turbo.json",
     "bun.lock",
@@ -100,9 +45,11 @@ beforeAll(async () => {
   ];
   await Promise.all(
     files.map(async (file) => {
-      await mkdir(path.dirname(path.join(fixture, file)), { recursive: true });
+      await mkdir(path.dirname(path.join(directory, file)), {
+        recursive: true,
+      });
       await writeFile(
-        path.join(fixture, file),
+        path.join(directory, file),
         await readFile(path.join(repoRoot, file))
       );
     })
@@ -116,48 +63,87 @@ beforeAll(async () => {
   );
   await Promise.all(
     Object.keys(jsonObject(baseline.files)).map(async (file) => {
-      const target = path.join(fixture, "apps/chat", file);
+      const target = path.join(directory, "apps/chat", file);
       await mkdir(path.dirname(target), { recursive: true });
       await writeFile(target, "// fixture owned copy\n");
     })
   );
-  for (const args of [
-    ["init", "-b", "main"],
-    ["add", "."],
-  ]) {
-    const result = Bun.spawnSync(["git", ...args], { cwd: fixture });
-    if (result.exitCode !== 0) {
-      throw new Error(result.stderr.toString());
-    }
+};
+
+const gitIn = async (
+  directory: string,
+  ...args: readonly string[]
+): Promise<string> => {
+  const result = await runTestProcess(["git", ...args], { cwd: directory });
+  if (result.exitCode !== SUCCESS_EXIT_CODE) {
+    throw new Error(result.stderr);
   }
-  const committed = Bun.spawnSync(
-    [
-      "git",
-      "-c",
-      "user.name=Demo task test",
-      "-c",
-      "user.email=demo-test@example.invalid",
-      "commit",
-      "-m",
-      "Baseline",
-    ],
-    { cwd: fixture }
+  return result.stdout.trim();
+};
+
+const initializeGitFixture = async (directory: string): Promise<void> => {
+  await gitIn(directory, "init", "-b", "main");
+  await gitIn(directory, "add", ".");
+  await gitIn(
+    directory,
+    "-c",
+    "user.name=Demo task test",
+    "-c",
+    "user.email=demo-test@example.invalid",
+    "commit",
+    "-m",
+    "Baseline"
   );
-  if (committed.exitCode !== 0) {
-    throw new Error(committed.stderr.toString());
+};
+
+const createFixture = async (): Promise<string> => {
+  const directory = await mkdtemp(path.join(tmpdir(), "chatjs-demo-turbo-"));
+  try {
+    await copyFixtureFiles(directory);
+    await initializeGitFixture(directory);
+    return directory;
+  } catch (error) {
+    await rm(directory, { force: true, recursive: true });
+    throw error;
   }
-});
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+};
+
+const fixture = await createFixture();
+
+const git = async (...args: readonly string[]): Promise<string> => {
+  const output = await gitIn(fixture, ...args);
+  return output;
+};
+
+const run = async (...args: readonly string[]): Promise<TaskPlan> => {
+  const result = await runTestProcess([turbo, "run", ...args, "--dry=json"], {
+    cwd: fixture,
+    environment: { TURBO_SCM_BASE: "", TURBO_SCM_HEAD: "" },
+  });
+  if (result.exitCode !== SUCCESS_EXIT_CODE) {
+    throw new Error(result.stderr);
+  }
+  return { tasks: taskList(result.stdout) };
+};
+
+const registryTask = async (
+  taskName: string
+): Promise<TaskPlan["tasks"][number]> => {
+  const { tasks } = await run(taskName, "--filter=@chat-js/registry");
+  return findTask(tasks, `@chat-js/registry#${taskName}`);
+};
+
+const taskHash = async (taskName: string): Promise<string> => {
+  const selected = await registryTask(taskName);
+  return jsonString(selected.hash);
+};
+
 afterAll(async () => {
   await rm(fixture, { force: true, recursive: true });
 });
 
 test("demo check hashes every owned copy and never restores app files; sync is uncached", async () => {
-  const plan = run("demo:check", "--filter=@chat-js/registry");
-  const task = findTask(plan.tasks, "@chat-js/registry#demo:check");
+  const task = await registryTask("demo:check");
   const baseline = parseJsonObject(
     await readFile(
       path.join(repoRoot, "packages/registry/demo-baseline.json"),
@@ -173,16 +159,9 @@ test("demo check hashes every owned copy and never restores app files; sync is u
   expect(task.dependencies).toEqual([]);
   expect(jsonObject(task.resolvedTaskDefinition).cache).toBe(true);
   expect(jsonObject(task.resolvedTaskDefinition).outputs).toEqual([]);
-  expect(
-    taskDefinition(
-      run("demo:sync", "--filter=@chat-js/registry").tasks,
-      "@chat-js/registry#demo:sync"
-    ).cache
-  ).toBe(false);
-  const unit = findTask(
-    run("test:unit", "--filter=@chat-js/registry").tasks,
-    "@chat-js/registry#test:unit"
-  );
+  const sync = await registryTask("demo:sync");
+  expect(jsonObject(sync.resolvedTaskDefinition).cache).toBe(false);
+  const unit = await registryTask("test:unit");
   expect(unit.dependencies).toContain("@chat-js/registry#demo:check");
 });
 
@@ -209,39 +188,64 @@ test.each([
   ["apps/chat/node_modules/example/index.js", false],
   ["apps/docs/index.mdx", false],
 ])("demo task hash invalidation for %s", async (file, invalidates) => {
-  const hash = (): string =>
-    jsonString(
-      findTask(
-        run("demo:check", "--filter=@chat-js/registry").tasks,
-        "@chat-js/registry#demo:check"
-      ).hash
-    );
-  const before = hash();
+  const before = await taskHash("demo:check");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";
   await writeFile(target, `${previous}\n// changed input\n`);
-  expect(hash() === before).toBe(!invalidates);
+  expect((await taskHash("demo:check")) === before).toBe(!invalidates);
 });
 
-/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for CI affected query and execution select demo checking for canonical and demo edits together so the transaction and cleanup remain visible in one test. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep setup, side effects, and assertions for CI affected query and execution select demo checking for canonical and demo edits together so the transaction and cleanup remain visible in one test. */
-/* oxlint-disable node/no-sync -- Each Turbo/git subprocess must finish before this shared fixture advances to its next commit, hash, or affected-task assertion. */
-/* oxlint-disable eslint/no-magic-numbers -- Compare documented Git/Turbo exit statuses directly in this fixture; numeric assertions are the observable CLI contract. */
-/* oxlint-disable node/no-process-env -- Pass the inherited environment while explicitly controlling Turbo SCM base/head for this temporary Git fixture. */
-test("CI affected query and execution select demo checking for canonical and demo edits", async () => {
-  for (const file of [
-    "packages/registry/src/tools/word-count/tool.ts",
-    "apps/chat/tools/chatjs/word-count/tool.ts",
-  ]) {
-    const base = git("rev-parse", "HEAD");
+const affectedTaskNames = async (base: string): Promise<readonly string[]> => {
+  const query = await runTestProcess(
+    [
+      turbo,
+      "query",
+      "affected",
+      "--tasks",
+      "test:unit",
+      "demo:check",
+      "--base",
+      base,
+      "--head",
+      "HEAD",
+      "--exit-code",
+    ],
+    { cwd: fixture }
+  );
+  expect(query.exitCode, query.stderr).toBe(EXPECTED_AFFECTED_EXIT);
+  return parseAffectedTaskNames(query.stdout);
+};
+
+const verifyAffectedExecution = async (base: string): Promise<void> => {
+  const execution = await runTestProcess(
+    [turbo, "run", "test:unit", "demo:check", "--affected", "--dry=json"],
+    {
+      cwd: fixture,
+      environment: { TURBO_SCM_BASE: base, TURBO_SCM_HEAD: "HEAD" },
+    }
+  );
+  expect(execution.exitCode, execution.stderr).toBe(SUCCESS_EXIT_CODE);
+  expect(
+    taskList(execution.stdout).filter(
+      (item) => item.taskId === "@chat-js/registry#demo:check"
+    )
+  ).toHaveLength(EXPECTED_DEMO_CHECK_TASKS);
+};
+
+test.each([
+  "packages/registry/src/tools/word-count/tool.ts",
+  "apps/chat/tools/chatjs/word-count/tool.ts",
+])(
+  "CI affected query and execution select demo checking for %s",
+  async (file) => {
+    const base = await git("rev-parse", "HEAD");
     const target = path.join(fixture, file);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each commit defines a separate CI change boundary.
     await writeFile(target, `// CI change ${base}\n`);
-    git("add", file);
-    git(
+    await git("add", file);
+    await git(
       "-c",
       "user.name=Demo task test",
       "-c",
@@ -250,73 +254,29 @@ test("CI affected query and execution select demo checking for canonical and dem
       "-m",
       "CI input change"
     );
-    const query = Bun.spawnSync(
-      [
-        turbo,
-        "query",
-        "affected",
-        "--tasks",
-        "test:unit",
-        "demo:check",
-        "--base",
-        base,
-        "--head",
-        "HEAD",
-        "--exit-code",
-      ],
-      { cwd: fixture }
+    expect(await affectedTaskNames(base)).toContain(
+      "@chat-js/registry#demo:check"
     );
-    expect(query.exitCode, query.stderr.toString()).toBe(1);
-    const data = jsonObject(parseJsonObject(query.stdout.toString()).data);
-    const affectedTasks = jsonObject(data.affectedTasks);
-    const affectedNames = jsonArray(affectedTasks.items).map(
-      (item) => jsonObject(item).fullName
-    );
-    expect(affectedNames).toContain("@chat-js/registry#demo:check");
-    const execution = Bun.spawnSync(
-      [turbo, "run", "test:unit", "demo:check", "--affected", "--dry=json"],
-      {
-        cwd: fixture,
-        env: { ...process.env, TURBO_SCM_BASE: base, TURBO_SCM_HEAD: "HEAD" },
-      }
-    );
-    expect(execution.exitCode, execution.stderr.toString()).toBe(0);
-    expect(
-      taskList(execution.stdout.toString()).filter(
-        (item) => item.taskId === "@chat-js/registry#demo:check"
-      )
-    ).toHaveLength(1);
+    await verifyAffectedExecution(base);
   }
-});
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+);
 
 test.each([
   "packages/cli/src/utils/installation-plan.ts",
   "packages/gateways/src/definition.ts",
 ])("registry typecheck invalidates for imported source %s", async (file) => {
-  const hash = (): string =>
-    jsonString(
-      findTask(
-        run("test:types", "--filter=@chat-js/registry").tasks,
-        "@chat-js/registry#test:types"
-      ).hash
-    );
-  const before = hash();
+  const before = await taskHash("test:types");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";
   await writeFile(target, `${previous}\n// changed type boundary\n`);
-  expect(hash()).not.toBe(before);
+  expect(await taskHash("test:types")).not.toBe(before);
 });
 
-test("registry typecheck restores gateway declaration outputs on cache hits", () => {
-  const { tasks } = run("test:types", "--filter=@chat-js/registry");
+test("registry typecheck restores gateway declaration outputs on cache hits", async () => {
+  const { tasks } = await run("test:types", "--filter=@chat-js/registry");
   const registry = findTask(tasks, "@chat-js/registry#test:types");
   const gateways = findTask(tasks, "@chat-js/gateways#test:types");
   expect(registry.dependencies).toContain("@chat-js/gateways#test:types");

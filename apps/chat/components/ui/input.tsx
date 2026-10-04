@@ -4,8 +4,8 @@ import type {
 } from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Input: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React input props, including native object refs. Deep readonly ref.current fails the input JSX receiver; preserving scalar string & {} aliases in type/autoComplete/role/style still triggers this rule.
 const Input = ({
   className,
   type,
@@ -23,6 +23,5 @@ const Input = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Input };

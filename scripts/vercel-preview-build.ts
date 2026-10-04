@@ -10,6 +10,12 @@ import {
 } from "./vercel-preview-environment";
 
 const EMPTY_MESSAGE_LENGTH = 0;
+const POSTGRES_CONNECT_TIMEOUT_SECONDS = 10;
+const POSTGRES_IDLE_TIMEOUT_SECONDS = 0;
+const SINGLE_POSTGRES_CONNECTION = 1;
+const POSTGRES_MAX_LIFETIME_SECONDS = 0;
+const POSTGRES_CLOSE_TIMEOUT_SECONDS = 5;
+const SUBPROCESS_SUCCESS_EXIT_CODE = 0;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BuildOperations: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 interface BuildOperations {
@@ -105,7 +111,6 @@ const runMaintainerBuild = async (
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable node/no-process-env -- vercel-preview-build.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable eslint/no-magic-numbers -- vercel-preview-build.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/no-console -- vercel-preview-build.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 /* oxlint-disable typescript/promise-function-async -- vercel-preview-build.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- vercel-preview-build.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -120,13 +125,14 @@ if (import.meta.main) {
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
         const connection = postgres(url, {
-          connect_timeout: 10,
-          idle_timeout: 0,
-          max: 1,
-          max_lifetime: 0,
+          connect_timeout: POSTGRES_CONNECT_TIMEOUT_SECONDS,
+          idle_timeout: POSTGRES_IDLE_TIMEOUT_SECONDS,
+          max: SINGLE_POSTGRES_CONNECTION,
+          max_lifetime: POSTGRES_MAX_LIFETIME_SECONDS,
         });
         return {
-          close: (): Promise<void> => connection.end({ timeout: 5 }),
+          close: (): Promise<void> =>
+            connection.end({ timeout: POSTGRES_CLOSE_TIMEOUT_SECONDS }),
           execute: async (query): Promise<void> => {
             await connection.unsafe(query);
           },
@@ -141,7 +147,7 @@ if (import.meta.main) {
           stdout: "inherit",
         });
         const exitCode = await child.exited;
-        if (exitCode !== 0) {
+        if (exitCode !== SUBPROCESS_SUCCESS_EXIT_CODE) {
           throw Object.assign(new Error("Command failed"), {
             code: `SUBPROCESS_EXIT_${exitCode}`,
           });
@@ -161,6 +167,5 @@ if (import.meta.main) {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-console */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
 export { runMaintainerBuild };

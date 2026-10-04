@@ -11,12 +11,10 @@ const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] =
     /* This host fixture does not persist tool-call registrations. */
   };
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export class TestRunHost implements ThreadRunHost<UIMessage> {
-  public readonly dataPartSchemas = undefined;
+  public readonly dataPartSchemas: undefined;
   public readonly id = "thread";
-  public readonly messageMetadataSchema = undefined;
+  public readonly messageMetadataSchema: undefined;
   public readonly generateMessageId = generateMessageId;
   public readonly spec: ThreadRunSpec;
   public readonly tree: MessageTree;
@@ -30,9 +28,10 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
   public readonly errors: Error[] = [];
 
   public constructor(
-    transport: ChatTransport<UIMessage>,
-    initialMessage: UIMessage,
-    spec: ThreadRunSpec
+    transport: Readonly<ChatTransport<UIMessage>>,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree construction receives the original canonical SDK message; readonly nested parts cannot satisfy its native message type.
+    initialMessage: Readonly<UIMessage>,
+    spec: Readonly<ThreadRunSpec>
   ) {
     this.transport = transport;
     this.spec = spec;
@@ -41,13 +40,17 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
 
   public getMessagePath = (messageId: string | null): UIMessage[] =>
     this.tree.getPath(messageId);
-  public updateRunPath = (messages: UIMessage[]): void => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.updatePath receives canonical SDK messages; readonly nested parts cannot satisfy its native message array, while the outer array is readonly.
+  public updateRunPath = (messages: readonly Readonly<UIMessage>[]): void => {
     this.tree.updatePath(messages);
   };
   public registerToolCall = registerToolCall;
   public removeMessage = (messageId: string): void =>
     this.tree.removeLeaf(messageId);
-  public setRunError = (_runId: string, error: Error | undefined): void => {
+  public setRunError = (
+    _runId: string,
+    error: Readonly<Error> | undefined
+  ): void => {
     if (error) {
       this.errors.push(error);
     }
@@ -55,7 +58,11 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
   public setRunStatus = (_runId: string, status: ChatStatus): void => {
     this.status = status;
   };
-  public writeRunMessage = (_runId: string, message: UIMessage): void => {
+  public writeRunMessage = (
+    _runId: string,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.upsertMessage receives the original canonical SDK response; readonly nested parts cannot satisfy its native stored-message type.
+    message: Readonly<UIMessage>
+  ): void => {
     if (
       typeof this.spec.messageId === "string" &&
       this.spec.messageId !== "" &&
@@ -75,5 +82,3 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
     this.tree.upsertMessage(message, this.spec.parentMessageId);
   };
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */

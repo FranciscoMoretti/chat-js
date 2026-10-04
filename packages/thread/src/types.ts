@@ -6,6 +6,27 @@ import type {
   UIMessage,
 } from "ai";
 
+type MessageMetadata<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer Metadata, infer _Data, infer _Tools>
+    ? Metadata
+    : never;
+type MessageData<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer _Metadata, infer Data, infer _Tools>
+    ? Data
+    : never;
+type MessageTools<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer _Metadata, infer _Data, infer Tools>
+    ? Tools
+    : never;
+
+// Thread construction follows the SDK message shape, preserving metadata, data,
+// and tools without promising arbitrary extensions the SDK cannot construct.
+type CanonicalMessage<TMessage extends UIMessage> = UIMessage<
+  MessageMetadata<TMessage>,
+  MessageData<TMessage>,
+  MessageTools<TMessage>
+>;
+
 const FIRST_PARAMETER_INDEX = 0;
 const TREE_SNAPSHOT_VERSION = 1;
 
@@ -114,13 +135,18 @@ type ThreadInitialState<TMessage extends UIMessage> =
   | { initialTree?: never; messages?: TMessage[] };
 
 type ThreadInit<TMessage extends UIMessage = UIMessage> = Omit<
-  ChatInit<TMessage>,
+  ChatInit<CanonicalMessage<TMessage>>,
   "messages"
 > & {
   concurrency?: ThreadConcurrency;
-} & ThreadInitialState<TMessage>;
+} & ThreadInitialState<CanonicalMessage<TMessage>> &
+  ThreadInitialState<TMessage>;
 
 export type {
+  CanonicalMessage,
+  MessageMetadata,
+  MessageData,
+  MessageTools,
   ThreadRun,
   ThreadRunHandle,
   TreeSendOptions,

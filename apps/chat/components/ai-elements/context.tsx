@@ -34,9 +34,7 @@ interface ContextSchema {
 const ContextContext = createContext<ContextSchema | null>(null);
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type -- useContextValue: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const useContextValue = () => {
+const useContextValue = (): ContextSchema => {
   const context = useContext(ContextContext);
 
   if (!context) {
@@ -45,7 +43,6 @@ const useContextValue = () => {
 
   return context;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 type ContextProps = ComponentProps<typeof HoverCard> & ContextSchema;
 

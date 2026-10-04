@@ -2,7 +2,10 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../artifacts/artifact-kind"; "../eve/document-contracts" dependency within this package instead of introducing an alias or barrel API.
  */
 import { and, eq, inArray, lt, lte, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import { z } from "zod";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { artifactKinds } from "../artifacts/artifact-kind";
 import { documentFileIds } from "../eve/document-contracts";
@@ -24,6 +27,8 @@ import {
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): revisionInput uses 2_000_000, 1, 512, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
+const FIRST_ROW_INDEX = 0;
+
 const revisionInput = z.object({
   content: z.string().max(2_000_000),
   conversationId: z.uuid(),
@@ -44,9 +49,7 @@ const revisionInput = z.object({
 type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): purgeEveFamilyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): purgeEveFamilyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): purgeEveFamilyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): purgeEveFamilyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): purgeEveFamilyDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -56,6 +59,9 @@ typescript/prefer-readonly-parameter-types (#565): purgeEveFamilyDocuments accep
  * The deletion coordinator must retain file references before calling this.
  * This does not erase native history, blobs, metadata, or accounting, and never
  * marks the conversation deleted.
+ * @param ownerId - Owner whose entire conversation family is already retiring.
+ * @param rootId - Chat identity selecting the family pending deletion.
+ * @returns Completion after document rows are erased in the locked transaction.
  */
 const purgeEveFamilyDocuments = async (
   ownerId: string,
@@ -157,39 +163,34 @@ const purgeEveFamilyDocuments = async (
         )
       );
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep ancestorIds's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const ancestorIds = (ownerId: string, documentId: string, headId: string) =>
+const ancestorIds = (
+  ownerId: string,
+  documentId: string,
+  headId: string
+): SQL =>
   sql`(with recursive ancestry as (
     select "id", "parentRevisionId" from "EveDocumentRevision" where "id" = ${headId} and "ownerId" = ${ownerId} and "documentId" = ${documentId}
     union
     select revision."id", revision."parentRevisionId" from "EveDocumentRevision" revision join ancestry on revision."id" = ancestry."parentRevisionId"
   ) select "id" from ancestry)`;
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * id-length (#506): orderRevisionHistory uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * max-statements (#512): orderRevisionHistory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep orderRevisionHistory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): orderRevisionHistory accepts revisions: T[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): orderRevisionHistory intentionally keeps the existing falsy-value behavior of revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable id-length, max-statements -- * id-length (#506): orderRevisionHistory uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+ * max-statements (#512): orderRevisionHistory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const orderRevisionHistory = <
   T extends {
-    id: string;
-    parentRevisionId: string | null;
+    readonly id: string;
+    readonly parentRevisionId: string | null;
   },
 >(
-  revisions: T[],
+  revisions: readonly T[],
   headId: string
-) => {
+): T[] => {
   const byId = new Map(revisions.map((revision) => [revision.id, revision]));
   const history: T[] = [];
   let revisionId: string | null = headId;
-  while (revisionId) {
+  while (revisionId !== null && revisionId !== "") {
     const revision = byId.get(revisionId);
     if (!revision) {
       throw new Error("Document history could not be loaded.");
@@ -200,111 +201,112 @@ const orderRevisionHistory = <
   }
   return history.toReversed();
 };
-/* oxlint-enable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-statements */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): backfillDocumentCheckpoints's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): backfillDocumentCheckpoints uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): backfillDocumentCheckpoints accepts tx: DocumentTransaction; { documentId, history }; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): backfillDocumentCheckpoints accepts tx: DocumentTransaction; { documentId, history }; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/**
+ * Upgrade pre-checkpoint native history before the first manual write changes its inference.
+ * @param tx - Caller transaction retaining the family and document locks.
+ * @param ownerId - Owner of the conversation and its historical revisions.
+ * @param conversationId - Conversation whose missing turn snapshots are backfilled.
+ * @param turns - Nonnegative native turn indexes that need durable snapshots.
  */
-/** Upgrade pre-checkpoint native history before the first manual write changes its inference. */
-const backfillDocumentCheckpoints =
-  /** Upgrade pre-checkpoint native history before the first manual write changes its inference. */
-  async (
-    tx: DocumentTransaction,
-    ownerId: string,
-    conversationId: string,
-    turns: readonly number[]
-  ): Promise<void> => {
-    const turnIndexes = [
-      ...new Set(z.array(z.number().int().nonnegative()).min(1).parse(turns)),
-    ];
-    const existing = await tx
-      .select({ turnIndex: eveDocumentCheckpoint.turnIndex })
-      .from(eveDocumentCheckpoint)
+const backfillDocumentCheckpoints = async (
+  tx: DocumentTransaction,
+  ownerId: string,
+  conversationId: string,
+  turns: readonly number[]
+): Promise<void> => {
+  const turnIndexes = [
+    ...new Set(z.array(z.number().int().nonnegative()).min(1).parse(turns)),
+  ];
+  const existing = await tx
+    .select({ turnIndex: eveDocumentCheckpoint.turnIndex })
+    .from(eveDocumentCheckpoint)
+    .where(
+      and(
+        eq(eveDocumentCheckpoint.conversationId, conversationId),
+        eq(eveDocumentCheckpoint.ownerId, ownerId),
+        inArray(eveDocumentCheckpoint.turnIndex, turnIndexes)
+      )
+    );
+  const known = new Set(existing.map((checkpoint) => checkpoint.turnIndex));
+  const missing = turnIndexes.filter((turnIndex) => !known.has(turnIndex));
+  if (missing.length === 0) {
+    return;
+  }
+  const heads = await tx
+    .select()
+    .from(eveDocumentHead)
+    .where(
+      and(
+        eq(eveDocumentHead.conversationId, conversationId),
+        eq(eveDocumentHead.ownerId, ownerId)
+      )
+    );
+  const histories: {
+    documentId: string;
+    history: {
+      id: string;
+      parentRevisionId: string | null;
+      turnIndex: number | null;
+    }[];
+  }[] = [];
+  for (const head of heads) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+    const revisions = await tx
+      .select({
+        id: eveDocumentRevision.id,
+        parentRevisionId: eveDocumentRevision.parentRevisionId,
+        turnIndex: eveDocumentRevision.turnIndex,
+      })
+      .from(eveDocumentRevision)
       .where(
-        and(
-          eq(eveDocumentCheckpoint.conversationId, conversationId),
-          eq(eveDocumentCheckpoint.ownerId, ownerId),
-          inArray(eveDocumentCheckpoint.turnIndex, turnIndexes)
+        inArray(
+          eveDocumentRevision.id,
+          ancestorIds(ownerId, head.documentId, head.revisionId)
         )
       );
-    const known = new Set(existing.map((checkpoint) => checkpoint.turnIndex));
-    const missing = turnIndexes.filter((turnIndex) => !known.has(turnIndex));
-    if (missing.length === 0) {
-      return;
-    }
-    const heads = await tx
-      .select()
-      .from(eveDocumentHead)
-      .where(
-        and(
-          eq(eveDocumentHead.conversationId, conversationId),
-          eq(eveDocumentHead.ownerId, ownerId)
-        )
+    const history = orderRevisionHistory(revisions, head.revisionId);
+    if (history.some((revision) => revision.turnIndex === null)) {
+      throw new Error(
+        "Document checkpoint is not ready. Retry saving shortly."
       );
-    const histories: {
-      documentId: string;
-      history: {
-        id: string;
-        parentRevisionId: string | null;
-        turnIndex: number | null;
-      }[];
-    }[] = [];
-    for (const head of heads) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
-      const revisions = await tx
-        .select({
-          id: eveDocumentRevision.id,
-          parentRevisionId: eveDocumentRevision.parentRevisionId,
-          turnIndex: eveDocumentRevision.turnIndex,
-        })
-        .from(eveDocumentRevision)
-        .where(
-          inArray(
-            eveDocumentRevision.id,
-            ancestorIds(ownerId, head.documentId, head.revisionId)
-          )
-        );
-      const history = orderRevisionHistory(revisions, head.revisionId);
-      if (history.some((revision) => revision.turnIndex === null)) {
-        throw new Error(
-          "Document checkpoint is not ready. Retry saving shortly."
-        );
-      }
-      histories.push({ documentId: head.documentId, history });
     }
-    for (const turnIndex of missing) {
+    histories.push({ documentId: head.documentId, history });
+  }
+  for (const turnIndex of missing) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
+    await tx
+      .insert(eveDocumentCheckpoint)
+      .values({ conversationId, ownerId, turnIndex });
+    const entries = histories.flatMap(({ documentId, history }) => {
+      const revision = history.findLast(
+        (item) => item.turnIndex !== null && item.turnIndex < turnIndex
+      );
+      return revision
+        ? [
+            {
+              conversationId,
+              documentId,
+              ownerId,
+              revisionId: revision.id,
+              turnIndex,
+            },
+          ]
+        : [];
+    });
+    if (entries.length > 0) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
-      await tx
-        .insert(eveDocumentCheckpoint)
-        .values({ conversationId, ownerId, turnIndex });
-      const entries = histories.flatMap(({ documentId, history }) => {
-        const revision = history.findLast(
-          (item) => item.turnIndex !== null && item.turnIndex < turnIndex
-        );
-        return revision
-          ? [
-              {
-                conversationId,
-                documentId,
-                ownerId,
-                revisionId: revision.id,
-                turnIndex,
-              },
-            ]
-          : [];
-      });
-      if (entries.length > 0) {
-        // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.
-        await tx.insert(eveDocumentCheckpointEntry).values(entries);
-      }
+      await tx.insert(eveDocumentCheckpointEntry).values(entries);
     }
-  };
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+  }
+};
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/prefer-readonly-parameter-types (#565): prepareManualRevision accepts tx: DocumentTransaction; input: z.infer<typeof revisionInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -331,23 +333,25 @@ const prepareManualRevision = async (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): saveEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): saveEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): saveEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): saveEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep saveEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep saveEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): saveEveDocumentRevision accepts value: z.input<typeof revisionInput>; signal?: AbortSignal; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): saveEveDocumentRevision intentionally keeps the existing falsy-value behavior of conversation; replay; head; previous; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): saveEveDocumentRevision preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** Save a revision and move only this conversation's head, atomically and replay-safely. */
+/**
+ * Save a revision and move only this conversation's head, atomically and replay-safely.
+ * @param value - Revision payload with the expected head and immutable operation ID.
+ * @param signal - Cancellation checked before admission and before transaction commit.
+ * @param historicalTurns - Native turns to snapshot before a first manual revision.
+ * @returns New revision or the persisted revision for an identical operation replay.
+ */
 const saveEveDocumentRevision = async (
   value: z.input<typeof revisionInput>,
   signal?: AbortSignal,
   historicalTurns?: readonly number[]
-) => {
+): Promise<typeof eveDocumentRevision.$inferSelect> => {
   signal?.throwIfAborted();
   const input = revisionInput.parse(value);
   // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
@@ -461,20 +465,27 @@ const saveEveDocumentRevision = async (
     return revision;
   });
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): getEveDocumentHistory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getEveDocumentHistory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep getEveDocumentHistory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveDocumentHistory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 typescript/strict-boolean-expressions (#610): getEveDocumentHistory intentionally keeps the existing falsy-value behavior of head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Traverse the selected revision's ancestry, never all revisions with the same document ID. */
+/**
+ * Traverse the selected revision's ancestry, never all revisions with the same document ID.
+ * @param ownerId - Owner authorized to inspect the selected conversation.
+ * @param conversationId - Conversation whose current document head selects ancestry.
+ * @param documentId - Document identity scoped to that conversation head.
+ * @returns Oldest-to-newest revision summaries, or no summaries when no head exists.
+ */
 const getEveDocumentHistory = async (
   ownerId: string,
   conversationId: string,
   documentId: string
-) => {
+): Promise<
+  Pick<
+    typeof eveDocumentRevision.$inferSelect,
+    "createdAt" | "id" | "kind" | "parentRevisionId" | "title" | "turnIndex"
+  >[]
+> => {
   const [head] = await db
     .select({ revisionId: eveDocumentHead.revisionId })
     .from(eveDocumentHead)
@@ -513,7 +524,7 @@ const getEveDocumentHistory = async (
     );
   return orderRevisionHistory(revisions, head.revisionId);
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * max-params (#511): inheritImportedDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -777,15 +788,18 @@ const initializeNamedForkDocuments = async (
 };
 /* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): initializeEveForkDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): initializeEveForkDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): initializeEveForkDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): initializeEveForkDocuments uses 13, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): initializeEveForkDocuments accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): initializeEveForkDocuments intentionally keeps the existing falsy-value behavior of target?.parentConversationId; target.forkMessageId; target.forkCheckpointId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Call before exposing a newly bound fork; source edits after its boundary stay excluded. */
+/**
+ * Call before exposing a newly bound fork; source edits after its boundary stay excluded.
+ * @param ownerId - Owner of the newly bound fork and its inherited snapshots.
+ * @param conversationId - Fork conversation whose native boundary selects source document heads.
+ * @returns Completion after the fork document heads and inherited checkpoints are initialized.
+ */
 const initializeEveForkDocuments = async (
   ownerId: string,
   conversationId: string
@@ -924,14 +938,18 @@ const initializeEveForkDocuments = async (
       }
     }
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): captureEveDocumentCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): captureEveDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): captureEveDocumentCheckpoint accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): captureEveDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Capture once before model execution; even an empty manifest is a durable checkpoint. */
+/**
+ * Capture once before model execution; even an empty manifest is a durable checkpoint.
+ * @param ownerId - Owner of the bound conversation whose heads are captured.
+ * @param conversationId - Conversation that receives the immutable turn snapshot.
+ * @param turnIndex - Native turn boundary captured before model execution.
+ */
 const captureEveDocumentCheckpoint = async (
   ownerId: string,
   conversationId: string,
@@ -980,17 +998,22 @@ const captureEveDocumentCheckpoint = async (
     }
   });
 };
-/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): captureEveNamedDocumentCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): captureEveNamedDocumentCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): captureEveNamedDocumentCheckpoint uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): captureEveNamedDocumentCheckpoint accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): captureEveNamedDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Native serialized capture calls this before publishing its named checkpoint. */
+/**
+ * Native serialized capture calls this before publishing its named checkpoint.
+ * @param ownerId - Owner of the bound conversation and current document heads.
+ * @param conversationId - Conversation whose manifest the native checkpoint captures.
+ * @param checkpointId - Immutable native checkpoint UUID, reused only for the same turn.
+ * @param turnIndex - Native turn boundary associated with that checkpoint UUID.
+ */
 const captureEveNamedDocumentCheckpoint = async (
   ownerId: string,
   conversationId: string,
@@ -1058,53 +1081,60 @@ const captureEveNamedDocumentCheckpoint = async (
     }
   });
 };
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type --
- * jsdoc/require-param (#534): readDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): readDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep readDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/**
+ * Internal only: the caller must first prove this revision belongs to the accessible ancestry.
+ * @param ownerId - Owner recorded on the authorized revision.
+ * @param documentId - Document identity expected by the ancestry lookup.
+ * @param revisionId - Selected revision whose content the caller is authorized to read.
+ * @returns Persisted revision row, or no row when that exact owned revision is absent.
  */
-/** Internal only: the caller must first prove this revision belongs to the accessible ancestry. */
-const readDocumentRevision =
-  /** Internal only: the caller must first prove this revision belongs to the accessible ancestry. */
-  async (ownerId: string, documentId: string, revisionId: string) => {
-    const [revision] = await db
-      .select()
-      .from(eveDocumentRevision)
-      .where(
-        and(
-          eq(eveDocumentRevision.id, revisionId),
-          eq(eveDocumentRevision.ownerId, ownerId),
-          eq(eveDocumentRevision.documentId, documentId)
-        )
-      );
-    return revision;
-  };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type */
+const readDocumentRevision = async (
+  ownerId: string,
+  documentId: string,
+  revisionId: string
+): Promise<typeof eveDocumentRevision.$inferSelect | undefined> => {
+  const revisions = await db
+    .select()
+    .from(eveDocumentRevision)
+    .where(
+      and(
+        eq(eveDocumentRevision.id, revisionId),
+        eq(eveDocumentRevision.ownerId, ownerId),
+        eq(eveDocumentRevision.documentId, documentId)
+      )
+    );
+  return revisions.at(FIRST_ROW_INDEX);
+};
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): getEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getEveDocumentRevision's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-params (#511): getEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, no-magic-numbers, typescript/strict-boolean-expressions -- max-params (#511): getEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): getEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep getEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveDocumentRevision's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getEveDocumentRevision accepts revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): getEveDocumentRevision intentionally keeps the existing falsy-value behavior of revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Content is loaded only for the selected, accessible revision. */
+/**
+ * Content is loaded only for the selected, accessible revision.
+ * @param ownerId - Owner authorized to traverse the selected conversation ancestry.
+ * @param conversationId - Conversation whose current head scopes the history lookup.
+ * @param documentId - Document identity within that conversation.
+ * @param revisionId - Requested ancestor revision; omission or empty text selects the latest.
+ * @returns Persisted revision content, or no revision when the selected ancestry is unavailable.
+ */
 const getEveDocumentRevision = async (
   ownerId: string,
   conversationId: string,
   documentId: string,
   revisionId?: string
-) => {
+): Promise<typeof eveDocumentRevision.$inferSelect | undefined> => {
   const history = await getEveDocumentHistory(
     ownerId,
     conversationId,
     documentId
   );
   const selected = revisionId
-    ? history.find((revision) => revision.id === revisionId)
+    ? history.find(
+        (revision: ReadonlyNativeSurface<(typeof history)[number]>) =>
+          revision.id === revisionId
+      )
     : history.at(-1);
   if (!selected) {
     return;
@@ -1112,26 +1142,38 @@ const getEveDocumentRevision = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDocumentRevision has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): getAccessibleEveDocument's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getAccessibleEveDocument's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- max-lines-per-function (#510): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): getAccessibleEveDocument uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): getAccessibleEveDocument uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep getAccessibleEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getAccessibleEveDocument's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getAccessibleEveDocument accepts item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): getAccessibleEveDocument intentionally keeps the existing falsy-value behavior of conversation; revisionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Public readers receive document content, never storage ownership or operation metadata. */
+/**
+ * Public readers receive document content, never storage ownership or operation metadata.
+ * @param viewerId - Authenticated viewer, or no identity for a public reader.
+ * @param conversationId - Bound conversation whose visibility is checked before and after reading.
+ * @param documentId - Document identity scoped to that conversation ancestry.
+ * @param revisionId - Requested ancestor revision; omission or empty text selects the latest.
+ * @returns Safe content and history with edit permission, or no result when access is unavailable.
+ */
 const getAccessibleEveDocument = async (
   viewerId: string | undefined,
   conversationId: string,
   documentId: string,
   revisionId?: string
-) => {
+): Promise<
+  | {
+      canEdit: boolean;
+      history: Awaited<ReturnType<typeof getEveDocumentHistory>>;
+      revision: Pick<
+        typeof eveDocumentRevision.$inferSelect,
+        "content" | "createdAt" | "documentId" | "id" | "kind" | "title"
+      >;
+    }
+  | undefined
+> => {
   const [conversation] = await db
     .select()
     .from(eveConversation)
@@ -1153,7 +1195,10 @@ const getAccessibleEveDocument = async (
     documentId
   );
   const selected = revisionId
-    ? history.find((item) => item.id === revisionId)
+    ? history.find(
+        (item: ReadonlyNativeSurface<(typeof history)[number]>) =>
+          item.id === revisionId
+      )
     : history.at(-1);
   const revision = selected
     ? await readDocumentRevision(conversation.ownerId, documentId, selected.id)
@@ -1191,22 +1236,29 @@ const getAccessibleEveDocument = async (
     },
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): removeEveDocumentFromConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): removeEveDocumentFromConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-lines-per-function (#510): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep removeEveDocumentFromConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep removeEveDocumentFromConversation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): removeEveDocumentFromConversation accepts input: { documentId: string; expectedRevisionId: string; title: string }; scope: { ownerId: string; conversationId: string }; signal: AbortSignal; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): removeEveDocumentFromConversation intentionally keeps the existing falsy-value behavior of conversation; revision; head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Remove only this conversation's current pointer; snapshots and other branches retain their revisions. */
+/**
+ * Remove only this conversation's current pointer; snapshots and other branches retain their revisions.
+ * @param input - Approved document identity, expected revision and title to recheck.
+ * @param scope - Authorized conversation and owner receiving the pointer removal.
+ * @param signal - Cancellation checked while the deletion transaction is locked.
+ * @returns Successful removal metadata, including the revision title that was revalidated.
+ */
 const removeEveDocumentFromConversation = async (
   input: { documentId: string; expectedRevisionId: string; title: string },
   scope: { ownerId: string; conversationId: string },
   signal: AbortSignal
-) =>
+): Promise<{
+  documentId: string;
+  result: string;
+  status: "success";
+  title: string;
+}> =>
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${scope.ownerId}`}, 0))`
@@ -1277,7 +1329,7 @@ const removeEveDocumentFromConversation = async (
       title: revision.title,
     };
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-documents.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {

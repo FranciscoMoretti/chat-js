@@ -12,15 +12,16 @@ import { planInstallation } from "./installation-plan";
 const { join } = path;
 const roots: string[] = [];
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
     roots
       .splice(0)
-      .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
+      .map(
+        async (root): Promise<void> =>
+          await rm(root, { force: true, recursive: true })
+      )
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */

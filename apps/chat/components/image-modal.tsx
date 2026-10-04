@@ -70,7 +70,7 @@ const handleDownload = async (
   }
 };
 /* oxlint-enable max-statements */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- ImageActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ImageActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract;  */
 
 const ImageActions = ({
   className,
@@ -83,7 +83,7 @@ const ImageActions = ({
     <Button
       className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
 
-      onClick={(event) => {
+      onClick={(event: Readonly<Pick<React.MouseEvent, "stopPropagation">>) => {
         void handleCopyImage(event, imageUrl);
       }}
       size="icon-sm"
@@ -96,7 +96,7 @@ const ImageActions = ({
     <Button
       className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
 
-      onClick={(event) => {
+      onClick={(event: Readonly<Pick<React.MouseEvent, "stopPropagation">>) => {
         void handleDownload(event, imageUrl);
       }}
       size="icon-sm"
@@ -108,9 +108,9 @@ const ImageActions = ({
     </Button>
   </div>
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships;  */
 
 const ImageModal = ({
   isOpen,
@@ -139,7 +139,10 @@ const ImageModal = ({
         </DialogClose>
         <button
           className="group flex h-full w-full cursor-pointer items-center justify-center"
-          onClick={(event) => {
+          onClick={(event: {
+            readonly target: object;
+            readonly currentTarget: object;
+          }) => {
             if (event.target === event.currentTarget) {
               onClose();
             }
@@ -173,5 +176,5 @@ const ImageModal = ({
     </Dialog>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp */
 export { ImageActions, ImageModal };

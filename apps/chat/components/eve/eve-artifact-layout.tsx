@@ -146,8 +146,8 @@ const EveArtifactPanel = ({
   const onSaved = useCallback(async () => {
     // Hydrate the destination query before switching the view: an empty latest query would unmount the focused editor.
 
-    // FetchQuery refreshes the destination document before changing revision selection so the focused editor stays mounted.
-    await queryClient.fetchQuery(
+    // Query refreshes the destination document before changing revision selection so the focused editor stays mounted.
+    await queryClient.query(
       trpc.eve.document.queryOptions(
         {
           conversationId,

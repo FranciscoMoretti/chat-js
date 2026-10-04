@@ -198,13 +198,13 @@ const EveRuntimeProvider = ({
   const [registry] = useState(() => new Map<string, Runtime>());
   const open = useCallback(
     async (request: OpenRequest, navigate = true) => {
-      // FetchQuery resolves the requested chat identity before looking up its owning runtime.
-      const identity = await queryClient.fetchQuery(
+      // Query resolves the requested chat identity before looking up its owning runtime.
+      const identity = await queryClient.query(
         trpc.eve.get.queryOptions({ id: request.id })
       );
 
-      // FetchQuery with staleTime 0 reloads the branch family before selecting or creating a runtime.
-      const family = await queryClient.fetchQuery({
+      // Query with staleTime 0 reloads the branch family before selecting or creating a runtime.
+      const family = await queryClient.query({
         ...trpc.eve.branches.queryOptions({ id: identity.chatId }),
         staleTime: 0,
       });

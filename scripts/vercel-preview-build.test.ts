@@ -34,13 +34,12 @@ const expectRejection = async (
 
 /* oxlint-disable eslint/max-params -- harness: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- harness: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- harness: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const harness = (
   failAt?: string,
   cleanupFails = false,
   code = "53000",
-  lockWait = Promise.resolve()
+  lockWait: Readonly<Promise<void>> = Promise.resolve()
 ) => {
   const events: string[] = [];
   const commands: { command: string; env: NodeJS.ProcessEnv }[] = [];
@@ -72,7 +71,7 @@ const harness = (
       },
       run: (
         command: "db:migrate" | "build",
-        env: NodeJS.ProcessEnv
+        env: Readonly<NodeJS.ProcessEnv>
       ): Promise<void> => {
         commands.push({ command, env });
         step(command);
@@ -82,7 +81,6 @@ const harness = (
   };
 };
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 
@@ -162,7 +160,6 @@ it.each([
 
 /* oxlint-disable eslint/no-undefined -- does not start migration until the advisory lock is acquired: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable eslint/no-magic-numbers -- does not start migration until the advisory lock is acquired: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- does not start migration until the advisory lock is acquired: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 it("does not start migration until the advisory lock is acquired", async (): Promise<void> => {
   const { promise: pending, resolve: acquired } =
     Promise.withResolvers<undefined>();
@@ -173,12 +170,15 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
   expect(test.commands).toEqual([]);
   acquired(undefined);
   await build;
-  expect(test.commands.map(({ command }): string => command)).toEqual([
-    "db:migrate",
-    "build",
-  ]);
+  expect(
+    test.commands.map(
+      ({
+        command,
+      }: Readonly<Pick<(typeof test.commands)[number], "command">>): string =>
+        command
+    )
+  ).toEqual(["db:migrate", "build"]);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 

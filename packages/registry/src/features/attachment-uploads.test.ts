@@ -1,11 +1,14 @@
 import { expect, mock, test } from "bun:test";
 
-/* oxlint-disable typescript/promise-function-async -- The compression mock returns a resolved Blob promise directly; making this fixed stub async would introduce an unnecessary await solely to satisfy require-await. */
-const compression = mock(
-  (_file: Readonly<File>, _options: Readonly<{ maxWidthOrHeight: number }>) =>
-    Promise.resolve(new Blob(["png"], { type: "image/png" }))
-);
-/* oxlint-enable typescript/promise-function-async */
+const COMPRESSED_IMAGE_TEXT = "png";
+const BYTES_PER_MEBIBYTE = 1_048_576;
+
+const compression = mock<
+  (
+    file: Readonly<File>,
+    options: Readonly<{ maxWidthOrHeight: number }>
+  ) => Promise<Blob>
+>().mockResolvedValue(new Blob([COMPRESSED_IMAGE_TEXT], { type: "image/png" }));
 await mock.module("browser-image-compression", () => ({
   default: compression,
 }));
@@ -38,24 +41,31 @@ test("small accepted images preserve exact bytes without browser compression", a
   expect(prepared.files).toEqual([image]);
 });
 
-/* oxlint-disable eslint/no-magic-numbers -- Assert the three-byte compressed Blob and convert configured bytes to MiB using the documented 1024-byte units. */
-test("compresses large accepted images and retains failed oversized originals", async () => {
+test("compresses large accepted images with configured limits", async () => {
   const image = new File(["oversized image data"], "photo.original", {
     type: "image/png",
   });
   const prepared = await processFilesForUpload([image], options);
-  expect(prepared.files[0]?.name).toBe("photo.png");
-  expect(prepared.files[0]?.size).toBe(3);
-  expect(compression.mock.calls[0]?.[1]).toMatchObject({
-    maxSizeMB: options.maxBytes / (1024 * 1024),
+  const [compressedFile] = prepared.files;
+  const [compressionCall = []] = compression.mock.calls;
+  const [, compressionOptions] = compressionCall;
+  expect(compressedFile?.name).toBe("photo.png");
+  expect(compressedFile?.size).toBe(COMPRESSED_IMAGE_TEXT.length);
+  expect(compressionOptions).toMatchObject({
+    maxSizeMB: options.maxBytes / BYTES_PER_MEBIBYTE,
     maxWidthOrHeight: options.maxDimension,
+  });
+});
+
+test("retains failed oversized originals", async () => {
+  const image = new File(["oversized image data"], "photo.original", {
+    type: "image/png",
   });
   compression.mockRejectedValueOnce(new Error("Compression failed"));
   const failed = await processFilesForUpload([image], options);
   expect(failed.stillOversized).toEqual([image]);
   expect(failed.files).toEqual([]);
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
 test("preparation preserves mixed PDF and compressed-image input order", async () => {
   const pdf = new File(["pdf"], "first.pdf", { type: "application/pdf" });

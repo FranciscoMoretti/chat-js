@@ -6,6 +6,10 @@ import type { StorageDefinition } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 import { itemAddress, readItem } from "./shadcn";
 
+type RegistryFile = NonNullable<
+  Awaited<ReturnType<typeof readItem>>["files"]
+>[number];
+
 export interface StorageSelection {
   source: string;
   definition: StorageDefinition;
@@ -24,7 +28,7 @@ export const resolveStorage = async (
   const definition = storageDefinitionSchema.parse(item.meta?.chatjs);
   if (
     item.files?.some(
-      (file: { readonly target?: string }) =>
+      (file: Readonly<RegistryFile>) =>
         file.target === "~/lib/storage-provider.ts"
     ) !== true
   ) {

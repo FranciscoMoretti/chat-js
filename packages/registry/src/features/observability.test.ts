@@ -1,6 +1,10 @@
 import { expect, test } from "bun:test";
 
 import { getLangfuseEnvironment } from "./langfuse/credentials";
+import { runTestProcess } from "./test-runtime";
+
+const SUCCESS_EXIT_CODE = 0;
+const MISSING_CREDENTIALS_EXIT_CODE = 1;
 
 for (const environment of [
   { NODE_ENV: "test" },
@@ -24,15 +28,17 @@ for (const environment of [
   });
 }
 
-/* oxlint-disable eslint/no-undefined -- Assert the own baseUrl key is undefined so exporter defaults remain intact. */
 test("Langfuse keeps exporter defaults and optional custom parameters", () => {
   const credentials = {
     LANGFUSE_PUBLIC_KEY: "test-public",
     LANGFUSE_SECRET_KEY: "test-secret",
     NODE_ENV: "test" as const,
   };
-  expect(getLangfuseEnvironment(credentials)).toEqual({
-    baseUrl: undefined,
+  const defaults = getLangfuseEnvironment(credentials);
+  const { baseUrl, ...rest } = defaults;
+  expect(Object.hasOwn(defaults, "baseUrl")).toBe(true);
+  expect(baseUrl).toBeUndefined();
+  expect(rest).toEqual({
     debug: false,
     publicKey: "test-public",
     secretKey: "test-secret",
@@ -45,18 +51,14 @@ test("Langfuse keeps exporter defaults and optional custom parameters", () => {
     })
   ).toMatchObject({ baseUrl: "https://langfuse.example", debug: true });
 });
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable node/no-sync -- Run instrumentation in an isolated Bun subprocess and inspect its completed exit code and stdout before asserting registration behavior. */
-/* oxlint-disable node/no-process-env -- Pass an isolated child environment with explicit Playwright flags and empty or test Langfuse credentials; do not depend on host credentials. */
-/* oxlint-disable eslint/no-magic-numbers -- Compare child exit statuses and exporter counts directly with the expected registration behavior. */
 for (const { runtime, playwright } of [
   { playwright: false, runtime: "nodejs" },
   { playwright: false, runtime: "edge" },
   { playwright: true, runtime: "nodejs" },
 ]) {
-  test(`Langfuse validates credentials only in its Node runtime: ${runtime}, Playwright ${playwright}`, () => {
-    const child = Bun.spawnSync(
+  test(`Langfuse validates credentials only in its Node runtime: ${runtime}, Playwright ${playwright}`, async () => {
+    const child = await runTestProcess(
       [
         process.execPath,
         "-e",
@@ -65,8 +67,7 @@ try { await register({ appPrefix: "test", runtime: "${runtime}" }); console.log(
 catch (error) { console.log(error.code + ":" + error.integration); process.exitCode = 1; }`,
       ],
       {
-        env: {
-          ...process.env,
+        environment: {
           CI_PLAYWRIGHT: "false",
           LANGFUSE_PUBLIC_KEY: "",
           LANGFUSE_SECRET_KEY: "",
@@ -75,23 +76,21 @@ catch (error) { console.log(error.code + ":" + error.integration); process.exitC
         },
       }
     );
-    expect(child.exitCode).toBe(runtime === "nodejs" && !playwright ? 1 : 0);
-    expect(child.stdout.toString().trim()).toBe(
+    expect(child.exitCode).toBe(
+      runtime === "nodejs" && !playwright
+        ? MISSING_CREDENTIALS_EXIT_CODE
+        : SUCCESS_EXIT_CODE
+    );
+    expect(child.stdout.trim()).toBe(
       runtime === "nodejs" && !playwright
         ? "CHATJS_MISSING_CREDENTIALS:langfuse"
         : "registered"
     );
   });
 }
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */
 
-/* oxlint-disable node/no-sync -- Run instrumentation in an isolated Bun subprocess and inspect its completed exit code and stdout before asserting registration behavior. */
-/* oxlint-disable node/no-process-env -- Pass an isolated child environment with explicit Playwright flags and empty or test Langfuse credentials; do not depend on host credentials. */
-/* oxlint-disable eslint/no-magic-numbers -- Compare child exit statuses and exporter counts directly with the expected registration behavior. */
-test("successful Node registration configures one exporter with application identity and explicit options", () => {
-  const child = Bun.spawnSync(
+test("successful Node registration configures one exporter with application identity and explicit options", async () => {
+  const child = await runTestProcess(
     [
       process.execPath,
       "-e",
@@ -119,8 +118,7 @@ assert.deepEqual(exporters[0].options, {
 console.log("registered once");`,
     ],
     {
-      env: {
-        ...process.env,
+      environment: {
         CI_PLAYWRIGHT: "false",
         LANGFUSE_BASE_URL: "https://langfuse.example",
         LANGFUSE_DEBUG: "true",
@@ -131,10 +129,7 @@ console.log("registered once");`,
       },
     }
   );
-  expect(child.exitCode).toBe(0);
-  expect(child.stdout.toString().trim()).toBe("registered once");
-  expect(child.stderr.toString()).toBe("");
+  expect(child.exitCode).toBe(SUCCESS_EXIT_CODE);
+  expect(child.stdout.trim()).toBe("registered once");
+  expect(child.stderr).toBe("");
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */

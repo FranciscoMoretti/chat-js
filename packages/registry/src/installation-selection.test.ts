@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-/* oxlint-disable import/no-relative-parent-imports -- Import the package-local generated catalog, schema, or demo installer directly; application aliases do not identify these registry package modules. */
+/* oxlint-disable import/no-relative-parent-imports -- Test the canonical registry selection schema; existing application aliases and ./r-only package exports do not expose this private package source. */
 import { installationSelectionSchema } from "../installation";
 /* oxlint-enable import/no-relative-parent-imports */
 

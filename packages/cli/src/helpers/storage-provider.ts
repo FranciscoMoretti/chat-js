@@ -17,6 +17,16 @@ import { preflight } from "../utils/preflight";
 /* oxlint-enable import/no-relative-parent-imports */
 import type { ReadonlyInput } from "./readonly-input";
 
+const CONFIG_JSON_INDENTATION_SPACES = 2;
+const MISSING_ENV_MARKER = -1;
+const ENV_SOURCE_START = 0;
+
+const serializedConfigValue = (
+  value: unknown
+): ReturnType<typeof JSON.stringify> =>
+  // oxlint-disable-next-line unicorn/no-null -- The native JSON null replacer preserves every storage option/environment field while two-space formatting keeps generated source bytes stable.
+  JSON.stringify(value, null, CONFIG_JSON_INDENTATION_SPACES);
+
 const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
   (item: ReadonlyInput<(typeof builtInStorage)[number]>) =>
     item.meta.chatjs.id !== "memory"
@@ -31,10 +41,11 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
 };
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/** Configure the installed source without evaluating it or editing dependencies. */
+/**
+ * Configure the installed source without evaluating it or editing dependencies.
+ * @param destination Project root receiving storage-options.ts and its env block.
+ * @param selection Resolved descriptor and non-secret native storage options.
+ */
 const configureStorageProvider = async (
   destination: string,
   selection: ReadonlyInput<StorageSelection>
@@ -47,10 +58,10 @@ const configureStorageProvider = async (
 import type { createStorageAdapter } from "./storage-provider";
 
 /* oxlint-disable no-magic-numbers -- Tuple index zero selects the storage factory options parameter. */
-export const storageOptions = ${JSON.stringify(options, null, 2)} satisfies Parameters<typeof createStorageAdapter>[0];
+export const storageOptions = ${serializedConfigValue(options)} satisfies Parameters<typeof createStorageAdapter>[0];
 /* oxlint-enable no-magic-numbers */
-export const storageId = ${JSON.stringify(definition.id)};
-export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definition.envRequirements, null, 2)};
+export const storageId = ${serializedConfigValue(definition.id)};
+export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(definition.envRequirements)};
 `)
   );
   const examplePath = path.join(destination, ".env.example");
@@ -64,8 +75,8 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
   const end = "# </chatjs-storage-provider>";
   const from = env.indexOf(start);
   const to = env.indexOf(end);
-  if (from !== -1 && to >= from) {
-    env = env.slice(0, from) + env.slice(to + end.length);
+  if (from !== MISSING_ENV_MARKER && to >= from) {
+    env = env.slice(ENV_SOURCE_START, from) + env.slice(to + end.length);
   }
   const variables = [
     ...new Set(
@@ -84,9 +95,6 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
   env += `${end}\n`;
   await writeFile(examplePath, env);
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-statements */
 export {
   configureStorageProvider,

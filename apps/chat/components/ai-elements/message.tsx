@@ -161,9 +161,7 @@ const MessageBranchContext = createContext<MessageBranchContextType | null>(
 );
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type -- useMessageBranch: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const useMessageBranch = () => {
+const useMessageBranch = (): MessageBranchContextType => {
   const context = useContext(MessageBranchContext);
 
   if (!context) {
@@ -174,7 +172,6 @@ const useMessageBranch = () => {
 
   return context;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 type MessageBranchProps = HTMLAttributes<HTMLDivElement> & {
   defaultBranch?: number;

@@ -30,16 +30,15 @@ import { readPublicEveCopySource } from "./public-copy-source";
 import { assertEveConfigured } from "./server";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
-/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): prepareCopyReservation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep prepareCopyReservation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/promise-function-async (#606): prepareCopyReservation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 const prepareCopyReservation = async (
   ownerId: string,
   input: EveCopyInput,
   origin: string
-) => {
+): Promise<Awaited<ReturnType<typeof reserveEveCopyOperation>>> => {
   try {
     await loadEveModelDefinition(input.modelId);
   } catch (error) {
@@ -79,24 +78,26 @@ const prepareCopyReservation = async (
     return saved;
   }
 };
-/* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * jsdoc/require-param (#534): saveEveCopyOperation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): saveEveCopyOperation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): saveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep saveEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep saveEveCopyOperation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): saveEveCopyOperation accepts blob; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): saveEveCopyOperation preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-/** Saving is idle: billing admission happens on the first actual model turn. */
+/**
+ * Saves an idle native copy under one durable operation; billing begins on its first model turn.
+ * @param ownerId Owner whose reservation, attachments, and copied conversation are used.
+ * @param input Source/model request checked against any previous reservation for this operation.
+ * @param origin Origin used to resolve public source resources while preparing the copy plan.
+ * @returns The dispatched copy binding after owned files/documents have been accepted.
+ */
 export const saveEveCopyOperation = async (
   ownerId: string,
   input: EveCopyInput,
   origin: string
-) => {
+): Promise<Awaited<ReturnType<typeof dispatchEveCopy>>> => {
   assertEveConfigured();
   const saved =
     (await getEveCopyOperation(ownerId, input.operationId)) ??
@@ -144,4 +145,4 @@ export const saveEveCopyOperation = async (
     createNativeEveCopy(ownerId, operationId, input.modelId)
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -11,9 +11,12 @@ import {
 import { createModuleLogger } from "@/lib/logger";
 
 import { eveMessageTitle } from "./message-input";
-import type { EveMessageInput } from "./message-input";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 
 const EVE_TITLE_MAX_LENGTH = 40;
+const TITLE_START_INDEX = 0;
+const WORD_BOUNDARY_LOOKAHEAD = 1;
+const TITLE_GENERATION_TIMEOUT_MS = 15_000;
 
 type EveTitleResult =
   | { source: "generated"; title: string }
@@ -25,51 +28,50 @@ const surroundingQuotes = /^[\s"'“”‘’]+|[\s"'“”‘’]+$/gu;
 
 const log = createModuleLogger("eve.conversation-title");
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): compactTitle uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const compactTitle = (value: string): string => {
   const normalized = value.replace(whitespace, " ").trim();
   if (normalized.length <= EVE_TITLE_MAX_LENGTH) {
     return normalized.replace(trailingPunctuation, "").trim();
   }
-  const shortened = normalized.slice(0, EVE_TITLE_MAX_LENGTH + 1);
+  const shortened = normalized.slice(
+    TITLE_START_INDEX,
+    EVE_TITLE_MAX_LENGTH + WORD_BOUNDARY_LOOKAHEAD
+  );
   const wordBoundary = shortened.lastIndexOf(" ");
-  return (wordBoundary > 0 ? shortened.slice(0, wordBoundary) : shortened)
-    .slice(0, EVE_TITLE_MAX_LENGTH)
+  return (
+    wordBoundary > TITLE_START_INDEX
+      ? shortened.slice(TITLE_START_INDEX, wordBoundary)
+      : shortened
+  )
+    .slice(TITLE_START_INDEX, EVE_TITLE_MAX_LENGTH)
     .replace(trailingPunctuation, "")
     .trim();
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): eveConversationTitleFallback accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * A short visible title is available even when the title provider is unavailable.
  * @param message First user message whose text or attachments provide the fallback title.
  * @returns A compact visible title, or the default title when the message has no usable label.
  */
-const eveConversationTitleFallback = (message: EveMessageInput): string =>
-  compactTitle(eveMessageTitle(message)) || "New conversation";
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const eveConversationTitleFallback = (
+  message: ReadonlyEveMessageInput
+): string => compactTitle(eveMessageTitle(message)) || "New conversation";
 
 const normalizeGeneratedTitle = (title: string): string =>
   compactTitle(title.replace(surroundingQuotes, ""));
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): generateEveConversationTitleResult uses 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): generateEveConversationTitleResult accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Auxiliary title generation must never prevent a conversation from starting.
  * @param message First user message supplied to the auxiliary title model.
  * @returns A normalized generated title, or its message-derived fallback if generation fails or is empty.
  */
 const generateEveConversationTitleResult = async (
-  message: EveMessageInput
+  message: ReadonlyEveMessageInput
 ): Promise<EveTitleResult> => {
   const fallback = eveConversationTitleFallback(message);
   try {
     const { text } = await generateText({
-      abortSignal: AbortSignal.timeout(15_000),
+      abortSignal: AbortSignal.timeout(TITLE_GENERATION_TIMEOUT_MS),
       instructions: `Generate a concise title for a chat conversation based on the user's first message.
 
 Rules (strictly follow all):
@@ -92,10 +94,8 @@ Rules (strictly follow all):
     return { source: "fallback", title: fallback };
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types -- max-statements (#512): persistGeneratedEveConversationTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): persistGeneratedEveConversationTitle accepts { conversationId, message, ownerId, }: { conversationId: string; message: EveMessageI; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-statements -- max-statements (#512): persistGeneratedEveConversationTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 /**
  * The conditional update preserves manual titles and every branch's shared root title.
  * @param options Root conversation and its owner's original message used to check title eligibility.
@@ -108,11 +108,11 @@ const persistGeneratedEveConversationTitle = async ({
   conversationId,
   message,
   ownerId,
-}: {
+}: Readonly<{
   conversationId: string;
-  message: EveMessageInput;
+  message: ReadonlyEveMessageInput;
   ownerId: string;
-}): Promise<EveTitleResult | undefined> => {
+}>): Promise<EveTitleResult | undefined> => {
   const fallbackTitle = eveConversationTitleFallback(message);
   try {
     if (
@@ -152,7 +152,7 @@ const persistGeneratedEveConversationTitle = async ({
   // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
 };
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements */
 export {
   EVE_TITLE_MAX_LENGTH,
   eveConversationTitleFallback,

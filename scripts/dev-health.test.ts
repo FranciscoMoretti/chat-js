@@ -2,6 +2,18 @@ import { afterEach, expect, test } from "bun:test";
 
 import { checkHealth } from "./dev-health";
 
+type ReadonlyNativeSurface<Value> = Value extends (
+  ...parameters: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? {
+        readonly [Property in keyof Value]: ReadonlyNativeSurface<
+          Value[Property]
+        >;
+      }
+    : Value;
+
 const servers: ReturnType<typeof Bun.serve>[] = [];
 const OS_ASSIGNED_PORT = 0;
 const FIRST_SERVER_INDEX = 0;
@@ -11,13 +23,13 @@ afterEach(async (): Promise<void> => {
     await server.stop(true);
   }
 });
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- fixture: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 const fixture = (
-  auth: () => Response,
-  health = () => Response.json({ status: "ready" })
+  auth: () => ReadonlyNativeSurface<Response>,
+  health: () => ReadonlyNativeSurface<Response> = () =>
+    Response.json({ status: "ready" })
 ): string => {
   const server = Bun.serve({
-    fetch(request) {
+    fetch(request: ReadonlyNativeSurface<Request>) {
       return new URL(request.url).pathname === "/api/health"
         ? health()
         : auth();
@@ -28,7 +40,6 @@ const fixture = (
   servers.push(server);
   return server.url.origin;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable unicorn/no-null -- requires the app health endpoint and a working unauthenticated auth route: The fixture explicitly exercises the null state required by the API. */
 test("requires the app health endpoint and a working unauthenticated auth route", async (): Promise<void> => {

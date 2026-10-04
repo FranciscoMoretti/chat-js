@@ -9,32 +9,28 @@ import { z } from "zod";
 import { env } from "../env";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): GUEST_SESSION_DURATION_MS uses 60, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-const GUEST_SESSION_DURATION_MS = 60 * 60 * 1000;
-/* oxlint-enable no-magic-numbers */
+const MINUTES_PER_HOUR = 60;
+const SECONDS_PER_MINUTE = 60;
+const MILLISECONDS_PER_SECOND = 1000;
+const MINIMUM_IDENTIFIER_LENGTH = 1;
+const MAXIMUM_CREDENTIAL_CHARACTERS = 2048;
+const SIGNED_CREDENTIAL_PART_COUNT = 2;
+const GUEST_SESSION_DURATION_MS =
+  MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND;
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): claimsSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const claimsSchema = z
   .object({
     expiresAt: z.number().int().positive(),
-    modelId: z.string().min(1),
+    modelId: z.string().min(MINIMUM_IDENTIFIER_LENGTH),
     ownerId: z.uuid(),
-    sessionId: z.string().min(1).optional(),
+    sessionId: z.string().min(MINIMUM_IDENTIFIER_LENGTH).optional(),
   })
   .strict();
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep signature's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const signature = (payload: string) =>
+const signature = (payload: string): Buffer =>
   createHmac("sha256", env.EVE_GATEWAY_SECRET)
     .update(`chatjs:disposable-guest:v1:${payload}`)
     .digest();
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const issueGuestCredential = (claims: z.infer<typeof claimsSchema>): string => {
   const payload = Buffer.from(
@@ -43,27 +39,35 @@ const issueGuestCredential = (claims: z.infer<typeof claimsSchema>): string => {
   return `${payload}.${signature(payload).toString("base64url")}`;
 };
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep newGuestClaims's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep newGuestClaims's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-const newGuestClaims = (modelId: string) => ({
+const newGuestClaims = (
+  modelId: string
+): {
+  expiresAt: number;
+  modelId: string;
+  ownerId: ReturnType<typeof randomUUID>;
+} => ({
   expiresAt: Date.now() + GUEST_SESSION_DURATION_MS,
   modelId,
   ownerId: randomUUID(),
 });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null -- max-statements (#512): readGuestCredential keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): readGuestCredential uses 2048, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep readGuestCredential's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readGuestCredential's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/strict-boolean-expressions (#610): readGuestCredential intentionally keeps the existing falsy-value behavior of token; distinguishing empty, zero, and absent states requires a domain behavior decision.
+// Preserve the empty/absent-token gate while making its string narrowing explicit.
+const hasCredentialText = (value: string | null): value is string =>
+  Boolean(value);
+
+/* oxlint-disable max-statements, unicorn/no-null -- max-statements (#512): readGuestCredential keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 unicorn/no-null (#570): readGuestCredential preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-const readGuestCredential = (token: string | null) => {
-  if (!token || token.length > 2048) {
+const readGuestCredential = (
+  token: string | null
+): z.infer<typeof claimsSchema> | null => {
+  if (
+    !hasCredentialText(token) ||
+    token.length > MAXIMUM_CREDENTIAL_CHARACTERS
+  ) {
     return null;
   }
   const parts = token.split(".");
-  if (parts.length !== 2) {
+  if (parts.length !== SIGNED_CREDENTIAL_PART_COUNT) {
     return null;
   }
   const [payload, supplied] = parts;
@@ -81,7 +85,7 @@ const readGuestCredential = (token: string | null) => {
     return null;
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, unicorn/no-null */
 export {
   GUEST_SESSION_DURATION_MS,
   issueGuestCredential,

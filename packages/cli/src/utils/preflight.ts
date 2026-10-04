@@ -3,24 +3,35 @@ import path from "node:path";
 
 import { isSafeTarget } from "./is-safe-target";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/** Protect ChatJS-managed outputs before generating integration files. */
-export const preflight = async (
-  cwd: string,
-  targets: readonly string[]
-): Promise<void> => {
+const LAST_PART_OFFSET = 1;
+
+const managedRootDirectory = async (cwd: string): Promise<string> => {
   const resolvedCwd = path.resolve(cwd);
   const root = await lstat(resolvedCwd);
   if (!root.isDirectory() || root.isSymbolicLink()) {
     throw new Error("Destination must be a directory, not a symlink.");
   }
+  return resolvedCwd;
+};
+
+const assertSafeTarget = (target: string, resolvedCwd: string): void => {
+  if (!isSafeTarget(target, resolvedCwd)) {
+    throw new Error(`Unsafe ChatJS target: ${target}`);
+  }
+};
+
+/**
+ * Protect ChatJS-managed outputs before generating integration files.
+ * @param cwd Project destination, resolved relative to the current directory.
+ * @param targets Managed file paths whose existing parents and leaf must be safe.
+ */
+export const preflight = async (
+  cwd: string,
+  targets: readonly string[]
+): Promise<void> => {
+  const resolvedCwd = await managedRootDirectory(cwd);
   for (const target of targets) {
-    if (!isSafeTarget(target, resolvedCwd)) {
-      throw new Error(`Unsafe ChatJS target: ${target}`);
-    }
+    assertSafeTarget(target, resolvedCwd);
     let current = resolvedCwd;
     const parts = target.split("/");
     for (const [index, part] of parts.entries()) {
@@ -32,21 +43,19 @@ export const preflight = async (
           "code" in error &&
           error.code === "ENOENT"
         ) {
-          return null;
+          return;
         }
         throw error;
       });
       if (
         entry &&
         (entry.isSymbolicLink() ||
-          (index === parts.length - 1 ? !entry.isFile() : !entry.isDirectory()))
+          (index === parts.length - LAST_PART_OFFSET
+            ? !entry.isFile()
+            : !entry.isDirectory()))
       ) {
         throw new Error(`Invalid or symlinked ChatJS target: ${target}`);
       }
     }
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-statements */

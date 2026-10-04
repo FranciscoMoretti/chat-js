@@ -19,6 +19,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
+import { preloadQuery } from "@/trpc/preload-query";
 import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
 /* oxlint-disable import/no-relative-parent-imports -- ../../lib/auth import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
@@ -82,13 +83,13 @@ const ChatLayoutDynamic = async ({
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
 
-    // PrefetchQuery must swallow preload errors while pending queries are dehydrated and streamed.
-    void queryClient.prefetchQuery(
-      trpc.settings.getModelPreferences.queryOptions()
+    // Preloading must swallow preload errors while pending queries are dehydrated and streamed.
+    void preloadQuery(
+      queryClient.query(trpc.settings.getModelPreferences.queryOptions())
     );
 
-    // PrefetchQuery must swallow preload errors while pending queries are dehydrated and streamed.
-    void queryClient.prefetchQuery(trpc.project.list.queryOptions());
+    // Preloading must swallow preload errors while pending queries are dehydrated and streamed.
+    void preloadQuery(queryClient.query(trpc.project.list.queryOptions()));
   }
 
   return (

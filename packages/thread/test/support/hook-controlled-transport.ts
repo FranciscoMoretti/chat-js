@@ -14,9 +14,8 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     [];
 
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] =
-    // oxlint-disable-next-line typescript/promise-function-async -- Register the controller synchronously and return its fulfilled stream promise; async adoption defers settlement and converts start callback throws into rejections.
-    (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
-      Promise.resolve(
+    async (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
+      await Promise.resolve(
         new ReadableStream({
           start: (
             controller: Readonly<

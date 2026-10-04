@@ -29,4 +29,41 @@ const jsonString = (value: unknown): string => {
   return value;
 };
 
-export { jsonObject, jsonArray, jsonString, parseJsonObject };
+const taskList = (
+  source: string
+): readonly Readonly<Record<string, unknown>>[] =>
+  jsonArray(parseJsonObject(source).tasks).map((item) => jsonObject(item));
+
+const findTask = (
+  tasks: readonly Readonly<Record<string, unknown>>[],
+  taskId: string
+): Readonly<Record<string, unknown>> => {
+  const task = tasks.find((item) => item.taskId === taskId);
+  if (!task) {
+    throw new Error(`Missing Turbo task: ${taskId}`);
+  }
+  return task;
+};
+
+interface TaskPlan {
+  readonly tasks: readonly Readonly<Record<string, unknown>>[];
+}
+
+const parseAffectedTaskNames = (source: string): readonly string[] => {
+  const data = jsonObject(parseJsonObject(source).data);
+  const affectedTasks = jsonObject(data.affectedTasks);
+  return jsonArray(affectedTasks.items).map((item) =>
+    jsonString(jsonObject(item).fullName)
+  );
+};
+
+export {
+  jsonObject,
+  jsonArray,
+  jsonString,
+  parseJsonObject,
+  taskList,
+  findTask,
+  parseAffectedTaskNames,
+};
+export type { TaskPlan };

@@ -9,6 +9,7 @@ import {
 } from "@/components/settings/settings-page";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { preloadQuery } from "@/trpc/preload-query";
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
 
 /* oxlint-disable react/jsx-max-depth -- ModelsSettingsHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -52,9 +53,9 @@ const ModelsSettingsHeader = ({
 const ModelsSettingsContent = async (): Promise<ReactJSX.Element> => {
   const queryClient = getQueryClient();
 
-  // PrefetchQuery populates the settings hydration cache and intentionally swallows preload failures.
-  await queryClient.prefetchQuery(
-    trpc.settings.getModelPreferences.queryOptions()
+  // Preloading populates the settings hydration cache and intentionally swallows preload failures.
+  await preloadQuery(
+    queryClient.query(trpc.settings.getModelPreferences.queryOptions())
   );
 
   return (

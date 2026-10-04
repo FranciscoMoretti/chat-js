@@ -3,6 +3,10 @@ import type { GatewayDefinition } from "@chat-js/gateways/definition";
 
 import { itemAddress, readItem } from "./shadcn";
 
+type RegistryFile = NonNullable<
+  Awaited<ReturnType<typeof readItem>>["files"]
+>[number];
+
 /* oxlint-disable import/no-relative-parent-imports -- Built-in gateway metadata has one canonical registry catalog; the CLI Bun build bundles this reexport, while the application @ alias points to apps/chat rather than registry sources. */
 export { builtInGateways } from "../../../registry/src/gateways/catalog";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -22,8 +26,7 @@ export const resolveGateway = async (
   const definition = gatewayDefinitionSchema.parse(item.meta?.chatjs);
   if (
     item.files?.some(
-      (file: { readonly target?: string }) =>
-        file.target === "~/lib/ai/gateway.ts"
+      (file: Readonly<RegistryFile>) => file.target === "~/lib/ai/gateway.ts"
     ) !== true
   ) {
     throw new Error(

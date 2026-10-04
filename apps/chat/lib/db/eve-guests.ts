@@ -7,6 +7,8 @@ import { randomUUID } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { eveGuestOwnerId } from "../eve/guest-credential";
 import { db } from "./client";
 import {
@@ -18,43 +20,81 @@ import {
 } from "./schema";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
+const MIN_OWNER_ID_LENGTH = 1;
+const MINUTE_WINDOW_SECONDS = 60;
+const MONTH_WINDOW_SECONDS = 2_592_000;
+const MILLISECONDS_PER_SECOND = 1000;
+const EMPTY_QUOTA = 0;
+const SINGLE_REQUEST = 1;
+const FIRST_PARAMETER_INDEX = 0;
+
+type GuestTransaction = Parameters<
+  Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
+>[typeof FIRST_PARAMETER_INDEX];
+
+interface GuestRateWindow {
+  seconds: number;
+  startsAt: Date;
+}
+type GuestAdmissionStatus = "unavailable" | "exhausted" | "rate-limited";
+type GuestAdmissionFailure = {
+  [Status in GuestAdmissionStatus]: Readonly<{
+    status: Status;
+    guest?: undefined;
+  }>;
+}[GuestAdmissionStatus];
+type GuestAdmissionResult =
+  | GuestAdmissionFailure
+  | Readonly<{ guest: typeof eveGuest.$inferSelect; status: "ready" }>;
+type GuestReservationResult =
+  | GuestAdmissionFailure
+  | Readonly<{ status: "conflict"; reservationId?: undefined }>
+  | Readonly<{ reservationId: string; status: "replay" }>
+  | Readonly<{
+      reservationId: ReturnType<typeof randomUUID>;
+      status: "reserved";
+    }>;
+type GuestBatchResult<Result> =
+  | GuestReservationFailure
+  | Readonly<{
+      admission: Awaited<Result> | undefined;
+      reservations: {
+        operationId: string;
+        reservationId: string;
+        status: "reserved" | "replay";
+      }[];
+      status: "admitted";
+    }>;
+
 const hash = z.string().regex(/^[0-9a-f]{64}$/u);
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): reservation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+
 const reservation = z.object({
   ipHash: hash,
   operationId: z.uuid(),
-  ownerId: z.string().min(1),
+  ownerId: z.string().min(MIN_OWNER_ID_LENGTH),
   requestHash: hash,
   requestsPerMinute: z.number().int().nonnegative(),
   requestsPerMonth: z.number().int().nonnegative(),
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): windows uses 60, 2_592_000, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep windows's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): windows accepts now: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const windows = (now: Date) =>
-  [60, 2_592_000].map((seconds) => ({
+const windows = (now: ReadonlyNativeSurface<Date>): GuestRateWindow[] =>
+  [MINUTE_WINDOW_SECONDS, MONTH_WINDOW_SECONDS].map((seconds) => ({
     seconds,
     startsAt: new Date(
-      Math.floor(now.getTime() / (seconds * 1000)) * seconds * 1000
+      Math.floor(now.getTime() / (seconds * MILLISECONDS_PER_SECOND)) *
+        seconds *
+        MILLISECONDS_PER_SECOND
     ),
   }));
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/explicit-function-return-type (#560): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep createEveGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): createEveGuest accepts input: { tokenHash: string; messageLimit: number; expiresAt: Date; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/prefer-readonly-parameter-types (#565): createEveGuest accepts input: { tokenHash: string; messageLimit: number; expiresAt: Date; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ */
 const createEveGuest = async (input: {
   tokenHash: string;
   messageLimit: number;
   expiresAt: Date;
-}) => {
+}): Promise<typeof eveGuest.$inferSelect> => {
   hash.parse(input.tokenHash);
   z.number().int().nonnegative().parse(input.messageLimit);
   if (
@@ -77,15 +117,17 @@ const createEveGuest = async (input: {
     return guest;
   });
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/explicit-function-return-type (#560): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readExistingEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 const readExistingEveGuestMessage = async (
   ownerId: string,
   operationId: string
-) => {
+): Promise<
+  Pick<
+    typeof eveGuestMessage.$inferSelect,
+    "requestHash" | "reservationId" | "state"
+  >
+> => {
   const [message] = await db
     .select({
       requestHash: eveGuestMessage.requestHash,
@@ -101,7 +143,6 @@ const readExistingEveGuestMessage = async (
     );
   return message;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 interface GuestBootstrap {
   tokenHash: string;
@@ -110,12 +151,9 @@ interface GuestBootstrap {
 }
 type GuestReservationInput = z.infer<typeof reservation>;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): validateReservation accepts bootstrap?: GuestBootstrap; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const validateReservation = (
   input: GuestReservationInput,
-  bootstrap?: GuestBootstrap
+  bootstrap?: ReadonlyNativeSurface<GuestBootstrap>
 ): void => {
   reservation.parse(input);
   if (bootstrap) {
@@ -130,14 +168,12 @@ const validateReservation = (
     }
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): rateAvailable uses 0, 60 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): rateAvailable accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; input: { ipHash: string; requestsPerMinute: number; requestsPerMonth: number; }; periods: ReturnType<typeof windows>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): rateAvailable accepts tx: GuestTransaction; input: { ipHash: string; requestsPerMinute: number; requestsPerMonth: number; }; periods: ReturnType<typeof windows>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const rateAvailable = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: GuestTransaction,
   input: {
     ipHash: string;
     requestsPerMinute: number;
@@ -147,7 +183,9 @@ const rateAvailable = async (
 ): Promise<boolean> => {
   for (const period of periods) {
     const limit =
-      period.seconds === 60 ? input.requestsPerMinute : input.requestsPerMonth;
+      period.seconds === MINUTE_WINDOW_SECONDS
+        ? input.requestsPerMinute
+        : input.requestsPerMonth;
     // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
     const [bucket] = await tx
       .select()
@@ -159,24 +197,22 @@ const rateAvailable = async (
           eq(eveGuestRate.startsAt, period.startsAt)
         )
       );
-    if ((bucket?.requests ?? 0) >= limit) {
+    if ((bucket?.requests ?? EMPTY_QUOTA) >= limit) {
       return false;
     }
   }
   return true;
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): admissionGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): admissionGuest uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep admissionGuest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): admissionGuest accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; bootstrap: | { tokenHash: string; messageLimit: number; expiresAt: Date;; now: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): admissionGuest accepts tx: GuestTransaction; bootstrap: | { tokenHash: string; messageLimit: number; expiresAt: Date;; now: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): admissionGuest intentionally keeps the existing falsy-value behavior of guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const admissionGuest = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: GuestTransaction,
   input: z.infer<typeof reservation>,
   bootstrap:
     | {
@@ -186,7 +222,7 @@ const admissionGuest = async (
       }
     | undefined,
   now: Date
-) => {
+): Promise<GuestAdmissionResult> => {
   let [guest] = await tx
     .select()
     .from(eveGuest)
@@ -196,7 +232,7 @@ const admissionGuest = async (
     if (bootstrap.expiresAt <= now) {
       return { status: "unavailable" } as const;
     }
-    if (bootstrap.messageLimit === 0) {
+    if (bootstrap.messageLimit === EMPTY_QUOTA) {
       return { status: "exhausted" } as const;
     }
     if (!(await rateAvailable(tx, input, windows(now)))) {
@@ -221,21 +257,19 @@ const admissionGuest = async (
   }
   return { guest, status: "ready" } as const;
 };
-/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): reserveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): reserveMessage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep reserveMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): reserveMessage accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; bootstrap?: GuestBootstrap; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): reserveMessage accepts tx: GuestTransaction; bootstrap?: GuestBootstrap; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): reserveMessage intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const reserveMessage = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: GuestTransaction,
   input: GuestReservationInput,
   bootstrap?: GuestBootstrap
-) => {
+): Promise<GuestReservationResult> => {
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtext(${`eve-guest-ip:${input.ipHash}`}))`
   );
@@ -263,7 +297,7 @@ const reserveMessage = async (
       status: "replay",
     } as const;
   }
-  if (guest.remainingMessages === 0) {
+  if (guest.remainingMessages === EMPTY_QUOTA) {
     return { status: "exhausted" } as const;
   }
   const periods = windows(now);
@@ -276,7 +310,7 @@ const reserveMessage = async (
       .insert(eveGuestRate)
       .values({
         ipHash: input.ipHash,
-        requests: 1,
+        requests: SINGLE_REQUEST,
         startsAt: period.startsAt,
         windowSeconds: period.seconds,
       })
@@ -316,26 +350,27 @@ const reserveMessage = async (
     });
   return { reservationId, status: "reserved" } as const;
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): reserveEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
 typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessage accepts bootstrap?: GuestBootstrap; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): reserveEveGuestMessage preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
-/** Reserve before native admission. Ambiguous admission keeps its reservation. */
+typescript/promise-function-async (#606): reserveEveGuestMessage preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ */
+/**
+ * Reserve before native admission. Ambiguous admission keeps its reservation.
+ * @param input Validated owner, operation, request digest and address quota policy to reserve.
+ * @param bootstrap Optional first-guest identity and expiry, created only when admission succeeds.
+ * @returns The new or replayed reservation, or the exact identity/quota admission rejection.
+ */
 const reserveEveGuestMessage = async (
   input: GuestReservationInput,
   bootstrap?: GuestBootstrap
-) => {
+): Promise<GuestReservationResult> => {
   validateReservation(input, bootstrap);
   return await db.transaction((tx) => reserveMessage(tx, input, bootstrap));
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-type GuestReservationResult = Awaited<ReturnType<typeof reserveMessage>>;
 type GuestReservationFailure = Exclude<
   GuestReservationResult,
   { status: "reserved" | "replay" }
@@ -349,25 +384,24 @@ class GuestBatchRejectedError extends Error {
   }
 }
 
-/* oxlint-disable id-length, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): reserveEveGuestMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): reserveEveGuestMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep reserveEveGuestMessages's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessages accepts inputs: GuestReservationInput[]; bootstrap?: GuestBootstrap; tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): reserveEveGuestMessages intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Comparisons admit every candidate or none, including first-guest account creation. */
+typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessages accepts inputs: GuestReservationInput[]; bootstrap?: GuestBootstrap; tx: GuestTransaction; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): reserveEveGuestMessages intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
+/**
+ * Comparisons admit every candidate or none, including first-guest account creation.
+ * @param inputs Candidate operations sharing one owner, address and quota policy.
+ * @param bootstrap Optional first-guest identity admitted atomically with all candidates.
+ * @param persistAdmission Optional transaction callback storing comparison intent after every reservation succeeds.
+ * @returns All reservations and the callback result on atomic admission, or the rejecting candidate status after rollback.
+ */
 const reserveEveGuestMessages = async <T = undefined>(
   inputs: GuestReservationInput[],
   bootstrap?: GuestBootstrap,
-  persistAdmission?: (
-    tx: Parameters<Parameters<typeof db.transaction>[0]>[0]
-  ) => Promise<T>
-) => {
+  persistAdmission?: (tx: GuestTransaction) => Promise<T>
+): Promise<GuestBatchResult<T>> => {
   const [first] = inputs;
   if (!first) {
     throw new Error("Guest admission requires at least one operation.");
@@ -413,7 +447,7 @@ const reserveEveGuestMessages = async <T = undefined>(
     throw error;
   }
 };
-/* oxlint-enable id-length, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const commitEveGuestMessage = async (
   ownerId: string,
@@ -519,43 +553,51 @@ const releaseMessage = async (
   });
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): releaseEveGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
-/** Only a proven unaccepted request can be refunded; never use this on a timeout. */
+/**
+ * Only a proven unaccepted request can be refunded; never use this on a timeout.
+ * @param ownerId Owner whose exact reservation can be refunded.
+ * @param operationId Operation proved unaccepted by native admission.
+ * @param reservationId Exact reservation receipt to fence stale refunds.
+ * @returns Whether the matching reserved message was released and its quota refunded.
+ */
 const releaseEveGuestMessage = async (
   ownerId: string,
   operationId: string,
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, false);
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): releaseEveGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
-/** Serialize proof of no creation with the same family lock used before native dispatch. */
+/**
+ * Serialize proof of no creation with the same family lock used before native dispatch.
+ * @param ownerId Owner whose guest and conversation family locks fence the refund.
+ * @param operationId Operation whose conversation creation must still be absent.
+ * @param reservationId Exact reservation receipt to fence stale refunds.
+ * @returns Whether no creation existed and the matching reservation was atomically released.
+ */
 const releaseEveGuestCreation = async (
   ownerId: string,
   operationId: string,
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, true);
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): readEveGuestOwner's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readEveGuestOwner's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Includes expired identities so cleanup and policy never reclassify a guest as a user. */
-const readEveGuestOwner = async (ownerId: string) => {
+/**
+ * Includes expired identities so cleanup and policy never reclassify a guest as a user.
+ * @param ownerId Durable guest owner identity inspected by cleanup or policy.
+ * @returns The stored expiry, including expired identities, from the existing row lookup.
+ */
+const readEveGuestOwner = async (
+  ownerId: string
+): Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt">> => {
   const [guest] = await db
     .select({ expiresAt: eveGuest.expiresAt })
     .from(eveGuest)
     .where(eq(eveGuest.ownerId, ownerId));
   return guest;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable max-lines -- #509: This eve-guests.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+/* oxlint-disable max-lines -- #509: This eve-guests.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
+ */
 export {
   commitEveGuestMessage,
   createEveGuest,

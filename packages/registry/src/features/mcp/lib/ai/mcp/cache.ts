@@ -42,7 +42,6 @@ interface DiscoveryResult {
   tools: { name: string; description: string | null }[];
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Create a cached connection status fetcher for a specific connector.
  * Successful connection status is cached for 60 seconds. Failures are not cached.
@@ -50,13 +49,12 @@ interface DiscoveryResult {
 class UncachedConnectionStatusError extends Error {
   public readonly result: ConnectionStatusResult;
 
-  public constructor(result: ConnectionStatusResult) {
+  public constructor(result: Readonly<ConnectionStatusResult>) {
     super("MCP connection status is unavailable");
     this.name = "UncachedConnectionStatusError";
     this.result = result;
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const createCachedConnectionStatus = (
   connectorId: string,
@@ -91,21 +89,21 @@ const createCachedConnectionStatus = (
   };
 };
 
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Create a cached discovery fetcher for a specific connector.
  * Cache duration: 5 minutes (tools/resources/prompts rarely change)
+ * @param connectorId - Connector whose discovery result is cached.
+ * @param fetcher - Loads discovery when the cache misses.
+ * @returns A cached discovery loader.
  */
 const createCachedDiscovery = (
   connectorId: string,
   fetcher: () => Promise<DiscoveryResult>
 ): (() => Promise<DiscoveryResult>) =>
   unstable_cache(
-    () => {
+    async () => {
       log.debug({ connectorId }, "Fetching discovery (cache miss)");
-      return fetcher();
+      return await fetcher();
     },
     ["mcp-discovery", connectorId],
     {
@@ -113,41 +111,35 @@ const createCachedDiscovery = (
       tags: [mcpCacheTags.discovery(connectorId)],
     }
   );
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable jsdoc/require-returns */
 
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /**
  * Invalidate connection status cache for a connector.
  * Call this on: auth errors, disconnect, OAuth completion
+ * @param connectorId - Connector whose cached results are invalidated.
  */
 const invalidateConnectionStatus = (connectorId: string): void => {
   log.debug({ connectorId }, "Invalidating connection status cache");
   revalidateTag(mcpCacheTags.connectionStatus(connectorId), { expire: 0 });
 };
-/* oxlint-enable jsdoc/require-param */
 
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /**
  * Invalidate discovery cache for a connector.
  * Call this on: disconnect, OAuth completion, refreshClient
+ * @param connectorId - Connector whose cached results are invalidated.
  */
 const invalidateDiscovery = (connectorId: string): void => {
   log.debug({ connectorId }, "Invalidating discovery cache");
   revalidateTag(mcpCacheTags.discovery(connectorId), { expire: 0 });
 };
-/* oxlint-enable jsdoc/require-param */
 
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /**
  * Invalidate all MCP caches for a connector.
+ * @param connectorId - Connector whose cached results are invalidated.
  */
 const invalidateAllMcpCaches = (connectorId: string): void => {
   invalidateConnectionStatus(connectorId);
   invalidateDiscovery(connectorId);
 };
-/* oxlint-enable jsdoc/require-param */
 export {
   createCachedConnectionStatus,
   createCachedDiscovery,

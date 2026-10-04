@@ -212,6 +212,7 @@ for (const [specifier, file] of [["@chat-js/thread", "index.js"], ["@chat-js/thr
           `${consumerSource}
 import type { UIMessage } from "ai";
 import { createThread } from "@chat-js/thread";
+import type { ThreadInit } from "@chat-js/thread";
 
 type LabeledMessage = UIMessage<{ threadLabel: string }>;
 const labeledThread = new Thread<LabeledMessage>();
@@ -223,6 +224,25 @@ labeledThread.getSnapshot().messages[0]?.metadata?.absentProperty;
 // @ts-expect-error createThread metadata must retain its specialized shape.
 createdThread.getSnapshot().messages[0]?.metadata?.absentProperty;
 
+type UnsupportedMessage = LabeledMessage & {
+  tenant: string;
+  id: "custom-id";
+  role: "user";
+  parts: [{ type: "text"; text: string }];
+};
+declare const constructorFinishEvent: Parameters<NonNullable<ThreadInit<UnsupportedMessage>["onFinish"]>>[0];
+// @ts-expect-error Constructor callbacks also receive canonical SDK messages.
+constructorFinishEvent.message.tenant;
+const [normalized] = new Thread<UnsupportedMessage>().getSnapshot().messages;
+// @ts-expect-error The SDK cannot guarantee arbitrary required message fields.
+normalized.tenant;
+// @ts-expect-error Generated IDs keep the SDK string contract.
+const unsupportedId: "custom-id" = normalized.id;
+// @ts-expect-error Streaming also constructs assistant messages.
+const unsupportedRole: "user" = normalized.role;
+// @ts-expect-error Streaming cannot guarantee a fixed text-part tuple.
+const unsupportedParts: [{ type: "text"; text: string }] = normalized.parts;
+
 // This function is only type-checked, never passed to the runtime consumer.
 function checkHookInference() {
   const helpers = useThread({ thread: labeledThread });
@@ -230,6 +250,11 @@ function checkHookInference() {
   // @ts-expect-error useThread must infer the supplied thread's metadata shape.
   helpers.messages[0]?.metadata?.absentProperty;
   return hookLabel;
+}
+function checkNormalizedHook() {
+  const helpers = useThread({ thread: new Thread<UnsupportedMessage>() });
+  // @ts-expect-error Hook messages cannot reintroduce unsupported fields.
+  helpers.messages[0]?.tenant;
 }
 `
         ),

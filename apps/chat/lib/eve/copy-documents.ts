@@ -1,25 +1,41 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-documents" dependency within this package instead of introducing an alias or barrel API.
  */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import type { snapshotPublicEveCopyDocuments } from "../db/eve-copy-documents";
 import { eveCopyResources, rewriteEveCopyResources } from "./copy-transcript";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): prepareEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): prepareEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-statements (#512): prepareEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): prepareEveCopyDocuments uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep prepareEveCopyDocuments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep prepareEveCopyDocuments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): prepareEveCopyDocuments accepts snapshot: Awaited< ReturnType<typeof snapshotPublicEveCopyDocuments> >["documents"]; allocations: Parameters<typeof rewriteEveCopyResources>[1]; document; revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+const ALLOCATIONS_PARAMETER_INDEX = 1;
+type CopyDocumentSnapshot = Awaited<
+  ReturnType<typeof snapshotPublicEveCopyDocuments>
+>["documents"];
+type PreparedCopyDocument = Omit<CopyDocumentSnapshot[number], "revisions"> & {
+  revisions: (Omit<
+    CopyDocumentSnapshot[number]["revisions"][number],
+    "operationId" | "turnIndex"
+  > & {
+    operationId: string;
+    turnIndex: null;
+  })[];
+};
+
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null --max-statements (#512): prepareEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/prefer-readonly-parameter-types (#565): prepareEveCopyDocuments retains mutable snapshot and allocation views; readonly projection changes copied revision fileIds output mutability, so this scope remains unreviewed.
 unicorn/no-null (#570): prepareEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** Convert only an authorized ancestry snapshot; imported revisions have no source execution turns. */
+/**
+ * Converts an authorized, completely allocated ancestry into idle imported revisions.
+ * @param snapshot Accessible document heads and their complete root-to-head revisions.
+ * @param allocations Ownership-checked destination document, revision, and file allocations.
+ * @returns Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
+ */
 const prepareEveCopyDocuments = (
-  snapshot: Awaited<
-    ReturnType<typeof snapshotPublicEveCopyDocuments>
-  >["documents"],
-  allocations: Parameters<typeof rewriteEveCopyResources>[1]
-) => {
+  snapshot: CopyDocumentSnapshot,
+  allocations: Parameters<
+    typeof rewriteEveCopyResources
+  >[typeof ALLOCATIONS_PARAMETER_INDEX]
+): PreparedCopyDocument[] => {
   for (const document of snapshot) {
     const revisionIds = new Set<string>();
     let parent: string | null = null;
@@ -53,19 +69,16 @@ const prepareEveCopyDocuments = (
     })),
   }));
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): eveCopyDocumentResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): eveCopyDocumentResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep eveCopyDocumentResources's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep eveCopyDocumentResources's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): eveCopyDocumentResources accepts snapshot: Awaited< ReturnType<typeof snapshotPublicEveCopyDocuments> >["documents"]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Inventory every accessible revision, including files removed from the current head. */
+/**
+ * Inventories every accessible revision, including files removed from the current head.
+ * @param snapshot Authorized document ancestry whose historical file references must remain available.
+ * @returns Sorted unique file keys, document IDs, and revision IDs across the entire snapshot.
+ */
 const eveCopyDocumentResources = (
-  snapshot: Awaited<
-    ReturnType<typeof snapshotPublicEveCopyDocuments>
-  >["documents"]
-) => {
+  snapshot: ReadonlyNativeSurface<CopyDocumentSnapshot>
+): ReturnType<typeof eveCopyResources> => {
   const files = new Set<string>();
   const documents = new Set<string>();
   const revisions = new Set<string>();
@@ -84,5 +97,5 @@ const eveCopyDocumentResources = (
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+
 export { eveCopyDocumentResources, prepareEveCopyDocuments };

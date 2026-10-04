@@ -8,6 +8,8 @@ import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 /* oxlint-enable import/no-relative-parent-imports */
 
+const FIRST_ROW_INDEX = 0;
+
 /* oxlint-disable no-undefined -- no-undefined (#519): isEveFileUnavailable uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Legacy keys have no EVE row; only EVE deletion fences deny an existing URL.
@@ -83,9 +85,8 @@ const reserveEveUpload = async (
   await db.insert(eveStoredFile).values({ key, ownerId });
 };
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): writeEveUpload uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): writeEveUpload accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): writeEveUpload intentionally keeps the existing falsy-value behavior of file; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): writeEveUpload uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+typescript/prefer-readonly-parameter-types (#565): writeEveUpload accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Serialize admitted storage writes with orphan cleanup and reference creation.
  * @param ownerId - Owner whose family lock protects the write.
@@ -102,7 +103,7 @@ const writeEveUpload = async <T>(
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
-    const [file] = await tx
+    const fileRows = await tx
       .select({ key: eveStoredFile.key })
       .from(eveStoredFile)
       .where(
@@ -112,12 +113,13 @@ const writeEveUpload = async <T>(
           eq(eveStoredFile.state, "active")
         )
       );
+    const file = fileRows.at(FIRST_ROW_INDEX);
     if (!file) {
       throw new Error("Upload reservation is unavailable.");
     }
     return await write();
   });
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
 /**
  * Register server-created keys only; a caller-supplied URL is not ownership proof.
@@ -141,10 +143,9 @@ const registerEveStoredFile = async (
   }
 };
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-lines-per-function (#510): referenceEveFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): referenceEveFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): referenceEveFiles uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): referenceEveFiles accepts keys: string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): referenceEveFiles intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+typescript/prefer-readonly-parameter-types (#565): referenceEveFiles accepts keys: string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Claim before dispatch; failed/uncertain sends retain their references safely.
  * @param ownerId - Owner of the conversation and every attachment.
@@ -171,7 +172,7 @@ const referenceEveFiles = async (
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
-    const [conversation] = await tx
+    const conversationRows = await tx
       .select()
       .from(eveConversation)
       .where(
@@ -180,6 +181,7 @@ const referenceEveFiles = async (
           eq(eveConversation.ownerId, ownerId)
         )
       );
+    const conversation = conversationRows.at(FIRST_ROW_INDEX);
     if (
       !(
         conversation &&
@@ -208,7 +210,7 @@ const referenceEveFiles = async (
       .onConflictDoNothing();
   });
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): assertEveFilesOwned uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): assertEveFilesOwned accepts keys: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -247,8 +249,7 @@ const assertEveFilesOwned = async (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- typescript/prefer-readonly-parameter-types (#565): reserveEveGeneratedFile accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): reserveEveGeneratedFile intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): reserveEveGeneratedFile accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Persist the key before storage I/O so a failed upload remains discoverable.
  * @param ownerId - Owner of the bound conversation and generated file.
@@ -267,7 +268,7 @@ const reserveEveGeneratedFile = async (
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
-    const [conversation] = await tx
+    const conversationRows = await tx
       .select({ id: eveConversation.id })
       .from(eveConversation)
       .where(
@@ -277,6 +278,7 @@ const reserveEveGeneratedFile = async (
           eq(eveConversation.state, "bound")
         )
       );
+    const conversation = conversationRows.at(FIRST_ROW_INDEX);
     if (!conversation) {
       throw new Error("Conversation is unavailable for generated files.");
     }
@@ -284,12 +286,11 @@ const reserveEveGeneratedFile = async (
     await tx.insert(eveFileReference).values({ conversationId, key, ownerId });
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): writeEveGeneratedFile uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, max-params, typescript/prefer-readonly-parameter-types -- id-length (#506): writeEveGeneratedFile uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 max-params (#511): writeEveGeneratedFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): writeEveGeneratedFile accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): writeEveGeneratedFile intentionally keeps the existing falsy-value behavior of reference; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+typescript/prefer-readonly-parameter-types (#565): writeEveGeneratedFile accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Deletion cannot pass an admitted write; the committed reservation survives failures.
  * @param ownerId - Owner whose family lock protects the generated write.
@@ -308,7 +309,7 @@ const writeEveGeneratedFile = async <T>(
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
-    const [reference] = await tx
+    const referenceRows = await tx
       .select({ key: eveFileReference.key })
       .from(eveFileReference)
       .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
@@ -325,12 +326,13 @@ const writeEveGeneratedFile = async <T>(
           eq(eveConversation.state, "bound")
         )
       );
+    const reference = referenceRows.at(FIRST_ROW_INDEX);
     if (!reference) {
       throw new Error("Conversation is unavailable for generated files.");
     }
     return await write();
   });
-/* oxlint-enable id-length, max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-params, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-params (#511): retainEveDocumentFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): retainEveDocumentFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -368,12 +370,10 @@ const retainEveDocumentFiles = async (
   if (files.length !== candidates.length) {
     throw new Error("Document references an unavailable or unowned file.");
   }
-  if (files.length > 0) {
-    await tx
-      .insert(eveFileReference)
-      .values(files.map(({ key }) => ({ conversationId, key, ownerId })))
-      .onConflictDoNothing();
-  }
+  await tx
+    .insert(eveFileReference)
+    .values(files.map(({ key }) => ({ conversationId, key, ownerId })))
+    .onConflictDoNothing();
 };
 /* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export {

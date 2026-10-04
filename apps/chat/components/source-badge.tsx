@@ -10,12 +10,12 @@ import { getDomainFromUrl, getFaviconUrl } from "@/lib/url-utils";
 import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
 
 import { Favicon } from "./favicon";
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- WebSourceBadge: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { result }: { result: SearchResultItem }). */
+/* oxlint-disable react/jsx-max-depth -- WebSourceBadge: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const WebSourceBadge = ({
   result,
 }: {
-  result: SearchResultItem;
+  readonly result: Readonly<SearchResultItem>;
 }): React.JSX.Element => (
   <Tooltip>
     <TooltipTrigger asChild>
@@ -42,4 +42,4 @@ export const WebSourceBadge = ({
     </TooltipContent>
   </Tooltip>
 );
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth */

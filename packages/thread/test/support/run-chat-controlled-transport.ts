@@ -32,15 +32,14 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     return this.requests.at(LAST_REQUEST_INDEX)?.options;
   }
 
-  // oxlint-disable-next-line typescript/promise-function-async -- Record the options/controller synchronously and return a fulfilled stream promise; async adoption changes settlement and the start callback throw boundary.
-  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (
+  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = async (
     options: ReadonlyDeep<
       Parameters<
         ChatTransport<UIMessage>["sendMessages"]
       >[typeof SDK_PARAMETER_INDEX]
     >
   ): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
-    Promise.resolve(
+    await Promise.resolve(
       new ReadableStream({
         start: (
           controller: Readonly<ReadableStreamDefaultController<UIMessageChunk>>

@@ -2,14 +2,22 @@ import { z } from "zod";
 
 import { eveRequest } from "./server";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers --
+const SEED_LOOKUP_TIMEOUT_MS = 15_000;
+const SEED_CREATION_TIMEOUT_MS = 30_000;
+const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
+const HTTP_NOT_FOUND = 404;
 
- * jsdoc/require-param (#534): createNativeEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): createNativeEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements --
+
  * max-statements (#512): createNativeEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): createNativeEveCopy uses 15_000, 1, 404, 30_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
   */
-/** Idempotent seed lookup/creation, without browser history or source capabilities. */
+/**
+ * Resolves or creates the native seed session for the same durable copy operation.
+ * @param ownerId Owner authorized to look up and create the native session.
+ * @param operationId Stable seed operation identity reused after uncertain creation replies.
+ * @param modelId Model sent only when a missing seed session must be created.
+ * @returns The validated native session ID from lookup or creation; unresolved replies throw.
+ */
 export const createNativeEveCopy = async (
   ownerId: string,
   operationId: string,
@@ -19,10 +27,12 @@ export const createNativeEveCopy = async (
     ownerId,
     `/eve/chat/v1/operation/${operationId}?kind=seed`,
     {
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(SEED_LOOKUP_TIMEOUT_MS),
     }
   );
-  const session = z.object({ sessionId: z.string().min(1) });
+  const session = z.object({
+    sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+  });
   if (existing.ok) {
     return session.parse(await existing.json()).sessionId;
   }
@@ -33,7 +43,7 @@ export const createNativeEveCopy = async (
         // The missing-operation schema rejects an absent JSON body.
       })
     );
-  if (existing.status !== 404 || !missing.success) {
+  if (existing.status !== HTTP_NOT_FOUND || !missing.success) {
     throw new Error("Native copy lookup is unavailable.");
   }
   const result = await eveRequest(
@@ -42,7 +52,7 @@ export const createNativeEveCopy = async (
     {
       body: JSON.stringify({ operationId, seed: true }),
       method: "POST",
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(SEED_CREATION_TIMEOUT_MS),
     },
     modelId
   );
@@ -51,4 +61,4 @@ export const createNativeEveCopy = async (
   }
   return session.parse(await result.json()).sessionId;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers */
+/* oxlint-enable max-statements */

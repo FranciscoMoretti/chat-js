@@ -34,16 +34,13 @@ interface ReasoningContextValue {
 const ReasoningContext = createContext<ReasoningContextValue | null>(null);
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type -- useReasoning: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const useReasoning = () => {
+const useReasoning = (): ReasoningContextValue => {
   const context = useContext(ReasoningContext);
   if (!context) {
     throw new Error("Reasoning components must be used within Reasoning");
   }
   return context;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 type ReasoningProps = ComponentProps<typeof Collapsible> & {
   isStreaming?: boolean;

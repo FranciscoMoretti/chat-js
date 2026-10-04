@@ -21,15 +21,14 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     | ReadableStream<UIMessageChunk>
     | typeof NO_RECONNECT_STREAM = NO_RECONNECT_STREAM;
 
-  // oxlint-disable-next-line typescript/promise-function-async -- Record the request synchronously and return its fulfilled stream promise; async adoption changes settlement and the start callback throw boundary.
-  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = (
+  public sendMessages: ChatTransport<UIMessage>["sendMessages"] = async (
     options: ReadonlyDeep<
       Parameters<
         ChatTransport<UIMessage>["sendMessages"]
       >[typeof SDK_PARAMETER_INDEX]
     >
   ): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
-    Promise.resolve(
+    await Promise.resolve(
       new ReadableStream({
         start: (
           controller: Readonly<ReadableStreamDefaultController<UIMessageChunk>>
@@ -51,8 +50,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
       })
     );
 
-  // oxlint-disable-next-line typescript/promise-function-async -- Consume the saved reconnect stream before returning its fulfilled stream/null promise; an added await defers the SDK reconnect result.
-  public reconnectToStream(
+  public async reconnectToStream(
     _options: ReadonlyDeep<
       Parameters<
         ChatTransport<UIMessage>["reconnectToStream"]
@@ -61,7 +59,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
   ): Promise<ReadableStream<UIMessageChunk> | null> {
     const stream = this.#reconnectStream;
     this.#reconnectStream = NO_RECONNECT_STREAM;
-    return Promise.resolve(stream);
+    return await Promise.resolve(stream);
   }
 
   public prepareReconnect(): ReadableStreamDefaultController<UIMessageChunk> {

@@ -23,6 +23,12 @@ import { attachmentDigest, draftAttachment } from "./draft";
 import { assertEveConfigured } from "./server";
 /* oxlint-enable import/no-relative-parent-imports */
 
+const EMPTY_ATTACHMENT_BYTES = 0;
+const DATA_URL_SEPARATOR_LENGTH = 1;
+const BASE64_CHARACTERS_PER_QUARTET = 4;
+const BASE64_BYTES_PER_QUARTET = 3;
+const HISTORY_READ_TIMEOUT_MS = 15_000;
+
 const parseContentType = (
   value: string
 ): z.infer<typeof draftAttachment>["contentType"] => {
@@ -33,30 +39,26 @@ const parseContentType = (
   return parsed.data;
 };
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): validateAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const validateAttachment = (
   file: Pick<Blob, "type" | "size">,
   contentType: string
 ): void => {
   if (
     file.type !== contentType ||
-    file.size === 0 ||
+    file.size === EMPTY_ATTACHMENT_BYTES ||
     file.size > config.attachments.maxBytes
   ) {
     throw new Error("This attachment has an unsupported type or size.");
   }
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
- * no-magic-numbers (#517): inlineAttachment uses 1, 4, 3 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep inlineAttachment's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const inlineAttachment = (url: string, contentType: string) => {
-  const encoded = url.slice(url.indexOf(",") + 1);
-  if (encoded.length > 4 * Math.ceil(config.attachments.maxBytes / 3)) {
+const inlineAttachment = (url: string, contentType: string): Blob => {
+  const encoded = url.slice(url.indexOf(",") + DATA_URL_SEPARATOR_LENGTH);
+  if (
+    encoded.length >
+    BASE64_CHARACTERS_PER_QUARTET *
+      Math.ceil(config.attachments.maxBytes / BASE64_BYTES_PER_QUARTET)
+  ) {
     throw new Error("This attachment has an unsupported type or size.");
   }
   const bytes = Buffer.from(encoded, "base64");
@@ -67,26 +69,24 @@ const inlineAttachment = (url: string, contentType: string) => {
   validateAttachment(blob, contentType);
   return blob;
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): restoreMessageAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): restoreMessageAttachments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): restoreMessageAttachments skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): restoreMessageAttachments uses 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep restoreMessageAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep restoreMessageAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): restoreMessageAttachments accepts input: { conversationId: string; messageId: string }; state; event; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): restoreMessageAttachments preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): restoreMessageAttachments intentionally keeps the existing falsy-value behavior of conversation?.sessionId; url; key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-/** Copy trusted native history for editing; callers cannot supply file bytes or URLs. */
+/**
+ * Copy trusted native history for editing after validating every historical attachment.
+ * @param ownerId Owner whose conversation and file access authorize each copy.
+ * @param input Conversation and user message identifying the native history to restore.
+ * @returns Owned attachment references copied sequentially from the validated history.
+ */
 export const restoreMessageAttachments = async (
   ownerId: string,
-  input: { conversationId: string; messageId: string }
-) => {
+  input: Readonly<{ conversationId: string; messageId: string }>
+): Promise<z.output<typeof draftAttachment>[]> => {
   const conversation = await getEveConversation(ownerId, input.conversationId);
   if (!(conversation?.sessionId && conversation.state === "bound")) {
     throw new Error("Conversation is unavailable for editing.");
@@ -95,16 +95,14 @@ export const restoreMessageAttachments = async (
   const client = new Client(getEveConnectionOptions(ownerId));
   const snapshot = await client.sessions
     .attach(conversation.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
+    .snapshot({ signal: AbortSignal.timeout(HISTORY_READ_TIMEOUT_MS) });
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
   // oxlint-disable-next-line unicorn/no-array-reduce -- Project trusted native history with EVE's reducer.
-  const { messages } = snapshot.events.reduce(
-    (state, event) => reduceEvent(state, event),
-    reducer.initial()
-  );
+  const { messages } = snapshot.events.reduce(reduceEvent, reducer.initial());
   const message = messages.find(
-    (item) => item.id === input.messageId && item.role === "user"
+    (item: Readonly<Pick<(typeof messages)[number], "id" | "role">>) =>
+      item.id === input.messageId && item.role === "user"
   );
   if (!message) {
     throw new Error("Message is unavailable for editing.");
@@ -171,4 +169,4 @@ export const restoreMessageAttachments = async (
   }
   return attachments;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions */

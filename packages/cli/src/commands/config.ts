@@ -40,7 +40,6 @@ const getTsEvalCommand = (pm: PackageManager): [string, string[]] => {
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const config = new Command()
   .name("config")
   .description(
@@ -51,7 +50,7 @@ export const config = new Command()
     "the working directory (defaults to current directory)",
     process.cwd()
   )
-  .action(async (opts: { cwd: string }) => {
+  .action(async (opts: { readonly cwd: string }) => {
     try {
       const cwd = path.resolve(opts.cwd);
 
@@ -88,7 +87,6 @@ export const config = new Command()
       handleError(error);
     }
   });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-statements */

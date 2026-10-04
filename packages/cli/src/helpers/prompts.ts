@@ -7,6 +7,7 @@ import {
   select,
   text,
 } from "@clack/prompts";
+import type { Option } from "@clack/prompts";
 import { PROVIDER_NAMES } from "files-sdk/providers";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
@@ -59,6 +60,7 @@ import {
   gatewayEnvRequirements,
 } from "./config-requirements";
 /* oxlint-enable import/max-dependencies */
+import type { ReadonlyInput } from "./readonly-input";
 import {
   INSTALLABLE_STORAGE_PROVIDERS,
   parseStorageOptions,
@@ -104,23 +106,33 @@ const BUILT_IN_TOOL_HINTS: Record<BuiltInToolKey, string> = {
   webSearch: "Search the web from chat",
 };
 
+const BUILT_IN_TOOL_DEFAULTS: Readonly<Record<BuiltInToolKey, boolean>> = {
+  codeExecution: false,
+  deepResearch: false,
+  imageGeneration: false,
+  urlRetrieval: false,
+  videoGeneration: false,
+  webSearch: false,
+};
+
 const AUTH_LABELS: Record<AuthProvider, string> = {
   github: "GitHub OAuth",
   google: "Google OAuth",
   vercel: "Vercel OAuth",
 };
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const PROMPT_CANCEL_EXIT_CODE = 1;
+const OBSERVABILITY_CANCEL_EXIT_CODE = 0;
+
 const handleCancel: <PromptValue>(
   value: PromptValue
 ) => asserts value is Exclude<PromptValue, symbol> = (value) => {
   if (isCancel(value)) {
     cancel("Operation cancelled.");
     // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
-    process.exit(1);
+    process.exit(PROMPT_CANCEL_EXIT_CODE);
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 const toKebabCase = (value: string | undefined): string =>
   (value ?? "")
@@ -166,8 +178,6 @@ const promptProjectName = async (
 };
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (skipPrompt) {
     return "vercel";
@@ -179,7 +189,10 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
     options: [
       ...GATEWAYS.map((gw) => ({
         hint: gatewayEnvRequirements[gw]
-          .map((requirement) => requirement.description)
+          .map(
+            (requirement: Readonly<{ description: string }>) =>
+              requirement.description
+          )
           .join("; "),
         label: gw,
         value: gw,
@@ -196,24 +209,45 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
     const source = await text({
       message: "Gateway registry item URL or local JSON path:",
       validate: (value) =>
-        value?.trim() ? undefined : "Enter a registry item address",
+        (value?.trim() ?? "") === ""
+          ? "Enter a registry item address"
+          : undefined,
     });
     handleCancel(source);
     return source.trim();
   }
   return gateway;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
+
+const APPEND_DELETE_COUNT = 0;
+const EMPTY_CONFIG_KEY_COUNT = 0;
+
+type StorageRequirementInput = ReadonlyInput<
+  ReturnType<typeof getStorageEnvironmentRequirements>[number]
+>;
+
+const registryStorageRequirement = (
+  requirement: StorageRequirementInput
+): StorageSelection["definition"]["envRequirements"][number] => ({
+  description: requirement.description,
+  options: requirement.options.flatMap((option) => {
+    let alternatives: string[][] = [[]];
+    for (const variable of option) {
+      alternatives = alternatives.flatMap((alternative: readonly string[]) =>
+        [variable.key, ...variable.aliases].map((key) =>
+          alternative.toSpliced(alternative.length, APPEND_DELETE_COUNT, key)
+        )
+      );
+    }
+    return alternatives;
+  }),
+});
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptStorage = async (
   skipPrompt: boolean,
   explicitProvider?: string,
@@ -229,10 +263,14 @@ const promptStorage = async (
       initialValue: "vercel-blob",
       message: "Which file storage provider would you like to use?",
       options: [
-        ...INSTALLABLE_STORAGE_PROVIDERS.map((item) => ({
-          label: item.title,
-          value: item.meta.chatjs.id,
-        })),
+        ...INSTALLABLE_STORAGE_PROVIDERS.map(
+          (
+            item: ReadonlyInput<(typeof INSTALLABLE_STORAGE_PROVIDERS)[number]>
+          ) => ({
+            label: item.title,
+            value: item.meta.chatjs.id,
+          })
+        ),
         {
           hint: "Namespace, URL or local JSON path",
           label: "External registry item",
@@ -246,7 +284,7 @@ const promptStorage = async (
       const address = await text({
         message: "Storage registry item address:",
         validate: (value) =>
-          value?.trim() ? undefined : "Enter an item address",
+          (value?.trim() ?? "") === "" ? "Enter an item address" : undefined,
       });
       handleCancel(address);
       source = address.trim();
@@ -255,7 +293,7 @@ const promptStorage = async (
   const selection = await resolveStorage(source, cwd);
   const keys = selection.definition.configKeys;
   let options = explicitOptions;
-  if (options === undefined && keys.length > 0) {
+  if (options === undefined && keys.length > EMPTY_CONFIG_KEY_COUNT) {
     if (skipPrompt) {
       throw new Error(
         `Storage requires adapter options (${keys.join(", ")}). Pass --storage-config.`
@@ -279,47 +317,31 @@ const promptStorage = async (
   // Only the actual built-in address uses SDK-derived option/credential rules.
   // An external item may use the same id with its own contract.
   const builtin = INSTALLABLE_STORAGE_PROVIDERS.find(
-    (item) => selection.source === `@chatjs/${item.name}`
+    (item: ReadonlyInput<(typeof INSTALLABLE_STORAGE_PROVIDERS)[number]>) =>
+      selection.source === `@chatjs/${item.name}`
   );
   const providerId = PROVIDER_NAMES.find(
     (id) => id === builtin?.meta.chatjs.id
   );
-  if (providerId) {
+  if (providerId !== undefined) {
     selection.definition.envRequirements = getStorageEnvironmentRequirements(
       providerId,
       selection.options
-    ).map((requirement) => ({
-      description: requirement.description,
-      options: requirement.options.flatMap((option) => {
-        let alternatives: string[][] = [[]];
-        for (const variable of option) {
-          alternatives = alternatives.flatMap((alternative) =>
-            // oxlint-disable-next-line oxc/no-map-spread -- #541: Each environment-variable alternative needs its own array; mutating a prefix would alter other combinations.
-            [variable.key, ...variable.aliases].map((key) => [
-              ...alternative,
-              key,
-            ])
-          );
-        }
-        return alternatives;
-      }),
-    }));
+    ).map((requirement: StorageRequirementInput) =>
+      registryStorageRequirement(requirement)
+    );
   }
   return selection;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const promptCoreFeatures = async (
   skipPrompt: boolean,
-  gateway: GatewayDefinition,
+  gateway: ReadonlyInput<GatewayDefinition>,
   mcp?: boolean
 ): Promise<Record<CoreFeatureKey, boolean>> => {
   const defaultTools = gateway.defaults.tools;
@@ -350,7 +372,10 @@ const promptCoreFeatures = async (
           : coreFeatureEnvRequirements[
               key as keyof typeof coreFeatureEnvRequirements
             ]
-              ?.map((requirement) => requirement.description)
+              ?.map(
+                (requirement: Readonly<{ description: string }>) =>
+                  requirement.description
+              )
               .join("; "),
       label: CORE_FEATURE_LABELS[key],
       value: key,
@@ -363,7 +388,6 @@ const promptCoreFeatures = async (
   result.mcp = mcp ?? result.mcp;
   return result;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 
 const promptDocumentTypes = async (
@@ -401,34 +425,44 @@ const promptDocumentTypes = async (
   return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected);
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
+  if (item.hidden === true) {
+    return false;
+  }
+  const hasSlot = Boolean(item.meta?.chatjs?.slot);
+  if (hasSlot) {
+    return false;
+  }
+  const hasDocumentRun = Boolean(item.meta?.chatjs?.documentRunExport);
+  return !hasDocumentRun && item.name !== "deep-research";
+};
+
+const assistantToolOptions = (
+  items: readonly ReadonlyInput<RegistryIndexItem>[]
+): Option<string>[] => [
+  ...BUILT_IN_TOOL_KEYS.map((key) => ({
+    hint:
+      builtInToolEnvRequirements[key]?.description ?? BUILT_IN_TOOL_HINTS[key],
+    label: BUILT_IN_TOOL_LABELS[key],
+    value: key,
+  })),
+  ...items.map((item: ReadonlyInput<RegistryIndexItem>) => ({
+    hint: item.description,
+    label: item.name,
+    value: item.name,
+  })),
+];
+
 const promptAssistantTools = async (
-  registryItems: RegistryIndexItem[],
+  registryItems: readonly ReadonlyInput<RegistryIndexItem>[],
   skipPrompt: boolean
 ): Promise<{
   builtInTools: Record<BuiltInToolKey, boolean>;
   installableTools: string[];
 }> => {
-  const BUILT_IN_TOOL_DEFAULTS: Record<BuiltInToolKey, boolean> = {
-    codeExecution: false,
-    deepResearch: false,
-    imageGeneration: false,
-    urlRetrieval: false,
-    videoGeneration: false,
-    webSearch: false,
-  };
-
-  const installableItems = registryItems.filter(
-    (item) =>
-      !(item.hidden === true) &&
-      !item.meta?.chatjs?.slot &&
-      !item.meta?.chatjs?.documentRunExport &&
-      item.name !== "deep-research"
+  const installableItems = registryItems.filter((item) =>
+    isInstallableTool(item)
   );
-  const supportedBuiltInTools = BUILT_IN_TOOL_KEYS;
 
   if (skipPrompt) {
     return {
@@ -438,32 +472,18 @@ const promptAssistantTools = async (
   }
 
   const selected = await multiselect({
-    initialValues: supportedBuiltInTools.filter(
+    initialValues: BUILT_IN_TOOL_KEYS.filter(
       (key) => BUILT_IN_TOOL_DEFAULTS[key]
     ),
     message: `Which ${highlighter.info("assistant tools")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
-    options: [
-      ...supportedBuiltInTools.map((key) => ({
-        hint:
-          builtInToolEnvRequirements[key]?.description ??
-          BUILT_IN_TOOL_HINTS[key],
-        label: BUILT_IN_TOOL_LABELS[key],
-        value: key,
-      })),
-      ...installableItems.map((item) => ({
-        hint: item.description,
-        label: item.name,
-        value: item.name,
-      })),
-    ],
+    options: assistantToolOptions(installableItems),
     required: false,
   });
   handleCancel(selected);
 
-  const selectedValues = selected;
   const builtInTools = toSelectionRecord(
     BUILT_IN_TOOL_KEYS,
-    selectedValues.filter((value): value is BuiltInToolKey =>
+    selected.filter((value): value is BuiltInToolKey =>
       (BUILT_IN_TOOL_KEYS as readonly string[]).includes(value)
     )
   );
@@ -473,15 +493,11 @@ const promptAssistantTools = async (
 
   return {
     builtInTools,
-    installableTools: selectedValues.filter(
+    installableTools: selected.filter(
       (value) => !(BUILT_IN_TOOL_KEYS as readonly string[]).includes(value)
     ),
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -545,7 +561,6 @@ const promptElectron = async (
 };
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "tavily-search";
@@ -572,16 +587,15 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "Search tool registry address:",
-    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
+    validate: (value) =>
+      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptCodeExecutionTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -605,16 +619,15 @@ const promptCodeExecutionTool = async (
   }
   const address = await text({
     message: "Code-execution tool registry address:",
-    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
+    validate: (value) =>
+      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "retrieve-url";
@@ -636,16 +649,15 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "URL retrieval tool registry address:",
-    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
+    validate: (value) =>
+      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptImageGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -669,16 +681,15 @@ const promptImageGenerationTool = async (
   }
   const address = await text({
     message: "image generation tool registry address:",
-    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
+    validate: (value) =>
+      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const promptVideoGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -702,15 +713,14 @@ const promptVideoGenerationTool = async (
   }
   const address = await text({
     message: "video generation tool registry address:",
-    validate: (value) => (value?.trim() ? undefined : "Enter an address"),
+    validate: (value) =>
+      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // One optional group; new applications never enable telemetry by default.
 const promptObservability = async (yes: boolean): Promise<string[]> => {
   if (yes) {
@@ -729,11 +739,10 @@ const promptObservability = async (yes: boolean): Promise<string[]> => {
   if (isCancel(result)) {
     cancel("Operation cancelled.");
     // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
-    process.exit(0);
+    process.exit(OBSERVABILITY_CANCEL_EXIT_CODE);
   }
   return result;
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export {

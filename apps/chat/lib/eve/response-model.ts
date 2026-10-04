@@ -1,5 +1,9 @@
 import type { MessageStreamEvent } from "eve/client";
 
+const MISSING_SEPARATOR_INDEX = -1;
+const FIRST_CHARACTER_INDEX = 0;
+const MODEL_SEPARATOR_LENGTH = 1;
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): responseModelReferences accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
 /** First native model reference per turn, including inherited history.
@@ -26,8 +30,7 @@ const responseModelReferences = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
-no-magic-numbers (#517): responseModel uses -1, 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): responseModel accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Native responses require runtime evidence; imported responses retain provenance.
  * @param events Native stream evidence used to resolve the turn's model reference.
@@ -43,18 +46,18 @@ const responseModel = (
   const reference = turnId
     ? responseModelReferences(events).get(turnId)
     : importedModelId;
-  const separator = reference?.indexOf("/") ?? -1;
+  const separator = reference?.indexOf("/") ?? MISSING_SEPARATOR_INDEX;
   if (
     typeof reference === "string" &&
     reference !== "" &&
-    separator > 0 &&
-    separator < reference.length - 1
+    separator > FIRST_CHARACTER_INDEX &&
+    separator < reference.length - MODEL_SEPARATOR_LENGTH
   ) {
-    return reference.slice(separator + 1);
+    return reference.slice(separator + MODEL_SEPARATOR_LENGTH);
   }
   throw new Error(
     "The response model is unavailable. Reload before regenerating."
   );
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { responseModel, responseModelReferences };

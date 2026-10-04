@@ -14,10 +14,9 @@ export class RejectingTransport implements ChatTransport<UIMessage> {
   public requests = ZERO_COUNT;
 
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] =
-    // oxlint-disable-next-line typescript/promise-function-async -- Count the request synchronously and return the already-rejected transport failure; async throw conflicts with require-await, while an await adds scheduling.
-    (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> => {
+    async (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> => {
       this.requests += COUNT_INCREMENT;
-      return Promise.reject(new Error("transport failed"));
+      return await Promise.reject(new Error("transport failed"));
     };
 
   public reconnectToStream = reconnectToNoStream;

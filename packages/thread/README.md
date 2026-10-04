@@ -12,6 +12,12 @@ Build branching AI SDK conversations without mounting one `useChat` hook per bra
 
 `AbstractThread` exposes `getSnapshot()` and `subscribe()`, so future Vue, Svelte, or vanilla adapters can observe the same controller without changing the core.
 
+## Message types
+
+`Thread<TMessage>`, `createThread<TMessage>`, and `useThread<TMessage>` preserve the metadata, data-part, and tool types of AI SDK's `UIMessage<Metadata, Data, Tools>`. Messages created or streamed by the SDK retain its normal string IDs, message roles, and part arrays.
+
+A subtype with extra required top-level fields, a narrower ID or role, or a fixed part tuple is normalized to that SDK shape in thread and hook results. Earlier declarations promised those restrictions even though the runtime did not construct them. Store application-specific values in typed metadata or data parts instead. Existing `UIMessage<Metadata, Data, Tools>` specializations and `new Thread()` keep their behavior and inference.
+
 ## Install
 
 ```bash

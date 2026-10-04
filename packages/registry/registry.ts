@@ -92,7 +92,20 @@ const toolItems = (
     ({
       dependencies: [...dependencies],
       description,
-      files: ["tool.ts", "renderer.tsx", "schemas.ts"].map((file) => ({
+      files: [
+        "tool.ts",
+        "renderer.tsx",
+        "schemas.ts",
+        ...(definition.id === "generate-image"
+          ? [
+              "image-model.ts",
+              "image-input.ts",
+              "image-errors.ts",
+              "image-generation.ts",
+              "image-request.ts",
+            ]
+          : []),
+      ].map((file) => ({
         path: `src/tools/${definition.id}/${file}`,
         target: `~/tools/chatjs/${definition.id}/${file}`,
         type: "registry:file",

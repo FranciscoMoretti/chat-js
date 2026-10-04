@@ -19,16 +19,13 @@ interface ChatLayoutContextValue {
 const ChatLayoutContext = createContext<ChatLayoutContextValue | null>(null);
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type -- useChatLayoutContext: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const useChatLayoutContext = () => {
+const useChatLayoutContext = (): ChatLayoutContextValue => {
   const context = useContext(ChatLayoutContext);
   if (!context) {
     throw new Error("ChatLayout components must be used within <ChatLayout />");
   }
   return context;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 type ChatLayoutProps = Omit<
   ComponentProps<typeof ResizablePanelGroup>,

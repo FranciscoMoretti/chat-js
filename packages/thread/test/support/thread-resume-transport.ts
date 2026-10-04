@@ -14,8 +14,7 @@ export class ResumeTransport extends ControlledTransport {
       >
     | undefined;
 
-  // oxlint-disable-next-line typescript/promise-function-async -- Capture reconnect options and construct the completed response stream before returning its fulfilled promise; async adoption changes settlement and start callback throws.
-  public override reconnectToStream = (
+  public override reconnectToStream = async (
     options: ReadonlyDeep<
       Parameters<
         ChatTransport<UIMessage>["reconnectToStream"]
@@ -23,7 +22,7 @@ export class ResumeTransport extends ControlledTransport {
     >
   ): Promise<ReadableStream<UIMessageChunk>> => {
     this.lastReconnectOptions = options;
-    return Promise.resolve(
+    return await Promise.resolve(
       new ReadableStream<UIMessageChunk>({
         start(
           controller: Readonly<ReadableStreamDefaultController<UIMessageChunk>>

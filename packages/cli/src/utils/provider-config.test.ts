@@ -10,13 +10,13 @@ import { gatewayConfigEdit, readProviderId } from "./provider-config";
 
 const roots: string[] = [];
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+    roots
+      .splice(0)
+      .map(async (root) => await rm(root, { force: true, recursive: true }))
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 test("provider replacement recognizes literal wrappers and refuses unknown installed IDs", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-"));

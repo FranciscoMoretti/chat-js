@@ -36,8 +36,8 @@ const buttonVariants = cva(
     },
   }
 );
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React button props to the button or Radix Slot, including native object refs. Deep readonly ref.current fails their JSX receiver; preserving React/CSS string & {} aliases still triggers this rule.
 const Button = ({
   className,
   variant,
@@ -58,7 +58,6 @@ const Button = ({
     />
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/only-export-components -- button.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Button, buttonVariants };

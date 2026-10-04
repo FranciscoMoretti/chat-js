@@ -468,10 +468,10 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const validateToolInstallation = (
+const validateToolInstallation = async (
   cwd: string,
   definitions: ToolDefinition[]
-): void => {
+): Promise<void> => {
   validateSelections(definitions);
   const documents = definitions.filter((item) => item.documentKind);
   if (
@@ -486,7 +486,7 @@ const validateToolInstallation = (
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
   }
-  validateCustomToolKeys(cwd, definitions);
+  await validateCustomToolKeys(cwd, definitions);
   validateToolDependencies(definitions);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -502,7 +502,7 @@ const syncTools = async (
 ): Promise<ToolDefinition[]> => {
   const definitions = await readInstalledTools(cwd);
   validateExpected(definitions, options.expected ?? []);
-  validateToolInstallation(cwd, definitions);
+  await validateToolInstallation(cwd, definitions);
   if (options.checkOnly === true) {
     return definitions;
   }

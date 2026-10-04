@@ -6,9 +6,12 @@ import { z } from "zod";
 import type { UiToolName } from "../ai/types";
 import { createConversationInput } from "./contracts";
 import type { EveForkInput, EveForkKind } from "./contracts";
-import type { EveMessageInput } from "./message-input";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 import { eveResponseGroupInput } from "./response-group-input";
 /* oxlint-enable import/no-relative-parent-imports */
+
+const SINGLE_MODEL_COUNT = 1;
+const FIRST_MODEL_INDEX = 0;
 
 const creationRequest = z.union([
   createConversationInput,
@@ -21,11 +24,10 @@ type CreationScope =
   | { conversationId: string; projectId?: never }
   | { projectId: string; conversationId?: never };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): keyFor accepts scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): keyFor intentionally keeps the existing falsy-value behavior of scope?.conversationId; scope?.projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-const keyFor = (ownerId: string, scope?: CreationScope): string => {
+const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
   if (scope?.conversationId) {
     suffix = `:fork:${scope.conversationId}`;
@@ -34,38 +36,34 @@ const keyFor = (ownerId: string, scope?: CreationScope): string => {
   }
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-undefined (#519): readCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep readCreationRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readCreationRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): readCreationRequest accepts scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- no-undefined (#519): readCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/strict-boolean-expressions (#610): readCreationRequest intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const readCreationRequest = (
   storage: StorageAccess,
   ownerId: string,
-  scope?: CreationScope
-) => {
+  scope?: Readonly<CreationScope>
+): z.output<typeof creationRequest> | undefined => {
   const stored = storage.getItem(keyFor(ownerId, scope));
   return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- max-params (#511): prepareResponseGroupCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep prepareResponseGroupCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep prepareResponseGroupCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): prepareResponseGroupCreation accepts message: EveMessageInput; modelIds: string[]; context?: CreationScope & { fork?: EveForkInput; forkKind?: Extract<EveForkKind, "com; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-params -- max-params (#511): prepareResponseGroupCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareResponseGroupCreation = (
   storage: StorageAccess,
   ownerId: string,
-  message: EveMessageInput,
-  modelIds: string[],
-  context?: CreationScope & {
-    fork?: EveForkInput;
-    forkKind?: Extract<EveForkKind, "comparison" | "edit">;
-  },
+  message: ReadonlyEveMessageInput,
+  modelIds: readonly string[],
+  context?: Readonly<
+    CreationScope & {
+      fork?: Readonly<EveForkInput>;
+      forkKind?: Extract<EveForkKind, "comparison" | "edit">;
+    }
+  >,
   selectedTool?: UiToolName
-) => {
+): z.output<typeof eveResponseGroupInput> => {
   const saved = readCreationRequest(storage, ownerId, context);
   if (saved) {
     if (!("modelIds" in saved)) {
@@ -87,16 +85,13 @@ const prepareResponseGroupCreation = (
   storage.setItem(keyFor(ownerId, context), JSON.stringify(request));
   return request;
 };
-/* oxlint-enable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep readCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): readCreation accepts scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const readCreation = (
   storage: StorageAccess,
   ownerId: string,
-  scope?: CreationScope
-) => {
+  scope?: Readonly<CreationScope>
+): z.output<typeof createConversationInput> | undefined => {
   const request = readCreationRequest(storage, ownerId, scope);
   if (request && "modelIds" in request) {
     throw new Error(
@@ -105,23 +100,21 @@ const readCreation = (
   }
   return request;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- max-params (#511): prepareCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep prepareCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep prepareCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): prepareCreation accepts draft: EveMessageInput; context?: CreationScope & { fork?: EveForkInput; forkKind?: EveForkKind; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-params -- max-params (#511): prepareCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareCreation = (
   storage: StorageAccess,
   ownerId: string,
-  draft: EveMessageInput,
+  draft: ReadonlyEveMessageInput,
   modelId?: string,
-  context?: CreationScope & {
-    fork?: EveForkInput;
-    forkKind?: EveForkKind;
-  },
+  context?: Readonly<
+    CreationScope & {
+      fork?: Readonly<EveForkInput>;
+      forkKind?: EveForkKind;
+    }
+  >,
   selectedTool?: UiToolName
-) => {
+): z.output<typeof createConversationInput> => {
   const key = keyFor(ownerId, context);
   const stored = readCreation(storage, ownerId, context);
   if (stored) {
@@ -142,26 +135,22 @@ const prepareCreation = (
   storage.setItem(key, JSON.stringify(pending.data));
   return pending.data;
 };
-/* oxlint-enable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params */
 
-/* oxlint-disable max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- max-params (#511): prepareSelectedCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): prepareSelectedCreation uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep prepareSelectedCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep prepareSelectedCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): prepareSelectedCreation accepts draft: EveMessageInput; modelIds: string[]; scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-params -- max-params (#511): prepareSelectedCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareSelectedCreation = (
   storage: StorageAccess,
   ownerId: string,
-  draft: EveMessageInput,
-  modelIds: string[],
-  scope?: CreationScope,
+  draft: ReadonlyEveMessageInput,
+  modelIds: readonly string[],
+  scope?: Readonly<CreationScope>,
   selectedTool?: UiToolName
-) => {
+): z.output<typeof creationRequest> => {
   const saved = readCreationRequest(storage, ownerId, scope);
   if (saved) {
     return saved;
   }
-  return modelIds.length > 1
+  return modelIds.length > SINGLE_MODEL_COUNT
     ? prepareResponseGroupCreation(
         storage,
         ownerId,
@@ -174,35 +163,37 @@ const prepareSelectedCreation = (
         storage,
         ownerId,
         draft,
-        modelIds[0],
+        modelIds[FIRST_MODEL_INDEX],
         scope,
         selectedTool
       );
 };
-/* oxlint-enable max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): finishCreation accepts scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-enable max-params */
+
 const finishCreation = (
   storage: StorageAccess,
   ownerId: string,
-  scope?: CreationScope
+  scope?: Readonly<CreationScope>
 ): void => {
   storage.removeItem(keyFor(ownerId, scope));
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): moveRejectedProjectCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): moveRejectedProjectCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-params (#511): moveRejectedProjectCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): moveRejectedProjectCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep moveRejectedProjectCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep moveRejectedProjectCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Only call after the server definitively rejected the original operation. */
+/* oxlint-disable max-params, no-undefined --max-params (#511): moveRejectedProjectCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-undefined (#519): moveRejectedProjectCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.*/
+/**
+ * Moves a definitively rejected project request into New Chat under a fresh operation.
+ * @param storage Browser storage holding the original project draft and any New Chat draft.
+ * @param ownerId Owner whose pending draft namespace must be preserved.
+ * @param projectId Project scope containing the rejected request.
+ * @param operationId Original operation checked before moving or deleting its stored draft.
+ * @returns A fresh request with the original message/model selection; changed or conflicting drafts throw.
+ */
 const moveRejectedProjectCreation = (
   storage: StorageAccess,
   ownerId: string,
   projectId: string,
   operationId: string
-) => {
+): z.output<typeof creationRequest> => {
   const scope = { projectId };
   const pending = readCreationRequest(storage, ownerId, scope);
   if (pending?.operationId !== operationId || pending.projectId !== projectId) {
@@ -234,7 +225,7 @@ const moveRejectedProjectCreation = (
   finishCreation(storage, ownerId, scope);
   return next;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable max-params, no-undefined */
 export {
   finishCreation,
   moveRejectedProjectCreation,

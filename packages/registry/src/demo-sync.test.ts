@@ -1,36 +1,42 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
+/* oxlint-disable import/no-nodejs-modules -- Exercise real Node rename/symlink rollback and source/baseline snapshots; Bun.file read/write alone cannot provide those filesystem operations. */
 import fs, {
   mkdir,
   mkdtemp,
   readFile,
-  readdir,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
+/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
+/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/no-relative-parent-imports -- Import the package-local generated catalog, schema, or demo installer directly; application aliases do not identify these registry package modules. */
+/* oxlint-disable import/no-relative-parent-imports -- Exercise the canonical package demo installer; @/ resolves application source and package exports expose only registry JSON artifacts. */
 import { generateDemo, syncDemo } from "../scripts/demo-sync";
+import {
+  observeGeneratorFailure,
+  prepareReplacement,
+  replacementFailure,
+  verifyRollback,
+} from "./demo-sync-test-support";
+import type { ReadonlyNativeSurface } from "./demo-sync-test-support";
 /* oxlint-enable import/no-relative-parent-imports */
 import { jsonObject, parseJsonObject } from "./test-json";
 
+const FIRST_DIRECTORY_INDEX = 0;
 const directories: string[] = [];
-/* oxlint-disable eslint/no-magic-numbers -- splice(0) drains every tracked temporary directory during cleanup. */
 afterEach(async () => {
   await Promise.all(
-    directories.splice(0).map(async (directory) => {
+    directories.splice(FIRST_DIRECTORY_INDEX).map(async (directory) => {
       await rm(directory, { force: true, recursive: true });
     })
   );
 });
-/* oxlint-enable eslint/no-magic-numbers */
 const fixture = async (): Promise<{
   baseline: string;
   expected: Map<string, string>;
@@ -46,28 +52,34 @@ const fixture = async (): Promise<{
   return { baseline, expected, root };
 };
 
+const verifyCanonicalChange = async (
+  original: ReadonlyNativeSurface<Awaited<ReturnType<typeof fixture>>>,
+  source: string
+): Promise<void> => {
+  const options = {
+    ...original,
+    expected: new Map([...original.expected, ["implementation.ts", source]]),
+  };
+  expect(syncDemo({ ...options, check: true })).rejects.toThrow(
+    "Demo source drift"
+  );
+  await syncDemo(options);
+  await syncDemo({ ...options, check: true });
+};
+
 test("types and comments drift; canonical changes sync and repeated sync is deterministic", async () => {
   const fixtureOptions = await fixture();
   const before = await readFile(fixtureOptions.baseline, "utf-8");
   await syncDemo(fixtureOptions);
   expect(await readFile(fixtureOptions.baseline, "utf-8")).toBe(before);
-  for (const source of [
-    "// revised comment\nexport type Result = string;\n",
-    "// canonical\nexport type Result = number;\n",
-  ]) {
-    const options = {
-      ...fixtureOptions,
-      expected: new Map([["implementation.ts", source]]),
-    };
-    // Each change is checked before synchronizing the next baseline; Bun rejection matchers drain the operation synchronously.
-    expect(syncDemo({ ...options, check: true })).rejects.toThrow(
-      "Demo source drift"
-    );
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish synchronization and its verification before mutating the next baseline fixture.
-    await syncDemo(options);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish synchronization and its verification before mutating the next baseline fixture.
-    await syncDemo({ ...options, check: true });
-  }
+  await verifyCanonicalChange(
+    fixtureOptions,
+    "// revised comment\nexport type Result = string;\n"
+  );
+  await verifyCanonicalChange(
+    fixtureOptions,
+    "// canonical\nexport type Result = number;\n"
+  );
 });
 
 test("local edits stop all writes; explicit discard restores canonical source", async () => {
@@ -134,10 +146,8 @@ test("sync preserves app-owned UI order and extensions and rejects removed owner
   );
 });
 
-/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
 test("symlink destinations are rejected before writes", async () => {
   const options = await fixture();
-  const { symlink } = await import("node:fs/promises");
   await symlink(
     path.join(options.root, "implementation.ts"),
     path.join(options.root, "linked.ts")
@@ -152,7 +162,6 @@ test("symlink destinations are rejected before writes", async () => {
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe(before);
 });
-/* oxlint-enable import/no-nodejs-modules */
 
 test("edits moved upstream can advance the baseline without discarding", async () => {
   const options = await fixture();
@@ -192,65 +201,25 @@ test("baseline key ordering uses locale-independent code-unit order", async () =
   );
 });
 
-/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for the injected replacement failure and rollback transaction together so the transaction and cleanup remain visible in one test. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep setup, side effects, and assertions for the injected replacement failure and rollback transaction together so the transaction and cleanup remain visible in one test. */
 test.each(["source", "baseline"])(
   "a failed %s replacement restores prior source and baseline, permitting retry",
   async (failure) => {
-    const options = await fixture();
-    const originalSource = await readFile(
-      path.join(options.root, "implementation.ts"),
-      "utf-8"
+    const { options, previous, target } = await prepareReplacement(
+      fixture,
+      failure
     );
-    const originalBaseline = await readFile(options.baseline, "utf-8");
-    options.expected.set("implementation.ts", "// updated canonical\n");
-    options.expected.set("new.ts", "// new canonical\n");
-    const target =
-      failure === "baseline"
-        ? options.baseline
-        : path.join(options.root, "new.ts");
-    const originalRename = fs.rename;
-    let replacedSource = false;
-    let failed = false;
-    const rename = spyOn(fs, "rename").mockImplementation(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Node rename accepts mutable Buffer/URL paths; the spy forwards both original arguments unchanged to preserve replacement behavior.
-      async (source, destination) => {
-        if (
-          destination === target &&
-          path.basename(String(source)) === "next" &&
-          !failed
-        ) {
-          failed = true;
-          throw new Error("Injected replacement failure");
-        }
-        await originalRename(source, destination);
-        if (destination === path.join(options.root, "implementation.ts")) {
-          replacedSource = true;
-        }
-      }
-    );
+    const injected = replacementFailure(options.root, target);
     try {
       expect(syncDemo(options)).rejects.toThrow("Injected replacement failure");
     } finally {
-      rename.mockRestore();
+      injected.restore();
     }
-    expect(failed).toBe(true);
-    expect(replacedSource).toBe(true);
-    expect(
-      await readFile(path.join(options.root, "implementation.ts"), "utf-8")
-    ).toBe(originalSource);
-    expect(await readFile(options.baseline, "utf-8")).toBe(originalBaseline);
-    expect(await Bun.file(path.join(options.root, "new.ts")).exists()).toBe(
-      false
-    );
-    const entries = await readdir(options.root);
-    expect(entries.some((file) => file.startsWith(".demo-sync-"))).toBe(false);
+    injected.assertTriggered();
+    await verifyRollback(options, previous);
     await syncDemo(options);
     await syncDemo({ ...options, check: true });
   }
 );
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
 test("a symlinked baseline is rejected before source or external target writes", async () => {
   const options = await fixture();
@@ -267,28 +236,17 @@ test("a symlinked baseline is rejected before source or external target writes",
   ).toBe("// canonical\nexport type Result = string;\n");
 });
 
-/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for generator setup failure removes its temporary installation directory together so the transaction and cleanup remain visible in one test. */
 test("generator setup failure removes its temporary installation directory", () => {
-  const originalRm = fs.rm;
-  let temporary = "";
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Node rm accepts mutable Buffer/URL paths and RmOptions; the spy forwards the original cleanup request unchanged.
-  const remove = spyOn(fs, "rm").mockImplementation(async (target, options) => {
-    temporary = String(target);
-    await originalRm(target, options);
-  });
-  const serve = spyOn(Bun, "serve").mockImplementation(() => {
-    throw new Error("Injected server setup failure");
-  });
+  const observed = observeGeneratorFailure();
   try {
     expect(generateDemo()).rejects.toThrow("Injected server setup failure");
   } finally {
-    remove.mockRestore();
-    serve.mockRestore();
+    observed.restore();
   }
-  if (temporary === "") {
-    throw new Error("Generator did not clean up its temporary directory");
+  const [temporary] = observed.cleanedPaths;
+  if (typeof temporary !== "string") {
+    throw new TypeError("Generator did not clean up its temporary directory");
   }
   expect(path.basename(temporary).startsWith("chatjs-demo-")).toBe(true);
   expect(fs.stat(temporary)).rejects.toThrow("ENOENT");
 });
-/* oxlint-enable eslint/max-statements */

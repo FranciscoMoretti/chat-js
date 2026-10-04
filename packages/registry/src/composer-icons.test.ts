@@ -4,7 +4,7 @@ import { expect, test } from "bun:test";
 import * as lucide from "lucide-react";
 /* oxlint-enable import/no-namespace */
 
-/* oxlint-disable import/no-relative-parent-imports -- Import the package-local generated catalog, schema, or demo installer directly; application aliases do not identify these registry package modules. */
+/* oxlint-disable import/no-relative-parent-imports -- Compare the canonical package-generated catalog; the @/ application alias and ./r-only package exports do not resolve this source module. */
 import { composerIconNames } from "../composer-icons.generated";
 /* oxlint-enable import/no-relative-parent-imports */
 
