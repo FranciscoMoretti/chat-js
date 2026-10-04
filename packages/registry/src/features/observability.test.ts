@@ -3,10 +3,10 @@ import { expect, test } from "bun:test";
 import { getLangfuseEnvironment } from "./langfuse/credentials";
 
 for (const environment of [
-  {},
-  { LANGFUSE_PUBLIC_KEY: "test-public" },
-  { LANGFUSE_SECRET_KEY: "test-secret" },
-]) {
+  { NODE_ENV: "test" },
+  { LANGFUSE_PUBLIC_KEY: "test-public", NODE_ENV: "test" },
+  { LANGFUSE_SECRET_KEY: "test-secret", NODE_ENV: "test" },
+] as const) {
   test(`Langfuse rejects missing credentials: ${Object.keys(environment).join(",") || "both"}`, () => {
     expect(() => getLangfuseEnvironment(environment)).toThrow(
       "Missing credentials for langfuse: LANGFUSE_PUBLIC_KEY + LANGFUSE_SECRET_KEY"
@@ -24,11 +24,12 @@ for (const environment of [
   });
 }
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable eslint/no-undefined -- Assert the own baseUrl key is undefined so exporter defaults remain intact. */
 test("Langfuse keeps exporter defaults and optional custom parameters", () => {
   const credentials = {
     LANGFUSE_PUBLIC_KEY: "test-public",
     LANGFUSE_SECRET_KEY: "test-secret",
+    NODE_ENV: "test" as const,
   };
   expect(getLangfuseEnvironment(credentials)).toEqual({
     baseUrl: undefined,
@@ -46,9 +47,9 @@ test("Langfuse keeps exporter defaults and optional custom parameters", () => {
 });
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable node/no-sync -- Run instrumentation in an isolated Bun subprocess and inspect its completed exit code and stdout before asserting registration behavior. */
+/* oxlint-disable node/no-process-env -- Pass an isolated child environment with explicit Playwright flags and empty or test Langfuse credentials; do not depend on host credentials. */
+/* oxlint-disable eslint/no-magic-numbers -- Compare child exit statuses and exporter counts directly with the expected registration behavior. */
 for (const { runtime, playwright } of [
   { playwright: false, runtime: "nodejs" },
   { playwright: false, runtime: "edge" },
@@ -86,9 +87,9 @@ catch (error) { console.log(error.code + ":" + error.integration); process.exitC
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable node/no-sync -- Run instrumentation in an isolated Bun subprocess and inspect its completed exit code and stdout before asserting registration behavior. */
+/* oxlint-disable node/no-process-env -- Pass an isolated child environment with explicit Playwright flags and empty or test Langfuse credentials; do not depend on host credentials. */
+/* oxlint-disable eslint/no-magic-numbers -- Compare child exit statuses and exporter counts directly with the expected registration behavior. */
 test("successful Node registration configures one exporter with application identity and explicit options", () => {
   const child = Bun.spawnSync(
     [

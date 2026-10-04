@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- Import the package-local generated catalog, schema, or demo installer directly; application aliases do not identify these registry package modules. */
 import {
   baselinePath,
   demoRoot,
@@ -9,17 +9,15 @@ import {
 } from "../scripts/demo-sync";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for demo stays aligned with full canonical installation source together so the transaction and cleanup remain visible in one test. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep setup, side effects, and assertions for demo stays aligned with full canonical installation source together so the transaction and cleanup remain visible in one test. */
+/* oxlint-disable eslint/no-magic-numbers -- The 60-second timeout accommodates the full canonical demo generation and source comparison. */
 test("demo stays aligned with full canonical installation source", async () => {
   const expected = await generateDemo();
-  const required = (file: string) => {
+  const required = (file: string): string => {
     const source = expected.get(file);
-    if (source === undefined) {
-      throw new Error(`Missing canonical demo file: ${file}`);
+    if (typeof source !== "string") {
+      throw new TypeError(`Missing canonical demo file: ${file}`);
     }
     return source;
   };
@@ -70,7 +68,5 @@ test("demo stays aligned with full canonical installation source", async () => {
   });
 }, 60_000);
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

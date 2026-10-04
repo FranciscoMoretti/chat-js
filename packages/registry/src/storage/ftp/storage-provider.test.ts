@@ -4,9 +4,9 @@ import { Client } from "basic-ftp";
 
 import { createStorageAdapter } from "./storage-provider";
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
+/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for uses TLS for default FTP connections and preserves implicit TLS selection together so the transaction and cleanup remain visible in one test. */
+/* oxlint-disable node/no-process-env -- Temporarily clear FTP_SECURE and restore its exact previous presence/value after both connection variants. */
+/* oxlint-disable eslint/no-undefined -- Exercise an omitted secure option and restore an environment variable that was originally absent. */
 it("uses TLS for default FTP connections and preserves implicit TLS selection", async () => {
   const access = spyOn(Client.prototype, "access").mockResolvedValue({
     code: 220,

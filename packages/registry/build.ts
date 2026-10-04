@@ -13,6 +13,7 @@ import { registry } from "./registry";
 const JSON_INDENTATION = 2;
 const FORMATTED_LINE_WIDTH = 80;
 const SUCCESS_EXIT_CODE = 0;
+const NO_FORMATTING_ERRORS = 0;
 
 const cwd = import.meta.dir;
 await rm(path.join(cwd, "dist"), { force: true, recursive: true });
@@ -32,7 +33,7 @@ await Promise.all(
         printWidth: FORMATTED_LINE_WIDTH,
         tabWidth: JSON_INDENTATION,
       });
-      if (formatted.errors.length > SUCCESS_EXIT_CODE) {
+      if (formatted.errors.length > NO_FORMATTING_ERRORS) {
         throw new Error(`Could not format registry descriptor: ${item.name}`);
       }
       await writeFile(path.join(cwd, sourcePath), formatted.code);

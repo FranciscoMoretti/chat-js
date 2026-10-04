@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- Import the package-local generated catalog, schema, or demo installer directly; application aliases do not identify these registry package modules. */
 import { installationSelectionSchema } from "../installation";
 /* oxlint-enable import/no-relative-parent-imports */
 

@@ -6,14 +6,12 @@ import { toolResultSchema } from "@/lib/eve/tool-result";
 
 import { wordCount } from "./tool";
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const unexpected = () => {
+const unexpected = (): never => {
   throw new Error("Word count must not acquire external resources");
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
+/* oxlint-disable unicorn/no-null -- ToolContext represents absent current and initiating authentication with null; retain the SDK session contract in this resource-free word-count fixture. */
+/* oxlint-disable eslint/no-magic-numbers -- Keep exact input-derived character, sentence, word, and zero-cost results next to the word-count assertions. */
 test("word count source handles empty text and whitespace without phantom words", async () => {
   const options = {
     abortSignal: new AbortController().signal,
@@ -29,24 +27,19 @@ test("word count source handles empty text and whitespace without phantom words"
     },
     toolName: "wordCount",
   } satisfies ToolContext;
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const empty = toolResultSchema.parse(
     await wordCount.execute({ text: " \n\t " }, options)
   );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(empty.output).toEqual({
     characters: 4,
     charactersNoSpaces: 0,
     sentences: 0,
     words: 0,
   });
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const result = toolResultSchema.parse(
     await wordCount.execute({ text: "One two three." }, options)
   );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(result.usage.costUsd).toBe(0);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(result.output).toEqual({
     characters: 14,
     charactersNoSpaces: 12,

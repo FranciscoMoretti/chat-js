@@ -1,5 +1,5 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
 import fs, {
   mkdir,
   mkdtemp,
@@ -9,31 +9,33 @@ import fs, {
   writeFile,
 } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- Import the package-local generated catalog, schema, or demo installer directly; application aliases do not identify these registry package modules. */
 import { generateDemo, syncDemo } from "../scripts/demo-sync";
 /* oxlint-enable import/no-relative-parent-imports */
+import { jsonObject, parseJsonObject } from "./test-json";
 
 const directories: string[] = [];
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+/* oxlint-disable eslint/no-magic-numbers -- splice(0) drains every tracked temporary directory during cleanup. */
 afterEach(async () => {
   await Promise.all(
-    directories
-      .splice(0)
-      .map((directory) => rm(directory, { force: true, recursive: true }))
+    directories.splice(0).map(async (directory) => {
+      await rm(directory, { force: true, recursive: true });
+    })
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const fixture = async () => {
+const fixture = async (): Promise<{
+  baseline: string;
+  expected: Map<string, string>;
+  root: string;
+}> => {
   const root = await mkdtemp(path.join(tmpdir(), "demo-sync-test-"));
   directories.push(root);
   const baseline = path.join(root, "baseline.json");
@@ -43,7 +45,6 @@ const fixture = async () => {
   await syncDemo({ baseline, expected, root });
   return { baseline, expected, root };
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 test("types and comments drift; canonical changes sync and repeated sync is deterministic", async () => {
   const fixtureOptions = await fixture();
@@ -58,13 +59,13 @@ test("types and comments drift; canonical changes sync and repeated sync is dete
       ...fixtureOptions,
       expected: new Map([["implementation.ts", source]]),
     };
-    // oxlint-disable-next-line eslint/no-await-in-loop, typescript/await-thenable, typescript/no-confusing-void-expression -- Each change is checked before synchronizing the next baseline. Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(syncDemo({ ...options, check: true })).rejects.toThrow(
+    // Each change is checked before synchronizing the next baseline; Bun rejection matchers drain the operation synchronously.
+    expect(syncDemo({ ...options, check: true })).rejects.toThrow(
       "Demo source drift"
     );
-    // oxlint-disable-next-line eslint/no-await-in-loop -- See above.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish synchronization and its verification before mutating the next baseline fixture.
     await syncDemo(options);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- See above.
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Finish synchronization and its verification before mutating the next baseline fixture.
     await syncDemo({ ...options, check: true });
   }
 });
@@ -77,8 +78,7 @@ test("local edits stop all writes; explicit discard restores canonical source", 
   );
   const before = await readFile(options.baseline, "utf-8");
   options.expected.set("new.ts", "// new upstream file\n");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncDemo(options)).rejects.toThrow("implementation.ts");
+  expect(syncDemo(options)).rejects.toThrow("implementation.ts");
   expect(await Bun.file(path.join(options.root, "new.ts")).exists()).toBe(
     false
   );
@@ -94,18 +94,13 @@ test("local edits stop all writes; explicit discard restores canonical source", 
 test("missing tracked files are edits and an untracked existing file is protected", async () => {
   const options = await fixture();
   await rm(path.join(options.root, "implementation.ts"));
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncDemo(options)).rejects.toThrow(
-    "Edited registry-owned demo files"
-  );
+  expect(syncDemo(options)).rejects.toThrow("Edited registry-owned demo files");
   await syncDemo({ ...options, discard: true });
   await writeFile(path.join(options.root, "new.ts"), "// user file\n");
   options.expected.set("new.ts", "// canonical file\n");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncDemo(options)).rejects.toThrow("new.ts");
+  expect(syncDemo(options)).rejects.toThrow("new.ts");
 });
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("sync preserves app-owned UI order and extensions and rejects removed ownership", async () => {
   const options = await fixture();
   const files = [
@@ -128,17 +123,18 @@ test("sync preserves app-owned UI order and extensions and rejects removed owner
   await syncDemo(options);
   expect(
     await Promise.all(
-      files.map((file) => readFile(path.join(options.root, file), "utf-8"))
+      files.map(async (file) => {
+        const source = await readFile(path.join(options.root, file), "utf-8");
+        return source;
+      })
     )
   ).toEqual(files.map(() => "// app-owned order and extensions\n"));
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncDemo({ ...options, expected: new Map() })).rejects.toThrow(
+  expect(syncDemo({ ...options, expected: new Map() })).rejects.toThrow(
     "removal is outside demo sync scope"
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- This Bun installer test creates and removes real temporary source and baseline files using the Node filesystem/path APIs. */
 test("symlink destinations are rejected before writes", async () => {
   const options = await fixture();
   const { symlink } = await import("node:fs/promises");
@@ -151,10 +147,7 @@ test("symlink destinations are rejected before writes", async () => {
     path.join(options.root, "implementation.ts"),
     "utf-8"
   );
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncDemo({ ...options, discard: true })).rejects.toThrow(
-    "symlink"
-  );
+  expect(syncDemo({ ...options, discard: true })).rejects.toThrow("symlink");
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe(before);
@@ -167,8 +160,7 @@ test("edits moved upstream can advance the baseline without discarding", async (
     "// edit now canonical upstream\nexport type Result = number;\n";
   await writeFile(path.join(options.root, "implementation.ts"), source);
   options.expected.set("implementation.ts", source);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncDemo({ ...options, check: true })).rejects.toThrow(
+  expect(syncDemo({ ...options, check: true })).rejects.toThrow(
     `Baseline drift: ${options.baseline}`
   );
   await syncDemo(options);
@@ -194,18 +186,14 @@ test("baseline key ordering uses locale-independent code-unit order", async () =
   } finally {
     collation.mockRestore();
   }
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-  const baseline = JSON.parse(await readFile(options.baseline, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-  expect(Object.keys(baseline.files)).toEqual(
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
+  const baseline = parseJsonObject(await readFile(options.baseline, "utf-8"));
+  expect(Object.keys(jsonObject(baseline.files))).toEqual(
     [...options.expected.keys()].toSorted()
   );
 });
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for the injected replacement failure and rollback transaction together so the transaction and cleanup remain visible in one test. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep setup, side effects, and assertions for the injected replacement failure and rollback transaction together so the transaction and cleanup remain visible in one test. */
 test.each(["source", "baseline"])(
   "a failed %s replacement restores prior source and baseline, permitting retry",
   async (failure) => {
@@ -225,6 +213,7 @@ test.each(["source", "baseline"])(
     let replacedSource = false;
     let failed = false;
     const rename = spyOn(fs, "rename").mockImplementation(
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Node rename accepts mutable Buffer/URL paths; the spy forwards both original arguments unchanged to preserve replacement behavior.
       async (source, destination) => {
         if (
           destination === target &&
@@ -241,10 +230,7 @@ test.each(["source", "baseline"])(
       }
     );
     try {
-      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-      await expect(syncDemo(options)).rejects.toThrow(
-        "Injected replacement failure"
-      );
+      expect(syncDemo(options)).rejects.toThrow("Injected replacement failure");
     } finally {
       rename.mockRestore();
     }
@@ -263,7 +249,6 @@ test.each(["source", "baseline"])(
     await syncDemo({ ...options, check: true });
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -275,21 +260,18 @@ test("a symlinked baseline is rejected before source or external target writes",
   await rm(options.baseline);
   await fs.symlink(external, options.baseline);
   options.expected.set("implementation.ts", "// changed canonical\n");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncDemo(options)).rejects.toThrow("symlink");
+  expect(syncDemo(options)).rejects.toThrow("symlink");
   expect(await readFile(external, "utf-8")).toBe(before);
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe("// canonical\nexport type Result = string;\n");
 });
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-test("generator setup failure removes its temporary installation directory", async () => {
+/* oxlint-disable eslint/max-statements -- Keep setup, side effects, and assertions for generator setup failure removes its temporary installation directory together so the transaction and cleanup remain visible in one test. */
+test("generator setup failure removes its temporary installation directory", () => {
   const originalRm = fs.rm;
-  let temporary: string | undefined;
+  let temporary = "";
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Node rm accepts mutable Buffer/URL paths and RmOptions; the spy forwards the original cleanup request unchanged.
   const remove = spyOn(fs, "rm").mockImplementation(async (target, options) => {
     temporary = String(target);
     await originalRm(target, options);
@@ -298,22 +280,15 @@ test("generator setup failure removes its temporary installation directory", asy
     throw new Error("Injected server setup failure");
   });
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(generateDemo()).rejects.toThrow(
-      "Injected server setup failure"
-    );
+    expect(generateDemo()).rejects.toThrow("Injected server setup failure");
   } finally {
     remove.mockRestore();
     serve.mockRestore();
   }
-  if (temporary === undefined) {
+  if (temporary === "") {
     throw new Error("Generator did not clean up its temporary directory");
   }
   expect(path.basename(temporary).startsWith("chatjs-demo-")).toBe(true);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(fs.stat(temporary)).rejects.toThrow("ENOENT");
+  expect(fs.stat(temporary)).rejects.toThrow("ENOENT");
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-statements */
