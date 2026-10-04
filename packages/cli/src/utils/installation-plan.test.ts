@@ -78,10 +78,9 @@ test("plans transitive dependencies and repairs against the complete resulting i
       join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
-      planInstallation(root, { features: [], tools: [] })
-    ).rejects.toThrow("requires installed tools: readDocument");
+    expect(planInstallation(root, { features: [], tools: [] })).rejects.toThrow(
+      "requires installed tools: readDocument"
+    );
     const repair = await planInstallation(root, {
       features: [],
       tools: [`${source}/read-document.json`],
@@ -91,8 +90,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       "createTextDocument"
     );
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    server.stop(true);
+    await server.stop(true);
   }
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -141,8 +139,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     port: 0,
   });
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       planInstallation(root, {
         features: [],
         tools: [`http://127.0.0.1:${server.port}/second.json`],
@@ -165,8 +162,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     });
     expect(reinstall.expected).toEqual([definition("first")]);
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    server.stop(true);
+    await server.stop(true);
   }
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -211,8 +207,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
   });
   const source = `http://127.0.0.1:${server.port}`;
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       planInstallation(root, {
         features: [`${source}/langfuse.json`],
         tools: [],
@@ -226,8 +221,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
       "langfuse",
       "mcp",
     ]);
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       planInstallation(root, {
         features: [`${source}/mcp.json`],
         gateway: `${source}/mcp.json`,
@@ -240,15 +234,13 @@ test("validates feature dependencies and exclusive storage slots before writing"
       join(dir, "chatjs.json"),
       JSON.stringify({ contractVersion: 1, id: "mcp", kind: "feature" })
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       planInstallation(root, {
         features: [`${source}/langfuse.json`],
         tools: [],
       })
     ).resolves.toMatchObject({ features: [{ id: "langfuse" }] });
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       planInstallation(root, {
         features: [],
         storage: { options: {}, source: `${source}/first.json` },
@@ -259,8 +251,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
       await Bun.file(join(root, "features/installed-routers.ts")).exists()
     ).toBe(false);
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    server.stop(true);
+    await server.stop(true);
   }
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

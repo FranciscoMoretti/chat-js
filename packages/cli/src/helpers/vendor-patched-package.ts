@@ -1,53 +1,112 @@
 import { execFile } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 import { promisify } from "node:util";
 
-/* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
+// oxlint-disable-next-line typescript/strict-void-return -- Node documents promisify(execFile): execFile immediately returns ChildProcess, and its native custom promisifier owns the stdout/stderr promise and rejection details rather than consuming that immediate return.
 const exec = promisify(execFile);
-/* oxlint-enable typescript/strict-void-return */
 const SCOPED_PACKAGE_PREFIX = /^@/u;
+const JSON_INDENTATION_SPACES = 2;
+const PACKING_OUTPUT_LIMIT_BYTES = 8_388_608;
 
-const tarballName = (packageName: string, version: string): string =>
-  `${packageName.replace(SCOPED_PACKAGE_PREFIX, "").replaceAll("/", "-")}-${version}.tgz`;
+interface VendorInput {
+  readonly destination: string;
+  readonly packageDir: string;
+  readonly packageName: string;
+  readonly patchPath: string;
+}
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/** Ship a checked maintained runtime consistently through Bun, npm, pnpm and Yarn. */
-export const vendorPatchedPackage = async (input: {
-  destination: string;
-  packageDir: string;
-  packageName: string;
-  patchPath: string;
-}): Promise<void> => {
-  const manifestPath = nodePath.join(input.destination, "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const manifest = JSON.parse(await readFile(manifestPath, "utf-8")) as {
-    dependencies?: Record<string, string>;
-  };
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const installed = JSON.parse(
+interface TemplateManifest {
+  dependencies: Record<string, unknown>;
+}
+
+interface InstalledManifest {
+  name: string;
+  version: string;
+}
+
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isTemplateManifest = (value: unknown): value is TemplateManifest =>
+  isJsonObject(value) && isJsonObject(value.dependencies);
+
+const isInstalledManifest = (value: unknown): value is InstalledManifest =>
+  isJsonObject(value) &&
+  typeof value.name === "string" &&
+  typeof value.version === "string";
+
+const readVendoringMetadata = async (
+  input: VendorInput
+): Promise<{ installed: InstalledManifest; manifest: TemplateManifest }> => {
+  const manifest: unknown = JSON.parse(
+    await readFile(nodePath.join(input.destination, "package.json"), "utf-8")
+  );
+  const installed: unknown = JSON.parse(
     await readFile(nodePath.join(input.packageDir, "package.json"), "utf-8")
-  ) as {
-    files?: string[];
-    name: string;
-    peerDependencies?: Record<string, string>;
-    version: string;
-  };
+  );
   if (
+    !isTemplateManifest(manifest) ||
+    !isInstalledManifest(installed) ||
     installed.name !== input.packageName ||
-    manifest.dependencies?.[input.packageName] !== installed.version
+    manifest.dependencies[input.packageName] !== installed.version
   ) {
     throw new Error(
       `The template and installed ${input.packageName} versions must match.`
     );
   }
+  // Keep both original JSON objects: publishing fields, dependency metadata and
+  // unrelated template fields remain intact when the selected dependency is pinned.
+  return { installed, manifest };
+};
+
+const formattedManifest = (value: unknown): string =>
+  // oxlint-disable-next-line unicorn/no-null -- JSON.stringify's null replacer preserves every metadata field while its third argument requests deterministic two-space formatting.
+  `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
+
+const tarballName = (packageName: string, version: string): string =>
+  `${packageName.replace(SCOPED_PACKAGE_PREFIX, "").replaceAll("/", "-")}-${version}.tgz`;
+
+const packMaintainedArchive = async (
+  staging: string,
+  input: VendorInput,
+  installed: Readonly<InstalledManifest>
+): Promise<string> => {
+  // Reject stale Bun caches rather than silently distributing an unpatched runtime.
+  await exec("git", ["apply", "--reverse", "--check", input.patchPath], {
+    cwd: staging,
+  });
+  await writeFile(
+    nodePath.join(staging, "package.json"),
+    formattedManifest(installed)
+  );
+  const vendor = nodePath.join(input.destination, "vendor");
+  const archiveName = tarballName(input.packageName, installed.version);
+  await mkdir(vendor, { recursive: true });
+  await exec(
+    "bun",
+    [
+      "pm",
+      "pack",
+      "--ignore-scripts",
+      "--filename",
+      nodePath.join(vendor, archiveName),
+      "--quiet",
+    ],
+    { cwd: staging, maxBuffer: PACKING_OUTPUT_LIMIT_BYTES }
+  );
+  return archiveName;
+};
+
+/**
+ * Ship a checked maintained runtime consistently through Bun, npm, pnpm and Yarn.
+ * @param input The installed package, maintained patch and template destination.
+ */
+export const vendorPatchedPackage = async (
+  input: VendorInput
+): Promise<void> => {
+  const { installed, manifest } = await readVendoringMetadata(input);
   const temporary = await mkdtemp(
     nodePath.join(tmpdir(), "chatjs-patched-package-")
   );
@@ -58,42 +117,13 @@ export const vendorPatchedPackage = async (input: {
         path !== nodePath.join(input.packageDir, "node_modules"),
       recursive: true,
     });
-    // Reject stale Bun caches rather than silently distributing an unpatched runtime.
-    await exec("git", ["apply", "--reverse", "--check", input.patchPath], {
-      cwd: staging,
-    });
-    await writeFile(
-      nodePath.join(staging, "package.json"),
-      `${JSON.stringify(installed, null, 2)}\n`
-    );
-    const vendor = nodePath.join(input.destination, "vendor");
-    const archiveName = tarballName(input.packageName, installed.version);
-    await mkdir(vendor, { recursive: true });
-    await exec(
-      "bun",
-      [
-        "pm",
-        "pack",
-        "--ignore-scripts",
-        "--filename",
-        nodePath.join(vendor, archiveName),
-        "--quiet",
-      ],
-      { cwd: staging, maxBuffer: 1024 * 1024 * 8 }
-    );
-    if (!manifest.dependencies) {
-      throw new Error("The template package must declare dependencies.");
-    }
+    const archiveName = await packMaintainedArchive(staging, input, installed);
     manifest.dependencies[input.packageName] = `file:vendor/${archiveName}`;
-    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    await writeFile(
+      nodePath.join(input.destination, "package.json"),
+      formattedManifest(manifest)
+    );
   } finally {
     await rm(temporary, { force: true, recursive: true });
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

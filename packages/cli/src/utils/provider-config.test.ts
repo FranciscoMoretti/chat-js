@@ -31,10 +31,7 @@ test("provider replacement recognizes literal wrappers and refuses unknown insta
   await writeFile(file, "export const gatewayType = `openai`;");
   expect(await readProviderId(root, "gateway")).toBe("openai");
   await writeFile(file, "export const gatewayType = process.env.GATEWAY;");
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(readProviderId(root, "gateway")).rejects.toThrow(
-    "Cannot determine"
-  );
+  expect(readProviderId(root, "gateway")).rejects.toThrow("Cannot determine");
 });
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -72,8 +69,7 @@ test("gateway replacement edits only the active root config discriminator", asyn
     path.join(root, "chat.config.ts"),
     bound.replace("defineConfig(", "transformConfig(")
   );
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+  expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
     "literal ai.gateway"
   );
   const mutable = bound
@@ -83,8 +79,7 @@ test("gateway replacement edits only the active root config discriminator", asyn
       'configInput = { ai: { gateway: "vercel" } };\nexport default'
     );
   await writeFile(path.join(root, "chat.config.ts"), mutable);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+  expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
     "literal ai.gateway"
   );
   expect(await readFile(path.join(root, "chat.config.ts"), "utf-8")).toBe(
@@ -95,8 +90,7 @@ test("gateway replacement edits only the active root config discriminator", asyn
     'configInput.ai = { gateway: "openai", models: { chat: "other" } };\nexport default'
   );
   await writeFile(path.join(root, "chat.config.ts"), modified);
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+  expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
     "literal ai.gateway"
   );
 });
@@ -135,8 +129,7 @@ test.each([
         original.replace('gateway: "openai"', 'gateway: "vercel"')
       );
     } else {
-      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-      await expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
+      expect(gatewayConfigEdit(root, selection)).rejects.toThrow(
         "literal ai.gateway"
       );
     }

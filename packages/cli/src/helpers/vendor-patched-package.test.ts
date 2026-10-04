@@ -32,8 +32,7 @@ it("refuses to distribute a stale installed runtime", async () => {
       patchPath,
       "diff --git a/runtime.js b/runtime.js\n--- a/runtime.js\n+++ b/runtime.js\n@@ -1 +1 @@\n-original\n+patched\n"
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       vendorPatchedPackage({
         destination,
         packageDir,

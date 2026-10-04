@@ -128,42 +128,96 @@ const shouldCopyElectronFile = (relativePath: string): boolean =>
 const REFERENCE_VISUAL_PROJECT =
   /^ {4}\{\n {6}name: "visual",[\s\S]*?^ {4}\},\n/gmu;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-const normalizeScaffoldContent = async (destination: string): Promise<void> => {
-  const packagePath = path.join(destination, "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const manifest = JSON.parse(await readFile(packagePath, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  for (const name of Object.keys(manifest.dependencies ?? {})) {
-    if (
-      (name.startsWith("@lexical/") && name !== "@lexical/react") ||
-      name.startsWith("@codemirror/") ||
-      [
-        "codemirror",
-        "diff",
-        "papaparse",
-        "react-data-grid",
-        "echarts",
-        "echarts-for-react",
-      ].includes(name)
-    ) {
-      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-      Reflect.deleteProperty(manifest.dependencies, name);
-    }
+interface ScaffoldPackageManifest {
+  dependencies?: Record<string, unknown> | null;
+  devDependencies?: Record<string, unknown> | null;
+  overrides?: Record<string, unknown> | null;
+  scripts?: Record<string, unknown> | null;
+}
+
+interface ScaffoldTsConfig {
+  compilerOptions: { paths: Record<string, unknown> };
+}
+
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isScaffoldPackageManifest = (
+  value: unknown
+): value is ScaffoldPackageManifest =>
+  isJsonObject(value) &&
+  ["dependencies", "devDependencies", "overrides", "scripts"].every(
+    (key) =>
+      !Object.hasOwn(value, key) ||
+      value[key] === null ||
+      isJsonObject(value[key])
+  );
+
+const parseScaffoldPackageManifest = (
+  source: string
+): ScaffoldPackageManifest => {
+  const value: unknown = JSON.parse(source);
+  if (!isScaffoldPackageManifest(value)) {
+    throw new TypeError(
+      "Template package.json must be an object with object-valued dependency, override, and script maps."
+    );
   }
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.devDependencies?.["@types/papaparse"];
+  // Return the original JSON data object: unknown extension fields and key order
+  // survive normalization, and optional null maps keep their existing sentinel.
+  return value;
+};
+
+const isScaffoldTsConfig = (value: unknown): value is ScaffoldTsConfig =>
+  isJsonObject(value) &&
+  isJsonObject(value.compilerOptions) &&
+  isJsonObject(value.compilerOptions.paths);
+
+const parseScaffoldTsConfig = (source: string): ScaffoldTsConfig => {
+  const value: unknown = JSON.parse(source);
+  if (!isScaffoldTsConfig(value)) {
+    throw new TypeError(
+      "Template tsconfig.json must declare an object-valued compilerOptions.paths map."
+    );
+  }
+  return value;
+};
+
+const JSON_INDENTATION_SPACES = 2;
+
+const formattedScaffoldJson = (value: unknown): string =>
+  // oxlint-disable-next-line unicorn/no-null -- A null JSON.stringify replacer preserves unknown template fields; the third argument keeps existing deterministic two-space formatting.
+  `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
+
+const isRepositoryOnlyDependency = (name: string): boolean =>
+  (name.startsWith("@lexical/") && name !== "@lexical/react") ||
+  name.startsWith("@codemirror/") ||
+  [
+    "codemirror",
+    "diff",
+    "papaparse",
+    "react-data-grid",
+    "echarts",
+    "echarts-for-react",
+  ].includes(name);
+
+const normalizePackageManifest = async (packagePath: string): Promise<void> => {
+  const manifest = parseScaffoldPackageManifest(
+    await readFile(packagePath, "utf-8")
+  );
+  const dependencies = manifest.dependencies ?? {};
+  for (const name of Object.keys(dependencies).filter((dependencyName) =>
+    isRepositoryOnlyDependency(dependencyName)
+  )) {
+    Reflect.deleteProperty(dependencies, name);
+  }
   for (const dependency of [
+    "@types/papaparse",
     "@electric-sql/pglite",
     "pg",
     "@types/pg",
     "evalite",
     "better-sqlite3",
   ]) {
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
     delete manifest.devDependencies?.[dependency];
   }
   for (const script of [
@@ -172,29 +226,33 @@ const normalizeScaffoldContent = async (destination: string): Promise<void> => {
     "test:research:native",
     "test:tools:live",
   ]) {
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
     delete manifest.scripts?.[script];
   }
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete manifest.overrides?.evalite;
-  await writeFile(packagePath, `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(packagePath, formattedScaffoldJson(manifest));
+};
 
-  const tsconfigPath = path.join(destination, "tsconfig.json");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
+const normalizeTsConfig = async (tsconfigPath: string): Promise<void> => {
+  const tsconfig = parseScaffoldTsConfig(await readFile(tsconfigPath, "utf-8"));
   delete tsconfig.compilerOptions.paths["@eve-test/*"];
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
   delete tsconfig.compilerOptions.paths["@world-postgres-test/*"];
-  await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
+  await writeFile(tsconfigPath, formattedScaffoldJson(tsconfig));
+};
 
+const removeReferenceVisualProject = async (
+  destination: string
+): Promise<void> => {
   const playwrightPath = path.join(destination, "playwright.config.ts");
   const playwright = await readFile(playwrightPath, "utf-8");
   await writeFile(
     playwrightPath,
     playwright.replace(REFERENCE_VISUAL_PROJECT, "")
   );
+};
 
+const normalizeStandaloneLintConfig = async (
+  destination: string
+): Promise<void> => {
   const lintPath = path.join(destination, "oxlint.config.ts");
   const lint = await readFile(lintPath, "utf-8");
   // The copied app config becomes the project root, where Oxlint permits typeAware.
@@ -212,10 +270,13 @@ const normalizeScaffoldContent = async (destination: string): Promise<void> => {
     )
   );
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+
+const normalizeScaffoldContent = async (destination: string): Promise<void> => {
+  await normalizePackageManifest(path.join(destination, "package.json"));
+  await normalizeTsConfig(path.join(destination, "tsconfig.json"));
+  await removeReferenceVisualProject(destination);
+  await normalizeStandaloneLintConfig(destination);
+};
 export {
   normalizeScaffoldContent,
   researchTestFiles,

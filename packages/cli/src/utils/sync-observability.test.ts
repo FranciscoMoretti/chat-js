@@ -180,16 +180,12 @@ for (const item of observabilityItems) {
         expect(registration).not.toContain(`"${feature.name}"`);
       }
       await rm(path.join(root, files[0].target.replace(/^~\//u, "")));
-      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-      await expect(syncFeatures(root)).rejects.toThrow(
-        "installation is incomplete"
-      );
+      expect(syncFeatures(root)).rejects.toThrow("installation is incomplete");
       expect(
         await readFile(path.join(root, "features/installed.ts"), "utf-8")
       ).toBe(registration);
     } finally {
-      // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-      server.stop(true);
+      await server.stop(true);
     }
   }, 30_000);
 
@@ -205,16 +201,12 @@ for (const item of observabilityItems) {
     );
     const descriptor = path.join(root, `features/${item.name}/chatjs.json`);
     await rm(descriptor);
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(syncFeatures(root)).rejects.toThrow("missing its descriptor");
+    expect(syncFeatures(root)).rejects.toThrow("missing its descriptor");
     await writeFile(
       descriptor,
       JSON.stringify({ ...item.meta.chatjs, id: "mcp" })
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(syncFeatures(root)).rejects.toThrow(
-      "id must match its directory"
-    );
+    expect(syncFeatures(root)).rejects.toThrow("id must match its directory");
     expect(
       await Bun.file(path.join(root, "features/installed-layout.ts")).exists()
     ).toBe(false);
