@@ -1,7 +1,8 @@
 /* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
+
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries"; "../logger" dependency within this package instead of introducing an alias or barrel API.
- */
+  */
 import { z } from "zod";
 
 import {
@@ -30,9 +31,10 @@ import { prepareEveMessage } from "./prepare-message";
 const logger = createModuleLogger("eve/creation");
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+
  * typescript/explicit-function-return-type (#560): Keep resolveFork's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): resolveFork intentionally keeps the existing falsy-value behavior of source?.sessionId; input.beforeMessageId; input.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+  */
 const resolveFork = async (
   ownerId: string,
   input: EveForkInput | undefined
@@ -87,7 +89,8 @@ const creationFailure = (cause: unknown): Response => {
   );
 };
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+
  * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * jsdoc/require-param (#534): executeEveConversationCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): executeEveConversationCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -98,8 +101,7 @@ const creationFailure = (cause: unknown): Response => {
  * no-undefined (#519): executeEveConversationCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): executeEveConversationCreation accepts input: z.infer<typeof createConversationInput>; initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): executeEveConversationCreation intentionally keeps the existing falsy-value behavior of await getEveCreation(ownerId, input.operationId); fork.beforeTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): executeEveConversationCreation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+  */
 /** Executes an admitted, journaled command. Retries retain the reservation and native operation identity. */
 export const executeEveConversationCreation = async (
   ownerId: string,
@@ -137,7 +139,11 @@ export const executeEveConversationCreation = async (
         }
         const lookupFailure = z
           .object({ code: z.literal("eve_operation_not_found") })
-          .safeParse(await existing.json().catch(() => null));
+          .safeParse(
+            await existing.json().catch((): void => {
+              // The missing-operation schema rejects an absent JSON body.
+            })
+          );
         if (existing.status !== 404 || !lookupFailure.success) {
           throw new EveCreationTransportError("lookup", existing.status);
         }
@@ -223,4 +229,4 @@ export const executeEveConversationCreation = async (
     return creationFailure(error);
   }
 };
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

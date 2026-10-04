@@ -15,15 +15,12 @@ import { config } from "../config";
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): EveModelUnavailableError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 class EveModelUnavailableError extends Error {
-  public constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: Readonly<ErrorOptions>) {
     super(message, options);
     this.name = "EveModelUnavailableError";
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): getEveModelDefinition uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

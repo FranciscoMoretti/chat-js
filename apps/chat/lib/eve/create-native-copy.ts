@@ -2,13 +2,13 @@ import { z } from "zod";
 
 import { eveRequest } from "./server";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null --
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers --
+
  * jsdoc/require-param (#534): createNativeEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): createNativeEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): createNativeEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): createNativeEveCopy uses 15_000, 1, 404, 30_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/no-null (#570): createNativeEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+  */
 /** Idempotent seed lookup/creation, without browser history or source capabilities. */
 export const createNativeEveCopy = async (
   ownerId: string,
@@ -28,7 +28,11 @@ export const createNativeEveCopy = async (
   }
   const missing = z
     .object({ code: z.literal("eve_operation_not_found") })
-    .safeParse(await existing.json().catch(() => null));
+    .safeParse(
+      await existing.json().catch((): void => {
+        // The missing-operation schema rejects an absent JSON body.
+      })
+    );
   if (existing.status !== 404 || !missing.success) {
     throw new Error("Native copy lookup is unavailable.");
   }
@@ -47,4 +51,4 @@ export const createNativeEveCopy = async (
   }
   return session.parse(await result.json()).sessionId;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers */

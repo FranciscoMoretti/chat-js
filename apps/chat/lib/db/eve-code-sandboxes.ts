@@ -1,6 +1,7 @@
 /* oxlint-disable import/no-relative-parent-imports --
+
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/code-sandbox-name" dependency within this package instead of introducing an alias or barrel API.
- */
+  */
 import { and, eq, sql } from "drizzle-orm";
 
 import { eveCodeSandboxName } from "../eve/code-sandbox-name";
@@ -8,28 +9,43 @@ import { db } from "./client";
 import { eveCodeSandbox, eveConversation } from "./schema";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): reserveEveCodeSandbox's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): reserveEveCodeSandbox's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+const FIRST_ROW_INDEX = 0;
+
+type SandboxTransaction = Readonly<
+  Pick<typeof db, "execute" | "insert" | "select">
+>;
+
+type CodeSandboxForDeletion = Pick<
+  typeof eveCodeSandbox.$inferSelect,
+  "callId" | "conversationId" | "creationConfirmed" | "name"
+> &
+  Pick<typeof eveConversation.$inferSelect, "sessionId">;
+
+/* oxlint-disable max-lines-per-function, max-params, max-statements --
 max-lines-per-function (#510): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): reserveEveCodeSandbox accepts provider: { teamId: string; projectId: string; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): reserveEveCodeSandbox intentionally keeps the existing falsy-value behavior of conversation?.sessionId; existing; inserted; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Commit intent before provider I/O; no resource may be allocated by this function. */
+max-statements (#512): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+/** Commit intent before provider I/O; no resource may be allocated by this function.
+ * @param ownerId Owner whose conversation family is locked during reservation.
+ * @param conversationId Bound conversation that will own the sandbox.
+ * @param callId Tool call whose existing allocation must be reconciled before any retry.
+ * @param provider Vercel project and team identities used to derive the sandbox name.
+ * @returns The durably reserved provider resource name.
+ */
 const reserveEveCodeSandbox = async (
   ownerId: string,
   conversationId: string,
   callId: string,
   provider: {
-    teamId: string;
-    projectId: string;
+    readonly teamId: string;
+    readonly projectId: string;
   }
 ): Promise<string> =>
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: SandboxTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
-    const [conversation] = await tx
+    const conversationRows = await tx
       .select({ sessionId: eveConversation.sessionId })
       .from(eveConversation)
       .where(
@@ -39,10 +55,12 @@ const reserveEveCodeSandbox = async (
           eq(eveConversation.state, "bound")
         )
       );
-    if (!conversation?.sessionId) {
+    const conversation = conversationRows.at(FIRST_ROW_INDEX);
+    const sessionId = conversation?.sessionId ?? "";
+    if (sessionId === "") {
       throw new Error("Conversation is unavailable for code execution.");
     }
-    const [existing] = await tx
+    const existingRows = await tx
       .select({ name: eveCodeSandbox.name })
       .from(eveCodeSandbox)
       .where(
@@ -52,6 +70,7 @@ const reserveEveCodeSandbox = async (
           eq(eveCodeSandbox.callId, callId)
         )
       );
+    const existing = existingRows.at(FIRST_ROW_INDEX);
     if (existing) {
       throw new Error(
         "Reconcile the existing code sandbox before retrying allocation."
@@ -61,13 +80,14 @@ const reserveEveCodeSandbox = async (
       callId,
       ownerId,
       provider,
-      sessionId: conversation.sessionId,
+      sessionId,
     });
-    const [inserted] = await tx
+    const insertedRows = await tx
       .insert(eveCodeSandbox)
       .values({ callId, conversationId, name, ownerId })
       .onConflictDoNothing()
       .returning({ name: eveCodeSandbox.name });
+    const inserted = insertedRows.at(FIRST_ROW_INDEX);
     // Retrying provider creation is unsafe until the earlier allocation is reconciled.
     if (!inserted) {
       throw new Error(
@@ -76,17 +96,19 @@ const reserveEveCodeSandbox = async (
     }
     return inserted.name;
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements */
 
-/* oxlint-disable jsdoc/require-param, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): recordEveCodeSandboxDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/strict-boolean-expressions (#610): recordEveCodeSandboxDeletion intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Internal coordinator only: caller must prove no pending allocation can finish later. */
+/** Internal coordinator only: caller must prove no pending allocation can finish later.
+ * @param ownerId Owner whose sandbox allocation may be marked deleted.
+ * @param conversationId Conversation that owns the allocation.
+ * @param name Reserved provider resource name confirmed deleted by the coordinator.
+ */
 const recordEveCodeSandboxDeletion = async (
   ownerId: string,
   conversationId: string,
   name: string
 ): Promise<void> => {
-  const [row] = await db
+  const rows = await db
     .update(eveCodeSandbox)
     .set({ state: "deleted" })
     .where(
@@ -97,21 +119,23 @@ const recordEveCodeSandboxDeletion = async (
       )
     )
     .returning({ name: eveCodeSandbox.name });
+  const row = rows.at(FIRST_ROW_INDEX);
   if (!row) {
     throw new Error("Code sandbox ownership not found.");
   }
 };
-/* oxlint-enable jsdoc/require-param, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): confirmEveCodeSandboxCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/strict-boolean-expressions (#610): confirmEveCodeSandboxCreation intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** A successful create reply proves this invocation has finished allocating. */
+/** A successful create reply proves this invocation has finished allocating.
+ * @param ownerId Owner whose unresolved allocation may be confirmed.
+ * @param conversationId Conversation that owns the allocation.
+ * @param name Reserved provider resource name successfully created.
+ */
 const confirmEveCodeSandboxCreation = async (
   ownerId: string,
   conversationId: string,
   name: string
 ): Promise<void> => {
-  const [row] = await db
+  const rows = await db
     .update(eveCodeSandbox)
     .set({ creationConfirmed: true })
     .where(
@@ -123,22 +147,23 @@ const confirmEveCodeSandboxCreation = async (
       )
     )
     .returning({ name: eveCodeSandbox.name });
+  const row = rows.at(FIRST_ROW_INDEX);
   if (!row) {
     throw new Error("Unresolved code sandbox ownership not found.");
   }
 };
-/* oxlint-enable jsdoc/require-param, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): listEveCodeSandboxesForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): listEveCodeSandboxesForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): listEveCodeSandboxesForDeletion uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep listEveCodeSandboxesForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep listEveCodeSandboxesForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Internal cleanup inventory; unretired families cannot authorize provider deletion. */
+/* oxlint-disable no-magic-numbers --
+no-magic-numbers (#517): listEveCodeSandboxesForDeletion uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+/** Internal cleanup inventory; unretired families cannot authorize provider deletion.
+ * @param ownerId Owner whose retired conversation family is being purged.
+ * @param rootId Logical chat identity whose versions must all be retired.
+ * @returns Owned allocations that still require provider deletion or reconciliation.
+ */
 const listEveCodeSandboxesForDeletion = async (
   ownerId: string,
   rootId: string
-) => {
+): Promise<CodeSandboxForDeletion[]> => {
   const family = await db
     .select({
       id: eveConversation.id,
@@ -180,7 +205,7 @@ const listEveCodeSandboxesForDeletion = async (
       )
     );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable no-magic-numbers */
 export {
   confirmEveCodeSandboxCreation,
   listEveCodeSandboxesForDeletion,

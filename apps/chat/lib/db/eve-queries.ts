@@ -346,22 +346,21 @@ const getEveChatIdentity = async (ownerId: string, routeId: string) => {
   return identity;
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): CreationConflictError accepts options?: ErrorOptions & { code?: "creation_conflict" | "creation_in_progress"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 class CreationConflictError extends Error {
   public readonly code: "creation_conflict" | "creation_in_progress";
   public constructor(
     message?: string,
-    options?: ErrorOptions & {
-      code?: "creation_conflict" | "creation_in_progress";
-    }
+    options?: Readonly<
+      ErrorOptions & {
+        code?: "creation_conflict" | "creation_in_progress";
+      }
+    >
   ) {
     super(message, options);
     this.code = options?.code ?? "creation_conflict";
     this.name = "CreationConflictError";
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const assertCreationAvailable = (
   state: typeof eveConversation.$inferSelect.state
@@ -404,15 +403,12 @@ const getEveCreation = async (ownerId: string, operationId: string) => {
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): CreationProjectNotFoundError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 class CreationProjectNotFoundError extends Error {
-  public constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: Readonly<ErrorOptions>) {
     super(message, options);
     this.name = "CreationProjectNotFoundError";
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): assertResponseGroupCandidateAvailable uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

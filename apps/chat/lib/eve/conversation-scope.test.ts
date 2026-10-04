@@ -108,6 +108,14 @@ it.each([
   }
 );
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+it("treats malformed native JSON as unavailable without binding the session", async (): Promise<void> => {
+  mocks.request.mockResolvedValue(new Response("{"));
+  await expect(resolve()).rejects.toMatchObject({
+    code: "receipt_unavailable",
+  });
+  expect(mocks.bind).not.toHaveBeenCalled();
+});
+
 it("leaves pending copies to their resource journal", async () => {
   mocks.read.mockResolvedValue({
     creationKind: "copy",

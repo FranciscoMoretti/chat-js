@@ -7,19 +7,21 @@ import { z } from "zod";
 import { keyFromFileUrl } from "../file-url";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): textPart uses 1, 16_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MIN_CONTENT_LENGTH = 1;
+const MIN_MESSAGE_PARTS = 1;
+const MAX_TEXT_LENGTH = 16_000;
+const MAX_FILENAME_LENGTH = 255;
+const MAX_TEXT_PARTS = 1;
+const MAX_FILE_PARTS = 16;
+const MAX_MESSAGE_PARTS = MAX_TEXT_PARTS + MAX_FILE_PARTS;
+
 const textPart = z
   .object({
     type: z.literal("text"),
-    text: z.string().trim().min(1).max(16_000),
+    text: z.string().trim().min(MIN_CONTENT_LENGTH).max(MAX_TEXT_LENGTH),
   })
   .strict();
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): filePart uses 1, 255 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+
 const filePart = z
   .object({
     type: z.literal("file"),
@@ -31,28 +33,30 @@ const filePart = z
         "Use a ChatJS upload"
       ),
     mediaType: z.enum(["image/jpeg", "image/png", "application/pdf"]),
-    filename: z.string().min(1).max(255),
+    filename: z.string().min(MIN_CONTENT_LENGTH).max(MAX_FILENAME_LENGTH),
   })
   .strict();
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): eveMessageInput uses 1, 16_000, 17, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): eveMessageInput accepts parts; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+
+type EveMessageInputPart = z.infer<typeof textPart> | z.infer<typeof filePart>;
+
 const eveMessageInput = z.union([
-  z.string().trim().min(1).max(16_000),
+  z.string().trim().min(MIN_CONTENT_LENGTH).max(MAX_TEXT_LENGTH),
   z
     .array(z.union([textPart, filePart]))
-    .min(1)
-    .max(17)
+    .min(MIN_MESSAGE_PARTS)
+    .max(MAX_MESSAGE_PARTS)
     .refine(
-      (parts) =>
-        parts.filter((part) => part.type === "text").length <= 1 &&
-        parts.filter((part) => part.type === "file").length <= 16
+      (parts: readonly Readonly<EveMessageInputPart>[]) =>
+        parts.filter((part) => part.type === "text").length <= MAX_TEXT_PARTS &&
+        parts.filter((part) => part.type === "file").length <= MAX_FILE_PARTS
     ),
 ]);
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+
 type EveMessageInput = z.infer<typeof eveMessageInput>;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveMessageTitle accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const eveMessageTitle = (message: EveMessageInput): string => {
+
+const eveMessageTitle = (
+  message: string | readonly Readonly<EveMessageInputPart>[]
+): string => {
   if (typeof message === "string") {
     return message;
   }
@@ -65,6 +69,6 @@ const eveMessageTitle = (message: EveMessageInput): string => {
     .map((part) => part.filename)
     .join(", ");
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export { eveMessageInput, eveMessageTitle };
 export type { EveMessageInput };

@@ -157,31 +157,35 @@ const eveMessageDelivery = {
 };
 /* oxlint-enable max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** The proxy owns this metadata so caller input cannot forge an acknowledgement. */
+/**
+ * The proxy owns this metadata so caller input cannot forge an acknowledgement.
+ * @param operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
+ * @param selectedTool App UI tool selection, normalized to null when no tool is selected.
+ * @returns The app namespace containing the operation acknowledgement and display-safe tool selection.
+ */
 const eveMessageDeliveryMetadata = (
   operationId: string,
   selectedTool: UiToolName | null | undefined
-) => ({
+): {
+  chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & {
+    operationId: string;
+  };
+} => ({
   chatjs: {
     ...eveToolMetadata(selectedTool).chatjs,
     operationId: z.uuid().parse(operationId),
   },
 });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/prefer-readonly-parameter-types (#565): eveMessageOperationId accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const eveMessageOperationId = (event: MessageStreamEvent) =>
+const eveMessageOperationId = (
+  event: MessageStreamEvent
+): string | undefined =>
   event.type === "message.received"
     ? deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
     : undefined;
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 export {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDelivery,

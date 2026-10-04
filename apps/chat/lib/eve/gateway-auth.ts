@@ -95,13 +95,13 @@ const gatewaySessionPolicy = (path: string, method: string) => {
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep readCreationReservation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readCreationReservation accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- * typescript/prefer-readonly-parameter-types (#565): readCreationReservation accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): readCreationReservation intentionally keeps the existing falsy-value behavior of reservation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): readCreationReservation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const readCreationReservation = async (request: Request, owner: string) => {
+ * unicorn/no-null (#570): readCreationReservation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const readCreationReservation = async (
+  request: Request,
+  owner: string
+): Promise<string | null> => {
   const command = z
     .object({ operationId: z.uuid(), seed: z.boolean().optional() })
     .safeParse(
@@ -127,7 +127,7 @@ const readCreationReservation = async (request: Request, owner: string) => {
   }
   return reservation.id;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

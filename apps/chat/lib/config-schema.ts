@@ -10,40 +10,33 @@ import type {
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep toolName's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
 // Helper to create typed model ID schemas
-const toolName = () => z.custom<ToolName>();
-/* oxlint-enable typescript/explicit-function-return-type */
+const toolName = (): z.ZodCustom<ToolName, ToolName> => z.custom<ToolName>();
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type --
- * id-length (#506): gatewayModelId uses G; v as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep gatewayModelId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
 // =====================================================
 // AI config — discriminated union keyed on gateway
 // =====================================================
 
-const gatewayModelId = <G extends GatewayType>() =>
-  z.custom<GatewayModelIdMap[G]>((value) => typeof value === "string");
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
+const gatewayModelId = <Gateway extends GatewayType>(): z.ZodCustom<
+  GatewayModelIdMap[Gateway],
+  GatewayModelIdMap[Gateway]
+> => z.custom<GatewayModelIdMap[Gateway]>((value) => typeof value === "string");
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type --
- * id-length (#506): gatewayImageModelId uses G; v as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep gatewayImageModelId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const gatewayImageModelId = <G extends GatewayType>() =>
-  z.custom<GatewayImageModelIdMap[G]>((value) => typeof value === "string");
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
+const gatewayImageModelId = <Gateway extends GatewayType>(): z.ZodCustom<
+  GatewayImageModelIdMap[Gateway],
+  GatewayImageModelIdMap[Gateway]
+> =>
+  z.custom<GatewayImageModelIdMap[Gateway]>(
+    (value) => typeof value === "string"
+  );
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type --
- * id-length (#506): gatewayVideoModelId uses G; v as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep gatewayVideoModelId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const gatewayVideoModelId = <G extends GatewayType>() =>
-  z.custom<GatewayVideoModelIdMap[G]>((value) => typeof value === "string");
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
+const gatewayVideoModelId = <Gateway extends GatewayType>(): z.ZodCustom<
+  GatewayVideoModelIdMap[Gateway],
+  GatewayVideoModelIdMap[Gateway]
+> =>
+  z.custom<GatewayVideoModelIdMap[Gateway]>(
+    (value) => typeof value === "string"
+  );
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): deepResearchToolConfigSchema uses 1, 20, 10 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

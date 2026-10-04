@@ -2,6 +2,7 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../config"; "../db/eve-files"; "../db/eve-queries"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
  */
 import { Client, defaultMessageReducer } from "eve/client";
+import type { z } from "zod";
 
 import { config } from "../config";
 import {
@@ -22,17 +23,15 @@ import { attachmentDigest, draftAttachment } from "./draft";
 import { assertEveConfigured } from "./server";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep parseContentType's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const parseContentType = (value: string) => {
+const parseContentType = (
+  value: string
+): z.infer<typeof draftAttachment>["contentType"] => {
   const parsed = draftAttachment.shape.contentType.safeParse(value);
   if (!parsed.success) {
     throw new Error("This attachment has an unsupported type or size.");
   }
   return parsed.data;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): validateAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
