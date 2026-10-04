@@ -15,14 +15,14 @@ export interface ResponseChoiceSlot {
   disabled?: boolean;
   handleSelect: () => void;
 }
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ResponseChoiceCards: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { slots, }: { slots: readonly ResponseChoiceSlot[]; }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ResponseChoiceCards: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { slots, }: { slots: readonly ResponseChoiceSlot[]; }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** Layout only: controllers own ordering, lifecycle, and selection. */
 export const ResponseChoiceCards = ({
   slots,
 }: {
   slots: readonly ResponseChoiceSlot[];
-}) => {
+}): React.JSX.Element | null => {
   if (slots.length === 0) {
     return null;
   }
@@ -53,4 +53,4 @@ export const ResponseChoiceCards = ({
     </div>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */

@@ -34,7 +34,7 @@ interface AttachmentViewData {
   url: string;
 }
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- AttachmentIcon: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AttachmentIcon: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AttachmentIcon = ({
   isImage,
@@ -46,7 +46,7 @@ const AttachmentIcon = ({
   isPdf: boolean;
   url: string;
   name: string;
-}) => {
+}): React.JSX.Element => {
   const { handleImageError, imageUnavailable } = useImageLoadError(url);
   if (isImage) {
     if (imageUnavailable) {
@@ -77,7 +77,7 @@ const AttachmentIcon = ({
 
   return <PaperclipIcon className="text-muted-foreground size-3" />;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- AttachmentPill: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 const AttachmentPill = ({

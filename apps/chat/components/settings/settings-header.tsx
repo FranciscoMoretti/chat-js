@@ -3,9 +3,8 @@
 import React from "react";
 
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- SettingsHeader: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
-export const SettingsHeader = () => {
+export const SettingsHeader = (): React.JSX.Element => {
   const { isMobile } = useSidebar();
 
   return (
@@ -20,4 +19,3 @@ export const SettingsHeader = () => {
     </div>
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

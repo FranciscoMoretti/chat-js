@@ -424,16 +424,14 @@ afterAll(() => {
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */
 
-// oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-const gatewaySource = (gateway: Gateway | "acme"): string =>
+const gatewaySource = (gateway: string): string =>
   // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   gateway === "acme"
     ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/gateway.json`
     : gateway;
 
-// oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-const storageArguments = (gateway: Gateway | "acme"): string[] => {
+const storageArguments = (gateway: string): string[] => {
   if (gateway === "acme") {
     return [
       "--storage-provider",
@@ -454,8 +452,7 @@ const storageArguments = (gateway: Gateway | "acme"): string[] => {
   return [];
 };
 
-// oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-const toolArguments = (gateway: Gateway | "acme"): string[] => {
+const toolArguments = (gateway: string): string[] => {
   if (gateway === "vercel") {
     return [
       "--video-generation-tool",
@@ -495,11 +492,7 @@ const toolArguments = (gateway: Gateway | "acme"): string[] => {
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const verifyResearchInstallation = async (
-  cwd: string,
-  // oxlint-disable-next-line typescript/no-redundant-type-constituents -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-  gateway: Gateway | "acme"
-) => {
+const verifyResearchInstallation = async (cwd: string, gateway: string) => {
   expect(
     await Bun.file(join(cwd, "agent/tools/deepResearch.ts")).exists()
   ).toBe(false);
