@@ -19,7 +19,11 @@ import {
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import type { McpConnector } from "@/lib/db/schema";
 /* oxlint-enable import/max-dependencies */
-import { describeMcpTool, executeMcpTool } from "@/lib/eve/mcp-adapter";
+import {
+  describeMcpTool,
+  executeMcpTool,
+  splitMcpToolApproval,
+} from "@/lib/eve/mcp-adapter";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -188,12 +192,8 @@ const discoverEveMcpTools = async (
             connectorSignal.throwIfAborted();
             try {
               // MCP output and approval policies are adapted explicitly below.
-              const {
-                toModelOutput: _outputAdapter,
-                // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
-                needsApproval: _approval,
-                ...definition
-              } = tool;
+              const { toModelOutput: _outputAdapter, ...definition } =
+                splitMcpToolApproval(tool).definition;
               // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
               const description = await describeMcpTool(definition);
               connectorSignal.throwIfAborted();
@@ -301,16 +301,14 @@ const requiresMcpApproval = async (
       ? validated.error
       : new Error("Invalid tool input.");
   }
-  // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
-  return typeof tool.needsApproval === "function"
-    ? // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
-      await tool.needsApproval(validated.value, {
+  const { approval } = splitMcpToolApproval(tool);
+  return typeof approval === "function"
+    ? await approval.call(tool, validated.value, {
         context: undefined,
         messages: [...messages],
         toolCallId: callId,
       })
-    : // oxlint-disable-next-line typescript/no-deprecated -- MCP compatibility still reads the SDK tool-level approval contract; migration to generation-level approval requires a separate behavior change.
-      Boolean(tool.needsApproval);
+    : Boolean(approval);
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
