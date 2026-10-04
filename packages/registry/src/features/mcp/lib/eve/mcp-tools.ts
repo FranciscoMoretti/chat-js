@@ -19,11 +19,7 @@ import {
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import type { McpConnector } from "@/lib/db/schema";
 /* oxlint-enable import/max-dependencies */
-import {
-  describeMcpTool,
-  executeMcpTool,
-  splitMcpToolApproval,
-} from "@/lib/eve/mcp-adapter";
+import { describeMcpTool, executeMcpTool } from "@/lib/eve/mcp-adapter";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -192,8 +188,7 @@ const discoverEveMcpTools = async (
             connectorSignal.throwIfAborted();
             try {
               // MCP output and approval policies are adapted explicitly below.
-              const { toModelOutput: _outputAdapter, ...definition } =
-                splitMcpToolApproval(tool).definition;
+              const { toModelOutput: _outputAdapter, ...definition } = tool;
               // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
               const description = await describeMcpTool(definition);
               connectorSignal.throwIfAborted();
@@ -289,26 +284,13 @@ const validateMcpTool = async (tool: Tool) => {
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const requiresMcpApproval = async (
-  tool: Tool,
-  input: unknown,
-  callId: string,
-  messages: readonly ModelMessage[]
-): Promise<boolean> => {
+const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
   const validated = await asSchema(tool.inputSchema).validate?.(input);
   if (!validated?.success) {
     throw validated && !validated.success
       ? validated.error
       : new Error("Invalid tool input.");
   }
-  const { approval } = splitMcpToolApproval(tool);
-  return typeof approval === "function"
-    ? await approval.call(tool, validated.value, {
-        context: undefined,
-        messages: [...messages],
-        toolCallId: callId,
-      })
-    : Boolean(approval);
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -348,16 +330,10 @@ const executeEveMcpTool = async (
     }
     const tool = tools[remoteName];
     const validatedTool = await validateMcpTool(tool);
-    if (
-      (await requiresMcpApproval(
-        validatedTool,
-        input,
-        context.callId,
-        messages
-      )) &&
-      context.approval?.responder.principalId !== ownerId
-    ) {
-      throw new Error("MCP approval policy changed; retry after rediscovery.");
+    // EVE binds this receipt to the exact session, tool, call and input.
+    // Remote tool metadata cannot waive owner consent.
+    if (context.approval?.responder.principalId !== ownerId) {
+      throw new Error("MCP tools require an owner approval receipt.");
     }
     let result: unknown;
     for await (const output of executeMcpTool(
@@ -402,9 +378,8 @@ const requestEveMcpApproval = async (
   connectorId: string,
   remoteName: string,
   input: unknown,
-  context: Pick<ToolContext, "session" | "callId" | "abortSignal">,
-  messages: readonly ModelMessage[]
-): Promise<"user-approval" | "not-applicable"> => {
+  context: Pick<ToolContext, "session" | "abortSignal">
+): Promise<"user-approval"> => {
   const ownerId = context.session.auth.initiator?.principalId;
   if (!(typeof ownerId === "string" && ownerId !== "")) {
     throw new Error("MCP tools require an authenticated owner.");
@@ -421,14 +396,8 @@ const requestEveMcpApproval = async (
     if (!Object.hasOwn(tools, remoteName)) {
       throw new Error("MCP tool is no longer available.");
     }
-    return (await requiresMcpApproval(
-      await validateMcpTool(tools[remoteName]),
-      input,
-      context.callId,
-      messages
-    ))
-      ? "user-approval"
-      : "not-applicable";
+    await validateMcpInput(await validateMcpTool(tools[remoteName]), input);
+    return "user-approval" as const;
   });
 };
 /* oxlint-enable typescript/promise-function-async */

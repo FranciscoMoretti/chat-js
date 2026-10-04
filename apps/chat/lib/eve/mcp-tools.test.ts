@@ -65,6 +65,14 @@ const connector = {
  */
 const context = {
   abortSignal: new AbortController().signal,
+  approval: {
+    requestId: "request",
+    responder: {
+      authenticator: "test",
+      principalId: "owner",
+      principalType: "user",
+    },
+  },
   callId: "call",
   session: {
     auth: {
@@ -313,109 +321,49 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
 });
 /* oxlint-enable no-magic-numbers */
 
-it("refuses a policy that escalates between request and execution without a receipt", async () => {
+it("requires native owner approval even when remote tools advertise no policy", async () => {
   expect(
-    await requestEveMcpApproval(
-      "connector",
-      "echo",
-      { text: "test" },
-      context,
-      []
-    )
-  ).toBe("not-applicable");
-  mocks.tools.mockResolvedValue({
-    echo: { ...definition, needsApproval: true },
-  });
-  await expect(
-    executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
-  ).rejects.toThrow("approval policy changed");
-  expect(execute).not.toHaveBeenCalled();
-});
-
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): it("preserves conditional policy semantics and requires an owner receipt when true") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): it("preserves conditional policy semantics and requires an owner receipt when true") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("preserves conditional policy semantics and requires an owner receipt when true") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): it("preserves conditional policy semantics and requires an owner receipt when true") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): it("preserves conditional policy semantics and requires an owner receipt when true") accepts input: { text: string }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
-it("preserves conditional policy semantics and requires an owner receipt when true", async () => {
-  const needsApproval = vi.fn(
-    (input: { text: string }) => input.text === "write"
-  );
-  mocks.tools.mockResolvedValue({ echo: { ...definition, needsApproval } });
-  const messages = [{ content: "Read then write", role: "user" as const }];
-  expect(await discoverEveMcpTools("owner", context.abortSignal)).toHaveLength(
-    1
-  );
-  expect(
-    await requestEveMcpApproval(
-      "connector",
-      "echo",
-      { text: "read" },
-      context,
-      messages
-    )
-  ).toBe("not-applicable");
-  expect(
-    await executeEveMcpTool(
-      "connector",
-      "echo",
-      { text: "read" },
-      context,
-      messages
-    )
-  ).toMatchObject({ output: "Echo output" });
-  expect(
-    await requestEveMcpApproval(
-      "connector",
-      "echo",
-      { text: "write" },
-      context,
-      messages
-    )
+    await requestEveMcpApproval("connector", "echo", { text: "test" }, context)
   ).toBe("user-approval");
-  await expect(
-    executeEveMcpTool("connector", "echo", { text: "write" }, context, messages)
-  ).rejects.toThrow("approval policy changed");
-  const approval = {
-    requestId: "request",
-    responder: {
-      authenticator: "test",
-      principalId: "owner",
-      principalType: "user",
-    },
-  };
-  expect(
-    await executeEveMcpTool(
-      "connector",
-      "echo",
-      { text: "write" },
-      { ...context, approval },
-      messages
-    )
-  ).toMatchObject({ output: "Echo output" });
+  expect(execute).not.toHaveBeenCalled();
+  const { approval: _approval, ...unapprovedContext } = context;
   await expect(
     executeEveMcpTool(
       "connector",
       "echo",
-      { text: "write" },
+      { text: "test" },
+      unapprovedContext,
+      []
+    )
+  ).rejects.toThrow("owner approval receipt");
+  expect(execute).not.toHaveBeenCalled();
+});
+
+it("rejects a receipt from another principal", async () => {
+  await expect(
+    executeEveMcpTool(
+      "connector",
+      "echo",
+      { text: "test" },
       {
         ...context,
         approval: {
-          ...approval,
-          responder: { ...approval.responder, principalId: "other" },
+          ...context.approval,
+          responder: { ...context.approval.responder, principalId: "other" },
         },
       },
-      messages
+      []
     )
-  ).rejects.toThrow("approval policy changed");
-  expect(needsApproval).toHaveBeenLastCalledWith(
-    { text: "write" },
-    { context: undefined, messages, toolCallId: "call" }
-  );
+  ).rejects.toThrow("owner approval receipt");
+  expect(execute).not.toHaveBeenCalled();
 });
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+
+it("validates tool input before asking for consent", async () => {
+  await expect(
+    requestEveMcpApproval("connector", "echo", { text: 123 }, context)
+  ).rejects.toThrow("Invalid tool input");
+  expect(execute).not.toHaveBeenCalled();
+});
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, unicorn/no-null --
  * max-lines-per-function (#510): it("registers native per-call approval restricted to the session owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -424,9 +372,6 @@ it("preserves conditional policy semantics and requires an owner receipt when tr
  * unicorn/no-null (#570): it("registers native per-call approval restricted to the session owner") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("registers native per-call approval restricted to the session owner", async () => {
-  mocks.tools.mockResolvedValue({
-    echo: { ...definition, needsApproval: true },
-  });
   const resolve = mcp.events["step.started"];
   if (!resolve) {
     throw new Error("Missing MCP resolver.");
@@ -581,8 +526,7 @@ it("approval requests inherit cancellation", async () => {
     "connector",
     "echo",
     { text: "test" },
-    { ...context, abortSignal: controller.signal },
-    []
+    { ...context, abortSignal: controller.signal }
   );
   await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalled());
   controller.abort(new Error("approval cancelled"));
@@ -616,8 +560,7 @@ it("approval cancellation bounds connector lookup before any transport opens", a
     "connector",
     "echo",
     {},
-    { ...context, abortSignal: controller.signal },
-    []
+    { ...context, abortSignal: controller.signal }
   );
   controller.abort(new Error("cancelled lookup"));
   await expect(result).rejects.toThrow("cancelled lookup");

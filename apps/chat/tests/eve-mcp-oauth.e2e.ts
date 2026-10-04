@@ -152,6 +152,13 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     const binding = conversationBinding.parse(await created.json());
     conversationId = binding.id;
     await page.goto(`/chat/${binding.id}`);
+    const approve = page.getByRole("button", { exact: true, name: "Approve" });
+    await expect(approve).toBeVisible({ timeout: 90_000 });
+    expect(fixture.counters.toolCalls).toBe(0);
+    await page.reload();
+    await expect(approve).toBeVisible();
+    expect(fixture.counters.toolCalls).toBe(0);
+    await approve.click();
     await expect(page.getByText("Ready", { exact: true })).toBeVisible({
       timeout: 90_000,
     });
