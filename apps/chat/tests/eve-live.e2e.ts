@@ -1,7 +1,7 @@
 /* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "node:fs/promises" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { mkdir } from "node:fs/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "../lib/db/eve-stream-positions"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "@/lib/eve/lifecycle/postgres/eve-stream-positions"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
@@ -12,9 +12,10 @@ import { expect, test } from "@playwright/test";
 import { eq, getTableColumns } from "drizzle-orm";
 import { Client } from "eve/client";
 
+import { getEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-stream-positions";
+
 import { db } from "../lib/db/client";
 import { getEveUsageCursor } from "../lib/db/eve-billing";
-import { getEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
 import { eveChat, eveConversation, eveUsage } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";

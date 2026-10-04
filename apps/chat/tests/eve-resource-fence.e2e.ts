@@ -1,5 +1,5 @@
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-resource-fence"; "../lib/db/eve-session-fence"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-resource-fence"; "@/lib/eve/lifecycle/postgres/eve-session-fence"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
@@ -9,8 +9,9 @@ import { afterAll, expect, test } from "vitest";
 import {
   fenceEvePostgresResources,
   installEvePostgresResourceFence,
-} from "../lib/db/eve-resource-fence";
-import { fenceEvePostgresSession } from "../lib/db/eve-session-fence";
+} from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
+import { fenceEvePostgresSession } from "@/lib/eve/lifecycle/postgres/eve-session-fence";
+
 import { env } from "../lib/env";
 /* oxlint-enable import/no-relative-parent-imports */
 

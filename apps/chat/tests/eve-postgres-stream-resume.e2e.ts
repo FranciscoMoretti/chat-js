@@ -1,5 +1,5 @@
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-stream-positions"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-stream-positions"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 import { Schema } from "@world-postgres-test/dist/drizzle/index.js";
 import { createStreamer } from "@world-postgres-test/dist/streamer.js";
@@ -12,7 +12,8 @@ import { Pool } from "pg";
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
-import { readEvePostgresStreamPositions } from "../lib/db/eve-stream-positions";
+import { readEvePostgresStreamPositions } from "@/lib/eve/lifecycle/postgres/eve-stream-positions";
+
 import { env } from "../lib/env";
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/no-relative-parent-imports */

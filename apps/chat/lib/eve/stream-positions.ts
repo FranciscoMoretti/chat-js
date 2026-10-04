@@ -6,7 +6,7 @@ import { resolveWorkflowWorld } from "./world-config";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-stream-positions" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-stream-positions" dependency within this package instead of introducing an alias or barrel API.
  * jsdoc/require-param (#534): getEveStreamPositions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): getEveStreamPositions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): getEveStreamPositions uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -24,7 +24,7 @@ export const getEveStreamPositions = async (sessionIds: string[]) => {
     throw new Error("Configure WORKFLOW_POSTGRES_URL for local workflows.");
   }
   const { getEvePostgresStreamPositions } =
-    await import("../db/eve-stream-positions");
+    await import("@/lib/eve/lifecycle/postgres/eve-stream-positions");
   return await getEvePostgresStreamPositions(
     env.WORKFLOW_POSTGRES_URL,
     sessionIds

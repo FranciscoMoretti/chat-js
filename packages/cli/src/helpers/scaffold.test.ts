@@ -215,6 +215,7 @@ describe("scaffoldFromTemplate", (): void => {
       "playwright.eve.config.ts",
       "playwright.guest.config.ts",
       "vitest.eve.config.ts",
+      "vitest.eve-provider.config.ts",
     ]) {
       expect(existsSync(join(destination, file))).toBe(false);
     }
@@ -277,6 +278,7 @@ describe("scaffoldFromTemplate", (): void => {
     for (const script of [
       "eval:dev",
       "eval:serve",
+      "test:native",
       "test:research:native",
       "test:tools:live",
     ]) {

@@ -1,8 +1,9 @@
+import { purgeEveNativeSession } from "@/lib/eve/lifecycle/postgres/eve-native-purge";
+
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-deletion"; "../db/eve-native-purge"; "../env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-deletion"; "@/lib/eve/lifecycle/postgres/eve-native-purge"; "../env" dependency within this package instead of introducing an alias or barrel API.
  */
 import { completeEveConversationDeletion } from "../db/eve-deletion";
-import { purgeEveNativeSession } from "../db/eve-native-purge";
 import { env } from "../env";
 import { purgeLocalEveFamilyResources } from "./purge-local-resources";
 import { retireEveSessionForDeletion } from "./retire-session";
