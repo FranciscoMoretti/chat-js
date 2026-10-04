@@ -21,6 +21,17 @@ const protectedPaths = [
   "packages/registry/src/probe.ts",
 ];
 
+const standalonePermitted = [
+  "electron/src/main.ts",
+  "electron/scripts/probe.ts",
+  "electron/forge.config.ts",
+];
+const standaloneProtected = [
+  "electron/src/preload.ts",
+  "electron/src/renderer.ts",
+  "components/probe.ts",
+];
+
 const writeFixture = async (temporary: string, file: string): Promise<void> => {
   const destination = path.join(temporary, file);
   await mkdir(path.dirname(destination), { recursive: true });
@@ -30,63 +41,141 @@ const writeFixture = async (temporary: string, file: string): Promise<void> => {
   );
 };
 
+const childDeadlineMs = 10_000;
+const testDeadlineMs = 30_000;
+const diagnosticFailureExit = 1;
+
+const assertDiagnostics = (
+  output: string,
+  cwd: string,
+  files: readonly string[]
+): void => {
+  for (const file of files) {
+    const diagnostics = output
+      .split("\n")
+      .filter((line): boolean => line.includes(`/${file}:`));
+    expect(diagnostics, `${cwd}: ${file}`).not.toEqual([]);
+    expect(
+      diagnostics.some((line): boolean =>
+        line.includes("[Error/import(no-nodejs-modules)]")
+      ),
+      `${cwd}: ${file}`
+    ).toBe(protectedPaths.includes(file) || standaloneProtected.includes(file));
+    expect(
+      diagnostics.some((line): boolean =>
+        line.includes("[Warning/import(no-nodejs-modules)]")
+      ),
+      `${cwd}: ${file}`
+    ).toBe(false);
+  }
+};
+
 const checkBoundary = async (
   temporary: string,
   cwd: string,
-  file: string
+  files: readonly string[]
 ): Promise<void> => {
   const result = Bun.spawn(
     [
-      "bun",
+      process.execPath,
       "--bun",
       path.join(root, "node_modules/oxlint/bin/oxlint"),
       "-c",
       path.join(temporary, "oxlint.config.ts"),
-      path.join(temporary, file),
+      ...files.map((file): string => path.join(temporary, file)),
       "--format",
       "unix",
     ],
     { cwd: path.join(temporary, cwd), stderr: "pipe", stdout: "pipe" }
   );
-  const output = await new Response(result.stdout).text();
-  const errors = await new Response(result.stderr).text();
-  await result.exited;
-  expect(errors, `${cwd}: ${file}`).toBe("");
-  expect(output, `${cwd}: ${file}`).toContain(file);
-  expect(output.includes("import(no-nodejs-modules)"), `${cwd}: ${file}`).toBe(
-    protectedPaths.includes(file)
+  const deadline = setTimeout((): void => {
+    result.kill("SIGKILL");
+  }, childDeadlineMs);
+  try {
+    const [output, errors, exitCode] = await Promise.all([
+      new Response(result.stdout).text(),
+      new Response(result.stderr).text(),
+      result.exited,
+    ]);
+    expect(errors, cwd).toBe("");
+    expect(exitCode, cwd).toBe(diagnosticFailureExit);
+    assertDiagnostics(output, cwd, files);
+  } finally {
+    clearTimeout(deadline);
+    result.kill("SIGKILL");
+    await result.exited;
+  }
+};
+
+const settleChecks = async (
+  checks: readonly (() => Promise<void>)[]
+): Promise<void> => {
+  const results = await Promise.allSettled(
+    checks.map(async (check): Promise<void> => await check())
+  );
+  for (const result of results) {
+    if (result.status === "rejected") {
+      throw result.reason;
+    }
+  }
+};
+
+const writeConfig = async (
+  temporary: string,
+  source: string
+): Promise<void> => {
+  await writeFile(
+    path.join(temporary, "oxlint.config.ts"),
+    `import config from ${JSON.stringify(path.join(root, source))};\nexport default { ...config, options: { typeAware: false } };\n`
   );
 };
 
-test("Node import policy preserves browser boundaries across working directories", async (): Promise<void> => {
-  const temporary = await mkdtemp(path.join(tmpdir(), "chatjs-lint-runtime-"));
-  try {
-    await writeFile(
-      path.join(temporary, "oxlint.config.ts"),
-      `import config from ${JSON.stringify(path.join(root, "oxlint.config.ts"))};\nexport default { ...config, options: { typeAware: false } };\n`
+test(
+  "Node import policy preserves browser boundaries across working directories",
+  async (): Promise<void> => {
+    const temporary = await mkdtemp(
+      path.join(tmpdir(), "chatjs-lint-runtime-")
     );
-    const files = [...permitted, ...protectedPaths];
-    await Promise.all(
-      files.map(
-        async (file): Promise<void> => await writeFixture(temporary, file)
-      )
-    );
-    await Promise.all(
-      [".", "packages/cli", "apps/electron"].flatMap((cwd): Promise<void>[] =>
-        files
-          .filter((file): boolean => cwd === "." || file.startsWith(`${cwd}/`))
-          .map(
-            async (file): Promise<void> =>
-              await checkBoundary(temporary, cwd, file)
-          )
-      )
-    );
-    await writeFile(
-      path.join(temporary, "oxlint.config.ts"),
-      `import config from ${JSON.stringify(path.join(root, "apps/chat/oxlint.config.ts"))};\nexport default { ...config, options: { typeAware: false } };\n`
-    );
-    await checkBoundary(temporary, ".", "apps/chat/components/probe.ts");
-  } finally {
-    await rm(temporary, { force: true, recursive: true });
-  }
-});
+    try {
+      await writeConfig(temporary, "oxlint.config.ts");
+      const files = [...permitted, ...protectedPaths];
+      await settleChecks(
+        [...files, ...standalonePermitted, ...standaloneProtected].map(
+          (file): (() => Promise<void>) =>
+            async (): Promise<void> =>
+              await writeFixture(temporary, file)
+        )
+      );
+      await settleChecks(
+        [".", "packages/cli", "apps/electron"].map(
+          (cwd): (() => Promise<void>) =>
+            async (): Promise<void> =>
+              await checkBoundary(
+                temporary,
+                cwd,
+                files.filter(
+                  (file): boolean => cwd === "." || file.startsWith(`${cwd}/`)
+                )
+              )
+        )
+      );
+      await writeConfig(temporary, "apps/chat/oxlint.config.ts");
+      await settleChecks(
+        [".", "electron"].map(
+          (cwd): (() => Promise<void>) =>
+            async (): Promise<void> =>
+              await checkBoundary(
+                temporary,
+                cwd,
+                [...standalonePermitted, ...standaloneProtected].filter(
+                  (file): boolean => cwd === "." || file.startsWith(`${cwd}/`)
+                )
+              )
+        )
+      );
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);

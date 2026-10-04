@@ -15,6 +15,16 @@ export default defineConfig({
     "tests/eve-results/**",
   ],
   overrides: [
+    // #529: Scaffolded Electron main and packaging run with Node/Bun capabilities.
+    // Preload and renderer files keep the browser restriction.
+    {
+      files: [
+        "electron/src/main.ts",
+        "electron/scripts/**",
+        "electron/forge.config.ts",
+      ],
+      rules: { "import/no-nodejs-modules": "off" },
+    },
     // Typed primitive wrappers forward the supported events, refs and accessibility props.
     {
       files: ["components/ui/**", "components/ai-elements/**"],

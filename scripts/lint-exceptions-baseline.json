@@ -27882,20 +27882,20 @@
       "ca978a4715d12a6e300778eee28360a9f8222725bceb4086de52a42d220af78f"
     ],
     "[\"apps/electron/forge.config.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "7f7de1432957e742cf15bf57e1e112a74ff9a10bd0a80dc8666da874f68979a1"
+      "34289f0fde9d7585d3a3a2fd021f6b7f08e5ff10b3b5a2f0bbe543f5633eaf9b"
     ],
     "[\"apps/electron/forge.config.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "ac82612682e3b534498468fc47508f7e33fc0aff0dd69793a5b2650bfc96b809"
+      "b76464e8d22e159630530382f243b02a0b284bb912c6c6c6f800e74e7272c4ae"
     ],
     "[\"apps/electron/forge.config.ts\",\"eslint/require-await\",\"oxlint-disable-next-line\"]": [
-      "defbb21ef972c3bddde956aaad3779d1b9d95c2f9043248f7b7bd545774ebcb9",
-      "c4a449289ae400e322ae0492402790ff87ba03c8b9a0a07b430a15f982e33408",
-      "3a5306a339559c7a0445b310240bd555953a86eac03e2d5329d6e1f884a31644"
+      "b76cd9622d0393ebbb475900a2d257dc4b5cd7e67b97b0ac19423c2713e0d32c",
+      "858afe36fb8836eb5abcd2fb8e442f0793ae4774d97f69ffac5a47402dd39e1e",
+      "e2aa3de2d2dceb9ca851a0fb8772bb5db12d3fef99a57927b645f1dcfb39adf5"
     ],
     "[\"apps/electron/forge.config.ts\",\"typescript/require-await\",\"oxlint-disable-next-line\"]": [
-      "defbb21ef972c3bddde956aaad3779d1b9d95c2f9043248f7b7bd545774ebcb9",
-      "c4a449289ae400e322ae0492402790ff87ba03c8b9a0a07b430a15f982e33408",
-      "3a5306a339559c7a0445b310240bd555953a86eac03e2d5329d6e1f884a31644"
+      "b76cd9622d0393ebbb475900a2d257dc4b5cd7e67b97b0ac19423c2713e0d32c",
+      "858afe36fb8836eb5abcd2fb8e442f0793ae4774d97f69ffac5a47402dd39e1e",
+      "e2aa3de2d2dceb9ca851a0fb8772bb5db12d3fef99a57927b645f1dcfb39adf5"
     ],
     "[\"apps/electron/forge.config.ts\",\"import/no-default-export\",\"oxlint-disable\"]": [
       "af2afba8f810f67f956c08823756b4974364e4b246ca2ea3c9d7da2c2493c425"

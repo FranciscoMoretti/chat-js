@@ -112,15 +112,15 @@ const createForgeConfig = (): ForgeConfig => {
 
   return {
     hooks: {
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       generateAssets: async () => {
         ensurePrebuild();
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       prePackage: async () => {
         runBunScript("build", { NODE_ENV: "production" });
       },
-      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- Electron Forge requires an async hook even though this build preparation is synchronous.
+      // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
       preStart: async () => {
         runBunScript("build", { NODE_ENV: "development" });
       },
