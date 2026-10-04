@@ -32,7 +32,7 @@ test("unsupported providers do not claim or revoke expired families", async () =
   mocks.available.mockReturnValue(false);
   expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
     deletedCount: 0,
-    pendingCount: 0,
+    reason: "unsupported_runtime",
     skipped: true,
   });
   expect(mocks.claim).not.toHaveBeenCalled();
@@ -66,3 +66,28 @@ test("never-dispatched copies use their proven unaccepted deletion path", async 
   expect(mocks.remove).not.toHaveBeenCalled();
 });
 /* oxlint-enable no-magic-numbers */
+
+test("an absent deletion receipt is pending and cannot count as an erased family", async () => {
+  mocks.claim.mockResolvedValueOnce([{ id: "uncertain", ownerId: "guest" }]);
+  expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
+    deletedCount: 0,
+    pendingCount: 1,
+    skipped: false,
+  });
+});
+
+test("inventory failures reject instead of claiming an empty successful sweep", async () => {
+  const failure = new Error("guest inventory unavailable");
+  mocks.claim.mockRejectedValueOnce(failure);
+  await expect(cleanupExpiredEveGuests("/trusted/app")).rejects.toBe(failure);
+  expect(mocks.remove).not.toHaveBeenCalled();
+});
+
+test("a supported empty sweep reports success only after checking inventory", async () => {
+  expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
+    deletedCount: 0,
+    pendingCount: 0,
+    skipped: false,
+  });
+  expect(mocks.claim).toHaveBeenCalledOnce();
+});

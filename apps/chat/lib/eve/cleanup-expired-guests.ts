@@ -22,7 +22,12 @@ import { localDeletionAvailable } from "./local-deletion-available";
 /** The appRoot is the trusted worker directory. Guest and billing identities are retained. */
 export const cleanupExpiredEveGuests = async (appRoot: string) => {
   if (!localDeletionAvailable()) {
-    return { deletedCount: 0, pendingCount: 0, skipped: true };
+    // Omit pendingCount: no inventory was read, so the backlog is unknown.
+    return {
+      deletedCount: 0,
+      reason: "unsupported_runtime",
+      skipped: true,
+    };
   }
   let deletedCount = 0;
   let pendingCount = 0;
