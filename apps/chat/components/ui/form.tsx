@@ -18,7 +18,12 @@ import {
   useFormContext,
   useFormState,
 } from "react-hook-form";
-import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
+import type {
+  ControllerFieldState,
+  ControllerProps,
+  FieldPath,
+  FieldValues,
+} from "react-hook-form";
 
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -62,9 +67,7 @@ const FormItemContext = reactCreateContext<FormItemContextValue>(
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
   {} as FormItemContextValue
 );
-type FormFieldState = ReturnType<
-  ReturnType<typeof useFormContext>["getFieldState"]
-> & {
+type FormFieldState = ControllerFieldState & {
   formDescriptionId: string;
   formItemId: string;
   formMessageId: string;

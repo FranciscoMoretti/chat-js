@@ -11,9 +11,8 @@ import { MemoryThreadState } from "#thread-source/thread-state";
 declare const messageId: string;
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-const useCompatibilityCheck = () => {
+const useCompatibilityCheck = (): UseThreadHelpers => {
   const thread = useThread();
   const chatCompatible: UseChatHelpers<UIMessage> = thread;
 
@@ -44,7 +43,6 @@ const useCompatibilityCheck = () => {
   return explicitHelpers;
 };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 
 class StateBackedThread extends AbstractThread {
@@ -53,8 +51,10 @@ class StateBackedThread extends AbstractThread {
   }
 }
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const useExternalThreadCheck = () => {
+const useExternalThreadCheck = (): {
+  defaultThread: UseThreadHelpers;
+  stateBackedThread: UseThreadHelpers;
+} => {
   const thread = new Thread();
   const defaultThread = useThread({ thread });
   const state = new MemoryThreadState();
@@ -64,7 +64,6 @@ const useExternalThreadCheck = () => {
   });
   return { defaultThread, stateBackedThread };
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const useInvalidOwnershipChecks = (): void => {
   const state = new MemoryThreadState();

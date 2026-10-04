@@ -44,13 +44,14 @@ const modelCatalogResponse = {
   object: "list",
 };
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("VercelGateway", () => {
   it("skips unsupported models before validating supported model metadata", async () => {
     vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
     vi.stubGlobal(
       "fetch",
-      vi.fn(() => Promise.resolve(Response.json(modelCatalogResponse)))
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(Response.json(modelCatalogResponse))
     );
 
     const models = await new VercelGateway().fetchModels();
@@ -70,4 +71,3 @@ describe("VercelGateway", () => {
     });
   });
 });
-/* oxlint-enable typescript/promise-function-async */

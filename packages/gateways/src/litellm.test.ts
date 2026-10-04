@@ -9,26 +9,22 @@ afterEach((): void => {
   vi.unstubAllGlobals();
 });
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const mockModelsFetch = (): ReturnType<typeof vi.fn<typeof fetch>> => {
-  const fetchMock = vi.fn<typeof fetch>((): Promise<Response> =>
-    Promise.resolve(
-      Response.json({
-        data: [
-          {
-            created: 1_717_986_432,
-            id: "openai/gpt-4o-mini",
-            object: "model",
-            owned_by: "openai",
-          },
-        ],
-      })
-    )
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+    Response.json({
+      data: [
+        {
+          created: 1_717_986_432,
+          id: "openai/gpt-4o-mini",
+          object: "model",
+          owned_by: "openai",
+        },
+      ],
+    })
   );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 };
-/* oxlint-enable typescript/promise-function-async */
 
 const fetchesModelsFromModelsEndpoint = async (): Promise<void> => {
   vi.stubEnv("LITELLM_BASE_URL", "http://localhost:4000");
