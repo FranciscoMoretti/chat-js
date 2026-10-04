@@ -9,7 +9,7 @@ import {
   MessageActions,
 } from "@/components/ai-elements/message";
 import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageActionsView: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types -- jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /** Shared message toolbar; each runtime supplies its actions and version state. */
 export const MessageActionsView = ({
@@ -32,7 +32,7 @@ export const MessageActionsView = ({
   onCopy: () => void;
   siblings?: ReactNode;
   feedback?: ReactNode;
-}) => {
+}): React.JSX.Element => {
   const isMobile = useIsMobile();
   if (isLoading) {
     return <div className="h-7" />;
@@ -72,4 +72,4 @@ export const MessageActionsView = ({
     </MessageActions>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types */

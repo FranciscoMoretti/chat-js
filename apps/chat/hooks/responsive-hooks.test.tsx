@@ -24,25 +24,33 @@ const Value = ({ value }: { value: boolean }): React.JSX.Element => (
   <output>{String(value)}</output>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MountedValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MountedValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
-const MountedValue = ({ onValue }: { onValue?: (value: boolean) => void }) => {
+const MountedValue = ({
+  onValue,
+}: {
+  onValue?: (value: boolean) => void;
+}): React.JSX.Element => {
   const value = useMounted();
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MobileValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MobileValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
-const MobileValue = ({ onValue }: { onValue?: (value: boolean) => void }) => {
+const MobileValue = ({
+  onValue,
+}: {
+  onValue?: (value: boolean) => void;
+}): React.JSX.Element => {
   const value = useIsMobile();
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- MediaQueryValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MediaQueryValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const MediaQueryValue = ({
   onValue,
@@ -50,12 +58,12 @@ const MediaQueryValue = ({
 }: {
   onValue?: (value: boolean) => void;
   query: string;
-}) => {
+}): React.JSX.Element => {
   const value = useMediaQuery(query);
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- installMatchMedia: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 

@@ -65,14 +65,14 @@ interface ProjectIconProps {
   icon: ProjectIconName;
   size?: number;
 }
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ProjectIcon: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
 
 export const ProjectIcon = ({
   icon,
   color,
   size = 16,
   className,
-}: ProjectIconProps) => {
+}: ProjectIconProps): React.JSX.Element => {
   const IconComponent = ICON_MAP[icon] ?? Folder;
   const colorValue = getColorValue(color);
 
@@ -84,4 +84,4 @@ export const ProjectIcon = ({
     />
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */

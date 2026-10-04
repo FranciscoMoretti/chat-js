@@ -3,16 +3,15 @@ import React from "react";
 
 import { ModelToolbarVisualFixture } from "@/components/model-toolbar-visual-fixture";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- ModelToolbarVisualFixturePage: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
-const ModelToolbarVisualFixturePage = () => {
+const ModelToolbarVisualFixturePage = (): React.JSX.Element => {
   if (!isPlaywrightTestEnvironment()) {
     notFound();
   }
 
   return <ModelToolbarVisualFixture />;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+
 /* oxlint-disable import/no-default-export -- page route: import/no-default-export: Next.js loads this route entry point through its required default export. */
 
 export default ModelToolbarVisualFixturePage;

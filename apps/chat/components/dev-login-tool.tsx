@@ -4,9 +4,9 @@ import React from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null -- DevLoginTool: ; node/no-process-env: this Next.js fixture gate reads the build-time environment flag before exposing its development-only route; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable node/no-process-env, unicorn/no-null -- node/no-process-env: this Next.js fixture gate reads the build-time environment flag before exposing its development-only route; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-export const DevLoginTool = () => {
+export const DevLoginTool = (): React.JSX.Element | null => {
   if (process.env.NODE_ENV !== "development") {
     return null;
   }
@@ -29,4 +29,4 @@ export const DevLoginTool = () => {
     </a>
   );
 };
-/* oxlint-enable node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */
+/* oxlint-enable node/no-process-env, unicorn/no-null */

@@ -12,7 +12,7 @@ import {
   ToolOutput,
 } from "@/components/ai-elements/tool";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- McpToolResult: ; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const McpToolResult = ({
   part,
@@ -25,7 +25,7 @@ export const McpToolResult = ({
   };
   icon?: ReactNode;
   defaultOpen?: boolean;
-}) => {
+}): React.JSX.Element => {
   const parsed = parseToolId(part.toolName);
   return (
     <Tool defaultOpen={defaultOpen}>
@@ -45,4 +45,4 @@ export const McpToolResult = ({
     </Tool>
   );
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */

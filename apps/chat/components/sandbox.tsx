@@ -23,7 +23,7 @@ interface SandboxComposedProps {
   state: ToolUIPart["state"];
   title?: string;
 }
-/* oxlint-disable react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- SandboxComposed: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const SandboxComposed = ({
   code,
@@ -31,7 +31,7 @@ export const SandboxComposed = ({
   language = "tsx",
   title,
   state,
-}: SandboxComposedProps) => {
+}: SandboxComposedProps): React.JSX.Element => {
   const [activeTab, setActiveTab] = React.useState("code");
 
   return (
@@ -56,4 +56,4 @@ export const SandboxComposed = ({
     </Sandbox>
   );
 };
-/* oxlint-enable react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
