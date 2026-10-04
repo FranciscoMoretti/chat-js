@@ -24,14 +24,14 @@ export const ProjectInstructionsDialog = ({
   isPending,
   error,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  projectName?: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  onSave: () => void;
-  isPending: boolean;
-  error?: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly projectName?: string;
+  readonly value: string;
+  readonly onValueChange: (value: string) => void;
+  readonly onSave: () => void;
+  readonly isPending: boolean;
+  readonly error?: string;
 }): React.JSX.Element => (
   <Dialog
     onOpenChange={(next) => {

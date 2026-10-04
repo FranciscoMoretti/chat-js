@@ -2,6 +2,7 @@
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
+import type { JSX as ReactJSX, ComponentProps } from "react";
 import React, {
   createContext,
   memo,
@@ -11,7 +12,6 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import type { ComponentProps } from "react";
 
 import {
   Collapsible,
@@ -55,7 +55,7 @@ type ReasoningProps = ComponentProps<typeof Collapsible> & {
 
 const AUTO_CLOSE_DELAY = 1000;
 const MS_IN_S = 1000;
-/* oxlint-disable max-lines-per-function, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Reasoning: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Reasoning: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const Reasoning = memo(
   ({
@@ -105,7 +105,7 @@ const Reasoning = memo(
           setHasAutoClosed(true);
         }, AUTO_CLOSE_DELAY);
 
-        return () => clearTimeout(timer);
+        return (): void => clearTimeout(timer);
       }
     }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosed]);
 
@@ -134,13 +134,16 @@ const Reasoning = memo(
     );
   }
 );
-/* oxlint-enable max-lines-per-function, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type -- getThinkingMessage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-disable no-magic-numbers, no-undefined -- getThinkingMessage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const getThinkingMessage = (isStreaming: boolean, duration?: number) => {
+const getThinkingMessage = (
+  isStreaming: boolean,
+  duration?: number
+): ReactJSX.Element => {
   if (isStreaming) {
     return <Shimmer duration={1}>Thinking...</Shimmer>;
   }
@@ -149,7 +152,7 @@ const getThinkingMessage = (isStreaming: boolean, duration?: number) => {
   }
   return <p>Thought for {duration} seconds</p>;
 };
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type */
+/* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
 
 const ReasoningTrigger = memo(

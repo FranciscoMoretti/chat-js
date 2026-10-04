@@ -3,14 +3,17 @@
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+  MouseEvent as ReactMouseEvent,
+  MouseEventHandler as ReactMouseEventHandler,
+} from "react";
 
 import { isElectronRenderer } from "@/lib/electron-auth";
 
-type InternalLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
-  href: string | Exclude<React.ComponentProps<typeof Link>["href"], string>;
+type InternalLinkProps = Omit<ReactComponentProps<typeof Link>, "href"> & {
+  href: string | Exclude<ReactComponentProps<typeof Link>["href"], string>;
   onNavigate?: () => void;
 };
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- InternalLink: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.MouseEvent<HTMLAnchorElement>). */
@@ -21,11 +24,11 @@ export const InternalLink = ({
   onNavigate,
   href,
   ...props
-}: InternalLinkProps): React.JSX.Element => {
+}: InternalLinkProps): ReactJSX.Element => {
   const router = useRouter();
   const isElectron = isElectronRenderer();
 
-  const navigate = (event: React.MouseEvent<HTMLAnchorElement>): void => {
+  const navigate = (event: ReactMouseEvent<HTMLAnchorElement>): void => {
     onNavigate?.();
     const targetHref = event.currentTarget.getAttribute("href");
     if (typeof targetHref === "string" && targetHref !== "") {
@@ -34,7 +37,7 @@ export const InternalLink = ({
     }
   };
 
-  const handleClick: React.MouseEventHandler<HTMLAnchorElement> = (event) => {
+  const handleClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
     onClick?.(event);
 
     if (event.defaultPrevented || event.button !== 0) {
@@ -54,9 +57,7 @@ export const InternalLink = ({
     onNavigate?.();
   };
 
-  const handleAuxClick: React.MouseEventHandler<HTMLAnchorElement> = (
-    event
-  ) => {
+  const handleAuxClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
     onAuxClick?.(event);
 
     if (event.defaultPrevented || event.button !== 1 || !isElectron) {

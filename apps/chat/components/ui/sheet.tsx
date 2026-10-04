@@ -1,29 +1,36 @@
 "use client";
 
-/* oxlint-disable import/no-namespace -- @radix-ui/react-dialog import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-
-import * as SheetPrimitive from "@radix-ui/react-dialog";
-/* oxlint-enable import/no-namespace */
+import {
+  Root as SheetPrimitiveRoot,
+  Trigger as SheetPrimitiveTrigger,
+  Close as SheetPrimitiveClose,
+  Portal as SheetPrimitivePortal,
+  Overlay as SheetPrimitiveOverlay,
+  Content as SheetPrimitiveContent,
+  Title as SheetPrimitiveTitle,
+  Description as SheetPrimitiveDescription,
+} from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Sheet: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: React.ComponentProps<typeof SheetPrimitive.Root>). */
 
 const Sheet = ({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Root>): React.JSX.Element => (
-  <SheetPrimitive.Root data-slot="sheet" {...props} />
+}: ReactComponentProps<typeof SheetPrimitiveRoot>): ReactJSX.Element => (
+  <SheetPrimitiveRoot data-slot="sheet" {...props} />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SheetTrigger = ({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Trigger>): React.JSX.Element => (
-  <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+}: ReactComponentProps<typeof SheetPrimitiveTrigger>): ReactJSX.Element => (
+  <SheetPrimitiveTrigger data-slot="sheet-trigger" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -31,8 +38,8 @@ const SheetTrigger = ({
 
 const SheetClose = ({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Close>): React.JSX.Element => (
-  <SheetPrimitive.Close data-slot="sheet-close" {...props} />
+}: ReactComponentProps<typeof SheetPrimitiveClose>): ReactJSX.Element => (
+  <SheetPrimitiveClose data-slot="sheet-close" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -40,8 +47,8 @@ const SheetClose = ({
 
 const SheetPortal = ({
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Portal>): React.JSX.Element => (
-  <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
+}: ReactComponentProps<typeof SheetPrimitivePortal>): ReactJSX.Element => (
+  <SheetPrimitivePortal data-slot="sheet-portal" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -50,8 +57,8 @@ const SheetPortal = ({
 const SheetOverlay = ({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Overlay>): React.JSX.Element => (
-  <SheetPrimitive.Overlay
+}: ReactComponentProps<typeof SheetPrimitiveOverlay>): ReactJSX.Element => (
+  <SheetPrimitiveOverlay
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=open]:animate-in fixed inset-0 z-50 bg-black/50",
       className
@@ -69,12 +76,12 @@ const SheetContent = ({
   children,
   side = "right",
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+}: ReactComponentProps<typeof SheetPrimitiveContent> & {
   side?: "top" | "right" | "bottom" | "left";
-}): React.JSX.Element => (
+}): ReactJSX.Element => (
   <SheetPortal>
     <SheetOverlay />
-    <SheetPrimitive.Content
+    <SheetPrimitiveContent
       className={cn(
         "bg-background data-[state=closed]:animate-out data-[state=open]:animate-in fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
         side === "right" &&
@@ -91,11 +98,11 @@ const SheetContent = ({
       {...props}
     >
       {children}
-      <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+      <SheetPrimitiveClose className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
         <XIcon className="size-4" />
         <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-    </SheetPrimitive.Content>
+      </SheetPrimitiveClose>
+    </SheetPrimitiveContent>
   </SheetPortal>
 );
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
@@ -105,7 +112,7 @@ const SheetContent = ({
 const SheetHeader = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-1.5 p-4", className)}
     data-slot="sheet-header"
@@ -119,7 +126,7 @@ const SheetHeader = ({
 const SheetFooter = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("mt-auto flex flex-col gap-2 p-4", className)}
     data-slot="sheet-footer"
@@ -133,8 +140,8 @@ const SheetFooter = ({
 const SheetTitle = ({
   className,
   ...props
-}: React.ComponentProps<typeof SheetPrimitive.Title>): React.JSX.Element => (
-  <SheetPrimitive.Title
+}: ReactComponentProps<typeof SheetPrimitiveTitle>): ReactJSX.Element => (
+  <SheetPrimitiveTitle
     className={cn("text-foreground font-semibold", className)}
     data-slot="sheet-title"
     {...props}
@@ -147,10 +154,8 @@ const SheetTitle = ({
 const SheetDescription = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof SheetPrimitive.Description
->): React.JSX.Element => (
-  <SheetPrimitive.Description
+}: ReactComponentProps<typeof SheetPrimitiveDescription>): ReactJSX.Element => (
+  <SheetPrimitiveDescription
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="sheet-description"
     {...props}

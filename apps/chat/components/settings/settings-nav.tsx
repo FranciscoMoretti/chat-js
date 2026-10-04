@@ -1,18 +1,19 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import type { JSX as ReactJSX } from "react";
 import React from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { cn } from "@/lib/utils";
 import { settingsItems } from "@/settings-items";
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- SettingsNav: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SettingsNav: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item). */
 
 export const SettingsNav = ({
   orientation = "vertical",
 }: {
-  orientation?: "horizontal" | "vertical";
-}) => {
+  readonly orientation?: "horizontal" | "vertical";
+}): ReactJSX.Element => {
   const pathname = usePathname();
 
   const navItems = settingsItems.filter(
@@ -49,4 +50,4 @@ export const SettingsNav = ({
     </nav>
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

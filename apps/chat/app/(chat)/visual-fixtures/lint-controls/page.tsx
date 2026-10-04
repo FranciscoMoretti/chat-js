@@ -11,7 +11,5 @@ const LintControlsVisualFixturePage = (): React.JSX.Element => {
   return <LintControlsVisualFixture />;
 };
 
-/* oxlint-disable import/no-default-export -- page route: import/no-default-export: Next.js loads this route entry point through its required default export. */
-
+// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component LintControlsVisualFixturePage.
 export default LintControlsVisualFixturePage;
-/* oxlint-enable import/no-default-export */

@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { ProjectIconPicker } from "@/components/project-icon-picker";
@@ -24,7 +25,7 @@ export interface ProjectDetailsData {
   icon: ProjectIconName;
   name: string;
 }
-/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- ProjectDetailsDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including data: ProjectDetailsData); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- ProjectDetailsDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including data: ProjectDetailsData); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ProjectDetailsDialog = ({
   open,
@@ -44,7 +45,7 @@ export const ProjectDetailsDialog = ({
   initialColor?: ProjectColorName;
   onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
   isLoading: boolean;
-}) => {
+}): ReactJSX.Element => {
   const [submitError, setSubmitError] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
@@ -67,7 +68,7 @@ export const ProjectDetailsDialog = ({
   const finalIcon = icon ?? DEFAULT_PROJECT_ICON;
   const finalColor = color ?? DEFAULT_PROJECT_COLOR;
 
-  const submitChanges = async () => {
+  const submitChanges = async (): Promise<void> => {
     const trimmedName = name.trim();
 
     if (mode === "create") {
@@ -99,7 +100,7 @@ export const ProjectDetailsDialog = ({
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     setSubmitError("");
     try {
       await submitChanges();
@@ -108,7 +109,7 @@ export const ProjectDetailsDialog = ({
     }
   };
 
-  const handleOpenChange = (newOpen: boolean) => {
+  const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen) {
       setName(initialName ?? "");
       setIcon(initialIcon ?? null);
@@ -180,4 +181,4 @@ export const ProjectDetailsDialog = ({
     </Dialog>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */

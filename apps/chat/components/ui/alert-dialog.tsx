@@ -1,11 +1,20 @@
 "use client";
-/* oxlint-disable import/no-namespace -- @radix-ui/react-alert-dialog import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
 
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-/* oxlint-enable import/no-namespace */
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import {
+  Root as AlertDialogPrimitiveRoot,
+  Trigger as AlertDialogPrimitiveTrigger,
+  Portal as AlertDialogPrimitivePortal,
+  Overlay as AlertDialogPrimitiveOverlay,
+  Content as AlertDialogPrimitiveContent,
+  Title as AlertDialogPrimitiveTitle,
+  Description as AlertDialogPrimitiveDescription,
+  Action as AlertDialogPrimitiveAction,
+  Cancel as AlertDialogPrimitiveCancel,
+} from "@radix-ui/react-alert-dialog";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,20 +22,18 @@ import { cn } from "@/lib/utils";
 
 const AlertDialog = ({
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Root
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+}: ReactComponentProps<typeof AlertDialogPrimitiveRoot>): ReactJSX.Element => (
+  <AlertDialogPrimitiveRoot data-slot="alert-dialog" {...props} />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const AlertDialogTrigger = ({
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Trigger
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
+}: ReactComponentProps<
+  typeof AlertDialogPrimitiveTrigger
+>): ReactJSX.Element => (
+  <AlertDialogPrimitiveTrigger data-slot="alert-dialog-trigger" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -34,10 +41,10 @@ const AlertDialogTrigger = ({
 
 const AlertDialogPortal = ({
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Portal
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
+}: ReactComponentProps<
+  typeof AlertDialogPrimitivePortal
+>): ReactJSX.Element => (
+  <AlertDialogPrimitivePortal data-slot="alert-dialog-portal" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -46,10 +53,10 @@ const AlertDialogPortal = ({
 const AlertDialogOverlay = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Overlay
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Overlay
+}: ReactComponentProps<
+  typeof AlertDialogPrimitiveOverlay
+>): ReactJSX.Element => (
+  <AlertDialogPrimitiveOverlay
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=open]:animate-in fixed inset-0 z-50 bg-black/50",
       className
@@ -65,12 +72,12 @@ const AlertDialogOverlay = ({
 const AlertDialogContent = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Content
->): React.JSX.Element => (
+}: ReactComponentProps<
+  typeof AlertDialogPrimitiveContent
+>): ReactJSX.Element => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
-    <AlertDialogPrimitive.Content
+    <AlertDialogPrimitiveContent
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 bg-background data-[state=closed]:animate-out data-[state=open]:animate-in fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
         className
@@ -87,7 +94,7 @@ const AlertDialogContent = ({
 const AlertDialogHeader = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
     data-slot="alert-dialog-header"
@@ -101,7 +108,7 @@ const AlertDialogHeader = ({
 const AlertDialogFooter = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn(
       "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
@@ -118,10 +125,8 @@ const AlertDialogFooter = ({
 const AlertDialogTitle = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Title
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Title
+}: ReactComponentProps<typeof AlertDialogPrimitiveTitle>): ReactJSX.Element => (
+  <AlertDialogPrimitiveTitle
     className={cn("text-lg font-semibold", className)}
     data-slot="alert-dialog-title"
     {...props}
@@ -134,10 +139,10 @@ const AlertDialogTitle = ({
 const AlertDialogDescription = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Description
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Description
+}: ReactComponentProps<
+  typeof AlertDialogPrimitiveDescription
+>): ReactJSX.Element => (
+  <AlertDialogPrimitiveDescription
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="alert-dialog-description"
     {...props}
@@ -150,10 +155,10 @@ const AlertDialogDescription = ({
 const AlertDialogAction = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Action
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Action
+}: ReactComponentProps<
+  typeof AlertDialogPrimitiveAction
+>): ReactJSX.Element => (
+  <AlertDialogPrimitiveAction
     className={cn(buttonVariants(), className)}
     {...props}
   />
@@ -165,10 +170,10 @@ const AlertDialogAction = ({
 const AlertDialogCancel = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof AlertDialogPrimitive.Cancel
->): React.JSX.Element => (
-  <AlertDialogPrimitive.Cancel
+}: ReactComponentProps<
+  typeof AlertDialogPrimitiveCancel
+>): ReactJSX.Element => (
+  <AlertDialogPrimitiveCancel
     className={cn(buttonVariants({ variant: "outline" }), className)}
     {...props}
   />

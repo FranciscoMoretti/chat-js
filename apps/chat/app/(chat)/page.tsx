@@ -10,7 +10,5 @@ const HomePage = (): React.JSX.Element => (
   </Suspense>
 );
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
-/* oxlint-disable import/no-default-export -- page route: import/no-default-export: Next.js loads this route entry point through its required default export. */
-
+// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component HomePage.
 export default HomePage;
-/* oxlint-enable import/no-default-export */

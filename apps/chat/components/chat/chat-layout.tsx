@@ -1,7 +1,7 @@
 "use client";
 
+import type { JSX as ReactJSX, ComponentProps } from "react";
 import React, { createContext, useContext, useMemo } from "react";
-import type { ComponentProps } from "react";
 
 import {
   ResizableHandle,
@@ -36,14 +36,14 @@ type ChatLayoutProps = Omit<
 > & {
   isSecondaryPanelVisible?: boolean;
 };
-/* oxlint-disable react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ChatLayout: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- ChatLayout: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ChatLayout = ({
   className,
   children,
   isSecondaryPanelVisible = false,
   ...props
-}: ChatLayoutProps) => {
+}: ChatLayoutProps): ReactJSX.Element => {
   const { state: sidebarState } = useSidebar();
   const contextValue = useMemo(
     () => ({ isSecondaryPanelVisible }),
@@ -66,7 +66,7 @@ const ChatLayout = ({
     </ChatLayoutContext.Provider>
   );
 };
-/* oxlint-enable react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
 
 type ChatLayoutMainProps = ComponentProps<typeof ResizablePanel>;
 /* oxlint-disable no-magic-numbers, react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatLayoutMain: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 65); react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */

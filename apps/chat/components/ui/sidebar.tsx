@@ -4,9 +4,19 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import {
+  createContext as reactCreateContext,
+  useContext as useReactContext,
+  useState as useReactState,
+  useCallback as useReactCallback,
+  useEffect as useReactEffect,
+  useMemo as useReactMemo,
+} from "react";
+import type {
+  ComponentProps as ReactComponentProps,
+  CSSProperties as ReactCSSProperties,
+  JSX as ReactJSX,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +47,12 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 /* oxlint-enable no-magic-numbers */
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
+const mobileSidebarStyle: ReactCSSProperties & {
+  readonly "--sidebar-width": string;
+} = { "--sidebar-width": SIDEBAR_WIDTH_MOBILE };
+const sidebarSkeletonStyle: ReactCSSProperties & {
+  readonly "--skeleton-width": string;
+} = { "--skeleton-width": "70%" };
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
@@ -51,13 +67,13 @@ interface SidebarContextProps {
 }
 /* oxlint-disable unicorn/no-null -- SidebarContext: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-const SidebarContext = React.createContext<SidebarContextProps | null>(null);
+const SidebarContext = reactCreateContext<SidebarContextProps | null>(null);
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- useSidebar: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 const useSidebar = () => {
-  const context = React.useContext(SidebarContext);
+  const context = useReactContext(SidebarContext);
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider.");
   }
@@ -66,7 +82,7 @@ const useSidebar = () => {
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- SidebarProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1000); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: KeyboardEvent). */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- SidebarProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1000); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: KeyboardEvent). */
 
 const SidebarProvider = ({
   defaultOpen = true,
@@ -76,19 +92,19 @@ const SidebarProvider = ({
   style,
   children,
   ...props
-}: React.ComponentProps<"div"> & {
+}: ReactComponentProps<"div"> & {
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-}) => {
+}): ReactJSX.Element => {
   const isMobile = useIsMobile();
-  const [openMobile, setOpenMobile] = React.useState(false);
+  const [openMobile, setOpenMobile] = useReactState(false);
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useReactState(defaultOpen);
   const open = openProp ?? internalOpen;
-  const setOpen = React.useCallback(
+  const setOpen = useReactCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
       if (setOpenProp) {
@@ -117,7 +133,7 @@ const SidebarProvider = ({
   );
 
   // Helper to toggle the sidebar.
-  const toggleSidebar = React.useCallback(
+  const toggleSidebar = useReactCallback(
     () =>
       isMobile
         ? setOpenMobile((wasOpen) => !wasOpen)
@@ -126,8 +142,8 @@ const SidebarProvider = ({
   );
 
   // Adds a keyboard shortcut to toggle the sidebar.
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+  useReactEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
@@ -138,14 +154,14 @@ const SidebarProvider = ({
     };
 
     globalThis.addEventListener("keydown", handleKeyDown);
-    return () => globalThis.removeEventListener("keydown", handleKeyDown);
+    return (): void => globalThis.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed";
 
-  const contextValue = React.useMemo<SidebarContextProps>(
+  const contextValue = useReactMemo<SidebarContextProps>(
     () => ({
       isMobile,
       open,
@@ -172,7 +188,7 @@ const SidebarProvider = ({
               "--sidebar-width": SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
-            } as React.CSSProperties
+            } as ReactCSSProperties
           }
           {...props}
         >
@@ -182,8 +198,8 @@ const SidebarProvider = ({
     </SidebarContext.Provider>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Sidebar = ({
   side = "left",
@@ -192,11 +208,11 @@ const Sidebar = ({
   className,
   children,
   ...props
-}: React.ComponentProps<"div"> & {
+}: ReactComponentProps<"div"> & {
   side?: "left" | "right";
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
-}): React.JSX.Element => {
+}): ReactJSX.Element => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
   if (collapsible === "none") {
@@ -224,12 +240,7 @@ const Sidebar = ({
           data-slot="sidebar"
           side={side}
 
-          style={
-            // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preserve the existing CSS custom-property or DOM event-target contract; stronger narrowing requires an interface-specific migration.
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
+          style={mobileSidebarStyle}
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Sidebar</SheetTitle>
@@ -288,15 +299,15 @@ const Sidebar = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- SidebarTrigger: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarTrigger: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 const SidebarTrigger = ({
   className,
   onClick,
   ...props
-}: React.ComponentProps<typeof Button>) => {
+}: ReactComponentProps<typeof Button>): ReactJSX.Element => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -317,14 +328,14 @@ const SidebarTrigger = ({
     </Button>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarRail: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"button">). */
 
 const SidebarRail = ({
   className,
   ...props
-}: React.ComponentProps<"button">): React.JSX.Element => {
+}: ReactComponentProps<"button">): ReactJSX.Element => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -356,7 +367,7 @@ const SidebarRail = ({
 const SidebarInset = ({
   className,
   ...props
-}: React.ComponentProps<"main">): React.JSX.Element => (
+}: ReactComponentProps<"main">): ReactJSX.Element => (
   <main
     className={cn(
       "bg-background relative flex w-full flex-1 flex-col",
@@ -374,7 +385,7 @@ const SidebarInset = ({
 const SidebarInput = ({
   className,
   ...props
-}: React.ComponentProps<typeof Input>): React.JSX.Element => (
+}: ReactComponentProps<typeof Input>): ReactJSX.Element => (
   <Input
     className={cn("bg-background h-8 w-full shadow-none", className)}
     data-sidebar="input"
@@ -389,7 +400,7 @@ const SidebarInput = ({
 const SidebarHeader = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-2 p-2", className)}
     data-sidebar="header"
@@ -404,7 +415,7 @@ const SidebarHeader = ({
 const SidebarFooter = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("flex flex-col gap-2 p-2", className)}
     data-sidebar="footer"
@@ -419,7 +430,7 @@ const SidebarFooter = ({
 const SidebarSeparator = ({
   className,
   ...props
-}: React.ComponentProps<typeof Separator>): React.JSX.Element => (
+}: ReactComponentProps<typeof Separator>): ReactJSX.Element => (
   <Separator
     className={cn(
       "bg-sidebar-border mx-2 data-[orientation=horizontal]:w-auto",
@@ -437,7 +448,7 @@ const SidebarSeparator = ({
 const SidebarContent = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn(
       "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
@@ -455,7 +466,7 @@ const SidebarContent = ({
 const SidebarGroup = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
     data-sidebar="group"
@@ -471,7 +482,7 @@ const SidebarGroupLabel = ({
   className,
   asChild = false,
   ...props
-}: React.ComponentProps<"div"> & { asChild?: boolean }): React.JSX.Element => {
+}: ReactComponentProps<"div"> & { asChild?: boolean }): ReactJSX.Element => {
   const Comp = asChild ? Slot : "div";
 
   return (
@@ -495,9 +506,9 @@ const SidebarGroupAction = ({
   className,
   asChild = false,
   ...props
-}: React.ComponentProps<"button"> & {
+}: ReactComponentProps<"button"> & {
   asChild?: boolean;
-}): React.JSX.Element => {
+}): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
 
   return (
@@ -522,7 +533,7 @@ const SidebarGroupAction = ({
 const SidebarGroupContent = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("w-full text-sm", className)}
     data-sidebar="group-content"
@@ -537,7 +548,7 @@ const SidebarGroupContent = ({
 const SidebarMenu = ({
   className,
   ...props
-}: React.ComponentProps<"ul">): React.JSX.Element => (
+}: ReactComponentProps<"ul">): ReactJSX.Element => (
   <ul
     className={cn("flex w-full min-w-0 flex-col gap-1", className)}
     data-sidebar="menu"
@@ -552,7 +563,7 @@ const SidebarMenu = ({
 const SidebarMenuItem = ({
   className,
   ...props
-}: React.ComponentProps<"li">): React.JSX.Element => (
+}: ReactComponentProps<"li">): ReactJSX.Element => (
   <li
     className={cn("group/menu-item relative", className)}
     data-sidebar="menu-item"
@@ -590,11 +601,11 @@ const SidebarMenuButton = ({
   tooltip,
   className,
   ...props
-}: React.ComponentProps<"button"> & {
+}: ReactComponentProps<"button"> & {
   asChild?: boolean;
   isActive?: boolean;
-  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-} & VariantProps<typeof sidebarMenuButtonVariants>): React.JSX.Element => {
+  tooltip?: string | ReactComponentProps<typeof TooltipContent>;
+} & VariantProps<typeof sidebarMenuButtonVariants>): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
 
@@ -637,10 +648,10 @@ const SidebarMenuAction = ({
   asChild = false,
   showOnHover = false,
   ...props
-}: React.ComponentProps<"button"> & {
+}: ReactComponentProps<"button"> & {
   asChild?: boolean;
   showOnHover?: boolean;
-}): React.JSX.Element => {
+}): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
 
   return (
@@ -670,7 +681,7 @@ const SidebarMenuAction = ({
 const SidebarMenuBadge = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn(
       "text-sidebar-foreground pointer-events-none absolute right-1 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums select-none",
@@ -688,52 +699,43 @@ const SidebarMenuBadge = ({
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSkeleton: react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSkeleton: react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const SidebarMenuSkeleton = ({
   className,
   showIcon = false,
   ...props
-}: React.ComponentProps<"div"> & {
+}: ReactComponentProps<"div"> & {
   showIcon?: boolean;
-}): React.JSX.Element => {
-  const width = "70%";
-
-  return (
-    <div
-      className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
-      data-sidebar="menu-skeleton"
-      data-slot="sidebar-menu-skeleton"
-      {...props}
-    >
-      {showIcon && (
-        <Skeleton
-          className="size-4 rounded-md"
-          data-sidebar="menu-skeleton-icon"
-        />
-      )}
+}): ReactJSX.Element => (
+  <div
+    className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
+    data-sidebar="menu-skeleton"
+    data-slot="sidebar-menu-skeleton"
+    {...props}
+  >
+    {showIcon && (
       <Skeleton
-        className="h-4 max-w-(--skeleton-width) flex-1"
-        data-sidebar="menu-skeleton-text"
-
-        style={
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preserve the existing CSS custom-property or DOM event-target contract; stronger narrowing requires an interface-specific migration.
-          {
-            "--skeleton-width": width,
-          } as React.CSSProperties
-        }
+        className="size-4 rounded-md"
+        data-sidebar="menu-skeleton-icon"
       />
-    </div>
-  );
-};
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+    )}
+    <Skeleton
+      className="h-4 max-w-(--skeleton-width) flex-1"
+      data-sidebar="menu-skeleton-text"
+
+      style={sidebarSkeletonStyle}
+    />
+  </div>
+);
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSub: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"ul">). */
 
 const SidebarMenuSub = ({
   className,
   ...props
-}: React.ComponentProps<"ul">): React.JSX.Element => (
+}: ReactComponentProps<"ul">): ReactJSX.Element => (
   <ul
     className={cn(
       "border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5",
@@ -752,7 +754,7 @@ const SidebarMenuSub = ({
 const SidebarMenuSubItem = ({
   className,
   ...props
-}: React.ComponentProps<"li">): React.JSX.Element => (
+}: ReactComponentProps<"li">): ReactJSX.Element => (
   <li
     className={cn("group/menu-sub-item relative", className)}
     data-sidebar="menu-sub-item"
@@ -770,11 +772,11 @@ const SidebarMenuSubButton = ({
   isActive = false,
   className,
   ...props
-}: React.ComponentProps<"a"> & {
+}: ReactComponentProps<"a"> & {
   asChild?: boolean;
   size?: "sm" | "md";
   isActive?: boolean;
-}): React.JSX.Element => {
+}): ReactJSX.Element => {
   const Comp = asChild ? Slot : "a";
 
   return (

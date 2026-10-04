@@ -1,8 +1,10 @@
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import { forwardRef as reactForwardRef } from "react";
+import type {
+  HTMLAttributes as ReactHTMLAttributes,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -23,10 +25,10 @@ const alertVariants = cva(
 );
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Alert: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }). */
 
-const Alert = React.forwardRef<
+const Alert = reactForwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+>(({ className, variant, ...props }, ref): ReactJSX.Element => (
   <div
     className={cn(alertVariants({ variant }), className)}
     ref={ref}
@@ -36,12 +38,12 @@ const Alert = React.forwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Alert.displayName = "Alert";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AlertTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const AlertTitle = React.forwardRef<
+const AlertTitle = reactForwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <>
     {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- Shared primitive forwards heading children through props. */}
     <h5
@@ -51,21 +53,21 @@ const AlertTitle = React.forwardRef<
     />
   </>
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 AlertTitle.displayName = "AlertTitle";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AlertDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const AlertDescription = React.forwardRef<
+const AlertDescription = reactForwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <div
     className={cn("text-sm [&_p]:leading-relaxed", className)}
     ref={ref}
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 AlertDescription.displayName = "AlertDescription";
 
 export { Alert, AlertDescription, AlertTitle };

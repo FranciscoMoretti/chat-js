@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -34,17 +35,17 @@ import { EveInitialMessage } from "./eve-initial-message";
 import { useEveRuntime } from "./eve-logical-context";
 import { EveOptimisticResponseGroup } from "./eve-optimistic-response-group";
 import { useEveAttachments } from "./use-eve-attachments";
-/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- NewEveConversation: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: ReturnType<typeof prepareSelectedCreation>); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- NewEveConversation: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: ReturnType<typeof prepareSelectedCreation>); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const NewEveConversation = ({
   ownerId,
   projectId,
   onPendingChange,
 }: {
-  ownerId: string;
-  projectId?: string;
-  onPendingChange?: (pending: boolean) => void;
-}) => {
+  readonly ownerId: string;
+  readonly projectId?: string;
+  readonly onPendingChange?: (pending: boolean) => void;
+}): ReactJSX.Element => {
   const openRuntime = useEveRuntime();
   const scope = useMemo(
     () =>
@@ -99,7 +100,7 @@ export const NewEveConversation = ({
   }, [ownerId, scope, setAttachments]);
   const retainOperation = (
     operation: ReturnType<typeof prepareSelectedCreation>
-  ) => {
+  ): void => {
     setDraft(restoreDraft(operation.message).text);
     setSelectedTool(operation.selectedTool ?? null);
     setRetainedModelId("modelIds" in operation ? undefined : operation.modelId);
@@ -109,7 +110,7 @@ export const NewEveConversation = ({
     setOptimisticComparison("modelIds" in operation ? operation : undefined);
     setRetainedOperationId(operation.operationId);
   };
-  const submit = async () => {
+  const submit = async (): Promise<void> => {
     if (lock.current) {
       return;
     }
@@ -235,4 +236,4 @@ export const NewEveConversation = ({
   }
   return projectId ? composer : <ChatWelcomeView>{composer}</ChatWelcomeView>;
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */

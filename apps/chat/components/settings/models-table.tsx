@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { JSX as ReactJSX } from "react";
 import React, { useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
@@ -11,15 +12,15 @@ import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
 
 import { ModelRow } from "./model-row";
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ModelsTable: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _err). */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ModelsTable: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _err). */
 
 export const ModelsTable = ({
   search,
   className,
 }: {
-  search: string;
-  className?: string;
-}) => {
+  readonly search: string;
+  readonly className?: string;
+}): ReactJSX.Element => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { allModels, models: enabledModels } = useChatModels();
@@ -72,14 +73,12 @@ export const ModelsTable = ({
   );
 
   const enabledModelsSet = useMemo(() => {
-    const enabled = getDefaultEnabledModels(allModels);
+    const enabled: Set<string> = getDefaultEnabledModels(allModels);
     for (const pref of preferences ?? []) {
       if (pref.enabled) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preference IDs originate from the catalog-backed settings API; replacing the assertion requires migrating persisted model-ID types.
-        enabled.add(pref.modelId as AppModelId);
+        enabled.add(pref.modelId);
       } else {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preference IDs originate from the catalog-backed settings API; replacing the assertion requires migrating persisted model-ID types.
-        enabled.delete(pref.modelId as AppModelId);
+        enabled.delete(pref.modelId);
       }
     }
     return enabled;
@@ -165,4 +164,4 @@ export const ModelsTable = ({
     </>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

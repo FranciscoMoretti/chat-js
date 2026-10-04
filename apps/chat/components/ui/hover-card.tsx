@@ -1,29 +1,31 @@
 "use client";
-/* oxlint-disable import/no-namespace -- @radix-ui/react-hover-card import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
 
-import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
-/* oxlint-enable import/no-namespace */
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import {
+  Root as HoverCardPrimitiveRoot,
+  Trigger as HoverCardPrimitiveTrigger,
+  Content as HoverCardPrimitiveContent,
+  Portal as HoverCardPrimitivePortal,
+} from "@radix-ui/react-hover-card";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- HoverCard: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const HoverCard = ({
   ...props
-}: React.ComponentProps<typeof HoverCardPrimitive.Root>): React.JSX.Element => (
-  <HoverCardPrimitive.Root data-slot="hover-card" {...props} />
+}: ReactComponentProps<typeof HoverCardPrimitiveRoot>): ReactJSX.Element => (
+  <HoverCardPrimitiveRoot data-slot="hover-card" {...props} />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- HoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const HoverCardTrigger = ({
   ...props
-}: React.ComponentProps<
-  typeof HoverCardPrimitive.Trigger
->): React.JSX.Element => (
-  <HoverCardPrimitive.Trigger data-slot="hover-card-trigger" {...props} />
+}: ReactComponentProps<typeof HoverCardPrimitiveTrigger>): ReactJSX.Element => (
+  <HoverCardPrimitiveTrigger data-slot="hover-card-trigger" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -34,11 +36,9 @@ const HoverCardContent = ({
   align = "center",
   sideOffset = 4,
   ...props
-}: React.ComponentProps<
-  typeof HoverCardPrimitive.Content
->): React.JSX.Element => (
-  <HoverCardPrimitive.Portal data-slot="hover-card-portal">
-    <HoverCardPrimitive.Content
+}: ReactComponentProps<typeof HoverCardPrimitiveContent>): ReactJSX.Element => (
+  <HoverCardPrimitivePortal data-slot="hover-card-portal">
+    <HoverCardPrimitiveContent
       align={align}
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in z-50 w-64 origin-(--radix-hover-card-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
@@ -48,7 +48,7 @@ const HoverCardContent = ({
       sideOffset={sideOffset}
       {...props}
     />
-  </HoverCardPrimitive.Portal>
+  </HoverCardPrimitivePortal>
 );
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 

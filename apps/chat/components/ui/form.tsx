@@ -1,13 +1,17 @@
 "use client";
 
-/* oxlint-disable import/no-namespace -- @radix-ui/react-label import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-
-import type * as LabelPrimitive from "@radix-ui/react-label";
-/* oxlint-enable import/no-namespace */
+import type { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import {
+  createContext as reactCreateContext,
+  useMemo as useReactMemo,
+  useContext as useReactContext,
+  useId as useReactId,
+} from "react";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 import {
   Controller,
   FormProvider,
@@ -28,22 +32,19 @@ interface FormFieldContextValue<
   name: TName;
 }
 
-const FormFieldContext = React.createContext<FormFieldContextValue>(
+const FormFieldContext = reactCreateContext<FormFieldContextValue>(
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
   {} as FormFieldContextValue
 );
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- FormField: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: ControllerProps<TFieldValues, TName>). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- FormField: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: ControllerProps<TFieldValues, TName>). */
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >({
   ...props
-}: ControllerProps<TFieldValues, TName>) => {
-  const contextValue = React.useMemo(
-    () => ({ name: props.name }),
-    [props.name]
-  );
+}: ControllerProps<TFieldValues, TName>): ReactJSX.Element => {
+  const contextValue = useReactMemo(() => ({ name: props.name }), [props.name]);
 
   return (
     <FormFieldContext.Provider value={contextValue}>
@@ -51,21 +52,21 @@ const FormField = <
     </FormFieldContext.Provider>
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 interface FormItemContextValue {
   id: string;
 }
 
-const FormItemContext = React.createContext<FormItemContextValue>(
+const FormItemContext = reactCreateContext<FormItemContextValue>(
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
   {} as FormItemContextValue
 );
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- useFormField: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including fieldContext). */
 
 const useFormField = () => {
-  const fieldContext = React.useContext(FormFieldContext);
-  const itemContext = React.useContext(FormItemContext);
+  const fieldContext = useReactContext(FormFieldContext);
+  const itemContext = useReactContext(FormItemContext);
   const { getFieldState } = useFormContext();
   const formState = useFormState({ name: fieldContext.name });
   const fieldState = getFieldState(fieldContext.name, formState);
@@ -86,11 +87,14 @@ const useFormField = () => {
   };
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- FormItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- FormItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
-const FormItem = ({ className, ...props }: React.ComponentProps<"div">) => {
-  const id = React.useId();
-  const contextValue = React.useMemo(() => ({ id }), [id]);
+const FormItem = ({
+  className,
+  ...props
+}: ReactComponentProps<"div">): ReactJSX.Element => {
+  const id = useReactId();
+  const contextValue = useReactMemo(() => ({ id }), [id]);
 
   return (
     <FormItemContext.Provider value={contextValue}>
@@ -102,14 +106,14 @@ const FormItem = ({ className, ...props }: React.ComponentProps<"div">) => {
     </FormItemContext.Provider>
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- FormLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const FormLabel = ({
   className,
   ...props
-}: React.ComponentProps<typeof LabelPrimitive.Root>): React.JSX.Element => {
+}: ReactComponentProps<typeof LabelPrimitiveRoot>): ReactJSX.Element => {
   const { error, formItemId } = useFormField();
 
   return (
@@ -128,7 +132,7 @@ const FormLabel = ({
 
 const FormControl = ({
   ...props
-}: React.ComponentProps<typeof Slot>): React.JSX.Element => {
+}: ReactComponentProps<typeof Slot>): ReactJSX.Element => {
   const { error, formItemId, formDescriptionId, formMessageId } =
     useFormField();
 
@@ -151,7 +155,7 @@ const FormControl = ({
 const FormDescription = ({
   className,
   ...props
-}: React.ComponentProps<"p">): React.JSX.Element => {
+}: ReactComponentProps<"p">): ReactJSX.Element => {
   const { formDescriptionId } = useFormField();
 
   return (
@@ -170,7 +174,7 @@ const FormDescription = ({
 const FormMessage = ({
   className,
   ...props
-}: React.ComponentProps<"p">): React.JSX.Element | null => {
+}: ReactComponentProps<"p">): ReactJSX.Element | null => {
   const { error, formMessageId } = useFormField();
   const body = error ? (error?.message ?? "") : props.children;
 

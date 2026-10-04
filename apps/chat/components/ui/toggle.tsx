@@ -1,14 +1,12 @@
 "use client";
 
-/* oxlint-disable import/no-namespace -- @radix-ui/react-toggle import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-
-import * as TogglePrimitive from "@radix-ui/react-toggle";
-/* oxlint-enable import/no-namespace */
+import { Root as TogglePrimitiveRoot } from "@radix-ui/react-toggle";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -37,9 +35,9 @@ const Toggle = ({
   variant,
   size,
   ...props
-}: React.ComponentProps<typeof TogglePrimitive.Root> &
-  VariantProps<typeof toggleVariants>): React.JSX.Element => (
-  <TogglePrimitive.Root
+}: ReactComponentProps<typeof TogglePrimitiveRoot> &
+  VariantProps<typeof toggleVariants>): ReactJSX.Element => (
+  <TogglePrimitiveRoot
     className={cn(toggleVariants({ className, size, variant }))}
     data-slot="toggle"
     {...props}

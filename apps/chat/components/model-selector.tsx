@@ -7,6 +7,7 @@ import {
   ChevronUpIcon,
   FilterIcon,
 } from "lucide-react";
+import type { JSX as ReactJSX, ReactNode } from "react";
 import React, {
   memo,
   startTransition,
@@ -16,7 +17,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { ReactNode } from "react";
 
 import { InternalLink } from "@/components/internal-link";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +51,7 @@ import {
   getPrimarySelectedModelId,
   isSelectedModelCounts,
 } from "@/lib/ai/types";
-import type { SelectedModelValue } from "@/lib/ai/types";
+import type { SelectedModelCounts, SelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { getEnabledFeatures } from "@/lib/features-config";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
@@ -111,19 +111,16 @@ const getFeatureIcons = (model: AppModelDefinition) => {
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- buildMultiModelSelection: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including modelIds: AppModelId[]). */
-
 const buildMultiModelSelection = (
-  modelIds: AppModelId[]
-): Record<AppModelId, number> => {
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-  const selection = {} as Record<AppModelId, number>;
+  modelIds: readonly AppModelId[]
+): SelectedModelCounts => {
+  const selection: SelectedModelCounts = {};
   for (const modelId of modelIds) {
     selection[modelId] = 1;
   }
   return selection;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-disable no-magic-numbers -- getSelectionCount: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1). */
 
 const getSelectionCount = (selection: SelectedModelValue): number => {
@@ -141,7 +138,7 @@ const getSelectionCount = (selection: SelectedModelValue): number => {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PureCommandItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including feature); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled). */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PureCommandItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including feature); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled). */
 
 const PureCommandItem = ({
   model,
@@ -159,7 +156,7 @@ const PureCommandItem = ({
   selectionControl?: ReactNode;
   onSelect: () => void;
   onCountChange?: (delta: number) => void;
-}) => {
+}): ReactJSX.Element => {
   const featureIcons = useMemo(() => getFeatureIcons(model), [model]);
   const searchValue = useMemo(
     () =>
@@ -243,7 +240,7 @@ const PureCommandItem = ({
     </UICommandItem>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- CommandItem: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prev). */
 
@@ -257,7 +254,7 @@ const CommandItem = memo(
     (prev.onCountChange !== undefined) === (next.onCountChange !== undefined)
 );
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureModelSelector: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including [, count]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including selectedItem?.model.name); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureModelSelector: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including [, count]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including selectedItem?.model.name); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureModelSelector = ({
   allowMultiple = true,
@@ -271,7 +268,7 @@ const PureModelSelector = ({
   selectedModelSelection: SelectedModelValue;
   onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
   className?: string;
-}) => {
+}): ReactJSX.Element => {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
@@ -314,11 +311,10 @@ const PureModelSelector = ({
       return new Set<AppModelId>([optimisticSelection]);
     }
 
-    return new Set<AppModelId>(
+    return new Set<string>(
       Object.entries(optimisticSelection)
         .filter(([, count]) => typeof count === "number" && count > 0)
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-        .map(([modelId]) => modelId as AppModelId)
+        .map(([modelId]) => modelId)
     );
   }, [optimisticSelection]);
 
@@ -445,16 +441,12 @@ const PureModelSelector = ({
     (id: AppModelId) => {
       startTransition(() => {
         const { current } = optimisticSelectionRef;
-        const currentCounts: Record<AppModelId, number> =
-          typeof current === "string"
-            ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-              ({ [current]: 1 } as Record<AppModelId, number>)
-            : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-              (current as Record<AppModelId, number>);
+        const currentCounts: SelectedModelCounts =
+          typeof current === "string" ? { [current]: 1 } : current;
 
         const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
 
-        let nextSelection: Record<AppModelId, number>;
+        let nextSelection: SelectedModelCounts;
         if (isAlreadySelected) {
           const remaining = Object.entries(currentCounts).filter(
             ([candidateId, selectionCount]) =>
@@ -463,11 +455,7 @@ const PureModelSelector = ({
           if (remaining.length === 0) {
             return;
           }
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-          nextSelection = Object.fromEntries(remaining) as Record<
-            AppModelId,
-            number
-          >;
+          nextSelection = Object.fromEntries(remaining);
         } else {
           nextSelection = { ...currentCounts, [id]: 1 };
         }
@@ -483,12 +471,8 @@ const PureModelSelector = ({
     (id: AppModelId, delta: number) => {
       startTransition(() => {
         const { current } = optimisticSelectionRef;
-        const currentCounts: Record<AppModelId, number> =
-          typeof current === "string"
-            ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-              ({ [current]: 1 } as Record<AppModelId, number>)
-            : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-              (current as Record<AppModelId, number>);
+        const currentCounts: SelectedModelCounts =
+          typeof current === "string" ? { [current]: 1 } : current;
 
         const newCount = (currentCounts[id] ?? 0) + delta;
         let nextSelection: SelectedModelValue;
@@ -575,12 +559,11 @@ const PureModelSelector = ({
         onFocusOutside={(event) => event.preventDefault()}
 
         onInteractOutside={(event) => {
-          // Prevent closing when interacting with nested popovers rendered in portals
+          // Radix dispatches the outside event on its original target. Elements, including SVGs, expose closest(); other EventTargets do not.
+          // Keep nested portal interactions from closing the model picker.
           if (
-            // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preserve the existing CSS custom-property or DOM event-target contract; stronger narrowing requires an interface-specific migration.
-            (event.target as HTMLElement).closest(
-              "[data-radix-popper-content-wrapper]"
-            )
+            event.target instanceof Element &&
+            event.target.closest("[data-radix-popper-content-wrapper]")
           ) {
             event.preventDefault();
           }
@@ -702,10 +685,7 @@ const PureModelSelector = ({
                     : model.id === optimisticModelId;
                   const count =
                     useMultipleModels && typeof optimisticSelection !== "string"
-                      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Dynamic selection records use catalog-derived model IDs; replacing assertions requires redesigning sparse model-count and optimistic-selection types.
-                        ((optimisticSelection as Record<AppModelId, number>)[
-                          model.id
-                        ] ?? 0)
+                      ? (optimisticSelection[model.id] ?? 0)
                       : undefined;
                   return (
                     <CommandItem
@@ -716,7 +696,7 @@ const PureModelSelector = ({
                       model={model}
                       onCountChange={
                         useMultipleModels
-                          ? (delta) => handleCountChange(model.id, delta)
+                          ? (delta): void => handleCountChange(model.id, delta)
                           : undefined
                       }
                       onSelect={() =>
@@ -758,7 +738,7 @@ const PureModelSelector = ({
     </Popover>
   );
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 export const ModelSelector = memo(
   PureModelSelector,

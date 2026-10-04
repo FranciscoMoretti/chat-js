@@ -1,9 +1,10 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -43,10 +44,10 @@ const Button = ({
   size,
   asChild = false,
   ...props
-}: React.ComponentProps<"button"> &
+}: ReactComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
-  }): React.JSX.Element => {
+  }): ReactJSX.Element => {
   const Comp = asChild ? Slot : "button";
 
   return (

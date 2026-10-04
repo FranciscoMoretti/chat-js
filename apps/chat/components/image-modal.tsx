@@ -1,6 +1,7 @@
 "use client";
 
 import { CopyIcon, DownloadIcon, ImageOffIcon, XIcon } from "lucide-react";
+import type { JSX as ReactJSX } from "react";
 import React from "react";
 import { toast } from "sonner";
 
@@ -16,16 +17,15 @@ import { useImageLoadError } from "@/hooks/use-image-load-error";
 import { cn } from "@/lib/utils";
 
 interface ImageModalProps {
-  imageName?: string;
-  imageUrl: string;
-  isOpen: boolean;
-  onClose: () => void;
-  showActions?: boolean;
+  readonly imageName?: string;
+  readonly imageUrl: string;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly showActions?: boolean;
 }
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- handleCopyImage: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.MouseEvent). */
 
 const handleCopyImage = async (
-  event: React.MouseEvent,
+  event: Readonly<Pick<React.MouseEvent, "stopPropagation">>,
   imageUrl: string | undefined
 ): Promise<void> => {
   event.stopPropagation();
@@ -42,11 +42,11 @@ const handleCopyImage = async (
     toast.error("Failed to copy image to clipboard");
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types -- handleDownload: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.MouseEvent). */
+
+/* oxlint-disable max-statements -- handleDownload: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation. */
 
 const handleDownload = async (
-  event: React.MouseEvent,
+  event: Readonly<Pick<React.MouseEvent, "stopPropagation">>,
   imageUrl: string | undefined
 ): Promise<void> => {
   event.stopPropagation();
@@ -69,15 +69,15 @@ const handleDownload = async (
     toast.error("Failed to download image");
   }
 };
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- ImageActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
 const ImageActions = ({
   className,
   imageUrl,
 }: {
-  className?: string;
-  imageUrl: string | undefined;
+  readonly className?: string;
+  readonly imageUrl: string | undefined;
 }): React.JSX.Element => (
   <div className={cn("flex items-center gap-1", className)}>
     <Button
@@ -110,7 +110,7 @@ const ImageActions = ({
 );
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
+/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 const ImageModal = ({
   isOpen,
@@ -118,7 +118,7 @@ const ImageModal = ({
   imageUrl,
   imageName,
   showActions = true,
-}: ImageModalProps) => {
+}: ImageModalProps): ReactJSX.Element => {
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
 
   return (
@@ -173,5 +173,5 @@ const ImageModal = ({
     </Dialog>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { ImageActions, ImageModal };

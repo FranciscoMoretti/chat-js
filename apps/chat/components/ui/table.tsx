@@ -1,14 +1,18 @@
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import { forwardRef as reactForwardRef } from "react";
+import type {
+  HTMLAttributes as ReactHTMLAttributes,
+  JSX as ReactJSX,
+  ThHTMLAttributes as ReactThHTMLAttributes,
+  TdHTMLAttributes as ReactTdHTMLAttributes,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Table: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const Table = React.forwardRef<
+const Table = reactForwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLTableElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <div className="relative w-full overflow-auto">
     <table
       className={cn("w-full caption-bottom text-sm", className)}
@@ -19,36 +23,36 @@ const Table = React.forwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Table.displayName = "Table";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TableHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TableHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const TableHeader = React.forwardRef<
+const TableHeader = reactForwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <thead className={cn("[&_tr]:border-b", className)} ref={ref} {...props} />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 TableHeader.displayName = "TableHeader";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TableBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TableBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const TableBody = React.forwardRef<
+const TableBody = reactForwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <tbody
     className={cn("[&_tr:last-child]:border-0", className)}
     ref={ref}
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 TableBody.displayName = "TableBody";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TableFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TableFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const TableFooter = React.forwardRef<
+const TableFooter = reactForwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <tfoot
     className={cn(
       "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
@@ -58,14 +62,14 @@ const TableFooter = React.forwardRef<
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 TableFooter.displayName = "TableFooter";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TableRow: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TableRow: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const TableRow = React.forwardRef<
+const TableRow = reactForwardRef<
   HTMLTableRowElement,
-  React.HTMLAttributes<HTMLTableRowElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLTableRowElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <tr
     className={cn(
       "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
@@ -75,14 +79,14 @@ const TableRow = React.forwardRef<
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 TableRow.displayName = "TableRow";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TableHead: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TableHead: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const TableHead = React.forwardRef<
+const TableHead = reactForwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactThHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <th
     className={cn(
       "text-muted-foreground h-12 px-4 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0",
@@ -92,35 +96,35 @@ const TableHead = React.forwardRef<
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 TableHead.displayName = "TableHead";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TableCell: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TableCell: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const TableCell = React.forwardRef<
+const TableCell = reactForwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactTdHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <td
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
     ref={ref}
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 TableCell.displayName = "TableCell";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TableCaption: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TableCaption: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const TableCaption = React.forwardRef<
+const TableCaption = reactForwardRef<
   HTMLTableCaptionElement,
-  React.HTMLAttributes<HTMLTableCaptionElement>
->(({ className, ...props }, ref): React.JSX.Element => (
+  ReactHTMLAttributes<HTMLTableCaptionElement>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <caption
     className={cn("text-muted-foreground mt-4 text-sm", className)}
     ref={ref}
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 TableCaption.displayName = "TableCaption";
 
 export {
