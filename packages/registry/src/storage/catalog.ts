@@ -37,7 +37,7 @@ const sdkPackage = z
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable node/no-sync */
 
-const unsupported = new Set(["box", "bun-s3", "convex", "fs"]);
+const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const builtInStorage = PROVIDER_NAMES.filter(
   (id) => !unsupported.has(id)
