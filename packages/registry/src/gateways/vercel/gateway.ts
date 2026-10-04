@@ -47,11 +47,15 @@ class VercelGateway
     return this.getProvider()(modelId);
   }
 
-  public createImageModel(modelId: string): ImageModel {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK model-ID literal suggestions and open string intersection; this primitive input cannot be mutated.
+  public createImageModel(modelId: VercelImageModelId): ImageModel {
     return this.getProvider().imageModel(modelId);
   }
 
-  public createVideoModel(modelId: string): Experimental_VideoModelV4 {
+  public createVideoModel(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK model-ID literal suggestions and open string intersection; this primitive input cannot be mutated.
+    modelId: VercelVideoModelId
+  ): Experimental_VideoModelV4 {
     return this.getProvider().videoModel(modelId);
   }
 

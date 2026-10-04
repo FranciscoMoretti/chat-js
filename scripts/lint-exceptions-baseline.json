@@ -1565,6 +1565,7 @@
     "[\"apps/chat/lib/ai/errors.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/ai/gateway.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/gateway.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/ai/gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/ai/gateways/fallback-models.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/gateways/fallback-models.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/gateways/fallback-models.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
@@ -5697,6 +5698,7 @@
     "[\"packages/registry/src/gateways/openrouter/gateway.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/gateways/vercel/gateway.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/gateways/vercel/gateway.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/gateways/vercel/gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 2,
     "[\"packages/registry/src/installation-selection.test.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/storage/catalog.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/storage/catalog.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
@@ -11867,10 +11869,14 @@
       "616bf5c9fe5f2830fe121730c446021798847a0fc9f8cf5cd179443b802f885d"
     ],
     "[\"apps/chat/lib/ai/gateway.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "0cf24180d111b067aa9676fc440a8340c5453f704c558c823af92ef49d62eb74"
+      "f3a42128045dd8d0fb67e07147b931a1308ffd99c49c7db64f314e13a7d6a11b"
     ],
     "[\"apps/chat/lib/ai/gateway.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "75817fd35d50c248a88cfd044a621f0f85324763cbe5632bc8001fcfafab59ac"
+      "b55024fea54754878d205795c331024e06a7a366771b579c61b7bb982f3ad41e"
+    ],
+    "[\"apps/chat/lib/ai/gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "f9ea7d43f10cb90d13a9ea9fc1659c8930d957b698b38bbf209225b215ae489e",
+      "0eafaf4525a2958d1b45eb71572bb1eaae72ab37e2f99e35aff610e24eb0d066"
     ],
     "[\"apps/chat/lib/ai/gateways/fallback-models.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "a69428962d81ca3fdaa9d7c0e5acb832a7c0c4e8ca7034c54b68211c7bba6959"
@@ -26943,10 +26949,14 @@
       "cd112c5436539901d69bdb223a41eece2cae9c103b8ea96c4a131d4e74bf352f"
     ],
     "[\"packages/registry/src/gateways/vercel/gateway.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "0cf24180d111b067aa9676fc440a8340c5453f704c558c823af92ef49d62eb74"
+      "f3a42128045dd8d0fb67e07147b931a1308ffd99c49c7db64f314e13a7d6a11b"
     ],
     "[\"packages/registry/src/gateways/vercel/gateway.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "75817fd35d50c248a88cfd044a621f0f85324763cbe5632bc8001fcfafab59ac"
+      "b55024fea54754878d205795c331024e06a7a366771b579c61b7bb982f3ad41e"
+    ],
+    "[\"packages/registry/src/gateways/vercel/gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "f9ea7d43f10cb90d13a9ea9fc1659c8930d957b698b38bbf209225b215ae489e",
+      "0eafaf4525a2958d1b45eb71572bb1eaae72ab37e2f99e35aff610e24eb0d066"
     ],
     "[\"packages/registry/src/installation-selection.test.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "abf8a42081b695dc41d2ee7683481dedface4a1d2b38e20b23052d738f813414"
