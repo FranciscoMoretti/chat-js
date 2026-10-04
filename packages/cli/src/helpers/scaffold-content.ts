@@ -52,6 +52,7 @@ const REPOSITORY_ONLY_FILES = new Set([
   "lib/db/mcp-oauth-lock.test.ts",
   "tests/fixtures/eve-oauth-mcp-server.ts",
   "vitest.eve.config.ts",
+  "vitest.eve-provider.config.ts",
 ]);
 
 const isRepositoryOnlyFile = (relativePath: string): boolean => {
@@ -169,6 +170,7 @@ const normalizeScaffoldContent = async (destination: string): Promise<void> => {
   for (const script of [
     "eval:dev",
     "eval:serve",
+    "test:native",
     "test:research:native",
     "test:tools:live",
   ]) {
