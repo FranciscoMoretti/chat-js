@@ -102,6 +102,15 @@ test("plans transitive dependencies and repairs against the complete resulting i
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 const definition = (id: string) =>
   toolDefinitionSchema.parse({
+    codeExecutionCapabilities: {
+      cancellation: "terminate",
+      cleanup: "durable-allocation",
+      files: "ephemeral",
+      languages: ["python", "javascript"],
+      timeout: "bounded",
+      usage: "single-receipt",
+    },
+    codeExecutorExport: "executeCode",
     contractVersion: 1,
     id,
     kind: "tool",
@@ -267,3 +276,66 @@ test("validates feature dependencies and exclusive storage slots before writing"
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+
+/* oxlint-disable eslint/max-lines-per-function, eslint/max-statements -- The upgrade scenario preserves the old installed descriptor while testing both successful planning and pre-write rejection. */
+/* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun rejection matchers are awaited despite their void declarations. */
+test("replaces an older executor descriptor but rejects newly requested providers without capabilities", async (): Promise<void> => {
+  const root = await mkdtemp(join(tmpdir(), "chatjs-executor-upgrade-"));
+  roots.push(root);
+  const old = definition("previous-executor");
+  const { codeExecutionCapabilities, ...oldDescriptor } = old;
+  expect(codeExecutionCapabilities).toBeDefined();
+  const directory = join(root, "tools/chatjs/previous-executor");
+  await mkdir(directory, { recursive: true });
+  const installed = JSON.stringify(oldDescriptor);
+  await writeFile(join(directory, "chatjs.json"), installed);
+  await writeFile(
+    join(directory, "tool.ts"),
+    "export const executeCode = {};\n"
+  );
+  let declared = true;
+  const server = Bun.serve({
+    fetch(): Response {
+      const complete = definition("next-executor");
+      const { codeExecutionCapabilities: capabilities, ...incomplete } =
+        complete;
+      return Response.json({
+        meta: {
+          chatjs: declared
+            ? { ...incomplete, codeExecutionCapabilities: capabilities }
+            : incomplete,
+        },
+        name: complete.id,
+        type: "registry:item",
+      });
+    },
+    hostname: "127.0.0.1",
+    port: 0,
+  });
+  try {
+    const selection = {
+      features: [],
+      tools: [`http://127.0.0.1:${server.port}/executor.json`],
+    };
+    const planned = await planInstallation(root, selection, { replace: true });
+    expect(
+      planned.replacements.map(
+        ({
+          previous,
+        }: Readonly<{ previous: Readonly<{ id: string }> }>): string =>
+          previous.id
+      )
+    ).toEqual([old.id]);
+    declared = false;
+    await expect(
+      planInstallation(root, selection, { replace: true })
+    ).rejects.toThrow("declared execution, cleanup and usage capabilities");
+    expect(await readFile(join(directory, "chatjs.json"), "utf-8")).toBe(
+      installed
+    );
+  } finally {
+    await server.stop(true);
+  }
+});
+/* oxlint-enable eslint/max-lines-per-function, eslint/max-statements */
+/* oxlint-enable typescript/await-thenable, typescript/no-confusing-void-expression */

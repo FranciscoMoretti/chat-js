@@ -108,6 +108,15 @@ export const planInstallation = async (
       }
       case "tool": {
         const definition = toolDefinitionSchema.parse(item.meta.chatjs);
+        if (
+          definition.slot === "codeExecution" &&
+          (!definition.codeExecutorExport ||
+            !definition.codeExecutionCapabilities)
+        ) {
+          throw new Error(
+            "Selected codeExecution provider requires a typed executor and declared execution, cleanup and usage capabilities."
+          );
+        }
         const previous = expected.get(definition.id);
         if (
           previous &&

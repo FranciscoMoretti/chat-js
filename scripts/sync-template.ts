@@ -53,6 +53,8 @@ const TEMPLATE_REMOVED_FILES = [
   "components/part/tool-part.test.tsx",
   // This test covers the reference app's Vercel adapter; scaffolds select their own.
   "lib/storage-provider.test.ts",
+  // This contract test imports canonical registry source outside a generated app.
+  "lib/eve/daytona-code-executor.test.ts",
 ];
 
 /** Import lines stripped from template files after copying. */

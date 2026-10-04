@@ -2,7 +2,7 @@ import { Sandbox } from "@vercel/sandbox";
 import pino from "pino";
 import { expect, it, vi } from "vitest";
 
-import { executePythonInSandbox } from "./python";
+import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
 
 const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 /* oxlint-disable typescript/explicit-function-return-type --

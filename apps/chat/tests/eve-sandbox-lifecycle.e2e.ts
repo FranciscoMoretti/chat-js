@@ -20,13 +20,13 @@ import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
 import { createModuleLogger } from "../lib/logger";
+import { executeJavaScriptInSandbox } from "../tools/chatjs/_shared/code-execution/javascript";
+import { executePythonInSandbox } from "../tools/chatjs/_shared/code-execution/python";
 import {
   cleanupSandbox,
   createSandbox,
   resolveSandboxAuth,
 } from "../tools/chatjs/vercel-code-execution/execution-sandbox";
-import { executeJavaScriptInSandbox } from "../tools/chatjs/vercel-code-execution/javascript";
-import { executePythonInSandbox } from "../tools/chatjs/vercel-code-execution/python";
 import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
 import { assertEveTestDatabase } from "./eve-test-database";
 import { testToolContext } from "./helpers/eve-tool-context";

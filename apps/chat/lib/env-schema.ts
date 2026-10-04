@@ -206,6 +206,8 @@ const serverEnvSchema = {
       z.string().min(1)
     )
     .describe("Postgres connection string"),
+  DAYTONA_API_KEY: z.string().optional(),
+  DAYTONA_ORGANIZATION_ID: z.string().optional(),
   EVE_GATEWAY_SECRET: z.preprocess(
     (value) => playwrightDefault(value, "playwright-test-eve-gateway-secret"),
     eveRuntimeEnvOptions.EVE_GATEWAY_SECRET

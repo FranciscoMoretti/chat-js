@@ -67,6 +67,15 @@ afterAll(async () => {
 /* oxlint-enable eslint/init-declarations */
 
 const executionDefinition = {
+  codeExecutionCapabilities: {
+    cancellation: "terminate",
+    cleanup: "durable-allocation",
+    files: "ephemeral",
+    languages: ["python", "javascript"],
+    timeout: "bounded",
+    usage: "single-receipt",
+  },
+  codeExecutorExport: "executeCode",
   contractVersion: 1,
   envRequirements: [{ options: [["ACME_EXECUTION_TOKEN"]] }],
   id: "acme-execution",
@@ -127,6 +136,9 @@ export function createStorageAdapter(options: {bucket: string}) {
           {
             content: `import { defineTool } from "eve/tools";
 import { z } from "zod";
+import type { CodeExecutor } from "@/lib/eve/code-executor";
+import { createToolResult } from "@/lib/eve/tool-result";
+export const executeCode: CodeExecutor = async ({code}) => createToolResult({chart: "", message: code}, 0);
 export const runCommand = defineTool({description: "External fixture",inputSchema: z.object({command: z.string()}),
     execute: async ({command}) => ({stdout: command, exitCode: 0})});`,
             path: "tool.ts",
@@ -1255,3 +1267,68 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+
+/* oxlint-disable eslint/max-lines-per-function, eslint/max-statements -- The packed CLI case proves fresh installation and both replacement directions before checking the resulting generated source. */
+const DAYTONA_INSTALL_TEST_TIMEOUT_MS = 180_000;
+it(
+  "Daytona installs and replaces Vercel through the packed CLI",
+  async () => {
+    const cwd = join(root, "daytona");
+    await run(root, [
+      "node",
+      cliEntry,
+      "create",
+      "daytona",
+      "--yes",
+      "--no-electron",
+      "--gateway",
+      "openai",
+      "--code-execution-tool",
+      "daytona-code-execution",
+    ]);
+    expect(
+      await Bun.file(
+        join(cwd, "tools/chatjs/vercel-code-execution/tool.ts")
+      ).exists()
+    ).toBe(false);
+    expect(
+      await readFile(join(cwd, "tools/chatjs/code-executor.ts"), "utf-8")
+    ).toContain("daytona-code-execution/tool");
+    await run(cwd, ["bun", "run", "test:types"]);
+    await run(cwd, [
+      "node",
+      cliEntry,
+      "add",
+      "vercel-code-execution",
+      "--replace",
+      "--yes",
+    ]);
+    expect(
+      await Bun.file(
+        join(cwd, "tools/chatjs/daytona-code-execution/tool.ts")
+      ).exists()
+    ).toBe(false);
+    expect(
+      await readFile(join(cwd, "tools/chatjs/code-executor.ts"), "utf-8")
+    ).toContain("vercel-code-execution/tool");
+    await run(cwd, [
+      "node",
+      cliEntry,
+      "add",
+      "daytona-code-execution",
+      "--replace",
+      "--yes",
+    ]);
+    expect(
+      await readFile(join(cwd, "tools/chatjs/code-executor.ts"), "utf-8")
+    ).toContain("daytona-code-execution/tool");
+    expect(await readFile(join(cwd, ".env.example"), "utf-8")).toContain(
+      "DAYTONA_API_KEY"
+    );
+    await run(cwd, ["bun", "run", "format"]);
+    await run(cwd, ["bun", "run", "test:types"]);
+    await run(cwd, ["bun", "run", "lint"]);
+  },
+  DAYTONA_INSTALL_TEST_TIMEOUT_MS
+);
+/* oxlint-enable eslint/max-lines-per-function, eslint/max-statements */

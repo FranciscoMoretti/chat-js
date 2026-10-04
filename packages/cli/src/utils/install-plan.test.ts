@@ -36,7 +36,20 @@ const server = () =>
         contractVersion: 1,
         id,
         kind: "tool",
-        ...(id === "extra" ? {} : { slot: "codeExecution" }),
+        ...(id === "extra"
+          ? {}
+          : {
+              codeExecutionCapabilities: {
+                cancellation: "terminate",
+                cleanup: "durable-allocation",
+                files: "ephemeral",
+                languages: ["python", "javascript"],
+                timeout: "bounded",
+                usage: "single-receipt",
+              },
+              codeExecutorExport: "executeCode",
+              slot: "codeExecution",
+            }),
         tools: [{ toolExport: id === "extra" ? "extra" : "executeCode" }],
       };
       return Response.json({

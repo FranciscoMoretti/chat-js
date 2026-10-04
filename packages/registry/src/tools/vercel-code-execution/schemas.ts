@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { supportedExecutionLanguages } from "./types";
+import { supportedExecutionLanguages } from "@/tools/chatjs/_shared/code-execution/types";
 
 const codeExecutionInput = z.object({
   code: z

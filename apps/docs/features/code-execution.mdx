@@ -5,7 +5,7 @@ description: Secure Python and JavaScript sandbox for running code
 
 ## Overview
 
-Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select an external code-execution item that exports a standard AI SDK tool.
+Execute Python and JavaScript code in a secure sandboxed environment directly from chat. The default registry item uses Vercel Sandbox with a 5-minute timeout and 2 vCPUs. You can select Daytona or an external provider implementing the native EVE tool and typed `CodeExecutor` contracts. Ad-hoc and saved-document execution use the selected executor. Saved documents execute their authorized stored revision, not replacement source supplied by the caller.
 
 <Frame>
   <img
@@ -32,27 +32,35 @@ npx @chat-js/cli@latest create my-app --yes \
 
 The fresh template includes only the selected implementation and dependencies. The CLI prints the selected item's credential requirements. Vercel Sandbox needs `VERCEL_OIDC_TOKEN` or the team/project/token credentials described below.
 
-For an existing app, install the item with `chat-js add vercel-code-execution`, then enable it in `chat.config.ts`. When switching implementations, remove the previous provider directory first; only one `codeExecution` item can occupy the slot. Keep generated registration files intact and let `add` or `sync` regenerate them.
+For an existing app, use `add`. Replace an installed provider explicitly:
 
 ```bash
-npx @chat-js/cli@latest add vercel-code-execution
+bunx @chat-js/cli@latest add daytona-code-execution --replace
 ```
 
-Enable code execution:
+Installation selects the implementation. There is no `enabled` flag or central provider switch. Keep generated registrations intact and use `add` or `sync` to regenerate them. Drain existing sandbox resources before replacing the provider or rotating its credentials.
 
-```ts
-ai: {
-  tools: {
-    codeExecution: {
-      enabled: true,
-    },
-  },
-}
+### Daytona credentials
+
+To create an app using Daytona:
+
+```bash
+bunx @chat-js/cli@latest create my-app --yes \
+  --code-execution-tool daytona-code-execution
 ```
+
+Configure your Daytona organization and its API key in `.env.local`:
+
+```bash
+DAYTONA_API_KEY=your_api_key
+DAYTONA_ORGANIZATION_ID=your_organization_id
+```
+
+Run the generated environment check before startup. The descriptor declares both variables and the adapter rejects empty credentials before allocation. The returned sandbox organization must match the configured organization. This adapter uses Daytona Cloud at `https://app.daytona.io/api` and needs no Vercel sandbox credentials. It does not certify the rest of your hosting configuration.
 
 ## Pre-installed Packages
 
-The Vercel item makes these Python packages available out of the box:
+Both built-in providers install these packages inside each Python sandbox before executing your code:
 
 - `matplotlib` - Plotting and visualization
 - `pandas` - Data analysis
@@ -139,9 +147,9 @@ Set the Python version via environment variable:
 VERCEL_SANDBOX_RUNTIME=python3.13
 ```
 
-### Non-Vercel Deployments
+### Vercel Sandbox outside Vercel hosting
 
-When deploying outside Vercel (Docker, Railway, Fly.io, etc.), you need to authenticate with an access token since `VERCEL_OIDC_TOKEN` is unavailable.
+If you select Vercel Sandbox while hosting outside Vercel, you need to authenticate with an access token since `VERCEL_OIDC_TOKEN` is unavailable.
 
 1. Copy your **Team ID** from team settings
 2. Copy your **Project ID** from project settings
@@ -160,8 +168,37 @@ The sandbox automatically uses these credentials when running outside Vercel inf
 
 The installed Vercel implementation lives in `tools/chatjs/vercel-code-execution/`:
 
-You get `tool.ts`, `renderer.tsx`, `execution-sandbox.ts`, `python.ts`, `javascript.ts`, `types.ts`, and its `chatjs.json` descriptor. `tools/chatjs/tools.ts` and `tools/chatjs/ui.ts` register the tool and its renderer automatically. The provider descriptor records its credential requirements.
+The provider directory contains the tool, renderer, schemas, SDK adapter and `chatjs.json` descriptor. Shared Python and JavaScript command wrappers are installed under `tools/chatjs/_shared/code-execution/`. Generated `tools/chatjs/code-executor.ts` exports the selected typed executor. `tools.ts` and `ui.ts` register the tool and renderer.
 
-Edit the installed provider source to change its description, runtime, or packages. The app imports the registered tool. Its renderer understands the Vercel item’s `title`, `language`, `code`, `message`, and `chart` fields. External items own their input/output shapes and may provide a different renderer.
+Third-party providers use the [standard tool registration](../tools/authoring#feature-selections). Declare `codeExecutorExport`, `envRequirements`, and `codeExecutionCapabilities` in the descriptor. The executor contract requires Python and JavaScript, bounded execution, terminating cancellation, ephemeral files, durable allocation cleanup, and a single usage receipt. Incompatible declared capabilities fail descriptor validation before source installation. Capability metadata is a declaration, not evidence of live service behavior.
 
-Third-party providers use the [standard tool registration](../tools/authoring#feature-selections). Their credentials and lifecycle belong in their own source. ChatJS does not expose a general-purpose sandbox API or load provider code dynamically.
+## Lifecycle and accounting
+
+Daytona execution has a five-minute application deadline and a ten-minute provider wall-clock TTL. Each sandbox is private and ephemeral. Cancellation requests deletion, including when cancellation happens while creation is still completing. Command output is combined into the text response. Python charts return structured data or a PNG. Arbitrary sandbox files are not persisted or downloaded into application storage.
+
+Before allocation, the executor records a durable intent bound to the owner, session, tool call and provider scope. It confirms creation before running source and releases ownership only after provider deletion is confirmed. Cleanup failure retains the intent for a later conversation-deletion retry. Restarted execution refuses to allocate again for the same call until the previous intent is reconciled.
+
+An uncertain create response remains an explicit reconciliation blocker. A single missing-resource response or elapsed TTL is not proof that an in-flight create can never complete. Operators must establish the allocation outcome before clearing its durable intent. This restriction also exists in the Vercel contract.
+
+Daytona API-key authentication does not honor a separate organization override. Cleanup therefore binds to a non-secret key fingerprint as well as the configured organization. Keep the original credentials until all resources are drained. Replacing the provider or key with outstanding intents fails closed and requires restoring the original provider scope or performing verified reconciliation.
+
+The application charges a fixed $0.05 for a completed built-in execution, independently of the provider's invoice. Daytona records zero application cost for infrastructure failure and charges only after output validation and confirmed cleanup. Native EVE cancellation and settlement retain their existing receipt behavior. Shared code wrappers can report user-code errors as completed executions. Provider compute costs may still accrue on failures, cancellation and uncertain creation.
+
+## Provider evaluation and validation
+
+Daytona was selected because its [TypeScript SDK](https://www.daytona.io/docs/en/typescript-sdk/daytona/) supports named allocation lookup and deletion confirmation. Its sandbox API also exposes organization identity, command execution, and wall-clock TTL. [E2B metadata](https://e2b.dev/docs/sandbox/metadata) supports finding sandboxes by metadata, but adopting it would require a separate reconciliation design around provider-generated identities. Both are real providers. Neither provider's documentation alone certifies this installation.
+
+The evaluation used the existing Vercel caller contract and provider documentation, not a live vendor benchmark:
+
+| Requirement | Daytona, selected | E2B, evaluated |
+| --- | --- | --- |
+| JavaScript and Python | SDK supports both, adapter runs the shared Node/Python wrappers | Both supported by its code interpreter |
+| Deadline and cancellation | Command timeout plus wall-clock TTL, cancellation deletes the resource | Configurable sandbox timeout and explicit kill, pause behavior must be excluded from erasure |
+| Output and files | Command output and sandbox filesystem, shared wrappers return charts | Code output and file read/write APIs, would need ChatJS output conversion |
+| Identity before creation | Caller-selected name with returned organization identity | Provider-generated ID plus metadata, requires metadata reconciliation |
+| Cleanup after restart | Resolve the durable name, delete and confirm absence | List running/paused resources and kill, additional inventory/absence proof needed |
+| Usage accounting | One native ChatJS receipt after confirmed cleanup | Would need the same application receipt wrapper, separate from vendor billing |
+
+E2B references: [languages](https://docs.e2b.dev/code-interpreting/supported-languages), [lifecycle](https://docs.e2b.dev/sandbox), [inventory](https://docs.e2b.dev/sandbox/list), and [file access](https://docs.e2b.dev/filesystem/read-write). Daytona references: [commands](https://www.daytona.io/docs/en/typescript-sdk/process/) and [sandbox lifecycle](https://www.daytona.io/docs/en/typescript-sdk/sandbox/). The choice favors the existing named-allocation contract. It is not a claim that E2B cannot implement it.
+
+The implementation pins `@daytona/sdk` to `0.220.0`. Offline tests cover allocation ordering, identity mismatch, cancellation, cleanup failure, output quoting, and restart cleanup. Live acceptance requires a Daytona account with sandbox create, read, command and delete permissions, both environment variables above, and the application's native EVE/database configuration. Until live runs prove JavaScript, Python charts, cancellation and deletion after restart, this provider is implemented but not hosted-certified.

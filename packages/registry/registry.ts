@@ -151,6 +151,16 @@ const searchToolItems = [
 }));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+const codeExecutionRuntimeItem: RegistryItem = {
+  files: ["python.ts", "javascript.ts", "types.ts"].map((file) => ({
+    path: `src/tools/_shared/code-execution/${file}`,
+    target: `~/tools/chatjs/_shared/code-execution/${file}`,
+    type: "registry:file",
+  })),
+  name: "code-execution-runtime",
+  type: "registry:item",
+};
+
 const codeExecutionItem = {
   dependencies: [
     "ai",
@@ -159,21 +169,23 @@ const codeExecutionItem = {
     `@vercel/sandbox@${registryPackage.devDependencies["@vercel/sandbox"]}`,
   ],
   description: "Execute Python and JavaScript with Vercel Sandbox",
-  files: [
-    "tool.ts",
-    "execution-sandbox.ts",
-    "python.ts",
-    "javascript.ts",
-    "types.ts",
-    "renderer.tsx",
-    "schemas.ts",
-  ].map((file) => ({
-    path: `src/tools/vercel-code-execution/${file}`,
-    target: `~/tools/chatjs/vercel-code-execution/${file}`,
-    type: "registry:file" as const,
-  })),
+  files: ["tool.ts", "execution-sandbox.ts", "renderer.tsx", "schemas.ts"].map(
+    (file) => ({
+      path: `src/tools/vercel-code-execution/${file}`,
+      target: `~/tools/chatjs/vercel-code-execution/${file}`,
+      type: "registry:file" as const,
+    })
+  ),
   meta: {
     chatjs: toolDefinitionSchema.parse({
+      codeExecutionCapabilities: {
+        cancellation: "terminate",
+        cleanup: "durable-allocation",
+        files: "ephemeral",
+        languages: ["python", "javascript"],
+        timeout: "bounded",
+        usage: "single-receipt",
+      },
       codeExecutorExport: "executeCode",
       contractVersion: 1,
       envRequirements: [
@@ -193,9 +205,59 @@ const codeExecutionItem = {
     }),
   },
   name: "vercel-code-execution",
-  registryDependencies: ["@chatjs/code-execution-ui"],
+  registryDependencies: [
+    "@chatjs/code-execution-ui",
+    "@chatjs/code-execution-runtime",
+  ],
   type: "registry:item",
 } satisfies RegistryItem;
+
+const daytonaCodeExecutionItem: RegistryItem = {
+  dependencies: [
+    `@daytona/sdk@${registryPackage.devDependencies["@daytona/sdk"]}`,
+    "zod",
+  ],
+  description: "Execute Python and JavaScript with Daytona",
+  files: [
+    ...["tool.ts", "sandbox.ts", "schemas.ts", "execution.ts"].map((file) => ({
+      path: `src/tools/daytona-code-execution/${file}`,
+      target: `~/tools/chatjs/daytona-code-execution/${file}`,
+      type: "registry:file" as const,
+    })),
+    {
+      path: "src/tools/vercel-code-execution/renderer.tsx",
+      target: "~/tools/chatjs/daytona-code-execution/renderer.tsx",
+      type: "registry:file",
+    },
+  ],
+  meta: {
+    chatjs: toolDefinitionSchema.parse({
+      codeExecutionCapabilities: {
+        cancellation: "terminate",
+        cleanup: "durable-allocation",
+        files: "ephemeral",
+        languages: ["python", "javascript"],
+        timeout: "bounded",
+        usage: "single-receipt",
+      },
+      codeExecutorExport: "executeCode",
+      contractVersion: 1,
+      envRequirements: [
+        { options: [["DAYTONA_API_KEY", "DAYTONA_ORGANIZATION_ID"]] },
+      ],
+      id: "daytona-code-execution",
+      kind: "tool",
+      slot: "codeExecution",
+      tools: [{ rendererExport: "CodeExecution", toolExport: "codeExecution" }],
+    }),
+  },
+  name: "daytona-code-execution",
+  registryDependencies: [
+    "@chatjs/code-execution-ui",
+    "@chatjs/code-execution-runtime",
+  ],
+  type: "registry:item",
+};
 
 const registry = registrySchema.parse({
   homepage: "https://chatjs.dev",
@@ -212,6 +274,8 @@ const registry = registrySchema.parse({
     codeExecutionUiItem,
     ...searchToolItems,
     codeExecutionItem,
+    codeExecutionRuntimeItem,
+    daytonaCodeExecutionItem,
   ],
   name: "chatjs",
 });
