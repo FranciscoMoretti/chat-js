@@ -5,6 +5,7 @@ import path from "node:path";
 import type { GatewaySelection } from "../registry/gateways";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- The provider generator shares the package-local registration emitter in formatter order. */
+import { updateEnvironmentExample } from "../utils/environment-example";
 import { generatedRegistrationSource } from "../utils/generated-registration-source";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
@@ -64,13 +65,6 @@ export const configureGatewayProvider = async (
       throw error;
     }
   );
-  const example = path.join(destination, ".env.example");
-  let env = await readFile(example, "utf-8").catch((error: unknown) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return "";
-    }
-    throw error;
-  });
   const { definition } = selection;
   await writeFile(
     path.join(destination, "lib/ai/gateway-model-defaults.ts"),
@@ -97,16 +91,12 @@ export const models: readonly AiGatewayModel[] = [];
 `)
     );
   }
-  for (const name of new Set(
-    definition.envRequirements.flatMap((requirement) =>
+  await updateEnvironmentExample(destination, "gateway-provider", [
+    ...definition.envRequirements.flatMap((requirement) =>
       requirement.options.flat()
-    )
-  )) {
-    if (!new RegExp(`^${name}=`, "mu").test(env)) {
-      env += `\n${name}=\n`;
-    }
-  }
-  await writeFile(example, env);
+    ),
+    ...definition.optionalEnv,
+  ]);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/max-nested-calls */

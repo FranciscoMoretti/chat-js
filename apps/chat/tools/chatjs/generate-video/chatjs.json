@@ -2,6 +2,8 @@
   "envRequirements": [],
   "id": "generate-video",
   "kind": "tool",
+  "requiresGateway": ["video"],
+  "requiresStorage": true,
   "requiresTools": [],
   "slot": "generateVideo",
   "tools": [

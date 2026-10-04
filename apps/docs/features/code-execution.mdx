@@ -32,13 +32,19 @@ npx @chat-js/cli@latest create my-app --yes \
 
 The fresh template includes only the selected implementation and dependencies. The CLI prints the selected item's credential requirements. Vercel Sandbox needs `VERCEL_OIDC_TOKEN` or the team/project/token credentials described below.
 
-For an existing app, use `add`. Replace an installed provider explicitly:
+For an existing app, use `add`. Replace an installed provider explicitly. Modified source requires `--overwrite` after review:
 
 ```bash
 bunx @chat-js/cli@latest add daytona-code-execution --replace
 ```
 
 Installation selects the implementation. There is no `enabled` flag or central provider switch. Keep generated registrations intact and use `add` or `sync` to regenerate them. Drain existing sandbox resources before replacing the provider or rotating its credentials.
+
+Saved-code execution requires a compatible executor and code documents. The planner resolves these dependencies when you install it:
+
+```bash
+bunx @chat-js/cli@latest add saved-code-execution
+```
 
 ### Daytona credentials
 

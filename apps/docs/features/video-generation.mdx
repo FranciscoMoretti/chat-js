@@ -9,16 +9,10 @@ Generate videos directly in chat using AI models. Users describe what they want 
 
 ## Quick Start
 
-Install the [video tool](../tools/generate-video), then enable it in `chat.config.ts`:
+Install the capability in your app:
 
-```ts
-ai: {
-  tools: {
-    video: {
-      enabled: true, // Requires durable file storage
-    },
-  },
-}
+```bash
+bunx @chat-js/cli@latest add generate-video --storage-provider vercel-blob
 ```
 
 <Callout type="note">
@@ -26,7 +20,7 @@ ai: {
   generated videos.
 </Callout>
 
-Configure the default video model:
+The built-in video tool requires a video-capable gateway. Only the built-in Vercel gateway currently declares this capability. Configure its default model:
 
 ```ts
 ai: {

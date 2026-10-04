@@ -14,9 +14,17 @@ The OpenAI gateway connects ChatJS directly to the [OpenAI API](https://platform
 OPENAI_API_KEY=sk-...
 ```
 
-3. Set the gateway in your config:
+3. Install the gateway source (add `--replace` when another gateway is installed):
+
+```bash
+bunx @chat-js/cli@latest add --gateway openai
+```
+
+Then configure runtime model overrides for that installation:
 
 ```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config-schema";
+
 const config: ConfigInput = {
   ai: {
     gateway: "openai",

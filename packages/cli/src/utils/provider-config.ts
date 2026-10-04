@@ -22,6 +22,72 @@ const unwrap = (expression: ts.Expression): ts.Expression => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+// Read generated data without importing or executing application code.
+// oxlint-disable-next-line eslint/max-statements, typescript/prefer-readonly-parameter-types -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
+const literalValue = (input: ts.Expression): unknown => {
+  const value = unwrap(input);
+  if (ts.isStringLiteralLike(value)) {
+    return value.text;
+  }
+  if (ts.isNumericLiteral(value)) {
+    return Number(value.text);
+  }
+  if (value.kind === ts.SyntaxKind.TrueKeyword) {
+    return true;
+  }
+  if (value.kind === ts.SyntaxKind.FalseKeyword) {
+    return false;
+  }
+  if (ts.isArrayLiteralExpression(value)) {
+    return value.elements.map(literalValue);
+  }
+  if (ts.isObjectLiteralExpression(value)) {
+    return Object.fromEntries(
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
+      value.properties.map((property) => {
+        if (
+          !ts.isPropertyAssignment(property) ||
+          !(
+            ts.isIdentifier(property.name) ||
+            ts.isStringLiteralLike(property.name)
+          )
+        ) {
+          throw new Error("Provider data must use literal properties.");
+        }
+        return [property.name.text, literalValue(property.initializer)];
+      })
+    );
+  }
+  throw new Error(
+    "Provider data must use literal values. Integrate this provider manually."
+  );
+};
+
+const readProviderLiteral = async (
+  cwd: string,
+  file: string,
+  name: string
+): Promise<unknown> => {
+  const source = await readFile(path.join(cwd, file), "utf-8");
+  const parsed = ts.createSourceFile(
+    file,
+    source,
+    ts.ScriptTarget.Latest,
+    true
+  );
+  const declaration = parsed.statements
+    .filter(ts.isVariableStatement)
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
+    .flatMap((statement) => statement.declarationList.declarations)
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
+    .find((item) => item.name.getText(parsed) === name);
+  if (!declaration?.initializer) {
+    throw new Error(
+      `Missing ${name} in ${file}. Reinstall the provider before adding dependent tools.`
+    );
+  }
+  return literalValue(declaration.initializer);
+};
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -204,4 +270,4 @@ const gatewayConfigEdit = async (
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
-export { gatewayConfigEdit, readProviderId };
+export { gatewayConfigEdit, readProviderId, readProviderLiteral };

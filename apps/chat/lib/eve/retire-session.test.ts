@@ -15,6 +15,7 @@ vi.mock("./reconcile-usage", () => ({
 
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(),
+  check: vi.fn(),
   client: vi.fn(),
   deleting: vi.fn(),
   env: {
@@ -24,6 +25,7 @@ const mocks = vi.hoisted(() => ({
     VERCEL_ENV: "",
     WORKFLOW_POSTGRES_URL: "postgres://localhost/fixture",
   },
+  provider: vi.fn(),
   reset: vi.fn(),
   retireMany: vi.fn(),
   snapshot: vi.fn(),
@@ -35,8 +37,8 @@ vi.mock("../db/eve-queries", () => ({
   beginEveConversationDeletion: mocks.begin,
   getDeletingEveConversationForSession: mocks.deleting,
 }));
-vi.mock("@/lib/eve/lifecycle/postgres/eve-native-purge", () => ({
-  retireEveNativeSessions: mocks.retireMany,
+vi.mock("./lifecycle/provider", () => ({
+  createEveLifecycleProvider: mocks.provider,
 }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.usage }));
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -58,6 +60,14 @@ vi.mock("eve/client", () => ({
  */
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.check.mockReset();
+  mocks.env.VERCEL = "";
+  mocks.env.VERCEL_ENV = "";
+  mocks.provider.mockReturnValue({
+    check: mocks.check,
+    retire: mocks.retireMany,
+    supported: true,
+  });
   mocks.deleting.mockResolvedValue({ id: "conversation" });
   mocks.reset.mockResolvedValue({ status: "reset" });
   mocks.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
@@ -144,9 +154,29 @@ it("does not enter native family cleanup for an inaccessible family or a missing
 it("rejects PostgreSQL retirement on Vercel before changing application access", async () => {
   mocks.env.VERCEL = "1";
   mocks.env.VERCEL_ENV = "production";
+  mocks.provider.mockReturnValue({
+    reason: "unverified erasure",
+    supported: false,
+    world: "vercel",
+  });
   await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
-    "requires the PostgreSQL workflow backend"
+    "unverified erasure"
+  );
+  expect(mocks.provider).toHaveBeenCalledWith({
+    databaseUrl: mocks.env.WORKFLOW_POSTGRES_URL,
+    world: "vercel",
+  });
+  expect(mocks.check).not.toHaveBeenCalled();
+  expect(mocks.begin).not.toHaveBeenCalled();
+  expect(mocks.retireMany).not.toHaveBeenCalled();
+});
+
+it("checks provider compatibility before revoking family access", async () => {
+  mocks.check.mockRejectedValueOnce(new Error("workflow fences missing"));
+  await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
+    "workflow fences missing"
   );
   expect(mocks.begin).not.toHaveBeenCalled();
   expect(mocks.retireMany).not.toHaveBeenCalled();
+  expect(mocks.reset).not.toHaveBeenCalled();
 });

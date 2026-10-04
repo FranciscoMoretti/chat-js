@@ -24,9 +24,17 @@ LITELLM_BASE_URL=http://localhost:4000   # Your LiteLLM proxy URL, without /v1
 LITELLM_API_KEY=sk-...                   # Optional; only if your proxy requires auth
 ```
 
-3. Set the gateway in your config:
+3. Install the gateway source (add `--replace` when another gateway is installed):
+
+```bash
+bunx @chat-js/cli@latest add --gateway litellm
+```
+
+Then configure runtime model overrides for that installation:
 
 ```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config-schema";
+
 const config: ConfigInput = {
   ai: {
     gateway: "litellm",
@@ -73,14 +81,16 @@ model_list:
 
 ## Image Generation
 
-Image generation support depends on the models available through your LiteLLM proxy. If your proxy is configured with an image generation model (e.g., `dall-e-3`), enable it in your config:
+Image generation support depends on the models available through your LiteLLM proxy. If your proxy is configured with an image generation model (e.g., `dall-e-3`), install `generate-image` with persistent storage and set its default model:
 
 ```typescript title="chat.config.ts"
+import type { ConfigInput } from "@/lib/config-schema";
+
 const config: ConfigInput = {
   ai: {
     gateway: "litellm",
     tools: {
-      image: { enabled: true, default: "dall-e-3" },
+      image: { default: "dall-e-3" },
     },
   },
 };
