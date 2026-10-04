@@ -80,11 +80,11 @@ const ChatLayoutDynamic = async ({
   if (session?.user?.id) {
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
-
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
     void queryClient.prefetchQuery(
       trpc.settings.getModelPreferences.queryOptions()
     );
-
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
     void queryClient.prefetchQuery(trpc.project.list.queryOptions());
   }
 
