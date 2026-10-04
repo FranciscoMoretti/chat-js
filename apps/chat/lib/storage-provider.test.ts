@@ -3,7 +3,6 @@ import { afterEach, expect, test, vi } from "vitest";
 import { createStorageAdapter } from "./storage-provider";
 
 const mocks = vi.hoisted(() => ({
-  adapter: vi.fn(() => ({ name: "vercel-blob" })),
   issue: vi.fn(),
   presign: vi.fn(),
 }));
@@ -11,42 +10,80 @@ vi.mock("@vercel/blob", () => ({
   issueSignedToken: mocks.issue,
   presignUrl: mocks.presign,
 }));
-vi.mock("files-sdk/vercel-blob", () => ({ vercelBlob: mocks.adapter }));
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.clearAllMocks();
+});
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): test("signs only private reads of the requested object for five minutes") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test("signs only private reads of the requested object for five minutes") uses 300_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-test("signs only private reads of the requested object for five minutes", async () => {
+/* oxlint-disable eslint/max-statements -- Keep credential, capability and signed-read assertions together for each authentication mode. */
+/* oxlint-disable eslint/no-magic-numbers -- These values assert the credential-scoped five-minute download contract. */
+test.each([
+  { token: "server-secret" },
+  { oidcToken: "oidc-secret", storeId: "store_fixture" },
+])(
+  "the Files SDK signs private reads with configured credentials %j",
+  async (
+    credentials: Readonly<{
+      token?: string;
+      oidcToken?: string;
+      storeId?: string;
+    }>
+  ) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-25T00:00:00Z"));
+    const token = {
+      clientSigningToken: "secret",
+      delegationToken: "delegation",
+    };
+    mocks.issue.mockResolvedValue(token);
+    mocks.presign.mockResolvedValue({
+      presignedUrl: "https://private.example/signed",
+    });
+    const adapter = createStorageAdapter(credentials);
+    expect(adapter.signedUrl?.supported).toBe(true);
+    expect(await adapter.url("chat/objects/object-key")).toBe(
+      "https://private.example/signed"
+    );
+    const validUntil = Date.now() + 300_000;
+    expect(mocks.issue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ...credentials,
+        operations: ["get"],
+        pathname: "chat/objects/object-key",
+        validUntil,
+      })
+    );
+    expect(mocks.presign).toHaveBeenCalledWith(token, {
+      access: "private",
+      operation: "get",
+      pathname: "chat/objects/object-key",
+      validUntil,
+    });
+  }
+);
+
+test("the Files SDK honors a caller's shorter expiry and cancellation signal", async () => {
+  const { signal } = new AbortController();
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-09-25T00:00:00Z"));
-  const token = { clientSigningToken: "secret", delegationToken: "delegation" };
-  mocks.issue.mockResolvedValue(token);
+  mocks.issue.mockResolvedValue({
+    clientSigningToken: "secret",
+    delegationToken: "delegation",
+  });
   mocks.presign.mockResolvedValue({
     presignedUrl: "https://private.example/signed",
   });
-  const adapter = createStorageAdapter({ token: "server-secret" });
-  expect(await adapter.url("chat/objects/object-key")).toBe(
-    "https://private.example/signed"
-  );
-  const validUntil = Date.now() + 300_000;
-  expect(mocks.adapter).toHaveBeenCalledWith({
-    access: "private",
-    token: "server-secret",
+  await createStorageAdapter({ token: "server-secret" }).url("one-object", {
+    expiresIn: 60,
+    signal,
   });
   expect(mocks.issue).toHaveBeenCalledWith(
     expect.objectContaining({
+      abortSignal: signal,
       operations: ["get"],
-      pathname: "chat/objects/object-key",
-      validUntil,
+      pathname: "one-object",
+      validUntil: Date.now() + 60_000,
     })
   );
-  expect(mocks.presign).toHaveBeenCalledWith(token, {
-    access: "private",
-    operation: "get",
-    pathname: "chat/objects/object-key",
-    validUntil,
-  });
 });
-/* oxlint-enable max-statements, no-magic-numbers */
+/* oxlint-enable eslint/no-magic-numbers */
