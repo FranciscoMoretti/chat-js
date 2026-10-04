@@ -29,6 +29,8 @@ const toolDefinitionBase = z.object({
   envRequirements: z.array(envRequirementSchema).default([]),
   id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
   kind: z.literal("tool"),
+  requiresGateway: z.array(z.enum(["image", "video"])).optional(),
+  requiresStorage: z.literal(true).optional(),
   requiresTools: z.array(identifier).default([]),
   slot: z
     .enum([
@@ -120,6 +122,7 @@ const featureDefinitionSchema = z.object({
   id: featureIdSchema,
   kind: z.literal("feature"),
   requiresFeatures: z.array(featureIdSchema).optional(),
+  requiresStorage: z.literal(true).optional(),
 });
 /* oxlint-enable eslint/no-magic-numbers */
 

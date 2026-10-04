@@ -11,16 +11,10 @@ This is distinct from [Web Search](/features/web-search): URL Retrieval fetches 
 
 ## Quick Start
 
-Enable URL Retrieval in `chat.config.ts`:
+Install the capability in your app:
 
-```ts
-ai: {
-  tools: {
-    urlRetrieval: {
-      enabled: true, // Requires FIRECRAWL_API_KEY
-    },
-  },
-}
+```bash
+bunx @chat-js/cli@latest add retrieve-url
 ```
 
 Add the API key to your environment:
@@ -77,7 +71,7 @@ The tool returns a structured result:
 
 | Setting          | Value                                         |
 | ---------------- | --------------------------------------------- |
-| Config key       | `ai.tools.urlRetrieval.enabled`               |
+| Registry item    | `retrieve-url`                                |
 | Required env var | `FIRECRAWL_API_KEY`                           |
 | Tool name        | `retrieveUrl`                                 |
 | Tool file        | `apps/chat/tools/chatjs/retrieve-url/tool.ts` |

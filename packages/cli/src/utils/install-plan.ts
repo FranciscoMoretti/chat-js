@@ -14,9 +14,12 @@ import { z } from "zod";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
 /* oxlint-enable import/no-relative-parent-imports */
+import { updateEnvironmentExample } from "./environment-example";
+import { prepareDependencyUpdate } from "./installation-dependencies";
 import type { planInstallation } from "./installation-plan";
 import { assertMcpApprovalSchema } from "./mcp-schema";
 import { preflight } from "./preflight";
+// oxlint-disable-next-line import/max-dependencies -- Keep schema checks, provider registration and rollback together at the installation transaction boundary.
 import { toolRegistrationTargets } from "./sync-tools";
 
 type Plan = Awaited<ReturnType<typeof planInstallation>>;
@@ -133,6 +136,7 @@ const installPlan = async (
     fresh?: boolean;
     managedTargets?: string[];
     rollbackTargets?: string[];
+    finalize?: () => Promise<void>;
   },
   register: () => Promise<void>
 ): Promise<void> => {
@@ -146,6 +150,15 @@ const installPlan = async (
     )
   );
   const rollbackTargets = [
+    "package.json",
+    ".env.example",
+    ".chatjs/installed-dependencies.json",
+    "bun.lock",
+    "bun.lockb",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
     ...toolRegistrationTargets,
     ...(options.rollbackTargets ?? []),
   ];
@@ -200,6 +213,7 @@ const installPlan = async (
       }
     }
   }
+  const updateDependencies = await prepareDependencyUpdate(cwd, plan);
   const staged: { from: string; to: string }[] = [];
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
   try {
@@ -216,16 +230,21 @@ const installPlan = async (
       staged.push({ from, to });
     }
     await register();
+    await updateEnvironmentExample(
+      cwd,
+      "installed-capabilities",
+      plan.environmentVariables
+    );
+    await updateDependencies();
+    await options.finalize?.();
   } catch (error) {
     // Restore old source even when shadcn or registration failed; new source may need repair.
     const restored = await Promise.allSettled([
       ...staged.map(({ from, to }): Promise<void> => rename(to, from)),
       ...[...existing].map(async ([target, content]): Promise<void> => {
-        if (content) {
-          await writeFile(path.join(cwd, target), content);
-        } else if (rollbackTargets.includes(target)) {
-          await rm(path.join(cwd, target), { force: true });
-        }
+        await (content
+          ? writeFile(path.join(cwd, target), content)
+          : rm(path.join(cwd, target), { force: true }));
       }),
     ]);
     const restorationErrors = restored.flatMap((result) =>

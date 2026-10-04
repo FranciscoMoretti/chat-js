@@ -27,6 +27,7 @@ const attachmentUploadsItem: RegistryItem = {
       contractVersion: 1,
       id: "attachment-uploads",
       kind: "feature",
+      requiresStorage: true,
     }),
   },
   name: "attachment-uploads",
