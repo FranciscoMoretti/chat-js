@@ -171,6 +171,7 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
 const createOptionsSchema = z.object({
   attachments: z.boolean().optional(),
   codeExecutionTool: z.string().optional(),
+  documents: z.boolean().optional(),
   electron: z.boolean().optional(),
   fromGit: z.string().optional(),
   gateway: z.string().optional(),
@@ -358,6 +359,7 @@ const loadInstallableTools = async (
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+// oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
 const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
@@ -376,12 +378,17 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
           .split(",")
           .map((id): string => id.trim())
           .filter(Boolean);
+  coreFeatures.documents = options.documents ?? coreFeatures.documents;
   const documentTypes = await promptDocumentTypes(
     options.yes,
     coreFeatures.documents
   );
   const registryItems = await loadInstallableTools(options, targetDir);
-  const assistantTools = await promptAssistantTools(registryItems, options.yes);
+  const assistantTools = await promptAssistantTools(
+    registryItems,
+    options.yes,
+    gatewaySelection.definition
+  );
   if (assistantTools.builtInTools.deepResearch) {
     coreFeatures.documents = true;
     documentTypes.text = true;
@@ -419,6 +426,7 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   }
   const usesStorage =
     coreFeatures.attachments ||
+    selectedTools.some((tool) => tool.requiresStorage === true) ||
     assistantTools.builtInTools.imageGeneration ||
     assistantTools.builtInTools.videoGeneration ||
     options.storageProvider !== undefined ||
@@ -434,6 +442,24 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   const auth = await promptAuth(options.yes);
   const withElectron = await promptElectron(options.yes, options.electron);
 
+  const plan = await planInstallation(
+    targetDir,
+    {
+      features: [
+        ...observability,
+        ...(coreFeatures.mcp ? ["mcp"] : []),
+        ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
+      ],
+      gateway: gatewaySelection.source,
+      storage: {
+        options: storage.options,
+        source: storage.source,
+      },
+      tools: toolSources,
+    },
+    { documents: options.documents, fresh: true }
+  );
+
   return {
     assistantTools,
     auth,
@@ -442,8 +468,8 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     gateway: gatewaySelection.definition.id,
     gatewaySelection,
     observability,
+    plan,
     storage,
-    toolSources,
     usesStorage,
     withElectron,
   };
@@ -537,23 +563,7 @@ const installRegistryItems = async (
     "Installing selected registry items..."
   ).start();
   try {
-    const plan = await planInstallation(
-      project.targetDir,
-      {
-        features: [
-          ...setup.observability,
-          ...(setup.coreFeatures.mcp ? ["mcp"] : []),
-          ...(setup.coreFeatures.attachments ? ["attachment-uploads"] : []),
-        ],
-        gateway: setup.gatewaySelection.source,
-        storage: {
-          options: setup.storage.options,
-          source: setup.storage.source,
-        },
-        tools: setup.toolSources,
-      },
-      { fresh: true }
-    );
+    const { plan } = setup;
     let installedTools: Awaited<ReturnType<typeof syncTools>> = [];
     await installPlan(
       project.targetDir,
@@ -582,7 +592,14 @@ const installRegistryItems = async (
     await runCommand(packageManager, ["install"], project.targetDir);
     await runCommand(
       packageManager,
-      [...oxfmtCommandFor(packageManager), "oxfmt", "--write", "."],
+      [
+        ...oxfmtCommandFor(packageManager),
+        "oxfmt",
+        "--write",
+        ".",
+        "package.json",
+        ".chatjs/installed-dependencies.json",
+      ],
       project.targetDir
     );
     await recordInstalledSource(project.targetDir, [
@@ -749,6 +766,8 @@ export const create = new Command()
     "--observability <items>",
     "comma-separated vercel-analytics, vercel-speed-insights, langfuse (default: none)"
   )
+  .option("--documents", "install text, code and sheet documents")
+  .option("--no-documents", "omit document tools from the new app")
   .option("--mcp", "install MCP connectors, pages and OAuth callback")
   .option("--no-mcp", "omit MCP from the new app")
   .option("--electron", "include the Electron desktop app")

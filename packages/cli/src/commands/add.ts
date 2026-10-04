@@ -1,3 +1,4 @@
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { access, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -11,12 +12,12 @@ import {
 } from "#cli/helpers/storage-provider";
 import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
 import { handleError } from "#cli/utils/handle-error";
 import { installPlan } from "#cli/utils/install-plan";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { planInstallation } from "#cli/utils/installation-plan";
-/* oxlint-enable import/max-dependencies */
 import { gatewayConfigEdit } from "#cli/utils/provider-config";
+import { runCommand } from "#cli/utils/run-command";
 import {
   assertSupportedFeatureInstallation,
   syncFeatures,
@@ -69,6 +70,8 @@ const hasProviderKind = (
   metadata !== null &&
   "kind" in metadata &&
   metadata.kind === kind;
+
+/* oxlint-enable import/max-dependencies */
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
@@ -266,10 +269,31 @@ export const add = new Command("add")
           cwd,
           plan,
           {
+            finalize: async (): Promise<void> => {
+              const manager = inferPackageManager(cwd);
+              await runCommand(manager, ["install"], cwd);
+              const formatter = {
+                bun: ["run"],
+                npm: ["exec", "--"],
+                pnpm: ["exec"],
+                yarn: ["run"],
+              }[manager];
+              await runCommand(
+                manager,
+                [
+                  ...formatter,
+                  "oxfmt",
+                  "--write",
+                  "package.json",
+                  ".chatjs/installed-dependencies.json",
+                ],
+                cwd
+              );
+            },
             managedTargets: [
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
               ...(selectedStorage && !keepStorageOptions
-                ? ["lib/storage-options.ts", ".env.example"]
+                ? ["lib/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,
@@ -310,3 +334,5 @@ export const add = new Command("add")
       }
     }
   );
+
+/* oxlint-disable eslint/max-lines -- Keep the add command and its ordered provider-installation transaction together. */

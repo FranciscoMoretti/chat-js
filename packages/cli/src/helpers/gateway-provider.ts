@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { GatewaySelection } from "#cli/registry/gateways";
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
 import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
 import { preflight } from "#cli/utils/preflight";
 
@@ -71,23 +72,6 @@ export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirement
 export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definition))};
 `);
 
-const gatewayEnvSource = (
-  source: string,
-  definition: ReadonlyInput<GatewaySelection["definition"]>
-): string => {
-  let env = source;
-  for (const name of new Set(
-    definition.envRequirements.flatMap((requirement) =>
-      requirement.options.flat()
-    )
-  )) {
-    if (!new RegExp(`^${name}=`, "mu").test(env)) {
-      env += `\n${name}=\n`;
-    }
-  }
-  return env;
-};
-
 /**
  * Wire the installed gateway; source and dependencies are installed by shadcn.
  * @param destination Project receiving gateway defaults, model snapshot and env keys.
@@ -115,13 +99,6 @@ export const configureGatewayProvider = async (
       throw error;
     }
   );
-  const example = path.join(destination, ".env.example");
-  const env = await readFile(example, "utf-8").catch((error: unknown) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return "";
-    }
-    throw error;
-  });
   const { definition } = selection;
   await writeFile(
     path.join(destination, "lib/ai/gateway-model-defaults.ts"),
@@ -140,5 +117,10 @@ export const models: readonly AiGatewayModel[] = [];
 `)
     );
   }
-  await writeFile(example, gatewayEnvSource(env, definition));
+  await updateEnvironmentExample(destination, "gateway-provider", [
+    ...definition.envRequirements.flatMap((requirement) =>
+      requirement.options.flat()
+    ),
+    ...definition.optionalEnv,
+  ]);
 };

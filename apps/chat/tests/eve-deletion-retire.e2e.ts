@@ -1,7 +1,7 @@
 /* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
  * import/max-dependencies (#524): import from "node:child_process" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This test harness requires import { execFile } from "node:child_process";; import { promisify } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-documents"; "../lib/db/eve-native-purge"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-documents"; "@/lib/eve/lifecycle/postgres/eve-native-purge"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
@@ -15,7 +15,6 @@ import { z } from "zod";
 
 import { db } from "../lib/db/client";
 import { saveEveDocumentRevision } from "../lib/db/eve-documents";
-import { purgeEveNativeSession } from "../lib/db/eve-native-purge";
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -25,6 +24,7 @@ import {
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+import { purgeEveNativeSession } from "../lib/eve/lifecycle/postgres/eve-native-purge";
 import { prepareEveFamilyDeletion } from "../lib/eve/prepare-deletion";
 import {
   retireEveFamilyForDeletion,

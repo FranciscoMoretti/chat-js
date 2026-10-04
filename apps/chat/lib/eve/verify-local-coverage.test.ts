@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => ({
  */
 vi.mock("postgres", () => ({ default: () => ({ end: mocks.end }) }));
 /* oxlint-enable typescript/explicit-function-return-type */
-vi.mock("../db/eve-sandbox-coverage-proof", () => ({
+vi.mock("@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof", () => ({
   verifyEveSandboxCoverage: mocks.verify,
 }));
 vi.mock("../env", () => ({

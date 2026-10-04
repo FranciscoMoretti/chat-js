@@ -50,7 +50,7 @@
     "@chat-js/gateways": "workspace:*",
     "@clack/prompts": "^1.0.1",
     "commander": "^14.0.0",
-    "files-sdk": "2.1.0",
+    "files-sdk": "2.5.0",
     "kleur": "^4.1.5",
     "ora": "^8.2.0",
     "shadcn": "4.21.0",

@@ -10,8 +10,8 @@ import { isDeepStrictEqual } from "node:util";
 import postgres from "postgres";
 import { z } from "zod";
 
-import { verifyEveSandboxCoverage } from "@/lib/db/eve-sandbox-coverage-proof";
 import { env } from "@/lib/env";
+import { verifyEveSandboxCoverage } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
 
 import { assertEveConfigured } from "./server";
 /* oxlint-enable import/no-nodejs-modules */

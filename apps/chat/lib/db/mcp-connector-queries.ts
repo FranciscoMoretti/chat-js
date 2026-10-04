@@ -131,6 +131,7 @@ const updateMcpConnector = async ({
       oauthClientId: string | null;
       oauthClientSecret: string | null;
       enabled: boolean;
+      requireApproval: boolean;
     }>
   >;
 }>): Promise<void> => {

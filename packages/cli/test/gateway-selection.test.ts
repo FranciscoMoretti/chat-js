@@ -12,6 +12,7 @@ import pathModule from "node:path";
 import { fileURLToPath } from "node:url";
 
 import gatewayPackage from "@chat-js/gateways/package.json";
+import { z } from "zod";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { gatewayMetadata } from "../../registry/src/gateways/metadata";
@@ -22,6 +23,7 @@ import cliPackage from "../package.json";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { GATEWAYS } from "../src/types";
 /* oxlint-enable import/no-relative-parent-imports */
+// oxlint-disable-next-line import/max-dependencies -- The installer orchestrates explicit planning, provider and package-manager boundaries.
 import { externalGatewayFixture } from "./external-gateway";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import {
@@ -81,14 +83,14 @@ const external = externalGatewayFixture();
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const registryServer = Bun.serve({
-  async fetch(request) {
+  async fetch(request): Promise<Response> {
     const path = new URL(request.url).pathname;
     if (path === "/paid-counter.json") {
       return Response.json(nativeToolFixture);
     }
     if (path === "/external-storage.json") {
       return Response.json({
-        dependencies: ["files-sdk@2.1.0"],
+        dependencies: ["files-sdk@2.5.0"],
         files: [
           {
             content: `import { memory } from "files-sdk/memory";
@@ -404,9 +406,9 @@ beforeAll(async () => {
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-afterAll(() => {
+afterAll(async () => {
   // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  registryServer.stop(true);
+  await registryServer.stop(true);
   if (originalRegistryUrl === undefined) {
     delete process.env.CHATJS_REGISTRY_URL;
   } else {
@@ -444,9 +446,59 @@ const storageArguments = (gateway: string): string[] => {
   return [];
 };
 
+it.each([
+  [
+    "unsupported-video",
+    "openai",
+    "--video-generation-tool",
+    "generate-video",
+    "vercel-blob",
+    "supporting video",
+  ],
+  [
+    "memory-image",
+    "vercel",
+    "--image-generation-tool",
+    "generate-image",
+    "memory",
+    "persistent storage",
+  ],
+])(
+  "rejects invalid create before writing source: %s",
+  // oxlint-disable-next-line eslint/max-params -- The table-driven test passes one column per invalid installation selection.
+  async (name, gateway, flag, tool, storage, message) => {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
+    await expect(
+      run(root, [
+        "node",
+        cliEntry,
+        "create",
+        name,
+        "--yes",
+        "--no-electron",
+        "--gateway",
+        gateway,
+        flag,
+        tool,
+        "--storage-provider",
+        storage,
+        "--storage-config",
+        "{}",
+      ])
+    ).rejects.toThrow(message);
+    expect(await Bun.file(join(root, name, "package.json")).exists()).toBe(
+      false
+    );
+  }
+);
+
 const toolArguments = (gateway: string): string[] => {
   if (gateway === "vercel") {
     return [
+      "--mcp",
+      "--attachments",
+      "--observability",
+      "vercel-analytics,vercel-speed-insights,langfuse",
       "--video-generation-tool",
       "generate-video",
       "--image-generation-tool",
@@ -489,6 +541,39 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
     await Bun.file(join(cwd, "agent/tools/deepResearch.ts")).exists()
   ).toBe(false);
   if (gateway === "vercel") {
+    const beforeGateway = await readFile(
+      join(cwd, "lib/ai/gateway-model-defaults.ts"),
+      "utf-8"
+    );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
+    await expect(
+      run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--gateway",
+        "openai",
+        "--replace",
+        "--yes",
+      ])
+    ).rejects.toThrow("supporting video");
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun rejection matcher even though its declaration returns void.
+    await expect(
+      run(cwd, [
+        "node",
+        cliEntry,
+        "add",
+        "--storage-provider",
+        "memory",
+        "--storage-config",
+        "{}",
+        "--replace",
+        "--yes",
+      ])
+    ).rejects.toThrow("persistent storage");
+    expect(
+      await readFile(join(cwd, "lib/ai/gateway-model-defaults.ts"), "utf-8")
+    ).toBe(beforeGateway);
     await run(join(cwd, "electron"), ["bun", "install", "--ignore-scripts"]);
     await run(cwd, ["bun", "run", "lint"]);
     expect(
@@ -551,6 +636,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const gateway of [...GATEWAYS, "acme"]) {
   const electronFlag = gateway === "vercel" ? "--electron" : "--no-electron";
+  // oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
     const cwd = join(root, gateway);
     await run(root, [
@@ -561,11 +647,21 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "--gateway",
       gatewaySource(gateway),
       ...storageArguments(gateway),
+      ...(gateway === "openrouter" ? ["--no-documents"] : []),
       "--yes",
       electronFlag,
       ...toolArguments(gateway),
     ]);
     await verifyResearchInstallation(cwd, gateway);
+    if (gateway === "openrouter") {
+      expect(
+        await readFile(join(cwd, "tools/chatjs/installed-features.ts"), "utf-8")
+      ).toContain("new Set([])");
+      expect(await readFile(join(cwd, ".env.example"), "utf-8")).not.toMatch(
+        /^(?:TAVILY_API_KEY|FIRECRAWL_API_KEY|MCP_ENCRYPTION_KEY|LANGFUSE_SECRET_KEY|BLOB_READ_WRITE_TOKEN)=/mu
+      );
+    }
+
     expect(
       await Bun.file(join(cwd, "tools/platform/generate-image.ts")).exists()
     ).toBe(false);
@@ -836,7 +932,7 @@ assert.equal(new Gateway().type, "${gateway}");
 
     if (gateway === "acme") {
       // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- The local registry fixture exposes the bound server port used by this generated probe. The local fixture serves generated registry JSON and preserves the runtime checks used by the integration test.
-      const registryPort: number = registryServer.port;
+      const registryPort = registryServer.port ?? 0;
       await writeFile(
         join(cwd, "probe-generation.ts"),
         `import assert from "node:assert/strict";
@@ -884,18 +980,18 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} }
         )
       );
       await run(cwd, ["bun", "run", "lint"]);
-      // Core omission, then all optional implementations through one shared add plan.
-      const omittedObservability = await Promise.all(
+      // Reinstall the full selection while preserving user-authored registrations.
+      const installedObservability = await Promise.all(
         ["vercel-analytics", "vercel-speed-insights", "langfuse"].map((id) =>
           Bun.file(join(cwd, `features/${id}/chatjs.json`)).exists()
         )
       );
-      expect(omittedObservability).toEqual([false, false, false]);
+      expect(installedObservability).toEqual([true, true, true]);
       expect(
         await Bun.file(
           join(cwd, "app/(chat)/api/files/upload/route.ts")
         ).exists()
-      ).toBe(false);
+      ).toBe(true);
       await run(cwd, [
         "node",
         cliEntry,
@@ -948,6 +1044,15 @@ assert.equal(aiConfigSchema.safeParse({ ...ai, tools: { ...ai.tools, video: {} }
           join(cwd, "tools/chatjs/firecrawl-search/chatjs.json")
         ).exists()
       ).toBe(false);
+      expect(
+        await readFile(join(cwd, "tools/chatjs/providers.ts"), "utf-8")
+      ).toContain("./tavily-search/tool");
+      expect(
+        await readFile(
+          join(cwd, "agent/subagents/researcher/tools/webSearch.ts"),
+          "utf-8"
+        )
+      ).toContain("Object.entries(providers)");
       const searchSource = join(cwd, "tools/chatjs/tavily-search/tool.ts");
       const originalSearch = await readFile(searchSource, "utf-8");
       await writeFile(
@@ -978,6 +1083,21 @@ ${originalSearch}`
         "--overwrite",
         "--yes",
       ]);
+      const finalManifest = z
+        .object({ dependencies: z.record(z.string(), z.string()) })
+        .parse(
+          JSON.parse(
+            // oxlint-disable-next-line unicorn/max-nested-calls -- Parse the fixture manifest against its narrow schema before asserting dependency ownership.
+            await readFile(join(cwd, "package.json"), "utf-8")
+          )
+        );
+      expect(finalManifest.dependencies["@tavily/core"]).toBeUndefined();
+      expect(
+        finalManifest.dependencies["@mendable/firecrawl-js"]
+      ).toBeDefined();
+      expect(await readFile(join(cwd, ".env.example"), "utf-8")).not.toContain(
+        "TAVILY_API_KEY="
+      );
       expect(
         await Bun.file(
           join(cwd, "tools/chatjs/vercel-code-execution/tool.ts")

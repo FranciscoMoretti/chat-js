@@ -11,29 +11,6 @@ const isAsyncIterable = <Output>(
   Symbol.asyncIterator in value &&
   typeof value[Symbol.asyncIterator] === "function";
 
-/** Isolate legacy approval metadata while preserving its boolean or predicate contract.
- * @param tool - Discovered AI SDK tool.
- * @returns Approval metadata and the remaining definition.
- */
-type WithoutToolApproval<NativeTool> = NativeTool extends Tool
-  ? Omit<NativeTool, "needsApproval">
-  : never;
-function splitMcpToolApproval<NativeTool extends Tool>(
-  tool: NativeTool
-): {
-  approval: NativeTool["needsApproval"];
-  definition: WithoutToolApproval<NativeTool>;
-};
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve native SDK schema members in the forwarded tool definition; recursive readonly changes FlexibleSchema generic _type and native schema metadata without an equivalent mutable SDK receiver.
-function splitMcpToolApproval(tool: Readonly<Tool>): {
-  approval: Tool["needsApproval"];
-  definition: WithoutToolApproval<Tool>;
-} {
-  // oxlint-disable-next-line typescript/no-deprecated -- Read existing discovered boolean/predicate needsApproval policy exactly here until producers migrate to generation-level approval.
-  const { needsApproval: approval, ...definition } = tool;
-  return { approval, definition };
-}
-
 /** Describe discovered MCP tools; approval and output policies are handled by the MCP integration.
  * @param definition - Tool whose JSON schema is described.
  * @returns A serializable description and validated JSON input schema.
@@ -46,7 +23,6 @@ const describeMcpTool = async <TInput, TOutput>(
   inputSchema: Record<string, z.infer<ReturnType<typeof z.json>>>;
 }> => {
   if (
-    Boolean(splitMcpToolApproval(definition).approval) ||
     typeof definition.toModelOutput === "function" ||
     definition.type === "provider" ||
     typeof definition.description === "function"
@@ -114,4 +90,4 @@ const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
     yield output;
   }
 };
-export { describeMcpTool, executeMcpTool, splitMcpToolApproval };
+export { describeMcpTool, executeMcpTool };

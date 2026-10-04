@@ -16,16 +16,10 @@ Generate images directly in chat using AI models. Supports both generation from 
 
 ## Quick Start
 
-Install the [image tool](../tools/generate-image), then enable it in `chat.config.ts`:
+Install the capability in your app:
 
-```ts
-ai: {
-  tools: {
-    image: {
-      enabled: true, // Requires durable file storage
-    },
-  },
-}
+```bash
+bunx @chat-js/cli@latest add generate-image --storage-provider vercel-blob
 ```
 
 <Callout type="note">

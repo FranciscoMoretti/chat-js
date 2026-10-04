@@ -3,8 +3,10 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 
 const mocks = vi.hoisted(() => ({
+  check: vi.fn(),
   complete: vi.fn(),
   native: vi.fn(),
+  provider: vi.fn(),
   resources: vi.fn(),
   retire: vi.fn(),
 }));
@@ -14,8 +16,8 @@ vi.mock("../env", () => ({
 vi.mock("../db/eve-deletion", () => ({
   completeEveConversationDeletion: mocks.complete,
 }));
-vi.mock("../db/eve-native-purge", () => ({
-  purgeEveNativeSession: mocks.native,
+vi.mock("./lifecycle/provider", () => ({
+  createEveLifecycleProvider: mocks.provider,
 }));
 vi.mock("./purge-local-resources", () => ({
   purgeLocalEveFamilyResources: mocks.resources,
@@ -35,6 +37,11 @@ const family = {
  */
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.provider.mockReturnValue({
+    check: mocks.check,
+    purge: mocks.native,
+    supported: true,
+  });
   mocks.resources.mockResolvedValue(family);
   mocks.native.mockResolvedValue(undefined);
   mocks.complete.mockResolvedValue(undefined);
@@ -49,10 +56,11 @@ beforeEach(() => {
  */
 test("all resources and native family payloads finish before the application tombstone", async () => {
   const gate = Promise.withResolvers<undefined>();
-  mocks.native.mockImplementationOnce(async (_url, _scope, retire) => {
-    // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    await retire();
-  });
+  mocks.native.mockImplementationOnce(
+    async (_sessionId: string, retire: () => Promise<void>) => {
+      await retire();
+    }
+  );
   mocks.native.mockReturnValueOnce(gate.promise);
   const deletion = deleteLocalEveConversationFamily(
     "owner",
@@ -67,7 +75,7 @@ test("all resources and native family payloads finish before the application tom
   );
   expect(mocks.retire).toHaveBeenCalledWith("owner", "session-root");
   // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.native.mock.calls.map((call) => call[1].sessionId)).toEqual([
+  expect(mocks.native.mock.calls.map((call) => call[0])).toEqual([
     "session-root",
     "session-branch",
   ]);
@@ -105,7 +113,7 @@ test("partial native purge retains pending state and retry runs the full orderin
   ).toEqual({ rootId: "root" });
   expect(mocks.resources).toHaveBeenCalledTimes(2);
   // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This delete-local-conversation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(mocks.native.mock.calls.map((call) => call[1].sessionId)).toEqual([
+  expect(mocks.native.mock.calls.map((call) => call[0])).toEqual([
     "session-root",
     "session-branch",
     "session-root",
@@ -134,4 +142,17 @@ test("an already deleted family is idempotent without resetting native sessions"
   ).toEqual({ rootId: "root" });
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.retire).not.toHaveBeenCalled();
+});
+
+test("unsupported native lifecycle cannot enter the local resource coordinator", async () => {
+  mocks.provider.mockReturnValue({
+    reason: "unverified erasure",
+    supported: false,
+  });
+  await expect(
+    deleteLocalEveConversationFamily("owner", "root", "/app")
+  ).rejects.toThrow("unverified erasure");
+  expect(mocks.check).not.toHaveBeenCalled();
+  expect(mocks.resources).not.toHaveBeenCalled();
+  expect(mocks.complete).not.toHaveBeenCalled();
 });

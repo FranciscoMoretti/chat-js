@@ -13,9 +13,9 @@ import {
   ownsEveSession,
   readEveSessionMapping,
 } from "@/lib/db/eve-queries";
-import { isFencedEveDescendant } from "@/lib/db/eve-sandbox-coverage-proof";
 import { getEveSubagent } from "@/lib/db/eve-subagents";
 import { env } from "@/lib/env";
+import { isFencedEveDescendant } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 

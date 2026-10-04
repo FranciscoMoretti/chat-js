@@ -1,6 +1,6 @@
-# Draft: MCP SSE transport refreshes OAuth credentials more than once for concurrent 401 responses
+# Historical MCP SSE OAuth refresh reproduction
 
-**Status:** unpublished; user review required before posting to vercel/ai.
+**Status:** resolved upstream in `@ai-sdk/mcp@2.0.53` (commit `4b5cb49`). ChatJS now uses that release; this document retains the original reproduction, not an open patch requirement.
 
 ## Problem
 

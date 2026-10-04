@@ -1,19 +1,20 @@
 ---
-title: "Configuration"
-description: "Customize ChatJS via chat.config.ts"
+title: Configuration
+description: Install capabilities and configure runtime policy in ChatJS
 ---
 
-App settings and runtime feature toggles live in `chat.config.ts`. That file is parsed and exported as `config` from `@/lib/config`. MCP and attachment-upload availability come from installed registrations.
+ChatJS separates **installed source**, **runtime policy**, and **deployment infrastructure**. The CLI installs tools, features, one gateway, and one storage adapter. `chat.config.ts` supplies branding, model defaults, authentication and guest policies. Environment variables supply credentials and deployment connections.
 
-## Config Structure
+## Runtime configuration
+
+The generated `chat.config.ts` is parsed by `lib/config-schema.ts` and exported as `config` from `@/lib/config`. Use the installed gateway's discriminator and override only the settings you need. This example applies to a Vercel gateway installation:
 
 ```typescript title="chat.config.ts"
 import type { ConfigInput } from "@/lib/config-schema";
 
-const config: ConfigInput = {
+const config = {
   appName: "Your App Name",
   appPrefix: "your-app",
-
   organization: {
     name: "Your Company",
     contact: {
@@ -21,18 +22,11 @@ const config: ConfigInput = {
       legalEmail: "legal@example.com",
     },
   },
-
   ai: {
-    gateway: "vercel", // "vercel" | "openrouter" | "openai" | "openai-compatible"
+    gateway: "vercel",
     tools: {
-      webSearch: { enabled: true },
-      urlRetrieval: { enabled: true },
-      codeExecution: { enabled: true },
       followupSuggestions: { enabled: true, default: "openai/gpt-5-nano" },
-      image: { enabled: true },
-      video: { enabled: true },
       deepResearch: {
-        enabled: true,
         defaultModel: "google/gemini-2.5-flash-lite",
         finalReportModel: "google/gemini-3-flash",
         allowClarification: true,
@@ -42,140 +36,62 @@ const config: ConfigInput = {
       },
     },
   },
-
-  features: {
-    parallelResponses: true,
-  },
-
-  authentication: {
-    google: true,
-    github: true,
-    vercel: false,
-  },
-
-  // ... more options
-};
+  features: { parallelResponses: true },
+  authentication: { google: false, github: true, vercel: false },
+} satisfies ConfigInput;
 
 export default config;
 ```
 
-## AI Gateway
+Model settings do not install their tools. Follow-up suggestions retain an `enabled` runtime setting. Search, retrieval, code execution, image/video generation and deep research do not have `enabled` configuration fields.
 
-The `ai.gateway` field selects which AI backend to use. All model routing, fetching, and API calls go through the active gateway.
+## Install tools and features
 
-| Value | Backend | Env Dependency |
-| --- | --- | --- |
-| `"vercel"` (default) | [Vercel AI Gateway](/gateways/vercel) | `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` |
-| `"openrouter"` | [OpenRouter](/gateways/openrouter) | `OPENROUTER_API_KEY` |
-| `"openai"` | [OpenAI](/gateways/openai) | `OPENAI_API_KEY` |
-| `"openai-compatible"` | [OpenAI Compatible](/gateways/openai-compatible) | `OPENAI_COMPATIBLE_BASE_URL` |
-| `"litellm"` | [LiteLLM](/gateways/litellm) | `LITELLM_BASE_URL` |
+Run commands inside your generated app, using the CLI version appropriate to your installation:
 
-```typescript
-ai: {
-  gateway: "openrouter", // Switch to OpenRouter
-  // ...
-},
+```bash
+bunx @chat-js/cli@latest add tavily-search deep-research
+bunx @chat-js/cli@latest add code-documents saved-code-execution
+bunx @chat-js/cli@latest add attachment-uploads --storage-provider vercel-blob
+bunx @chat-js/cli@latest add mcp
 ```
 
-See [Gateways](/gateways/overview) for detailed setup and comparison.
+| Installation | Requirements |
+| --- | --- |
+| `tavily-search` or `firecrawl-search` | Selected provider's credentials. One `webSearch` provider serves chat and research. |
+| `deep-research` | Text documents, document reading and a search provider. Missing search defaults to Tavily. |
+| `saved-code-execution` | Code documents, document reading and a compatible `codeExecution` provider. Missing execution defaults to Vercel Sandbox. |
+| `generate-image` / `generate-video` | Compatible gateway capability, a default media model and persistent storage. Only the built-in Vercel gateway declares video support. |
+| `attachment-uploads` | Persistent storage. Configure limits separately under `attachments`. |
+| `mcp` | `MCP_ENCRYPTION_KEY`, including installations with no connectors yet. |
+| `vercel-analytics`, `vercel-speed-insights`, `langfuse` | Independently installed telemetry. Langfuse requires its keys. |
 
-## Features
+Planning resolves transitive registry dependencies and validates the resulting selection before installation. Memory storage is appropriate only when no installed feature needs persistent files. An external adapter's metadata is a declaration, not proof of live provider behavior.
 
-Toggle feature flags on/off. Tool flags live under `ai.tools.*.enabled`. Application-level flags live under `features`. Missing env vars are caught at build time via `bun run prebuild`. Install MCP with `chat-js create my-chat --mcp` or `chat-js add mcp`. Its installed descriptor requires `MCP_ENCRYPTION_KEY`, even before you add connectors.
+## Replace providers
 
-| Feature | Config Key | Env Dependency |
-| --- | --- | --- |
-| Code Execution | `ai.tools.codeExecution.enabled` | `VERCEL_OIDC_TOKEN` (on Vercel) or `VERCEL_TEAM_ID + VERCEL_PROJECT_ID + VERCEL_TOKEN` |
-| Web Search | `ai.tools.webSearch.enabled` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
-| URL Retrieval | `ai.tools.urlRetrieval.enabled` | `FIRECRAWL_API_KEY` |
-| MCP Connectors | Installed with `chat-js add mcp` | `MCP_ENCRYPTION_KEY` |
-| Image Generation | `ai.tools.image.enabled` | Configured file storage provider |
-| Video Generation | `ai.tools.video.enabled` | Configured file storage provider |
-| Deep Research | `ai.tools.deepResearch.enabled` | `TAVILY_API_KEY` or `FIRECRAWL_API_KEY` |
-| Follow-up Suggestions | `ai.tools.followupSuggestions.enabled` | Uses your configured language model provider |
-| Attachments | Installed with `chat-js add attachment-uploads` | Configured file storage provider |
-| Parallel Responses | `features.parallelResponses` | None |
+Gateway selection installs `lib/ai/gateway.ts` and its typed defaults. Changing only `ai.gateway` cannot switch providers:
 
-```typescript
-ai: {
-  tools: {
-    webSearch: { enabled: true },          // Requires TAVILY_API_KEY or FIRECRAWL_API_KEY
-    urlRetrieval: { enabled: false },      // Requires FIRECRAWL_API_KEY
-    codeExecution: { enabled: true },      // Vercel-native
-    image: { enabled: true },              // Requires durable file storage
-    video: { enabled: false },             // Requires durable file storage
-    deepResearch: { enabled: false },      // Requires search provider
-    followupSuggestions: { enabled: true } // Uses selected provider/model
-  },
-},
-features: {
-  parallelResponses: true,
-},
+```bash
+bunx @chat-js/cli@latest add --gateway openai --replace
+bunx @chat-js/cli@latest add firecrawl-search --replace
+bunx @chat-js/cli@latest add tavily-search --replace
 ```
 
-## Authentication
+Replacement requires `--replace`. Modified or untracked provider source requires review and explicit `--overwrite`. Keep a version-control checkpoint before replacing customized source. The CLI preserves runtime model overrides, so review their IDs for the selected gateway and run `bun run setup` and `bun run fetch:models` after supplying credentials. Registry addresses can select external providers too. The CLI removes unused dependency entries that its installation receipt owns, and refreshes its marked environment-example sections. It preserves pre-existing dependencies, user-changed versions, dependencies referenced by remaining source and environment entries outside those sections. Older installations without receipts need manual dependency review. Environment entries outside the marked sections, including credentials from older scaffolds, are treated as user-owned and preserved. After replacing a provider in an older app, review those unmarked entries and remove obsolete examples manually; the CLI cannot distinguish old generated entries from your own values.
 
-Set to `true` to enable providers. Missing env vars are caught at server startup.
+Search replacement uses the same `webSearch` slot for direct search and research. Saved-code execution requires an executor export, in addition to a `codeExecution` tool. A second independent sandbox provider and its resource cleanup remain release gates. See [Self-hosted deployment](../deployment/self-hosted) for the infrastructure acceptance boundary.
 
-```typescript
-authentication: {
-  google: false, // Requires AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET
-  github: true,  // Requires AUTH_GITHUB_ID + AUTH_GITHUB_SECRET
-  vercel: false, // Requires VERCEL_APP_CLIENT_ID + VERCEL_APP_CLIENT_SECRET
-},
+A reproducible minimal scaffold omits document tools as well as optional integrations:
+
+```bash
+bunx @chat-js/cli@latest create minimal-chat --yes --no-documents --no-mcp --no-attachments --no-electron
 ```
 
-## Branding
+## Runtime policy and credentials
 
-Customize app name and organization details:
+Authentication booleans enable GitHub, Google or Vercel OAuth and require the corresponding credentials. `anonymous` configures guest model/tool access, credits and rate limits. Retention additionally needs an operational cleanup schedule and lifecycle support.
 
-```typescript
-appName: "ChatJS",
-appTitle: "ChatJS - The prod ready AI chat app",
-appPrefix: "chatjs",
+`features.parallelResponses` controls parallel responses. `attachments.acceptedTypes`, `maxBytes` and `maxDimension` control installed upload behavior. Neither setting installs its feature. Branding, organization/legal text and pricing display are also runtime configuration.
 
-organization: {
-  name: "Your Company",
-  contact: {
-    privacyEmail: "privacy@example.com",
-    legalEmail: "legal@example.com",
-  },
-},
-```
-
-## Deep Research
-
-Configure the deep research pipeline in `ai.tools.deepResearch`:
-
-```typescript
-ai: {
-  tools: {
-    deepResearch: {
-      enabled: true,                   // Requires webSearch provider config
-      defaultModel: "openai/gpt-5-mini",
-      finalReportModel: "openai/gpt-5-mini",
-      allowClarification: true,        // Ask clarifying questions before starting
-      maxResearcherIterations: 1,      // Supervisor loop iterations
-      maxConcurrentResearchUnits: 2,   // Topics researched in parallel
-      maxSearchQueries: 2,             // Queries per research topic
-    },
-  },
-},
-```
-
-See [Deep Research](/features/deep-research) for usage details.
-
-## Using Config in Components
-
-Import directly in both server and client components:
-
-```typescript
-import { config } from "@/lib/config";
-
-export function MyComponent() {
-  return <div>{config.appName}</div>;
-}
-```
-
-See [Config Reference](/reference/config) for full type definitions.
+Read installed descriptors and `.env.example` for credentials, then run `bun run check-env`. Never put secrets in `chat.config.ts` or `--storage-config`. See [Config reference](../reference/config) and [Gateway overview](../gateways/overview).

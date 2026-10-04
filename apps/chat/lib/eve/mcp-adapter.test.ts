@@ -25,20 +25,6 @@ describe("Eve tool contract", () => {
     });
     expect(JSON.stringify(adapted.inputSchema)).not.toContain("~standard");
   });
-  it("refuses to silently bypass an existing approval policy", async () => {
-    await expect(
-      describeMcpTool(
-        tool({
-          description: "Protected",
-          execute: (): string => "done",
-          inputSchema: z.object({}),
-          // oxlint-disable-next-line typescript/no-deprecated -- #583: This test verifies compatibility with approval metadata on legacy tool definitions.
-          needsApproval: true,
-        })
-      )
-    ).rejects.toThrow("explicit Eve policy");
-  });
-
   it("executes a discovered MCP tool with its native invocation identity", async () => {
     const services = { selectedModel: "selected/model" };
     const definition = tool({

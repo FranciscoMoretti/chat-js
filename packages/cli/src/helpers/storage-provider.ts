@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { z } from "zod";
@@ -8,6 +8,7 @@ import { builtInStorage } from "../../../registry/src/storage/catalog";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { StorageSelection } from "../registry/storage";
+import { updateEnvironmentExample } from "../utils/environment-example";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- The provider generator shares the package-local registration emitter in formatter order. */
 import { generatedRegistrationSource } from "../utils/generated-registration-source";
@@ -18,8 +19,6 @@ import { preflight } from "../utils/preflight";
 import type { ReadonlyInput } from "./readonly-input";
 
 const CONFIG_JSON_INDENTATION_SPACES = 2;
-const MISSING_ENV_MARKER = -1;
-const ENV_SOURCE_START = 0;
 
 const serializedConfigValue = (
   value: unknown
@@ -38,46 +37,6 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
   } catch {
     throw new Error("Storage config must be a valid JSON object.");
   }
-};
-
-const STORAGE_ENV_START = "# <chatjs-storage-provider>";
-const STORAGE_ENV_END = "# </chatjs-storage-provider>";
-
-const withoutStorageEnvBlock = (source: string): string => {
-  const from = source.indexOf(STORAGE_ENV_START);
-  const to = source.indexOf(STORAGE_ENV_END);
-  return from !== MISSING_ENV_MARKER && to >= from
-    ? source.slice(ENV_SOURCE_START, from) +
-        source.slice(to + STORAGE_ENV_END.length)
-    : source;
-};
-
-const storageEnvSource = (
-  source: string,
-  definition: ReadonlyInput<StorageSelection["definition"]>
-): string => {
-  let env = withoutStorageEnvBlock(source);
-  const variables = [
-    ...new Set(
-      definition.envRequirements.flatMap(
-        (
-          requirement: ReadonlyInput<
-            StorageSelection["definition"]["envRequirements"][number]
-          >
-        ) => requirement.options.flat()
-      )
-    ),
-  ];
-  env += `\n${STORAGE_ENV_START}\n# ${definition.id} storage\n`;
-  for (const key of variables) {
-    if (!new RegExp(`^${key}=`, "mu").test(env)) {
-      env += `${key}=\n`;
-    }
-  }
-  for (const key of definition.optionalEnv) {
-    env += `# ${key}=\n`;
-  }
-  return `${env}${STORAGE_ENV_END}\n`;
 };
 
 /**
@@ -103,14 +62,12 @@ export const storageId = ${serializedConfigValue(definition.id)};
 export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(definition.envRequirements)};
 `)
   );
-  const examplePath = path.join(destination, ".env.example");
-  const env = await readFile(examplePath, "utf-8").catch((error: unknown) => {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return "";
-    }
-    throw error;
-  });
-  await writeFile(examplePath, storageEnvSource(env, definition));
+  await updateEnvironmentExample(destination, "storage-provider", [
+    ...definition.envRequirements.flatMap((requirement) =>
+      requirement.options.flat()
+    ),
+    ...definition.optionalEnv,
+  ]);
 };
 export {
   configureStorageProvider,

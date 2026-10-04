@@ -57,8 +57,8 @@
     "test:types": "tsc -p tsconfig.json --noEmit && bun run build"
   },
   "dependencies": {
-    "@ai-sdk/react": "4.0.108",
-    "ai": "7.0.105"
+    "@ai-sdk/react": "4.0.109",
+    "ai": "7.0.106"
   },
   "devDependencies": {
     "@types/bun": "^1.3.12",

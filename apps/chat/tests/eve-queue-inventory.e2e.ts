@@ -1,12 +1,13 @@
 /* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/eve-queue-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
+ * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-queue-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import postgres from "postgres";
 import { afterAll, expect, test } from "vitest";
 
-import { readEvePostgresQueueInventory } from "../lib/db/eve-queue-inventory";
+import { readEvePostgresQueueInventory } from "@/lib/eve/lifecycle/postgres/eve-queue-inventory";
+
 import { env } from "../lib/env";
 /* oxlint-enable import/no-relative-parent-imports */
 

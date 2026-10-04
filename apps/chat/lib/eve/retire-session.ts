@@ -1,18 +1,16 @@
 import { Client } from "eve/client";
 import type { SessionSnapshot } from "eve/client";
 
-import { retireEveNativeSessions } from "@/lib/db/eve-native-purge";
 import {
   beginEveConversationDeletion,
   getDeletingEveConversationForSession,
 } from "@/lib/db/eve-queries";
-import { env } from "@/lib/env";
 
 import { getEveConnectionOptions } from "./connection-options";
+import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
 import { reconcileEveSubagentUsage } from "./reconcile-usage";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
-import { resolveWorkflowWorld } from "./world-config";
 
 const SESSION_RETIRE_TIMEOUT_MS = 30_000;
 const RETIRED_SNAPSHOT_TIMEOUT_MS = 15_000;
@@ -89,15 +87,8 @@ const retireEveFamilyForDeletion = async (
   | undefined
 > => {
   assertEveConfigured();
-  const databaseUrl = env.WORKFLOW_POSTGRES_URL;
-  if (
-    resolveWorkflowWorld(env) !== "@workflow/world-postgres" ||
-    !databaseUrl
-  ) {
-    throw new Error(
-      "This deletion operation requires the PostgreSQL workflow backend."
-    );
-  }
+  const lifecycle = requireEveDeletionLifecycle();
+  await lifecycle.check();
   const family = await beginEveConversationDeletion(ownerId, conversationId);
   if (!family) {
     return;
@@ -108,7 +99,7 @@ const retireEveFamilyForDeletion = async (
     }
     return conversation.sessionId;
   });
-  await retireEveNativeSessions(databaseUrl, sessionIds, async (sessionId) => {
+  await lifecycle.retire(sessionIds, async (sessionId) => {
     await retireEveSessionForDeletion(ownerId, sessionId);
   });
   // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.

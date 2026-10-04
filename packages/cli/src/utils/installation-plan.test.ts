@@ -38,6 +38,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
   });
   const documents = toolDefinitionSchema.parse({
     contractVersion: 1,
+    documentKind: "text",
     id: "text-documents",
     kind: "tool",
     requiresTools: ["readDocument"],
@@ -61,6 +62,18 @@ test("plans transitive dependencies and repairs against the complete resulting i
   });
   try {
     const source = `http://127.0.0.1:${server.port}`;
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous Bun matcher before checking that planning made no writes.
+    await expect(
+      planInstallation(
+        root,
+        {
+          features: [],
+          tools: [`${source}/text-documents.json`],
+        },
+        { documents: false, fresh: true }
+      )
+    ).rejects.toThrow("--no-documents");
+    expect(await Bun.file(join(root, "package.json")).exists()).toBe(false);
     const first = await planInstallation(root, {
       features: [],
       tools: [`${source}/text-documents.json`],
@@ -75,6 +88,10 @@ test("plans transitive dependencies and repairs against the complete resulting i
     const dir = join(root, "tools/chatjs/text-documents");
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "chatjs.json"), JSON.stringify(documents));
+    await writeFile(
+      join(dir, "document.tsx"),
+      "export const documentUi = {};\n"
+    );
     await writeFile(
       join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
@@ -156,7 +173,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     );
     expect(
       fresh.replacements.map(({ previous }): string => previous.id)
-    ).toEqual(["first"]);
+    ).toEqual([]);
     const reinstall = await planInstallation(root, {
       features: [],
       tools: [`http://127.0.0.1:${server.port}/first.json`],

@@ -78,9 +78,7 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
-    "//@better-auth/core": "Pinned because @better-auth/electron and other @better-auth/* packages declare a strict peerDependency on @better-auth/core@1.5.6. Do not remove without auditing all @better-auth/* peer ranges.",
     "//astro": "Pinned to Blume's Astro version so workspace hoisting cannot bind Blume integrations to an incompatible copy.",
-    "@better-auth/core": "1.5.6",
     "astro": "7.3.1"
   },
   "engines": {
@@ -88,7 +86,6 @@
   },
   "packageManager": "bun@1.3.1",
   "patchedDependencies": {
-    "@ai-sdk/mcp@2.0.52": "patches/ai-sdk-mcp@2.0.52.patch",
     "@workflow/world-postgres@5.0.0-beta.40": "patches/workflow-world-postgres@5.0.0-beta.40.patch"
   }
 }

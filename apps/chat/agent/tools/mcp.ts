@@ -55,8 +55,7 @@ export default defineDynamic({
                 connectorId,
                 remoteName,
                 approvalContext.toolInput,
-                approvalContext,
-                parse(messages)
+                approvalContext
               ),
             response: ({ responder, session }) =>
               responder.principalId === session.initiator?.principalId

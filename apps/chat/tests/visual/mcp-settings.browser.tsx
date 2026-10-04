@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => {
   });
   const mutation = { mutationOptions: () => ({}) };
   return {
+    approvalRequired: false,
     cachedData: false,
     handleClose: vi.fn(),
     listError: false,
@@ -42,6 +43,7 @@ const mocks = vi.hoisted(() => {
       listConnected: query("listConnected"),
       testConnection: query("testConnection"),
       toggleEnabled: mutation,
+      update: mutation,
     },
     mutate: vi.fn(),
     needsOAuth: false,
@@ -50,12 +52,15 @@ const mocks = vi.hoisted(() => {
     refetch: vi.fn(),
     router: { push: vi.fn(), replace: vi.fn() },
     search: new URLSearchParams(),
+    sharedConnector: false,
   };
 });
 /* oxlint-enable typescript/explicit-function-return-type */
 
 afterEach(async () => {
   await act(() => toast.dismiss());
+  mocks.approvalRequired = false;
+  mocks.sharedConnector = false;
   mocks.listError = false;
   mocks.cachedData = false;
   mocks.needsOAuth = false;
@@ -73,6 +78,7 @@ const connector = {
   nameId: "documentation",
   oauthClientId: null,
   oauthClientSecret: null,
+  requireApproval: false,
   type: "sse" as const,
   updatedAt: new Date("2026-01-01T00:00:00Z"),
   url: "https://docs.example.test/mcp",
@@ -118,7 +124,11 @@ vi.mock("@tanstack/react-query", () => ({
         tools: [{ name: "search_docs" }, { name: "read_page" }],
       },
       list: [
-        connector,
+        {
+          ...connector,
+          requireApproval: mocks.approvalRequired,
+          userId: mocks.sharedConnector ? null : connector.userId,
+        },
         {
           ...connector,
           id: "global",
@@ -503,3 +513,33 @@ test("invalid authorization links keep the dialog open and display an error", as
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- mcp-settings.browser keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
+
+for (const state of ["off", "enabled", "saving", "shared"] as const) {
+  // oxlint-disable-next-line max-statements -- Keep each approval state, interaction, capture and cleanup together so the persisted setting is verified as one scenario.
+  test(`connection approval setting is ${state}`, async () => {
+    Object.assign(mocks, {
+      approvalRequired: state !== "off",
+      pendingAuthorization: state === "saving",
+      sharedConnector: state === "shared",
+    });
+    const cleanup = await renderPage(true);
+    try {
+      const approval = page.getByRole("switch", { name: "Require approval" });
+      await expect
+        .element(approval)
+        .toHaveAttribute("aria-checked", String(state !== "off"));
+      if (state === "enabled" || state === "off") {
+        await approval.click();
+        expect(mocks.mutate).toHaveBeenCalledWith({
+          id: "documentation",
+          updates: { requireApproval: state === "off" },
+        });
+      } else {
+        await expect.element(approval).toBeDisabled();
+      }
+      await takeSnapshot(`mcp-approval-${state}`);
+    } finally {
+      await cleanup();
+    }
+  });
+}

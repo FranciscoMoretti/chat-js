@@ -102,12 +102,6 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
 
   await vendorPatchedPackage({
     destination,
-    packageDir: await resolvePackageDirectory("@ai-sdk/mcp", sourceDir),
-    packageName: "@ai-sdk/mcp",
-    patchPath: join(rootDir, "patches", "ai-sdk-mcp@2.0.52.patch"),
-  });
-  await vendorPatchedPackage({
-    destination,
     packageDir: await resolvePackageDirectory(
       "@workflow/world-postgres",
       sourceDir

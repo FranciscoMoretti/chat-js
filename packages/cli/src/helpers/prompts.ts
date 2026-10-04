@@ -438,9 +438,10 @@ const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
 };
 
 const assistantToolOptions = (
-  items: readonly ReadonlyInput<RegistryIndexItem>[]
+  items: readonly ReadonlyInput<RegistryIndexItem>[],
+  supportedBuiltInTools: readonly BuiltInToolKey[]
 ): Option<string>[] => [
-  ...BUILT_IN_TOOL_KEYS.map((key) => ({
+  ...supportedBuiltInTools.map((key) => ({
     hint:
       builtInToolEnvRequirements[key]?.description ?? BUILT_IN_TOOL_HINTS[key],
     label: BUILT_IN_TOOL_LABELS[key],
@@ -453,9 +454,29 @@ const assistantToolOptions = (
   })),
 ];
 
+const supportedAssistantTools = (
+  gateway: ReadonlyInput<GatewayDefinition>
+): BuiltInToolKey[] =>
+  BUILT_IN_TOOL_KEYS.filter((key) => {
+    if (key === "imageGeneration") {
+      return (
+        gateway.capabilities.image &&
+        Boolean(gateway.defaults.tools.image.default)
+      );
+    }
+    if (key === "videoGeneration") {
+      return (
+        gateway.capabilities.video &&
+        Boolean(gateway.defaults.tools.video.default)
+      );
+    }
+    return true;
+  });
+
 const promptAssistantTools = async (
   registryItems: readonly ReadonlyInput<RegistryIndexItem>[],
-  skipPrompt: boolean
+  skipPrompt: boolean,
+  gateway: ReadonlyInput<GatewayDefinition>
 ): Promise<{
   builtInTools: Record<BuiltInToolKey, boolean>;
   installableTools: string[];
@@ -463,6 +484,7 @@ const promptAssistantTools = async (
   const installableItems = registryItems.filter((item) =>
     isInstallableTool(item)
   );
+  const supportedBuiltInTools = supportedAssistantTools(gateway);
 
   if (skipPrompt) {
     return {
@@ -472,11 +494,11 @@ const promptAssistantTools = async (
   }
 
   const selected = await multiselect({
-    initialValues: BUILT_IN_TOOL_KEYS.filter(
+    initialValues: supportedBuiltInTools.filter(
       (key) => BUILT_IN_TOOL_DEFAULTS[key]
     ),
     message: `Which ${highlighter.info("assistant tools")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
-    options: assistantToolOptions(installableItems),
+    options: assistantToolOptions(installableItems, supportedBuiltInTools),
     required: false,
   });
   handleCancel(selected);

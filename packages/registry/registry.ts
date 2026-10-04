@@ -21,6 +21,8 @@ const toolItems = (
       dependencies: ["ai", "zod"],
       description: "Generate videos using the selected gateway and storage",
       id: "generate-video",
+      requiresGateway: ["video"],
+      requiresStorage: true,
       slot: "generateVideo",
       tools: [
         {
@@ -39,6 +41,8 @@ const toolItems = (
       description:
         "Generate and edit images using the selected gateway and storage",
       id: "generate-image",
+      requiresGateway: ["image"],
+      requiresStorage: true,
       slot: "generateImage",
       tools: [
         {
