@@ -27,11 +27,14 @@ Before adding or updating MCP in an older generated app, check the `mcpConnector
 requireApproval: boolean("requireApproval").notNull().default(false),
 ```
 
-If it is missing, add it to the connector columns and generate a migration using your app's own migration history:
+If it is missing, add it to the connector columns and run your app's `db:generate` script using its package manager. This generates a migration against your app's own migration history.
 
-```bash
-bun db:generate
-```
+| Package manager | Generate migration     | Apply reviewed migration |
+| --------------- | ---------------------- | ------------------------ |
+| Bun             | `bun run db:generate`  | `bun run db:migrate`     |
+| npm             | `npm run db:generate`  | `npm run db:migrate`     |
+| pnpm            | `pnpm run db:generate` | `pnpm run db:migrate`    |
+| Yarn            | `yarn run db:generate` | `yarn run db:migrate`    |
 
 Review the generated migration. For an existing `McpConnector` table, the approval change should add this column:
 
@@ -39,10 +42,9 @@ Review the generated migration. For an existing `McpConnector` table, the approv
 ALTER TABLE "McpConnector" ADD COLUMN "requireApproval" boolean DEFAULT false NOT NULL;
 ```
 
-Apply the migration to your intended database before installing the updated MCP code:
+Run `db:migrate` with your package manager to apply the reviewed migration to your intended database. Then install the updated MCP code:
 
 ```bash
-bun db:migrate
 chat-js add mcp
 ```
 

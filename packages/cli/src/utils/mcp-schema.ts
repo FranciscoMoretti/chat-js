@@ -41,7 +41,7 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
     return;
   }
   throw new Error(
-    'MCP requires mcpConnector.requireApproval in lib/db/schema.ts. Add requireApproval: boolean("requireApproval").notNull().default(false) to the connector columns, then run bun db:generate, review the generated migration, and run bun db:migrate against your intended database before retrying chat-js add mcp. No source was installed. See https://chatjs.dev/docs/features/mcp for the existing-app upgrade steps.'
+    'MCP requires mcpConnector.requireApproval in lib/db/schema.ts. Add requireApproval: boolean("requireApproval").notNull().default(false) to the connector columns, then run your db:generate script, review the generated migration, and run your db:migrate script against the intended database using your package manager before retrying chat-js add mcp. No source was installed. See https://chatjs.dev/docs/features/mcp for the existing-app upgrade steps.'
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

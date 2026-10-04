@@ -209,7 +209,7 @@ test("MCP installation requires the approval schema before changing an older sca
           new Error("registration must not run before the schema upgrade")
         )
       )
-    ).rejects.toThrow("bun db:generate");
+    ).rejects.toThrow("db:generate script");
     expect(
       await Bun.file(path.join(root, "trpc/routers/mcp.router.ts")).exists()
     ).toBe(false);
