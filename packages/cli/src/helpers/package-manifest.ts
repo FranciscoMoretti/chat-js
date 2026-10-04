@@ -1,9 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { PackageManager } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { PackageManager } from "#cli/types";
 
 type DependencyMap = Record<string, string>;
 type ScriptMap = Record<string, string>;

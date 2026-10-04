@@ -3,12 +3,9 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { scaffoldFromTemplate } from "../helpers/scaffold";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installItems } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
+import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+import { installItems } from "#cli/registry/shadcn";
+
 import { installPlan, recordInstalledSource } from "./install-plan";
 import { planInstallation } from "./installation-plan";
 import { syncTools, toolRegistrationTargets } from "./sync-tools";

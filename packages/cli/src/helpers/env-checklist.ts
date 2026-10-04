@@ -1,18 +1,15 @@
-/* oxlint-disable import/no-relative-parent-imports -- The CLI shares auth/tool key constants from its sibling types module; the published Bun bundle includes this import, and the existing @ alias points to apps/chat. */
 import {
   AUTH_PROVIDERS,
   BUILT_IN_TOOL_KEYS,
   CORE_FEATURE_KEYS,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- EnvChecklistInput uses the closed key unions declared in the CLI types module; the application @ alias cannot resolve this package-local type boundary. */
+} from "#cli/types";
 import type {
   AuthProvider,
   BuiltInToolKey,
   CoreFeatureKey,
   Gateway,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#cli/types";
+
 import {
   authEnvRequirements,
   builtInToolEnvRequirements,
@@ -86,69 +83,66 @@ const requirementToEntries = (
   });
 };
 
-const addRequirementEntries = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This caller-owned output array is appended to; copying would lose entries collected for subsequent feature requirements.
-  entries: EnvVarEntry[],
-  requirement: EnvRequirementLike | undefined,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This caller-owned set records deduplication across successive requirements; a copy would allow duplicate checklist entries.
-  seen: Set<string>
-): void => {
-  if (!requirement) {
-    return;
-  }
-  const dedupeKey = JSON.stringify(
-    requirement.options
-      .map((group) => group.toSorted())
-      .toSorted((leftEntry: readonly string[], rightEntry: readonly string[]) =>
-        JSON.stringify(leftEntry).localeCompare(JSON.stringify(rightEntry))
-      )
-  );
-  if (seen.has(dedupeKey)) {
-    return;
-  }
+interface RequirementCollector {
+  readonly entries: EnvVarEntry[];
+  readonly add: (requirement: EnvRequirementLike | undefined) => void;
+}
 
-  seen.add(dedupeKey);
-  entries.push(...requirementToEntries(requirement));
+const requirementCollector = (): RequirementCollector => {
+  const entries: EnvVarEntry[] = [];
+  const seen = new Set<string>();
+  const add = (requirement: EnvRequirementLike | undefined): void => {
+    if (!requirement) {
+      return;
+    }
+    const dedupeKey = JSON.stringify(
+      requirement.options
+        .map((group) => group.toSorted())
+        .toSorted(
+          (leftEntry: readonly string[], rightEntry: readonly string[]) =>
+            JSON.stringify(leftEntry).localeCompare(JSON.stringify(rightEntry))
+        )
+    );
+    if (!seen.has(dedupeKey)) {
+      seen.add(dedupeKey);
+      entries.push(...requirementToEntries(requirement));
+    }
+  };
+  return { add, entries };
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
-  const featureItems: EnvVarEntry[] = [];
-  const seen = new Set<string>();
-
+const collectCoreFeatureEntries = (
+  input: EnvChecklistInput,
+  add: RequirementCollector["add"]
+): void => {
   for (const feature of CORE_FEATURE_KEYS) {
-    if (!input.coreFeatures[feature]) {
-      continue;
-    }
-
-    for (const requirement of coreFeatureEnvRequirements[feature] ?? []) {
-      addRequirementEntries(featureItems, requirement, seen);
+    if (input.coreFeatures[feature]) {
+      for (const requirement of coreFeatureEnvRequirements[feature] ?? []) {
+        add(requirement);
+      }
     }
   }
+};
 
+const collectFeatureEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
+  const collector = requirementCollector();
+  collectCoreFeatureEntries(input, collector.add);
   for (const tool of BUILT_IN_TOOL_KEYS) {
     if (
-      tool === "webSearch" ||
-      tool === "urlRetrieval" ||
-      tool === "deepResearch" ||
-      tool === "codeExecution" ||
-      !input.builtInTools[tool]
+      tool !== "webSearch" &&
+      tool !== "urlRetrieval" &&
+      tool !== "deepResearch" &&
+      tool !== "codeExecution" &&
+      input.builtInTools[tool]
     ) {
-      continue;
+      collector.add(builtInToolEnvRequirements[tool]);
     }
-
-    addRequirementEntries(featureItems, builtInToolEnvRequirements[tool], seen);
   }
-
   for (const requirement of input.installableToolEnvRequirements ?? []) {
-    addRequirementEntries(featureItems, requirement, seen);
+    collector.add(requirement);
   }
-
-  return featureItems;
+  return collector.entries;
 };
-/* oxlint-enable eslint/no-continue */
-/* oxlint-enable eslint/max-statements */
 
 const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
   const authItems: EnvVarEntry[] = [];

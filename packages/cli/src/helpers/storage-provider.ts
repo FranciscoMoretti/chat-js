@@ -40,7 +40,46 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+const STORAGE_ENV_START = "# <chatjs-storage-provider>";
+const STORAGE_ENV_END = "# </chatjs-storage-provider>";
+
+const withoutStorageEnvBlock = (source: string): string => {
+  const from = source.indexOf(STORAGE_ENV_START);
+  const to = source.indexOf(STORAGE_ENV_END);
+  return from !== MISSING_ENV_MARKER && to >= from
+    ? source.slice(ENV_SOURCE_START, from) +
+        source.slice(to + STORAGE_ENV_END.length)
+    : source;
+};
+
+const storageEnvSource = (
+  source: string,
+  definition: ReadonlyInput<StorageSelection["definition"]>
+): string => {
+  let env = withoutStorageEnvBlock(source);
+  const variables = [
+    ...new Set(
+      definition.envRequirements.flatMap(
+        (
+          requirement: ReadonlyInput<
+            StorageSelection["definition"]["envRequirements"][number]
+          >
+        ) => requirement.options.flat()
+      )
+    ),
+  ];
+  env += `\n${STORAGE_ENV_START}\n# ${definition.id} storage\n`;
+  for (const key of variables) {
+    if (!new RegExp(`^${key}=`, "mu").test(env)) {
+      env += `${key}=\n`;
+    }
+  }
+  for (const key of definition.optionalEnv) {
+    env += `# ${key}=\n`;
+  }
+  return `${env}${STORAGE_ENV_END}\n`;
+};
+
 /**
  * Configure the installed source without evaluating it or editing dependencies.
  * @param destination Project root receiving storage-options.ts and its env block.
@@ -65,37 +104,14 @@ export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(
 `)
   );
   const examplePath = path.join(destination, ".env.example");
-  let env = await readFile(examplePath, "utf-8").catch((error: unknown) => {
+  const env = await readFile(examplePath, "utf-8").catch((error: unknown) => {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return "";
     }
     throw error;
   });
-  const start = "# <chatjs-storage-provider>";
-  const end = "# </chatjs-storage-provider>";
-  const from = env.indexOf(start);
-  const to = env.indexOf(end);
-  if (from !== MISSING_ENV_MARKER && to >= from) {
-    env = env.slice(ENV_SOURCE_START, from) + env.slice(to + end.length);
-  }
-  const variables = [
-    ...new Set(
-      definition.envRequirements.flatMap((envReq) => envReq.options.flat())
-    ),
-  ];
-  env += `\n${start}\n# ${definition.id} storage\n`;
-  for (const key of variables) {
-    if (!new RegExp(`^${key}=`, "mu").test(env)) {
-      env += `${key}=\n`;
-    }
-  }
-  for (const key of definition.optionalEnv) {
-    env += `# ${key}=\n`;
-  }
-  env += `${end}\n`;
-  await writeFile(examplePath, env);
+  await writeFile(examplePath, storageEnvSource(env, definition));
 };
-/* oxlint-enable eslint/max-statements */
 export {
   configureStorageProvider,
   INSTALLABLE_STORAGE_PROVIDERS,

@@ -1,9 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { PackageManager } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { PackageManager } from "#cli/types";
 
 const launcherPackageManager = (): PackageManager => {
   // oxlint-disable-next-line node/no-process-env -- Read the launching package manager per call; inferPackageManager uses this current process fallback only after exhausting project manifests and lockfiles.

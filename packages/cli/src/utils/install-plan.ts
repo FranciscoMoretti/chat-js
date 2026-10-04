@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import type { Dirent } from "node:fs";
 import {
   mkdir,
   readFile,
@@ -11,20 +12,29 @@ import path from "node:path";
 
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installItems } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
+import { installItems } from "#cli/registry/shadcn";
+
 import type { planInstallation } from "./installation-plan";
 import { preflight } from "./preflight";
 import { toolRegistrationTargets } from "./sync-tools";
 
 type Plan = Awaited<ReturnType<typeof planInstallation>>;
+type ReadonlyNative<Value> = Value extends (
+  ...args: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
+    : Value;
+const REGISTRY_ROOT_PREFIX = "~/";
+const NO_INFERRED_DESTINATIONS = 0;
+const NO_REPLACEMENTS = 0;
+const NO_RESTORATION_ERRORS = 0;
+const RECEIPT_INDENTATION_SPACES = 2;
 const receiptFile = ".chatjs/installed-source.json";
 const receiptSchema = z.record(z.string(), z.string());
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const hash = (content: Buffer): string =>
+const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const optionalFile = async (file: string): Promise<Buffer | null> => {
@@ -47,23 +57,23 @@ const readReceipt = async (
   return source ? receiptSchema.parse(JSON.parse(source.toString())) : {};
 };
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const sourceTargets = (plan: Plan): string[] => [
+const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ...new Set(
-    plan.items.flatMap((item) =>
-      (item.files ?? []).flatMap((file) =>
-        file.target?.startsWith("~/") ? [file.target.slice(2)] : []
+    plan.items.flatMap((item: ReadonlyNative<Plan["items"][number]>) =>
+      (item.files ?? []).flatMap(
+        (
+          file: ReadonlyNative<
+            NonNullable<Plan["items"][number]["files"]>[number]
+          >
+        ) =>
+          file.target?.startsWith("~/") === true
+            ? [file.target.slice(REGISTRY_ROOT_PREFIX.length)]
+            : []
       )
     )
   ),
 ];
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const directoryFiles = async (
   cwd: string,
   directory: string
@@ -72,7 +82,7 @@ const directoryFiles = async (
     withFileTypes: true,
   });
   const files = await Promise.all(
-    entries.map(async (entry) => {
+    entries.map(async (entry: Readonly<Dirent>) => {
       const target = `${directory}/${entry.name}`;
       if (entry.isSymbolicLink()) {
         throw new Error(`Invalid or symlinked ChatJS target: ${target}`);
@@ -82,16 +92,16 @@ const directoryFiles = async (
   );
   return files.flat();
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/** Capture only source we actually installed. Never bless a skipped user file. */
+/**
+ * Capture only source we actually installed. Never bless a skipped user file.
+ * @param cwd Project containing the receipt and installed source files.
+ * @param targets Ordered installed paths to hash without modifying the caller list.
+ */
 const recordInstalledSource = async (
   cwd: string,
-  targets: string[]
+  targets: readonly string[]
 ): Promise<void> => {
   const receipt = await readReceipt(cwd);
   await preflight(cwd, targets);
@@ -105,40 +115,48 @@ const recordInstalledSource = async (
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
   await writeFile(
     path.join(cwd, receiptFile),
-    `${JSON.stringify(receipt, null, 2)}\n`
+    `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
 
 const plannedSourceTargets = sourceTargets;
+
+const hasProviderKind = (
+  metadata: unknown,
+  kind: "gateway" | "storage"
+): boolean =>
+  typeof metadata === "object" &&
+  metadata !== null &&
+  "kind" in metadata &&
+  metadata.kind === kind;
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/** Validate protection before mutation; stage retired exclusive sources until registration succeeds. */
+/**
+ * Validate protection before mutation; stage retired exclusive sources until registration succeeds.
+ * @param cwd Project whose installed source and receipts are protected.
+ * @param plan Resolved items and exclusive provider replacements to install.
+ * @param options Authorization and extra paths for protection and rollback.
+ * @param register Registration operation awaited before retired source is removed.
+ */
 const installPlan = async (
   cwd: string,
-  plan: Plan,
+  plan: ReadonlyNative<Plan>,
   options: {
-    overwrite?: boolean;
-    fresh?: boolean;
-    managedTargets?: string[];
-    rollbackTargets?: string[];
+    readonly overwrite?: boolean;
+    readonly fresh?: boolean;
+    readonly managedTargets?: readonly string[];
+    readonly rollbackTargets?: readonly string[];
   },
   register: () => Promise<void>
 ): Promise<void> => {
   const targets = [...sourceTargets(plan), ...(options.managedTargets ?? [])];
   const retired = await Promise.all(
-    plan.replacements.map(({ previous }) =>
-      directoryFiles(cwd, `tools/chatjs/${previous.id}`)
+    plan.replacements.map(
+      async ({ previous }): Promise<string[]> =>
+        await directoryFiles(cwd, `tools/chatjs/${previous.id}`)
     )
   );
   const rollbackTargets = [
@@ -159,30 +177,41 @@ const installPlan = async (
   );
   // A replacement writes shared source. Unknown/native source requires explicit authorization.
   const replacingShared = plan.items.some(
-    (item): boolean =>
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-      item.meta?.chatjs?.kind === "gateway" ||
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-      item.meta?.chatjs?.kind === "storage"
+    (item: ReadonlyNative<Plan["items"][number]>): boolean =>
+      hasProviderKind(item.meta?.chatjs, "gateway") ||
+      hasProviderKind(item.meta?.chatjs, "storage")
   );
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
-  const overwrite = options.overwrite || options.fresh || replacingShared;
+  const overwrite =
+    options.overwrite === true || options.fresh === true || replacingShared;
   // The shadcn installer infers destinations for native UI files. Until those paths are
   // explicit, they cannot participate in protection or registration rollback.
   if (overwrite) {
-    const unprotected = plan.items.flatMap((item) =>
-      (item.files ?? [])
-        .filter((file): boolean => !file.target?.startsWith("~/"))
-        .map((file): string => `${item.name}: ${file.path}`)
+    const unprotected = plan.items.flatMap(
+      (item: ReadonlyNative<Plan["items"][number]>) =>
+        (item.files ?? [])
+          .filter(
+            (
+              file: ReadonlyNative<
+                NonNullable<Plan["items"][number]["files"]>[number]
+              >
+            ): boolean => file.target?.startsWith("~/") !== true
+          )
+          .map(
+            (
+              file: ReadonlyNative<
+                NonNullable<Plan["items"][number]["files"]>[number]
+              >
+            ): string => `${item.name}: ${file.path}`
+          )
     );
-    if (unprotected.length > 0) {
+    if (unprotected.length > NO_INFERRED_DESTINATIONS) {
       throw new Error(
         `Cannot safely overwrite inferred installer destinations: ${unprotected.join(", ")}. Give these registry files explicit ~/ targets before combining them with provider installation or --overwrite. No source was installed.`
       );
     }
   }
   const protectedFiles =
-    plan.replacements.length > 0 || replacingShared
+    plan.replacements.length > NO_REPLACEMENTS || replacingShared
       ? [...targets, ...retired.flat()]
       : [];
   if (!(options.fresh === true) && !(options.overwrite === true)) {
@@ -196,7 +225,7 @@ const installPlan = async (
       }
     }
   }
-  const staged: { from: string; to: string }[] = [];
+  const staged: { readonly from: string; readonly to: string }[] = [];
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
   try {
     await installItems(plan.sources, cwd, overwrite);
@@ -215,47 +244,58 @@ const installPlan = async (
   } catch (error) {
     // Restore old source even when shadcn or registration failed; new source may need repair.
     const restored = await Promise.allSettled([
-      ...staged.map(({ from, to }): Promise<void> => rename(to, from)),
-      ...[...existing].map(async ([target, content]): Promise<void> => {
-        if (content) {
-          await writeFile(path.join(cwd, target), content);
-        } else if (rollbackTargets.includes(target)) {
-          await rm(path.join(cwd, target), { force: true });
+      ...staged.map(
+        async ({
+          from,
+          to,
+        }: Readonly<(typeof staged)[number]>): Promise<void> =>
+          await rename(to, from)
+      ),
+      ...[...existing].map(
+        async ([target, content]: ReadonlyNative<
+          readonly [string, Buffer | null]
+        >): Promise<void> => {
+          if (content) {
+            await writeFile(path.join(cwd, target), content);
+          } else if (rollbackTargets.includes(target)) {
+            await rm(path.join(cwd, target), { force: true });
+          }
         }
-      }),
+      ),
     ]);
-    const restorationErrors = restored.flatMap((result) =>
-      result.status === "rejected" ? [String(result.reason)] : []
+    const restorationErrors = restored.flatMap(
+      (result: ReadonlyNative<(typeof restored)[number]>) =>
+        result.status === "rejected" ? [String(result.reason)] : []
     );
     throw new Error(
-      `Installation did not complete. ${restorationErrors.length > 0 ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
+      `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
       { cause: error }
     );
   }
   await Promise.all(
-    staged.map(({ to }): Promise<void> =>
-      rm(to, { force: true, recursive: true })
+    staged.map(
+      async ({ to }: Readonly<(typeof staged)[number]>): Promise<void> =>
+        await rm(to, { force: true, recursive: true })
     )
   );
   await recordInstalledSource(
     cwd,
-    snapshotTargets.filter((target) => {
+    snapshotTargets.filter((target): boolean => {
       const previous = existing.get(target);
       // Registration can update rollback-only files. Refresh an existing baseline
       // only when the file was untouched beforehand; never bless user edits.
       if (!targets.includes(target)) {
-        return previous && receipt[target] === hash(previous);
+        return previous ? receipt[target] === hash(previous) : false;
       }
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
-      return !previous || options.overwrite || options.fresh || replacingShared;
+      return (
+        !previous ||
+        options.overwrite === true ||
+        options.fresh === true ||
+        replacingShared
+      );
     })
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

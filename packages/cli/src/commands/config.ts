@@ -4,15 +4,9 @@ import path from "node:path";
 
 import { Command } from "commander";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { PackageManager } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { inferPackageManager } from "../utils/get-package-manager";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { handleError } from "../utils/handle-error";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { PackageManager } from "#cli/types";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
+import { handleError } from "#cli/utils/handle-error";
 
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";

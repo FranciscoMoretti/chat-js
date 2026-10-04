@@ -1,11 +1,7 @@
 import { readdir, lstat } from "node:fs/promises";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { highlighter } from "../utils/highlighter";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { logger } from "../utils/logger";
-/* oxlint-enable import/no-relative-parent-imports */
+import { highlighter } from "#cli/utils/highlighter";
+import { logger } from "#cli/utils/logger";
 
 const FAILURE_EXIT_CODE = 1;
 const EMPTY_DIRECTORY_SIZE = 0;

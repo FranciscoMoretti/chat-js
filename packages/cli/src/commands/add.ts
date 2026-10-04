@@ -4,44 +4,24 @@ import path from "node:path";
 import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { configureGatewayProvider } from "../helpers/gateway-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
 import {
   parseStorageOptions,
   configureStorageProvider,
-} from "../helpers/storage-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveGateway } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { handleError } from "../utils/handle-error";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installPlan } from "../utils/install-plan";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#cli/helpers/storage-provider";
+import { resolveGateway } from "#cli/registry/gateways";
+import { resolveStorage } from "#cli/registry/storage";
+import { handleError } from "#cli/utils/handle-error";
+import { installPlan } from "#cli/utils/install-plan";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { planInstallation } from "../utils/installation-plan";
-/* oxlint-enable import/no-relative-parent-imports */
+import { planInstallation } from "#cli/utils/installation-plan";
 /* oxlint-enable import/max-dependencies */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { gatewayConfigEdit } from "../utils/provider-config";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { gatewayConfigEdit } from "#cli/utils/provider-config";
 import {
   assertSupportedFeatureInstallation,
   syncFeatures,
-} from "../utils/sync-features";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncTools } from "../utils/sync-tools";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#cli/utils/sync-features";
+import { syncTools } from "#cli/utils/sync-tools";
 
 type ReadonlyNative<Value> = Value extends (
   ...args: readonly never[]

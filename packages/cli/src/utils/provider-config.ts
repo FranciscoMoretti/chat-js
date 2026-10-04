@@ -3,9 +3,7 @@ import path from "node:path";
 
 import ts from "typescript";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { GatewaySelection } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { GatewaySelection } from "#cli/registry/gateways";
 
 const INITIAL_REFERENCE_COUNT = 0;
 const REFERENCE_INCREMENT = 1;
