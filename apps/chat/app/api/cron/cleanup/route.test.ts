@@ -153,10 +153,12 @@ test("unsupported guest cleanup never reports cron success or an empty backlog",
   );
   expect(response.status).toBe(SERVICE_UNAVAILABLE);
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
-  expect(await response.json()).toMatchObject({
+  const result: unknown = await response.json();
+  expect(result).toMatchObject({
     results: { expiredGuests: unsupported },
     success: false,
   });
+  expect(result).not.toHaveProperty("results.expiredGuests.pendingCount");
 });
 
 test("a skipped cleanup cannot become successful through a zero pending count", async () => {
