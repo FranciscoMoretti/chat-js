@@ -10,20 +10,14 @@ import path from "node:path";
 
 const join = (...segments: readonly string[]): string => path.join(...segments);
 
-/* oxlint-disable import/exports-last -- SNAPSHOT_CONCURRENCY: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- SNAPSHOT_CONCURRENCY: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export const SNAPSHOT_CONCURRENCY = 32;
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
+const SNAPSHOT_CONCURRENCY = 32;
 
-/* oxlint-disable import/exports-last -- SnapshotOptions: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
 /* oxlint-disable typescript/consistent-type-definitions -- SnapshotOptions: The structural alias participates in typed JSON/configuration boundaries; interface conversion changes implicit index assignability and merging. */
-export type SnapshotOptions = {
+type SnapshotOptions = {
   concurrency?: number;
   onActiveOperationsChange?: (activeOperations: number) => void;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable eslint/max-statements -- SnapshotIoLimiter: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/no-magic-numbers -- SnapshotIoLimiter: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
@@ -120,10 +114,9 @@ const collectSnapshotWithLimiter = async (
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- collectSnapshot: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- collectSnapshot: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/promise-function-async -- collectSnapshot: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-export const collectSnapshot = (
+const collectSnapshot = (
   dir: string,
   prefix = "",
   options: SnapshotOptions = {}
@@ -131,4 +124,5 @@ export const collectSnapshot = (
   collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
+export { collectSnapshot, SNAPSHOT_CONCURRENCY };
+export type { SnapshotOptions };

@@ -24,15 +24,13 @@ const isSocialAuthProvider = (
 ): value is SocialAuthProvider =>
   typeof value === "string" && Object.hasOwn(SOCIAL_AUTH_PROVIDER_ORDER, value);
 
-/* oxlint-disable id-length --
- * id-length (#506): SOCIAL_AUTH_PROVIDER_IDS uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 const SOCIAL_AUTH_PROVIDER_IDS = Object.keys(SOCIAL_AUTH_PROVIDER_ORDER)
   .filter((provider) => isSocialAuthProvider(provider))
   .toSorted(
-    (a, b) => SOCIAL_AUTH_PROVIDER_ORDER[a] - SOCIAL_AUTH_PROVIDER_ORDER[b]
+    (leftProvider, rightProvider) =>
+      SOCIAL_AUTH_PROVIDER_ORDER[leftProvider] -
+      SOCIAL_AUTH_PROVIDER_ORDER[rightProvider]
   );
-/* oxlint-enable id-length */
 
 const getEnabledSocialAuthProviders = (
   authentication: AuthenticationConfig

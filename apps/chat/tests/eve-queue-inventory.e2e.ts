@@ -48,9 +48,8 @@ async function job(body: unknown): Promise<string> {
   return row.id;
 }
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
- * id-length (#506): test("finds retries and queued child creation without returning input payloads") uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts a; b; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts leftJob; rightJob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();
@@ -76,7 +75,7 @@ test("finds retries and queued child creation without returning input payloads",
     [
       { id: retry, locked: false, runId: root },
       { id: childJob, locked: false, runId: child },
-    ].toSorted((a, b) => a.id.localeCompare(b.id))
+    ].toSorted((leftJob, rightJob) => leftJob.id.localeCompare(rightJob.id))
   );
   expect(result.unsupportedJobIds).toEqual([]);
   expect(JSON.stringify(result)).not.toContain("private-marker");
@@ -89,7 +88,7 @@ test("finds retries and queued child creation without returning input payloads",
     ).jobs
   ).toEqual([]);
 });
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 test("reports worker locks and unsupported messages; ignores ordinary health probes", async () => {
   const runId = crypto.randomUUID();

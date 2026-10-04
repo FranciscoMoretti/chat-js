@@ -28,13 +28,11 @@ import {
   planObservability,
 } from "./sync-observability";
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Extend only when an implementation has complete installer/sync integration. */
-export const assertSupportedFeatureInstallation = (
+const assertSupportedFeatureInstallation = (
   features: readonly FeatureDefinition[]
 ): void => {
   const unsupported = features.filter(
@@ -51,8 +49,6 @@ export const assertSupportedFeatureInstallation = (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 const exists = async (file: string): Promise<boolean> => {
   try {
@@ -107,7 +103,6 @@ const contributionBinding = (
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Plan both application-owned UI edits before writing any registrations.
 const planContribution = async (
@@ -211,14 +206,15 @@ const planContribution = async (
     edits.push({ start: last.end, text: "," });
   }
   let content = source;
-  for (const edit of edits.toSorted((a, b): number => b.start - a.start)) {
+  for (const edit of edits.toSorted(
+    (leftEdit, rightEdit): number => rightEdit.start - leftEdit.start
+  )) {
     content =
       content.slice(0, edit.start) + edit.text + content.slice(edit.start);
   }
   return { content, file };
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
@@ -312,14 +308,13 @@ const validateMcp = async (
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export const syncFeatures = async (
+const syncFeatures = async (
   cwd: string,
   options: {
     addUi?: boolean | readonly string[];
@@ -420,17 +415,14 @@ export const syncFeatures = async (
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Only fresh scaffolds use defaults. Cloning and sync never call this function.
-export const initializeFeatureUi = async (cwd: string): Promise<void> => {
+const initializeFeatureUi = async (cwd: string): Promise<void> => {
   await initializeObservability(cwd);
   for (const [file, name, marker, symbol] of [
     [
@@ -522,7 +514,9 @@ export const initializeFeatureUi = async (cwd: string): Promise<void> => {
       }
     }
     let content = source;
-    for (const edit of edits.toSorted((a, b): number => b.start - a.start)) {
+    for (const edit of edits.toSorted(
+      (leftEdit, rightEdit): number => rightEdit.start - leftEdit.start
+    )) {
       content =
         content.slice(0, edit.start) + edit.text + content.slice(edit.end);
     }
@@ -533,10 +527,13 @@ export const initializeFeatureUi = async (cwd: string): Promise<void> => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+export {
+  assertSupportedFeatureInstallation,
+  initializeFeatureUi,
+  syncFeatures,
+};

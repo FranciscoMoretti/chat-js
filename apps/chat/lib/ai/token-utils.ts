@@ -9,13 +9,10 @@ const MESSAGE_WRAPPER_TOKEN_OVERHEAD = 5;
 const ESTIMATED_CHARACTERS_PER_TOKEN = 3;
 const encoder = getEncoding("o200k_base");
 
-/* oxlint-disable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/exports-last (#522): calculateMessagesTokens is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): calculateMessagesTokens stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): calculateMessagesTokens accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+typescript/prefer-readonly-parameter-types (#565): calculateMessagesTokens accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Calculate total tokens from messages
-export const calculateMessagesTokens = (messages: ModelMessage[]): number => {
+const calculateMessagesTokens = (messages: ModelMessage[]): number => {
   let totalTokens = 0;
 
   for (const message of messages) {
@@ -42,7 +39,7 @@ export const calculateMessagesTokens = (messages: ModelMessage[]): number => {
 
   return totalTokens;
 };
-/* oxlint-enable import/exports-last, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): trimPrompt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -207,8 +204,7 @@ const truncateToolResultPart = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * id-length (#506): truncateToolArrayContent uses i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): truncateToolArrayContent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): truncateToolArrayContent uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): truncateToolArrayContent accepts lastMessage: ToolModelMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -221,24 +217,28 @@ const truncateToolArrayContent = (
   const currentMessageTokens = calculateMessagesTokens([lastMessage]);
   let tokensToRemove = currentMessageTokens - availableTokens;
 
-  for (let i = content.length - 1; i >= 0 && tokensToRemove > 0; i -= 1) {
-    const part = content[i];
+  for (
+    let index = content.length - 1;
+    index >= 0 && tokensToRemove > 0;
+    index -= 1
+  ) {
+    const part = content[index];
     const { truncatedPart, tokensRemoved } = truncateToolResultPart(
       part,
       tokensToRemove
     );
 
     if (truncatedPart === null) {
-      content.splice(i, 1);
+      content.splice(index, 1);
     } else {
-      content[i] = truncatedPart;
+      content[index] = truncatedPart;
     }
     tokensToRemove -= tokensRemoved;
   }
 
   return { ...lastMessage, content };
 };
-/* oxlint-enable id-length, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): truncateLastMessageIfNeeded uses 0, -1, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -276,14 +276,11 @@ const truncateLastMessageIfNeeded = (
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): truncateMessages stays exported at its declaration so its public contract is visible beside its implementation.
- * max-statements (#512): truncateMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): truncateMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): truncateMessages accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-statements (#512): truncateMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): truncateMessages uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): truncateMessages accepts messages: ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Truncate messages array to fit within token limit
-export const truncateMessages = (
+const truncateMessages = (
   messages: ModelMessage[],
   maxTokens: number,
   preserveSystemMessage = true
@@ -322,4 +319,5 @@ export const truncateMessages = (
     ? [systemMessage, ...truncatedMessages]
     : truncatedMessages;
 };
-/* oxlint-enable import/group-exports, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+export { calculateMessagesTokens, truncateMessages };

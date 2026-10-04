@@ -174,9 +174,7 @@ const SAMPLE = {
 };
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-const n = (num: number): number => Math.ceil(num);
-/* oxlint-enable eslint/id-length */
+const roundUp = (num: number): number => Math.ceil(num);
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -238,12 +236,12 @@ const WeatherCard = ({
             )}
           />
           <div className="text-4xl font-medium text-blue-50">
-            {n(weatherAtLocation.current.temperature_2m)}
+            {roundUp(weatherAtLocation.current.temperature_2m)}
             {weatherAtLocation.current_units.temperature_2m}
           </div>
         </div>
 
-        <div className="text-blue-50">{`H:${n(currentHigh)}° L:${n(currentLow)}°`}</div>
+        <div className="text-blue-50">{`H:${roundUp(currentHigh)}° L:${roundUp(currentLow)}°`}</div>
       </div>
 
       <div className="flex flex-row justify-between">
@@ -260,7 +258,7 @@ const WeatherCard = ({
               )}
             />
             <div className="text-sm text-blue-50">
-              {n(displayTemperatures[index])}
+              {roundUp(displayTemperatures[index])}
               {weatherAtLocation.hourly_units.temperature_2m}
             </div>
           </div>

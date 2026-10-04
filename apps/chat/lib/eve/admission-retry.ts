@@ -5,26 +5,17 @@ import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
 const ADMISSION_RETRY_WINDOW_MS = 30_000;
 const ADMISSION_RETRY_DELAY_MS = 2000;
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): isEveAdmissionBusy stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const isEveAdmissionBusy = (error: unknown): boolean =>
+const isEveAdmissionBusy = (error: unknown): boolean =>
   error instanceof EveUsageReconciliationBusyError ||
   (error instanceof ClientError && error.code === "usage_reconciliation_busy");
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports --
- * id-length (#506): retryEveAdmission uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): retryEveAdmission stays exported at its declaration so its public contract is visible beside its implementation.
- */
+/* oxlint-disable id-length -- id-length (#506): retryEveAdmission uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 /**
  * Replay only a server-certified undispatched admission, retaining its closure/ID.
  * @param admit Replays the caller's admission closure after certified backpressure.
  * @returns The first successful admission result.
  */
-export const retryEveAdmission = async <T>(
-  admit: () => Promise<T>
-): Promise<T> => {
+const retryEveAdmission = async <T>(admit: () => Promise<T>): Promise<T> => {
   const deadline = Date.now() + ADMISSION_RETRY_WINDOW_MS;
   for (;;) {
     try {
@@ -44,4 +35,5 @@ export const retryEveAdmission = async <T>(
     }
   }
 };
-/* oxlint-enable id-length, import/group-exports */
+/* oxlint-enable id-length */
+export { isEveAdmissionBusy, retryEveAdmission };

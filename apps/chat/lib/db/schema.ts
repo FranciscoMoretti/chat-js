@@ -25,13 +25,10 @@ import type { EveCopyPlan, EveCopySeed } from "../eve/copy-journal-contract";
 import { encryptedJson, encryptedText } from "./encrypted-text";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveWorkflowBackend stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): eveWorkflowBackend uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): eveWorkflowBackend accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): eveWorkflowBackend uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): eveWorkflowBackend accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** One application database belongs to one durable workflow world. */
-export const eveWorkflowBackend = pgTable(
+const eveWorkflowBackend = pgTable(
   "EveWorkflowBackend",
   {
     id: integer("id").primaryKey().default(1),
@@ -39,12 +36,9 @@ export const eveWorkflowBackend = pgTable(
   },
   (table) => [check("EveWorkflowBackend_singleton", sql`${table.id} = 1`)]
 );
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): user stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const user = pgTable("user", {
+const user = pgTable("user", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
@@ -61,19 +55,11 @@ export const user = pgTable("user", {
     )
     .notNull(),
 });
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): User stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type User = InferSelectModel<typeof user>;
-/* oxlint-enable import/group-exports */
+type User = InferSelectModel<typeof user>;
 
-/* oxlint-disable import/group-exports, no-magic-numbers --
- * import/group-exports (#523): userCredit stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): userCredit uses 50 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-export const userCredit = pgTable("UserCredit", {
+/* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): userCredit uses 50 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const userCredit = pgTable("UserCredit", {
   /** Balance in cents. Default = $0.50 */
   credits: integer("credits").notNull().default(50),
   userId: text("userId")
@@ -81,21 +67,14 @@ export const userCredit = pgTable("UserCredit", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
-/* oxlint-enable import/group-exports, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): UserCredit stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type UserCredit = InferSelectModel<typeof userCredit>;
-/* oxlint-enable import/group-exports */
+type UserCredit = InferSelectModel<typeof userCredit>;
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): userModelPreference uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): userModelPreference stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): userModelPreference accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+typescript/prefer-readonly-parameter-types (#565): userModelPreference accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
-export const userModelPreference = pgTable(
+const userModelPreference = pgTable(
   "UserModelPreference",
   {
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -109,28 +88,20 @@ export const userModelPreference = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (t) => ({
+  (columns) => ({
     UserModelPreference_user_id_idx: index(
       "UserModelPreference_user_id_idx"
-    ).on(t.userId),
-    pk: primaryKey({ columns: [t.userId, t.modelId] }),
+    ).on(columns.userId),
+    pk: primaryKey({ columns: [columns.userId, columns.modelId] }),
   })
 );
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): UserModelPreference stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type UserModelPreference = InferSelectModel<typeof userModelPreference>;
-/* oxlint-enable import/group-exports */
+type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): project uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): project stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): project accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): project accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
-export const project = pgTable(
+const project = pgTable(
   "Project",
   {
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -147,27 +118,19 @@ export const project = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (t) => ({
-    Project_id_user: unique("Project_id_user").on(t.id, t.userId),
-    Project_user_id_idx: index("Project_user_id_idx").on(t.userId),
+  (columns) => ({
+    Project_id_user: unique("Project_id_user").on(columns.id, columns.userId),
+    Project_user_id_idx: index("Project_user_id_idx").on(columns.userId),
   })
 );
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): Project stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type Project = InferSelectModel<typeof project>;
-/* oxlint-enable import/group-exports */
+type Project = InferSelectModel<typeof project>;
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): eveGuest uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): eveGuest stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveGuest accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveGuest accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Guest ownership is separate from BetterAuth sessions and monetary credits.
 // Retain expired identities after content cleanup so late usage remains guest usage.
-export const eveGuest = pgTable(
+const eveGuest = pgTable(
   "EveGuest",
   {
     createdAt: timestamp("createdAt", { withTimezone: true })
@@ -181,23 +144,19 @@ export const eveGuest = pgTable(
     remainingMessages: integer("remainingMessages").notNull(),
     tokenHash: varchar("tokenHash", { length: 64 }).notNull().unique(),
   },
-  (t) => [
+  (columns) => [
     check(
       "EveGuest_message_balance",
-      sql`${t.remainingMessages} >= 0 and ${t.remainingMessages} <= ${t.messageLimit}`
+      sql`${columns.remainingMessages} >= 0 and ${columns.remainingMessages} <= ${columns.messageLimit}`
     ),
-    check("EveGuest_token_hash", sql`${t.tokenHash} ~ '^[0-9a-f]{64}$'`),
-    index("EveGuest_expiry_idx").on(t.expiresAt),
+    check("EveGuest_token_hash", sql`${columns.tokenHash} ~ '^[0-9a-f]{64}$'`),
+    index("EveGuest_expiry_idx").on(columns.expiresAt),
   ]
 );
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): eveGuestRate uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): eveGuestRate stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveGuestRate accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveGuestRate = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveGuestRate accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveGuestRate = pgTable(
   "EveGuestRate",
   {
     ipHash: varchar("ipHash", { length: 64 }).notNull(),
@@ -205,20 +164,21 @@ export const eveGuestRate = pgTable(
     startsAt: timestamp("startsAt", { withTimezone: true }).notNull(),
     windowSeconds: integer("windowSeconds").notNull(),
   },
-  (t) => [
-    primaryKey({ columns: [t.ipHash, t.windowSeconds, t.startsAt] }),
-    check("EveGuestRate_requests", sql`${t.requests} >= 0`),
-    check("EveGuestRate_window", sql`${t.windowSeconds} in (60, 2592000)`),
+  (columns) => [
+    primaryKey({
+      columns: [columns.ipHash, columns.windowSeconds, columns.startsAt],
+    }),
+    check("EveGuestRate_requests", sql`${columns.requests} >= 0`),
+    check(
+      "EveGuestRate_window",
+      sql`${columns.windowSeconds} in (60, 2592000)`
+    ),
   ]
 );
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): eveGuestMessage uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): eveGuestMessage stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveGuestMessage accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveGuestMessage = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveGuestMessage accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveGuestMessage = pgTable(
   "EveGuestMessage",
   {
     ipHash: varchar("ipHash", { length: 64 }).notNull(),
@@ -233,24 +193,21 @@ export const eveGuestMessage = pgTable(
       .$type<"reserved" | "committed" | "released">()
       .notNull(),
   },
-  (t) => [
-    primaryKey({ columns: [t.ownerId, t.operationId] }),
+  (columns) => [
+    primaryKey({ columns: [columns.ownerId, columns.operationId] }),
     check(
       "EveGuestMessage_state",
-      sql`${t.state} in ('reserved', 'committed', 'released')`
+      sql`${columns.state} in ('reserved', 'committed', 'released')`
     ),
     check(
       "EveGuestMessage_request_hash",
-      sql`${t.requestHash} ~ '^[0-9a-f]{64}$'`
+      sql`${columns.requestHash} ~ '^[0-9a-f]{64}$'`
     ),
   ]
 );
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): session stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const session = pgTable("session", {
+const session = pgTable("session", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   id: text("id").primaryKey(),
@@ -268,12 +225,8 @@ export const session = pgTable("session", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): account stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const account = pgTable("account", {
+const account = pgTable("account", {
   accessToken: text("access_token"),
   accessTokenExpiresAt: timestamp("access_token_expires_at"),
   accountId: text("account_id").notNull(),
@@ -296,12 +249,8 @@ export const account = pgTable("account", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): verification stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const verification = pgTable("verification", {
+const verification = pgTable("verification", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   id: text("id").primaryKey(),
@@ -316,15 +265,10 @@ export const verification = pgTable("verification", {
     .notNull(),
   value: text("value").notNull(),
 });
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): mcpConnector uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): mcpConnector stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): mcpConnector accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpConnector accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
-export const mcpConnector = pgTable(
+const mcpConnector = pgTable(
   "McpConnector",
   {
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -346,32 +290,26 @@ export const mcpConnector = pgTable(
     // Null = global.
     userId: text("userId").references(() => user.id, { onDelete: "cascade" }),
   },
-  (t) => ({
-    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(t.userId),
+  (columns) => ({
+    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(
+      columns.userId
+    ),
     McpConnector_user_name_id_idx: index("McpConnector_user_name_id_idx").on(
-      t.userId,
-      t.nameId
+      columns.userId,
+      columns.nameId
     ),
     McpConnector_user_name_id_unique: uniqueIndex(
       "McpConnector_user_name_id_unique"
-    ).on(t.userId, t.nameId),
+    ).on(columns.userId, columns.nameId),
   })
 );
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): McpConnector stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type McpConnector = InferSelectModel<typeof mcpConnector>;
-/* oxlint-enable import/group-exports */
+type McpConnector = InferSelectModel<typeof mcpConnector>;
 
-/* oxlint-disable id-length, import/group-exports, typescript/prefer-readonly-parameter-types --
- * id-length (#506): mcpOAuthSession uses t as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * import/group-exports (#523): mcpOAuthSession stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): mcpOAuthSession accepts t; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpOAuthSession accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
-export const mcpOAuthSession = pgTable(
+const mcpOAuthSession = pgTable(
   "McpOAuthSession",
   {
     // OAuthClientInformationFull from MCP SDK.
@@ -393,33 +331,24 @@ export const mcpOAuthSession = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (t) => ({
+  (columns) => ({
     McpOAuthSession_connector_idx: index("McpOAuthSession_connector_idx").on(
-      t.mcpConnectorId
+      columns.mcpConnectorId
     ),
-    McpOAuthSession_state_idx: index("McpOAuthSession_state_idx").on(t.state),
+    McpOAuthSession_state_idx: index("McpOAuthSession_state_idx").on(
+      columns.state
+    ),
   })
 );
-/* oxlint-enable id-length, import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): McpOAuthSession stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
-/* oxlint-enable import/group-exports */
+type McpOAuthSession = InferSelectModel<typeof mcpOAuthSession>;
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): schema stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const schema = { account, session, user, verification };
-/* oxlint-enable import/group-exports */
+const schema = { account, session, user, verification };
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveChat stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveChat accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveChat accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Metadata only. Eve owns the transcript and execution state.
-export const eveChat = pgTable(
+const eveChat = pgTable(
   "EveChat",
   {
     activeConversationId: uuid("activeConversationId"),
@@ -454,22 +383,15 @@ export const eveChat = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): EveChat stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type EveChat = InferSelectModel<typeof eveChat>;
-/* oxlint-enable import/group-exports */
+type EveChat = InferSelectModel<typeof eveChat>;
 
-/* oxlint-disable import/group-exports, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveConversation stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): eveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): eveConversation uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): eveConversation accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): eveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): eveConversation uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): eveConversation accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // One logical chat may contain several private native EVE sessions.
-export const eveConversation = pgTable(
+const eveConversation = pgTable(
   "EveConversation",
   {
     chatId: uuid("chatId").notNull(),
@@ -579,14 +501,11 @@ export const eveConversation = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveConversationCopy stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveConversationCopy accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveConversationCopy accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Temporary copy preparation is discarded once native history is bound. */
-export const eveConversationCopy = pgTable(
+const eveConversationCopy = pgTable(
   "EveConversationCopy",
   {
     acceptedAt: timestamp("acceptedAt"),
@@ -630,14 +549,11 @@ export const eveConversationCopy = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveConversationCopyFile stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveConversationCopyFile accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveConversationCopyFile accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Receipt metadata is committed only after writing the allocated destination bytes. */
-export const eveConversationCopyFile = pgTable(
+const eveConversationCopyFile = pgTable(
   "EveConversationCopyFile",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -665,14 +581,11 @@ export const eveConversationCopyFile = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveResponseGroup stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveResponseGroup accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveResponseGroup accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Immutable fan-out intent. Native sessions remain the only transcript store. */
-export const eveResponseGroup = pgTable(
+const eveResponseGroup = pgTable(
   "EveResponseGroup",
   {
     candidateOperationIds: uuid("candidateOperationIds").array().notNull(),
@@ -703,14 +616,11 @@ export const eveResponseGroup = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveChatProject stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveChatProject accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveChatProject accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Removing a project detaches its conversations without deleting their native sessions. */
-export const eveChatProject = pgTable(
+const eveChatProject = pgTable(
   "EveChatProject",
   {
     chatId: uuid("chatId").primaryKey(),
@@ -729,14 +639,11 @@ export const eveChatProject = pgTable(
     }).onDelete("cascade"),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveVote stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveVote accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveVote accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Feedback references native message IDs without copying the Eve transcript. */
-export const eveVote = pgTable(
+const eveVote = pgTable(
   "EveVote",
   {
     conversationId: uuid("conversationId")
@@ -747,14 +654,11 @@ export const eveVote = pgTable(
   },
   (table) => [primaryKey({ columns: [table.conversationId, table.messageId] })]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveStoredFile stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveStoredFile accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveStoredFile accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Application-owned storage identity; transcript contents remain in EVE. */
-export const eveStoredFile = pgTable(
+const eveStoredFile = pgTable(
   "EveStoredFile",
   {
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -776,13 +680,10 @@ export const eveStoredFile = pgTable(
     unique("EveStoredFile_key_owner").on(table.key, table.ownerId),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveFileReference stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveFileReference accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveFileReference = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveFileReference accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveFileReference = pgTable(
   "EveFileReference",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -802,14 +703,11 @@ export const eveFileReference = pgTable(
     }),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveCodeSandbox stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveCodeSandbox accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveCodeSandbox accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Allocation intent survives provider timeouts and worker crashes.
-export const eveCodeSandbox = pgTable(
+const eveCodeSandbox = pgTable(
   "EveCodeSandbox",
   {
     callId: text("callId").notNull(),
@@ -830,15 +728,12 @@ export const eveCodeSandbox = pgTable(
     index("EveCodeSandbox_conversation").on(table.conversationId),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveSubagentSession stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): eveSubagentSession uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): eveSubagentSession accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): eveSubagentSession uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): eveSubagentSession accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Native child identity and billing progress; transcript stays in EVE. */
-export const eveSubagentSession = pgTable(
+const eveSubagentSession = pgTable(
   "EveSubagentSession",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -862,14 +757,11 @@ export const eveSubagentSession = pgTable(
     check("EveSubagentSession_cursor", sql`${table.usageStreamIndex} >= 0`),
   ]
 );
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveUsage stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): eveUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): eveUsage accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveUsage = pgTable(
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): eveUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+typescript/prefer-readonly-parameter-types (#565): eveUsage accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveUsage = pgTable(
   "EveUsage",
   {
     chargedCents: integer("chargedCents").notNull().default(0),
@@ -890,13 +782,10 @@ export const eveUsage = pgTable(
       .where(sql`${table.costUsd} is null`),
   ]
 );
-/* oxlint-enable import/group-exports, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveDocumentRevision stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveDocumentRevision accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveDocumentRevision = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveDocumentRevision accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveDocumentRevision = pgTable(
   "EveDocumentRevision",
   {
     content: text("content").notNull(),
@@ -935,13 +824,10 @@ export const eveDocumentRevision = pgTable(
     check("EveDocumentRevision_turn_nonnegative", sql`${table.turnIndex} >= 0`),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveDocumentHead stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveDocumentHead accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveDocumentHead = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveDocumentHead accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveDocumentHead = pgTable(
   "EveDocumentHead",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -967,19 +853,12 @@ export const eveDocumentHead = pgTable(
     }),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): EveDocumentRevision stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type EveDocumentRevision = InferSelectModel<typeof eveDocumentRevision>;
-/* oxlint-enable import/group-exports */
+type EveDocumentRevision = InferSelectModel<typeof eveDocumentRevision>;
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveDocumentCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveDocumentCheckpoint accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveDocumentCheckpoint = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveDocumentCheckpoint accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveDocumentCheckpoint = pgTable(
   "EveDocumentCheckpoint",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -1004,13 +883,10 @@ export const eveDocumentCheckpoint = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveDocumentCheckpointEntry stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveDocumentCheckpointEntry accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveDocumentCheckpointEntry = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveDocumentCheckpointEntry accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveDocumentCheckpointEntry = pgTable(
   "EveDocumentCheckpointEntry",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -1043,14 +919,11 @@ export const eveDocumentCheckpointEntry = pgTable(
     }),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveNamedDocumentCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveNamedDocumentCheckpoint accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveNamedDocumentCheckpoint accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Immutable document boundary captured by a serialized native idle command. */
-export const eveNamedDocumentCheckpoint = pgTable(
+const eveNamedDocumentCheckpoint = pgTable(
   "EveNamedDocumentCheckpoint",
   {
     checkpointId: uuid("checkpointId").notNull(),
@@ -1076,13 +949,10 @@ export const eveNamedDocumentCheckpoint = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveNamedDocumentCheckpointEntry stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveNamedDocumentCheckpointEntry accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveNamedDocumentCheckpointEntry = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveNamedDocumentCheckpointEntry accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveNamedDocumentCheckpointEntry = pgTable(
   "EveNamedDocumentCheckpointEntry",
   {
     checkpointId: uuid("checkpointId").notNull(),
@@ -1115,14 +985,11 @@ export const eveNamedDocumentCheckpointEntry = pgTable(
     }),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveImportedDocumentCheckpoint stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveImportedDocumentCheckpoint accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveImportedDocumentCheckpoint accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Document heads at an imported transcript message boundary. */
-export const eveImportedDocumentCheckpoint = pgTable(
+const eveImportedDocumentCheckpoint = pgTable(
   "EveImportedDocumentCheckpoint",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -1147,13 +1014,10 @@ export const eveImportedDocumentCheckpoint = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveImportedDocumentCheckpointEntry stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveImportedDocumentCheckpointEntry accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const eveImportedDocumentCheckpointEntry = pgTable(
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveImportedDocumentCheckpointEntry accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const eveImportedDocumentCheckpointEntry = pgTable(
   "EveImportedDocumentCheckpointEntry",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -1186,14 +1050,11 @@ export const eveImportedDocumentCheckpointEntry = pgTable(
     }),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): eveSearchText stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): eveSearchText accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveSearchText accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Rebuildable display-text projection; EVE remains the transcript source of truth. */
-export const eveSearchText = pgTable(
+const eveSearchText = pgTable(
   "EveSearchText",
   {
     conversationId: uuid("conversationId").notNull(),
@@ -1214,6 +1075,53 @@ export const eveSearchText = pgTable(
     ),
   ]
 );
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This schema.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+export {
+  account,
+  eveChat,
+  eveChatProject,
+  eveCodeSandbox,
+  eveConversation,
+  eveConversationCopy,
+  eveConversationCopyFile,
+  eveDocumentCheckpoint,
+  eveDocumentCheckpointEntry,
+  eveDocumentHead,
+  eveDocumentRevision,
+  eveFileReference,
+  eveGuest,
+  eveGuestMessage,
+  eveGuestRate,
+  eveImportedDocumentCheckpoint,
+  eveImportedDocumentCheckpointEntry,
+  eveNamedDocumentCheckpoint,
+  eveNamedDocumentCheckpointEntry,
+  eveResponseGroup,
+  eveSearchText,
+  eveStoredFile,
+  eveSubagentSession,
+  eveUsage,
+  eveVote,
+  eveWorkflowBackend,
+  mcpConnector,
+  mcpOAuthSession,
+  project,
+  schema,
+  session,
+  user,
+  userCredit,
+  userModelPreference,
+  verification,
+};
+export type {
+  EveChat,
+  EveDocumentRevision,
+  McpConnector,
+  McpOAuthSession,
+  Project,
+  User,
+  UserCredit,
+  UserModelPreference,
+};

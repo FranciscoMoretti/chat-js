@@ -17,12 +17,7 @@ import { config } from "@/lib/config";
 import { env } from "@/lib/env";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/only-export-components --
- * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): metadata stays exported at its declaration so its public contract is visible beside its implementation.
- * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
-export const metadata: Metadata = {
+const metadata: Metadata = {
   description: config.appDescription,
   metadataBase: new URL(config.appUrl),
   openGraph: {
@@ -33,19 +28,12 @@ export const metadata: Metadata = {
   },
   title: config.appTitle ?? config.appName,
 };
-/* oxlint-enable import/exports-last, import/group-exports, react/only-export-components */
 
-/* oxlint-disable import/exports-last, import/group-exports, react/only-export-components --
- * import/exports-last (#522): viewport is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): viewport stays exported at its declaration so its public contract is visible beside its implementation.
- * react/only-export-components (#553): viewport is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
-export const viewport = {
+const viewport = {
   interactiveWidget: "resizes-content" as const,
   // Disable auto-zoom on mobile Safari
   maximumScale: 1,
 };
-/* oxlint-enable import/exports-last, import/group-exports, react/only-export-components */
 
 const geist = Geist({
   display: "swap",
@@ -138,8 +126,9 @@ const RootLayout = ({
 );
 /* oxlint-enable node/no-process-env, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
+/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
+export { metadata, viewport };
+/* oxlint-enable react/only-export-components */
+/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;
 /* oxlint-enable import/no-default-export */

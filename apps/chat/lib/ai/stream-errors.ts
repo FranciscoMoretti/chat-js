@@ -69,23 +69,16 @@ const mapKnownStreamErrorMessage = (message: string): string => {
   return FALLBACK_STREAM_ERROR_MESSAGE;
 };
 
-/* oxlint-disable import/group-exports --
- * import/group-exports (#523): getStreamErrorMessage stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export const getStreamErrorMessage = (error: unknown): string =>
+const getStreamErrorMessage = (error: unknown): string =>
   mapKnownStreamErrorMessage(
     getErrorText(error) ?? FALLBACK_STREAM_ERROR_MESSAGE
   );
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * import/group-exports (#523): getStreamErrorToastContent stays exported at its declaration so its public contract is visible beside its implementation.
- * no-magic-numbers (#517): getStreamErrorToastContent uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): getStreamErrorToastContent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): getStreamErrorToastContent accepts error: Error; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): getStreamErrorToastContent intentionally keeps the existing falsy-value behavior of rawCause; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-export const getStreamErrorToastContent = (
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): getStreamErrorToastContent uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+no-undefined (#519): getStreamErrorToastContent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/prefer-readonly-parameter-types (#565): getStreamErrorToastContent accepts error: Error; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/strict-boolean-expressions (#610): getStreamErrorToastContent intentionally keeps the existing falsy-value behavior of rawCause; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const getStreamErrorToastContent = (
   error: Error
 ): {
   description?: string;
@@ -112,4 +105,5 @@ export const getStreamErrorToastContent = (
 
   return { message };
 };
-/* oxlint-enable import/group-exports, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+export { getStreamErrorMessage, getStreamErrorToastContent };

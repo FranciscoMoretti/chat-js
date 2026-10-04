@@ -15,9 +15,7 @@ import { TechStack } from "@/components/tech-stack";
 import { UseCases } from "@/components/use-cases";
 import { siteConfig, siteLinks } from "@/lib/site-config";
 
-/* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-export const metadata: Metadata = {
+const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.home,
   },
@@ -31,8 +29,6 @@ export const metadata: Metadata = {
   },
   title: "The Prod-Ready AI Chat App",
 };
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable import/exports-last */
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -88,6 +84,9 @@ const HomePage = (): React.JSX.Element => (
   </div>
 );
 
-/* oxlint-disable import/no-default-export -- page.tsx: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
+/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
+export { metadata };
+/* oxlint-enable react/only-export-components */
+/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default HomePage;
 /* oxlint-enable import/no-default-export */

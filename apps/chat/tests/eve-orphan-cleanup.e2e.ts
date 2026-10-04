@@ -4,7 +4,6 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable import/first -- The mocked dependency must be registered before the module under test is loaded. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq } from "drizzle-orm";
 import { expect, test, vi } from "vitest";
 
@@ -100,13 +99,13 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     storage.fail = true;
     await expect(cleanupEveOrphanedFiles(cutoff)).rejects.toThrow("incomplete");
     expect(storage.objects.has(orphan)).toBe(true);
-    const state = async () =>
-      (
-        await db
-          .select({ state: eveStoredFile.state })
-          .from(eveStoredFile)
-          .where(eq(eveStoredFile.key, orphan))
-      )[0].state;
+    const state = async () => {
+      const storedFiles = await db
+        .select({ state: eveStoredFile.state })
+        .from(eveStoredFile)
+        .where(eq(eveStoredFile.key, orphan));
+      return storedFiles[0].state;
+    };
     expect(await state()).toBe("deleting");
     storage.fail = false;
     expect(await cleanupEveOrphanedFiles(cutoff)).toEqual({

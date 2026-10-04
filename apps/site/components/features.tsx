@@ -143,7 +143,6 @@ const SectionLabel = ({
 /* oxlint-disable react/no-multi-comp -- Features: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 
 /* oxlint-disable react/jsx-max-depth -- Features: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable eslint/id-length -- Features: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Features: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 /* ── Main component ───────────────────────────────────────────────── */
 
@@ -166,8 +165,8 @@ export const Features = (): React.JSX.Element => (
       <div className="mt-20">
         <SectionLabel>Platform</SectionLabel>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PLATFORM_FEATURES.map((f) => (
-            <FeatureCard feature={f} key={f.title} />
+          {PLATFORM_FEATURES.map((feature) => (
+            <FeatureCard feature={feature} key={feature.title} />
           ))}
         </div>
       </div>
@@ -176,8 +175,8 @@ export const Features = (): React.JSX.Element => (
       <div className="mt-16">
         <SectionLabel>Built-in Tools</SectionLabel>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TOOLS.map((f) => (
-            <FeatureCard feature={f} key={f.title} />
+          {TOOLS.map((feature) => (
+            <FeatureCard feature={feature} key={feature.title} />
           ))}
         </div>
       </div>
@@ -185,7 +184,6 @@ export const Features = (): React.JSX.Element => (
   </section>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable react/no-multi-comp */

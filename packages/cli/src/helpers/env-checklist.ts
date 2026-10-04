@@ -17,16 +17,13 @@ import {
   gatewayEnvRequirements,
 } from "./config-requirements";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type EnvRequirementLike = {
+interface EnvRequirementLike {
   description?: string;
   options: string[][];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
 /* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-export type EnvVarEntry = {
+type EnvVarEntry = {
   /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
   vars: string;
   /** Human-readable description derived from the Zod schema */
@@ -35,26 +32,22 @@ export type EnvVarEntry = {
   oneOfGroup?: string;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-enable import/exports-last */
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type EnvChecklistInput = {
+interface EnvChecklistInput {
   gateway: Gateway;
   gatewayRequirements?: EnvRequirementLike[];
   coreFeatures: Record<CoreFeatureKey, boolean>;
   builtInTools: Record<BuiltInToolKey, boolean>;
   auth: Record<AuthProvider, boolean>;
   installableToolEnvRequirements?: EnvRequirementLike[];
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
@@ -73,7 +66,7 @@ const requirementToEntries = (
 
   return requirement.options.map((group) => {
     const description = group
-      .map((v) => envDescriptions.get(v) ?? v)
+      .map((variableName) => envDescriptions.get(variableName) ?? variableName)
       .join(", ");
 
     return {
@@ -89,13 +82,11 @@ const requirementToEntries = (
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const addRequirementEntries = (
   entries: EnvVarEntry[],
@@ -108,7 +99,9 @@ const addRequirementEntries = (
   const dedupeKey = JSON.stringify(
     requirement.options
       .map((group) => group.toSorted())
-      .toSorted((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
+      .toSorted((leftEntry, rightEntry) =>
+        JSON.stringify(leftEntry).localeCompare(JSON.stringify(rightEntry))
+      )
   );
   if (seen.has(dedupeKey)) {
     return;
@@ -118,7 +111,6 @@ const addRequirementEntries = (
   entries.push(...requirementToEntries(requirement));
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
@@ -183,9 +175,7 @@ const collectAuthEntries = (input: EnvChecklistInput): EnvVarEntry[] => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const collectEnvChecklist = (
-  input: EnvChecklistInput
-): EnvVarEntry[] => {
+const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
   const entries: EnvVarEntry[] = [
     {
       description: envDescriptions.get("AUTH_SECRET") ?? "AUTH_SECRET",
@@ -207,3 +197,5 @@ export const collectEnvChecklist = (
   ];
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
+export { collectEnvChecklist };
+export type { EnvVarEntry };

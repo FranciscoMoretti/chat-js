@@ -46,8 +46,7 @@ test.afterEach(async ({ page }, testInfo) => {
   }
 });
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * id-length (#506): test("native deep research saves a reloadable report in ChatJS with a usage receipt") uses a; b as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native deep research saves a reloadable report in ChatJS with a usage receipt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native deep research saves a reloadable report in ChatJS with a usage receipt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("native deep research saves a reloadable report in ChatJS with a usage receipt") uses 900_000, 15_000, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -199,7 +198,13 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, binding.sessionId));
   expect(
-    replayed.toSorted((a, b) => a.eventId.localeCompare(b.eventId))
-  ).toEqual(usage.toSorted((a, b) => a.eventId.localeCompare(b.eventId)));
+    replayed.toSorted((leftUsage, rightUsage) =>
+      leftUsage.eventId.localeCompare(rightUsage.eventId)
+    )
+  ).toEqual(
+    usage.toSorted((leftUsage, rightUsage) =>
+      leftUsage.eventId.localeCompare(rightUsage.eventId)
+    )
+  );
 });
-/* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -15,7 +15,6 @@ const isAsyncIterable = <T>(
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -24,7 +23,7 @@ const isAsyncIterable = <T>(
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /** Describe discovered MCP tools; approval and output policies are handled by the MCP integration. */
-export const describeMcpTool = async <TInput, TOutput>(
+const describeMcpTool = async <TInput, TOutput>(
   definition: Tool<TInput, TOutput>
 ) => {
   if (
@@ -60,9 +59,7 @@ export const describeMcpTool = async <TInput, TOutput>(
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -73,7 +70,7 @@ export const describeMcpTool = async <TInput, TOutput>(
  * Resolve module-level definitions at execution time, avoiding executable captures in durable closures.
  * @yields {unknown} Each output emitted by the installed AI SDK tool.
  */
-export const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
+const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
   definition: Tool<TInput, TOutput>,
   input: unknown,
   context: Pick<ToolContext, "callId" | "abortSignal">,
@@ -105,4 +102,4 @@ export const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
+export { describeMcpTool, executeMcpTool };

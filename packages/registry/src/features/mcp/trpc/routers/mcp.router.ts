@@ -184,7 +184,7 @@ const publicConnector = (
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const mcpRouter = createTRPCRouter({
@@ -410,8 +410,8 @@ export const mcpRouter = createTRPCRouter({
                 }),
               mcpClient
                 .listResources()
-                .then((r) =>
-                  r.resources.map((res) => ({
+                .then((resourceResult) =>
+                  resourceResult.resources.map((res) => ({
                     description: res.description ?? null,
                     mimeType: res.mimeType ?? null,
                     name: res.name,
@@ -427,16 +427,16 @@ export const mcpRouter = createTRPCRouter({
                 }),
               mcpClient
                 .listPrompts()
-                .then((r) =>
-                  r.prompts.map((p) => ({
+                .then((promptResult) =>
+                  promptResult.prompts.map((prompt) => ({
                     arguments:
-                      p.arguments?.map((arg) => ({
+                      prompt.arguments?.map((arg) => ({
                         description: arg.description ?? null,
                         name: arg.name,
                         required: arg.required ?? false,
                       })) ?? [],
-                    description: p.description ?? null,
-                    name: p.name,
+                    description: prompt.description ?? null,
+                    name: prompt.name,
                   }))
                 )
                 .catch((error: unknown) => {
@@ -524,8 +524,11 @@ export const mcpRouter = createTRPCRouter({
     );
 
     return results
-      .filter((r): boolean => r.status?.status === "connected")
-      .map((r) => publicConnector(r.connector));
+      .filter(
+        (connectionResult): boolean =>
+          connectionResult.status?.status === "connected"
+      )
+      .map((connectionResult) => publicConnector(connectionResult.connector));
   }),
 
   /**
@@ -695,7 +698,7 @@ export const mcpRouter = createTRPCRouter({
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/id-length */
+
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */

@@ -1,15 +1,6 @@
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): ChatRouteSource is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): ChatRouteSource stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type ChatRouteSource = "chat" | "home" | "project" | "share";
-/* oxlint-enable import/exports-last, import/group-exports */
+type ChatRouteSource = "chat" | "home" | "project" | "share";
 
-/* oxlint-disable import/exports-last, import/group-exports --
- * import/exports-last (#522): ParsedChatIdFromPathname is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * import/group-exports (#523): ParsedChatIdFromPathname stays exported at its declaration so its public contract is visible beside its implementation.
- */
-export type ParsedChatIdFromPathname =
+type ParsedChatIdFromPathname =
   | {
       type: "home";
       id: null;
@@ -46,7 +37,6 @@ export type ParsedChatIdFromPathname =
       source: null;
       projectId: null;
     };
-/* oxlint-enable import/exports-last, import/group-exports */
 
 const SHARE_ROUTE_PATTERN = /^\/share\/(?<shareId>[^/]+)$/u;
 const PROJECT_ROUTE_PATTERN =
@@ -64,7 +54,7 @@ const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
  * Parse a Next.js pathname into the chat route shape.
  * Unknown paths are passthrough routes and must not become draft chats.
  */
-export const parseChatIdFromPathname = (
+const parseChatIdFromPathname = (
   pathname: string | null
 ): ParsedChatIdFromPathname => {
   const shareId = pathname?.match(SHARE_ROUTE_PATTERN)?.groups?.shareId;
@@ -98,3 +88,5 @@ export const parseChatIdFromPathname = (
   return { id: null, projectId: null, source: null, type: "passthrough" };
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/strict-boolean-expressions, unicorn/no-null */
+export { parseChatIdFromPathname };
+export type { ChatRouteSource, ParsedChatIdFromPathname };

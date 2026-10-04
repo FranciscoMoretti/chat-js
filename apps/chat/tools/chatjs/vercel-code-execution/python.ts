@@ -51,7 +51,7 @@ const installBasePackages = async (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
+
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const processExtraPackages = async (
@@ -67,7 +67,9 @@ const processExtraPackages = async (
     result?: CodeExecutionResult;
   };
 }> => {
-  const basePackageNames = new Set(basePackages.map((p) => p.toLowerCase()));
+  const basePackageNames = new Set(
+    basePackages.map((basePackageName) => basePackageName.toLowerCase())
+  );
   const lines = code.split("\n");
   const pipLines = lines.filter((line) =>
     line.trim().startsWith("!pip install ")
@@ -123,7 +125,7 @@ const processExtraPackages = async (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
+
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

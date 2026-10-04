@@ -1,6 +1,5 @@
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const clarifyWithUserInstructions = ({
+const clarifyWithUserInstructions = ({
   messages,
   date,
 }: {
@@ -45,11 +44,9 @@ For the verification message when no clarification is needed:
 - Confirm that you will now begin the research process
 - Keep the message concise and professional`;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const transformMessagesIntoResearchTopicPrompt = ({
+const transformMessagesIntoResearchTopicPrompt = ({
   messages,
   date,
 }: {
@@ -90,11 +87,9 @@ Guidelines:
 - For people, try linking directly to their LinkedIn profile, or their personal website if they have one.
 - If the query is in a specific language, prioritize sources published in that language.`;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const leadResearcherPrompt = ({
+const leadResearcherPrompt = ({
   date,
   max_concurrent_research_units,
 }: {
@@ -114,11 +109,9 @@ Return JSON with complete (boolean) and topics (array of strings).
 - Match depth to the user's request. Detailed or comprehensive requests warrant more follow-up than broad overviews.
 - As research accumulates, require a stronger reason to request additional work. Finish when the findings adequately answer the brief. Do not repeat topics with minor rephrasing.`;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const researchSystemPrompt = ({
+const researchSystemPrompt = ({
   date,
   mcp_prompt,
   max_search_queries,
@@ -162,15 +155,9 @@ You can use any of the tools provided to you to find resources that can help ans
 - The caller needs your findings, not just your search activity. Always finish by calling final_output with the collected evidence; a separate agent will compress it and write the user-facing report.
 </Critical Reminders>`;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const compressResearchSystemPrompt = ({
-  date,
-}: {
-  date: string;
-}): string =>
+const compressResearchSystemPrompt = ({ date }: { date: string }): string =>
   `You are a research assistant that has conducted research on a topic by calling several tools and web searches. Your job is now to clean up the findings, but preserve all of the relevant statements and information that the researcher has gathered. For context, today's date is ${date}.
 
 <Task>
@@ -208,18 +195,14 @@ The report should be structured like this:
 
 Critical Reminder: It is extremely important that any information that is even remotely relevant to the user's research topic is preserved verbatim (e.g. don't rewrite it, don't summarize it, don't paraphrase it).`;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const compressResearchSimpleHumanMessage = `All above messages are about research conducted by an AI Researcher. Please clean up these findings.
+const compressResearchSimpleHumanMessage = `All above messages are about research conducted by an AI Researcher. Please clean up these findings.
 
 DO NOT summarize the information. I want the raw information returned, just in a cleaner format. Make sure all relevant information is preserved - you can rewrite findings verbatim.`;
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const finalReportGenerationPrompt = ({
+const finalReportGenerationPrompt = ({
   research_brief,
   date,
   findings,
@@ -296,4 +279,12 @@ Format the report in clear markdown with proper structure and include source ref
 </Citation Rules>`;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable import/group-exports */
+export {
+  clarifyWithUserInstructions,
+  compressResearchSimpleHumanMessage,
+  compressResearchSystemPrompt,
+  finalReportGenerationPrompt,
+  leadResearcherPrompt,
+  researchSystemPrompt,
+  transformMessagesIntoResearchTopicPrompt,
+};

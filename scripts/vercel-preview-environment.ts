@@ -1,10 +1,6 @@
-/* oxlint-disable import/exports-last -- PreviewConfigurationError: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable import/group-exports -- PreviewConfigurationError: Keep the named API with its implementation; existing direct exports are the consumer contract. */
-export class PreviewConfigurationError extends Error {
+class PreviewConfigurationError extends Error {
   public override name = "PreviewConfigurationError";
 }
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 // PostgreSQL URLs use a non-special scheme, so normalize DNS names explicitly.
 const normalizedHost = (host: string): string =>
@@ -31,7 +27,6 @@ const matchingAuthority = (app: URL, migration: URL): boolean => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports -- resolveMaintainerPreviewDatabase: Keep the named API with its implementation; existing direct exports are the consumer contract. */
 /* oxlint-disable eslint/max-statements -- resolveMaintainerPreviewDatabase: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- resolveMaintainerPreviewDatabase: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable eslint/no-undefined -- resolveMaintainerPreviewDatabase: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
@@ -42,11 +37,10 @@ const matchingAuthority = (app: URL, migration: URL): boolean => {
  * @param source - Environment values supplied to the maintainer preview build.
  * @returns Isolated pooled/direct database URLs, or undefined outside preview deployments.
  */
-export const resolveMaintainerPreviewDatabase = (
+const resolveMaintainerPreviewDatabase = (
   source: Readonly<Record<string, string | undefined>>
 ): { DATABASE_MIGRATION_URL: string; DATABASE_URL: string } | undefined => {
   if (source.VERCEL !== "1" || source.VERCEL_ENV !== "preview") {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
     return undefined;
   }
 
@@ -108,4 +102,4 @@ export const resolveMaintainerPreviewDatabase = (
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
+export { PreviewConfigurationError, resolveMaintainerPreviewDatabase };

@@ -7,13 +7,11 @@ import { createModuleLogger } from "@/lib/logger";
 
 import type { SupportedExecutionLanguage } from "./types";
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-export interface SandboxAuth {
+interface SandboxAuth {
   projectId: string;
   teamId: string;
   token: string;
 }
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -60,9 +58,7 @@ const tokenClaims = (token: string) => {
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const getTokenAuth = (): Partial<SandboxAuth> => {
+const getTokenAuth = (): Partial<SandboxAuth> => {
   const { VERCEL_TEAM_ID, VERCEL_PROJECT_ID, VERCEL_TOKEN } = env;
   if (
     typeof VERCEL_TEAM_ID === "string" &&
@@ -80,18 +76,14 @@ export const getTokenAuth = (): Partial<SandboxAuth> => {
   }
   return {};
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /** Resolve the exact provider scope before a durable allocation is reserved. */
-export const resolveSandboxAuth = (): SandboxAuth => {
+const resolveSandboxAuth = (): SandboxAuth => {
   const configured = getTokenAuth();
   if (
     typeof configured.projectId === "string" &&
@@ -135,14 +127,8 @@ export const resolveSandboxAuth = (): SandboxAuth => {
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const getSandboxRuntime = (
-  language: SupportedExecutionLanguage
-): string => {
+const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
   if (language === "javascript") {
     return env.VERCEL_SANDBOX_RUNTIME_JAVASCRIPT ?? "node22";
   }
@@ -153,16 +139,12 @@ export const getSandboxRuntime = (
     "python3.13"
   );
 };
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export const createSandbox = (
+const createSandbox = (
   runtime: string,
   signal?: AbortSignal,
   name?: string,
@@ -182,13 +164,9 @@ export const createSandbox = (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-export const cleanupSandbox = async (
+const cleanupSandbox = async (
   sandbox: Pick<Sandbox, "delete" | "stop"> | undefined,
   log: Pick<ReturnType<typeof createModuleLogger>, "info" | "warn">,
   requestId: string
@@ -212,8 +190,6 @@ export const cleanupSandbox = async (
   }
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -238,8 +214,7 @@ const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
+const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
   createCleanupSession: () => {
     const auth = resolveSandboxAuth();
     const log = createModuleLogger("eve-code-sandbox-cleanup");
@@ -262,9 +237,16 @@ export const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
     };
   },
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const getErrorMessage = (err: unknown): string =>
+const getErrorMessage = (err: unknown): string =>
   err instanceof Error ? err.message : "Unknown error";
-/* oxlint-enable import/group-exports */
+export {
+  cleanupSandbox,
+  codeSandboxCleanupCapability,
+  createSandbox,
+  getErrorMessage,
+  getSandboxRuntime,
+  getTokenAuth,
+  resolveSandboxAuth,
+};
+export type { SandboxAuth };

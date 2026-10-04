@@ -1,13 +1,9 @@
 import { z } from "zod";
 
-/* oxlint-disable import/exports-last -- Keep the exported declaration beside the types and initialization it describes; moving it can reorder module initialization. */
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const documentExecutionInput = z.object({
+const documentExecutionInput = z.object({
   documentId: z.uuid(),
   revisionId: z.uuid(),
 });
-/* oxlint-enable import/group-exports */
-/* oxlint-enable import/exports-last */
 
 const chartLabels = {
   title: z.string(),
@@ -44,10 +40,9 @@ const chart = z.discriminatedUnion("type", [
 ]);
 /* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /** The saved-code runner owns its output contract independently of installed renderers. */
-export const eveCodeExecutionResult = z.object({
+const eveCodeExecutionResult = z.object({
   chart: z.union([
     z.string(),
     z.object({ base64: z.string(), format: z.string() }),
@@ -56,12 +51,10 @@ export const eveCodeExecutionResult = z.object({
   message: z.string(),
 });
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-export const documentExecutionLanguage = (
+const documentExecutionLanguage = (
   title: string
 ): "python" | "javascript" | undefined => {
   const extension = title.includes(".")
@@ -80,4 +73,8 @@ export const documentExecutionLanguage = (
 };
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
+export {
+  documentExecutionInput,
+  documentExecutionLanguage,
+  eveCodeExecutionResult,
+};

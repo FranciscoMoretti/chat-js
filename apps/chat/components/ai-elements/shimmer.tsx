@@ -5,16 +5,14 @@ import React, { memo, useEffect } from "react";
 import type { CSSProperties, ElementType } from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable import/exports-last -- TextShimmerProps: import/exports-last: keep this public declaration beside its implementation so its props and behavior remain reviewable together;  */
 
-export interface TextShimmerProps {
+interface TextShimmerProps {
   children: string;
   as?: ElementType;
   className?: string;
   duration?: number;
   spread?: number;
 }
-/* oxlint-enable import/exports-last */
 
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- ShimmerComponent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -64,4 +62,6 @@ const ShimmerComponent = ({
 };
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-export const Shimmer = memo(ShimmerComponent);
+const Shimmer = memo(ShimmerComponent);
+export { Shimmer };
+export type { TextShimmerProps };

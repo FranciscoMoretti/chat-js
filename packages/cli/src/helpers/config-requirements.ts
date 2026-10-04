@@ -10,14 +10,13 @@ import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "../types";
 
 type EnvVarName = string;
 
-export interface EnvRequirement {
+interface EnvRequirement {
   description: string;
   options: EnvVarName[][];
 }
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
+const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
   Object.fromEntries(
     builtInGateways.map((item) => [
       item.meta.chatjs.id,
@@ -30,11 +29,9 @@ export const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
     ])
   );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const coreFeatureEnvRequirements: Partial<
+const coreFeatureEnvRequirements: Partial<
   Record<CoreFeatureKey, EnvRequirement[]>
 > = {
   // oxlint-disable-next-line oxc/no-map-spread -- #541: Customize CLI descriptions without modifying the registry definition shared by other consumers.
@@ -46,11 +43,9 @@ export const coreFeatureEnvRequirements: Partial<
   })),
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-export const builtInToolEnvRequirements: Record<
+const builtInToolEnvRequirements: Record<
   BuiltInToolKey,
   EnvRequirement | undefined
 > = {
@@ -68,10 +63,8 @@ export const builtInToolEnvRequirements: Record<
   },
 };
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
+const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
   github: {
     description: "AUTH_GITHUB_ID + AUTH_GITHUB_SECRET",
     options: [["AUTH_GITHUB_ID", "AUTH_GITHUB_SECRET"]],
@@ -85,10 +78,8 @@ export const authEnvRequirements: Record<AuthProvider, EnvRequirement> = {
     options: [["VERCEL_APP_CLIENT_ID", "VERCEL_APP_CLIENT_SECRET"]],
   },
 };
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const envVarDescriptions: Record<string, string> = {
+const envVarDescriptions: Record<string, string> = {
   AI_GATEWAY_API_KEY: "Vercel AI Gateway API key",
   AUTH_GITHUB_ID: "GitHub OAuth client id",
   AUTH_GITHUB_SECRET: "GitHub OAuth client secret",
@@ -112,4 +103,11 @@ export const envVarDescriptions: Record<string, string> = {
   VERCEL_TEAM_ID: "Vercel team id for sandbox execution",
   VERCEL_TOKEN: "Vercel token for sandbox execution",
 };
-/* oxlint-enable import/group-exports */
+export {
+  authEnvRequirements,
+  builtInToolEnvRequirements,
+  coreFeatureEnvRequirements,
+  envVarDescriptions,
+  gatewayEnvRequirements,
+};
+export type { EnvRequirement };

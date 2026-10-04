@@ -117,16 +117,13 @@ const prepareNativeSession = async (
 };
 /* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): purgeEveNativeSession stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): purgeEveNativeSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): purgeEveNativeSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep purgeEveNativeSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep purgeEveNativeSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): purgeEveNativeSession accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): purgeEveNativeSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): purgeEveNativeSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep purgeEveNativeSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep purgeEveNativeSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): purgeEveNativeSession accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Internal provider stage. Caller authorizes a deleting binding; retirement must settle usage. */
-export const purgeEveNativeSession = async (
+const purgeEveNativeSession = async (
   databaseUrl: string,
   scope: {
     sessionId: string;
@@ -143,19 +140,16 @@ export const purgeEveNativeSession = async (
       return await purgeEvePostgresSessionPayloads(connection, scope);
     }
   );
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * import/group-exports (#523): prepareEveNativeSessionPurge stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): prepareEveNativeSessionPurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): prepareEveNativeSessionPurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep prepareEveNativeSessionPurge's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep prepareEveNativeSessionPurge's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): prepareEveNativeSessionPurge accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): prepareEveNativeSessionPurge preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- jsdoc/require-param (#534): prepareEveNativeSessionPurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+jsdoc/require-returns (#535): prepareEveNativeSessionPurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/explicit-function-return-type (#560): Keep prepareEveNativeSessionPurge's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep prepareEveNativeSessionPurge's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): prepareEveNativeSessionPurge accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): prepareEveNativeSessionPurge preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /** Fence native work and clear its queued deliveries while retaining transcript payloads for resource inventory. */
-export const prepareEveNativeSessionPurge = async (
+const prepareEveNativeSessionPurge = async (
   databaseUrl: string,
   scope: {
     sessionId: string;
@@ -166,16 +160,13 @@ export const prepareEveNativeSessionPurge = async (
   await withNativeSession(databaseUrl, scope.sessionId, retire, (connection) =>
     prepareNativeSession(connection, scope)
   );
-/* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
-/* oxlint-disable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * import/group-exports (#523): retireEveNativeSessions stays exported at its declaration so its public contract is visible beside its implementation.
- * jsdoc/require-param (#534): retireEveNativeSessions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/prefer-readonly-parameter-types (#565): retireEveNativeSessions accepts sessionIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): retireEveNativeSessions preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- jsdoc/require-param (#534): retireEveNativeSessions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+typescript/prefer-readonly-parameter-types (#565): retireEveNativeSessions accepts sessionIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+typescript/promise-function-async (#606): retireEveNativeSessions preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 /** Retire and settle every authorized member without erasing any native payloads. */
-export const retireEveNativeSessions = async (
+const retireEveNativeSessions = async (
   databaseUrl: string,
   sessionIds: string[],
   retire: (sessionId: string) => Promise<void>
@@ -195,4 +186,9 @@ export const retireEveNativeSessions = async (
     await connection.end();
   }
 };
-/* oxlint-enable import/group-exports, jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+export {
+  prepareEveNativeSessionPurge,
+  purgeEveNativeSession,
+  retireEveNativeSessions,
+};

@@ -170,7 +170,8 @@ test("composer connector controls persist and fence native tool execution", asyn
     });
     const discover = () =>
       discoverEveMcpTools(owner.id, AbortSignal.timeout(10_000));
-    expect((await discover()).map((tool) => tool.name)).toContain(
+    const enabledConnectorTools = await discover();
+    expect(enabledConnectorTools.map((tool) => tool.name)).toContain(
       `${nameId}__read_token`
     );
     await expect(
@@ -199,7 +200,8 @@ test("composer connector controls persist and fence native tool execution", asyn
         return connector?.enabled;
       })
       .toBe(false);
-    expect((await discover()).map((tool) => tool.name)).not.toContain(
+    const disabledConnectorTools = await discover();
+    expect(disabledConnectorTools.map((tool) => tool.name)).not.toContain(
       `${nameId}__read_token`
     );
     await expect(
@@ -244,9 +246,12 @@ test("composer connector controls persist and fence native tool execution", asyn
       });
     await toggle.click();
     await expect
-      .poll(async () =>
-        (await discover()).some((tool) => tool.name === `${nameId}__read_token`)
-      )
+      .poll(async () => {
+        const discoveredTools = await discover();
+        return discoveredTools.some(
+          (tool) => tool.name === `${nameId}__read_token`
+        );
+      })
       .toBe(true);
     await page.getByRole("menuitem", { name: "Manage connectors" }).click();
     await expect(page).toHaveURL(

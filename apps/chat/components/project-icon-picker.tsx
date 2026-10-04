@@ -25,7 +25,7 @@ interface ProjectIconPickerProps {
   onColorChange: (color: ProjectColorName) => void;
   onIconChange: (icon: ProjectIconName) => void;
 }
-/* oxlint-disable id-length, max-lines-per-function, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ProjectIconPicker: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ProjectIconPicker: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ProjectIconPicker = ({
   icon,
@@ -54,18 +54,18 @@ export const ProjectIconPicker = ({
       <PopoverContent align="start" className="w-auto p-3">
         {/* Color row */}
         <div className="mb-3 flex gap-1.5">
-          {PROJECT_COLORS.map((c): React.JSX.Element => (
+          {PROJECT_COLORS.map((swatchColor): React.JSX.Element => (
             <button
-              aria-label={`Select ${c.name} color`}
-              aria-pressed={displayColor === c.name}
+              aria-label={`Select ${swatchColor.name} color`}
+              aria-pressed={displayColor === swatchColor.name}
               className={cn(
                 "size-6 rounded-full transition-transform hover:scale-110",
-                displayColor === c.name &&
+                displayColor === swatchColor.name &&
                   "ring-foreground ring-2 ring-offset-2"
               )}
-              key={c.name}
-              onClick={() => onColorChange(c.name)}
-              style={{ backgroundColor: c.value }}
+              key={swatchColor.name}
+              onClick={() => onColorChange(swatchColor.name)}
+              style={{ backgroundColor: swatchColor.value }}
               type="button"
             />
           ))}
@@ -92,4 +92,4 @@ export const ProjectIconPicker = ({
     </Popover>
   );
 };
-/* oxlint-enable id-length, max-lines-per-function, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

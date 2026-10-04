@@ -1,4 +1,3 @@
-/* oxlint-disable unicorn/no-await-expression-member -- Each response assertion is tied to its awaited browser action. */
 import { expect, test } from "@playwright/test";
 
 const chatRoute = /\/chat\/[a-f\d-]+$/u;
@@ -63,7 +62,8 @@ test("logical chat keeps its URL and native observers across first send, retry, 
       response.request().method() === "POST"
   );
   await page.getByRole("button", { exact: true, name: "Retry" }).last().click();
-  expect((await retryAccepted).ok()).toBe(true);
+  const acceptedRetryResponse = await retryAccepted;
+  expect(acceptedRetryResponse.ok()).toBe(true);
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
@@ -99,7 +99,8 @@ test("logical chat keeps its URL and native observers across first send, retry, 
       response.request().method() === "POST"
   );
   await editor.getByRole("button", { exact: true, name: "Send" }).click();
-  expect((await editAccepted).ok()).toBe(true);
+  const acceptedEditResponse = await editAccepted;
+  expect(acceptedEditResponse.ok()).toBe(true);
   await expect(page.getByRole("log")).toContainText("exactly jade");
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,

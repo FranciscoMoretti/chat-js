@@ -7,13 +7,10 @@ import { config } from "../config";
 import type { DocumentAssistantRequest } from "./document-contracts";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * import/group-exports (#523): documentAssistantActions stays exported at its declaration so its public contract is visible beside its implementation.
- * max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-export const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
+/* oxlint-disable max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/explicit-function-return-type (#560): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
+const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
   if (!installedDocumentKinds.has(kind)) {
     return [];
   }
@@ -66,13 +63,10 @@ export const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
     }
   }
 };
-/* oxlint-enable import/group-exports, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable import/group-exports, typescript/prefer-readonly-parameter-types --
- * import/group-exports (#523): documentAssistantRequest stays exported at its declaration so its public contract is visible beside its implementation.
- * typescript/prefer-readonly-parameter-types (#565): documentAssistantRequest accepts action: ReturnType<typeof documentAssistantActions>[number]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-export const documentAssistantRequest = (
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): documentAssistantRequest accepts action: ReturnType<typeof documentAssistantActions>[number]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const documentAssistantRequest = (
   action: ReturnType<typeof documentAssistantActions>[number],
   documentId: string,
   revisionId: string
@@ -80,4 +74,5 @@ export const documentAssistantRequest = (
   message: `${action.instruction}\n\nTarget document: ${documentId}. Selected revision: ${revisionId}. Use readDocument to read this document, then use the document tools to apply the requested changes.`,
   modelId: action.modelId,
 });
-/* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+export { documentAssistantActions, documentAssistantRequest };

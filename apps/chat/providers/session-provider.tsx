@@ -37,13 +37,10 @@ const SessionSeedContext = createContext<
 >(null);
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): SessionProvider stays exported at its declaration so its public contract is visible beside its implementation.
- * no-undefined (#519): SessionProvider uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): SessionProvider accepts { children, }: { children: React.ReactNode; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): SessionProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const SessionProvider = ({
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null -- no-undefined (#519): SessionProvider uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+typescript/prefer-readonly-parameter-types (#565): SessionProvider accepts { children, }: { children: React.ReactNode; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): SessionProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const SessionProvider = ({
   children,
 }: {
   children: React.ReactNode;
@@ -93,17 +90,14 @@ export const SessionProvider = ({
     </SessionSeedContext.Provider>
   );
 };
-/* oxlint-enable import/group-exports, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * import/group-exports (#523): SessionSeed stays exported at its declaration so its public contract is visible beside its implementation.
- * react/no-multi-comp (#552): SessionSeed keeps related render components together; extraction changes component, state, and layout boundaries.
- * typescript/explicit-function-return-type (#560): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): SessionSeed accepts { session }: { session: Session | null }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): SessionSeed preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const SessionSeed = ({ session }: { session: Session | null }) => {
+/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- react/no-multi-comp (#552): SessionSeed keeps related render components together; extraction changes component, state, and layout boundaries.
+typescript/explicit-function-return-type (#560): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/explicit-module-boundary-types (#562): Keep SessionSeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+typescript/prefer-readonly-parameter-types (#565): SessionSeed accepts { session }: { session: Session | null }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+unicorn/no-null (#570): SessionSeed preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const SessionSeed = ({ session }: { session: Session | null }) => {
   const setServerSession = useContext(SessionSeedContext);
 
   if (!setServerSession) {
@@ -116,17 +110,16 @@ export const SessionSeed = ({ session }: { session: Session | null }) => {
 
   return null;
 };
-/* oxlint-enable import/group-exports, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, react/only-export-components --
- * import/group-exports (#523): useSession stays exported at its declaration so its public contract is visible beside its implementation.
- * react/only-export-components (#553): useSession is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
-export const useSession = (): SessionContextValue => {
+const useSession = (): SessionContextValue => {
   const ctx = useContext(SessionContext);
   if (!ctx) {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return ctx;
 };
-/* oxlint-enable import/group-exports, react/only-export-components */
+
+/* oxlint-disable react/only-export-components -- #620: Consumers import SessionProvider, SessionSeed, useSession from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
+export { SessionProvider, SessionSeed, useSession };
+/* oxlint-enable react/only-export-components */

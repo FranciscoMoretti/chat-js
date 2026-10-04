@@ -4,9 +4,8 @@ import type { RegistryItem } from "shadcn/schema";
 import { featureDefinitionSchema } from "../../metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 // Canonical MCP implementation; apps/chat contains installed demo copies.
-export const mcpFiles = [
+const mcpFiles = [
   "agent/tools/mcp.ts",
   "app/(chat)/settings/connectors/page.tsx",
   "app/(chat)/settings/connectors/[connectorId]/page.tsx",
@@ -33,19 +32,15 @@ export const mcpFiles = [
   "lib/nuqs/mcp-search-params.server.ts",
   "trpc/routers/mcp.router.ts",
 ];
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const mcpDefinition = featureDefinitionSchema.parse({
+const mcpDefinition = featureDefinitionSchema.parse({
   contractVersion: 1,
   envRequirements: [{ options: [["MCP_ENCRYPTION_KEY"]] }],
   id: "mcp",
   kind: "feature",
 });
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const mcpItem: RegistryItem = {
+const mcpItem: RegistryItem = {
   description: "MCP connectors, management pages, OAuth and composer control",
   files: mcpFiles.map((file) => ({
     path: `src/features/mcp/${file}`,
@@ -58,4 +53,4 @@ export const mcpItem: RegistryItem = {
   name: "mcp",
   type: "registry:item",
 };
-/* oxlint-enable import/group-exports */
+export { mcpDefinition, mcpFiles, mcpItem };

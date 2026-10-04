@@ -1,10 +1,9 @@
 import { z } from "zod";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /** Registry addresses, not runtime flags. Creation and demo sync use the same input. */
-export const installationSelectionSchema = z.strictObject({
+const installationSelectionSchema = z.strictObject({
   features: z.array(z.string().min(1)).default([]),
   gateway: z.string().min(1).optional(),
   storage: z
@@ -17,12 +16,11 @@ export const installationSelectionSchema = z.strictObject({
 });
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
-export type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
+type InstallationSelection = z.infer<typeof installationSelectionSchema>;
+
 // Checked-in demo preset preserves the application's installed features.
-export const demoInstallation = installationSelectionSchema.parse({
+const demoInstallation = installationSelectionSchema.parse({
   features: [
     "mcp",
     "attachment-uploads",
@@ -49,4 +47,5 @@ export const demoInstallation = installationSelectionSchema.parse({
     "deep-research",
   ],
 });
-/* oxlint-enable import/group-exports */
+export { demoInstallation, installationSelectionSchema };
+export type { InstallationSelection };

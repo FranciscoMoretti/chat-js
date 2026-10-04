@@ -5,13 +5,12 @@ import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import type { EditorState, LexicalEditor } from "lexical";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-console -- This is the explicit command-line or library error-reporting boundary; writing to the console is the intended observable output. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Create initial editor configuration
-export const createEditorConfig = () => ({
+const createEditorConfig = () => ({
   namespace: "DocumentEditor",
   nodes: [
     HeadingNode,
@@ -30,11 +29,9 @@ export const createEditorConfig = () => ({
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const handleEditorChange = ({
+const handleEditorChange = ({
   editorState: _editorState,
   editor,
   onSaveContent,
@@ -56,4 +53,4 @@ export const handleEditorChange = ({
   onSaveContent(updatedContent, shouldDebounce);
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable import/group-exports */
+export { createEditorConfig, handleEditorChange };

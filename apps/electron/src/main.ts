@@ -601,12 +601,11 @@ const createWindow = (): BrowserWindow => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable eslint/id-length -- createTray: The local index/OS/library binding retains its conventional API notation. */
 /* oxlint-disable typescript/strict-boolean-expressions -- createTray: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createTray = (): Tray => {
   const iconPath = getAppAssetPath("build", "icon.png");
   const trayIcon = nativeImage.createFromPath(iconPath);
-  const t = new Tray(trayIcon.resize({ height: 16, width: 16 }));
+  const trayInstance = new Tray(trayIcon.resize({ height: 16, width: 16 }));
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -626,10 +625,10 @@ const createTray = (): Tray => {
     },
   ]);
 
-  t.setToolTip(APP_NAME);
-  t.setContextMenu(contextMenu);
+  trayInstance.setToolTip(APP_NAME);
+  trayInstance.setContextMenu(contextMenu);
 
-  t.on("click", (): void => {
+  trayInstance.on("click", (): void => {
     if (mainWindow?.isVisible()) {
       mainWindow.hide();
     } else {
@@ -638,10 +637,9 @@ const createTray = (): Tray => {
     }
   });
 
-  return t;
+  return trayInstance;
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/id-length */
 
 const setupApplicationMenu = (): void => {
   if (process.platform !== "darwin") {

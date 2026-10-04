@@ -26,9 +26,7 @@ const THREADS_TITLE = "useThread — Branching Chats for AI SDK";
 const THREADS_DESCRIPTION =
   "Keep the useChat interface and add message trees, branch navigation, and concurrent AI SDK response streams.";
 
-/* oxlint-disable import/exports-last -- metadata: The declaration is an existing named entrypoint used by consumers; its colocated export makes that boundary explicit. */
-/* oxlint-disable react/only-export-components -- metadata: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */
-export const metadata: Metadata = {
+const metadata: Metadata = {
   alternates: {
     canonical: siteLinks.threads,
   },
@@ -48,8 +46,6 @@ export const metadata: Metadata = {
     title: THREADS_TITLE,
   },
 };
-/* oxlint-enable react/only-export-components */
-/* oxlint-enable import/exports-last */
 
 const compatibility = [
   "messages",
@@ -366,8 +362,10 @@ const ThreadsPage = (): React.JSX.Element => (
 
 /* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable import/no-default-export -- page.tsx: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
+/* oxlint-disable max-lines -- page.tsx: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */
+/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
+export { metadata };
+/* oxlint-enable react/only-export-components */
+/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default ThreadsPage;
 /* oxlint-enable import/no-default-export */
-
-/* oxlint-disable max-lines -- page.tsx: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */

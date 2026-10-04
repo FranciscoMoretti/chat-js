@@ -4,15 +4,10 @@ import React, { Suspense } from "react";
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { SignupForm } from "@/components/signup-form";
 
-/* oxlint-disable import/exports-last, react/only-export-components --
- * import/exports-last (#522): metadata is directly exported at its declaration; moving it below executable initialization can obscure ordering and API ownership.
- * react/only-export-components (#553): metadata is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision.
- */
-export const metadata: Metadata = {
+const metadata: Metadata = {
   description: "Create an account to get started.",
   title: "Create an account",
 };
-/* oxlint-enable import/exports-last, react/only-export-components */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth --
  * react-perf/jsx-no-jsx-as-prop (#555): RegisterPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
@@ -36,8 +31,9 @@ const RegisterPage = (): React.JSX.Element => (
 );
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth */
 
-/* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
- */
+/* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
+export { metadata };
+/* oxlint-enable react/only-export-components */
+/* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RegisterPage;
 /* oxlint-enable import/no-default-export */

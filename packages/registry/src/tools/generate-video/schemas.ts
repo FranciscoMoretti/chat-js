@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-export const generateVideoInput = z.object({
+const generateVideoInput = z.object({
   aspectRatio: z
     .enum(["16:9", "9:16", "1:1"])
     .optional()
@@ -19,12 +18,10 @@ export const generateVideoInput = z.object({
     .describe("A descriptive prompt for the video to generate."),
 });
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/group-exports */
 
-/* oxlint-disable import/group-exports -- These declarations form independently consumed package exports; preserve their declaration-local API documentation and type inference. */
-export const generateVideoResult = z.object({
+const generateVideoResult = z.object({
   fileId: z.string().optional(),
   prompt: z.string(),
   videoUrl: z.string(),
 });
-/* oxlint-enable import/group-exports */
+export { generateVideoInput, generateVideoResult };
