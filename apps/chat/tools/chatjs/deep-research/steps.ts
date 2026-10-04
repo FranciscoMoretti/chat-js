@@ -1,6 +1,6 @@
-/* oxlint-disable eslint/func-style -- EVE compiles top-level async workflow and step declarations. */
 import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
+import type { z } from "zod";
 
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
@@ -11,10 +11,24 @@ import { researchAvailable } from "./availability";
 import { getDeepResearchConfig } from "./configuration";
 import { researchReport } from "./schemas";
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-async function prepareResearch(context: WorkflowToolContext) {
+type Context = Readonly<
+  Omit<WorkflowToolContext, "abortSignal"> & {
+    abortSignal: Readonly<AbortSignal>;
+  }
+>;
+
+type MessageView = Readonly<{
+  parts: readonly Readonly<{ type: string; toolCallId?: string }>[];
+  role: string;
+}>;
+
+// oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires top-level async function declarations so this durable prepareResearch step keeps its stable name and replay boundary.
+async function prepareResearch(context: Context): Promise<{
+  config: ReturnType<typeof getDeepResearchConfig>;
+  date: string;
+  messages: string;
+  timestamp: number;
+}> {
   "use step";
   const owner = context.session.auth.initiator;
   if (!owner || !researchAvailable(context.session)) {
@@ -27,13 +41,15 @@ async function prepareResearch(context: WorkflowToolContext) {
   const snapshot = await client.sessions
     .attach(context.session.id)
     .snapshot({ signal: context.abortSignal });
-  const messages = sharedEveMessages(snapshot.events).map((message) => ({
-    parts: message.parts.filter(
-      (part): boolean =>
-        part.type !== "dynamic-tool" || part.toolCallId !== context.callId
-    ),
-    role: message.role,
-  }));
+  const messages = sharedEveMessages(snapshot.events).map(
+    (message: MessageView) => ({
+      parts: message.parts.filter(
+        (part): boolean =>
+          part.type !== "dynamic-tool" || part.toolCallId !== context.callId
+      ),
+      role: message.role,
+    })
+  );
   return {
     config: getDeepResearchConfig(),
     date: new Date().toLocaleDateString("en-US", {
@@ -44,23 +60,19 @@ async function prepareResearch(context: WorkflowToolContext) {
     }),
     messages: messages
       .map(
-        (message): string => `${message.role}: ${JSON.stringify(message.parts)}`
+        (message: MessageView): string =>
+          `${message.role}: ${JSON.stringify(message.parts)}`
       )
       .join("\n"),
     timestamp: Date.now(),
   };
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+// oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires a top-level async function declaration for the durable saveResearchReport step.
 async function saveResearchReport(
-  context: WorkflowToolContext,
-  report: { title: string; content: string }
-) {
+  context: Context,
+  report: Readonly<z.infer<typeof researchReport>>
+): Promise<z.infer<typeof eveDocumentWriteResult>> {
   "use step";
   context.abortSignal.throwIfAborted();
   const content = researchReport.parse(report);
@@ -75,11 +87,8 @@ async function saveResearchReport(
     )
   );
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 
-// oxlint-disable-next-line eslint/require-await -- Durable steps must be async even for a clock read.
+// oxlint-disable-next-line eslint/func-style, eslint/require-await -- EVE requires this clock read to remain a named async durable step; a synchronous or arrow function is rejected by its directive compiler.
 async function researchCompletionTime(): Promise<number> {
   "use step";
   return Date.now();

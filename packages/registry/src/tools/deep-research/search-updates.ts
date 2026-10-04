@@ -1,16 +1,67 @@
-/* oxlint-disable eslint/func-style -- EVE compiles durable step declarations. */
 import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
 
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
 import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
+import type { WebSearchUpdate } from "@/tools/platform/research-updates-schema";
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-export async function researchSearchUpdates(context: WorkflowToolContext) {
+type Context = Readonly<
+  Omit<WorkflowToolContext, "abortSignal"> & {
+    abortSignal: Readonly<AbortSignal>;
+  }
+>;
+
+type Snapshot = Awaited<
+  ReturnType<ReturnType<Client["sessions"]["attach"]>["snapshot"]>
+>;
+type StreamEvent = Snapshot["events"][number];
+type InvocationData = Extract<StreamEvent, { type: "subagent.called" }>["data"];
+type InvocationEventView =
+  | Readonly<{
+      type: "subagent.called";
+      data: Readonly<
+        Pick<
+          InvocationData,
+          "callId" | "childSessionId" | "name" | "turnId"
+        > & {
+          remote?: Readonly<NonNullable<InvocationData["remote"]>>;
+        }
+      >;
+    }>
+  | Readonly<{ type: Exclude<StreamEvent["type"], "subagent.called"> }>;
+type ActionResult = Extract<
+  StreamEvent,
+  { type: "action.result" }
+>["data"]["result"];
+type ActionEventView =
+  | Readonly<{
+      type: "action.result";
+      data: Readonly<{
+        result:
+          | Readonly<{ kind: "tool-result"; output: unknown }>
+          | Readonly<{ kind: Exclude<ActionResult["kind"], "tool-result"> }>;
+      }>;
+    }>
+  | Readonly<{ type: Exclude<StreamEvent["type"], "action.result"> }>;
+type SnapshotView = Readonly<{ events: readonly ActionEventView[] }>;
+
+const readResearchSnapshots = async (
+  client: Readonly<{ sessions: Readonly<Pick<Client["sessions"], "attach">> }>,
+  sessionIds: readonly string[],
+  options: Readonly<{ signal: Readonly<AbortSignal> }>
+): Promise<Snapshot[]> => {
+  const requests: Promise<Snapshot>[] = [];
+  for (const sessionId of sessionIds) {
+    requests.push(client.sessions.attach(sessionId).snapshot(options));
+  }
+  return await Promise.all(requests);
+};
+
+// oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires this durable researchSearchUpdates step to be a top-level named async function declaration.
+export async function researchSearchUpdates(
+  context: Context
+): Promise<WebSearchUpdate[]> {
   "use step";
   const owner = context.session.auth.initiator;
   if (!owner) {
@@ -21,7 +72,7 @@ export async function researchSearchUpdates(context: WorkflowToolContext) {
   const root = await client.sessions
     .attach(context.session.id)
     .snapshot(options);
-  const children = root.events.flatMap((event) =>
+  const children = root.events.flatMap((event: InvocationEventView) =>
     event.type === "subagent.called" &&
     !event.data.remote &&
     event.data.name === "researcher" &&
@@ -31,12 +82,8 @@ export async function researchSearchUpdates(context: WorkflowToolContext) {
       ? [event.data.childSessionId]
       : []
   );
-  const snapshots = await Promise.all(
-    children.map((sessionId) =>
-      client.sessions.attach(sessionId).snapshot(options)
-    )
-  );
-  return snapshots.flatMap((snapshot) =>
+  const snapshots = await readResearchSnapshots(client, children, options);
+  return snapshots.flatMap((snapshot: SnapshotView) =>
     snapshot.events.flatMap((event) => {
       if (
         event.type !== "action.result" ||
@@ -48,7 +95,7 @@ export async function researchSearchUpdates(context: WorkflowToolContext) {
       if (!receipt.success) {
         return [];
       }
-      return (receipt.data.updates ?? []).flatMap((value) => {
+      return (receipt.data.updates ?? []).flatMap((value: unknown) => {
         const update = ResearchUpdateSchema.safeParse(value);
         return update.success && update.data.type === "web"
           ? [update.data]
@@ -57,7 +104,3 @@ export async function researchSearchUpdates(context: WorkflowToolContext) {
     })
   );
 }
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */

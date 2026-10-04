@@ -5,8 +5,22 @@ const weatherInput = z.object({
   longitude: z.number(),
 });
 
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const MINIMUM_FORECAST_SAMPLE_COUNT = 1;
+const sunriseSeries = z.array(z.string()).min(MINIMUM_FORECAST_SAMPLE_COUNT);
+const sunsetSeries = z.array(z.string()).min(MINIMUM_FORECAST_SAMPLE_COUNT);
+const hourlyTemperatures = z
+  .array(z.number())
+  .min(MINIMUM_FORECAST_SAMPLE_COUNT);
+const dailyForecast = z.object({
+  sunrise: sunriseSeries,
+  sunset: sunsetSeries,
+  time: z.array(z.string()),
+});
+const hourlyForecast = z.object({
+  temperature_2m: hourlyTemperatures,
+  time: z.array(z.string()),
+});
+
 const weatherResult = z.object({
   current: z.object({
     interval: z.number(),
@@ -18,11 +32,7 @@ const weatherResult = z.object({
     temperature_2m: z.string(),
     time: z.string(),
   }),
-  daily: z.object({
-    sunrise: z.array(z.string()).min(1),
-    sunset: z.array(z.string()).min(1),
-    time: z.array(z.string()),
-  }),
+  daily: dailyForecast,
   daily_units: z.object({
     sunrise: z.string(),
     sunset: z.string(),
@@ -30,10 +40,7 @@ const weatherResult = z.object({
   }),
   elevation: z.number(),
   generationtime_ms: z.number(),
-  hourly: z.object({
-    temperature_2m: z.array(z.number()).min(1),
-    time: z.array(z.string()),
-  }),
+  hourly: hourlyForecast,
   hourly_units: z.object({ temperature_2m: z.string(), time: z.string() }),
   latitude: z.number(),
   longitude: z.number(),
@@ -41,6 +48,4 @@ const weatherResult = z.object({
   timezone_abbreviation: z.string(),
   utc_offset_seconds: z.number(),
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/max-nested-calls */
 export { weatherInput, weatherResult };

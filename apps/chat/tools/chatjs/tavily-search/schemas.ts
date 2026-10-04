@@ -28,15 +28,13 @@ const searchResult = z.object({
   url: z.string(),
 });
 
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
+const searchQuery = z.object({ maxResults: z.number(), query: z.string() });
+const queryResults = z.object({
+  query: searchQuery,
+  results: z.array(searchResult),
+});
 const webSearchResult = z.object({
   error: z.string().optional(),
-  searches: z.array(
-    z.object({
-      query: z.object({ maxResults: z.number(), query: z.string() }),
-      results: z.array(searchResult),
-    })
-  ),
+  searches: z.array(queryResults),
 });
-/* oxlint-enable unicorn/max-nested-calls */
 export { webSearchInput, webSearchResult };

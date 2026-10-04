@@ -1,36 +1,40 @@
 import { defineTool } from "eve/tools";
+import type { z } from "zod";
 
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+import type { ToolUsage } from "@/lib/eve/tool-usage";
 
 import { wordCountInput } from "./schemas";
 
+const UNBILLED_TOOL_COST_USD = 0;
+const EMPTY_COUNT = 0;
 const WORD_SPLIT_REGEX = /\s+/u;
 const SENTENCE_SPLIT_REGEX = /[.!?]+/u;
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const wordCount = defineTool({
   description: "Count the words, characters, and sentences in a given text",
-  execute: ({ text }, context) =>
-    executeWithToolUsage(context, (usage) => {
-      usage.addCostUsd(0);
-      const words =
-        text.trim() === "" ? 0 : text.trim().split(WORD_SPLIT_REGEX).length;
-      const characters = text.length;
-      const charactersNoSpaces = text.replaceAll(/\s/gu, "").length;
-      const sentences = text
-        .split(SENTENCE_SPLIT_REGEX)
-        .filter((sentence) => sentence.trim().length > 0).length;
+  execute: async (
+    { text }: Readonly<z.infer<typeof wordCountInput>>,
+    context: Readonly<{ abortSignal: Readonly<AbortSignal> }>
+  ) =>
+    await executeWithToolUsage(
+      context,
+      (usage: Readonly<Pick<ToolUsage, "addCostUsd">>) => {
+        usage.addCostUsd(UNBILLED_TOOL_COST_USD);
+        const words =
+          text.trim() === ""
+            ? EMPTY_COUNT
+            : text.trim().split(WORD_SPLIT_REGEX).length;
+        const characters = text.length;
+        const charactersNoSpaces = text.replaceAll(/\s/gu, "").length;
+        const sentences = text
+          .split(SENTENCE_SPLIT_REGEX)
+          .filter((sentence) => sentence.trim().length > EMPTY_COUNT).length;
 
-      return { characters, charactersNoSpaces, sentences, words };
-    }),
+        return { characters, charactersNoSpaces, sentences, words };
+      }
+    ),
   inputSchema: wordCountInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
-/* oxlint-enable eslint/no-magic-numbers */
