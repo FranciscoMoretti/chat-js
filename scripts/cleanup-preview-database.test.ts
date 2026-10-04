@@ -8,17 +8,31 @@ const preview = {
   name: "preview/feature",
   parent_id: "br-quiet-pine-za1aryyz",
 };
+const rootBranch = {
+  created_at: "2026-01-01T00:00:00Z",
+  default: true,
+  id: "br-root",
+  name: "main",
+  // oxlint-disable-next-line unicorn/no-null -- Exercise Neon's explicit null parent sentinel separately from an omitted parent_id in a root-branch API response.
+  parent_id: null,
+  protected: false,
+};
+interface Branch {
+  created_at: string;
+  default?: boolean;
+  id: string;
+  name: string;
+  parent_id?: string | null;
+  primary?: boolean;
+  protected?: boolean;
+}
 interface RunOptions {
   state?: string;
   repo?: string;
   open?: boolean;
-  branches?: (typeof preview & {
-    default?: boolean;
-    primary?: boolean;
-    protected?: boolean;
-  })[];
+  branches?: Branch[];
   deleteStatus?: number;
-  pages?: { branches: (typeof preview)[]; pagination: { next: string } }[];
+  pages?: { branches: Branch[]; pagination: { next: string } }[];
   stateBeforeDelete?: string;
   openBeforeDelete?: boolean;
 }
@@ -133,6 +147,25 @@ describe("preview database cleanup", (): void => {
       },
     ]);
   });
+  it("accepts root branches with null or absent parent_id beside the preview", async (): Promise<void> => {
+    const absentParent = {
+      created_at: rootBranch.created_at,
+      id: rootBranch.id,
+      name: rootBranch.name,
+    };
+    const results = await Promise.all(
+      [rootBranch, absentParent].map(
+        async (root) => await run({ branches: [root, preview] })
+      )
+    );
+    for (const { calls } of results) {
+      expect(calls.map((call): string => call.method)).toEqual([
+        "GET",
+        "DELETE",
+      ]);
+      expect(calls[1]?.url).toEndWith("/br-preview");
+    }
+  });
   it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])(
     "skips unsafe PR ownership/state %j",
     async (options): Promise<void> => {
@@ -196,6 +229,7 @@ describe("preview database cleanup", (): void => {
   });
   it.each([
     { ...preview, id: "br-quiet-pine-za1aryyz" },
+    { ...preview, parent_id: rootBranch.parent_id },
     { ...preview, parent_id: "another-parent" },
     { ...preview, default: true },
     { ...preview, primary: true },

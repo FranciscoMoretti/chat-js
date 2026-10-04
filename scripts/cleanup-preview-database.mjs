@@ -1,5 +1,5 @@
 /**
- * @typedef {Readonly<{id: string, name: string, parent_id: string, created_at: string, default?: boolean, primary?: boolean, protected?: boolean}>} NeonBranch
+ * @typedef {Readonly<{id: string, name: string, parent_id?: string | null, created_at: string, default?: boolean, primary?: boolean, protected?: boolean}>} NeonBranch
  * @typedef {Readonly<{state: string, closed_at: string, head: Readonly<{ref: string, repo: Readonly<{full_name: string}> | null}>}>} PullRequest
  * @typedef {Readonly<{rest: Readonly<{pulls: Readonly<{get: (params: Readonly<Record<string, unknown>>) => Promise<Readonly<{data: PullRequest}>>, list: unknown}>}>, paginate: (method: unknown, params: Readonly<Record<string, unknown>>) => Promise<readonly unknown[]>}>} GitHubClient
  * @typedef {Readonly<{branches: readonly NeonBranch[], pagination?: Readonly<{next?: unknown}> | null}>} NeonBranchPage
@@ -39,7 +39,9 @@ const isNeonBranch = (value) =>
   isRecord(value) &&
   typeof value.id === "string" &&
   typeof value.name === "string" &&
-  typeof value.parent_id === "string" &&
+  (!("parent_id" in value) ||
+    value.parent_id === null ||
+    typeof value.parent_id === "string") &&
   typeof value.created_at === "string" &&
   (!("default" in value) || typeof value.default === "boolean") &&
   (!("primary" in value) || typeof value.primary === "boolean") &&

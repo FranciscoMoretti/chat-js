@@ -1,4 +1,5 @@
 const HEALTH_CHECK_TIMEOUT_MS = 6000;
+const EMPTY_URL_LENGTH = 0;
 
 const checkHealth = async (origin: string): Promise<void> => {
   const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
@@ -40,24 +41,22 @@ const checkHealth = async (origin: string): Promise<void> => {
   ]);
 };
 
-/* oxlint-disable node/no-process-env -- dev-health.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable eslint/no-console -- dev-health.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable typescript/strict-boolean-expressions -- dev-health.ts: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 if (import.meta.main) {
   try {
-    if (!process.env.APP_URL) {
+    // oxlint-disable-next-line node/no-process-env -- Read the configured readiness origin at this CLI boundary.
+    const appUrl = process.env.APP_URL;
+    if (typeof appUrl !== "string" || appUrl.length === EMPTY_URL_LENGTH) {
       throw new Error("Run bun dev:health from the repository root.");
     }
-    await checkHealth(process.env.APP_URL);
+    await checkHealth(appUrl);
+    // oxlint-disable-next-line eslint/no-console -- Preserve the command's successful readiness message.
     console.info("Healthy: ChatJS, Eve and database are ready.");
   } catch (error) {
+    // oxlint-disable-next-line eslint/no-console -- Preserve the command's operator-facing failure diagnostic.
     console.error(
       error instanceof Error ? error.message : "Runtime unavailable"
     );
     process.exitCode = 1;
   }
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-console */
-/* oxlint-enable node/no-process-env */
 export { checkHealth };

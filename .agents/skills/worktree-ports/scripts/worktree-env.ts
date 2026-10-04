@@ -4,97 +4,89 @@ import { spawn } from "bun";
 
 import { loadWorktreeConfig, resolveWorktreeRuntime } from "./worktree-runtime";
 
-/* oxlint-disable eslint/no-magic-numbers -- args: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-const args = process.argv.slice(2);
-/* oxlint-enable eslint/no-magic-numbers */
+const ARGUMENT_START_INDEX = 2;
+const FIRST_ARGUMENT_INDEX = 0;
+const SECOND_ARGUMENT_INDEX = 1;
+const COMMAND_ARGUMENT_INDEX = 0;
+const ARGUMENTS_TO_REMOVE = 1;
+const EMPTY_ARGUMENT_COUNT = 0;
+const JSON_INDENT_SPACES = 2;
+const SUCCESS_EXIT_CODE = 0;
+const FAILURE_EXIT_CODE = 1;
+const args = process.argv.slice(ARGUMENT_START_INDEX);
 const configFile = ".worktree-env.json";
 const config = await loadWorktreeConfig(configFile);
-/* oxlint-disable node/no-process-env -- runtime: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
+// This CLI resolves the ambient slot setting before forwarding its validated app environment.
+// oxlint-disable-next-line node/no-process-env -- The CLI boundary reads the configured slot from this process environment.
 const runtime = resolveWorktreeRuntime(config, process.env);
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable eslint/no-console -- fail: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable eslint/no-magic-numbers -- fail: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const fail: (message: string) => never = (message) => {
+  // oxlint-disable-next-line eslint/no-console -- The operator-facing failure diagnostic must stay on stderr.
   console.error(message);
-  process.exit(1);
+  process.exit(FAILURE_EXIT_CODE);
 };
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-console */
 
-/* oxlint-disable eslint/no-magic-numbers -- worktree-env.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable eslint/no-console -- worktree-env.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable unicorn/no-null -- worktree-env.ts: The SDK/wire/OS contract uses null as an explicit absence value. */
-if (args[0] === "--info") {
+// oxlint-disable-next-line eslint/no-console -- The status output is the CLI's documented human and --info output channel.
+const writeStatus = (message: string): void => console.log(message);
+
+if (args[FIRST_ARGUMENT_INDEX] === "--info") {
   const info = { ...runtime, configFile };
-  if (args[1] === "--json") {
-    console.log(JSON.stringify(info, null, 2));
+  if (args[SECOND_ARGUMENT_INDEX] === "--json") {
+    // JSON.stringify treats a null replacer as absent; the third argument controls indentation.
+    // oxlint-disable-next-line unicorn/no-null -- Use the native serializer without a filtering replacer for the CLI's JSON output.
+    writeStatus(JSON.stringify(info, null, JSON_INDENT_SPACES));
   } else {
-    console.log(`Worktree slot ${runtime.slot}`);
+    writeStatus(`Worktree slot ${runtime.slot}`);
     for (const [name, app] of Object.entries(runtime.apps)) {
-      console.log(`${name}: ${app.url} (port ${app.port})`);
+      writeStatus(`${name}: ${app.url} (port ${app.port})`);
     }
   }
-  process.exit(0);
+  process.exit(SUCCESS_EXIT_CODE);
 }
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-console */
-/* oxlint-enable eslint/no-magic-numbers */
 
 const appName = args.shift();
-/* oxlint-disable typescript/strict-boolean-expressions -- worktree-env.ts: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-if (!appName) {
+if (typeof appName !== "string" || appName.length === EMPTY_ARGUMENT_COUNT) {
   fail("Usage: worktree-env <app> -- <command>");
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const app = runtime.apps[appName];
-/* oxlint-disable typescript/strict-boolean-expressions -- worktree-env.ts: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-if (!app) {
+if (!Object.hasOwn(runtime.apps, appName)) {
   fail(
     `Unknown worktree app "${appName}". Expected one of: ${Object.keys(runtime.apps).join(", ")}`
   );
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable eslint/no-magic-numbers -- worktree-env.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-if (args[0] === "--") {
-  args.shift();
+if (args[FIRST_ARGUMENT_INDEX] === "--") {
+  args.splice(FIRST_ARGUMENT_INDEX, ARGUMENTS_TO_REMOVE);
 }
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable eslint/no-magic-numbers -- worktree-env.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-if (args.length === 0) {
+if (args.length === EMPTY_ARGUMENT_COUNT) {
   fail("worktree-env requires a command to run");
 }
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-console -- worktree-env.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
-console.log(`Worktree slot ${runtime.slot} · ${appName} → ${app.url}`);
-/* oxlint-enable eslint/no-console */
+writeStatus(`Worktree slot ${runtime.slot} · ${appName} → ${app.url}`);
 
-/* oxlint-disable typescript/explicit-function-return-type -- child: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable node/no-process-env -- child: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable eslint/no-magic-numbers -- child: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-const child = (() => {
+const spawnChild = (
+  commandArgs: readonly string[],
+  environment: Readonly<Record<string, string | undefined>>
+): ReturnType<typeof spawn> => {
   try {
-    return spawn(args, {
-      env: {
-        ...process.env,
-        ...app.env,
-      },
+    return spawn([...commandArgs], {
+      env: { ...environment },
       stderr: "inherit",
       stdin: "inherit",
       stdout: "inherit",
     });
   } catch (error) {
     return fail(
-      `Failed to start "${args[0]}": ${error instanceof Error ? error.message : String(error)}`
+      `Failed to start "${commandArgs[COMMAND_ARGUMENT_INDEX]}": ${error instanceof Error ? error.message : String(error)}`
     );
   }
-})();
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable typescript/explicit-function-return-type */
+};
+
+// Forward ambient variables for commands that rely on inherited setup alongside app-specific overrides.
+// oxlint-disable-next-line node/no-process-env -- Child processes inherit this CLI's environment and receive validated app exports.
+const childEnvironment = { ...process.env, ...app.env };
+const child = spawnChild(args, childEnvironment);
 
 process.on("SIGTERM", () => child.kill("SIGTERM"));
 

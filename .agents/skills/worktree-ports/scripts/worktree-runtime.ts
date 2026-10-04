@@ -1,93 +1,98 @@
-import { file } from "bun";
+import type { WorktreeAppConfig, WorktreeEnvConfig } from "./worktree-config";
 
 const SLOT_PATTERN = /^\d+$/u;
 const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/u;
 const TEMPLATE_PATTERN = /\{(?<token>[^}]+)\}/gu;
 const APP_TEMPLATE_PATTERN =
   /^apps\.(?<app>[a-zA-Z0-9_-]+)\.(?<property>port|url)$/u;
+const NON_NEGATIVE_MINIMUM = 0;
+const EMPTY_RANGE_STRIDE = 0;
+const NO_CONFIGURED_APPS = 0;
+const EMPTY_URL_LENGTH = 0;
+const TEMPLATE_WRAPPER_WIDTH = 1;
 const MIN_PORT = 1024;
 const MAX_PORT = 65_535;
 
-interface WorktreeAppConfig {
-  exports?: Record<string, string>;
-  offset: number;
-}
-
-interface WorktreeEnvConfig {
-  apps: Record<string, WorktreeAppConfig>;
-  range: {
-    base: number;
-    stride: number;
-  };
-  slot: {
-    default: number;
-    env: string;
-  };
-  url: string;
-}
-
 interface ResolvedWorktreeApp {
-  env: Record<string, string>;
-  port: number;
-  url: string;
+  readonly env: Record<string, string>;
+  readonly port: number;
+  readonly url: string;
 }
 
 interface WorktreeRuntime {
-  apps: Record<string, ResolvedWorktreeApp>;
-  slot: number;
+  readonly apps: Record<string, ResolvedWorktreeApp>;
+  readonly slot: number;
 }
 
 interface TemplateContext {
-  apps: Record<string, { port: number; url: string }>;
-  port: number;
-  slot: number;
-  url?: string;
+  readonly apps: Readonly<
+    Record<string, Readonly<{ port: number; url: string }>>
+  >;
+  readonly port: number;
+  readonly slot: number;
+  readonly url?: string;
 }
 
-/* oxlint-disable eslint/no-magic-numbers -- assertNonNegativeInteger: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 const assertNonNegativeInteger = (value: number, label: string): void => {
-  if (!(Number.isSafeInteger(value) && value >= 0)) {
+  if (!(Number.isSafeInteger(value) && value >= NON_NEGATIVE_MINIMUM)) {
     throw new Error(`${label} must be a non-negative integer`);
   }
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- renderTemplate: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/id-length -- renderTemplate: The local index/OS/library binding retains its conventional API notation. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- renderTemplate: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-/* oxlint-disable typescript/strict-boolean-expressions -- renderTemplate: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-const renderTemplate = (template: string, context: TemplateContext): string =>
-  template.replace(TEMPLATE_PATTERN, (_, token: string) => {
-    if (token === "slot") {
-      return String(context.slot);
-    }
-    if (token === "port") {
-      return String(context.port);
-    }
-    if (token === "url" && context.url) {
-      return context.url;
-    }
+const unknownTemplateVariable = (token: string): never => {
+  throw new Error(`Unknown worktree template variable "${token}"`);
+};
 
-    const appMatch = APP_TEMPLATE_PATTERN.exec(token);
-    if (appMatch) {
-      const [, appName, property] = appMatch;
-      const app = context.apps[appName];
-      if (app && (property === "port" || property === "url")) {
-        return String(app[property]);
-      }
-    }
+const resolveAppTemplateToken = (
+  token: string,
+  context: Readonly<TemplateContext>
+): string => {
+  const appMatch = APP_TEMPLATE_PATTERN.exec(token);
+  if (!appMatch) {
+    return unknownTemplateVariable(token);
+  }
+  const [, appName, property] = appMatch;
+  const app = context.apps[appName];
+  if (Boolean(app) && (property === "port" || property === "url")) {
+    return String(app[property]);
+  }
+  return unknownTemplateVariable(token);
+};
 
-    throw new Error(`Unknown worktree template variable "${token}"`);
-  });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
-/* oxlint-enable eslint/max-statements */
+const resolveTemplateToken = (
+  token: string,
+  context: Readonly<TemplateContext>
+): string => {
+  if (token === "slot") {
+    return String(context.slot);
+  }
+  if (token === "port") {
+    return String(context.port);
+  }
+  if (
+    token === "url" &&
+    typeof context.url === "string" &&
+    context.url.length > EMPTY_URL_LENGTH
+  ) {
+    return context.url;
+  }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- resolveSlot: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
+  return resolveAppTemplateToken(token, context);
+};
+
+const renderTemplate = (
+  template: string,
+  context: Readonly<TemplateContext>
+): string =>
+  template.replace(TEMPLATE_PATTERN, (wrappedToken) =>
+    resolveTemplateToken(
+      wrappedToken.slice(TEMPLATE_WRAPPER_WIDTH, -TEMPLATE_WRAPPER_WIDTH),
+      context
+    )
+  );
 const resolveSlot = (
-  config: WorktreeEnvConfig,
-  environment: Record<string, string | undefined>
+  config: Readonly<WorktreeEnvConfig>,
+  environment: Readonly<Record<string, string | undefined>>
 ): number => {
   if (!ENV_NAME_PATTERN.test(config.slot.env)) {
     throw new Error(`Invalid slot.env "${config.slot.env}"`);
@@ -105,35 +110,27 @@ const resolveSlot = (
   assertNonNegativeInteger(slot, config.slot.env);
   return slot;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-statements -- resolveWorktreeRuntime: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
-/* oxlint-disable eslint/max-lines-per-function -- resolveWorktreeRuntime: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable eslint/no-magic-numbers -- resolveWorktreeRuntime: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- resolveWorktreeRuntime: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
-const resolveWorktreeRuntime = (
-  config: WorktreeEnvConfig,
-  environment: Record<string, string | undefined>
-): WorktreeRuntime => {
-  assertNonNegativeInteger(config.range.base, "range.base");
-  assertNonNegativeInteger(config.range.stride, "range.stride");
-  if (config.range.stride === 0) {
-    throw new Error("range.stride must be greater than zero");
-  }
+type AppEntries = readonly (readonly [string, WorktreeAppConfig])[];
+type AppEndpoints = Readonly<
+  Record<string, Readonly<{ port: number; url: string }>>
+>;
+type MutableAppEndpoints = Record<string, { port: number; url: string }>;
+type EndpointResolution = Readonly<{
+  apps: AppEntries;
+  rangeStart: number;
+  template: string;
+  slot: number;
+}>;
+type RuntimeStart = Readonly<{ rangeStart: number; slot: number }>;
 
-  const slot = resolveSlot(config, environment);
-  const rangeStart = config.range.base + slot * config.range.stride;
-  const apps = Object.entries(config.apps);
-  if (apps.length === 0) {
-    throw new Error("Worktree config requires at least one app");
-  }
+const validateAppOffsets = (apps: AppEntries, stride: number): void => {
   const seenOffsets = new Set<number>();
-
   for (const [appName, app] of apps) {
     assertNonNegativeInteger(app.offset, `apps.${appName}.offset`);
-    if (app.offset >= config.range.stride) {
+    if (app.offset >= stride) {
       throw new Error(
-        `App "${appName}" offset ${app.offset} must be below range.stride ${config.range.stride}`
+        `App "${appName}" offset ${app.offset} must be below range.stride ${stride}`
       );
     }
     if (seenOffsets.has(app.offset)) {
@@ -141,14 +138,15 @@ const resolveWorktreeRuntime = (
     }
     seenOffsets.add(app.offset);
   }
+};
 
-  if (config.url.includes("{apps.")) {
-    throw new Error(
-      "url must not reference other apps; use cross-app templates in exports"
-    );
-  }
-
-  const endpoints: Record<string, { port: number; url: string }> = {};
+const resolveAppEndpoints = ({
+  apps,
+  rangeStart,
+  template,
+  slot,
+}: EndpointResolution): AppEndpoints => {
+  const endpoints: MutableAppEndpoints = {};
   for (const [appName, app] of apps) {
     const port = rangeStart + app.offset;
     if (port < MIN_PORT || port > MAX_PORT) {
@@ -158,19 +156,28 @@ const resolveWorktreeRuntime = (
     }
     endpoints[appName] = {
       port,
-      url: renderTemplate(config.url, {
+      url: renderTemplate(template, {
         apps: endpoints,
         port,
         slot,
       }),
     };
   }
+  return endpoints;
+};
 
+const resolveAppEnvironments = (
+  options: Readonly<{
+    apps: AppEntries;
+    endpoints: AppEndpoints;
+    slot: number;
+  }>
+): Record<string, ResolvedWorktreeApp> => {
+  const { apps, endpoints, slot } = options;
   const resolvedApps: Record<string, ResolvedWorktreeApp> = {};
   for (const [appName, app] of apps) {
     const endpoint = endpoints[appName];
     const env: Record<string, string> = {};
-
     for (const [name, template] of Object.entries(app.exports ?? {})) {
       env[name] = renderTemplate(template, {
         apps: endpoints,
@@ -179,31 +186,54 @@ const resolveWorktreeRuntime = (
         url: endpoint.url,
       });
     }
-
     resolvedApps[appName] = { ...endpoint, env };
   }
-
-  return { apps: resolvedApps, slot };
+  return resolvedApps;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
 
-const loadWorktreeConfig = async (
-  path = ".worktree-env.json"
-): Promise<WorktreeEnvConfig> => {
-  const configFile = file(path);
-  if (!(await configFile.exists())) {
-    throw new Error(`Missing worktree environment config: ${path}`);
+const resolveRuntimeStart = (
+  config: Readonly<WorktreeEnvConfig>,
+  environment: Readonly<Record<string, string | undefined>>
+): RuntimeStart => {
+  assertNonNegativeInteger(config.range.base, "range.base");
+  assertNonNegativeInteger(config.range.stride, "range.stride");
+  if (config.range.stride === EMPTY_RANGE_STRIDE) {
+    throw new Error("range.stride must be greater than zero");
   }
-  // oxlint-disable-next-line typescript/no-unsafe-return -- This repository-owned config is consumed by the runtime resolver; a separate input schema requires a config-format decision.
-  return await configFile.json();
+  const slot = resolveSlot(config, environment);
+  return { rangeStart: config.range.base + slot * config.range.stride, slot };
 };
-export { loadWorktreeConfig, resolveWorktreeRuntime };
-export type {
-  ResolvedWorktreeApp,
-  WorktreeAppConfig,
-  WorktreeEnvConfig,
-  WorktreeRuntime,
+
+const resolveWorktreeRuntime = (
+  config: Readonly<WorktreeEnvConfig>,
+  environment: Readonly<Record<string, string | undefined>>
+): WorktreeRuntime => {
+  const { rangeStart, slot } = resolveRuntimeStart(config, environment);
+  const apps = Object.entries(config.apps);
+  if (apps.length === NO_CONFIGURED_APPS) {
+    throw new Error("Worktree config requires at least one app");
+  }
+  validateAppOffsets(apps, config.range.stride);
+
+  if (config.url.includes("{apps.")) {
+    throw new Error(
+      "url must not reference other apps; use cross-app templates in exports"
+    );
+  }
+
+  const endpoints = resolveAppEndpoints({
+    apps,
+    rangeStart,
+    slot,
+    template: config.url,
+  });
+  return {
+    apps: resolveAppEnvironments({ apps, endpoints, slot }),
+    slot,
+  };
 };
+
+export { loadWorktreeConfig } from "./worktree-config";
+export { resolveWorktreeRuntime };
+export type { ResolvedWorktreeApp, WorktreeRuntime };
+export type { WorktreeAppConfig, WorktreeEnvConfig } from "./worktree-config";
