@@ -1,11 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
 
-import { keyFromFileUrl } from "../file-url";
-/* oxlint-enable import/no-relative-parent-imports */
+import { keyFromFileUrl } from "@/lib/file-url";
 
 const MIN_CONTENT_LENGTH = 1;
 const MIN_MESSAGE_PARTS = 1;

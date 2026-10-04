@@ -1,13 +1,12 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
  */
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
 
-import { env } from "../env";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+import { env } from "@/lib/env";
+/* oxlint-enable import/no-nodejs-modules */
 
 const MINUTES_PER_HOUR = 60;
 const SECONDS_PER_MINUTE = 60;

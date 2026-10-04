@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
-import type { UiToolName } from "../ai/types";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
+
 import { draftAttachment } from "./draft";
 import { eveToolMetadata } from "./message-tool-selection";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 

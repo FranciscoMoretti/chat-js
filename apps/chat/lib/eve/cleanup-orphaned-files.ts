@@ -1,11 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-file-purge"; "../db/eve-orphaned-files"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
-import { completeEveFilePurge } from "../db/eve-file-purge";
-import { prepareEveOrphanedFilePurge } from "../db/eve-orphaned-files";
-import { deleteFilesByUrls, iterateStoredFiles } from "../file-storage";
-import { createFileUrl, isFileStorageKey } from "../file-url";
-/* oxlint-enable import/no-relative-parent-imports */
+import { completeEveFilePurge } from "@/lib/db/eve-file-purge";
+import { prepareEveOrphanedFilePurge } from "@/lib/db/eve-orphaned-files";
+import { deleteFilesByUrls, iterateStoredFiles } from "@/lib/file-storage";
+import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
 

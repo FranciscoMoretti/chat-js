@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { constants } from "node:fs";; import { open, realpath } from "node:fs/promises";; import nodePath from "node:path";; import { isDeepStrictEqual } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-sandbox-coverage-proof"; "../env" dependency within this package instead of introducing an alias or barrel API.
  */
 import { createHash } from "node:crypto";
 import { constants } from "node:fs";
@@ -11,10 +10,11 @@ import { isDeepStrictEqual } from "node:util";
 import postgres from "postgres";
 import { z } from "zod";
 
-import { verifyEveSandboxCoverage } from "../db/eve-sandbox-coverage-proof";
-import { env } from "../env";
+import { verifyEveSandboxCoverage } from "@/lib/db/eve-sandbox-coverage-proof";
+import { env } from "@/lib/env";
+
 import { assertEveConfigured } from "./server";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): identitySchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

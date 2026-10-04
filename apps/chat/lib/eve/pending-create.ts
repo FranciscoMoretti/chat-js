@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
 import { z } from "zod";
 
-import type { UiToolName } from "../ai/types";
+import type { UiToolName } from "@/lib/ai/types";
+
 import { createConversationInput } from "./contracts";
 import type { EveForkInput, EveForkKind } from "./contracts";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 import { eveResponseGroupInput } from "./response-group-input";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const SINGLE_MODEL_COUNT = 1;
 const FIRST_MODEL_INDEX = 0;

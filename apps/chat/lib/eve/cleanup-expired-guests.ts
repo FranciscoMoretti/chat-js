@@ -1,12 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-journal"; "../db/eve-guest-cleanup" dependency within this package instead of introducing an alias or barrel API.
- */
-import { isUnacceptedEveCopy } from "../db/eve-copy-journal";
-import { claimExpiredEveGuestFamilies } from "../db/eve-guest-cleanup";
+import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
+import { claimExpiredEveGuestFamilies } from "@/lib/db/eve-guest-cleanup";
+
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
 import { localDeletionAvailable } from "./local-deletion-available";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-console, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): cleanupExpiredEveGuests's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

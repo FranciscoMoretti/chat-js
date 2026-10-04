@@ -1,17 +1,17 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
 
  * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as delay } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
-  */
+ */
 import { setTimeout as delay } from "node:timers/promises";
 
 import { z } from "zod";
 
-import { getEveCreation, listPendingEveCreations } from "../db/eve-queries";
+import { getEveCreation, listPendingEveCreations } from "@/lib/db/eve-queries";
+
 import { createConversationInput } from "./contracts";
 import { EveCreationRecoveryError } from "./creation-recovery-error";
 import { executeEveConversationCreation } from "./execute-conversation-creation";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions --
 

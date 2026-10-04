@@ -1,12 +1,12 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
  */
 import { createHash } from "node:crypto";
 
-import type { UiToolName } from "../ai/types";
+import type { UiToolName } from "@/lib/ai/types";
+
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 export const eveCreationContentHash = (
   message: ReadonlyEveMessageInput,

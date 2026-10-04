@@ -1,19 +1,16 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-guests"; "../db/eve-response-groups" dependency within this package instead of introducing an alias or barrel API.
- */
 import { z } from "zod";
 
-import { releaseEveGuestCreation } from "../db/eve-guests";
+import { releaseEveGuestCreation } from "@/lib/db/eve-guests";
 import {
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
-} from "../db/eve-response-groups";
+} from "@/lib/db/eve-response-groups";
+
 import { conversationBinding } from "./contracts";
 import { createEveConversationOperation } from "./create-conversation-operation";
 import { settleGuestCreation } from "./guest-admission";
 import type { EveResponseGroupResult } from "./response-group-contracts";
 import { eveResponseGroupInput } from "./response-group-input";
-/* oxlint-enable import/no-relative-parent-imports */
 
 type CandidateResult = EveResponseGroupResult["candidates"][number];
 

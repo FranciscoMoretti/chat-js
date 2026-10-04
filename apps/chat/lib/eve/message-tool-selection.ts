@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { EveMessage } from "eve/client";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
-import type { UiToolName } from "../ai/types";
-/* oxlint-enable import/no-relative-parent-imports */
+import { frontendToolsSchema } from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
 
 const selection = z.object({ selectedTool: frontendToolsSchema.nullable() });
 

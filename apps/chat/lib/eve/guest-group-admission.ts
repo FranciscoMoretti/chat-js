@@ -1,20 +1,20 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-guests"; "../db/eve-response-groups"; "../types/anonymous" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
 import type { z } from "zod";
 
-import { reserveEveGuestMessages } from "../db/eve-guests";
-import { reserveEveResponseGroupInTransaction } from "../db/eve-response-groups";
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
+import { reserveEveGuestMessages } from "@/lib/db/eve-guests";
+import { reserveEveResponseGroupInTransaction } from "@/lib/db/eve-response-groups";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import { validateGuestCreation } from "./guest-admission";
 import type { EvePrincipal } from "./principal";
 import { eveResponseGroupCandidates } from "./response-group-candidates";
 import type { eveResponseGroupInput } from "./response-group-input";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): admitGuestResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

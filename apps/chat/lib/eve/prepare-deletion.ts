@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-native-purge"; "../env" dependency within this package instead of introducing an alias or barrel API.
- */
-import { prepareEveNativeSessionPurge } from "../db/eve-native-purge";
-import { env } from "../env";
+import { prepareEveNativeSessionPurge } from "@/lib/db/eve-native-purge";
+import { env } from "@/lib/env";
+
 import {
   retireEveFamilyForDeletion,
   retireEveSessionForDeletion,
 } from "./retire-session";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): prepareEveFamilyDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

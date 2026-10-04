@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-files"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { EveChannelInput } from "eve/channels/eve";
 
-import { assertEveFilesOwned } from "../db/eve-files";
-import { downloadFile } from "../file-storage";
-import { keyFromFileUrl } from "../file-url";
-/* oxlint-enable import/no-relative-parent-imports */
+import { assertEveFilesOwned } from "@/lib/db/eve-files";
+import { downloadFile } from "@/lib/file-storage";
+import { keyFromFileUrl } from "@/lib/file-url";
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): FileContext uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

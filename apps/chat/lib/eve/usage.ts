@@ -1,12 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-billing"; "../db/eve-subagents" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { MessageStreamEvent } from "eve/client";
 
-import { recordEveUsage } from "../db/eve-billing";
-import { registerEveSubagent } from "../db/eve-subagents";
+import { recordEveUsage } from "@/lib/db/eve-billing";
+import { registerEveSubagent } from "@/lib/db/eve-subagents";
+
 import { toolResultSchema, hasEveToolReceipt } from "./tool-result";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

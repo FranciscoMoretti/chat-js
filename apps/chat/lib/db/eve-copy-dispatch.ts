@@ -1,25 +1,23 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
- */
 import { and, eq, sql } from "drizzle-orm";
 
-import { eveSeedSearchText } from "../eve/search-text";
+import { eveSeedSearchText } from "@/lib/eve/search-text";
+
 import { db } from "./client";
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
 import { CreationConflictError } from "./eve-queries";
 import { writeEveSearchText } from "./eve-search";
 import { eveChat, eveConversation, eveConversationCopy } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): resolveAcceptedEveCopySeed's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): resolveAcceptedEveCopySeed's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep resolveAcceptedEveCopySeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep resolveAcceptedEveCopySeed's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Used only by the authenticated native seed resolver; accepted copies no longer depend on their source. */
+/**
+ * Used only by the authenticated native seed resolver; accepted copies no longer depend on their source.
+ * @param ownerId Owner whose accepted destination copy is authorized.
+ * @param operationId Destination reservation identity used by the authenticated seed resolver.
+ * @returns The preserved native seed while accepted creation is pending; unavailable or dispatched copies throw.
+ */
 const resolveAcceptedEveCopySeed = async (
   ownerId: string,
   operationId: string
-) => {
+): Promise<NonNullable<typeof eveConversationCopy.$inferSelect.seed>> => {
   const { copy, conversation } = await readEveCopy(db, ownerId, operationId);
   if (
     copy.phase !== "accepted" ||
@@ -32,23 +30,25 @@ const resolveAcceptedEveCopySeed = async (
   }
   return copy.seed;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): dispatchEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): dispatchEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep dispatchEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep dispatchEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): dispatchEveCopy accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): dispatchEveCopy intentionally keeps the existing falsy-value behavior of conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): dispatchEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** The callback must use the seed operation namespace with this destination reservation ID. */
+unicorn/no-null (#570): dispatchEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
+/**
+ * The callback must use the seed operation namespace with this destination reservation ID.
+ * @param ownerId Owner whose accepted copy is dispatched under the creation lock.
+ * @param conversationId Exact accepted destination reservation, also used for native idempotency.
+ * @param create Native seed creation callback returning the accepted session identity.
+ * @returns Existing or newly bound destination/session identities after atomic metadata and search updates.
+ */
 const dispatchEveCopy = async (
   ownerId: string,
   conversationId: string,
   create: (operationId: string) => Promise<string>
-) => {
+): Promise<{ id: string; sessionId: string }> => {
   try {
     return await db.transaction(async (tx) => {
       const [lock] = await tx.execute<{
@@ -125,20 +125,22 @@ const dispatchEveCopy = async (
     throw error;
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): rejectUnacceptedEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): rejectUnacceptedEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep rejectUnacceptedEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep rejectUnacceptedEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): rejectUnacceptedEveCopy accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --typescript/prefer-readonly-parameter-types (#565): rejectUnacceptedEveCopy accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): rejectUnacceptedEveCopy intentionally keeps the existing falsy-value behavior of conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): rejectUnacceptedEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** Rejected preparations are provably never dispatched; the cleanup coordinator can omit native retirement. */
+unicorn/no-null (#570): rejectUnacceptedEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
+/**
+ * Rejected preparations are provably never dispatched; the cleanup coordinator can omit native retirement.
+ * @param ownerId Owner whose copy family lock fences rejection.
+ * @param conversationId Unaccepted destination preparation whose metadata is cleared.
+ * @returns The destination identity and never-dispatched marker after transactional rejection; accepted or native-bound copies throw.
+ */
 const rejectUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
-) =>
+): Promise<{ id: string; neverDispatched: boolean }> =>
   await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId]);
     const { copy, conversation } = await readEveCopy(
@@ -167,5 +169,5 @@ const rejectUnacceptedEveCopy = async (
     }
     return { id: conversationId, neverDispatched: true };
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 export { dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed };

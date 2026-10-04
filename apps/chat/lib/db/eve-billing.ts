@@ -1,12 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../env"; "../eve/usage-reconciliation-busy" dependency within this package instead of introducing an alias or barrel API.
- */
 import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import { env } from "../env";
-import { EveUsageReconciliationBusyError } from "../eve/usage-reconciliation-busy";
+import { env } from "@/lib/env";
+import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
+
 import { db } from "./client";
 import { databaseConnection } from "./connection";
 import {
@@ -16,7 +14,17 @@ import {
   user,
   userCredit,
 } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports */
+
+const FIRST_PARAMETER_INDEX = 0;
+const NO_CHARGED_CENTS = 0;
+const MINIMUM_COST_USD = 0;
+const COST_DECIMAL_PLACES = 12;
+const MINIMUM_USAGE_STREAM_INDEX = 0;
+const SINGLE_USAGE_MATCH_LIMIT = 1;
+
+type UsageTransaction = Parameters<
+  Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
+>[typeof FIRST_PARAMETER_INDEX];
 
 const hasConflictingCost = (
   stored: string | null,
@@ -24,12 +32,11 @@ const hasConflictingCost = (
 ): boolean =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): debitTurnUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): debitTurnUsage accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; input: { ownerId: string; sessionId: string; turnId: string; eventId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): debitTurnUsage accepts tx: UsageTransaction; input: { ownerId: string; sessionId: string; turnId: string; eventId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const debitTurnUsage = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: UsageTransaction,
   input: {
     ownerId: string;
     sessionId: string;
@@ -51,8 +58,9 @@ const debitTurnUsage = async (
         eq(eveUsage.ownerId, input.ownerId)
       )
     );
-  const delta = (totals?.due ?? 0) - (totals?.paid ?? 0);
-  if (delta > 0) {
+  const delta =
+    (totals?.due ?? NO_CHARGED_CENTS) - (totals?.paid ?? NO_CHARGED_CENTS);
+  if (delta > NO_CHARGED_CENTS) {
     await tx
       .update(userCredit)
       .set({ credits: sql`${userCredit.credits} - ${delta}` })
@@ -63,18 +71,26 @@ const debitTurnUsage = async (
       .where(eq(eveUsage.eventId, input.eventId));
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): recordEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): recordEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): recordEveUsage uses 0, 12 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): recordEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/prefer-readonly-parameter-types (#565): recordEveUsage accepts input: { eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): recordEveUsage intentionally keeps the existing falsy-value behavior of settled; guest; existing; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** A replay can arrive concurrently with the hook. Both use the same durable event ID. */
+unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ */
+/**
+ * A replay can arrive concurrently with the hook. Both use the same durable event ID.
+ * @param input Native usage event identity and optional provider cost evidence.
+ * @param input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
+ * @param input.sessionId Native session whose turn cost is recorded.
+ * @param input.turnId Native turn whose decimal costs are rounded and charged together.
+ * @param input.ownerId Owner whose credit or guest quota identity scopes the record.
+ * @param input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
+ * @param input.generationId Optional provider generation identifier used for later reconciliation.
+ * @returns Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
+ */
 const recordEveUsage = async (input: {
   eventId: string;
   sessionId: string;
@@ -86,7 +102,7 @@ const recordEveUsage = async (input: {
   if (
     !input.eventId ||
     (input.costUsd !== undefined &&
-      (!Number.isFinite(input.costUsd) || input.costUsd < 0))
+      (!Number.isFinite(input.costUsd) || input.costUsd < MINIMUM_COST_USD))
   ) {
     throw new Error("Invalid Eve usage evidence.");
   }
@@ -106,7 +122,9 @@ const recordEveUsage = async (input: {
     );
   if (settled) {
     const incoming =
-      input.costUsd === undefined ? null : input.costUsd.toFixed(12);
+      input.costUsd === undefined
+        ? null
+        : input.costUsd.toFixed(COST_DECIMAL_PLACES);
     if (hasConflictingCost(settled.costUsd, incoming)) {
       throw new Error("Eve usage amount changed; reconcile provider evidence.");
     }
@@ -130,7 +148,9 @@ const recordEveUsage = async (input: {
         .for("update");
     }
     const costUsd =
-      input.costUsd === undefined ? null : input.costUsd.toFixed(12);
+      input.costUsd === undefined
+        ? null
+        : input.costUsd.toFixed(COST_DECIMAL_PLACES);
     const [existing] = await tx
       .select()
       .from(eveUsage)
@@ -166,12 +186,16 @@ const recordEveUsage = async (input: {
     return recordedCost !== null && recordedCost !== undefined;
   });
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): getEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/strict-boolean-expressions (#610): getEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** This cursor is billing progress, never a second copy of the transcript. */
+/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): getEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
+/**
+ * This cursor is billing progress, never a second copy of the transcript.
+ * @param ownerId Owner whose bound session is authorized.
+ * @param sessionId Native session whose durable billing cursor is read.
+ * @returns The current ingestion stream index; missing owned bindings throw.
+ */
 const getEveUsageCursor = async (
   ownerId: string,
   sessionId: string
@@ -191,18 +215,25 @@ const getEveUsageCursor = async (
   }
   return row.streamIndex;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): advanceEveUsageCursor's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): advanceEveUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/strict-boolean-expressions (#610): advanceEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Advance only after durable ingestion; concurrent older readers cannot rewind it. */
+/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): advanceEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
+/**
+ * Advance only after durable ingestion; concurrent older readers cannot rewind it.
+ * @param ownerId Owner whose bound session is authorized.
+ * @param sessionId Native session whose billing cursor advances.
+ * @param streamIndex Nonnegative safe ingestion index committed after durable usage recording.
+ */
 const advanceEveUsageCursor = async (
   ownerId: string,
   sessionId: string,
   streamIndex: number
 ): Promise<void> => {
-  if (!Number.isSafeInteger(streamIndex) || streamIndex < 0) {
+  if (
+    !Number.isSafeInteger(streamIndex) ||
+    streamIndex < MINIMUM_USAGE_STREAM_INDEX
+  ) {
     throw new Error("Invalid Eve usage cursor.");
   }
   const [row] = await db
@@ -222,15 +253,18 @@ const advanceEveUsageCursor = async (
     throw new Error("Conversation not found.");
   }
 };
-/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): withManagedUsageReconciliation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): withManagedUsageReconciliation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): withManagedUsageReconciliation accepts unpricedSessions: Set<string>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation intentionally keeps the existing falsy-value behavior of owner; unpriced; error.cause; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Serialize managed fallback sweeps across deployments, without locking credit debits. */
+typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation intentionally keeps the existing falsy-value behavior of owner; unpriced; error.cause; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ */
+/**
+ * Serialize managed fallback sweeps across deployments, without locking credit debits.
+ * @param ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
+ * @param reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
+ */
 const withManagedUsageReconciliation = async (
   ownerId: string,
   reconcile: (sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>
@@ -271,7 +305,7 @@ const withManagedUsageReconciliation = async (
         .select({ id: eveUsage.eventId })
         .from(eveUsage)
         .where(and(eq(eveUsage.ownerId, ownerId), isNull(eveUsage.costUsd)))
-        .limit(1);
+        .limit(SINGLE_USAGE_MATCH_LIMIT);
       if (unpriced) {
         throw new Error(
           "Completed usage needs provider cost reconciliation before starting more work."
@@ -295,7 +329,7 @@ const withManagedUsageReconciliation = async (
     await connection.end();
   }
 };
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export {
   advanceEveUsageCursor,
   getEveUsageCursor,

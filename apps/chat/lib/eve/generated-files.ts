@@ -1,16 +1,13 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-files"; "../file-storage" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { ToolContext } from "eve/tools";
 
 import {
   reserveEveGeneratedFile,
   writeEveGeneratedFile,
-} from "../db/eve-files";
-import { createFileId, uploadFileAtKey } from "../file-storage";
-import type { FileUploader } from "../file-storage";
+} from "@/lib/db/eve-files";
+import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
+import type { FileUploader } from "@/lib/file-storage";
+
 import { resolveEveConversationScope } from "./conversation-scope";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): eveGeneratedFileUploader accepts context: Pick<ToolContext, "abortSignal"> & { session?: { id: string; auth: { ; body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

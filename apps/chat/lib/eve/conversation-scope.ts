@@ -1,18 +1,13 @@
-/* oxlint-disable import/no-relative-parent-imports --
-
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
-  */
 import { z } from "zod";
-
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import {
   bindAcceptedEveConversation,
   readEveSessionMapping,
-} from "../db/eve-queries";
+} from "@/lib/db/eve-queries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { eveRequest } from "./server";
 import { EveSessionMappingError } from "./session-mapping-error";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable init-declarations, max-params, max-statements, no-magic-numbers -- * init-declarations (#507): assertNativeReceipt assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-params (#511): assertNativeReceipt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

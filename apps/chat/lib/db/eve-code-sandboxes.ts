@@ -1,13 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
-
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/code-sandbox-name" dependency within this package instead of introducing an alias or barrel API.
-  */
 import { and, eq, sql } from "drizzle-orm";
 
-import { eveCodeSandboxName } from "../eve/code-sandbox-name";
+import { eveCodeSandboxName } from "@/lib/eve/code-sandbox-name";
+
 import { db } from "./client";
 import { eveCodeSandbox, eveConversation } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const FIRST_ROW_INDEX = 0;
 

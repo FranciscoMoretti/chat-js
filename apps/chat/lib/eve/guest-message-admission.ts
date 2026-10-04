@@ -1,26 +1,25 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types"; "../db/eve-guests"; "../types/anonymous" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
 import { z } from "zod";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import type { UiToolName } from "../ai/types";
+import type { UiToolName } from "@/lib/ai/types";
 import {
   commitEveGuestMessage,
   releaseEveGuestMessage,
   reserveEveGuestMessage,
-} from "../db/eve-guests";
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
+} from "@/lib/db/eve-guests";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import { rejectEveCommand } from "./command-rejection";
 import { guestRequestIpHash } from "./guest-admission";
 import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 jsdoc/require-param (#534): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

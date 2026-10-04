@@ -1,27 +1,24 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../config"; "../db/eve-files"; "../db/eve-queries"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 import { Client, defaultMessageReducer } from "eve/client";
 import type { z } from "zod";
 
-import { config } from "../config";
+import { config } from "@/lib/config";
 import {
   canReadEveFile,
   reserveEveUpload,
   writeEveUpload,
-} from "../db/eve-files";
-import { getEveConversation } from "../db/eve-queries";
+} from "@/lib/db/eve-files";
+import { getEveConversation } from "@/lib/db/eve-queries";
 import {
   createFileId,
   downloadFile,
   getFileMetadata,
   uploadFileAtKey,
-} from "../file-storage";
-import { keyFromFileUrl } from "../file-url";
+} from "@/lib/file-storage";
+import { keyFromFileUrl } from "@/lib/file-url";
+
 import { getEveConnectionOptions } from "./connection-options";
 import { attachmentDigest, draftAttachment } from "./draft";
 import { assertEveConfigured } from "./server";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const EMPTY_ATTACHMENT_BYTES = 0;
 const DATA_URL_SEPARATOR_LENGTH = 1;

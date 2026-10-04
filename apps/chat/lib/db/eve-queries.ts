@@ -1,6 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/session-mapping-error" dependency within this package instead of introducing an alias or barrel API.
- */
 // oxlint-disable-next-line eslint/max-classes-per-file -- Keep the related admission error variants alongside their shared query contract.
 import {
   and,
@@ -28,12 +25,11 @@ import {
 } from "@/lib/db/schema";
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
+import { EveSessionMappingError } from "@/lib/eve/session-mapping-error";
 
-import { EveSessionMappingError } from "../eve/session-mapping-error";
 import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
-/* oxlint-enable import/no-relative-parent-imports */
 
 type ConversationRow = typeof eveConversation.$inferSelect;
 type ChatRow = typeof eveChat.$inferSelect;

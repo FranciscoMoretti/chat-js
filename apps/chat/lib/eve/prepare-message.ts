@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../config"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { UserContent } from "ai";
 
-import { config } from "../config";
-import { downloadFile } from "../file-storage";
-import { keyFromFileUrl } from "../file-url";
+import { config } from "@/lib/config";
+import { downloadFile } from "@/lib/file-storage";
+import { keyFromFileUrl } from "@/lib/file-url";
+
 import { loadEveModelDefinition } from "./model-selection";
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable max-statements, no-continue --
  * max-statements (#512): prepareEveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

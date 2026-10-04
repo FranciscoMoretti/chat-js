@@ -1,11 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-documents" dependency within this package instead of introducing an alias or barrel API.
- */
+import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import type { snapshotPublicEveCopyDocuments } from "../db/eve-copy-documents";
 import { eveCopyResources, rewriteEveCopyResources } from "./copy-transcript";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const ALLOCATIONS_PARAMETER_INDEX = 1;
 type CopyDocumentSnapshot = Awaited<

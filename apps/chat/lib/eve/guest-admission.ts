@@ -1,31 +1,30 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { isIP } from "node:net";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-files"; "../db/eve-guests"; "../db/eve-queries"; "../env"; "../types/anonymous" dependency within this package instead of introducing an alias or barrel API.
  */
 import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 
 import { z } from "zod";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import { assertEveFilesOwned } from "../db/eve-files";
+import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import {
   commitEveGuestMessage,
   readExistingEveGuestMessage,
   releaseEveGuestCreation,
   reserveEveGuestMessage,
-} from "../db/eve-guests";
-import { getEveConversation } from "../db/eve-queries";
-import { env } from "../env";
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
+} from "@/lib/db/eve-guests";
+import { getEveConversation } from "@/lib/db/eve-queries";
+import { env } from "@/lib/env";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import type { createConversationInput } from "./contracts";
 import { eveMessageFileKeys } from "./file-references";
 import { eveGuestIpHash } from "./guest-credential";
 import { loadEveModelDefinition } from "./model-selection";
 import type { EvePrincipal } from "./principal";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 type ReadonlyGuestCreationInput = ReadonlyNativeSurface<
   z.infer<typeof createConversationInput>

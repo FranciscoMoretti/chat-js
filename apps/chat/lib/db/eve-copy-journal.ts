@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/copy-journal-contract"; "../eve/copy-transcript"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
  */
 import { createHash } from "node:crypto";
 
@@ -8,9 +7,10 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { parseSessionTranscriptSeed } from "eve/transcript";
 import { z } from "zod";
 
-import type { EveCopyPlan } from "../eve/copy-journal-contract";
-import { eveCopyResources } from "../eve/copy-transcript";
-import { isFileStorageKey } from "../file-url";
+import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
+import { eveCopyResources } from "@/lib/eve/copy-transcript";
+import { isFileStorageKey } from "@/lib/file-url";
+
 import { db } from "./client";
 import { CreationConflictError } from "./eve-queries";
 import {
@@ -22,7 +22,7 @@ import {
   eveResponseGroup,
   eveStoredFile,
 } from "./schema";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): CopyTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

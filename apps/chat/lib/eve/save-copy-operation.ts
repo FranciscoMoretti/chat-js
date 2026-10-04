@@ -1,23 +1,23 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "../db/eve-copy-dispatch" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-dispatch"; "../db/eve-copy-documents"; "../db/eve-copy-journal"; "../db/eve-copy-resources"; "../db/eve-copy-source-file" dependency within this package instead of introducing an alias or barrel API.
  */
-import { dispatchEveCopy } from "../db/eve-copy-dispatch";
-import { snapshotPublicEveCopyDocuments } from "../db/eve-copy-documents";
+import { dispatchEveCopy } from "@/lib/db/eve-copy-dispatch";
+import { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
 import {
   EveCopySourceChangedError,
   getEveCopyOperation,
   rejectEveCopyPreflight,
   reserveEveCopyOperation,
-} from "../db/eve-copy-journal";
+} from "@/lib/db/eve-copy-journal";
 import {
   acceptEveCopy,
   writeEveCopyDocuments,
   writeEveCopyFile,
-} from "../db/eve-copy-resources";
-import { readPublicEveCopyFile } from "../db/eve-copy-source-file";
-import { CreationConflictError } from "../db/eve-queries";
-import { downloadFile, uploadFileAtKey } from "../file-storage";
+} from "@/lib/db/eve-copy-resources";
+import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
+import { CreationConflictError } from "@/lib/db/eve-queries";
+import { downloadFile, uploadFileAtKey } from "@/lib/file-storage";
+
 import type { EveCopyInput } from "./copy-input";
 import { createNativeEveCopy } from "./create-native-copy";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
@@ -28,7 +28,7 @@ import {
 import { prepareEveCopyPlan } from "./prepare-copy-plan";
 import { readPublicEveCopySource } from "./public-copy-source";
 import { assertEveConfigured } from "./server";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): prepareCopyReservation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

@@ -1,10 +1,6 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { MessageStreamEvent } from "eve/client";
 
-import { recordEveConversationActivity } from "../db/eve-queries";
-/* oxlint-enable import/no-relative-parent-imports */
+import { recordEveConversationActivity } from "@/lib/db/eve-queries";
 
 /* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): ingestEveActivity's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

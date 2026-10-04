@@ -1,10 +1,5 @@
+import { auth } from "@/lib/auth";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../auth" dependency within this package instead of introducing an alias or barrel API.
- */
-import { auth } from "../auth";
-/* oxlint-enable import/no-relative-parent-imports */
 
 export type EvePrincipal =
   | { kind: "registered"; ownerId: string }

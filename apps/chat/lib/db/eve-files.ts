@@ -1,12 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import { isFileStorageKey } from "../file-url";
+import { isFileStorageKey } from "@/lib/file-url";
+
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const FIRST_ROW_INDEX = 0;
 

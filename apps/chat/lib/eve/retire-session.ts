@@ -1,21 +1,18 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-native-purge"; "../db/eve-queries"; "../env" dependency within this package instead of introducing an alias or barrel API.
- */
 import { Client } from "eve/client";
 import type { SessionSnapshot } from "eve/client";
 
-import { retireEveNativeSessions } from "../db/eve-native-purge";
+import { retireEveNativeSessions } from "@/lib/db/eve-native-purge";
 import {
   beginEveConversationDeletion,
   getDeletingEveConversationForSession,
-} from "../db/eve-queries";
-import { env } from "../env";
+} from "@/lib/db/eve-queries";
+import { env } from "@/lib/env";
+
 import { getEveConnectionOptions } from "./connection-options";
 import { reconcileEveSubagentUsage } from "./reconcile-usage";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const SESSION_RETIRE_TIMEOUT_MS = 30_000;
 const RETIRED_SNAPSHOT_TIMEOUT_MS = 15_000;

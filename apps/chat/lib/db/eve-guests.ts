@@ -1,15 +1,14 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { randomUUID } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/guest-credential" dependency within this package instead of introducing an alias or barrel API.
  */
 import { randomUUID } from "node:crypto";
 
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { eveGuestOwnerId } from "@/lib/eve/guest-credential";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { eveGuestOwnerId } from "../eve/guest-credential";
 import { db } from "./client";
 import {
   eveConversation,
@@ -18,7 +17,7 @@ import {
   eveGuestRate,
   user,
 } from "./schema";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 const MIN_OWNER_ID_LENGTH = 1;
 const MINUTE_WINDOW_SECONDS = 60;

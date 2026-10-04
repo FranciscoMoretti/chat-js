@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
@@ -14,12 +13,13 @@ import {
   FILES_PATH,
   isFileStorageKey,
   keyFromFileUrl,
-} from "../file-url";
+} from "@/lib/file-url";
+
 import { eveDocumentOperations } from "./document-contracts";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 import { sharedEveMessages } from "./shared-messages";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 type Seed = NonNullable<
   Awaited<ReturnType<NonNullable<EveChannelInput["resolveSeed"]>>>

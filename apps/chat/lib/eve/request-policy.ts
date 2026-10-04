@@ -1,15 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { inputResponseSchema } from "eve/client";
 import { z } from "zod";
 
+import { frontendToolsSchema } from "@/lib/ai/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { frontendToolsSchema } from "../ai/types";
 import { eveMessageInput } from "./message-input";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const streamIndex = /^\d{1,12}$/u;
 const sessionPath =

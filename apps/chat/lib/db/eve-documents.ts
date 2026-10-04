@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../artifacts/artifact-kind"; "../eve/document-contracts" dependency within this package instead of introducing an alias or barrel API.
- */
 import { and, eq, inArray, lt, lte, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { z } from "zod";
 
+import { artifactKinds } from "@/lib/artifacts/artifact-kind";
+import { documentFileIds } from "@/lib/eve/document-contracts";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-import { artifactKinds } from "../artifacts/artifact-kind";
-import { documentFileIds } from "../eve/document-contracts";
 import { db } from "./client";
 import { retainEveDocumentFiles } from "./eve-files";
 import {
@@ -22,7 +19,6 @@ import {
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
 } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): revisionInput uses 2_000_000, 1, 512, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tools/platform/research-updates-schema"; "../ai/tool-context" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { ToolContext } from "eve/tools";
 
-import type { ResearchUpdate } from "../../tools/platform/research-updates-schema";
-import type { ToolProgressWriter } from "../ai/tool-context";
+import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+
 import type { ToolOutput, ToolResult } from "./tool-result";
 import { executeWithToolProgress } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
 

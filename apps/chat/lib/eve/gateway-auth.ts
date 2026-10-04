@@ -1,30 +1,29 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import { timingSafeEqual } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types"; "../db/eve-guests"; "../db/eve-queries"; "../db/eve-sandbox-coverage-proof"; "../db/eve-subagents" dependency within this package instead of introducing an alias or barrel API.
  */
 import { timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
 
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import { frontendToolsSchema } from "../ai/types";
-import { readEveGuestOwner } from "../db/eve-guests";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import { readEveGuestOwner } from "@/lib/db/eve-guests";
 import {
   getDeletingEveConversationForSession,
   ownsEveSession,
   readEveSessionMapping,
-} from "../db/eve-queries";
-import { isFencedEveDescendant } from "../db/eve-sandbox-coverage-proof";
-import { getEveSubagent } from "../db/eve-subagents";
-import { env } from "../env";
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
+} from "@/lib/db/eve-queries";
+import { isFencedEveDescendant } from "@/lib/db/eve-sandbox-coverage-proof";
+import { getEveSubagent } from "@/lib/db/eve-subagents";
+import { env } from "@/lib/env";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 const checkpointLookupPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;

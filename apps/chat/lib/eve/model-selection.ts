@@ -1,17 +1,13 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/active-gateway"; "../ai/gateways/fallback-models"; "../ai/gateways/registry"; "../ai/model-data"; "../ai/to-model-data" dependency within this package instead of introducing an alias or barrel API.
- */
 import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
 import { wrapLanguageModel } from "ai";
 import { z } from "zod";
 
-import { getActiveGateway } from "../ai/active-gateway";
-import { getFallbackModels } from "../ai/gateways/fallback-models";
-import type { InstalledGateway } from "../ai/gateways/registry";
-import type { ModelData } from "../ai/model-data";
-import { toModelData } from "../ai/to-model-data";
-import { config } from "../config";
-/* oxlint-enable import/no-relative-parent-imports */
+import { getActiveGateway } from "@/lib/ai/active-gateway";
+import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
+import type { InstalledGateway } from "@/lib/ai/gateways/registry";
+import type { ModelData } from "@/lib/ai/model-data";
+import { toModelData } from "@/lib/ai/to-model-data";
+import { config } from "@/lib/config";
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 const MODEL_CATALOG_TTL_MS = 3_600_000;

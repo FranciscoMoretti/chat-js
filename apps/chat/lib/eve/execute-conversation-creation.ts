@@ -1,8 +1,7 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies --
 
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries"; "../logger" dependency within this package instead of introducing an alias or barrel API.
-  */
+ */
 import { z } from "zod";
 
 import {
@@ -11,8 +10,9 @@ import {
   createEveConversation,
   getEveConversation,
   getEveCreation,
-} from "../db/eve-queries";
-import { createModuleLogger } from "../logger";
+} from "@/lib/db/eve-queries";
+import { createModuleLogger } from "@/lib/logger";
+
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
 import type { createConversationInput, EveForkInput } from "./contracts";
 import { eveConversationTitleFallback } from "./conversation-title";
@@ -26,7 +26,7 @@ import { eveMessageDeliveryMetadata } from "./message-delivery";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies */
 
 const logger = createModuleLogger("eve/creation");
 const OPERATION_LOOKUP_TIMEOUT_MS = 15_000;
