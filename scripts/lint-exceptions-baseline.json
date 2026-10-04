@@ -5209,8 +5209,6 @@
     "[\"apps/electron/scripts/run-forge.cjs\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/electron/scripts/run-forge.cjs\",\"unicorn/no-process-exit\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/electron/scripts/run-forge.cjs\",\"node/no-process-env\",\"oxlint-disable\"]": 1,
-    "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/electron/scripts/write-branding.ts\",\"eslint/no-console\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/electron/src/config.ts\",\"node/no-process-env\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/electron/src/lib/auth-client.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/electron/src/lib/auth-client.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 2,
@@ -6687,7 +6685,12 @@
     "[\"scripts/vercel-preview-build.ts\",\"eslint/no-console\",\"oxlint-disable\"]": 1,
     "[\"scripts/vercel-preview-build.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"scripts/vercel-preview-build.ts\",\"typescript/no-unsafe-assignment\",\"oxlint-disable-next-line\"]": 1,
-    "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 1
+    "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/electron/scripts/write-branding.ts\",\"eslint/no-console\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/electron/scripts/write-branding.ts\",\"promise/prefer-await-to-then\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/electron/scripts/write-branding.ts\",\"promise/prefer-await-to-callbacks\",\"oxlint-disable-next-line\"]": 1
   },
   "missingReasons": {},
   "scopeFingerprints": {
@@ -25597,12 +25600,6 @@
     "[\"apps/electron/scripts/run-forge.cjs\",\"node/no-process-env\",\"oxlint-disable\"]": [
       "038f19e346ea9b768d62417b1e7027054af6dacf6b8454870441bd8a3143d3bc"
     ],
-    "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
-      "50ef426e6f0294edd14b6efcdc28336561c6d3961a630f3ed9d2dfed3566110f"
-    ],
-    "[\"apps/electron/scripts/write-branding.ts\",\"eslint/no-console\",\"oxlint-disable-next-line\"]": [
-      "1c8806a1121f28accc32f9c48859b432a2ec59319c5851189a027f68999c68a1"
-    ],
     "[\"apps/electron/src/config.ts\",\"node/no-process-env\",\"oxlint-disable-next-line\"]": [
       "bf32df615f4c3e513101959fd11fc6f9ca3001aced88ba83b943e05a49cb0703"
     ],
@@ -31185,6 +31182,22 @@
     ],
     "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": [
       "844e34a0a4cc4d1aa34f45a88b057d41e0dd0759e4791c10f69ce8b99c7f8269"
+    ],
+    "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
+      "50ef426e6f0294edd14b6efcdc28336561c6d3961a630f3ed9d2dfed3566110f"
+    ],
+    "[\"apps/electron/scripts/write-branding.ts\",\"eslint/no-console\",\"oxlint-disable-next-line\"]": [
+      "00b2d76879c747eb27143dd87c96513cda41cdf673ff354c4bfe62051e7186ae",
+      "812aea3c0e4e374ba1c164a7d9f1a3a126c0e1789cc18a34969ea6762e828bf3"
+    ],
+    "[\"apps/electron/scripts/write-branding.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": [
+      "6126ce8703cd6494c9699e13a6ac252d5409c02d24ebe65f12fb93d357f5d82c"
+    ],
+    "[\"apps/electron/scripts/write-branding.ts\",\"promise/prefer-await-to-then\",\"oxlint-disable-next-line\"]": [
+      "6126ce8703cd6494c9699e13a6ac252d5409c02d24ebe65f12fb93d357f5d82c"
+    ],
+    "[\"apps/electron/scripts/write-branding.ts\",\"promise/prefer-await-to-callbacks\",\"oxlint-disable-next-line\"]": [
+      "6126ce8703cd6494c9699e13a6ac252d5409c02d24ebe65f12fb93d357f5d82c"
     ]
   },
   "version": 1
