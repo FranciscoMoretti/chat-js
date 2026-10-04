@@ -1,17 +1,33 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../../db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
+import { auth } from "@ai-sdk/mcp";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import type { McpOAuthSession } from "../../db/schema";
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
 /* oxlint-enable import/no-relative-parent-imports */
 
+const sdkIssuer = "http://127.0.0.1:3799";
+const sdkMetadata = {
+  authorization_endpoint: `${sdkIssuer}/authorize`,
+  code_challenge_methods_supported: ["S256"],
+  issuer: sdkIssuer,
+  registration_endpoint: `${sdkIssuer}/register`,
+  response_types_supported: ["code"],
+  token_endpoint: `${sdkIssuer}/token`,
+};
+const sdkResource = {
+  authorization_servers: [sdkIssuer],
+  resource: `${sdkIssuer}/mcp`,
+};
+
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   read: vi.fn(),
   save: vi.fn(),
   setClientInfo: vi.fn(),
+  setCodeVerifier: vi.fn(),
 }));
 vi.mock("./mcp-fetch", () => ({ mcpFetch: mocks.fetch }));
 
@@ -20,6 +36,7 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   getSessionByState: mocks.read,
   saveTokensAndCleanup: mocks.save,
   setOAuthClientInfoOnceByState: mocks.setClientInfo,
+  setOAuthCodeVerifierOnceByState: mocks.setCodeVerifier,
 }));
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/mcp-oauth-lock")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -83,6 +100,18 @@ beforeEach(() => {
     updatedAt: new Date(0),
   };
   mocks.read.mockImplementation(() => Promise.resolve(stored));
+  mocks.setClientInfo.mockImplementation(
+    ({ clientInfo }: { clientInfo: Record<string, unknown> }) => {
+      stored = { ...stored, clientInfo };
+      return stored;
+    }
+  );
+  mocks.setCodeVerifier.mockImplementation(
+    ({ codeVerifier }: { codeVerifier: string }) => {
+      stored = { ...stored, codeVerifier };
+      return stored;
+    }
+  );
   mocks.save.mockImplementation(
     ({ tokens }: { tokens: Record<string, unknown> }) => {
       stored = { ...stored, tokens };
@@ -90,8 +119,163 @@ beforeEach(() => {
     }
   );
 });
+test("absent stored credentials return undefined", async () => {
+  stored = { ...stored, clientInfo: null, tokens: null };
+  const client = provider();
+  await expect(client.clientInformation()).resolves.toBeUndefined();
+  await expect(client.tokens()).resolves.toBeUndefined();
+});
+
+test("credentials saved by the pinned SDK can be read by a fresh provider", async () => {
+  stored = { ...stored, tokens: null };
+  mocks.fetch
+    .mockResolvedValueOnce(Response.json(sdkResource))
+    .mockResolvedValueOnce(Response.json(sdkMetadata))
+    .mockResolvedValueOnce(
+      Response.json({
+        client_id: "sdk-client",
+        client_secret: "sdk-secret",
+        redirect_uris: ["http://localhost:3790/callback"],
+        token_endpoint_auth_method: "client_secret_post",
+      })
+    );
+  await expect(
+    auth(provider(), { fetchFn: provider().fetch, serverUrl: stored.serverUrl })
+  ).resolves.toBe("REDIRECT");
+  const registered = stored.clientInfo;
+  mocks.fetch
+    .mockResolvedValueOnce(Response.json(sdkResource))
+    .mockResolvedValueOnce(Response.json(sdkMetadata))
+    .mockResolvedValueOnce(
+      Response.json({
+        access_token: "sdk-access",
+        refresh_token: "sdk-refresh",
+        token_type: "Bearer",
+      })
+    );
+  await expect(
+    auth(provider(), {
+      authorizationCode: "code",
+      callbackIssuer: sdkIssuer,
+      fetchFn: provider().fetch,
+      serverUrl: stored.serverUrl,
+    })
+  ).resolves.toBe("AUTHORIZED");
+  await expect(provider().clientInformation()).resolves.toEqual(registered);
+  await expect(provider().tokens()).resolves.toEqual(stored.tokens);
+  expect(stored.tokens).toMatchObject({
+    authorization_server: new URL(sdkIssuer).href,
+    issuer: sdkIssuer,
+    token_endpoint: sdkMetadata.token_endpoint,
+  });
+});
+
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 afterEach(() => vi.unstubAllGlobals());
+
+test("stored client information retains metadata, credentials, pins and extensions", async () => {
+  const clientInfo = {
+    authorization_server: "https://auth.example.test",
+    client_id: "registered",
+    client_secret: "secret",
+    issuer: "https://auth.example.test",
+    redirect_uris: ["http://localhost:3790/callback"],
+    registration_access_token: "registration-secret",
+    token_endpoint: "https://auth.example.test/token",
+    token_endpoint_auth_method: "client_secret_basic",
+  };
+  stored = { ...stored, clientInfo };
+  await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
+});
+
+test("older records without authorization-server pins remain readable", async () => {
+  const clientInfo = {
+    client_id: "legacy",
+    redirect_uris: ["http://localhost:3790/callback"],
+  };
+  stored = { ...stored, clientInfo };
+  const client = provider();
+  await expect(client.clientInformation()).resolves.toEqual(clientInfo);
+  await expect(client.tokens()).resolves.toEqual(stored.tokens);
+});
+
+test.each([
+  {},
+  { client_id: "registered" },
+  { client_id: "registered", redirect_uris: "https://chat.example/callback" },
+  { client_id: "registered", redirect_uris: ["data:secret"] },
+  { client_id: "registered", client_secret: false, redirect_uris: [] },
+])(
+  "malformed stored client information fails without leaking or changing credentials: %j",
+  async (clientInfo: Readonly<Record<string, unknown>>) => {
+    stored = { ...stored, clientInfo };
+    await expect(provider().clientInformation()).rejects.toThrow(
+      "Invalid stored MCP OAuth client information; reconnect this connector."
+    );
+    expect(stored.clientInfo).toEqual(clientInfo);
+    expect(mocks.setClientInfo).not.toHaveBeenCalled();
+  }
+);
+
+test.each([
+  {},
+  { access_token: "secret" },
+  { access_token: false, token_type: "Bearer" },
+  { access_token: "secret", expires_in: "3600", token_type: "Bearer" },
+  { access_token: "secret", refresh_token: false, token_type: "Bearer" },
+  { access_token: "secret", issuer: "invalid-url", token_type: "Bearer" },
+  {
+    access_token: "secret",
+    token_endpoint: "data:secret",
+    token_type: "Bearer",
+  },
+])(
+  "malformed stored tokens fail without leaking or overwriting credentials: %j",
+  async (tokens: Readonly<Record<string, unknown>>) => {
+    stored = { ...stored, tokens };
+    await expect(provider().tokens()).rejects.toThrow(
+      "Invalid stored MCP OAuth tokens; reconnect this connector."
+    );
+    expect(stored.tokens).toEqual(tokens);
+    expect(mocks.save).not.toHaveBeenCalled();
+  }
+);
+
+test("tokens read under the refresh lock are decoded before reuse", async () => {
+  const client = provider();
+  await client.tokens();
+  stored = { ...stored, tokens: { refresh_token: "other-secret" } };
+  await expect(client.fetch(refreshRequest("refresh-old"))).rejects.toThrow(
+    "Invalid stored MCP OAuth tokens; reconnect this connector."
+  );
+  expect(mocks.fetch).not.toHaveBeenCalled();
+  expect(mocks.save).not.toHaveBeenCalled();
+});
+
+test("a repaired stored credential can replace a stale malformed cache", async () => {
+  stored = { ...stored, tokens: { access_token: false } };
+  const client = provider();
+  await client.adoptState("state");
+  stored = {
+    ...stored,
+    tokens: {
+      access_token: "repaired",
+      refresh_token: "refresh-old",
+      token_type: "Bearer",
+    },
+  };
+  const response = await client.fetch(refreshRequest("refresh-old"));
+  expect(await response.json()).toEqual(stored.tokens);
+  await expect(client.tokens()).resolves.toEqual(stored.tokens);
+  expect(mocks.fetch).not.toHaveBeenCalled();
+  expect(mocks.save).not.toHaveBeenCalled();
+});
+
+test("an empty redirect list remains supported for an authenticated SDK-shaped record", async () => {
+  const clientInfo = { client_id: "registered", redirect_uris: [] };
+  stored = { ...stored, clientInfo };
+  await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
+});
 
 test("an access-token winner is reused even when its refresh token did not change", async () => {
   const client = provider();
@@ -255,3 +439,5 @@ test("a successful rotated refresh persists its credentials even after caller ca
     refresh_token: "rotated",
   });
 });
+
+/* oxlint-disable max-lines -- Keep the persisted OAuth credential contract, SDK round-trip and refresh-race cases together with their shared session fixture. */

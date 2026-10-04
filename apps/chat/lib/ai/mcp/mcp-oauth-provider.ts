@@ -35,6 +35,48 @@ const refreshTokensSchema = z.object({
   token_type: z.string(),
 });
 
+// @ai-sdk/mcp does not export its runtime OAuth schemas. Match its persisted
+// fields, including optional AS pins, while retaining server extension fields.
+const oauthUrlSchema = z
+  .url()
+  .refine(
+    (value) =>
+      URL.canParse(value) &&
+      !/^(?:javascript|data|vbscript):$/u.test(new URL(value).protocol)
+  );
+const authorizationServerPinShape = {
+  authorization_server: oauthUrlSchema.optional(),
+  issuer: oauthUrlSchema.optional(),
+  token_endpoint: oauthUrlSchema.optional(),
+};
+const storedTokensSchema = refreshTokensSchema
+  .extend(authorizationServerPinShape)
+  .loose();
+const storedClientInformationSchema = z.looseObject({
+  ...authorizationServerPinShape,
+  application_type: z.enum(["native", "web"]).optional(),
+  client_id: z.string(),
+  client_id_issued_at: z.number().optional(),
+  client_name: z.string().optional(),
+  client_secret: z.string().optional(),
+  client_secret_expires_at: z.number().optional(),
+  client_uri: oauthUrlSchema.optional(),
+  contacts: z.array(z.string()).optional(),
+  grant_types: z.array(z.string()).optional(),
+  jwks: z.unknown().optional(),
+  jwks_uri: oauthUrlSchema.optional(),
+  logo_uri: oauthUrlSchema.optional(),
+  policy_uri: z.string().optional(),
+  redirect_uris: z.array(oauthUrlSchema),
+  response_types: z.array(z.string()).optional(),
+  scope: z.string().optional(),
+  software_id: z.string().optional(),
+  software_statement: z.string().optional(),
+  software_version: z.string().optional(),
+  token_endpoint_auth_method: z.string().optional(),
+  tos_uri: oauthUrlSchema.optional(),
+});
+
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -140,6 +182,24 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     this.initialized = true;
   }
 
+  private static decodeStoredCredentials<Result>(
+    schema: Readonly<Pick<z.ZodType<Result>, "safeParse">>,
+    value: unknown,
+    kind: "client information" | "tokens"
+  ): Result | undefined {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+    const result = schema.safeParse(value);
+    if (!result.success) {
+      // Do not expose secrets in validation errors or mutate another flow's state.
+      throw new Error(
+        `Invalid stored MCP OAuth ${kind}; reconnect this connector.`
+      );
+    }
+    return result.data;
+  }
+
   private async getAuthData() {
     await this.initializeOAuth();
     return this.cachedAuthData;
@@ -188,10 +248,13 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         client_secret: this.config.oauthClientSecret ?? undefined,
       };
     }
-    if (authData?.clientInfo) {
+    const clientInfo = McpOAuthClientProvider.decodeStoredCredentials(
+      storedClientInformationSchema,
+      authData?.clientInfo,
+      "client information"
+    );
+    if (clientInfo && authData) {
       // Security: if redirect URI changed and no tokens yet, invalidate
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Stored OAuth client and token JSON follows the MCP SDK contract; stricter database decoding requires a migration policy for existing records.
-      const clientInfo = authData.clientInfo as OAuthClientInformationFull;
       if (
         !authData.tokens &&
         clientInfo.redirect_uris[0] !== this.redirectUrl
@@ -246,8 +309,11 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   public async tokens(): Promise<OAuthTokens | undefined> {
     const authData = await this.getAuthData();
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Stored OAuth client and token JSON follows the MCP SDK contract; stricter database decoding requires a migration policy for existing records.
-    return authData?.tokens as OAuthTokens | undefined;
+    return McpOAuthClientProvider.decodeStoredCredentials(
+      storedTokensSchema,
+      authData?.tokens,
+      "tokens"
+    );
   }
 
   /** The SDK uses this for transport and OAuth requests, including later 401 refreshes. */
@@ -268,6 +334,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     if (params.get("grant_type") !== "refresh_token") {
       return await mcpFetch(request);
     }
+    // Compare the cached fingerprint only; validate the latest credentials under
+    // the lock so a stale malformed cache cannot prevent adopting a repaired row.
     const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
     return await withMcpOAuthRefreshLock(
       this.config.mcpConnectorId,
@@ -276,22 +344,28 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         const latest = await getSessionByState({
           state: this.currentOAuthState,
         });
+        const latestTokens = McpOAuthClientProvider.decodeStoredCredentials(
+          storedTokensSchema,
+          latest?.tokens,
+          "tokens"
+        );
         if (
-          !latest?.tokens?.refresh_token ||
+          !latestTokens?.refresh_token ||
+          !latest ||
           latest.mcpConnectorId !== this.config.mcpConnectorId ||
           latest.serverUrl !== this.config.serverUrl
         ) {
           throw new Error("MCP credentials changed; reconnect this connector.");
         }
         if (
-          latest.tokens.refresh_token !== params.get("refresh_token") ||
-          latest.tokens.access_token !== observedAccessToken
+          latestTokens.refresh_token !== params.get("refresh_token") ||
+          latestTokens.access_token !== observedAccessToken
         ) {
           // Another instance already rotated this credential. Return its result
           // to the SDK instead of consuming the old single-use refresh token.
           this.cachedAuthData = latest;
           this.committedRefreshes += 1;
-          return Response.json(latest.tokens);
+          return Response.json(latestTokens);
         }
         const response = await mcpFetch(request, {
           signal: AbortSignal.any([
@@ -311,7 +385,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         this.cachedAuthData = await saveTokensAndCleanup({
           mcpConnectorId: this.config.mcpConnectorId,
           state: this.currentOAuthState,
-          tokens: { ...latest.tokens, ...refreshed },
+          tokens: { ...latestTokens, ...refreshed },
         });
         this.committedRefreshes += 1;
         return Response.json(refreshed);
