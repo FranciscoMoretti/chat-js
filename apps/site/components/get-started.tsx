@@ -11,7 +11,6 @@ const command = "npx @chat-js/cli@latest create my-app";
 /* oxlint-disable eslint/no-magic-numbers -- GetStarted: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 
 /* oxlint-disable react/jsx-max-depth -- GetStarted: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- GetStarted: This callback closes over current render state; preserving its timing and dependencies needs more than mechanical memoization. */
 
 export const GetStarted = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
@@ -111,7 +110,6 @@ export const GetStarted = (): React.JSX.Element => {
   );
 };
 
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable eslint/no-magic-numbers */

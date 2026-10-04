@@ -41,7 +41,6 @@ const resolveMaintainerPreviewDatabase = (
   source: Readonly<Record<string, string | undefined>>
 ): { DATABASE_MIGRATION_URL: string; DATABASE_URL: string } | undefined => {
   if (source.VERCEL !== "1" || source.VERCEL_ENV !== "preview") {
-    // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
     return undefined;
   }
 

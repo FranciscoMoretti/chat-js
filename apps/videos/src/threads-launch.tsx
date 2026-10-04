@@ -31,7 +31,7 @@ const Author = (): React.JSX.Element => (
 
 /* oxlint-disable react/no-multi-comp -- Status: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- Status: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Status: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+
 /* oxlint-disable eslint/no-magic-numbers -- Status: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Status: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Status = ({
@@ -55,7 +55,7 @@ const Status = ({
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable react/no-multi-comp -- ActionIcon: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
@@ -92,7 +92,6 @@ const ActionIcon = ({
 /* oxlint-disable react/no-multi-comp -- VersionActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/no-magic-numbers -- VersionActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- VersionActions: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable unicorn/no-null -- VersionActions: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 const VersionActions = ({
   count,
@@ -123,7 +122,6 @@ const VersionActions = ({
     </>
   ) : null;
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/no-multi-comp */
@@ -254,7 +252,6 @@ const PromptMessage = ({
 /* oxlint-disable eslint/max-lines-per-function -- Chat: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/id-length -- Chat: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Chat: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable eslint/no-magic-numbers -- Chat: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- Chat: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
@@ -344,7 +341,6 @@ const Chat = ({
 
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -353,7 +349,6 @@ const Chat = ({
 /* oxlint-disable eslint/max-lines-per-function -- ConversationTree: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/id-length -- ConversationTree: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- ConversationTree: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable eslint/no-magic-numbers -- ConversationTree: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- ConversationTree: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ConversationTree: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
@@ -508,7 +503,6 @@ const ConversationTree = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -518,7 +512,7 @@ const ConversationTree = ({
 /* oxlint-disable eslint/id-length -- ThreadsLaunch: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 
 /* oxlint-disable react/jsx-props-no-spreading -- ThreadsLaunch: The wrapper forwards its typed native/library prop contract; enumerating props would narrow that interface. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- ThreadsLaunch: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+
 /* oxlint-disable eslint/no-magic-numbers -- ThreadsLaunch: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
 /* oxlint-disable react/jsx-max-depth -- ThreadsLaunch: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsLaunch: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
@@ -599,7 +593,7 @@ export const ThreadsLaunch = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+
 /* oxlint-enable react/jsx-props-no-spreading */
 
 /* oxlint-enable eslint/id-length */

@@ -106,7 +106,6 @@ const BrowserFrame = ({
 
 /* oxlint-disable react/jsx-max-depth -- Platforms: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Platforms: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* ── Main Component ───────────────────────────────────────────────── */
 
 export const Platforms = (): React.JSX.Element => (
@@ -241,7 +240,6 @@ export const Platforms = (): React.JSX.Element => (
     </div>
   </section>
 );
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-enable react/jsx-max-depth */
 

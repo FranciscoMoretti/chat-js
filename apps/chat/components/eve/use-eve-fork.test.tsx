@@ -149,15 +149,12 @@ const deferred = <T,>() => {
 };
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- flushEffects: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const flushEffects = async () => {
+const flushEffects = async (): Promise<void> => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
   await act(async () => {
     await Promise.resolve();
   });
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 afterEach(() => {
   mocks.resolveCreationRequest.mockReset();

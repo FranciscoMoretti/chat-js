@@ -21,8 +21,7 @@ const _mockEncoder = {
 const _originalModule = await import("./token-utils");
 /* oxlint-enable no-underscore-dangle */
 
-/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * id-length (#506): describe("truncateMessages") uses i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * init-declarations (#507): describe("truncateMessages") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("truncateMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("truncateMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -241,9 +240,13 @@ describe("truncateMessages", () => {
       expect(result[0].role).toBe("system");
 
       // Subsequent messages should maintain relative order
-      for (let i = 1; i < result.length - 1; i += 1) {
-        const currentIndex = messages.indexOf(result[i]);
-        const nextIndex = messages.indexOf(result[i + 1]);
+      for (
+        let resultIndex = 1;
+        resultIndex < result.length - 1;
+        resultIndex += 1
+      ) {
+        const currentIndex = messages.indexOf(result[resultIndex]);
+        const nextIndex = messages.indexOf(result[resultIndex + 1]);
         expect(currentIndex).toBeLessThan(nextIndex);
       }
     }
@@ -306,7 +309,7 @@ describe("truncateMessages", () => {
     expect(resultLow[0].role).toBe("system");
   });
 });
-/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): describe("calculateMessagesTokens") uses 0, 5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
