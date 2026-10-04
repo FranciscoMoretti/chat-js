@@ -1,7 +1,6 @@
 /* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "@better-auth/electron" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
-import { electron } from "@better-auth/electron";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
@@ -13,26 +12,11 @@ import { authSessionOptions } from "./auth-session-options";
 import { config } from "./config";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
-import {
-  ELECTRON_AUTH_CLIENT_ID,
-  ELECTRON_AUTH_COOKIE_PREFIX,
-  ELECTRON_TRUSTED_ORIGINS,
-} from "./electron-auth";
+import { ELECTRON_TRUSTED_ORIGINS } from "./electron-auth";
+import { electronAuthPlugin } from "./electron-auth-plugin";
 import { getBaseUrl } from "./url";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): BetterAuthOptions uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-type BetterAuthOptions = Parameters<typeof betterAuth>[0];
-/* oxlint-enable no-magic-numbers */
-type BetterAuthPlugin = NonNullable<BetterAuthOptions["plugins"]>[number];
-
-// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The Electron plugin adapter bridges installed Better Auth plugin types; removing the compatibility assertion requires coordinated dependency/API migration.
-const electronAuthPlugin = electron({
-  clientID: ELECTRON_AUTH_CLIENT_ID,
-  cookiePrefix: ELECTRON_AUTH_COOKIE_PREFIX,
-}) as unknown as BetterAuthPlugin;
 /* oxlint-disable node/no-process-env, typescript/strict-boolean-expressions --
  * node/no-process-env (#537): baseUrl reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/strict-boolean-expressions (#610): baseUrl intentionally keeps the existing falsy-value behavior of env.APP_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.

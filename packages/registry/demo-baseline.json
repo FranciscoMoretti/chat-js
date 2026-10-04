@@ -10,7 +10,7 @@
     "agent/subagents/researcher/hooks/billing.ts": "fd739ac31c0a6c0329c7e007c88761cbaf6a4c8ad34f5e0a6c7f4ce66792dd8d",
     "agent/subagents/researcher/tools/webSearch.ts": "93e31e72241c265fe744ccc73769cff4259171b9875f9104815059d33fc7d749",
     "agent/tools/deepResearch.ts": "48c760c8a6c309bed55fbdb60bf7ef70791f879698d33777ed074b0bc1a94402",
-    "agent/tools/mcp.ts": "0e1fc9f9e95e5a9fbfa3857802634729ad6c4453bcb56f513bbd4401293828a4",
+    "agent/tools/mcp.ts": "308c6a8affd115b52c4a63f0a7fb7742eafe08071a8dde6907053ed92dba8254",
     "app/(chat)/api/files/upload/route.ts": "0687e7abe062f09aca90439120766c9dfe74e4cbd01dd8eb720ad3c05937d036",
     "app/(chat)/settings/connectors/[connectorId]/page.tsx": "06a50c010b748ff48748dad74f259a35a5096c442fb789c4ce692f0749cf7a53",
     "app/(chat)/settings/connectors/page.tsx": "787264f2be1a7eaf2909bd7e75228a3f9f043c8f1588c0cfde41cd4350f43003",
@@ -19,7 +19,7 @@
     "components/settings/connectors-settings.tsx": "6be2255a12c17ebaaf02c8cdcc139c8209a957095d4d6bd5c7349e1ccecb0e99",
     "components/settings/mcp-connect-dialog.tsx": "a2db4562c295950f7513d414609a67cdc92b6f41a29c0cb17247cf28cba8bbba",
     "components/settings/mcp-create-dialog.tsx": "005745064df754ab7a3907306baf1b52acd083ae95e3efe8a5a61c9e2080c017",
-    "components/settings/mcp-details-page.tsx": "90be9f824d20a375f216623feaa987498e37783b99234acd98d36ba547ce359c",
+    "components/settings/mcp-details-page.tsx": "f6883819b57848dc71464eb8a6c89a20cb972c4905eac3a7dd33174014048daa",
     "features/attachment-uploads/chatjs.json": "e8781cfd1e1dba075c995e2796c15073301a7ff9c13cac944a454a881f829b62",
     "features/attachment-uploads/controls.tsx": "9d3104b8ad49d8fb8ca72c6e485251b1072e85d76b7b483c4274c30773e13866",
     "features/attachment-uploads/integration.tsx": "1495ef9951ad0bd3381a9905d6b99f79e856f640160819eca3669f16c5896f4a",
@@ -50,9 +50,9 @@
     "lib/ai/mcp/mcp-oauth-provider.ts": "278ab25d2571351e0fd3679191096feeaea93e684032bdd28e9a39d3dff58fe4",
     "lib/ai/mcp/oauth-authorization-required-error.ts": "c291048de54aeebe685f728b3ddfbbfbaa3f83f5479654a9ef8b979bc4667e5e",
     "lib/db/mcp-oauth-lock.ts": "208082625cdb44dbfa93903f177af9183fa01587f68b92ab01f7af7bf29d2bcf",
-    "lib/db/mcp-queries.ts": "0dde42caa4786a3caeb8118501dd43af918d41e6af3e68efc74f18caba300db9",
-    "lib/eve/mcp-adapter.ts": "43f7e37d4eaa528fb8f6573e57ac773d05ef8befa17adf14875c4dc5a945e20f",
-    "lib/eve/mcp-tools.ts": "3c9530b589863a374a4e6dea2b71534dcde18079f10cd7d02a0efaa69468bd76",
+    "lib/db/mcp-queries.ts": "5c0ccb4374f902e38ce0650c59bb3aa9b37f24f4f02c2b0252eb2c3d239afbc5",
+    "lib/eve/mcp-adapter.ts": "4d64c25da14c9a1da0ac9005c9b4fb8695e0f0d112581889eb0d77cb27b9db19",
+    "lib/eve/mcp-tools.ts": "d3c3aff8eead6c5d4b8e44b23b6515e0fefaf9778c635991946e96809d9c22f6",
     "lib/nuqs/mcp-search-params.server.ts": "36dd15f4e013927b93a85a657d27351e3b50b8fb6b3502d4b8825ba9f4a2f8cb",
     "lib/nuqs/mcp-search-params.ts": "3ab71b61b7a78b785f228978a4bbd98c9e279161ad8efbc9e33dbc89858cd120",
     "lib/storage-options.ts": "aa77cd63c7a5cf53e241764905eebac2bedf598625524cc1aa6a2a23a10950ce",
@@ -151,7 +151,7 @@
     "tools/chatjs/word-count/schemas.ts": "f0938e22887b3b6d84281cac500cc446f04d93660b98420a3bf373573abb177e",
     "tools/chatjs/word-count/tool.ts": "e639b69fa0394278dc3d960ab135d5dbfdbf0e63c619cdc1dc2fda7567051aaa",
     "tools/chatjs/workflow-types.ts": "1e747832047ce5d1ff48f01763d6663192549c04a92dcc6b76c88cadba71186a",
-    "trpc/routers/mcp.router.ts": "93e634e6c704083a866f0f4e125ff6fb0e23fb2458689e60f84e994941d64489"
+    "trpc/routers/mcp.router.ts": "d7ef98449377c75463b4e91bf4bae97e52b129a1d6f2f34b38d7d56f6364da5a"
   },
   "version": 1
 }

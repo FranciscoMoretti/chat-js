@@ -323,11 +323,11 @@ describe("scaffoldFromTemplate", (): void => {
     };
 
     expect(packageJson.packageManager).toBe(`bun@${Bun.version}`);
-    expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
-    expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.5.6");
-    expect(packageJson.dependencies["better-auth"]).toBe("1.5.6");
+    expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
+    expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.6.2");
+    expect(packageJson.dependencies["better-auth"]).toBe("1.6.2");
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
-    expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
+    expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(packageJson.scripts?.build).toBe(
       "tsx lib/db/migrate.ts --deployment && eve build && next build"
     );
@@ -549,7 +549,7 @@ describe("scaffoldFromTemplate", (): void => {
           join(projectDir, "lib/db/migrations/eve-runtime-migration.test.ts")
         )
       ).toBe(false);
-      expect(packageJson.dependencies["@better-auth/core"]).toBe("1.5.6");
+      expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
       expect(packageJson.dependencies.eve).toBe(
         "npm:@chat-js/eve@0.61.0-chatjs.0"
       );
@@ -558,7 +558,7 @@ describe("scaffoldFromTemplate", (): void => {
         "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
       );
       expect(electronPackageJson.devDependencies["@better-auth/electron"]).toBe(
-        "1.5.6"
+        "1.6.2"
       );
     } finally {
       if (existsSync(backupDir)) {
@@ -789,8 +789,8 @@ describe("scaffoldElectron", (): void => {
 
     expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/u);
     expect(packageJson.pnpm).toBeUndefined();
-    expect(packageJson.devDependencies["@better-auth/electron"]).toBe("1.5.6");
-    expect(packageJson.devDependencies["better-auth"]).toBe("1.5.6");
+    expect(packageJson.devDependencies["@better-auth/electron"]).toBe("1.6.2");
+    expect(packageJson.devDependencies["better-auth"]).toBe("1.6.2");
     expect(packageJson.devDependencies.esbuild).toBeDefined();
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const rootPackageJson = JSON.parse(
@@ -821,7 +821,7 @@ describe("scaffoldElectron", (): void => {
       expect(script).not.toContain("bun ");
       expect(script).not.toContain("bunx");
     }
-    expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.5.6");
+    expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(
       await readFile(join(projectDir, "electron", "README.md"), "utf-8")
     ).not.toContain("bun ");
