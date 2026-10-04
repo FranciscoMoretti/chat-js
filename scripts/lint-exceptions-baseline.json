@@ -3028,15 +3028,12 @@
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.test.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"init-declarations\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"no-console\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/strict-void-return\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"eslint/no-use-before-define\",\"oxlint-disable-next-line\"]": 2,
@@ -7381,7 +7378,6 @@
     "[\"prototypes/app-owned-branching/branching.test.ts\",\"max-lines\",\"oxlint-disable\"]": 1,
     "[\"prototypes/app-owned-branching/mock-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"prototypes/app-owned-branching/mock-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
-    "[\"prototypes/app-owned-branching/model.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": 2,
     "[\"prototypes/app-owned-branching/model.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 14,
     "[\"prototypes/app-owned-branching/model.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 9,
     "[\"prototypes/app-owned-branching/model.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 11,
@@ -18725,35 +18721,26 @@
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "d888213eef0c4496d336ebc28ff041d6a1680a2177c383a603e02341d087d985"
     ],
-    "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": [
-      "a32667088b6073a4bb116445351145af624e01177b7e7878d155c4231fe40fec"
-    ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"init-declarations\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
+      "9d082e7893d691403835da3e01547b2e0ed4d420c5a558d519b01f717a9a6c59"
     ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
+      "9d082e7893d691403835da3e01547b2e0ed4d420c5a558d519b01f717a9a6c59"
     ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
+      "9d082e7893d691403835da3e01547b2e0ed4d420c5a558d519b01f717a9a6c59"
     ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
+      "9d082e7893d691403835da3e01547b2e0ed4d420c5a558d519b01f717a9a6c59"
     ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"no-console\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
+      "9d082e7893d691403835da3e01547b2e0ed4d420c5a558d519b01f717a9a6c59"
     ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
-    ],
-    "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
-    ],
-    "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
+      "9d082e7893d691403835da3e01547b2e0ed4d420c5a558d519b01f717a9a6c59"
     ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/strict-void-return\",\"oxlint-disable\"]": [
-      "87318d504ede9bdfe52bcf0acbb15f8ef326b631c038342f340cf1ee699da189"
+      "9d082e7893d691403835da3e01547b2e0ed4d420c5a558d519b01f717a9a6c59"
     ],
     "[\"apps/chat/lib/eve/local-guest-cleanup-scheduler.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
       "aa5e782b9adf3aad641bad974b010aaa513ac3481b3fd84aad7e783bbd13f3c5",
@@ -28061,18 +28048,18 @@
       "95bb1c27908a860a4de2273e8b85a1ae67f0526315a69d874b9a1249857865fc"
     ],
     "[\"apps/electron/scripts/run-forge.cjs\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
-      "3c23262248ba108eee8f90d7157c961dd059d7cad1663a01384c6e971ec1b75e",
+      "4a0605d0aa9c78284beef8e82ef63f43e5e0dfdd988622c5ceb8b0ef64739513",
       "d5e60e9c8fcad6ae291378b5c65c04a1cf7ba44f464cc48df09de4453b735401",
       "546968d130a64702dea056e569103954b0a6a2a8ceb9447e3a29caef2406f45e"
     ],
     "[\"apps/electron/scripts/run-forge.cjs\",\"import/no-commonjs\",\"oxlint-disable\"]": [
-      "b7e1b15205bea7bce6b49253bf543116e0196ced948268357c11a604b1bedfe7"
+      "f6110a432ca95917fe8ae1e57eb4c1c20e40398030ef4abda24d5d6b2929c3c3"
     ],
     "[\"apps/electron/scripts/run-forge.cjs\",\"typescript/no-require-imports\",\"oxlint-disable\"]": [
-      "b7e1b15205bea7bce6b49253bf543116e0196ced948268357c11a604b1bedfe7"
+      "f6110a432ca95917fe8ae1e57eb4c1c20e40398030ef4abda24d5d6b2929c3c3"
     ],
     "[\"apps/electron/scripts/run-forge.cjs\",\"typescript/no-var-requires\",\"oxlint-disable\"]": [
-      "b7e1b15205bea7bce6b49253bf543116e0196ced948268357c11a604b1bedfe7"
+      "f6110a432ca95917fe8ae1e57eb4c1c20e40398030ef4abda24d5d6b2929c3c3"
     ],
     "[\"apps/electron/scripts/run-forge.cjs\",\"node/no-sync\",\"oxlint-disable\"]": [
       "9b902cea5aac7df2753e4c791fa2d17c241c34999f09bc0f11cbd2fe7113bec2",
@@ -34676,10 +34663,6 @@
     "[\"prototypes/app-owned-branching/mock-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "2ed8f21bb7b4673503e3efad74b684986a3f56b4b2d699b52397c6ad6d5886ff"
     ],
-    "[\"prototypes/app-owned-branching/model.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": [
-      "caebed89f534fab299137a54f72b687d6802180797c01fc7abd36dce07f6bf49",
-      "a420e001d9a63800801edb919a467d60255e9821f2726fe72fb05d518cc31d61"
-    ],
     "[\"prototypes/app-owned-branching/model.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "7077902abe8db2ac59f1838cfd680da389f42a210b09816870fcfec0125abac5",
       "f6b6c78c9b587b0d5420f85aad2c6f92ad520d67b6c8161c856c0794b4890a2b",
@@ -34754,7 +34737,7 @@
       "fb8f8bfa3a25214a8a661e2613cf5f1aed09bcc340931baa178a1a16f38007a3"
     ],
     "[\"prototypes/app-owned-branching/model.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "34f2c7a40fb6ebc6e65240e4e541a8af10a0dc5984e6bd8f39f6879aa5e3213d"
+      "f8e792ae9c6d5e9d0f3630e17372dde27598bce53c851d08d9fb5e1cbaef2c77"
     ],
     "[\"prototypes/app-owned-branching/vitest.config.ts\",\"import/no-default-export\",\"oxlint-disable\"]": [
       "48fbe8e5f7a9da187039662d0402d1ca3b5ab90b9776be0ccb4460989e065042"
