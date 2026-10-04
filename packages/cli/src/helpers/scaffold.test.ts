@@ -168,7 +168,6 @@ describe("scaffoldFromTemplate", (): void => {
     ) as { dependencies: Record<string, string> };
     expect(manifest.dependencies.eve).toBe("npm:@chat-js/eve@0.61.0-chatjs.0");
     const archives = {
-      "@ai-sdk/mcp": "ai-sdk-mcp-2.0.52.tgz",
       "@workflow/world-postgres": "workflow-world-postgres-5.0.0-beta.40.tgz",
     };
 
@@ -297,7 +296,7 @@ describe("scaffoldFromTemplate", (): void => {
       await readFile(join(destination, "package.json"), "utf-8")
     );
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    expect(manifest.dependencies["files-sdk"]).toBe("2.1.0");
+    expect(manifest.dependencies["files-sdk"]).toBe("2.5.0");
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -554,9 +553,7 @@ describe("scaffoldFromTemplate", (): void => {
       expect(packageJson.dependencies.eve).toBe(
         "npm:@chat-js/eve@0.61.0-chatjs.0"
       );
-      expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe(
-        "file:vendor/ai-sdk-mcp-2.0.52.tgz"
-      );
+      expect(packageJson.dependencies["@ai-sdk/mcp"]).toBe("2.0.53");
       expect(packageJson.dependencies["@workflow/world-postgres"]).toBe(
         "file:vendor/workflow-world-postgres-5.0.0-beta.40.tgz"
       );
