@@ -4568,6 +4568,8 @@
     "[\"apps/chat/tests/eve-image.e2e.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tests/eve-image.e2e.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tests/eve-image.e2e.ts\",\"typescript/require-array-sort-compare\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/tests/eve-lifecycle-provider.e2e.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/tests/eve-lifecycle-provider.e2e.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tests/eve-live.e2e.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tests/eve-live.e2e.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tests/eve-live.e2e.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
@@ -18301,7 +18303,7 @@
       "72dfaff1eeebca78fb44a76cc726ed8551e5875f900920f72e64c714a657395e"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/compatibility.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "ece768f6436790628d6a10dfdd34940c0d4ead2b9b39657e4e8e892417ca37e7"
+      "df9b7029e481c024ced096655b2aa1e40bef9373d5d8b18832e89a79926aae87"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-native-purge.ts\",\"id-length\",\"oxlint-disable\"]": [
       "f2b2e6d76b0c2756cc037af143b33eb3f16a5dae3102bd98bda7da0e5b4e5d3e",
@@ -24123,6 +24125,12 @@
     ],
     "[\"apps/chat/tests/eve-image.e2e.ts\",\"typescript/require-array-sort-compare\",\"oxlint-disable-next-line\"]": [
       "0359972d3b534292edf574081c721ba36ae858680ed1885a9a7625dc3e653161"
+    ],
+    "[\"apps/chat/tests/eve-lifecycle-provider.e2e.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
+      "c1ac6ac25bcd1d2151340a57a28ca87ef18ca234bbaa2e72782d616b88cac65a"
+    ],
+    "[\"apps/chat/tests/eve-lifecycle-provider.e2e.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
+      "c9691e5b4dbb192bb7ce65d4660e927f6c6fd98ae58b6a9e616524b29a92eec6"
     ],
     "[\"apps/chat/tests/eve-live.e2e.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
       "33b4bb74eaaa78320a03e24798001cdd9658e19eaa195c496813c01f3a73c134"

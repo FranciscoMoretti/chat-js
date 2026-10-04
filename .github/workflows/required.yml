@@ -18,3 +18,11 @@ jobs:
           check-regexp: ^(Docs|Lint|Typecheck|Unit|Playwright|CLI Scaffold|Native Lifecycle)$
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+      - name: Require native lifecycle acceptance
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: Native Lifecycle
+          allowed-conclusions: success
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10

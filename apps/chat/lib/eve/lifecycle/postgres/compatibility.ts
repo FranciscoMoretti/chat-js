@@ -39,11 +39,21 @@ export const assertPostgresLifecycleCompatibility = async (
     select c.relname from pg_trigger t
     join pg_class c on c.oid = t.tgrelid
     join pg_namespace n on n.oid = c.relnamespace
-    where not t.tgisinternal and t.tgenabled = 'O'
+    where not t.tgisinternal and t.tgenabled in ('O', 'A')
+      -- BEFORE ROW INSERT OR UPDATE, without a conditional WHEN or arguments.
+      and t.tgtype = 23 and t.tgqual is null and t.tgnargs = 0
       and ((n.nspname = 'workflow' and c.relname in ${connection(fencedTables)}
-        and t.tgname = 'eve_resource_fence')
+        and t.tgname = 'eve_resource_fence' and t.tgattr = ''::int2vector
+        and t.tgfoid = case c.relname
+          when 'workflow_runs' then 'workflow.eve_guard_run()'::regprocedure
+          when 'workflow_stream_chunks' then 'workflow.eve_guard_stream()'::regprocedure
+          else 'workflow.eve_guard_run_payload()'::regprocedure end)
       or (n.nspname = 'graphile_worker' and c.relname = '_private_jobs'
-        and t.tgname = 'eve_queue_fence'))
+        and t.tgname = 'eve_queue_fence'
+        and t.tgfoid = 'workflow.eve_guard_queue()'::regprocedure
+        and (select array_agg(a.attname::text order by a.attname)
+          from pg_attribute a where a.attrelid = c.oid
+          and a.attnum = any(t.tgattr)) = array['payload', 'task_id']))
   `;
   const tasks = await connection`
     select identifier from workflow.eve_queue_tasks where identifier = 'workflow_flows'
@@ -53,7 +63,7 @@ export const assertPostgresLifecycleCompatibility = async (
     tasks.length === missingTaskCount
   ) {
     throw new Error(
-      "Workflow lifecycle fences are missing or disabled. Run eve:setup before cleanup."
+      "Workflow lifecycle fences are missing or disabled, or their definitions are incompatible. Run eve:setup before cleanup."
     );
   }
 };
