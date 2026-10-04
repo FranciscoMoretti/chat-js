@@ -21,21 +21,22 @@ const eveHealth = z.object({
  * unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 export const GET = async (): Promise<Response> => {
-  // A bounded local readiness probe, not a public infrastructure inventory.
-  if (env.NODE_ENV !== "development") {
-    return new Response(null, { status: 404 });
-  }
+  // Public readiness reveals no database, agent or credential details.
+  // Both workers must be ready before the host sends traffic to this instance.
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     await Promise.race([
       Promise.all([
         checkDatabase(),
-        fetch(new URL("/eve/chat/v1/health", env.EVE_INTERNAL_ORIGIN), {
-          cache: "no-store",
-          redirect: "error",
-          signal: AbortSignal.timeout(4000),
-          // oxlint-disable-next-line promise/always-return -- This readiness branch validates or throws; Promise.all only needs its completion, not a result value.
-        }).then(async (response) => {
+        ...["chat", "guest"].map(async (agent) => {
+          const response = await fetch(
+            new URL(`/eve/${agent}/v1/health`, env.EVE_INTERNAL_ORIGIN),
+            {
+              cache: "no-store",
+              redirect: "error",
+              signal: AbortSignal.timeout(4000),
+            }
+          );
           if (!response.ok) {
             throw new Error("Eve unavailable");
           }
