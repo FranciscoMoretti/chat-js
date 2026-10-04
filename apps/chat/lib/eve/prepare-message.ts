@@ -6,21 +6,22 @@ import type { UserContent } from "ai";
 import { config } from "../config";
 import { downloadFile } from "../file-storage";
 import { keyFromFileUrl } from "../file-url";
-import type { EveMessageInput } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): prepareEveMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): prepareEveMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-continue --
  * max-statements (#512): prepareEveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): prepareEveMessage skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/prefer-readonly-parameter-types (#565): prepareEveMessage accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): prepareEveMessage intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-/** Resolve application storage directly, never fetch a client-supplied host. */
+/**
+ * Resolve application storage directly, never fetch a client-supplied host.
+ * @param message Validated user text or attachment references owned by application storage.
+ * @param modelId Model whose PDF/image capabilities must permit each attachment.
+ * @returns The original text, or ordered model content with checked files embedded as data URLs.
+ */
 export const prepareEveMessage = async (
-  message: EveMessageInput,
+  message: ReadonlyEveMessageInput,
   modelId?: string
 ): Promise<string | UserContent> => {
   if (typeof message === "string") {
@@ -43,7 +44,7 @@ export const prepareEveMessage = async (
       );
     }
     const key = keyFromFileUrl(part.data);
-    if (!key) {
+    if (key === null || key === "") {
       throw new Error("Invalid attachment reference.");
     }
     // oxlint-disable-next-line eslint/no-await-in-loop -- Bound attachment memory and finish each owned write before proceeding.
@@ -66,4 +67,4 @@ export const prepareEveMessage = async (
   }
   return content;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-continue */

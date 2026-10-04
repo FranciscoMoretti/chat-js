@@ -7,10 +7,14 @@ import { config } from "../config";
 import type { DocumentAssistantRequest } from "./document-contracts";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep documentAssistantActions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
+/* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+const documentAssistantActions = (
+  kind: "text" | "code" | "sheet"
+): {
+  instruction: string;
+  label: string;
+  modelId: typeof config.ai.tools.text.polish;
+}[] => {
   if (!installedDocumentKinds.has(kind)) {
     return [];
   }
@@ -63,16 +67,15 @@ const documentAssistantActions = (kind: "text" | "code" | "sheet") => {
     }
   }
 };
-/* oxlint-enable max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable max-lines-per-function */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): documentAssistantRequest accepts action: ReturnType<typeof documentAssistantActions>[number]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const documentAssistantRequest = (
-  action: ReturnType<typeof documentAssistantActions>[number],
+  action: Readonly<ReturnType<typeof documentAssistantActions>[number]>,
   documentId: string,
   revisionId: string
 ): DocumentAssistantRequest => ({
   message: `${action.instruction}\n\nTarget document: ${documentId}. Selected revision: ${revisionId}. Use readDocument to read this document, then use the document tools to apply the requested changes.`,
   modelId: action.modelId,
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 export { documentAssistantActions, documentAssistantRequest };

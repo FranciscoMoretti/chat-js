@@ -2,11 +2,16 @@ import { defaultMessageReducer } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): checkpointIndex uses 0, 2_147_483_647 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-const checkpointIndex = z.number().int().min(0).max(2_147_483_647);
-/* oxlint-enable no-magic-numbers */
+const MIN_CHECKPOINT_INDEX = 0;
+const MAX_CHECKPOINT_INDEX = 2_147_483_647;
+const NATIVE_TURN_PREFIX = "turn_";
+const IMPORTED_MESSAGE_PREFIX = "seed_message_";
+const checkpointIndex = z
+  .number()
+  .int()
+  .min(MIN_CHECKPOINT_INDEX)
+  .max(MAX_CHECKPOINT_INDEX);
+
 const nativeTurn = z.string().regex(/^turn_(?<turnIndex>0|[1-9][0-9]*)$/u);
 const importedMessage = z
   .string()
@@ -18,16 +23,17 @@ export interface EveCopyBoundary {
   sourceIndex: number;
 }
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): eveCopyBoundaries's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveCopyBoundaries's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): eveCopyBoundaries uses 5, 13 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep eveCopyBoundaries's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveCopyBoundaries's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): eveCopyBoundaries accepts events: readonly MessageStreamEvent[]; state; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-/** Private provenance used only to snapshot application resources, never copied into native history. */
-export const eveCopyBoundaries = (events: readonly MessageStreamEvent[]) => {
+/**
+ * Private provenance used only to snapshot application resources, never copied into native history.
+ * @param events Native EVE events reduced in their original order to locate user-message checkpoints.
+ * @returns One source turn or imported-message boundary for each user message; malformed provenance throws.
+ */
+export const eveCopyBoundaries = (
+  events: readonly MessageStreamEvent[]
+): EveCopyBoundary[] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
   return (
@@ -43,7 +49,9 @@ export const eveCopyBoundaries = (events: readonly MessageStreamEvent[]) => {
           return [
             {
               messageIndex,
-              sourceIndex: checkpointIndex.parse(Number(turn.data.slice(5))),
+              sourceIndex: checkpointIndex.parse(
+                Number(turn.data.slice(NATIVE_TURN_PREFIX.length))
+              ),
               sourceKind: "turn",
             },
           ];
@@ -53,7 +61,9 @@ export const eveCopyBoundaries = (events: readonly MessageStreamEvent[]) => {
           return [
             {
               messageIndex,
-              sourceIndex: Number(imported.data.slice(13)),
+              sourceIndex: Number(
+                imported.data.slice(IMPORTED_MESSAGE_PREFIX.length)
+              ),
               sourceKind: "imported",
             },
           ];
@@ -62,4 +72,4 @@ export const eveCopyBoundaries = (events: readonly MessageStreamEvent[]) => {
       })
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

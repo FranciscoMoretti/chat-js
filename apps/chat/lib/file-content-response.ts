@@ -1,5 +1,7 @@
 import { FilesError } from "files-sdk";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import {
   downloadFile,
   getFileMetadata,
@@ -41,20 +43,17 @@ const parseRange = (
 };
 /* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null -- * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): createFileContentResponse uses 206, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): createFileContentResponse uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): createFileContentResponse accepts request: Request; { allowRedirect = true }: {readonly allowRedirect?: boolean} = {}; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): createFileContentResponse intentionally keeps the existing falsy-value behavior of providerUrl; rangeHeader; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): createFileContentResponse preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+ * unicorn/no-null (#570): createFileContentResponse preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 export const createFileContentResponse = async (
-  request: Request,
+  request: ReadonlyNativeSurface<Request>,
   key: string,
-  { allowRedirect = true }: { allowRedirect?: boolean } = {}
+  { allowRedirect = true }: { readonly allowRedirect?: boolean } = {}
 ): Promise<Response> => {
   try {
     const providerUrl = allowRedirect
@@ -112,4 +111,4 @@ export const createFileContentResponse = async (
     return new Response("File download failed", { status: 500 });
   }
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */

@@ -5,14 +5,11 @@
 import { createHash } from "node:crypto";
 
 import type { UiToolName } from "../ai/types";
-import type { EveMessageInput } from "./message-input";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): eveCreationContentHash accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 export const eveCreationContentHash = (
-  message: EveMessageInput,
+  message: ReadonlyEveMessageInput,
   selectedTool?: UiToolName
 ): string | undefined => {
   // Preserve the identity of already-reserved requests with automatic tools.
@@ -24,4 +21,3 @@ export const eveCreationContentHash = (
     .update(JSON.stringify(selectedTool ? { message, selectedTool } : message))
     .digest("hex");
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

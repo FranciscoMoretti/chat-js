@@ -6,35 +6,32 @@ import { createHash, createHmac, randomBytes } from "node:crypto";
 import { v5 as uuidv5 } from "uuid";
 /* oxlint-enable import/no-nodejs-modules */
 
+const CREDENTIAL_TOKEN_BYTES = 32;
 const HASH = /^[0-9a-f]{64}$/u;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns --
- * jsdoc/require-param (#534): eveGuestOwnerId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveGuestOwnerId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/**
+ * Stable draft/ownership scope before admission, without exposing the credential hash.
+ * @param tokenHash - Validated SHA-256 credential digest that identifies the guest.
+ * @returns Deterministic UUID ownership scope for that credential digest.
  */
-/** Stable draft/ownership scope before admission, without exposing the credential hash. */
 const eveGuestOwnerId = (tokenHash: string): string => {
   if (!HASH.test(tokenHash)) {
     throw new Error("Invalid guest credential hash.");
   }
   return uuidv5(`chatjs:eve:guest-owner:${tokenHash}`, uuidv5.URL);
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): createEveGuestCredential uses 32 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const createEveGuestCredential = (): { token: string; tokenHash: string } => {
-  const token = randomBytes(32).toString("base64url");
+  const token = randomBytes(CREDENTIAL_TOKEN_BYTES).toString("base64url");
   return { token, tokenHash: createHash("sha256").update(token).digest("hex") };
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns --
- * jsdoc/require-param (#534): eveGuestIpHash's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveGuestIpHash's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/**
+ * Hash a canonical, trusted client IP. The database never keeps the raw address.
+ * @param address - Canonical IP obtained from the trusted forwarding policy.
+ * @param secret - Server secret that isolates quota keys across installations.
+ * @returns Stable quota key scoped to this server secret and client address.
  */
-/** Hash a canonical, trusted client IP. The database never keeps the raw address. */
 const eveGuestIpHash = (address: string, secret: string): string => {
   if (!(address && secret)) {
     throw new Error("A trusted client address and server secret are required.");
@@ -43,6 +40,5 @@ const eveGuestIpHash = (address: string, secret: string): string => {
     .update(`eve-guest-ip:${address}`)
     .digest("hex");
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
 export { eveGuestOwnerId, createEveGuestCredential, eveGuestIpHash };

@@ -1,4 +1,5 @@
 import { takeSnapshot } from "@uiverify/vitest";
+import type { JSX as ReactJSX } from "react";
 import React, { act, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster, toast } from "sonner";
@@ -212,7 +213,7 @@ vi.mock("@/components/eve/eve-model-picker", () => ({
 }));
 
 const originalControls = [...composerControls];
-/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- mount: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 350); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ...args); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- mount: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 350); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/only-export-components: consumers also import the associated type, variants, or helper from this established module API; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ...args); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const mount = async (
   disabled = false,
@@ -224,7 +225,7 @@ const mount = async (
   container.style.cssText = `padding:32px;width:${state.mobile ? 350 : 900}px;min-height:540px;background:#171717`;
   document.body.append(container);
   const root = createRoot(container);
-  const Fixture = () => {
+  const Fixture = (): ReactJSX.Element => {
     const [attachments, setAttachments] = useState(state.history);
     const files = useEveAttachments({ attachments, setAttachments });
     const [selectedTool, setSelectedTool] = useState<UiToolName | null>(
@@ -277,13 +278,13 @@ const mount = async (
   };
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
   await act(() => root.render(<Fixture />));
-  return async () => {
+  return async (): Promise<void> => {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   };
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
 /* oxlint-disable max-statements, no-magic-numbers -- composer-menu.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
 
 afterEach(() => {

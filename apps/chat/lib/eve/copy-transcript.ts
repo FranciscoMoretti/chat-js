@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 
 import type { EveChannelInput } from "eve/channels/eve";
-import type { EveMessagePart, MessageStreamEvent } from "eve/client";
+import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
 import {
@@ -17,6 +17,7 @@ import {
 } from "../file-url";
 import { eveDocumentOperations } from "./document-contracts";
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
+import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 import { sharedEveMessages } from "./shared-messages";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
@@ -61,12 +62,11 @@ class EveCopyNotReadyError extends Error {
   }
 }
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): completedPart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): completedPart uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): completedPart accepts part: EveMessagePart; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-const completedPart = (part: EveMessagePart): SeedPart => {
+const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
   if (part.type === "text" || part.type === "reasoning") {
     if (part.state === "streaming") {
       throw new EveCopyNotReadyError();
@@ -116,7 +116,7 @@ const completedPart = (part: EveMessagePart): SeedPart => {
     }
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-magic-numbers */
 /* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

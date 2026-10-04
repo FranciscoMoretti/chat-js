@@ -25,16 +25,23 @@ import {
 } from "./schema";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): writeEveCopyFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): writeEveCopyFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+const FIRST_ROW_INDEX = 0;
+
+/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types --
 max-lines-per-function (#510): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep writeEveCopyFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep writeEveCopyFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): writeEveCopyFile accepts storage: { readSourceFile: ( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffe; file: Blob; tx; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): writeEveCopyFile intentionally keeps the existing falsy-value behavior of receipt; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** The family lock fences writes against rejection/deletion, including an uncertain storage reply. */
+typescript/prefer-readonly-parameter-types (#565): writeEveCopyFile accepts storage: { readSourceFile: ( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffe; file: Blob; tx; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/**
+ * The family lock fences writes against rejection/deletion, including an uncertain storage reply.
+ * @param ownerId Owner of the allocated destination copy.
+ * @param conversationId Destination conversation whose file inventory is already allocated.
+ * @param key Allocated destination file key to verify and write.
+ * @param storage Source reader and destination writer used while the copy family is locked.
+ * @param storage.readSourceFile Read the source bytes and content type for an allocated file.
+ * @param storage.writeDestinationFile Acknowledge the destination write before recording its receipt.
+ * @returns The allocated receipt, with writtenAt recorded after content type, size, and digest verification.
+ */
 const writeEveCopyFile = async (
   ownerId: string,
   conversationId: string,
@@ -45,7 +52,7 @@ const writeEveCopyFile = async (
     ) => Promise<Pick<Blob, "type" | "arrayBuffer">>;
     writeDestinationFile: (key: string, file: Blob) => Promise<void>;
   }
-) => {
+): Promise<typeof eveConversationCopyFile.$inferSelect> => {
   const initial = await readEveCopy(db, ownerId, conversationId);
   return await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId, initial.copy.sourceOwnerId]);
@@ -60,7 +67,7 @@ const writeEveCopyFile = async (
     ) {
       throw new CreationConflictError("Saved copy is unavailable.");
     }
-    const [receipt] = await tx
+    const receiptRows = await tx
       .select()
       .from(eveConversationCopyFile)
       .where(
@@ -70,6 +77,7 @@ const writeEveCopyFile = async (
           eq(eveConversationCopyFile.key, key)
         )
       );
+    const receipt = receiptRows.at(FIRST_ROW_INDEX);
     if (!receipt) {
       throw new Error("Copied file was not allocated.");
     }
@@ -114,15 +122,19 @@ const writeEveCopyFile = async (
     return written;
   });
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): writeEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
 max-lines-per-function (#510): writeEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): writeEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): writeEveCopyDocuments uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): writeEveCopyDocuments accepts tx; document; revision; checkpoint; head; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): writeEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** All ancestry and heads commit together, before any copy can be accepted. */
+/**
+ * All ancestry and heads commit together, before any copy can be accepted.
+ * @param ownerId Owner whose copy family lock authorizes the destination writes.
+ * @param conversationId Allocated copy receiving revision ancestry, checkpoint entries, and document heads atomically.
+ */
 const writeEveCopyDocuments = async (
   ownerId: string,
   conversationId: string
@@ -196,20 +208,25 @@ const writeEveCopyDocuments = async (
       .where(eq(eveConversationCopy.conversationId, conversationId));
   });
 };
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null -- jsdoc/require-param (#534): acceptEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): acceptEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
 max-lines-per-function (#510): acceptEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): acceptEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): acceptEveCopy uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep acceptEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep acceptEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): acceptEveCopy accepts tx; head; expected; receipt; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/max-nested-calls (#568): acceptEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 unicorn/no-null (#570): acceptEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** This short transaction is the publication boundary; no native or storage I/O runs inside it. */
-const acceptEveCopy = async (ownerId: string, conversationId: string) => {
+/**
+ * This short transaction is the publication boundary; no native or storage I/O runs inside it.
+ * @param ownerId Owner whose copy and source family are locked for publication.
+ * @param conversationId Copy whose file receipts, committed documents, and current source heads must match its plan.
+ * @returns The accepted phase, or the existing bound phase for an idempotent publication replay.
+ */
+const acceptEveCopy = async (
+  ownerId: string,
+  conversationId: string
+): Promise<"accepted" | "bound"> => {
   const initial = await readEveCopy(db, ownerId, conversationId);
   return await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [ownerId, initial.copy.sourceOwnerId]);
@@ -311,5 +328,5 @@ const acceptEveCopy = async (ownerId: string, conversationId: string) => {
     return "accepted";
   });
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 export { acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile };

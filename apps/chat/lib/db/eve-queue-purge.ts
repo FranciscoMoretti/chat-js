@@ -4,12 +4,14 @@ import { z } from "zod";
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): removeUnlockedJobs uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep removeUnlockedJobs's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): removeUnlockedJobs accepts query: TransactionSql; jobIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-const removeUnlockedJobs = async (query: TransactionSql, jobIds: string[]) => {
+const removeUnlockedJobs = async (
+  query: TransactionSql,
+  jobIds: string[]
+): Promise<string[]> => {
   if (jobIds.length === 0) {
     return [];
   }
@@ -38,17 +40,13 @@ const removeUnlockedJobs = async (query: TransactionSql, jobIds: string[]) => {
   }
   return removed.map((job) => job.id).toSorted();
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): purgeEvePostgresQueue's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): purgeEvePostgresQueue's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): purgeEvePostgresQueue keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): purgeEvePostgresQueue keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): purgeEvePostgresQueue skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): purgeEvePostgresQueue uses 1, 10_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep purgeEvePostgresQueue's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep purgeEvePostgresQueue's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): purgeEvePostgresQueue accepts connection: Sql; input: { sessionId: string; runIds: string[]; taskIdentifier: string; }; query; job; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): purgeEvePostgresQueue intentionally keeps the existing falsy-value behavior of job.runId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -56,6 +54,12 @@ const removeUnlockedJobs = async (query: TransactionSql, jobIds: string[]) => {
  * Remove queued payloads for an authorized resource set already fenced by the
  * session coordinator. Returns newly discovered queued run IDs for the caller's
  * deletion inventory. Never force-unlocks workers or claims full session purge.
+ * @param connection PostgreSQL connection used for an atomic inventory/fence/removal transaction.
+ * @param input Authorized session root, fenced run inventory, and configured queue task identifier.
+ * @param input.sessionId Session root required in the cleanup inventory.
+ * @param input.runIds Authorized run identities whose queue payloads may be removed.
+ * @param input.taskIdentifier Installed queue task whose fence governs these payloads.
+ * @returns Removed unlocked job identities and the durably retained discovered run inventory.
  */
 export const purgeEvePostgresQueue = async (
   connection: Sql,
@@ -64,7 +68,7 @@ export const purgeEvePostgresQueue = async (
     runIds: string[];
     taskIdentifier: string;
   }
-) => {
+): Promise<{ removedJobIds: string[]; runIds: string[] }> => {
   const parsed = z
     .object({
       runIds: z.array(z.string().min(1)).min(1).max(10_000),
@@ -144,4 +148,4 @@ export const purgeEvePostgresQueue = async (
     }
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

@@ -151,7 +151,7 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => mocks.queryClient,
 }));
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
-/* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/strict-void-return -- renderPage: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable max-statements, typescript/strict-void-return -- renderPage: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const renderPage = async (
   details: boolean,
@@ -199,13 +199,13 @@ const renderPage = async (
       </SettingsPage>
     )
   );
-  return async () => {
+  return async (): Promise<void> => {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() => root.unmount());
     container.remove();
   };
 };
-/* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/strict-void-return */
+/* oxlint-enable max-statements, typescript/strict-void-return */
 
 test("connector list shows custom and shared connectors with their management links", async () => {
   const cleanup = await renderPage(false);

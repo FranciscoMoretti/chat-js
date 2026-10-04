@@ -5,6 +5,8 @@
 import { inputResponseSchema } from "eve/client";
 import { z } from "zod";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { frontendToolsSchema } from "../ai/types";
 import { eveMessageInput } from "./message-input";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -80,11 +82,10 @@ const parseSessionRequest = (path: string, method: string) => {
   };
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): safeStreamQuery accepts params: URLSearchParams; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): safeStreamQuery preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const safeStreamQuery = (params: URLSearchParams): URLSearchParams | null => {
+/* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): safeStreamQuery preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const safeStreamQuery = (
+  params: ReadonlyNativeSurface<URLSearchParams>
+): URLSearchParams | null => {
   const result = new URLSearchParams();
   for (const [key, value] of params) {
     if (result.has(key)) {
@@ -104,18 +105,18 @@ const safeStreamQuery = (params: URLSearchParams): URLSearchParams | null => {
   }
   return result;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null*/
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): sameOrigin accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): sameOrigin intentionally keeps the existing falsy-value behavior of supplied; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-const sameOrigin = (request: Request, origin: string): boolean => {
+/* oxlint-enable unicorn/no-null */
+/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): sameOrigin intentionally keeps the existing falsy-value behavior of supplied; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+const sameOrigin = (
+  request: ReadonlyNativeSurface<Request>,
+  origin: string
+): boolean => {
   const supplied = request.headers.get("origin");
   return supplied
     ? supplied === origin
     : request.method === "GET" &&
         request.headers.get("sec-fetch-site") !== "cross-site";
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 export { parseSessionRequest, safeStreamQuery, sameOrigin };
