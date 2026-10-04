@@ -21,10 +21,9 @@ const packageDirectory = path.resolve(import.meta.dir, "..");
 
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const run = (command: string[], cwd: string): void => {
+const run = (command: readonly string[], cwd: string): void => {
   const result = Bun.spawnSync({
-    cmd: command,
+    cmd: [...command],
     cwd,
     killSignal: "SIGKILL",
     stderr: "pipe",
@@ -41,7 +40,6 @@ const run = (command: string[], cwd: string): void => {
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 
@@ -49,7 +47,6 @@ const run = (command: string[], cwd: string): void => {
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test(
   "the packed package loads its core and React entry points",
   async (): Promise<void> => {
@@ -130,7 +127,7 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       run(["node", coreConsumerPath], temporaryDirectory);
       await Promise.all(
         ["react", "@ai-sdk/react", "@types/react", "typescript"].map(
-          (name): Promise<void> => linkDependency(name)
+          async (name): Promise<void> => await linkDependency(name)
         )
       );
 
@@ -285,7 +282,6 @@ function checkNormalizedHook() {
   },
   smokeTimeout
 );
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */

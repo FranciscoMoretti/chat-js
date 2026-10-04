@@ -27,6 +27,9 @@
   ],
   "type": "module",
   "types": "./dist/index.d.ts",
+  "imports": {
+    "#thread-source/*": "./src/*.ts"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

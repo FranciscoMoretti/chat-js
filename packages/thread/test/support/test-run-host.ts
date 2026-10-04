@@ -1,9 +1,10 @@
 import type { ChatStatus, ChatTransport, UIMessage } from "ai";
 
-// oxlint-disable-next-line import/no-relative-parent-imports -- ThreadRunHost and ThreadRunSpec are module-internal types, not package-entrypoint exports.
-import type { ThreadRunHost, ThreadRunSpec } from "../../src/ai-sdk-run-chat";
-// oxlint-disable-next-line import/no-relative-parent-imports -- MessageTree is a module-internal class, not a package-entrypoint export.
-import { MessageTree } from "../../src/message-tree";
+import type {
+  ThreadRunHost,
+  ThreadRunSpec,
+} from "#thread-source/ai-sdk-run-chat";
+import { MessageTree } from "#thread-source/message-tree";
 
 const generateMessageId = (): string => "client-response";
 const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] =
