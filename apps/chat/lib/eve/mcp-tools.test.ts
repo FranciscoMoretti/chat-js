@@ -222,7 +222,7 @@ it("forwards cancellation and closes the connection once", async () => {
         // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
         options.abortSignal.addEventListener(
           "abort",
-          // oxlint-disable-next-line typescript/prefer-promise-reject-errors, typescript/no-unsafe-member-access -- #603: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons. #597: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+          // oxlint-disable-next-line typescript/prefer-promise-reject-errors, typescript/no-unsafe-member-access -- #603: The tool mock forwards the abort signal reason unchanged while the test verifies cancellation and single connection cleanup. #597: This mcp-tools fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
           () => reject(options.abortSignal.reason),
           { once: true }
         );

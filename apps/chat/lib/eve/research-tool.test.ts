@@ -195,7 +195,7 @@ it("runs topics sequentially and stops before new work or saving after cancellat
     .mockResolvedValueOnce({ complete: false, topics: ["First", "Second"] })
     .mockImplementationOnce(() => {
       controller.abort(new Error("Cancelled"));
-      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
+      // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: AbortSignal.reason is typed as any; forward the controller’s Error unchanged to verify cancellation stops further topics and saving.
       return Promise.reject(controller.signal.reason);
     });
   await expect(

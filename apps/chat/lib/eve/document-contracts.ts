@@ -6,10 +6,10 @@ import { z } from "zod";
 import { isFileStorageKey } from "../file-url";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/consistent-type-definitions -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/consistent-type-definitions (#559): DocumentAssistantRequest preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type DocumentAssistantRequest = { message: string; modelId: string };
-/* oxlint-enable typescript/consistent-type-definitions */
+interface DocumentAssistantRequest {
+  message: string;
+  modelId: string;
+}
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): documentFileIds uses 256 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

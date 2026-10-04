@@ -103,15 +103,11 @@ const readExistingEveGuestMessage = async (
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): GuestBootstrap preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type GuestBootstrap = {
+interface GuestBootstrap {
   tokenHash: string;
   messageLimit: number;
   expiresAt: Date;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 type GuestReservationInput = z.infer<typeof reservation>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --

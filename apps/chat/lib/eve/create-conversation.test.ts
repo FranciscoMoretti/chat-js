@@ -28,7 +28,7 @@ it("aborts a stalled creation without resending or changing its operation", asyn
       new Promise<Response>((_resolve, reject) => {
         init.signal?.addEventListener(
           "abort",
-          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
+          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: The fetch mock rejects with the signal reason unchanged so the timeout test exercises requestConversation’s cancellation error.
           () => reject(init.signal?.reason),
           { once: true }
         );
