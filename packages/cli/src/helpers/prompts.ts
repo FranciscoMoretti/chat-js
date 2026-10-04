@@ -485,7 +485,6 @@ const promptAssistantTools = async (
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const promptAuth = async (
   skipPrompt: boolean
@@ -523,7 +522,6 @@ const promptAuth = async (
   return toSelectionRecord(AUTH_PROVIDERS, selectedProviders);
 };
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-statements */
 
 const promptElectron = async (

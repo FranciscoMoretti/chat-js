@@ -92,11 +92,9 @@ const PendingInput = ({
 };
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/explicit-function-return-type -- toolStatus: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
 const toolStatus = (
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>
-) => {
+): string => {
   if (part.state === "approval-requested") {
     return "Waiting for input.";
   }
@@ -111,7 +109,7 @@ const toolStatus = (
   }
   return "Working…";
 };
-/* oxlint-enable typescript/explicit-function-return-type */
+
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Part: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // This renderer handles all streamed EVE part variants and their recovery states.

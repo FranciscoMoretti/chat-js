@@ -68,7 +68,7 @@ const initialFilters: FeatureFilter = {};
 for (const feature of enabledFeatures) {
   initialFilters[feature.key] = false;
 }
-/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- getFeatureIcons: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including model: AppModelDefinition); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including condition). */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- getFeatureIcons: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including model: AppModelDefinition); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including condition). */
 
 const getFeatureIcons = (model: AppModelDefinition) => {
   const icons: React.ReactNode[] = [];
@@ -77,17 +77,17 @@ const getFeatureIcons = (model: AppModelDefinition) => {
   const featureIconMap = [
     {
       condition: model.toolCall,
-      config: enabled.find((f) => f.key === "functionCalling"),
+      config: enabled.find((feature) => feature.key === "functionCalling"),
       key: "functionCalling",
     },
     {
       condition: model.input?.image,
-      config: enabled.find((f) => f.key === "imageInput"),
+      config: enabled.find((feature) => feature.key === "imageInput"),
       key: "imageInput",
     },
     {
       condition: model.input?.pdf,
-      config: enabled.find((f) => f.key === "pdfInput"),
+      config: enabled.find((feature) => feature.key === "pdfInput"),
       key: "pdfInput",
     },
   ];
@@ -109,7 +109,7 @@ const getFeatureIcons = (model: AppModelDefinition) => {
 
   return icons;
 };
-/* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- buildMultiModelSelection: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including modelIds: AppModelId[]). */
 
@@ -141,7 +141,7 @@ const getSelectionCount = (selection: SelectedModelValue): number => {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable id-length, max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PureCommandItem: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including f); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled). */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PureCommandItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including feature); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled). */
 
 const PureCommandItem = ({
   model,
@@ -168,7 +168,7 @@ const PureCommandItem = ({
   );
 
   const reasoningConfig = useMemo(
-    () => getEnabledFeatures().find((f) => f.key === "reasoning"),
+    () => getEnabledFeatures().find((feature) => feature.key === "reasoning"),
     []
   );
 
@@ -207,8 +207,8 @@ const PureCommandItem = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               asChild
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
             >
               <button
                 className="bg-primary/15 text-foreground hover:bg-primary/25 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums"
@@ -220,17 +220,20 @@ const PureCommandItem = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              onKeyDown={(e) => e.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
             >
-              {[1, 2, 3, 4].map((n): React.JSX.Element => (
+              {[1, 2, 3, 4].map((modelCount): React.JSX.Element => (
                 <DropdownMenuItem
-                  key={n}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCountChange(n - count);
+                  key={modelCount}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onCountChange(modelCount - count);
                   }}
                 >
-                  {n}x{n === count && <CheckIcon className="ml-auto h-3 w-3" />}
+                  {modelCount}x
+                  {modelCount === count && (
+                    <CheckIcon className="ml-auto h-3 w-3" />
+                  )}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -240,7 +243,7 @@ const PureCommandItem = ({
     </UICommandItem>
   );
 };
-/* oxlint-enable id-length, max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- CommandItem: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prev). */
 
@@ -254,7 +257,7 @@ const CommandItem = memo(
     (prev.onCountChange !== undefined) === (next.onCountChange !== undefined)
 );
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureModelSelector: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including [, count]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including selectedItem?.model.name); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureModelSelector: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including [, count]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including selectedItem?.model.name); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureModelSelector = ({
   allowMultiple = true,
@@ -321,19 +324,19 @@ const PureModelSelector = ({
 
   const models = useMemo<ModelItem[]>(
     () =>
-      chatModels.map((m) => ({
+      chatModels.map((chatModel) => ({
         disabled:
           isAnonymous &&
           !(
             ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-          ).includes(m.id),
-        model: m,
+          ).includes(chatModel.id),
+        model: chatModel,
       })),
     [isAnonymous, chatModels]
   );
 
   const hasDisabledModels = useMemo(
-    () => models.some((m) => m.disabled),
+    () => models.some((modelItem) => modelItem.disabled),
     [models]
   );
 
@@ -380,14 +383,18 @@ const PureModelSelector = ({
 
   const selectedItem = useMemo<ModelItem | null>(() => {
     // First try to find in filtered models (user's enabled models)
-    const found = models.find((m) => m.model.id === optimisticModelId);
+    const found = models.find(
+      (modelItem) => modelItem.model.id === optimisticModelId
+    );
     if (found) {
       return found;
     }
 
     // Fallback: look in all models to at least display the model name
     // This handles cases where preferences are loading or model was disabled
-    const fallbackModel = allModels.find((m) => m.id === optimisticModelId);
+    const fallbackModel = allModels.find(
+      (model) => model.id === optimisticModelId
+    );
     if (fallbackModel) {
       return {
         disabled:
@@ -402,7 +409,7 @@ const PureModelSelector = ({
     return null;
   }, [models, allModels, optimisticModelId, isAnonymous]);
   const reasoningConfig = useMemo(
-    () => getEnabledFeatures().find((f) => f.key === "reasoning"),
+    () => getEnabledFeatures().find((feature) => feature.key === "reasoning"),
     []
   );
   const activeFilterCount = useMemo(
@@ -450,7 +457,8 @@ const PureModelSelector = ({
         let nextSelection: Record<AppModelId, number>;
         if (isAlreadySelected) {
           const remaining = Object.entries(currentCounts).filter(
-            ([k, v]) => k !== id && v > 0
+            ([candidateId, selectionCount]) =>
+              candidateId !== id && selectionCount > 0
           );
           if (remaining.length === 0) {
             return;
@@ -487,7 +495,8 @@ const PureModelSelector = ({
 
         if (newCount <= 0) {
           const remaining = Object.entries(currentCounts).filter(
-            ([k, v]) => k !== id && v > 0
+            ([candidateId, selectionCount]) =>
+              candidateId !== id && selectionCount > 0
           );
           if (remaining.length === 0) {
             return;
@@ -567,17 +576,17 @@ const PureModelSelector = ({
       <PopoverContent
         align="start"
         className="w-[350px] p-0"
-        onFocusOutside={(e) => e.preventDefault()}
+        onFocusOutside={(event) => event.preventDefault()}
 
-        onInteractOutside={(e) => {
+        onInteractOutside={(event) => {
           // Prevent closing when interacting with nested popovers rendered in portals
           if (
             // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Preserve the existing CSS custom-property or DOM event-target contract; stronger narrowing requires an interface-specific migration.
-            (e.target as HTMLElement).closest(
+            (event.target as HTMLElement).closest(
               "[data-radix-popper-content-wrapper]"
             )
           ) {
-            e.preventDefault();
+            event.preventDefault();
           }
         }}
       >
@@ -587,7 +596,7 @@ const PureModelSelector = ({
               <CommandInput
                 className="px-3"
                 containerClassName="w-full border-0 h-11"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
                 placeholder="Search models..."
               />
               <Popover onOpenChange={setFilterOpen} open={filterOpen}>
@@ -687,7 +696,7 @@ const PureModelSelector = ({
             )}
             <CommandList
               className="max-h-[min(40dvh,400px)]"
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
             >
               <CommandEmpty>No model found.</CommandEmpty>
               <CommandGroup>
@@ -753,7 +762,7 @@ const PureModelSelector = ({
     </Popover>
   );
 };
-/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 export const ModelSelector = memo(
   PureModelSelector,

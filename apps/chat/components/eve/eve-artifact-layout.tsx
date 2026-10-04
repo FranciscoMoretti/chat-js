@@ -145,7 +145,7 @@ const EveArtifactPanel = ({
   const owned = !readOnly && document.data?.canEdit;
   const onSaved = useCallback(async () => {
     // Hydrate the destination query before switching the view: an empty latest query would unmount the focused editor.
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 fetch API supported by the repository lockfile and fresh scaffolds; migrating to query() requires a coordinated dependency upgrade.
+
     await queryClient.fetchQuery(
       trpc.eve.document.queryOptions(
         {

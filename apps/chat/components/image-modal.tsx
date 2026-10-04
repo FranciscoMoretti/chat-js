@@ -22,13 +22,13 @@ interface ImageModalProps {
   onClose: () => void;
   showActions?: boolean;
 }
-/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- handleCopyImage: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e: React.MouseEvent). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- handleCopyImage: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.MouseEvent). */
 
 const handleCopyImage = async (
-  e: React.MouseEvent,
+  event: React.MouseEvent,
   imageUrl: string | undefined
-) => {
-  e.stopPropagation();
+): Promise<void> => {
+  event.stopPropagation();
   if (!(typeof imageUrl === "string" && imageUrl !== "")) {
     return;
   }
@@ -42,14 +42,14 @@ const handleCopyImage = async (
     toast.error("Failed to copy image to clipboard");
   }
 };
-/* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- handleDownload: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e: React.MouseEvent). */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types -- handleDownload: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.MouseEvent). */
 
 const handleDownload = async (
-  e: React.MouseEvent,
+  event: React.MouseEvent,
   imageUrl: string | undefined
-) => {
-  e.stopPropagation();
+): Promise<void> => {
+  event.stopPropagation();
   if (!(typeof imageUrl === "string" && imageUrl !== "")) {
     return;
   }
@@ -58,19 +58,19 @@ const handleDownload = async (
     const response = await fetch(imageUrl);
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `image-${Date.now()}.png`;
-    document.body.append(a);
-    a.click();
-    a.remove();
+    const downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = `image-${Date.now()}.png`;
+    document.body.append(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
     URL.revokeObjectURL(url);
   } catch {
     toast.error("Failed to download image");
   }
 };
-/* oxlint-enable id-length, max-statements, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable id-length, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- ImageActions: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- ImageActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including e). */
 
 const ImageActions = ({
   className,
@@ -83,8 +83,8 @@ const ImageActions = ({
     <Button
       className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
 
-      onClick={(e) => {
-        void handleCopyImage(e, imageUrl);
+      onClick={(event) => {
+        void handleCopyImage(event, imageUrl);
       }}
       size="icon-sm"
       title="Copy image"
@@ -96,8 +96,8 @@ const ImageActions = ({
     <Button
       className="bg-black/50 text-white hover:bg-black/70 hover:text-white"
 
-      onClick={(e) => {
-        void handleDownload(e, imageUrl);
+      onClick={(event) => {
+        void handleDownload(event, imageUrl);
       }}
       size="icon-sm"
       title="Download image"
@@ -108,7 +108,7 @@ const ImageActions = ({
     </Button>
   </div>
 );
-/* oxlint-enable id-length, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 

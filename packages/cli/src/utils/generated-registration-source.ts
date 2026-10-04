@@ -2,7 +2,7 @@
 // Oxfmt owns generated import ordering; only retained restrictions need exceptions.
 const registrationRules = (line: string): string[] => {
   const rules: string[] = [];
-  if (line.includes("undefined")) {
+  if (/[=]\s*undefined;\s*$/u.test(line)) {
     rules.push("no-undefined");
   }
   if (line.startsWith("export type WorkflowTools = {")) {

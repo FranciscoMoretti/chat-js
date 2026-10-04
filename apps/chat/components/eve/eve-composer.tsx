@@ -18,12 +18,10 @@ import { installedToolNames } from "@/tools/chatjs/installed-features";
 import { EveModelPicker } from "./eve-model-picker";
 /* oxlint-enable import/max-dependencies */
 import type { useEveAttachments } from "./use-eve-attachments";
-/* oxlint-disable typescript/explicit-function-return-type -- uploadsOmitted: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const uploadsOmitted = () => {
+const uploadsOmitted = (): void => {
   // Uploads are omitted from this installation.
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type -- modelSelectionIds: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 const modelSelectionIds = (
@@ -36,12 +34,12 @@ const modelSelectionIds = (
     : expandSelectedModelValue(selection ?? selected);
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- unsupportedAttachments: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including files: DraftAttachment[]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model?.input.pdf). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- unsupportedAttachments: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including files: DraftAttachment[]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model?.input.pdf). */
 
 const unsupportedAttachments = (
   models: ReturnType<ReturnType<typeof useChatModels>["getModelById"]>[],
   files: DraftAttachment[]
-) =>
+): boolean =>
   models.some((model) =>
     files.some((file) =>
       file.contentType === "application/pdf"
@@ -49,13 +47,11 @@ const unsupportedAttachments = (
         : !model?.input.image
     )
   );
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/explicit-function-return-type -- isUnavailableTool: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const isUnavailableTool = (tool: UiToolName | null) =>
+const isUnavailableTool = (tool: UiToolName | null): boolean =>
   Boolean(tool && !installedToolNames.has(tool));
-/* oxlint-enable typescript/explicit-function-return-type */
+
 /* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveComposer: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including attachment: { url: string }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including props.readOnly); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveComposer = ({

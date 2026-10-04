@@ -182,7 +182,7 @@ const TECHS: Tech[] = [
 ];
 
 /* oxlint-disable eslint/no-magic-numbers -- TechCard: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechCard: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TechCard: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const TechCard = ({
   tech,
@@ -217,12 +217,11 @@ const TechCard = ({
   );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable react/no-multi-comp -- TechStack: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- TechStack: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable react/jsx-max-depth -- TechStack: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TechStack: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 export const TechStack = (): React.JSX.Element => (
@@ -271,6 +270,5 @@ export const TechStack = (): React.JSX.Element => (
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-enable react/no-multi-comp */

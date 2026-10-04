@@ -140,14 +140,12 @@ const EveCopyButton = ({
 };
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
-/* oxlint-disable typescript/explicit-function-return-type -- forgetConfirmedRequest: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput) => {
+const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
   try {
     finishPendingEveCopy(sessionStorage, ownerId, input);
   } catch {
     // A confirmed binding or rejection remains authoritative when browser storage is unavailable.
   }
 };
-/* oxlint-enable typescript/explicit-function-return-type */
+
 export { EveCopyButton };

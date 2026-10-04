@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 import "./presentation.css";
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Caption: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Caption: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Caption = ({
   children,
@@ -17,11 +16,10 @@ const Caption = ({
   </div>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-disable react/no-multi-comp -- Pointer: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- Pointer: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Pointer: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+
 const Pointer = ({
   x,
   y,
@@ -43,14 +41,14 @@ const Pointer = ({
     />
   </svg>
 );
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- ClickPulse: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- ClickPulse: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
 /* oxlint-disable eslint/no-magic-numbers -- ClickPulse: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- ClickPulse: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+
 /* oxlint-disable unicorn/no-null -- ClickPulse: React refs/rendering and selected-state contracts use null as an explicit empty state. */
 const ClickPulse = ({
   age,
@@ -73,7 +71,7 @@ const ClickPulse = ({
     />
   ) : null;
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
