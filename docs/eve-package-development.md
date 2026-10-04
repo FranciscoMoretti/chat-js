@@ -24,7 +24,7 @@ The command temporarily installs that archive as `eve`, runs lint, all workspace
 
 The scoped package retains the upstream runtime identity for persisted workflow IDs. Fork revisions have versions such as `0.61.0-chatjs.0`; changing the upstream base is a separate upgrade that requires workflow compatibility checks.
 
-Generated apps preserve the exact npm alias. They no longer reconstruct an eve package from a Bun patch. MCP and Postgres still use their existing vendored patched archives. Native approval tests now import the regular built module, without the old Bun patch filename relocation.
+Generated apps preserve the exact npm alias. They no longer reconstruct an eve package from a Bun patch. Postgres still uses its vendored patched archive. MCP now consumes the supported upstream release described in [runtime dependency maintenance](../patches/README.md). Native approval tests now import the regular built module, without the old Bun patch filename relocation.
 
 ## Release workflow
 
