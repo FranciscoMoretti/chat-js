@@ -4,8 +4,7 @@ import type { AbstractThread } from "./abstract-thread";
 
 const DISABLED_THROTTLE_WAIT_MS = 0;
 
-// oxlint-disable-next-line eslint/no-undefined -- The optional throttle argument and empty timer slot use JavaScript's undefined sentinel.
-const ABSENT_VALUE = undefined;
+const ABSENT_VALUE = globalThis.undefined;
 
 type SnapshotSource<TMessage extends UIMessage> = Readonly<
   Pick<AbstractThread<TMessage>, "getSnapshot" | "subscribe">

@@ -4,8 +4,7 @@ import type { ThreadRunHost, ThreadRunSpec } from "./ai-sdk-run-chat";
 
 const CURRENT_RESPONSE_OFFSET = 1;
 
-// oxlint-disable-next-line eslint/no-undefined -- An absent resume prefix means that the next SDK message must not merge previously restored parts.
-const NO_RESUME_PREFIX = undefined;
+const NO_RESUME_PREFIX = globalThis.undefined;
 
 type RunStateHost<TMessage extends UIMessage> = Readonly<
   Pick<

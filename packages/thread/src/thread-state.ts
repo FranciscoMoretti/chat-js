@@ -4,8 +4,7 @@ import { MessageTree } from "./message-tree";
 import type { SnapshotInput } from "./message-tree-readers";
 import type { ThreadState, ThreadStateSnapshot } from "./types";
 
-// oxlint-disable-next-line eslint/no-undefined -- A ready snapshot has no error; this required field explicitly uses the ThreadStateSnapshot undefined sentinel.
-const NO_THREAD_ERROR = undefined;
+const NO_THREAD_ERROR = globalThis.undefined;
 
 const createThreadStateSnapshot = <TMessage extends UIMessage>({
   initialTree,

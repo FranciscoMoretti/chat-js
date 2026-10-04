@@ -18,12 +18,9 @@ const mocks = vi.hoisted(() => {
     state,
   };
 });
-/* oxlint-disable id-length, typescript/explicit-function-return-type --
- * id-length (#506): vi.mock("eve/hooks") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/hooks")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("eve/hooks", () => ({ defineHook: <T>(value: T) => value }));
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
+vi.mock("eve/hooks", () => ({
+  defineHook: <Value>(value: Value): Value => value,
+}));
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/context")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("eve/context") accepts current: EveSearchText[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.

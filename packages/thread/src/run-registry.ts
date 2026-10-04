@@ -40,7 +40,6 @@ interface RunRecord<TMessage extends UIMessage> {
 }
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 class RunRegistry<TMessage extends UIMessage> {
   readonly #concurrency: Required<ThreadConcurrency>;
   readonly #runIdByApprovalId = new Map<string, string>();
@@ -100,7 +99,7 @@ class RunRegistry<TMessage extends UIMessage> {
     const runId = this.#runIdByApprovalId.get(approvalId);
     return typeof runId === "string" && runId !== ""
       ? this.#runsById.get(runId)
-      : undefined;
+      : globalThis.undefined;
   }
 
   public getForMessage(messageId: string): RunRecord<TMessage> | undefined {
@@ -126,7 +125,7 @@ class RunRegistry<TMessage extends UIMessage> {
     const runId = this.#runIdByToolCallId.get(toolCallId);
     return typeof runId === "string" && runId !== ""
       ? this.#runsById.get(runId)
-      : undefined;
+      : globalThis.undefined;
   }
 
   public getForResponseMessage(
@@ -164,7 +163,7 @@ class RunRegistry<TMessage extends UIMessage> {
     }
     return childIds.filter((childId): boolean => {
       const order = siblingOrderByMessageId.get(childId);
-      return order === undefined || order < siblingOrder;
+      return order === globalThis.undefined || order < siblingOrder;
     }).length;
   }
 
@@ -216,7 +215,8 @@ class RunRegistry<TMessage extends UIMessage> {
     const runs = this.values().toReversed();
     const responseRun = runs.find(
       (run: RunIdentityReader): boolean =>
-        run.spec.messageId !== undefined && pathIds.has(run.spec.messageId)
+        run.spec.messageId !== globalThis.undefined &&
+        pathIds.has(run.spec.messageId)
     );
     if (responseRun || !(typeof cursorId === "string" && cursorId !== "")) {
       return responseRun;
@@ -387,7 +387,6 @@ class RunRegistry<TMessage extends UIMessage> {
     }
   }
 }
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

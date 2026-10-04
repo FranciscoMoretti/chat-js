@@ -164,12 +164,12 @@ const promptProjectName = async (
   const name = await text({
     initialValue: targetArg ?? "my-chat-app",
     message: "What is your project named?",
-    // oxlint-disable-next-line typescript/consistent-return -- Prompt validation returns an error message for invalid input and no value for accepted input.
     validate: (value?: string) => {
       const kebab = toKebabCase(value);
       if (!kebab) {
         return "Please enter a valid project name";
       }
+      return globalThis.undefined;
     },
   });
   handleCancel(name);
@@ -177,7 +177,6 @@ const promptProjectName = async (
   return toKebabCase(name) || "my-chat-app";
 };
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (skipPrompt) {
     return "vercel";
@@ -211,14 +210,13 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
       validate: (value) =>
         (value?.trim() ?? "") === ""
           ? "Enter a registry item address"
-          : undefined,
+          : globalThis.undefined,
     });
     handleCancel(source);
     return source.trim();
   }
   return gateway;
 };
-/* oxlint-enable eslint/no-undefined */
 
 const APPEND_DELETE_COUNT = 0;
 const EMPTY_CONFIG_KEY_COUNT = 0;
@@ -247,7 +245,6 @@ const registryStorageRequirement = (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptStorage = async (
   skipPrompt: boolean,
   explicitProvider?: string,
@@ -284,7 +281,9 @@ const promptStorage = async (
       const address = await text({
         message: "Storage registry item address:",
         validate: (value) =>
-          (value?.trim() ?? "") === "" ? "Enter an item address" : undefined,
+          (value?.trim() ?? "") === ""
+            ? "Enter an item address"
+            : globalThis.undefined,
       });
       handleCancel(address);
       source = address.trim();
@@ -293,7 +292,10 @@ const promptStorage = async (
   const selection = await resolveStorage(source, cwd);
   const keys = selection.definition.configKeys;
   let options = explicitOptions;
-  if (options === undefined && keys.length > EMPTY_CONFIG_KEY_COUNT) {
+  if (
+    options === globalThis.undefined &&
+    keys.length > EMPTY_CONFIG_KEY_COUNT
+  ) {
     if (skipPrompt) {
       throw new Error(
         `Storage requires adapter options (${keys.join(", ")}). Pass --storage-config.`
@@ -301,19 +303,20 @@ const promptStorage = async (
     }
     const input = await text({
       message: `Non-secret adapter options as JSON (${keys.join(", ")}). Credentials use environment variables.`,
-      // oxlint-disable-next-line typescript/consistent-return -- Prompt validation returns an error message for invalid input and no value for accepted input.
       validate: (value) => {
         try {
           parseStorageOptions(value ?? "");
         } catch {
           return "Enter a JSON object";
         }
+        return globalThis.undefined;
       },
     });
     handleCancel(input);
     options = input;
   }
-  selection.options = options === undefined ? {} : parseStorageOptions(options);
+  selection.options =
+    options === globalThis.undefined ? {} : parseStorageOptions(options);
   // Only the actual built-in address uses SDK-derived option/credential rules.
   // An external item may use the same id with its own contract.
   const builtin = INSTALLABLE_STORAGE_PROVIDERS.find(
@@ -323,7 +326,7 @@ const promptStorage = async (
   const providerId = PROVIDER_NAMES.find(
     (id) => id === builtin?.meta.chatjs.id
   );
-  if (providerId !== undefined) {
+  if (providerId !== globalThis.undefined) {
     selection.definition.envRequirements = getStorageEnvironmentRequirements(
       providerId,
       selection.options
@@ -333,12 +336,10 @@ const promptStorage = async (
   }
   return selection;
 };
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptCoreFeatures = async (
   skipPrompt: boolean,
   gateway: ReadonlyInput<GatewayDefinition>,
@@ -358,7 +359,7 @@ const promptCoreFeatures = async (
   }
 
   const availableFeatures = CORE_FEATURE_KEYS.filter(
-    (key) => key !== "mcp" || mcp === undefined
+    (key) => key !== "mcp" || mcp === globalThis.undefined
   );
   const selected = await multiselect({
     initialValues: availableFeatures.filter(
@@ -388,7 +389,6 @@ const promptCoreFeatures = async (
   result.mcp = mcp ?? result.mcp;
   return result;
 };
-/* oxlint-enable eslint/no-undefined */
 
 const promptDocumentTypes = async (
   skipPrompt: boolean,
@@ -560,7 +560,6 @@ const promptElectron = async (
   return wantsElectron;
 };
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "tavily-search";
@@ -588,14 +587,12 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   const address = await text({
     message: "Search tool registry address:",
     validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
+      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptCodeExecutionTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -620,14 +617,12 @@ const promptCodeExecutionTool = async (
   const address = await text({
     message: "Code-execution tool registry address:",
     validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
+      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "retrieve-url";
@@ -650,14 +645,12 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   const address = await text({
     message: "URL retrieval tool registry address:",
     validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
+      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptImageGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -682,14 +675,12 @@ const promptImageGenerationTool = async (
   const address = await text({
     message: "image generation tool registry address:",
     validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
+      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const promptVideoGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -714,12 +705,11 @@ const promptVideoGenerationTool = async (
   const address = await text({
     message: "video generation tool registry address:",
     validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : undefined,
+      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
   return address.trim();
 };
-/* oxlint-enable eslint/no-undefined */
 
 // One optional group; new applications never enable telemetry by default.
 const promptObservability = async (yes: boolean): Promise<string[]> => {

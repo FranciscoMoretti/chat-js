@@ -11,6 +11,10 @@ interface EveResponseGroupLineageConversation {
   sessionId: string;
 }
 
+type LineageConversation = Readonly<
+  Omit<EveResponseGroupLineageConversation, "createdAt">
+> & { readonly createdAt: Readonly<Date> };
+
 interface EveResponseGroupLineage {
   groupId: string;
   replacements: ReadonlyMap<
@@ -19,40 +23,37 @@ interface EveResponseGroupLineage {
   >;
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): localTurnBoundary accepts conversation: EveResponseGroupLineageConversation; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): localTurnBoundary intentionally keeps the existing falsy-value behavior of conversation.forkMessageId; conversation.parentConversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const localTurnBoundary = (
-  conversation: EveResponseGroupLineageConversation
+  conversation: LineageConversation
 ): string | null => {
   if (!conversation.parentConversationId || conversation.forkMessageId) {
     return "turn_0";
   }
   return conversation.forkTurnId;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): laterConversation uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): laterConversation accepts left: EveResponseGroupLineageConversation; right: EveResponseGroupLineageConversation; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const laterConversation = (
-  left: EveResponseGroupLineageConversation,
-  right: EveResponseGroupLineageConversation
+  left: LineageConversation,
+  right: LineageConversation
 ): boolean =>
   left.createdAt.getTime() === right.createdAt.getTime()
     ? left.id.localeCompare(right.id) > 0
     : left.createdAt > right.createdAt;
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): resolveEveResponseGroupLineage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): resolveEveResponseGroupLineage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): resolveEveResponseGroupLineage skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): resolveEveResponseGroupLineage uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): resolveEveResponseGroupLineage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): resolveEveResponseGroupLineage accepts conversations: readonly EveResponseGroupLineageConversation[]; groups: readonly { candidateOperationIds: readonly string[]; id: string }[]; conversation; group; entry; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): resolveEveResponseGroupLineage intentionally keeps the existing falsy-value behavior of current.parentConversationId; candidate; boundary; conversation.parentConversationId; originalBoundary; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): resolveEveResponseGroupLineage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -66,13 +67,16 @@ const laterConversation = (
 // oxlint-disable-next-line eslint/complexity -- Candidate discovery, lineage validation, and retry selection form one fail-closed projection.
 const resolveEveResponseGroupLineage = (
   selectedConversationId: string,
-  conversations: readonly EveResponseGroupLineageConversation[],
-  groups: readonly { candidateOperationIds: readonly string[]; id: string }[]
+  conversations: readonly LineageConversation[],
+  groups: readonly {
+    readonly candidateOperationIds: readonly string[];
+    readonly id: string;
+  }[]
 ): EveResponseGroupLineage | undefined => {
   const conversationsById = new Map(
     conversations.map((conversation) => [conversation.id, conversation])
   );
-  const reversedLineage: EveResponseGroupLineageConversation[] = [];
+  const reversedLineage: LineageConversation[] = [];
   const visited = new Set<string>();
   let current = conversationsById.get(selectedConversationId);
   while (current && !visited.has(current.id)) {
@@ -114,7 +118,7 @@ const resolveEveResponseGroupLineage = (
     return;
   }
 
-  const children = new Map<string, EveResponseGroupLineageConversation[]>();
+  const children = new Map<string, LineageConversation[]>();
   for (const conversation of conversations) {
     if (!conversation.parentConversationId) {
       continue;
@@ -171,6 +175,6 @@ const resolveEveResponseGroupLineage = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: resolveEveResponseGroupLineage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId: group.id, replacements };
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 export { resolveEveResponseGroupLineage };
 export type { EveResponseGroupLineage, EveResponseGroupLineageConversation };
