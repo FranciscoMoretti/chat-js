@@ -17,34 +17,34 @@ import {
 } from "../../../scripts/sync-template-snapshot";
 /* oxlint-enable import/no-relative-parent-imports */
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = path;
-
 const hash = (value: string): string =>
   new Bun.CryptoHasher("sha256").update(value).digest("hex");
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const collectFileOrder = async (
   dir: string,
   prefix = ""
 ): Promise<string[]> => {
   const entries = await readdir(dir, { withFileTypes: true });
   const paths = await Promise.all(
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    entries.map((entry) => {
-      const absolute = join(dir, entry.name);
-      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-      if (entry.isDirectory()) {
-        return collectFileOrder(absolute, rel);
+    entries.map(
+      async (
+        entry: Readonly<{
+          name: string;
+          isDirectory: () => boolean;
+          isFile: () => boolean;
+        }>
+      ): Promise<string[]> => {
+        const absolute = path.join(dir, entry.name);
+        const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          return await collectFileOrder(absolute, rel);
+        }
+        return entry.isFile() ? [rel] : [];
       }
-      return entry.isFile() ? [rel] : [];
-    })
+    )
   );
   return paths.flat();
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -52,21 +52,23 @@ const collectFileOrder = async (
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 it("collects ordered hashes with bounded nested filesystem concurrency", async () => {
-  const root = await mkdtemp(join(process.cwd(), "sync-template-snapshot-"));
+  const root = await mkdtemp(
+    path.join(process.cwd(), "sync-template-snapshot-")
+  );
   try {
-    const nested = join(root, "nested");
-    const deeper = join(nested, "deeper");
+    const nested = path.join(root, "nested");
+    const deeper = path.join(nested, "deeper");
     await mkdir(deeper, { recursive: true });
     const files = [
       ...Array.from({ length: SNAPSHOT_CONCURRENCY * 4 }, (_, index) =>
-        writeFile(join(root, `file-${index}.txt`), `root-${index}`)
+        writeFile(path.join(root, `file-${index}.txt`), `root-${index}`)
       ),
-      writeFile(join(nested, "leaf.txt"), "nested-leaf"),
-      writeFile(join(deeper, "deep.txt"), "deep-leaf"),
+      writeFile(path.join(nested, "leaf.txt"), "nested-leaf"),
+      writeFile(path.join(deeper, "deep.txt"), "deep-leaf"),
     ];
     await Promise.all(files);
     const siblingDirectories = Array.from({ length: 8 }, (_, index) =>
-      join(root, `nested-${index}`)
+      path.join(root, `nested-${index}`)
     );
     await Promise.all(
       siblingDirectories.map(async (directory, directoryIndex) => {
@@ -74,14 +76,17 @@ it("collects ordered hashes with bounded nested filesystem concurrency", async (
         await Promise.all(
           Array.from({ length: 8 }, (_, fileIndex) =>
             writeFile(
-              join(directory, `file-${fileIndex}.txt`),
+              path.join(directory, `file-${fileIndex}.txt`),
               `nested-${directoryIndex}-${fileIndex}`
             )
           )
         );
       })
     );
-    await symlink(join(root, "file-0.txt"), join(root, "ignored-link.txt"));
+    await symlink(
+      path.join(root, "file-0.txt"),
+      path.join(root, "ignored-link.txt")
+    );
 
     let activeOperations = 0;
     let peakOperations = 0;

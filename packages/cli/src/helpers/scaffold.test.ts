@@ -159,8 +159,7 @@ describe("buildConfigTs", (): void => {
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldFromTemplate", (): void => {
   it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const destination = await makeTempDir("chat-app-patched-runtimes");
+    const destination = makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
@@ -287,8 +286,7 @@ describe("scaffoldFromTemplate", (): void => {
   });
 
   it("leaves the storage slot and provider peers to registry installation", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const destination = await makeTempDir("chat-app-storage");
+    const destination = makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
@@ -306,8 +304,7 @@ describe("scaffoldFromTemplate", (): void => {
   });
 
   it("writes a standalone-safe root package.json", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const destination = await makeTempDir("chat-app");
+    const destination = makeTempDir("chat-app");
 
     await scaffoldFromTemplate(destination);
 
@@ -367,8 +364,7 @@ describe("scaffoldFromTemplate", (): void => {
   });
 
   it("rewrites the generated web app to be npm-friendly", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const destination = await makeTempDir("chat-app-npm");
+    const destination = makeTempDir("chat-app-npm");
 
     await scaffoldFromTemplate(destination, { packageManager: "npm" });
 
@@ -424,8 +420,7 @@ describe("scaffoldFromTemplate", (): void => {
 
   it("allows known native package build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const destination = await makeTempDir("chat-app-pnpm");
+    const destination = makeTempDir("chat-app-pnpm");
 
     await scaffoldFromTemplate(destination, { packageManager: "pnpm" });
 
@@ -454,8 +449,7 @@ describe("scaffoldFromTemplate", (): void => {
   });
 
   it("starts generated apps with an empty installable tool registry", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    const destination = await makeTempDir("chat-app-tools");
+    const destination = makeTempDir("chat-app-tools");
 
     await scaffoldFromTemplate(destination);
 
@@ -484,8 +478,7 @@ describe("scaffoldFromTemplate", (): void => {
   });
 
   it("falls back to repo source apps when synced templates are missing", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const projectDir = await makeTempDir("chat-app-fallback");
+    const projectDir = makeTempDir("chat-app-fallback");
     const templatesDir = join(getCliPackageRoot(), "templates");
     const backupDir = join(
       tmpdir(),
@@ -579,10 +572,8 @@ describe("scaffoldFromTemplate", (): void => {
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("scaffoldFromGit", (): void => {
   it("leaves repositories without the ChatJS storage seam untouched", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const source = await makeTempDir("plain-git-source");
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const destination = await makeTempDir("plain-git-destination");
+    const source = makeTempDir("plain-git-source");
+    const destination = makeTempDir("plain-git-destination");
     await mkdir(source, { recursive: true });
     await writeFile(
       join(source, "package.json"),
@@ -629,8 +620,7 @@ describe("scaffoldFromGit", (): void => {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("scaffoldElectron", (): void => {
   it("runs generated Electron prebuild under Node and tsx", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const projectDir = await makeTempDir("electron-node-prebuild");
+    const projectDir = makeTempDir("electron-node-prebuild");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
     await scaffoldElectron(projectDir, {
       packageManager: "npm",
@@ -689,8 +679,7 @@ describe("scaffoldElectron", (): void => {
   });
 
   it("runs generated Forge prebuild and build hooks with the selected package manager", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const projectDir = await makeTempDir("electron-forge");
+    const projectDir = makeTempDir("electron-forge");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
     await scaffoldElectron(projectDir, {
       packageManager: "npm",
@@ -768,8 +757,7 @@ describe("scaffoldElectron", (): void => {
   });
 
   it("pins Better Auth versions in the generated electron app", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const projectDir = await makeTempDir("electron");
+    const projectDir = makeTempDir("electron");
 
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
     await scaffoldElectron(projectDir, {
@@ -830,8 +818,7 @@ describe("scaffoldElectron", (): void => {
 
   it("allows Electron install/build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
-    // oxlint-disable-next-line typescript/await-thenable -- Preserve the fixture contract and its runtime assertions; changing this expression would alter the case under test.
-    const projectDir = await makeTempDir("electron-pnpm");
+    const projectDir = makeTempDir("electron-pnpm");
 
     await scaffoldFromTemplate(projectDir, { packageManager: "pnpm" });
     await scaffoldElectron(projectDir, {

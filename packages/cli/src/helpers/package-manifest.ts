@@ -28,31 +28,29 @@ const BETTER_AUTH_PACKAGES = [
 
 const toExactVersion = (range: string): string => range.replace(/^[~^]/u, "");
 
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const resolveBetterAuthVersion = (packageJson: PackageJson): string | null => {
+const resolveBetterAuthVersion = (
+  packageJson: Readonly<{
+    dependencies?: Readonly<DependencyMap>;
+    devDependencies?: Readonly<DependencyMap>;
+  }>
+): string => {
   for (const dependencyGroup of [
     packageJson.dependencies,
     packageJson.devDependencies,
   ]) {
-    if (!dependencyGroup) {
-      continue;
-    }
-
-    for (const packageName of BETTER_AUTH_PACKAGES) {
-      const version = dependencyGroup[packageName];
-      if (version) {
-        return toExactVersion(version);
+    if (dependencyGroup) {
+      for (const packageName of BETTER_AUTH_PACKAGES) {
+        const version = dependencyGroup[packageName];
+        if (version) {
+          return toExactVersion(version);
+        }
       }
     }
   }
 
-  return null;
+  // The only receiver pins versions when this lookup returns a nonempty string.
+  return "";
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-continue */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const pinBetterAuthVersions = (
@@ -164,12 +162,12 @@ const normalizeElectronDevDependencies = (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const normalizeScaffoldedPackageJson = (
   packageJson: PackageJson,
-  options?: {
+  options?: Readonly<{
     packageManager?: PackageManager;
     persistPackageManager?: boolean;
     template?: "chat-app" | "electron";
     tsxVersion?: string;
-  }
+  }>
 ): PackageJson => {
   const betterAuthVersion = resolveBetterAuthVersion(packageJson);
 

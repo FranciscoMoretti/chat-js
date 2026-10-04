@@ -5,31 +5,38 @@ import path from "node:path";
 import type { PackageManager } from "../types";
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const launcherPackageManager = (): PackageManager => {
-  const ua = process.env.npm_config_user_agent ?? "";
-  if (ua.startsWith("pnpm/")) {
+  // oxlint-disable-next-line node/no-process-env -- Read the launching package manager per call; inferPackageManager uses this current process fallback only after exhausting project manifests and lockfiles.
+  const userAgent = process.env.npm_config_user_agent ?? "";
+  if (userAgent.startsWith("pnpm/")) {
     return "pnpm";
   }
-  if (ua.startsWith("yarn/")) {
+  if (userAgent.startsWith("yarn/")) {
     return "yarn";
   }
-  if (ua.startsWith("npm/")) {
+  if (userAgent.startsWith("npm/")) {
     return "npm";
   }
-  if (ua.startsWith("bun/")) {
+  if (userAgent.startsWith("bun/")) {
     return "bun";
   }
 
   return "bun";
 };
-/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable node/no-sync -- These private manifest probes preserve inferPackageManager's synchronous PackageManager API: commands/config.ts uses that value immediately to build install arguments. The paired existence check and parse keep file errors and declaration precedence unchanged. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+const readManifest = (manifestPath: string): unknown => {
+  try {
+    return JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return undefined;
+    }
+    throw error;
+  }
+};
+
 const readDeclaredPackageManager = (
   manifestPath: string
 ): PackageManager | undefined => {
@@ -37,18 +44,10 @@ const readDeclaredPackageManager = (
     return undefined;
   }
 
-  let manifest: unknown;
-  try {
-    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      return undefined;
-    }
-    throw error;
-  }
+  const manifest = readManifest(manifestPath);
 
   if (
-    !manifest ||
+    manifest === null ||
     typeof manifest !== "object" ||
     !("packageManager" in manifest) ||
     typeof manifest.packageManager !== "string"
@@ -64,47 +63,49 @@ const readDeclaredPackageManager = (
     ? declared
     : undefined;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+interface LockfileDefinition {
+  readonly filenames: readonly string[];
+  readonly manager: PackageManager;
+}
+
+// Preserve precedence and the short-circuit order of filesystem probes.
+const LOCKFILES: readonly LockfileDefinition[] = [
+  { filenames: ["pnpm-lock.yaml"], manager: "pnpm" },
+  { filenames: ["yarn.lock"], manager: "yarn" },
+  { filenames: ["package-lock.json"], manager: "npm" },
+  { filenames: ["bun.lock", "bun.lockb"], manager: "bun" },
+];
+
+const directoryPackageManager = (cwd: string): PackageManager | undefined => {
+  const declared = readDeclaredPackageManager(path.join(cwd, "package.json"));
+  if (declared) {
+    return declared;
+  }
+  const lockfile = LOCKFILES.find((candidate: LockfileDefinition): boolean =>
+    candidate.filenames.some((filename): boolean =>
+      // oxlint-disable-next-line node/no-sync -- inferPackageManager synchronously selects a manager before config.ts builds install command arguments; async probing would change its public PackageManager result to a Promise.
+      fs.existsSync(path.join(cwd, filename))
+    )
+  );
+  return lockfile?.manager;
+};
+
 const inferPackageManager = (cwd = process.cwd()): PackageManager => {
   let currentDir = path.resolve(cwd);
   while (true) {
-    const manifestPath = path.join(currentDir, "package.json");
-    const declared = readDeclaredPackageManager(manifestPath);
+    const declared = directoryPackageManager(currentDir);
     if (declared) {
       return declared;
     }
-    if (fs.existsSync(path.join(currentDir, "pnpm-lock.yaml"))) {
-      return "pnpm";
-    }
-    if (fs.existsSync(path.join(currentDir, "yarn.lock"))) {
-      return "yarn";
-    }
-    if (fs.existsSync(path.join(currentDir, "package-lock.json"))) {
-      return "npm";
-    }
-    if (
-      fs.existsSync(path.join(currentDir, "bun.lock")) ||
-      fs.existsSync(path.join(currentDir, "bun.lockb"))
-    ) {
-      return "bun";
-    }
-
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir) {
       break;
     }
     currentDir = parentDir;
   }
-
   return launcherPackageManager();
 };
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-statements */
 export { inferPackageManager, launcherPackageManager };

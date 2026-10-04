@@ -111,7 +111,9 @@ const AUTH_LABELS: Record<AuthProvider, string> = {
 };
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-const handleCancel: (value: unknown) => asserts value is never = (value) => {
+const handleCancel: <PromptValue>(
+  value: PromptValue
+) => asserts value is Exclude<PromptValue, symbol> = (value) => {
   if (isCancel(value)) {
     cancel("Operation cancelled.");
     // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
@@ -197,7 +199,7 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
         value?.trim() ? undefined : "Enter a registry item address",
     });
     handleCancel(source);
-    return String(source).trim();
+    return source.trim();
   }
   return gateway;
 };
@@ -239,7 +241,7 @@ const promptStorage = async (
       ],
     });
     handleCancel(choice);
-    source = String(choice);
+    source = choice;
     if (source === "__external__") {
       const address = await text({
         message: "Storage registry item address:",
@@ -247,7 +249,7 @@ const promptStorage = async (
           value?.trim() ? undefined : "Enter an item address",
       });
       handleCancel(address);
-      source = String(address).trim();
+      source = address.trim();
     }
   }
   const selection = await resolveStorage(source, cwd);
@@ -271,7 +273,7 @@ const promptStorage = async (
       },
     });
     handleCancel(input);
-    options = String(input);
+    options = input;
   }
   selection.options = options === undefined ? {} : parseStorageOptions(options);
   // Only the actual built-in address uses SDK-derived option/credential rules.
@@ -357,10 +359,7 @@ const promptCoreFeatures = async (
   });
   handleCancel(selected);
 
-  const result = toSelectionRecord(
-    CORE_FEATURE_KEYS,
-    selected as CoreFeatureKey[]
-  );
+  const result = toSelectionRecord(CORE_FEATURE_KEYS, selected);
   result.mcp = mcp ?? result.mcp;
   return result;
 };
@@ -399,7 +398,7 @@ const promptDocumentTypes = async (
   });
   handleCancel(selected);
 
-  return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected as DocumentTypeKey[]);
+  return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected);
 };
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -461,7 +460,7 @@ const promptAssistantTools = async (
   });
   handleCancel(selected);
 
-  const selectedValues = selected as string[];
+  const selectedValues = selected;
   const builtInTools = toSelectionRecord(
     BUILT_IN_TOOL_KEYS,
     selectedValues.filter((value): value is BuiltInToolKey =>
@@ -513,7 +512,7 @@ const promptAuth = async (
     });
     handleCancel(selected);
 
-    selectedProviders = selected as AuthProvider[];
+    selectedProviders = selected;
     if (selectedProviders.length === 0) {
       logger.warn("At least one auth provider is required. Please select one.");
     }
@@ -576,7 +575,7 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
     validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
-  return String(address).trim();
+  return address.trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
@@ -609,7 +608,7 @@ const promptCodeExecutionTool = async (
     validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
-  return String(address).trim();
+  return address.trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
@@ -640,7 +639,7 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
     validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
-  return String(address).trim();
+  return address.trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
@@ -673,7 +672,7 @@ const promptImageGenerationTool = async (
     validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
-  return String(address).trim();
+  return address.trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
@@ -706,7 +705,7 @@ const promptVideoGenerationTool = async (
     validate: (value) => (value?.trim() ? undefined : "Enter an address"),
   });
   handleCancel(address);
-  return String(address).trim();
+  return address.trim();
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */

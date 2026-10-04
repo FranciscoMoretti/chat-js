@@ -15,12 +15,12 @@ import { generatedRegistrationSource } from "../utils/generated-registration-sou
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { preflight } from "../utils/preflight";
 /* oxlint-enable import/no-relative-parent-imports */
+import type { ReadonlyInput } from "./readonly-input";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
-  (item) => item.meta.chatjs.id !== "memory"
+  (item: ReadonlyInput<(typeof builtInStorage)[number]>) =>
+    item.meta.chatjs.id !== "memory"
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const parseStorageOptions = (value: string): Record<string, unknown> => {
   try {
@@ -34,11 +34,10 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Configure the installed source without evaluating it or editing dependencies. */
 const configureStorageProvider = async (
   destination: string,
-  selection: StorageSelection
+  selection: ReadonlyInput<StorageSelection>
 ): Promise<void> => {
   await preflight(destination, ["lib/storage-options.ts", ".env.example"]);
   const { definition, options } = selection;
@@ -85,7 +84,6 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
   env += `${end}\n`;
   await writeFile(examplePath, env);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable jsdoc/require-param */

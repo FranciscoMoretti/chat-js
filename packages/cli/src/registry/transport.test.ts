@@ -6,7 +6,6 @@ import path from "node:path";
 import { installItems } from "./shadcn";
 import { withRegistryTransport } from "./transport";
 
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("shadcn transitive registry requests retain transport policy and restore host fetch", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-transport-"));
   const original = globalThis.fetch;
@@ -27,7 +26,9 @@ test("shadcn transitive registry requests retain transport policy and restore ho
     ).rejects.toThrow("HTTPS");
     expect(globalThis.fetch).toBe(original);
     expect(
-      await withRegistryTransport(() => Promise.resolve("next operation"))
+      await withRegistryTransport(
+        async () => await Promise.resolve("next operation")
+      )
     ).toBe("next operation");
     expect(globalThis.fetch).toBe(original);
   } finally {
@@ -35,4 +36,3 @@ test("shadcn transitive registry requests retain transport policy and restore ho
     await rm(cwd, { force: true, recursive: true });
   }
 });
-/* oxlint-enable typescript/promise-function-async */

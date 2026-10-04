@@ -10,28 +10,35 @@ import { generatedRegistrationSource } from "../utils/generated-registration-sou
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { preflight } from "../utils/preflight";
 /* oxlint-enable import/no-relative-parent-imports */
+import type { ReadonlyInput } from "./readonly-input";
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const sortJsonKeys = (value: unknown): unknown => {
   if (Array.isArray(value)) {
-    return value.map((nestedValue) => sortJsonKeys(nestedValue));
+    return value.map((nestedValue: unknown) => sortJsonKeys(nestedValue));
   }
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value)
-        .toSorted(([left], [right]) => {
-          if (left === right) {
-            return 0;
+        .toSorted(
+          (
+            [left]: readonly [string, unknown],
+            [right]: readonly [string, unknown]
+          ) => {
+            if (left === right) {
+              return 0;
+            }
+            return left < right ? -1 : 1;
           }
-          return left < right ? -1 : 1;
-        })
-        .map(([key, nestedValue]) => [key, sortJsonKeys(nestedValue)])
+        )
+        .map(([key, nestedValue]: readonly [string, unknown]) => [
+          key,
+          sortJsonKeys(nestedValue),
+        ])
     );
   }
   return value;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -40,11 +47,10 @@ const sortJsonKeys = (value: unknown): unknown => {
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Wire the installed gateway; source and dependencies are installed by shadcn. */
 export const configureGatewayProvider = async (
   destination: string,
-  selection: GatewaySelection
+  selection: ReadonlyInput<GatewaySelection>
 ): Promise<void> => {
   await preflight(destination, [
     "lib/ai/gateway-model-defaults.ts",
@@ -108,7 +114,6 @@ export const models: readonly AiGatewayModel[] = [];
   }
   await writeFile(example, env);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
