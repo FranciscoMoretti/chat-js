@@ -643,24 +643,24 @@ const EveConversation = ({
 };
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- sameComposerDraft: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: ReturnType<typeof restoreDraft>). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- sameComposerDraft: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: ReturnType<typeof restoreDraft>). */
 
 const sameComposerDraft = (
   draft: ReturnType<typeof restoreDraft>,
   sent: ReturnType<typeof restoreDraft>
-) =>
+): boolean =>
   draft.text.trim() === sent.text.trim() &&
   draft.attachments.length === sent.attachments.length &&
   draft.attachments.every(
     (file, index) => file.url === sent.attachments[index]?.url
   );
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- nextTurnBoundary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 5); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- nextTurnBoundary: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 5); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const nextTurnBoundary = (
   event: ReturnType<typeof useEveAgent>["events"][number] | undefined
-) => {
+): string => {
   if (
     !(
       event &&
@@ -675,7 +675,7 @@ const nextTurnBoundary = (
   }
   return `turn_${BigInt(event.data.turnId.slice(5)) + 1n}`;
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useConversationInput: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 

@@ -24,7 +24,6 @@ const updateName = {
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -139,7 +138,6 @@ export const ResearchProgress = ({
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */

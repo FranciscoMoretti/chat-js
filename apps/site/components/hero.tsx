@@ -29,7 +29,7 @@ const Sparkle = ({
 /* oxlint-disable eslint/max-lines-per-function -- Hero: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 
 /* oxlint-disable react/jsx-max-depth -- Hero: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- Hero: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
+
 export const Hero = (): React.JSX.Element => (
   <section className="relative overflow-hidden">
     {/* Background atmosphere — layered organic gradients */}
@@ -158,7 +158,7 @@ export const Hero = (): React.JSX.Element => (
     </div>
   </section>
 );
-/* oxlint-enable react-perf/jsx-no-new-object-as-prop */
+
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-enable eslint/max-lines-per-function */
