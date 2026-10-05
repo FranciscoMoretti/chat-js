@@ -13,7 +13,7 @@ import type {
 /* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Breadcrumb: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Breadcrumb: typescript/prefer-readonly-parameter-types: React nav props preserve the existing forwarded ref and native event callback contracts. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Breadcrumb uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Breadcrumb = reactForwardRef<
@@ -21,7 +21,7 @@ const Breadcrumb = reactForwardRef<
   ReactComponentPropsWithoutRef<"nav"> & {
     separator?: ReactReactNode;
   }
->(({ ...props }, ref): ReactJSX.Element => (
+>((props, ref): ReactJSX.Element => (
   <nav
     aria-label="breadcrumb"
     ref={ref}

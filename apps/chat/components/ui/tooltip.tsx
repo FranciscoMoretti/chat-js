@@ -35,9 +35,9 @@ const TooltipProvider = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Tooltip: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Tooltip uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Tooltip = ({
-  ...props
-}: ReactComponentProps<typeof TooltipPrimitiveRoot>): ReactJSX.Element => (
+const Tooltip = (
+  props: ReactComponentProps<typeof TooltipPrimitiveRoot>
+): ReactJSX.Element => (
   <TooltipProvider>
     <TooltipPrimitiveRoot
       data-slot="tooltip"
@@ -52,9 +52,9 @@ const Tooltip = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TooltipTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const TooltipTrigger = ({
-  ...props
-}: ReactComponentProps<typeof TooltipPrimitiveTrigger>): ReactJSX.Element => (
+const TooltipTrigger = (
+  props: ReactComponentProps<typeof TooltipPrimitiveTrigger>
+): ReactJSX.Element => (
   <TooltipPrimitiveTrigger
     data-slot="tooltip-trigger"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TooltipTrigger's TooltipPrimitiveTrigger prop contract, preserving caller options, children and callbacks.

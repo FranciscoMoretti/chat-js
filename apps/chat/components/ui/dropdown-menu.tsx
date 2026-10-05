@@ -29,9 +29,9 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- DropdownMenu: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenu uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DropdownMenu = ({
-  ...props
-}: ReactComponentProps<typeof DropdownMenuPrimitiveRoot>): ReactJSX.Element => (
+const DropdownMenu = (
+  props: ReactComponentProps<typeof DropdownMenuPrimitiveRoot>
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveRoot
     data-slot="dropdown-menu"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenu's DropdownMenuPrimitiveRoot prop contract, preserving caller options, children and callbacks.
@@ -43,11 +43,9 @@ const DropdownMenu = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DropdownMenuPortal = ({
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitivePortal
->): ReactJSX.Element => (
+const DropdownMenuPortal = (
+  props: ReactComponentProps<typeof DropdownMenuPrimitivePortal>
+): ReactJSX.Element => (
   <DropdownMenuPrimitivePortal
     data-slot="dropdown-menu-portal"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuPortal's DropdownMenuPrimitivePortal prop contract, preserving caller options, children and callbacks.
@@ -60,11 +58,9 @@ const DropdownMenuPortal = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DropdownMenuTrigger = ({
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveTrigger
->): ReactJSX.Element => (
+const DropdownMenuTrigger = (
+  props: ReactComponentProps<typeof DropdownMenuPrimitiveTrigger>
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveTrigger
     data-slot="dropdown-menu-trigger"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuTrigger's DropdownMenuPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
@@ -104,11 +100,9 @@ const DropdownMenuContent = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DropdownMenuGroup = ({
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveGroup
->): ReactJSX.Element => (
+const DropdownMenuGroup = (
+  props: ReactComponentProps<typeof DropdownMenuPrimitiveGroup>
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveGroup
     data-slot="dropdown-menu-group"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuGroup's DropdownMenuPrimitiveGroup prop contract, preserving caller options, children and callbacks.
@@ -185,11 +179,9 @@ const DropdownMenuCheckboxItem = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuRadioGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuRadioGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DropdownMenuRadioGroup = ({
-  ...props
-}: ReactComponentProps<
-  typeof DropdownMenuPrimitiveRadioGroup
->): ReactJSX.Element => (
+const DropdownMenuRadioGroup = (
+  props: ReactComponentProps<typeof DropdownMenuPrimitiveRadioGroup>
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveRadioGroup
     data-slot="dropdown-menu-radio-group"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuRadioGroup's DropdownMenuPrimitiveRadioGroup prop contract, preserving caller options, children and callbacks.
@@ -301,9 +293,9 @@ const DropdownMenuShortcut = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuSub: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSub uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DropdownMenuSub = ({
-  ...props
-}: ReactComponentProps<typeof DropdownMenuPrimitiveSub>): ReactJSX.Element => (
+const DropdownMenuSub = (
+  props: ReactComponentProps<typeof DropdownMenuPrimitiveSub>
+): ReactJSX.Element => (
   <DropdownMenuPrimitiveSub
     data-slot="dropdown-menu-sub"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuSub's DropdownMenuPrimitiveSub prop contract, preserving caller options, children and callbacks.

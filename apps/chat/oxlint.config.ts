@@ -36,6 +36,7 @@ export default defineConfig({
       },
     },
     // EVE derives the public tool name from this filename.
+    // Oxlint reports this rule at offset zero and cannot honor source directives.
     {
       files: [
         "agent/tools/deepResearch.ts",

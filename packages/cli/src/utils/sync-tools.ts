@@ -279,7 +279,10 @@ const orderedProperties = (
       if (leftProperty.key === rightProperty.key) {
         return 0;
       }
-      return leftProperty.key < rightProperty.key ? -1 : 1;
+      if (leftProperty.key < rightProperty.key) {
+        return -1;
+      }
+      return 1;
     })
     .map(({ key, value }): string => `  ${key}: ${value},`)
     .join("\n");

@@ -22,9 +22,9 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Dialog: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Dialog uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Dialog = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitiveRoot>): ReactJSX.Element => (
+const Dialog = (
+  props: ReactComponentProps<typeof DialogPrimitiveRoot>
+): ReactJSX.Element => (
   <DialogPrimitiveRoot
     data-slot="dialog"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Dialog's DialogPrimitiveRoot prop contract, preserving caller options, children and callbacks.
@@ -36,9 +36,9 @@ const Dialog = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DialogTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DialogTrigger = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitiveTrigger>): ReactJSX.Element => (
+const DialogTrigger = (
+  props: ReactComponentProps<typeof DialogPrimitiveTrigger>
+): ReactJSX.Element => (
   <DialogPrimitiveTrigger
     data-slot="dialog-trigger"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogTrigger's DialogPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
@@ -51,9 +51,9 @@ const DialogTrigger = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DialogPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DialogPortal = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitivePortal>): ReactJSX.Element => (
+const DialogPortal = (
+  props: ReactComponentProps<typeof DialogPrimitivePortal>
+): ReactJSX.Element => (
   <DialogPrimitivePortal
     data-slot="dialog-portal"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogPortal's DialogPrimitivePortal prop contract, preserving caller options, children and callbacks.
@@ -66,9 +66,9 @@ const DialogPortal = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- DialogClose uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const DialogClose = ({
-  ...props
-}: ReactComponentProps<typeof DialogPrimitiveClose>): ReactJSX.Element => (
+const DialogClose = (
+  props: ReactComponentProps<typeof DialogPrimitiveClose>
+): ReactJSX.Element => (
   <DialogPrimitiveClose
     data-slot="dialog-close"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogClose's DialogPrimitiveClose prop contract, preserving caller options, children and callbacks.

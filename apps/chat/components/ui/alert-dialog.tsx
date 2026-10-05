@@ -21,9 +21,9 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AlertDialog: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialog uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const AlertDialog = ({
-  ...props
-}: ReactComponentProps<typeof AlertDialogPrimitiveRoot>): ReactJSX.Element => (
+const AlertDialog = (
+  props: ReactComponentProps<typeof AlertDialogPrimitiveRoot>
+): ReactJSX.Element => (
   <AlertDialogPrimitiveRoot
     data-slot="alert-dialog"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialog's AlertDialogPrimitiveRoot prop contract, preserving caller options, children and callbacks.
@@ -35,11 +35,9 @@ const AlertDialog = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const AlertDialogTrigger = ({
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitiveTrigger
->): ReactJSX.Element => (
+const AlertDialogTrigger = (
+  props: ReactComponentProps<typeof AlertDialogPrimitiveTrigger>
+): ReactJSX.Element => (
   <AlertDialogPrimitiveTrigger
     data-slot="alert-dialog-trigger"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogTrigger's AlertDialogPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
@@ -52,11 +50,9 @@ const AlertDialogTrigger = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialogPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const AlertDialogPortal = ({
-  ...props
-}: ReactComponentProps<
-  typeof AlertDialogPrimitivePortal
->): ReactJSX.Element => (
+const AlertDialogPortal = (
+  props: ReactComponentProps<typeof AlertDialogPrimitivePortal>
+): ReactJSX.Element => (
   <AlertDialogPrimitivePortal
     data-slot="alert-dialog-portal"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogPortal's AlertDialogPrimitivePortal prop contract, preserving caller options, children and callbacks.

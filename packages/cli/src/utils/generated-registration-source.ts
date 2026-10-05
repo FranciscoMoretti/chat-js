@@ -15,9 +15,10 @@ const noRules = 0;
 
 const registrationLine = (line: string, rendered: string): string => {
   const rules = registrationRules(line);
-  return rules.length === noRules
-    ? rendered
-    : `// oxlint-disable-next-line ${rules.join(", ")} -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.\n${rendered}`;
+  if (rules.length === noRules) {
+    return rendered;
+  }
+  return `// oxlint-disable-next-line ${rules.join(", ")} -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.\n${rendered}`;
 };
 const defaultDependencyLimit = 10;
 

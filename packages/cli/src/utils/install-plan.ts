@@ -84,10 +84,12 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
           file: ReadonlyNative<
             NonNullable<Plan["items"][number]["files"]>[number]
           >
-        ) =>
-          file.target?.startsWith("~/") === true
-            ? [file.target.slice(REGISTRY_ROOT_PREFIX.length)]
-            : []
+        ) => {
+          if (file.target?.startsWith("~/") === true) {
+            return [file.target.slice(REGISTRY_ROOT_PREFIX.length)];
+          }
+          return [];
+        }
       )
     )
   ),
@@ -304,8 +306,12 @@ const installPlan = async (
       ),
     ]);
     const restorationErrors = restored.flatMap(
-      (result: ReadonlyNative<(typeof restored)[number]>) =>
-        result.status === "rejected" ? [String(result.reason)] : []
+      (result: ReadonlyNative<(typeof restored)[number]>) => {
+        if (result.status === "rejected") {
+          return [String(result.reason)];
+        }
+        return [];
+      }
     );
     throw new Error(
       `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,

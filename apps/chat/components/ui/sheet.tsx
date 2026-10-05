@@ -19,12 +19,12 @@ import type {
 /* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Sheet: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: React.ComponentProps<typeof SheetPrimitive.Root>). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Sheet: typescript/prefer-readonly-parameter-types: Radix Dialog root props preserve its existing modal state and callback contracts. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Sheet uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Sheet = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveRoot>): ReactJSX.Element => (
+const Sheet = (
+  props: ReactComponentProps<typeof SheetPrimitiveRoot>
+): ReactJSX.Element => (
   <SheetPrimitiveRoot
     data-slot="sheet"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Sheet's SheetPrimitiveRoot prop contract, preserving caller options, children and callbacks.
@@ -36,9 +36,9 @@ const Sheet = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SheetTrigger = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveTrigger>): ReactJSX.Element => (
+const SheetTrigger = (
+  props: ReactComponentProps<typeof SheetPrimitiveTrigger>
+): ReactJSX.Element => (
   <SheetPrimitiveTrigger
     data-slot="sheet-trigger"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetTrigger's SheetPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
@@ -51,9 +51,9 @@ const SheetTrigger = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetClose uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SheetClose = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitiveClose>): ReactJSX.Element => (
+const SheetClose = (
+  props: ReactComponentProps<typeof SheetPrimitiveClose>
+): ReactJSX.Element => (
   <SheetPrimitiveClose
     data-slot="sheet-close"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetClose's SheetPrimitiveClose prop contract, preserving caller options, children and callbacks.
@@ -66,9 +66,9 @@ const SheetClose = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const SheetPortal = ({
-  ...props
-}: ReactComponentProps<typeof SheetPrimitivePortal>): ReactJSX.Element => (
+const SheetPortal = (
+  props: ReactComponentProps<typeof SheetPrimitivePortal>
+): ReactJSX.Element => (
   <SheetPrimitivePortal
     data-slot="sheet-portal"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetPortal's SheetPrimitivePortal prop contract, preserving caller options, children and callbacks.

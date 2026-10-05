@@ -54,6 +54,10 @@ Remaining declaration exceptions cover one import and explain either runtime mod
 
 The 2,728 findings map to 2,054 canonical scopes and 132 generated scopes. Emitted JavaScript tokens, parser diagnostics and JSDoc attachment remain unchanged. These new policy exceptions do not sign off unrelated pre-existing suppressions in the same functions.
 
+## File-level directive limitations
+
+Pinned Oxlint 1.82 reports `import/unambiguous` and `unicorn/filename-case` at offset zero, even when the file starts with a matching disable comment. A native three-file probe confirms this for an ambient declaration, CommonJS entry and underscore-named tool. Keep the existing exact-file configuration exceptions for Electron's ambient/Forge boundaries and EVE's filename-derived public tool names; do not widen them to directories. Source directives remain the default elsewhere.
+
 ## Acceptance criteria
 
 1. Resolve contradictory policies in shared root and standalone-app configuration.

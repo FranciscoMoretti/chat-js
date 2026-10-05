@@ -36,7 +36,10 @@ const requiredMedia = (tool: MediaConsumer): readonly MediaKind[] => {
   if (tool.id === "generate-image") {
     return ["image"];
   }
-  return tool.id === "generate-video" ? ["video"] : [];
+  if (tool.id === "generate-video") {
+    return ["video"];
+  }
+  return [];
 };
 
 const requiresStorage = (item: StorageConsumer): boolean =>

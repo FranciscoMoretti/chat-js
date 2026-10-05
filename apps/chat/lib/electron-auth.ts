@@ -44,16 +44,6 @@ const toSearchParamRecord = (
   return query;
 };
 
-const buildAuthPageHref = (
-  pathname: string,
-  searchParams: Readonly<Record<string, SearchParamValue>>
-): string => {
-  const query = new URLSearchParams(
-    toSearchParamRecord(searchParams)
-  ).toString();
-  return query === "" ? pathname : `${pathname}?${query}`;
-};
-
 const isElectronTransferQuery = (
   query: Readonly<Record<string, string>>
 ): boolean => query.client_id === ELECTRON_AUTH_CLIENT_ID;
@@ -101,7 +91,6 @@ export {
   isDesktopAppEnabled,
   isElectronRenderer,
   toSearchParamRecord,
-  buildAuthPageHref,
   isElectronTransferQuery,
   buildSocialAuthRequest,
 };

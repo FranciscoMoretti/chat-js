@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- HoverCard: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCard uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const HoverCard = ({
-  ...props
-}: ReactComponentProps<typeof HoverCardPrimitiveRoot>): ReactJSX.Element => (
+const HoverCard = (
+  props: ReactComponentProps<typeof HoverCardPrimitiveRoot>
+): ReactJSX.Element => (
   <HoverCardPrimitiveRoot
     data-slot="hover-card"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward HoverCard's HoverCardPrimitiveRoot prop contract, preserving caller options, children and callbacks.
@@ -29,9 +29,9 @@ const HoverCard = ({
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- HoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCardTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const HoverCardTrigger = ({
-  ...props
-}: ReactComponentProps<typeof HoverCardPrimitiveTrigger>): ReactJSX.Element => (
+const HoverCardTrigger = (
+  props: ReactComponentProps<typeof HoverCardPrimitiveTrigger>
+): ReactJSX.Element => (
   <HoverCardPrimitiveTrigger
     data-slot="hover-card-trigger"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward HoverCardTrigger's HoverCardPrimitiveTrigger prop contract, preserving caller options, children and callbacks.

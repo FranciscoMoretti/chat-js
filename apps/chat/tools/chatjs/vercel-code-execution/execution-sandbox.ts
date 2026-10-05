@@ -249,8 +249,12 @@ const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
   },
 };
 
-const getErrorMessage = (err: unknown): string =>
-  err instanceof Error ? err.message : "Unknown error";
+const getErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return "Unknown error";
+};
 export {
   cleanupSandbox,
   codeSandboxCleanupCapability,

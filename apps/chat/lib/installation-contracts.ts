@@ -7,10 +7,7 @@ import type {
   ComposerControl,
   ComposerControlProps,
 } from "@/components/composer/control";
-import type { SettingsItem } from "@/components/settings/settings-item";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DraftAttachment } from "@/lib/eve/draft";
-/* oxlint-enable sort-imports */
 
 /** Preserve inferred procedure types: use `satisfies`, never annotate the map. */
 type InstalledRouters = Record<string, AnyTRPCRouter> & {
@@ -19,12 +16,6 @@ type InstalledRouters = Record<string, AnyTRPCRouter> & {
   project?: never;
   settings?: never;
 };
-
-/** Application-owned composition; sync adds defaults only during create/add. */
-interface FeatureUiContribution {
-  composerControls: readonly ComposerControl[];
-  settingsItems: readonly SettingsItem[];
-}
 
 /** D owns picker/camera/paste/drop behavior; core owns persisted attachments. */
 interface AttachmentUploadInput {
@@ -62,7 +53,6 @@ export type {
   AttachmentUploadBehavior,
   AttachmentUploadInput,
   AttachmentUploadIntegration,
-  FeatureUiContribution,
   InstalledLayoutComponent,
   InstalledRouters,
   InstrumentationRegistration,
