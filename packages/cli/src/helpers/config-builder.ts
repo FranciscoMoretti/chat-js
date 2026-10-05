@@ -13,62 +13,54 @@ import { builtInGateways } from "../registry/gateways";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { AuthProvider, CoreFeatureKey, Gateway } from "../types";
 /* oxlint-enable import/no-relative-parent-imports */
+import type { ReadonlyInput } from "./readonly-input";
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const defaultsFor = (input: {
-  gateway: string;
-  gatewayDefaults?: GatewayDefinition["defaults"];
-}) => {
+const defaultsFor = (
+  input: ReadonlyInput<{
+    gateway: string;
+    gatewayDefaults?: GatewayDefinition["defaults"];
+  }>
+): ReadonlyInput<GatewayDefinition["defaults"]> => {
   const defaults =
     input.gatewayDefaults ??
     builtInGateways.find(
-      (item): boolean => item.meta.chatjs.id === input.gateway
+      (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>
+        item.meta.chatjs.id === input.gateway
     )?.meta.chatjs.defaults;
   if (!defaults) {
     throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
   }
   return defaults;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const extractDescriptions = (
-  schema: z.ZodType,
-  prefix = "",
-  result = new Map<string, string>()
-): Map<string, string> => {
-  if (
-    typeof schema.description === "string" &&
-    schema.description !== "" &&
-    prefix
-  ) {
-    result.set(prefix, schema.description);
-  }
-
-  if (schema instanceof z.ZodObject) {
-    const { shape } = schema;
-    for (const [key, propSchema] of Object.entries(shape)) {
-      const path = prefix ? `${prefix}.${key}` : key;
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Configuration traversal supports heterogeneous Zod schemas and nested values; a stricter schema visitor would alter generated configuration support.
-      extractDescriptions(propSchema as z.ZodType, path, result);
+const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
+  const result = new Map<string, string>();
+  const visit = (node: unknown, prefix: string): void => {
+    if (!(node instanceof z.ZodType)) {
+      return;
     }
-  }
+    if (
+      typeof node.description === "string" &&
+      node.description !== "" &&
+      prefix !== ""
+    ) {
+      result.set(prefix, node.description);
+    }
 
-  if (schema instanceof z.ZodDiscriminatedUnion) {
-    for (const option of schema.options.values()) {
-      if (option instanceof z.ZodType) {
-        extractDescriptions(option, prefix, result);
+    if (node instanceof z.ZodObject) {
+      for (const [key, property] of Object.entries(node.shape)) {
+        visit(property, prefix === "" ? key : `${prefix}.${key}`);
       }
     }
-  }
-
+    if (node instanceof z.ZodDiscriminatedUnion) {
+      for (const option of node.options.values()) {
+        visit(option, prefix);
+      }
+    }
+  };
+  visit(schema, "");
   return result;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-statements */
 
 const descriptions = extractDescriptions(configDescriptionSchema);
 
@@ -77,11 +69,14 @@ const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u;
 const formatKey = (key: string): string =>
   VALID_KEY_REGEX.test(key) ? key : JSON.stringify(key);
 
+const compareEntryKeys = (
+  [left]: readonly [string, unknown],
+  [right]: readonly [string, unknown]
+): number => left.localeCompare(right);
+
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const formatValue = (value: unknown, indent: number): string => {
   const spaces = "  ".repeat(indent);
   const inner = "  ".repeat(indent + 1);
@@ -104,28 +99,27 @@ const formatValue = (value: unknown, indent: number): string => {
   }
 
   if (Array.isArray(value)) {
-    if (value.length === 0) {
+    const values: readonly unknown[] = value;
+    if (values.length === 0) {
       return "[]";
     }
-    if (value.every((v) => typeof v === "string")) {
-      return `[${value.map((v): string => JSON.stringify(v)).join(", ")}]`;
+    if (values.every((entry) => typeof entry === "string")) {
+      return `[${values.map((entry): string => JSON.stringify(entry)).join(", ")}]`;
     }
-    return `[\n${value
-      .map((v): string => `${inner}${formatValue(v, indent + 1)}`)
+    return `[\n${values
+      .map((entry): string => `${inner}${formatValue(entry, indent + 1)}`)
       .join(",\n")}\n${spaces}]`;
   }
 
   if (typeof value === "object") {
-    const entries = Object.entries(value).toSorted(([left], [right]): number =>
-      left.localeCompare(right)
-    );
+    const entries = Object.entries(value).toSorted(compareEntryKeys);
     if (entries.length === 0) {
       return "{}";
     }
     return `{\n${entries
       .map(
-        ([k, v]): string =>
-          `${inner}${formatKey(k)}: ${formatValue(v, indent + 1)}`
+        ([key, entry]: readonly [string, unknown]): string =>
+          `${inner}${formatKey(key)}: ${formatValue(entry, indent + 1)}`
       )
       .join(",\n")},\n${spaces}}`;
   }
@@ -133,24 +127,21 @@ const formatValue = (value: unknown, indent: number): string => {
   // oxlint-disable-next-line typescript/no-base-to-string -- Diagnostic formatting intentionally accepts arbitrary third-party values; changing their representation requires an error-output contract decision.
   return String(value);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const generateConfig = (
-  obj: Record<string, unknown>,
+  obj: object,
   indent: number,
   pathPrefix: string
 ): string => {
   const spaces = "  ".repeat(indent);
 
   return Object.entries(obj)
-    .toSorted(([left], [right]): number => left.localeCompare(right))
-    .map(([key, value]): string => {
+    .toSorted(compareEntryKeys)
+    .map(([key, value]: readonly [string, unknown]): string => {
       const path = pathPrefix ? `${pathPrefix}.${key}` : key;
       const desc = descriptions.get(path);
       const comment =
@@ -161,12 +152,7 @@ const generateConfig = (
         value !== null &&
         !Array.isArray(value)
       ) {
-        const nested = generateConfig(
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Configuration traversal supports heterogeneous Zod schemas and nested values; a stricter schema visitor would alter generated configuration support.
-          value as Record<string, unknown>,
-          indent + 1,
-          path
-        );
+        const nested = generateConfig(value, indent + 1, path);
         return `${comment}${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
       }
 
@@ -174,21 +160,31 @@ const generateConfig = (
     })
     .join("\n");
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const toConfigInput = (input: {
+const toConfigInput = (
+  input: ReadonlyInput<{
+    appName: string;
+    appPrefix: string;
+    appUrl: string;
+    withElectron: boolean;
+    gateway: Gateway;
+    gatewayDefaults?: GatewayDefinition["defaults"];
+    coreFeatures: Record<CoreFeatureKey, boolean>;
+    auth: Record<AuthProvider, boolean>;
+  }>
+): {
+  ai: {
+    gateway: Gateway;
+    tools: { followupSuggestions: { enabled: boolean } };
+  };
   appName: string;
   appPrefix: string;
   appUrl: string;
-  withElectron: boolean;
-  gateway: Gateway;
-  gatewayDefaults?: GatewayDefinition["defaults"];
-  coreFeatures: Record<CoreFeatureKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
-}) => ({
+  authentication: Readonly<Record<AuthProvider, boolean>>;
+  desktopApp: { enabled: boolean };
+  features: { parallelResponses: boolean };
+} => ({
   ai: {
     gateway: input.gateway,
     tools: {
@@ -208,8 +204,6 @@ const toConfigInput = (input: {
     parallelResponses: input.coreFeatures.parallelResponses,
   },
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */

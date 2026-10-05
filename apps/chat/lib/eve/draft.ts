@@ -2,6 +2,11 @@ import { z } from "zod";
 
 import { eveMessageInput } from "./message-input";
 import type { EveMessageInput } from "./message-input";
+import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+
+const EMPTY_ATTACHMENT_COUNT = 0;
+const HEX_RADIX = 16;
+const HEX_BYTE_WIDTH = 2;
 
 const draftAttachment = z.object({
   contentType: z.enum(["image/jpeg", "image/png", "application/pdf"]),
@@ -12,9 +17,8 @@ const draftAttachment = z.object({
 
 type DraftAttachment = z.infer<typeof draftAttachment>;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): restoreDraft accepts message: EveMessageInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const restoreDraft = (
-  message: EveMessageInput
+  message: ReadonlyEveMessageInput
 ): {
   text: string;
   attachments: DraftAttachment[];
@@ -37,15 +41,12 @@ const restoreDraft = (
       .join("\n"),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): draftMessage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): draftMessage accepts attachments: DraftAttachment[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const draftMessage = (
   text: string,
-  attachments: DraftAttachment[]
+  attachments: readonly Readonly<DraftAttachment>[]
 ): EveMessageInput => {
-  if (attachments.length === 0) {
+  if (attachments.length === EMPTY_ATTACHMENT_COUNT) {
     return eveMessageInput.parse(text);
   }
   return eveMessageInput.parse([
@@ -58,15 +59,14 @@ const draftMessage = (
     })),
   ]);
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): attachmentDigest uses 16, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): attachmentDigest accepts bytes: ArrayBuffer; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const attachmentDigest = async (bytes: ArrayBuffer): Promise<string> =>
   Array.from(
     new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
-    (byte) => byte.toString(16).padStart(2, "0")
+    (byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, "0")
   ).join("");
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { attachmentDigest, draftAttachment, draftMessage, restoreDraft };
 export type { DraftAttachment };

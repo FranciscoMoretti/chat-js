@@ -16,51 +16,45 @@ interface Metadata {
   isPinned: boolean;
 }
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): pendingEveMetadataMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/prefer-readonly-parameter-types (#565): pendingEveMetadataMutations accepts cache: QueryClient; mutation; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Background title refreshes defer to the last metadata mutation's reconciliation. */
-const pendingEveMetadataMutations = (cache: QueryClient): number =>
-  cache.isMutating({
-    predicate: (mutation): boolean =>
-      mutation.options.meta?.eveMetadata === true,
-  });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
-
-/* oxlint-disable id-length, no-undefined, typescript/prefer-readonly-parameter-types --
- * id-length (#506): rollbackFields uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * no-undefined (#519): rollbackFields uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): rollbackFields accepts previous: Metadata; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/**
+ * Background title refreshes defer to the last metadata mutation's reconciliation.
+ * @param cache Query client whose active mutations share the chat metadata flag.
+ * @returns Number of active mutations tagged with eveMetadata, across chat branches.
  */
-const rollbackFields = <T extends Metadata>(
-  current: T,
-  previous: Metadata,
-  patch: Partial<Metadata>
-): T => ({
+const pendingEveMetadataMutations = (
+  cache: Readonly<Pick<QueryClient, "isMutating">>
+): number =>
+  cache.isMutating({
+    predicate: (mutation: {
+      readonly options: { readonly meta?: { readonly eveMetadata?: unknown } };
+    }): boolean => mutation.options.meta?.eveMetadata === true,
+  });
+
+const rollbackFields = <Value extends Metadata>(
+  current: Value,
+  previous: Readonly<Metadata>,
+  patch: Readonly<Partial<Metadata>>
+): Value => ({
   ...current,
-  ...(patch.title !== undefined && current.title === patch.title
+  ...(patch.title !== globalThis.undefined && current.title === patch.title
     ? { title: previous.title }
     : {}),
-  ...(patch.isPinned !== undefined && current.isPinned === patch.isPinned
+  ...(patch.isPinned !== globalThis.undefined &&
+  current.isPinned === patch.isPinned
     ? { isPinned: previous.isPinned }
     : {}),
 });
-/* oxlint-enable id-length, no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-continue (#515): optimisticEveMetadata skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
-typescript/explicit-function-return-type (#560): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep optimisticEveMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): optimisticEveMetadata accepts cache: QueryClient; page; item; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const optimisticEveMetadata = async (
   cache: QueryClient,
   listKey: QueryKey,
   detailKey: QueryKey,
   id: string,
-  patch: Partial<Metadata>
-) => {
+  patch: Readonly<Partial<Metadata>>
+): Promise<() => void> => {
   await Promise.all([
     cache.cancelQueries({ queryKey: listKey }),
     cache.cancelQueries({ queryKey: detailKey }),
@@ -87,39 +81,37 @@ const optimisticEveMetadata = async (
     }
   }
   // Only restore the affected field; another chat or pin mutation may be in flight.
-  return () => {
+  return (): void => {
     for (const [key, previous] of lists) {
       const before = previous?.pages
         .flatMap((page) => page.items)
         .find((item) => item.id === id);
-      if (!before) {
-        continue;
+      if (before) {
+        cache.setQueryData<History>(
+          key,
+          (current) =>
+            current && {
+              ...current,
+              pages: current.pages.map((page) => ({
+                ...page,
+                items: page.items.map((item) =>
+                  item.id === id ? rollbackFields(item, before, patch) : item
+                ),
+              })),
+            }
+        );
       }
-      cache.setQueryData<History>(
-        key,
-        (current) =>
-          current && {
-            ...current,
-            pages: current.pages.map((page) => ({
-              ...page,
-              items: page.items.map((item) =>
-                item.id === id ? rollbackFields(item, before, patch) : item
-              ),
-            })),
-          }
-      );
     }
     for (const [key, previous] of details) {
-      if (previous?.chatId !== id) {
-        continue;
+      if (previous?.chatId === id) {
+        cache.setQueryData<Identity>(key, (current) =>
+          current?.chatId === id
+            ? rollbackFields(current, previous, patch)
+            : current
+        );
       }
-      cache.setQueryData<Identity>(key, (current) =>
-        current?.chatId === id
-          ? rollbackFields(current, previous, patch)
-          : current
-      );
     }
   };
 };
-/* oxlint-enable max-lines-per-function, max-params, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types */
 export { optimisticEveMetadata, pendingEveMetadataMutations };

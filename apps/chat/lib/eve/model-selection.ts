@@ -1,41 +1,38 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/active-gateway"; "../ai/gateways/fallback-models"; "../ai/gateways/registry"; "../ai/model-data"; "../ai/to-model-data" dependency within this package instead of introducing an alias or barrel API.
- */
 import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
 import { wrapLanguageModel } from "ai";
 import { z } from "zod";
 
-import { getActiveGateway } from "../ai/active-gateway";
-import { getFallbackModels } from "../ai/gateways/fallback-models";
-import type { InstalledGateway } from "../ai/gateways/registry";
-import type { ModelData } from "../ai/model-data";
-import { toModelData } from "../ai/to-model-data";
-import { config } from "../config";
-/* oxlint-enable import/no-relative-parent-imports */
+import { getActiveGateway } from "@/lib/ai/active-gateway";
+import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
+import type { InstalledGateway } from "@/lib/ai/gateways/registry";
+import type { ModelData } from "@/lib/ai/model-data";
+import { toModelData } from "@/lib/ai/to-model-data";
+import { config } from "@/lib/config";
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
+const MODEL_CATALOG_TTL_MS = 3_600_000;
+const MODEL_ID_PARAMETER_INDEX = 0;
+type EveModelDefinition = ModelData & {
+  apiModelId: Parameters<
+    InstalledGateway["createLanguageModel"]
+  >[typeof MODEL_ID_PARAMETER_INDEX];
+};
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): EveModelUnavailableError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 class EveModelUnavailableError extends Error {
-  public constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: Readonly<ErrorOptions>) {
     super(message, options);
     this.name = "EveModelUnavailableError";
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): getEveModelDefinition uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep getEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
 typescript/prefer-readonly-parameter-types (#565): getEveModelDefinition accepts models = getFallbackModels(config.ai.gateway).map((model) => toModelData(model) ); model; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const getEveModelDefinition = (
   requestedId?: string,
   models = getFallbackModels(config.ai.gateway).map((model) =>
     toModelData(model)
   )
-) => {
+): EveModelDefinition => {
   const id = requestedId ?? config.ai.workflows.chat;
   const model = models.find(
     (item) =>
@@ -53,13 +50,11 @@ const getEveModelDefinition = (
     ...model,
     // The active gateway catalog above validates this ID at the runtime boundary.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The selected installed gateway determines valid model IDs at runtime; a generic gateway redesign is needed to encode that relationship.
-    apiModelId: model.id as Parameters<
-      InstalledGateway["createLanguageModel"]
-    >[0],
+    apiModelId: model.id as EveModelDefinition["apiModelId"],
     reasoning: model.reasoning && id.endsWith("-reasoning"),
   };
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable init-declarations --
  * init-declarations (#507): catalog assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -72,18 +67,20 @@ let catalog: { expires: number; models: ModelData[] } | undefined;
 let loading: Promise<ModelData[]> | undefined;
 /* oxlint-enable init-declarations */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): loadEveModelDefinition uses 3_600_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep loadEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep loadEveModelDefinition's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/prefer-readonly-parameter-types (#565): loadEveModelDefinition accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const loadEveModelDefinition = async (requestedId?: string) => {
+const loadEveModelDefinition = async (
+  requestedId?: string
+): Promise<EveModelDefinition> => {
   if (!catalog || catalog.expires < Date.now()) {
-    loading ??= (async () => {
+    loading ??= (async (): Promise<ModelData[]> => {
       try {
         const models = await getActiveGateway().fetchModels();
         const converted = models.map((model) => toModelData(model));
-        catalog = { expires: Date.now() + 3_600_000, models: converted };
+        catalog = {
+          expires: Date.now() + MODEL_CATALOG_TTL_MS,
+          models: converted,
+        };
         return converted;
       } finally {
         loading = undefined;
@@ -93,12 +90,17 @@ const loadEveModelDefinition = async (requestedId?: string) => {
   }
   return getEveModelDefinition(requestedId, catalog.models);
 };
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls -- typescript/explicit-function-return-type (#560): Keep resolveEveModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep resolveEveModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable unicorn/max-nested-calls -- typescript/explicit-function-return-type (#560): Keep resolveEveModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 unicorn/max-nested-calls (#568): resolveEveModel keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
-const resolveEveModel = async (requestedId?: string) => {
+const resolveEveModel = async (
+  requestedId?: string
+): Promise<{
+  model: ReturnType<typeof wrapLanguageModel>;
+  modelContextWindowTokens: number;
+  modelOptions: { providerOptions: z.output<typeof serializedOptions> };
+}> => {
   const model = await loadEveModelDefinition(requestedId);
   return {
     model: wrapLanguageModel({
@@ -115,7 +117,7 @@ const resolveEveModel = async (requestedId?: string) => {
     },
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/max-nested-calls */
+/* oxlint-enable unicorn/max-nested-calls */
 export {
   EveModelUnavailableError,
   getEveModelDefinition,

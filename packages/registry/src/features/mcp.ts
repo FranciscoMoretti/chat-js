@@ -26,6 +26,8 @@ const mcpFiles = [
   "lib/ai/mcp/oauth-authorization-required-error.ts",
   "lib/db/mcp-oauth-lock.ts",
   "lib/db/mcp-queries.ts",
+  "lib/db/mcp-connector-queries.ts",
+  "lib/db/mcp-oauth-queries.ts",
   "lib/eve/mcp-tools.ts",
   "lib/eve/mcp-adapter.ts",
   "lib/nuqs/mcp-search-params.ts",

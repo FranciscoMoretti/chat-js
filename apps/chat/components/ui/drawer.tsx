@@ -1,8 +1,13 @@
 "use client";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
 
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import { forwardRef as reactForwardRef } from "react";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+  ComponentRef as ReactComponentRef,
+  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  HTMLAttributes as ReactHTMLAttributes,
+} from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "@/lib/utils";
@@ -11,7 +16,7 @@ import { cn } from "@/lib/utils";
 const Drawer = ({
   shouldScaleBackground = true,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>): React.JSX.Element => (
+}: ReactComponentProps<typeof DrawerPrimitive.Root>): ReactJSX.Element => (
   <DrawerPrimitive.Root
     shouldScaleBackground={shouldScaleBackground}
     {...props}
@@ -25,26 +30,26 @@ const DrawerTrigger = DrawerPrimitive.Trigger;
 const DrawerPortal = DrawerPrimitive.Portal;
 
 const DrawerClose = DrawerPrimitive.Close;
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DrawerOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const DrawerOverlay = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
->(({ className, ...props }, ref): React.JSX.Element => (
+const DrawerOverlay = reactForwardRef<
+  ReactComponentRef<typeof DrawerPrimitive.Overlay>,
+  ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Overlay
     className={cn("fixed inset-0 z-50 bg-black/80", className)}
     ref={ref}
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DrawerContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
-const DrawerContent = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref): React.JSX.Element => (
+const DrawerContent = reactForwardRef<
+  ReactComponentRef<typeof DrawerPrimitive.Content>,
+  ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
+>(({ className, children, ...props }, ref): ReactJSX.Element => (
   <DrawerPortal>
     <DrawerOverlay />
     <DrawerPrimitive.Content
@@ -60,14 +65,14 @@ const DrawerContent = React.forwardRef<
     </DrawerPrimitive.Content>
   </DrawerPortal>
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 DrawerContent.displayName = "DrawerContent";
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DrawerHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DrawerHeader = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element => (
+}: ReactHTMLAttributes<HTMLDivElement>): ReactJSX.Element => (
   <div
     className={cn("grid gap-1.5 p-4 text-center sm:text-left", className)}
     {...props}
@@ -80,7 +85,7 @@ DrawerHeader.displayName = "DrawerHeader";
 const DrawerFooter = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element => (
+}: ReactHTMLAttributes<HTMLDivElement>): ReactJSX.Element => (
   <div
     className={cn("mt-auto flex flex-col gap-2 p-4", className)}
     {...props}
@@ -88,12 +93,12 @@ const DrawerFooter = ({
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 DrawerFooter.displayName = "DrawerFooter";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DrawerTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const DrawerTitle = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Title>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
->(({ className, ...props }, ref): React.JSX.Element => (
+const DrawerTitle = reactForwardRef<
+  ReactComponentRef<typeof DrawerPrimitive.Title>,
+  ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Title
     className={cn(
       "text-lg leading-none font-semibold tracking-tight",
@@ -103,21 +108,21 @@ const DrawerTitle = React.forwardRef<
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DrawerDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const DrawerDescription = React.forwardRef<
-  React.ComponentRef<typeof DrawerPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
->(({ className, ...props }, ref): React.JSX.Element => (
+const DrawerDescription = reactForwardRef<
+  ReactComponentRef<typeof DrawerPrimitive.Description>,
+  ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
+>(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Description
     className={cn("text-muted-foreground text-sm", className)}
     ref={ref}
     {...props}
   />
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
 export {

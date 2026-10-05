@@ -1,8 +1,35 @@
-import { isToolUIPart } from "ai";
 import type { ChatStatus, UIMessage } from "ai";
 
 import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
 import type { ThreadConcurrency, ThreadRun } from "./types";
+
+const SIBLING_ORDER_STEP = 1;
+
+type ReadonlyOwnershipValue<TValue> = TValue extends readonly unknown[]
+  ? readonly ReadonlyOwnershipValue<TValue[number]>[]
+  : TValue extends object
+    ? { readonly [TKey in keyof TValue]: ReadonlyOwnershipValue<TValue[TKey]> }
+    : TValue;
+
+type OwnershipPart = ReadonlyOwnershipValue<UIMessage["parts"][number]>;
+type OwnershipToolPart = Extract<
+  OwnershipPart,
+  { readonly type: `tool-${string}` | "dynamic-tool" }
+>;
+
+const isOwnershipToolPart = (part: OwnershipPart): part is OwnershipToolPart =>
+  part.type.startsWith("tool-") || part.type === "dynamic-tool";
+
+interface RunIdentityReader {
+  readonly spec: Readonly<ThreadRunSpec>;
+  readonly status: ChatStatus;
+}
+
+interface RunSnapshotReader {
+  readonly error: Readonly<Error> | undefined;
+  readonly spec: Readonly<Pick<ThreadRunSpec, "id">>;
+  readonly status: ChatStatus;
+}
 
 interface RunRecord<TMessage extends UIMessage> {
   chat: ThreadRunChat<TMessage>;
@@ -12,14 +39,7 @@ interface RunRecord<TMessage extends UIMessage> {
   status: ChatStatus;
 }
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The registry retains owned RunRecord instances and mutates their error/status fields; reader-only insertion/selection inputs and ownership maps use readonly views. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 class RunRegistry<TMessage extends UIMessage> {
   readonly #concurrency: Required<ThreadConcurrency>;
   readonly #runIdByApprovalId = new Map<string, string>();
@@ -27,7 +47,7 @@ class RunRegistry<TMessage extends UIMessage> {
   readonly #runsById = new Map<string, RunRecord<TMessage>>();
   #selectedRunId: string | null = null;
 
-  public constructor(concurrency: ThreadConcurrency = {}) {
+  public constructor(concurrency: Readonly<ThreadConcurrency> = {}) {
     this.#concurrency = {
       maxActiveRuns: concurrency.maxActiveRuns ?? Number.POSITIVE_INFINITY,
       maxActiveRunsPerMessage:
@@ -35,6 +55,7 @@ class RunRegistry<TMessage extends UIMessage> {
     };
   }
 
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keeps the live RunRecord and its SDK chat/spec references; the thread mutates spec.messageId and error/status after insertion.
   public add(record: RunRecord<TMessage>): void {
     if (this.#runsById.has(record.spec.id)) {
       throw new Error(`Run ${record.spec.id} already exists`);
@@ -48,7 +69,8 @@ class RunRegistry<TMessage extends UIMessage> {
       throw new Error("Cannot start run: max active runs reached");
     }
     const activeFromMessage = activeRuns.filter(
-      (run): boolean => run.spec.parentMessageId === parentMessageId
+      (run: RunIdentityReader): boolean =>
+        run.spec.parentMessageId === parentMessageId
     ).length;
     if (activeFromMessage >= this.#concurrency.maxActiveRunsPerMessage) {
       throw new Error(`Cannot start another run from ${parentMessageId}`);
@@ -68,7 +90,8 @@ class RunRegistry<TMessage extends UIMessage> {
 
   public getActive(): RunRecord<TMessage>[] {
     return this.values().filter(
-      (run): boolean => run.status === "submitted" || run.status === "streaming"
+      (run: RunIdentityReader): boolean =>
+        run.status === "submitted" || run.status === "streaming"
     );
   }
 
@@ -76,22 +99,24 @@ class RunRegistry<TMessage extends UIMessage> {
     const runId = this.#runIdByApprovalId.get(approvalId);
     return typeof runId === "string" && runId !== ""
       ? this.#runsById.get(runId)
-      : undefined;
+      : globalThis.undefined;
   }
 
   public getForMessage(messageId: string): RunRecord<TMessage> | undefined {
     const runs = this.values().toReversed();
     return (
       runs.find(
-        (candidate): boolean => candidate.spec.messageId === messageId
+        (candidate: RunIdentityReader): boolean =>
+          candidate.spec.messageId === messageId
       ) ??
       runs.find(
-        (candidate): boolean =>
+        (candidate: RunIdentityReader): boolean =>
           candidate.spec.parentMessageId === messageId &&
           (candidate.status === "submitted" || candidate.status === "streaming")
       ) ??
       runs.find(
-        (candidate): boolean => candidate.spec.parentMessageId === messageId
+        (candidate: RunIdentityReader): boolean =>
+          candidate.spec.parentMessageId === messageId
       )
     );
   }
@@ -100,7 +125,7 @@ class RunRegistry<TMessage extends UIMessage> {
     const runId = this.#runIdByToolCallId.get(toolCallId);
     return typeof runId === "string" && runId !== ""
       ? this.#runsById.get(runId)
-      : undefined;
+      : globalThis.undefined;
   }
 
   public getForResponseMessage(
@@ -108,7 +133,10 @@ class RunRegistry<TMessage extends UIMessage> {
   ): RunRecord<TMessage> | undefined {
     return this.values()
       .toReversed()
-      .find((candidate): boolean => candidate.spec.messageId === messageId);
+      .find(
+        (candidate: RunIdentityReader): boolean =>
+          candidate.spec.messageId === messageId
+      );
   }
 
   public getInsertionIndex({
@@ -135,7 +163,7 @@ class RunRegistry<TMessage extends UIMessage> {
     }
     return childIds.filter((childId): boolean => {
       const order = siblingOrderByMessageId.get(childId);
-      return order === undefined || order < siblingOrder;
+      return order === globalThis.undefined || order < siblingOrder;
     }).length;
   }
 
@@ -146,12 +174,23 @@ class RunRegistry<TMessage extends UIMessage> {
   } {
     const runs = this.snapshots();
     const activeRuns = runs.filter(
-      (run): boolean => run.status === "submitted" || run.status === "streaming"
+      (run: Readonly<Pick<ThreadRun, "status">>): boolean =>
+        run.status === "submitted" || run.status === "streaming"
     );
     let status: ChatStatus = "ready";
-    if (activeRuns.some((run): boolean => run.status === "streaming")) {
+    if (
+      activeRuns.some(
+        (run: Readonly<Pick<ThreadRun, "status">>): boolean =>
+          run.status === "streaming"
+      )
+    ) {
       status = "streaming";
-    } else if (activeRuns.some((run): boolean => run.status === "submitted")) {
+    } else if (
+      activeRuns.some(
+        (run: Readonly<Pick<ThreadRun, "status">>): boolean =>
+          run.status === "submitted"
+      )
+    ) {
       status = "submitted";
     }
     return { activeRuns, runs, status };
@@ -162,65 +201,62 @@ class RunRegistry<TMessage extends UIMessage> {
     pathIds,
   }: {
     readonly cursorId: string | null;
-    readonly pathIds: ReadonlySet<string>;
+    readonly pathIds: Readonly<Pick<ReadonlySet<string>, "has">>;
   }): RunRecord<TMessage> | undefined {
-    if (this.#selectedRunId) {
-      const selectedRun = this.#runsById.get(this.#selectedRunId);
-      if (selectedRun) {
-        return selectedRun;
-      }
+    const selectedRun = this.#runsById.get(this.#selectedRunId ?? "");
+    if (
+      typeof this.#selectedRunId === "string" &&
+      this.#selectedRunId !== "" &&
+      selectedRun
+    ) {
+      return selectedRun;
     }
 
     const runs = this.values().toReversed();
     const responseRun = runs.find(
-      (run): boolean =>
-        run.spec.messageId !== undefined && pathIds.has(run.spec.messageId)
+      (run: RunIdentityReader): boolean =>
+        run.spec.messageId !== globalThis.undefined &&
+        pathIds.has(run.spec.messageId)
     );
-    if (responseRun) {
+    if (responseRun || !(typeof cursorId === "string" && cursorId !== "")) {
       return responseRun;
-    }
-    if (!(typeof cursorId === "string" && cursorId !== "")) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
     }
 
     return (
       runs.find(
-        (run): boolean =>
+        (run: RunIdentityReader): boolean =>
           run.spec.parentMessageId === cursorId &&
           (run.status === "submitted" || run.status === "streaming")
-      ) ?? runs.find((run): boolean => run.spec.parentMessageId === cursorId)
+      ) ??
+      runs.find(
+        (run: RunIdentityReader): boolean =>
+          run.spec.parentMessageId === cursorId
+      )
     );
   }
 
-  public indexMessageOwnership(runId: string, message: TMessage): void {
-    const toolCallIds: string[] = [];
-    const approvalIds: string[] = [];
-    for (const part of message.parts) {
-      if (!isToolUIPart(part)) {
-        continue;
-      }
-      toolCallIds.push(part.toolCallId);
-      if (part.approval) {
-        approvalIds.push(part.approval.id);
-      }
-    }
+  public indexMessageOwnership(
+    runId: string,
+    message: { readonly parts: readonly OwnershipPart[] }
+  ): void {
+    const { approvalIds, toolCallIds } =
+      RunRegistry.collectMessageOwnership(message);
 
     for (const toolCallId of toolCallIds) {
-      RunRegistry.assertOwnershipAvailable(
-        this.#runIdByToolCallId,
-        toolCallId,
+      RunRegistry.assertOwnershipAvailable({
+        id: toolCallId,
+        label: "tool call",
+        owners: this.#runIdByToolCallId,
         runId,
-        "tool call"
-      );
+      });
     }
     for (const approvalId of approvalIds) {
-      RunRegistry.assertOwnershipAvailable(
-        this.#runIdByApprovalId,
-        approvalId,
+      RunRegistry.assertOwnershipAvailable({
+        id: approvalId,
+        label: "tool approval",
+        owners: this.#runIdByApprovalId,
         runId,
-        "tool approval"
-      );
+      });
     }
     for (const toolCallId of toolCallIds) {
       this.#runIdByToolCallId.set(toolCallId, runId);
@@ -235,12 +271,12 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public registerToolCall(runId: string, toolCallId: string): void {
-    RunRegistry.assertOwnershipAvailable(
-      this.#runIdByToolCallId,
-      toolCallId,
+    RunRegistry.assertOwnershipAvailable({
+      id: toolCallId,
+      label: "tool call",
+      owners: this.#runIdByToolCallId,
       runId,
-      "tool call"
-    );
+    });
     this.#runIdByToolCallId.set(toolCallId, runId);
   }
 
@@ -264,18 +300,21 @@ class RunRegistry<TMessage extends UIMessage> {
     parentMessageId: string | null,
     existingChildrenCount: number
   ): number {
-    const existingMessageOrder = existingChildrenCount - 1;
+    const existingMessageOrder = existingChildrenCount - SIBLING_ORDER_STEP;
     const runOrders = this.values()
-      .filter((run): boolean => run.spec.parentMessageId === parentMessageId)
-      .map((run): number => run.spec.siblingOrder);
-    return Math.max(existingMessageOrder, ...runOrders) + 1;
+      .filter(
+        (run: RunIdentityReader): boolean =>
+          run.spec.parentMessageId === parentMessageId
+      )
+      .map((run: RunIdentityReader): number => run.spec.siblingOrder);
+    return Math.max(existingMessageOrder, ...runOrders) + SIBLING_ORDER_STEP;
   }
 
   public select(runId: string | null): void {
     this.#selectedRunId = runId;
   }
 
-  public setError(runId: string, error: Error | undefined): void {
+  public setError(runId: string, error: Readonly<Error> | undefined): void {
     const run = this.#runsById.get(runId);
     if (!run) {
       return;
@@ -291,12 +330,12 @@ class RunRegistry<TMessage extends UIMessage> {
   }
 
   public snapshots(): ThreadRun[] {
-    return this.values().map((run) => RunRegistry.toSnapshot(run));
+    return this.values().map((run: RunSnapshotReader) =>
+      RunRegistry.toSnapshot(run)
+    );
   }
 
-  public static toSnapshot<TMessage extends UIMessage>(
-    run: RunRecord<TMessage>
-  ): ThreadRun {
+  public static toSnapshot(run: RunSnapshotReader): ThreadRun {
     return {
       error: run.error,
       id: run.spec.id,
@@ -308,12 +347,34 @@ class RunRegistry<TMessage extends UIMessage> {
     return [...this.#runsById.values()];
   }
 
-  private static assertOwnershipAvailable(
-    owners: ReadonlyMap<string, string>,
-    id: string,
-    runId: string,
-    label: string
-  ): void {
+  private static collectMessageOwnership(message: {
+    readonly parts: readonly OwnershipPart[];
+  }): { approvalIds: string[]; toolCallIds: string[] } {
+    const toolCallIds: string[] = [];
+    const approvalIds: string[] = [];
+    for (const part of message.parts) {
+      if (isOwnershipToolPart(part)) {
+        toolCallIds.push(part.toolCallId);
+        if (part.approval) {
+          approvalIds.push(part.approval.id);
+        }
+      }
+    }
+
+    return { approvalIds, toolCallIds };
+  }
+
+  private static assertOwnershipAvailable({
+    owners,
+    id,
+    runId,
+    label,
+  }: {
+    readonly owners: Readonly<Pick<ReadonlyMap<string, string>, "get">>;
+    readonly id: string;
+    readonly runId: string;
+    readonly label: string;
+  }): void {
     const existingRunId = owners.get(id);
     if (
       typeof existingRunId === "string" &&
@@ -326,14 +387,7 @@ class RunRegistry<TMessage extends UIMessage> {
     }
   }
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-continue */
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 

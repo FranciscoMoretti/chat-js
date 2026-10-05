@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { ContextType } from "react";
 
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
 import type { EveMessageInput } from "@/lib/eve/message-input";
@@ -13,16 +14,18 @@ export const EveLogicalContext = createContext<{
 } | null>(null);
 /* oxlint-enable import/group-exports, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- useLogicalChat: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types.; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
+/* oxlint-disable import/group-exports -- useLogicalChat: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types. */
 
-export const useLogicalChat = () => {
+export const useLogicalChat = (): NonNullable<
+  ContextType<typeof EveLogicalContext>
+> => {
   const value = useContext(EveLogicalContext);
   if (!value) {
     throw new Error("The conversation needs a logical chat runtime.");
   }
   return value;
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports */
 
 export interface OpenRequest {
   id: string;
@@ -39,12 +42,14 @@ export const EveRuntimeContext = createContext<
 >(null);
 /* oxlint-enable import/group-exports, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- useEveRuntime: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types.; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
-export const useEveRuntime = () => {
+/* oxlint-disable import/group-exports -- useEveRuntime: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types. */
+export const useEveRuntime = (): NonNullable<
+  ContextType<typeof EveRuntimeContext>
+> => {
   const open = useContext(EveRuntimeContext);
   if (!open) {
     throw new Error("Eve creation requires its layout runtime provider");
   }
   return open;
 };
-/* oxlint-enable import/group-exports, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable import/group-exports */

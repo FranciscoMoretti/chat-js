@@ -1,23 +1,25 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
+
  * import/no-nodejs-modules (#529): This server/tooling module requires import { setTimeout as delay } from "node:timers/promises";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
  */
 import { setTimeout as delay } from "node:timers/promises";
 
 import { z } from "zod";
 
-import { getEveCreation, listPendingEveCreations } from "../db/eve-queries";
+import { getEveCreation, listPendingEveCreations } from "@/lib/db/eve-queries";
+
 import { createConversationInput } from "./contracts";
 import { EveCreationRecoveryError } from "./creation-recovery-error";
 import { executeEveConversationCreation } from "./execute-conversation-creation";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions --
+
  * jsdoc/require-param (#534): waitForConcurrentBinding's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): waitForConcurrentBinding's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): waitForConcurrentBinding uses 8, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/strict-boolean-expressions (#610): waitForConcurrentBinding intentionally keeps the existing falsy-value behavior of current.sessionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+  */
 /** Only wait for an explicitly identified lock contender; never retry dispatch here. */
 const waitForConcurrentBinding = async (
   ownerId: string,
@@ -43,13 +45,13 @@ const waitForConcurrentBinding = async (
 };
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, max-statements, no-continue, no-magic-numbers, unicorn/no-null --
+/* oxlint-disable jsdoc/require-param, max-statements, no-continue, no-magic-numbers --
+
  * jsdoc/require-param (#534): recoverEveCreations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-statements (#512): recoverEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): recoverEveCreations skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): recoverEveCreations uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/no-null (#570): recoverEveCreations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+  */
 /** Finish admitted commands before accounting for their native usage or admitting more work. */
 export const recoverEveCreations = async (ownerId: string): Promise<void> => {
   const pending = await listPendingEveCreations(ownerId);
@@ -67,7 +69,9 @@ export const recoverEveCreations = async (ownerId: string): Promise<void> => {
     );
     if (!response.ok) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Decode only the failed operation before continuing the recovery loop.
-      const body: unknown = await response.json().catch(() => null);
+      const body: unknown = await response.json().catch((): void => {
+        // The conflict schema below rejects an absent JSON body.
+      });
       const conflict = z
         .object({ code: z.literal("creation_in_progress") })
         .safeParse(body);
@@ -83,4 +87,4 @@ export const recoverEveCreations = async (ownerId: string): Promise<void> => {
     }
   }
 };
-/* oxlint-enable jsdoc/require-param, max-statements, no-continue, no-magic-numbers, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, max-statements, no-continue, no-magic-numbers */

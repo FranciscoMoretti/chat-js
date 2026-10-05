@@ -1,29 +1,32 @@
 "use client";
-/* oxlint-disable import/no-namespace -- @radix-ui/react-popover import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
 
-import * as PopoverPrimitive from "@radix-ui/react-popover";
-/* oxlint-enable import/no-namespace */
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import {
+  Root as PopoverPrimitiveRoot,
+  Trigger as PopoverPrimitiveTrigger,
+  Content as PopoverPrimitiveContent,
+  Portal as PopoverPrimitivePortal,
+  Anchor as PopoverPrimitiveAnchor,
+} from "@radix-ui/react-popover";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Popover: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const Popover = ({
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>): React.JSX.Element => (
-  <PopoverPrimitive.Root data-slot="popover" {...props} />
+}: ReactComponentProps<typeof PopoverPrimitiveRoot>): ReactJSX.Element => (
+  <PopoverPrimitiveRoot data-slot="popover" {...props} />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const PopoverTrigger = ({
   ...props
-}: React.ComponentProps<
-  typeof PopoverPrimitive.Trigger
->): React.JSX.Element => (
-  <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}: ReactComponentProps<typeof PopoverPrimitiveTrigger>): ReactJSX.Element => (
+  <PopoverPrimitiveTrigger data-slot="popover-trigger" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -34,11 +37,9 @@ const PopoverContent = ({
   align = "center",
   sideOffset = 4,
   ...props
-}: React.ComponentProps<
-  typeof PopoverPrimitive.Content
->): React.JSX.Element => (
-  <PopoverPrimitive.Portal>
-    <PopoverPrimitive.Content
+}: ReactComponentProps<typeof PopoverPrimitiveContent>): ReactJSX.Element => (
+  <PopoverPrimitivePortal>
+    <PopoverPrimitiveContent
       align={align}
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
@@ -48,7 +49,7 @@ const PopoverContent = ({
       sideOffset={sideOffset}
       {...props}
     />
-  </PopoverPrimitive.Portal>
+  </PopoverPrimitivePortal>
 );
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -56,8 +57,8 @@ const PopoverContent = ({
 
 const PopoverAnchor = ({
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>): React.JSX.Element => (
-  <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+}: ReactComponentProps<typeof PopoverPrimitiveAnchor>): ReactJSX.Element => (
+  <PopoverPrimitiveAnchor data-slot="popover-anchor" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 

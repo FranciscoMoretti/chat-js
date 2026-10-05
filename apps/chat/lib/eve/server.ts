@@ -1,12 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
+import type { UiToolName } from "@/lib/ai/types";
 import { env } from "@/lib/env";
 
-import type { UiToolName } from "../ai/types";
 import { getEveConnectionOptions } from "./connection-options";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- typescript/strict-boolean-expressions (#610): assertEveConfigured intentionally keeps the existing falsy-value behavior of env.WORKFLOW_POSTGRES_URL; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const assertEveConfigured = (): void => {

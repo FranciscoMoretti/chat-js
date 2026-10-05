@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
 
+const MINIMUM_RESEARCH_TEXT_LENGTH = 1;
+
 const researchOutput = z.union([
   z.object({ searches: z.tuple([]) }),
   z.object({ answer: z.string(), format: z.literal("clarifying_questions") }),
@@ -16,30 +18,24 @@ const researchClarification = z.object({
   verification: z.string(),
 });
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const researchBrief = z.object({
-  research_brief: z.string().min(1),
-  title: z.string().min(1),
+  research_brief: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
+  title: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const researchDecision = z.object({
   complete: z.boolean(),
-  topics: z.array(z.string().min(1)),
+  topics: z.array(z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH)),
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-const researchFindings = z.object({ findings: z.string().min(1) });
-/* oxlint-enable eslint/no-magic-numbers */
+const researchFindings = z.object({
+  findings: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
+});
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const researchReport = z.object({
-  content: z.string().min(1),
-  title: z.string().min(1),
+  content: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
+  title: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
 });
-/* oxlint-enable eslint/no-magic-numbers */
 export {
   researchBrief,
   researchClarification,

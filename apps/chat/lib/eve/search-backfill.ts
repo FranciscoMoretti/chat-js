@@ -1,13 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-search" dependency within this package instead of introducing an alias or barrel API.
- */
 import { Client } from "eve/client";
 
-import { indexEveSearchText } from "../db/eve-search";
+import { indexEveSearchText } from "@/lib/db/eve-search";
+
 import { getEveConnectionOptions } from "./connection-options";
 import { eveEventSearchText } from "./search-text";
 import type { EveSearchText } from "./search-text";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable jsdoc/require-param, no-magic-numbers --
  * jsdoc/require-param (#534): backfillEveSearchConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

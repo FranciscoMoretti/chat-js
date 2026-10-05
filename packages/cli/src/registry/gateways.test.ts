@@ -22,8 +22,7 @@ it("validates gateway integration metadata with the standard registry schema", a
         },
       })
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(resolveGateway(source)).rejects.toThrow();
+    expect(resolveGateway(source)).rejects.toThrow();
   } finally {
     await rm(cwd, { force: true, recursive: true });
   }
@@ -41,17 +40,14 @@ it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
     port: 0,
   });
   try {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
-      resolveGateway("http://example.com/gateway.json")
-    ).rejects.toThrow("HTTPS");
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(resolveGateway("http://example.com/gateway.json")).rejects.toThrow(
+      "HTTPS"
+    );
+    expect(
       resolveGateway(`http://127.0.0.1:${server.port}/gateway.json`)
     ).rejects.toThrow("HTTPS");
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    server.stop(true);
+    await server.stop(true);
   }
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

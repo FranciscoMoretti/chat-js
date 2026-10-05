@@ -10,9 +10,9 @@ export const MessageVoteActions = ({
   disabled = false,
   onVote,
 }: {
-  vote?: { isUpvoted: boolean };
-  disabled?: boolean;
-  onVote: (type: "up" | "down") => Promise<unknown>;
+  readonly vote?: { isUpvoted: boolean };
+  readonly disabled?: boolean;
+  readonly onVote: (type: "up" | "down") => Promise<unknown>;
 }): React.JSX.Element => (
   <>
     <MessageAction

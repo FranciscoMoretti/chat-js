@@ -2,19 +2,20 @@
 
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- ElectronAuthOverlay: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { state, }: { state: ElectronRendererAuthState; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including state.detail); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- ElectronAuthOverlay: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { state, }: { state: ElectronRendererAuthState; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including state.detail); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ElectronAuthOverlay = ({
   state,
 }: {
   state: ElectronRendererAuthState;
-}) => {
+}): ReactJSX.Element | null => {
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (state.status === "idle" || !state.message) {
@@ -92,8 +93,8 @@ const ElectronAuthOverlay = ({
     </div>
   );
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
-/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-console, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ElectronAuthHandler: ; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ctx: ElectronAuthErrorContext); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ctx.message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-console, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ElectronAuthHandler: ; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ctx: ElectronAuthErrorContext); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ctx.message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /**
  * Handles the electron auth redirect after OAuth completes in the browser.
@@ -103,7 +104,7 @@ const ElectronAuthOverlay = ({
  *
  * Mount this in the root layout so it runs on every page.
  */
-export const ElectronAuthHandler = () => {
+export const ElectronAuthHandler = (): ReactJSX.Element | null => {
   const isDesktopAppEnabled = config.desktopApp.enabled;
   const router = useRouter();
   const [authState, setAuthState] = useState<ElectronRendererAuthState>({
@@ -118,7 +119,7 @@ export const ElectronAuthHandler = () => {
 
     const id = authClient.ensureElectronRedirect();
     // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
-    return () => clearInterval(id);
+    return (): void => clearInterval(id);
   }, [isDesktopAppEnabled]);
 
   useEffect(() => {
@@ -144,7 +145,7 @@ export const ElectronAuthHandler = () => {
       return;
     }
 
-    const loadAuthState = async () => {
+    const loadAuthState = async (): Promise<void> => {
       try {
         // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
         const state = await window.electronAPI?.getAuthState?.();
@@ -158,7 +159,7 @@ export const ElectronAuthHandler = () => {
 
     void loadAuthState();
 
-    const syncAndRefresh = async () => {
+    const syncAndRefresh = async (): Promise<void> => {
       // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       await window.electronAPI?.syncAuthSession?.();
       router.refresh();
@@ -166,7 +167,7 @@ export const ElectronAuthHandler = () => {
 
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeAuthenticated = window.onAuthenticated(() => {
-      const syncAuthenticatedSession = async () => {
+      const syncAuthenticatedSession = async (): Promise<void> => {
         try {
           await syncAndRefresh();
         } catch (error) {
@@ -180,7 +181,7 @@ export const ElectronAuthHandler = () => {
     });
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeUserUpdated = window.onUserUpdated(() => {
-      const syncUpdatedUser = async () => {
+      const syncUpdatedUser = async (): Promise<void> => {
         try {
           await syncAndRefresh();
         } catch (error) {
@@ -204,7 +205,7 @@ export const ElectronAuthHandler = () => {
     );
 
     // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
-    return () => {
+    return (): void => {
       unsubscribeAuthenticated();
       unsubscribeUserUpdated();
       unsubscribeAuthError();
@@ -222,4 +223,4 @@ export const ElectronAuthHandler = () => {
 
   return <ElectronAuthOverlay key={overlayKey} state={authState} />;
 };
-/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-console, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-console, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

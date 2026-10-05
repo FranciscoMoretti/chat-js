@@ -18,9 +18,9 @@ const ModelRow = memo(
     isEnabled,
     onToggle,
   }: {
-    model: { id: string; name: string; reasoning?: boolean };
-    isEnabled: boolean;
-    onToggle: (modelId: string, isEnabled: boolean) => void;
+    readonly model: { id: string; name: string; reasoning?: boolean };
+    readonly isEnabled: boolean;
+    readonly onToggle: (modelId: string, isEnabled: boolean) => void;
   }) => {
     const ReasoningIcon = AVAILABLE_FEATURES.reasoning.icon;
 

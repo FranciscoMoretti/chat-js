@@ -3,14 +3,14 @@ title: "Overview"
 description: "Route AI requests through a pluggable gateway abstraction"
 ---
 
-ChatJS uses a **gateway** to route all AI requests (model listing, chat completions, and image generation) through a single backend. Set `gateway` in `chat.config.ts` to choose which backend your app talks to.
+ChatJS uses a **gateway** to route all AI requests (model listing, chat completions, and image generation) through a single backend. Install a gateway with the CLI to select its source, model defaults and credentials. `ai.gateway` must match the installed provider.
 
 ## Available Gateways
 
 | Gateway | Models | Auth | Image Generation | Best For |
 | --- | --- | --- | --- | --- |
 | [Vercel AI Gateway](/gateways/vercel) (default) | 120+ | `AI_GATEWAY_API_KEY` or auto OIDC | Dedicated image models | Vercel deployments |
-| [OpenRouter](/gateways/openrouter) | Hundreds | `OPENROUTER_API_KEY` | Via multimodal models | Broadest model access |
+| [OpenRouter](/gateways/openrouter) | Hundreds | `OPENROUTER_API_KEY` | Not declared by this adapter | Broadest model access |
 | [OpenAI](/gateways/openai) | OpenAI only | `OPENAI_API_KEY` | `gpt-image-1` and others | Direct OpenAI access |
 | [LiteLLM](/gateways/litellm) | 100+ providers | `LITELLM_BASE_URL` + optional key | Provider-dependent | Unified proxy for all major providers |
 | [OpenAI Compatible](/gateways/openai-compatible) | Varies | `OPENAI_COMPATIBLE_API_KEY` (optional) | Provider-dependent | Ollama, LM Studio, vLLM, Azure |
@@ -27,21 +27,14 @@ Need a provider not listed here? See [Custom Gateway](/gateways/custom).
 
 ## Configuration
 
-Set the gateway in `chat.config.ts`:
+Select a gateway during creation or explicitly replace it in an existing app:
 
-```typescript title="chat.config.ts"
-const config: ConfigInput = {
-  ai: {
-    gateway: "openrouter", // "vercel" | "openrouter" | "openai" | "openai-compatible" | "litellm"
-    // ...
-  },
-};
+```bash
+bunx @chat-js/cli@latest create my-chat --gateway openrouter
+bunx @chat-js/cli@latest add --gateway openrouter --replace
 ```
 
-<Callout type="note">
-  The `gateway` field lives inside the `ai` key and defaults to `"vercel"` when
-  omitted.
-</Callout>
+Replacement preserves runtime overrides. Review model IDs for the new provider and its supported media capabilities. Editing only `ai.gateway` cannot install a new implementation. See [Configuration](../core/configuration).
 
 ## How Model Fetching Works
 
@@ -83,8 +76,8 @@ This is caught at two levels:
 - **Runtime**: each gateway checks `generatedForGateway` before using the fallback. If it doesn't match, the fallback is skipped and an empty model list is returned instead of stale model IDs.
 
 <Callout type="tip">
-  After changing `gateway` in `chat.config.ts`, always run `bun fetch:models` to
-  keep the fallback snapshot in sync.
+  After replacing the installed gateway, run `bun fetch:models` to keep the
+  fallback snapshot in sync.
 </Callout>
 
 See [Auto-Updating Models](/cookbook/auto-updating-models) for the full implementation pattern.

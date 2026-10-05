@@ -4,21 +4,22 @@ import { conversationBinding } from "./contracts";
 import { eveCopyInput } from "./copy-input";
 import type { EveCopyInput } from "./copy-input";
 
+const COPY_REQUEST_TIMEOUT_MS = 45_000;
+
 const keyFor = (ownerId: string, sourceId: string): string =>
   `chatjs.eve.pending-copy:${ownerId}:${sourceId.toLowerCase()}`;
 
 type CopyStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/* oxlint-disable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- max-params (#511): preparePendingEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep preparePendingEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep preparePendingEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/strict-boolean-expressions (#610): preparePendingEveCopy intentionally keeps the existing falsy-value behavior of saved; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable max-params, typescript/strict-boolean-expressions --
+ max-params (#511): preparePendingEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+typescript/strict-boolean-expressions (#610): preparePendingEveCopy intentionally keeps the existing falsy-value behavior of saved; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 const preparePendingEveCopy = (
   storage: CopyStorage,
   ownerId: string,
   sourceConversationId: string,
   modelId: string
-) => {
+): EveCopyInput => {
   const key = keyFor(ownerId, sourceConversationId);
   const saved = storage.getItem(key);
   const input = eveCopyInput.parse(
@@ -32,9 +33,10 @@ const preparePendingEveCopy = (
   storage.setItem(key, JSON.stringify(input));
   return input;
 };
-/* oxlint-enable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- typescript/strict-boolean-expressions (#610): finishPendingEveCopy intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable typescript/strict-boolean-expressions --
+ typescript/strict-boolean-expressions (#610): finishPendingEveCopy intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 const finishPendingEveCopy = (
   storage: CopyStorage,
   ownerId: string,
@@ -66,14 +68,13 @@ class EveCopyRequestError extends Error {
   }
 }
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null -- max-statements (#512): requestEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): requestEveCopy uses 45_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): requestEveCopy uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep requestEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep requestEveCopy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-unicorn/no-null (#570): requestEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-const requestEveCopy = async (input: EveCopyInput) => {
-  const signal = AbortSignal.timeout(45_000);
+/* oxlint-disable max-statements, no-undefined --
+ max-statements (#512): requestEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-undefined (#519): requestEveCopy uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+const requestEveCopy = async (
+  input: EveCopyInput
+): Promise<z.output<typeof conversationBinding>> => {
+  const signal = AbortSignal.timeout(COPY_REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch("/api/agent-conversation-copies", {
       body: JSON.stringify(input),
@@ -88,7 +89,11 @@ const requestEveCopy = async (input: EveCopyInput) => {
           error: z.string(),
           retryable: z.boolean().optional(),
         })
-        .safeParse(await response.json().catch(() => null));
+        .safeParse(
+          await response.json().catch((): void => {
+            // The failure schema rejects an absent JSON body.
+          })
+        );
       throw new EveCopyRequestError(
         failure.success
           ? failure.data.error
@@ -112,7 +117,7 @@ const requestEveCopy = async (input: EveCopyInput) => {
     );
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */
+/* oxlint-enable max-statements, no-undefined */
 export {
   EveCopyRequestError,
   finishPendingEveCopy,

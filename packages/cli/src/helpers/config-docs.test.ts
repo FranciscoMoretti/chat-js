@@ -1,0 +1,52 @@
+import { expect, test } from "bun:test";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+import ts from "typescript";
+
+// oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
+test("public configuration snippets typecheck against the installed application contract", async () => {
+  const app = path.resolve(import.meta.dir, "../../../../apps/chat");
+  const pages = ["core/configuration", "reference/config"];
+  const sources = new Map<string, string>();
+  for (const page of pages) {
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
+    const markdown = await readFile(
+      path.join(app, `../docs/${page}.mdx`),
+      "utf-8"
+    );
+    const snippets = [
+      ...markdown.matchAll(/```typescript[^\n]*\n(?<source>[\s\S]*?)```/gu),
+    ];
+    // oxlint-disable-next-line eslint/no-magic-numbers -- These local values specify JSON indentation, source offsets or bounded test fixtures.
+    expect(snippets.length).toBeGreaterThan(0);
+    for (const [index, match] of snippets.entries()) {
+      sources.set(
+        path.join(app, `docs-${page.replaceAll("/", "-")}-${index}.ts`),
+        match.groups?.source ?? ""
+      );
+    }
+  }
+  const config = ts.readConfigFile(path.join(app, "tsconfig.json"), (file) =>
+    ts.sys.readFile(file)
+  );
+  const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, app);
+  const options = { ...parsed.options, incremental: false };
+  const host = ts.createCompilerHost(options);
+  const read = host.readFile.bind(host);
+  host.readFile = (file): string | undefined => sources.get(file) ?? read(file);
+  const program = ts.createProgram([...sources.keys()], options, host);
+  const errors = ts
+    .getPreEmitDiagnostics(program)
+    .filter(
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
+      (diagnostic) =>
+        Boolean(diagnostic.file) && sources.has(diagnostic.file?.fileName ?? "")
+    )
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
+    .map((diagnostic) =>
+      ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")
+    );
+  expect(errors).toEqual([]);
+  // oxlint-disable-next-line eslint/no-magic-numbers -- These local values specify JSON indentation, source offsets or bounded test fixtures.
+}, 30_000);

@@ -16,16 +16,10 @@ Enable your AI to search the web in real-time and provide answers with inline ci
 
 ## Quick Start
 
-Enable web search in `chat.config.ts`:
+Install the capability in your app:
 
-```ts
-ai: {
-  tools: {
-    webSearch: {
-      enabled: true, // Requires the selected search tool’s credentials
-    },
-  },
-}
+```bash
+bunx @chat-js/cli@latest add tavily-search
 ```
 
 ## Environment Variables
@@ -117,28 +111,22 @@ The selected implementation lives in `tools/chatjs/<id>/tool.ts`. Edit its typed
 
 ### Change the selected tool
 
-Keep any custom edits, then remove the previous search tool directory (for example, `tools/chatjs/tavily-search`) and install the replacement:
+Replace the exclusive search provider explicitly:
 
 ```bash
-bunx @chat-js/cli add firecrawl-search
+bunx @chat-js/cli@latest add firecrawl-search --replace
 ```
 
-Sync requires exactly one installed search selection when search is used. It generates the registration indexes in `tools/chatjs/tools.ts` and `ui.ts`, plus `search-config.ts` for credentials. Do not edit generated files. An unused native package can be removed after checking that no other tool uses it. Firecrawl may also be needed by URL retrieval.
+Sync requires exactly one installed search selection when search is used. It generates the registration indexes in `tools/chatjs/tools.ts` and `ui.ts`, and `providers.ts` for the shared chat/research provider. Do not edit generated files. An unused native package can be removed after checking that no other tool uses it. Firecrawl may also be needed by URL retrieval.
 
 ## URL Retrieval
 
 A separate `retrieveUrl` tool is available for fetching structured content from specific URLs (as opposed to searching the web). This tool uses Firecrawl to extract clean markdown from any webpage.
 
-Enable in `chat.config.ts`:
+Install URL retrieval separately:
 
-```ts
-ai: {
-  tools: {
-    urlRetrieval: {
-      enabled: true, // Requires FIRECRAWL_API_KEY
-    },
-  },
-}
+```bash
+bunx @chat-js/cli@latest add retrieve-url
 ```
 
 The tool extracts:

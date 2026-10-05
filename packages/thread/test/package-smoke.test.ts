@@ -21,10 +21,9 @@ const packageDirectory = path.resolve(import.meta.dir, "..");
 
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const run = (command: string[], cwd: string): void => {
+const run = (command: readonly string[], cwd: string): void => {
   const result = Bun.spawnSync({
-    cmd: command,
+    cmd: [...command],
     cwd,
     killSignal: "SIGKILL",
     stderr: "pipe",
@@ -41,7 +40,6 @@ const run = (command: string[], cwd: string): void => {
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 
@@ -49,7 +47,6 @@ const run = (command: string[], cwd: string): void => {
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test(
   "the packed package loads its core and React entry points",
   async (): Promise<void> => {
@@ -130,7 +127,7 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       run(["node", coreConsumerPath], temporaryDirectory);
       await Promise.all(
         ["react", "@ai-sdk/react", "@types/react", "typescript"].map(
-          (name): Promise<void> => linkDependency(name)
+          async (name): Promise<void> => await linkDependency(name)
         )
       );
 
@@ -212,6 +209,7 @@ for (const [specifier, file] of [["@chat-js/thread", "index.js"], ["@chat-js/thr
           `${consumerSource}
 import type { UIMessage } from "ai";
 import { createThread } from "@chat-js/thread";
+import type { ThreadInit } from "@chat-js/thread";
 
 type LabeledMessage = UIMessage<{ threadLabel: string }>;
 const labeledThread = new Thread<LabeledMessage>();
@@ -223,6 +221,25 @@ labeledThread.getSnapshot().messages[0]?.metadata?.absentProperty;
 // @ts-expect-error createThread metadata must retain its specialized shape.
 createdThread.getSnapshot().messages[0]?.metadata?.absentProperty;
 
+type UnsupportedMessage = LabeledMessage & {
+  tenant: string;
+  id: "custom-id";
+  role: "user";
+  parts: [{ type: "text"; text: string }];
+};
+declare const constructorFinishEvent: Parameters<NonNullable<ThreadInit<UnsupportedMessage>["onFinish"]>>[0];
+// @ts-expect-error Constructor callbacks also receive canonical SDK messages.
+constructorFinishEvent.message.tenant;
+const [normalized] = new Thread<UnsupportedMessage>().getSnapshot().messages;
+// @ts-expect-error The SDK cannot guarantee arbitrary required message fields.
+normalized.tenant;
+// @ts-expect-error Generated IDs keep the SDK string contract.
+const unsupportedId: "custom-id" = normalized.id;
+// @ts-expect-error Streaming also constructs assistant messages.
+const unsupportedRole: "user" = normalized.role;
+// @ts-expect-error Streaming cannot guarantee a fixed text-part tuple.
+const unsupportedParts: [{ type: "text"; text: string }] = normalized.parts;
+
 // This function is only type-checked, never passed to the runtime consumer.
 function checkHookInference() {
   const helpers = useThread({ thread: labeledThread });
@@ -230,6 +247,11 @@ function checkHookInference() {
   // @ts-expect-error useThread must infer the supplied thread's metadata shape.
   helpers.messages[0]?.metadata?.absentProperty;
   return hookLabel;
+}
+function checkNormalizedHook() {
+  const helpers = useThread({ thread: new Thread<UnsupportedMessage>() });
+  // @ts-expect-error Hook messages cannot reintroduce unsupported fields.
+  helpers.messages[0]?.tenant;
 }
 `
         ),
@@ -260,7 +282,6 @@ function checkHookInference() {
   },
   smokeTimeout
 );
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */

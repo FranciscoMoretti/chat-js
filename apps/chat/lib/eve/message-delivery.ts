@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
-import type { UiToolName } from "../ai/types";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import type { UiToolName } from "@/lib/ai/types";
+
 import { draftAttachment } from "./draft";
 import { eveToolMetadata } from "./message-tool-selection";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const EVE_MESSAGE_OPERATION_HEADER = "x-chatjs-message-operation";
 
@@ -41,26 +38,27 @@ type DeliveryStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 const storageKey = (sessionId: string): string =>
   `chatjs.eve.pending-message:${sessionId}`;
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type --
+/* oxlint-disable id-length --
  * id-length (#506): write uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep write's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 const write = <T extends PendingEveMessage>(
   storage: DeliveryStorage,
   sessionId: string,
   value: T
-) => {
+): T => {
   storage.setItem(storageKey(sessionId), JSON.stringify(value));
   return value;
 };
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
+/* oxlint-enable id-length */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep read's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): read intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): read preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const read = (storage: DeliveryStorage, sessionId: string) => {
+const read = (
+  storage: DeliveryStorage,
+  sessionId: string
+): PendingEveMessage | null => {
   const stored = storage.getItem(storageKey(sessionId));
   if (!stored) {
     return null;
@@ -76,12 +74,10 @@ const read = (storage: DeliveryStorage, sessionId: string) => {
   storage.removeItem(storageKey(sessionId));
   return null;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveMessageDelivery keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): eveMessageDelivery uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep eveMessageDelivery's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): eveMessageDelivery accepts pending: PendingEveMessage; event: MessageStreamEvent; input: NewPendingEveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): eveMessageDelivery intentionally keeps the existing falsy-value behavior of pending.operationId; current?.retryable; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /** One durable client contract for sending, reloading, rejecting, and acknowledging a message. */
@@ -132,7 +128,8 @@ const eveMessageDelivery = {
     pending: PendingEveMessage,
     rejection: string,
     retryable = false
-  ) => write(storage, sessionId, { ...pending, rejection, retryable }),
+  ): PendingEveMessage & { rejection: string; retryable: boolean } =>
+    write(storage, sessionId, { ...pending, rejection, retryable }),
   retry: (
     storage: DeliveryStorage,
     sessionId: string,
@@ -155,33 +152,37 @@ const eveMessageDelivery = {
     });
   },
 };
-/* oxlint-enable max-params, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): eveMessageDeliveryMetadata's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep eveMessageDeliveryMetadata's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** The proxy owns this metadata so caller input cannot forge an acknowledgement. */
+/**
+ * The proxy owns this metadata so caller input cannot forge an acknowledgement.
+ * @param operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
+ * @param selectedTool App UI tool selection, normalized to null when no tool is selected.
+ * @returns The app namespace containing the operation acknowledgement and display-safe tool selection.
+ */
 const eveMessageDeliveryMetadata = (
   operationId: string,
   selectedTool: UiToolName | null | undefined
-) => ({
+): {
+  chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & {
+    operationId: string;
+  };
+} => ({
   chatjs: {
     ...eveToolMetadata(selectedTool).chatjs,
     operationId: z.uuid().parse(operationId),
   },
 });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep eveMessageOperationId's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/prefer-readonly-parameter-types (#565): eveMessageOperationId accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const eveMessageOperationId = (event: MessageStreamEvent) =>
+const eveMessageOperationId = (
+  event: MessageStreamEvent
+): string | undefined =>
   event.type === "message.received"
     ? deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
     : undefined;
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 export {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDelivery,

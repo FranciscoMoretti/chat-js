@@ -1,9 +1,6 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
- */
-import { env } from "../env";
+import { env } from "@/lib/env";
+
 import { localDeletionAvailable } from "./local-deletion-available";
-/* oxlint-enable import/no-relative-parent-imports */
 
 const CLEANUP_INTERVAL_MS = 60_000;
 

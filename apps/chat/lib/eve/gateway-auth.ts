@@ -1,29 +1,29 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import { timingSafeEqual } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types"; "../db/eve-guests"; "../db/eve-queries"; "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof"; "../db/eve-subagents" dependency within this package instead of introducing an alias or barrel API.
  */
 import { timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
 
-import { isFencedEveDescendant } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
-
-import { frontendToolsSchema } from "../ai/types";
-import { readEveGuestOwner } from "../db/eve-guests";
+import { frontendToolsSchema } from "@/lib/ai/types";
+import { readEveGuestOwner } from "@/lib/db/eve-guests";
 import {
   getDeletingEveConversationForSession,
   ownsEveSession,
   readEveSessionMapping,
-} from "../db/eve-queries";
-import { getEveSubagent } from "../db/eve-subagents";
-import { env } from "../env";
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
+} from "@/lib/db/eve-queries";
+import { getEveSubagent } from "@/lib/db/eve-subagents";
+import { env } from "@/lib/env";
+import { isFencedEveDescendant } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import { parseDeletionSessionRequest } from "./deletion-policy";
 import { loadEveModelDefinition } from "./model-selection";
 import { parseSessionRequest } from "./request-policy";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 const checkpointLookupPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/checkpoint$/u;
@@ -35,12 +35,9 @@ const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): authorizeDeletionRequest accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): authorizeDeletionRequest intentionally keeps the existing falsy-value behavior of sessionId; rootSessionId; env.WORKFLOW_POSTGRES_URL; await getDeletingEveConversationForSession(owner, rootSessionId); distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): authorizeDeletionRequest intentionally keeps the existing falsy-value behavior of sessionId; rootSessionId; env.WORKFLOW_POSTGRES_URL; await getDeletingEveConversationForSession(owner, rootSessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const authorizeDeletionRequest = async (
-  request: Request,
+  request: ReadonlyNativeSurface<Request>,
   owner: string,
   path: string
 ): Promise<boolean> => {
@@ -71,7 +68,7 @@ const authorizeDeletionRequest = async (
     sessionId
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): gatewaySessionPolicy uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -96,13 +93,12 @@ const gatewaySessionPolicy = (path: string, method: string) => {
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep readCreationReservation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readCreationReservation accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): readCreationReservation intentionally keeps the existing falsy-value behavior of reservation; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): readCreationReservation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const readCreationReservation = async (request: Request, owner: string) => {
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null -- * typescript/strict-boolean-expressions (#610): readCreationReservation intentionally keeps the existing falsy-value behavior of reservation; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * unicorn/no-null (#570): readCreationReservation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const readCreationReservation = async (
+  request: ReadonlyNativeSurface<Request>,
+  owner: string
+): Promise<string | null> => {
   const command = z
     .object({ operationId: z.uuid(), seed: z.boolean().optional() })
     .safeParse(
@@ -128,17 +124,17 @@ const readCreationReservation = async (request: Request, owner: string) => {
   }
   return reservation.id;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null -- * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): readGatewayAttributes uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep readGatewayAttributes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readGatewayAttributes accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): readGatewayAttributes intentionally keeps the existing falsy-value behavior of modelId; reservationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): readGatewayAttributes preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const readGatewayAttributes = async (request: Request, owner: string) => {
+ * unicorn/no-null (#570): readGatewayAttributes preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const readGatewayAttributes = async (
+  request: ReadonlyNativeSurface<Request>,
+  owner: string
+) => {
   const modelId = request.headers.get("x-chatjs-model") ?? undefined;
   if (modelId) {
     await loadEveModelDefinition(modelId);
@@ -170,14 +166,11 @@ const readGatewayAttributes = async (request: Request, owner: string) => {
   }
   return attributes;
 };
-/* oxlint-enable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): guestAttributesAllowed accepts expiresAt: Date; attributes: Record<string, string>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const guestAttributesAllowed = (
-  expiresAt: Date,
-  attributes: Record<string, string>,
+  expiresAt: ReadonlyNativeSurface<Date>,
+  attributes: Readonly<Record<string, string>>,
   requiresModel: boolean
 ): boolean =>
   expiresAt > new Date() &&
@@ -190,7 +183,6 @@ const guestAttributesAllowed = (
     ANONYMOUS_LIMITS.AVAILABLE_TOOLS.some(
       (tool) => tool === attributes.selectedTool
     ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params --
  * max-params (#511): ownsGatewaySession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -212,16 +204,15 @@ const ownsGatewaySession = async (
 };
 /* oxlint-enable max-params */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * max-lines-per-function (#510): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/explicit-function-return-type (#560): Keep authenticateEveGateway's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep authenticateEveGateway's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): authenticateEveGateway accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): authenticateEveGateway intentionally keeps the existing falsy-value behavior of owner; guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): authenticateEveGateway preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-export const authenticateEveGateway = async (request: Request) => {
+ * unicorn/no-null (#570): authenticateEveGateway preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+export const authenticateEveGateway = async (
+  request: ReadonlyNativeSurface<Request>
+) => {
   if (!env.EVE_GATEWAY_SECRET) {
     return null;
   }
@@ -288,4 +279,4 @@ export const authenticateEveGateway = async (request: Request) => {
     subject: owner,
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */

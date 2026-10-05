@@ -14,7 +14,11 @@ import { scaffoldFromTemplate } from "../helpers/scaffold";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { installItems } from "../registry/shadcn";
 /* oxlint-enable import/no-relative-parent-imports */
+import { installPlan } from "./install-plan";
+import { planInstallation } from "./installation-plan";
+/* oxlint-disable import/max-dependencies -- The feature installation contract exercises the real planner, installer, registry and scaffold together. */
 import { initializeFeatureUi, syncFeatures } from "./sync-features";
+/* oxlint-enable import/max-dependencies */
 
 const roots: string[] = [];
 const demo = path.resolve(import.meta.dir, "../../../../apps/chat");
@@ -134,8 +138,7 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
   await initializeFeatureUi(root);
   await install(root);
   await rm(path.join(root, "app/api/mcp/oauth/callback/route.ts"));
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncFeatures(root, { expectedMcp: true })).rejects.toThrow(
+  expect(syncFeatures(root, { expectedMcp: true })).rejects.toThrow(
     "app/api/mcp/oauth/callback/route.ts"
   );
   expect(
@@ -148,7 +151,7 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-test("shadcn installs MCP into a core-only scaffold with no duplicate demo source", async (): Promise<void> => {
+test("MCP installation requires the approval schema before changing an older scaffold", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-mcp-install-"));
   roots.push(root);
   await scaffoldFromTemplate(root);
@@ -186,8 +189,34 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
     port: 0,
   });
   try {
-    await installItems([`http://127.0.0.1:${server.port}/mcp.json`], root);
-    await syncFeatures(root, { addUi: true, expectedMcp: true });
+    const schemaFile = path.join(root, "lib/db/schema.ts");
+    const schema = await readFile(schemaFile, "utf-8");
+    const oldSchema = schema.replace(
+      '    requireApproval: boolean("requireApproval").notNull().default(false),\n',
+      ""
+    );
+    expect(oldSchema).not.toContain("requireApproval");
+    await writeFile(schemaFile, oldSchema);
+    const plan = await planInstallation(root, {
+      features: [],
+      tools: [`http://127.0.0.1:${server.port}/mcp.json`],
+    });
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before checking for writes.
+    await expect(
+      installPlan(root, plan, { overwrite: true }, (): Promise<void> =>
+        Promise.reject(
+          new Error("registration must not run before the schema upgrade")
+        )
+      )
+    ).rejects.toThrow("db:generate script");
+    expect(
+      await Bun.file(path.join(root, "trpc/routers/mcp.router.ts")).exists()
+    ).toBe(false);
+    expect(await readFile(schemaFile, "utf-8")).toBe(oldSchema);
+    await writeFile(schemaFile, schema);
+    await installPlan(root, plan, {}, async (): Promise<void> => {
+      await syncFeatures(root, { addUi: true, expectedMcp: true });
+    });
     const installed = await Promise.all(
       mcpFiles.map((file): Promise<boolean> =>
         Bun.file(path.join(root, file)).exists()
@@ -198,8 +227,7 @@ test("shadcn installs MCP into a core-only scaffold with no duplicate demo sourc
       await readFile(path.join(root, "features/installed-routers.ts"), "utf-8")
     ).toContain("mcp: mcpRouter");
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    server.stop(true);
+    await server.stop(true);
   }
 }, 30_000);
 /* oxlint-enable eslint/max-lines-per-function */
@@ -282,8 +310,7 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
         readFile(path.join(root, entry), "utf-8")
       )
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(syncFeatures(root, { addUi: true })).rejects.toThrow(
+    expect(syncFeatures(root, { addUi: true })).rejects.toThrow(
       "retry chat-js add"
     );
     expect(
@@ -302,8 +329,7 @@ test("missing descriptors report partial MCP source and how to recover", async (
   await initializeFeatureUi(root);
   await install(root);
   await rm(path.join(root, "features/mcp/chatjs.json"));
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncFeatures(root)).rejects.toThrow("chat-js add mcp");
+  expect(syncFeatures(root)).rejects.toThrow("chat-js add mcp");
 });
 
 test("empty feature registration uses a zero-argument Set constructor", async (): Promise<void> => {
@@ -446,13 +472,11 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
       ).toBe(customControls);
     }
     await rm(path.join(root, "app/(chat)/api/files/upload/route.ts"));
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(syncFeatures(root, { expectedUploads: true })).rejects.toThrow(
+    expect(syncFeatures(root, { expectedUploads: true })).rejects.toThrow(
       "app/(chat)/api/files/upload/route.ts"
     );
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    server.stop(true);
+    await server.stop(true);
   }
 }, 30_000);
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -478,10 +502,7 @@ test("unrelated additions preserve computed feature UI; requesting MCP still req
   expect(await readFile(path.join(root, "settings-items.ts"), "utf-8")).toBe(
     settings
   );
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-  await expect(syncFeatures(root, { addUi: ["mcp"] })).rejects.toThrow(
-    "manually"
-  );
+  expect(syncFeatures(root, { addUi: ["mcp"] })).rejects.toThrow("manually");
 });
 /* oxlint-enable eslint/max-statements */
 

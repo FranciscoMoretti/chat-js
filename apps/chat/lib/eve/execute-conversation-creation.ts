@@ -1,6 +1,6 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies --
+
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries"; "../logger" dependency within this package instead of introducing an alias or barrel API.
  */
 import { z } from "zod";
 
@@ -10,8 +10,9 @@ import {
   createEveConversation,
   getEveConversation,
   getEveCreation,
-} from "../db/eve-queries";
-import { createModuleLogger } from "../logger";
+} from "@/lib/db/eve-queries";
+import { createModuleLogger } from "@/lib/logger";
+
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
 import type { createConversationInput, EveForkInput } from "./contracts";
 import { eveConversationTitleFallback } from "./conversation-title";
@@ -25,14 +26,19 @@ import { eveMessageDeliveryMetadata } from "./message-delivery";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies */
 
 const logger = createModuleLogger("eve/creation");
+const OPERATION_LOOKUP_TIMEOUT_MS = 15_000;
+const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
+const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
+const HTTP_NOT_FOUND = 404;
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+
  * typescript/explicit-function-return-type (#560): Keep resolveFork's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): resolveFork intentionally keeps the existing falsy-value behavior of source?.sessionId; input.beforeMessageId; input.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+  */
 const resolveFork = async (
   ownerId: string,
   input: EveForkInput | undefined
@@ -87,20 +93,24 @@ const creationFailure = (cause: unknown): Response => {
   );
 };
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+
  * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): executeEveConversationCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): executeEveConversationCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): executeEveConversationCreation uses 15_000, 1, 404, 30_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): executeEveConversationCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): executeEveConversationCreation accepts input: z.infer<typeof createConversationInput>; initialPreparedMessage?: Awaited<ReturnType<typeof prepareEveMessage>>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): executeEveConversationCreation intentionally keeps the existing falsy-value behavior of await getEveCreation(ownerId, input.operationId); fork.beforeTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): executeEveConversationCreation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+  */
+/**
+ * Executes an admitted creation command while retaining its journaled operation identity.
+ * @param ownerId Owner used to resolve source conversations and reserve the creation.
+ * @param input Original creation request reused when an uncertain dispatch is retried.
+ * @param guestReservationId Optional admission reservation attached to the created conversation.
+ * @param initialPreparedMessage Optional prepared message reused without preparing it again.
+ * @returns The bound conversation, or an error response that leaves unresolved creation recoverable.
  */
-/** Executes an admitted, journaled command. Retries retain the reservation and native operation identity. */
 export const executeEveConversationCreation = async (
   ownerId: string,
   input: z.infer<typeof createConversationInput>,
@@ -127,18 +137,24 @@ export const executeEveConversationCreation = async (
           ownerId,
           `/eve/chat/v1/operation/${operationId}`,
           {
-            signal: AbortSignal.timeout(15_000),
+            signal: AbortSignal.timeout(OPERATION_LOOKUP_TIMEOUT_MS),
           }
         );
         if (existing.ok) {
           return z
-            .object({ sessionId: z.string().min(1) })
+            .object({
+              sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+            })
             .parse(await existing.json()).sessionId;
         }
         const lookupFailure = z
           .object({ code: z.literal("eve_operation_not_found") })
-          .safeParse(await existing.json().catch(() => null));
-        if (existing.status !== 404 || !lookupFailure.success) {
+          .safeParse(
+            await existing.json().catch((): void => {
+              // The missing-operation schema rejects an absent JSON body.
+            })
+          );
+        if (existing.status !== HTTP_NOT_FOUND || !lookupFailure.success) {
           throw new EveCreationTransportError("lookup", existing.status);
         }
         // Accepted operations recover independently of their former source.
@@ -181,7 +197,7 @@ export const executeEveConversationCreation = async (
               operationId,
             }),
             method: "POST",
-            signal: AbortSignal.timeout(30_000),
+            signal: AbortSignal.timeout(SESSION_DISPATCH_TIMEOUT_MS),
           },
           input.modelId,
           input.selectedTool
@@ -190,7 +206,9 @@ export const executeEveConversationCreation = async (
           throw new EveCreationTransportError("dispatch", result.status);
         }
         return z
-          .object({ sessionId: z.string().min(1) })
+          .object({
+            sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+          })
           .parse(await result.json()).sessionId;
       },
       {
@@ -223,4 +241,4 @@ export const executeEveConversationCreation = async (
     return creationFailure(error);
   }
 };
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

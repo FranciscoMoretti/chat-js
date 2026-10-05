@@ -1,70 +1,92 @@
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { access, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { confirm, isCancel, log } from "@clack/prompts";
 import { Command } from "commander";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { configureGatewayProvider } from "../helpers/gateway-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
 import {
   parseStorageOptions,
   configureStorageProvider,
-} from "../helpers/storage-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveGateway } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { handleError } from "../utils/handle-error";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installPlan } from "../utils/install-plan";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { planInstallation } from "../utils/installation-plan";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { gatewayConfigEdit } from "../utils/provider-config";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+} from "#cli/helpers/storage-provider";
+import { resolveGateway } from "#cli/registry/gateways";
+import { resolveStorage } from "#cli/registry/storage";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
+import { handleError } from "#cli/utils/handle-error";
+import { installPlan } from "#cli/utils/install-plan";
+import { planInstallation } from "#cli/utils/installation-plan";
+import { gatewayConfigEdit } from "#cli/utils/provider-config";
+import { runCommand } from "#cli/utils/run-command";
 import {
   assertSupportedFeatureInstallation,
   syncFeatures,
-} from "../utils/sync-features";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncTools } from "../utils/sync-tools";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#cli/utils/sync-features";
+import { syncTools } from "#cli/utils/sync-tools";
+
+type ReadonlyNative<Value> = Value extends (
+  ...args: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
+    : Value;
+
+type InstallationPlan = Awaited<ReturnType<typeof planInstallation>>;
+type RegistryItemInput = ReadonlyNative<InstallationPlan["items"][number]>;
+type ProviderChangeInput = ReadonlyNative<
+  InstallationPlan["providerChanges"][number]
+>;
+type FeatureInput = ReadonlyNative<InstallationPlan["features"][number]>;
+
+interface AddOptions {
+  readonly gateway?: string;
+  readonly storageProvider?: string;
+  readonly storageConfig?: string;
+  readonly replace?: boolean;
+}
+interface AddCommandOptions extends AddOptions {
+  readonly cwd: string;
+  readonly yes: boolean;
+  readonly overwrite: boolean;
+}
+
+interface AddSetup {
+  configEdit: string | undefined;
+  gatewayChange: boolean;
+  keepStorageOptions: boolean;
+  plan: InstallationPlan;
+  selectedGateway: Awaited<ReturnType<typeof resolveGateway>> | undefined;
+  selectedStorage: Awaited<ReturnType<typeof resolveStorage>> | undefined;
+}
+
+const EMPTY_SELECTION_COUNT = 0;
+
+const hasProviderKind = (
+  metadata: unknown,
+  kind: "gateway" | "storage"
+): boolean =>
+  typeof metadata === "object" &&
+  metadata !== null &&
+  "kind" in metadata &&
+  metadata.kind === kind;
+
+/* oxlint-enable import/max-dependencies */
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const prepareAdd = async (
   cwd: string,
-  items: string[],
-  options: {
-    gateway?: string;
-    storageProvider?: string;
-    storageConfig?: string;
-    replace?: boolean;
-  }
-) => {
+  items: readonly string[],
+  options: AddOptions
+): Promise<AddSetup> => {
   if (
-    items.length === 0 &&
+    items.length === EMPTY_SELECTION_COUNT &&
     !hasNonEmptyValue(options.gateway) &&
     !hasNonEmptyValue(options.storageProvider)
   ) {
@@ -101,13 +123,11 @@ const prepareAdd = async (
   );
   assertSupportedFeatureInstallation(plan.features);
   // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
-  const gatewayItem = plan.items.find(
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    (item): boolean => item.meta?.chatjs?.kind === "gateway"
+  const gatewayItem = plan.items.find((item: RegistryItemInput): boolean =>
+    hasProviderKind(item.meta?.chatjs, "gateway")
   );
-  const storageItem = plan.items.find(
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    (item): boolean => item.meta?.chatjs?.kind === "storage"
+  const storageItem = plan.items.find((item: RegistryItemInput): boolean =>
+    hasProviderKind(item.meta?.chatjs, "storage")
   );
   const selectedGateway =
     gateway ??
@@ -120,14 +140,19 @@ const prepareAdd = async (
       ? await resolveStorage(plan.sources[plan.items.indexOf(storageItem)], cwd)
       : undefined);
   const gatewayChange = plan.providerChanges.some(
-    ({ kind, previous, next }) =>
+    ({ kind, previous, next }: ProviderChangeInput) =>
       kind === "gateway" && previous && previous !== next
   );
   const keepStorageOptions =
     !hasNonEmptyValue(options.storageConfig) &&
     plan.providerChanges.some(
-      ({ kind, previous, next }): boolean =>
-        kind === "storage" && previous === next
+      ({
+        kind,
+        previous,
+        next,
+      }: ReadonlyNative<
+        InstallationPlan["providerChanges"][number]
+      >): boolean => kind === "storage" && previous === next
     );
   const configEdit =
     gatewayChange && selectedGateway
@@ -144,41 +169,37 @@ const prepareAdd = async (
   };
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const printSetupRequirements = (
-  setup: Awaited<ReturnType<typeof prepareAdd>>
-): void => {
+const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   const { plan, selectedGateway, selectedStorage } = setup;
-  if (plan.features.some((feature): boolean => feature.id === "mcp")) {
+  if (plan.features.some((feature: FeatureInput) => feature.id === "mcp")) {
     log.info(
       "Set MCP_ENCRYPTION_KEY before starting the app, even if no connectors are configured."
     );
   }
   const requirements = [
-    ...plan.expected.flatMap((item) => item.envRequirements),
-    ...plan.features.flatMap((feature) => feature.envRequirements ?? []),
+    ...plan.expected.flatMap(
+      (item: ReadonlyNative<AddSetup["plan"]["expected"][number]>) =>
+        item.envRequirements
+    ),
+    ...plan.features.flatMap(
+      (feature: FeatureInput) => feature.envRequirements ?? []
+    ),
     ...(selectedGateway?.definition.envRequirements ?? []),
     ...(selectedStorage?.definition.envRequirements ?? []),
   ];
   for (const requirement of requirements) {
     log.info(
-      `Required: ${requirement.options.map((option): string => option.join(" + ")).join(" or ")}`
+      `Required: ${requirement.options.map((option: readonly string[]): string => option.join(" + ")).join(" or ")}`
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const add = new Command("add")
   .description(
     "install registry tools/features/providers and compose their ChatJS registrations"
@@ -204,12 +225,8 @@ export const add = new Command("add")
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
   .action(
     async (
-      items: string[],
-      options: Parameters<typeof prepareAdd>[2] & {
-        cwd: string;
-        yes: boolean;
-        overwrite: boolean;
-      }
+      items: readonly string[],
+      options: AddCommandOptions
     ): Promise<void> => {
       try {
         const cwd = path.resolve(options.cwd);
@@ -252,10 +269,31 @@ export const add = new Command("add")
           cwd,
           plan,
           {
+            finalize: async (): Promise<void> => {
+              const manager = inferPackageManager(cwd);
+              await runCommand(manager, ["install"], cwd);
+              const formatter = {
+                bun: ["run"],
+                npm: ["exec", "--"],
+                pnpm: ["exec"],
+                yarn: ["run"],
+              }[manager];
+              await runCommand(
+                manager,
+                [
+                  ...formatter,
+                  "oxfmt",
+                  "--write",
+                  "package.json",
+                  ".chatjs/installed-dependencies.json",
+                ],
+                cwd
+              );
+            },
             managedTargets: [
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
               ...(selectedStorage && !keepStorageOptions
-                ? ["lib/storage-options.ts", ".env.example"]
+                ? ["lib/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,
@@ -277,12 +315,12 @@ export const add = new Command("add")
             }
             await syncTools(cwd, { expected: plan.expected });
             await syncFeatures(cwd, {
-              addUi: plan.features.map((feature) => feature.id),
+              addUi: plan.features.map((feature: FeatureInput) => feature.id),
               expectedMcp: plan.features.some(
-                (feature): boolean => feature.id === "mcp"
+                (feature: FeatureInput) => feature.id === "mcp"
               ),
               expectedUploads: plan.features.some(
-                (feature): boolean => feature.id === "attachment-uploads"
+                (feature: FeatureInput) => feature.id === "attachment-uploads"
               ),
             });
           }
@@ -296,4 +334,5 @@ export const add = new Command("add")
       }
     }
   );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
+/* oxlint-disable eslint/max-lines -- Keep the add command and its ordered provider-installation transaction together. */

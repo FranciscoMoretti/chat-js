@@ -7,9 +7,11 @@ interface EveSearchText {
   text: string;
 }
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): eveSeedSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
-/** Index display text only: never reasoning, tool payloads, files, or auth metadata. */
+/**
+ * Index display text only: never reasoning, tool payloads, files, or auth metadata.
+ * @param messages Seeded message parts and roles whose visible text may enter the search index.
+ * @returns Nonempty user/assistant text indexed by its original seed position.
+ */
 const eveSeedSearchText = (
   messages: readonly {
     readonly role: string;
@@ -29,13 +31,15 @@ const eveSeedSearchText = (
       ? [{ key: `seed:${index}`, text }]
       : [];
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): eveEventSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): eveEventSearchText intentionally keeps the existing falsy-value behavior of event.data.message?.trim(); distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Immutable event identities make live delivery, restored prefixes and backfills idempotent. */
+ */
+/**
+ * Immutable event identities make live delivery, restored prefixes and backfills idempotent.
+ * @param event Native history or live event that may contain visible user/assistant text.
+ * @returns Display text with stable event/seed keys, including restored history and excluding empty content.
+ */
 const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
   if (event.type === "history.seeded") {
     return eveSeedSearchText(event.data.messages);
@@ -52,11 +56,15 @@ const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
       : event.data.message;
     return text.trim() ? [{ key: `event:${event.meta.id}`, text }] : [];
   }
-  if (event.type === "message.completed" && event.data.message?.trim()) {
+  if (
+    event.type === "message.completed" &&
+    typeof event.data.message === "string" &&
+    event.data.message.trim() !== ""
+  ) {
     return [{ key: `event:${event.meta.id}`, text: event.data.message }];
   }
   return [];
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH };
 export type { EveSearchText };

@@ -9,15 +9,22 @@ const isBetterAuthCookieName = (name: string): boolean =>
   isSessionTokenCookieName(name) ||
   name.endsWith(".session_data");
 
-/* oxlint-disable eslint/no-magic-numbers -- hasSessionCookie: Zero rejects empty cookie names/values and index + 1 skips the single equals delimiter; these offsets define the cookie-header parser. */
+const COOKIE_HEADER_SEPARATOR = ";";
+const COOKIE_VALUE_SEPARATOR = "=";
+const COOKIE_NAME_START_INDEX = 0;
+const COOKIE_SEPARATOR_LENGTH = 1;
+const EMPTY_COOKIE_VALUE_LENGTH = 0;
+
 const hasSessionCookie = (cookieHeader: string): boolean =>
-  cookieHeader.split(";").some((entry) => {
-    const index = entry.indexOf("=");
+  cookieHeader.split(COOKIE_HEADER_SEPARATOR).some((entry) => {
+    const index = entry.indexOf(COOKIE_VALUE_SEPARATOR);
     return (
-      index > 0 &&
-      isSessionTokenCookieName(entry.slice(0, index).trim()) &&
-      entry.slice(index + 1).trim().length > 0
+      index > COOKIE_NAME_START_INDEX &&
+      isSessionTokenCookieName(
+        entry.slice(COOKIE_NAME_START_INDEX, index).trim()
+      ) &&
+      entry.slice(index + COOKIE_SEPARATOR_LENGTH).trim().length >
+        EMPTY_COOKIE_VALUE_LENGTH
     );
   });
-/* oxlint-enable eslint/no-magic-numbers */
 export { hasSessionCookie, isBetterAuthCookieName };

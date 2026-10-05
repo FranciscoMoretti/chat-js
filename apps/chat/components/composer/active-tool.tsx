@@ -8,16 +8,16 @@ import type { UiToolName } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
 import { getToolDisplay } from "./tool-display";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable unicorn/no-null --  unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ActiveTool = ({
   selectedTool,
   disabled,
   onClear,
 }: {
-  selectedTool: UiToolName | null;
-  disabled?: boolean;
-  onClear: () => void;
+  readonly selectedTool: UiToolName | null;
+  readonly disabled?: boolean;
+  readonly onClear: () => void;
 }): React.JSX.Element | null => {
   if (!selectedTool) {
     return null;
@@ -46,4 +46,4 @@ export const ActiveTool = ({
     </Button>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */

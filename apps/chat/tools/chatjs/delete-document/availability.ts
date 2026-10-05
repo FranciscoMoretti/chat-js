@@ -2,7 +2,8 @@ import type { ToolContext } from "eve/tools";
 
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const EMPTY_DOCUMENT_KIND_COUNT = 0;
+
 export const deleteDocumentAvailable = (
   session: Pick<ToolContext["session"], "auth" | "parent">
 ): boolean =>
@@ -10,6 +11,5 @@ export const deleteDocumentAvailable = (
     session.auth.initiator &&
     session.auth.initiator.attributes.chatjsGuest !== "true" &&
     !session.parent &&
-    installedDocumentKinds.size > 0
+    installedDocumentKinds.size > EMPTY_DOCUMENT_KIND_COUNT
   );
-/* oxlint-enable eslint/no-magic-numbers */

@@ -5,41 +5,40 @@ import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import type { EditorState, LexicalEditor } from "lexical";
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-console -- This is the explicit command-line or library error-reporting boundary; writing to the console is the intended observable output. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-// Create initial editor configuration
-const createEditorConfig = () => ({
+const DOCUMENT_NODE_CLASSES = [
+  HeadingNode,
+  ListNode,
+  ListItemNode,
+  QuoteNode,
+  CodeNode,
+  CodeHighlightNode,
+  LinkNode,
+];
+interface DocumentEditorConfig {
+  namespace: string;
+  nodes: typeof DOCUMENT_NODE_CLASSES;
+  onError: (error: Readonly<Error>) => void;
+}
+
+// Create initial editor configuration with a fresh node collection for each editor.
+const createEditorConfig = (): DocumentEditorConfig => ({
   namespace: "DocumentEditor",
-  nodes: [
-    HeadingNode,
-    ListNode,
-    ListItemNode,
-    QuoteNode,
-    CodeNode,
-    CodeHighlightNode,
-    LinkNode,
-  ],
-  onError: (error: Error): void => {
+  nodes: [...DOCUMENT_NODE_CLASSES],
+  onError: (error: Readonly<Error>): void => {
+    // oxlint-disable-next-line eslint/no-console -- Preserve Lexical's configured error-reporting boundary: every editor error is reported with its native Error object.
     console.error("Lexical error:", error);
   },
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-console */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const handleEditorChange = ({
   editorState: _editorState,
   editor,
   onSaveContent,
-}: {
-  editorState: EditorState;
-  editor: LexicalEditor;
+}: Readonly<{
+  editorState: Readonly<Pick<EditorState, "read">>;
+  editor: Readonly<Pick<LexicalEditor, "getEditorState">>;
   onSaveContent: (updatedContent: string, debounce: boolean) => void;
-}): void => {
+}>): void => {
   let updatedContent = "";
 
   editor.getEditorState().read((): void => {
@@ -52,5 +51,4 @@ const handleEditorChange = ({
 
   onSaveContent(updatedContent, shouldDebounce);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { createEditorConfig, handleEditorChange };

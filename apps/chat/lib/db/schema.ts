@@ -1,6 +1,3 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/copy-journal-contract" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
@@ -21,9 +18,9 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import type { EveCopyPlan, EveCopySeed } from "../eve/copy-journal-contract";
+import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
+
 import { encryptedJson, encryptedText } from "./encrypted-text";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): eveWorkflowBackend uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): eveWorkflowBackend accepts table; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -279,6 +276,7 @@ const mcpConnector = pgTable(
     nameId: varchar("nameId", { length: 256 }).notNull(),
     oauthClientId: text("oauthClientId"),
     oauthClientSecret: encryptedText("oauthClientSecret"),
+    requireApproval: boolean("requireApproval").notNull().default(false),
     type: varchar("type", { enum: ["http", "sse"] })
       .notNull()
       .default("http"),

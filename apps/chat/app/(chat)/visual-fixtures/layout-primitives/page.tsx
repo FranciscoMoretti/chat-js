@@ -12,7 +12,5 @@ const LayoutPrimitivesVisualFixturePage = (): React.JSX.Element => {
   return <LayoutPrimitivesVisualFixture />;
 };
 
-/* oxlint-disable import/no-default-export -- page route: import/no-default-export: Next.js loads this route entry point through its required default export. */
-
+// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component LayoutPrimitivesVisualFixturePage.
 export default LayoutPrimitivesVisualFixturePage;
-/* oxlint-enable import/no-default-export */

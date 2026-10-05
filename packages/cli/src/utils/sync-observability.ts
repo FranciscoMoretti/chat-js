@@ -20,56 +20,118 @@ const exists = async (file: string): Promise<boolean> => {
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-// Validate every installed implementation before sync writes any registrations.
-const planObservability = async (cwd: string) => {
-  const installed = await Promise.all(
-    observabilityItems.map(async (item) => {
-      const descriptor = path.join(cwd, `features/${item.name}/chatjs.json`);
-      const present = await exists(descriptor);
-      const files = await Promise.all(
-        (item.files ?? []).map(async (file) => {
-          const target = file.target?.replace(/^~\//u, "");
-          if (!target) {
-            throw new Error(
-              `Observability file needs an explicit target: ${file.path}`
-            );
-          }
-          return { present: await exists(path.join(cwd, target)), target };
-        })
-      );
-      if (!present) {
-        if (files.some((file): boolean => file.present)) {
-          throw new Error(
-            `${item.name} is missing its descriptor. Run chat-js add ${item.name} to complete installation.`
-          );
-        }
-        return null;
-      }
-      const definition = featureDefinitionSchema.parse(
-        JSON.parse(await readFile(descriptor, "utf-8"))
-      );
-      if (definition.id !== item.name) {
-        throw new Error(
-          `Feature descriptor id must match its directory: ${item.name}`
-        );
-      }
-      const missing = files.filter((file): boolean => !file.present);
-      if (missing.length > 0) {
-        throw new Error(
-          `${item.name} installation is incomplete. Missing: ${missing.map((file): string => file.target).join(", ")}. Run chat-js add ${item.name}.`
-        );
-      }
-      return item.name;
-    })
+type ObservabilityId = ReturnType<typeof featureDefinitionSchema.parse>["id"];
+
+const NO_INSTALLED_FILES = 0;
+const JSON_INDENTATION_SPACES = 2;
+
+interface ObservabilityFile {
+  readonly path: string;
+  readonly target?: string;
+}
+
+interface ObservabilitySource {
+  readonly name: string;
+  readonly files?: readonly ObservabilityFile[];
+}
+
+interface LocatedFile {
+  readonly present: boolean;
+  readonly target: string;
+}
+
+interface ObservabilityManifest {
+  dependencies?: Record<string, unknown> | null;
+}
+
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isObservabilityManifest = (
+  value: unknown
+): value is ObservabilityManifest =>
+  isJsonObject(value) &&
+  (!Object.hasOwn(value, "dependencies") ||
+    value.dependencies === null ||
+    isJsonObject(value.dependencies));
+
+const formattedManifest = (value: unknown): string =>
+  // oxlint-disable-next-line unicorn/no-null -- JSON.stringify's null replacer retains unknown template metadata; its third argument preserves deterministic two-space formatting.
+  `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
+
+const locateObservabilityFile = async (
+  cwd: string,
+  file: ObservabilityFile
+): Promise<LocatedFile> => {
+  const target = file.target?.replace(/^~\//u, "");
+  if (typeof target !== "string" || target === "") {
+    throw new Error(
+      `Observability file needs an explicit target: ${file.path}`
+    );
+  }
+  return { present: await exists(path.join(cwd, target)), target };
+};
+
+const completeObservabilitySource = async (
+  item: ObservabilitySource,
+  descriptor: string,
+  files: readonly LocatedFile[]
+): Promise<ObservabilityId[]> => {
+  const definition = featureDefinitionSchema.parse(
+    JSON.parse(await readFile(descriptor, "utf-8"))
   );
-  const ids = installed.filter((id) => id !== null);
+  if (definition.id !== item.name) {
+    throw new Error(
+      `Feature descriptor id must match its directory: ${item.name}`
+    );
+  }
+  const missing = files.filter((file: LocatedFile): boolean => !file.present);
+  if (missing.length > NO_INSTALLED_FILES) {
+    throw new Error(
+      `${item.name} installation is incomplete. Missing: ${missing.map((file: LocatedFile): string => file.target).join(", ")}. Run chat-js add ${item.name}.`
+    );
+  }
+  return [item.name];
+};
+
+// Finish validating each implementation before its ID contributes to output.
+const installedObservabilityIds = async (
+  cwd: string,
+  item: ObservabilitySource
+): Promise<ObservabilityId[]> => {
+  const descriptor = path.join(cwd, `features/${item.name}/chatjs.json`);
+  const present = await exists(descriptor);
+  const files = await Promise.all(
+    (item.files ?? []).map(
+      async (file: ObservabilityFile): Promise<LocatedFile> =>
+        await locateObservabilityFile(cwd, file)
+    )
+  );
+  if (!present) {
+    if (files.some((file: LocatedFile): boolean => file.present)) {
+      throw new Error(
+        `${item.name} is missing its descriptor. Run chat-js add ${item.name} to complete installation.`
+      );
+    }
+    return [];
+  }
+  return await completeObservabilitySource(item, descriptor, files);
+};
+
+// Validate every installed implementation before sync writes any registrations.
+const planObservability = async (
+  cwd: string
+): Promise<{
+  files: { content: string; file: string }[];
+  ids: ObservabilityId[];
+}> => {
+  const installed = await Promise.all(
+    observabilityItems.map(
+      async (item: ObservabilitySource): Promise<ObservabilityId[]> =>
+        await installedObservabilityIds(cwd, item)
+    )
+  );
+  const ids = installed.flat();
   const layout = ids.filter((id) => id !== "langfuse");
   const imports = layout
     .map(
@@ -83,7 +145,7 @@ const planObservability = async (cwd: string) => {
   return {
     files: [
       {
-        content: `// Generated by chat-js sync.\n${imports ? `${imports}\n` : ""}import type { InstalledLayoutComponent } from "@/lib/installation-contracts";\n\nexport const installedLayoutComponents: readonly {\n  id: string;\n  Component: InstalledLayoutComponent;\n}[] = ${layout.length > 0 ? `[\n${layout.map((id, index): string => `  { Component: Component${index}, id: "${id}" },`).join("\n")}\n]` : "[]"};\n`,
+        content: `// Generated by chat-js sync.\n${imports ? `${imports}\n` : ""}import type { InstalledLayoutComponent } from "@/lib/installation-contracts";\n\nexport const installedLayoutComponents: readonly {\n  id: string;\n  Component: InstalledLayoutComponent;\n}[] = ${layout.length > NO_INSTALLED_FILES ? `[\n${layout.map((id, index): string => `  { Component: Component${index}, id: "${id}" },`).join("\n")}\n]` : "[]"};\n`,
         file: path.join(cwd, "features/installed-layout.ts"),
       },
       {
@@ -94,34 +156,28 @@ const planObservability = async (cwd: string) => {
     ids,
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable eslint/max-statements */
-
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 // Creation only: reset demo selections. Sync/add never remove implementations.
 const initializeObservability = async (cwd: string): Promise<void> => {
   await Promise.all(
-    observabilityItems.map((item): Promise<void> =>
-      rm(path.join(cwd, "features", item.name), {
-        force: true,
-        recursive: true,
-      })
+    observabilityItems.map(
+      async (item: Readonly<{ name: string }>): Promise<void> => {
+        await rm(path.join(cwd, "features", item.name), {
+          force: true,
+          recursive: true,
+        });
+      }
     )
   );
   const manifestPath = path.join(cwd, "package.json");
   if (!(await exists(manifestPath))) {
     return;
   }
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Dependency removal must preserve unrelated package manifest fields; adopting a stricter manifest schema requires compatibility decisions.
-  const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
+  const manifest: unknown = JSON.parse(await readFile(manifestPath, "utf-8"));
+  if (!isObservabilityManifest(manifest)) {
+    throw new TypeError(
+      "Observability initialization needs a package JSON object with an optional dependency object."
+    );
+  }
   for (const dependency of [
     "@vercel/analytics",
     "@vercel/speed-insights",
@@ -129,13 +185,8 @@ const initializeObservability = async (cwd: string): Promise<void> => {
     "langfuse-vercel",
     "langfuse",
   ]) {
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Dependency removal must preserve unrelated package manifest fields; adopting a stricter manifest schema requires compatibility decisions.
     delete manifest.dependencies?.[dependency];
   }
-  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(manifestPath, formattedManifest(manifest));
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
 export { initializeObservability, planObservability };

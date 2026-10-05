@@ -1,14 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-file-purge"; "../file-storage"; "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 import {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,
   releaseEveFamilyFileReferences,
-} from "../db/eve-file-purge";
-import { deleteFilesByUrls } from "../file-storage";
-import { createFileUrl } from "../file-url";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "@/lib/db/eve-file-purge";
+import { deleteFilesByUrls } from "@/lib/file-storage";
+import { createFileUrl } from "@/lib/file-url";
 
 /* oxlint-disable jsdoc/require-param, no-magic-numbers --
  * jsdoc/require-param (#534): purgeEveFamilyFiles's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

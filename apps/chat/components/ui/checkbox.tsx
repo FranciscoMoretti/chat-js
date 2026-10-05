@@ -1,22 +1,25 @@
 "use client";
 
-/* oxlint-disable import/no-namespace -- @radix-ui/react-checkbox import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-/* oxlint-enable import/no-namespace */
+import {
+  Root as CheckboxPrimitiveRoot,
+  Indicator as CheckboxPrimitiveIndicator,
+} from "@radix-ui/react-checkbox";
 import { Check } from "lucide-react";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import { forwardRef as reactForwardRef } from "react";
+import type {
+  ComponentRef as ReactComponentRef,
+  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Checkbox: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const Checkbox = React.forwardRef<
-  React.ComponentRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref): React.JSX.Element => (
-  <CheckboxPrimitive.Root
+const Checkbox = reactForwardRef<
+  ReactComponentRef<typeof CheckboxPrimitiveRoot>,
+  ReactComponentPropsWithoutRef<typeof CheckboxPrimitiveRoot>
+>(({ className, ...props }, ref): ReactJSX.Element => (
+  <CheckboxPrimitiveRoot
     className={cn(
       "peer border-primary ring-offset-background focus-visible:ring-ring data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4 shrink-0 rounded-sm border focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
       className
@@ -24,14 +27,14 @@ const Checkbox = React.forwardRef<
     ref={ref}
     {...props}
   >
-    <CheckboxPrimitive.Indicator
+    <CheckboxPrimitiveIndicator
       className={cn("flex items-center justify-center text-current")}
     >
       <Check className="h-4 w-4" />
-    </CheckboxPrimitive.Indicator>
-  </CheckboxPrimitive.Root>
+    </CheckboxPrimitiveIndicator>
+  </CheckboxPrimitiveRoot>
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-Checkbox.displayName = CheckboxPrimitive.Root.displayName;
+Checkbox.displayName = CheckboxPrimitiveRoot.displayName;
 
 export { Checkbox };

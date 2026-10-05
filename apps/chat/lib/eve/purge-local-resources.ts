@@ -1,7 +1,5 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-documents" dependency within this package instead of introducing an alias or barrel API.
- */
-import { purgeEveFamilyDocuments } from "../db/eve-documents";
+import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
+
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
@@ -9,7 +7,6 @@ import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
 import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): purgeLocalEveFamilyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

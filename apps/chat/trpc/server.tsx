@@ -6,6 +6,7 @@ import type { ResolverDef, TRPCQueryOptions } from "@trpc/tanstack-react-query";
 import React, { cache } from "react";
 
 import { createTRPCContext } from "./init";
+import { preloadQuery } from "./preload-query";
 import { makeQueryClient } from "./query-client";
 import { appRouter } from "./routers/_app";
 
@@ -41,17 +42,16 @@ const prefetch = <T extends ReturnType<TRPCQueryOptions<ResolverDef>>>(
 ): void => {
   const queryClient = getQueryClient();
   if (queryOptions.queryKey[1]?.type === "infinite") {
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
-    void queryClient.prefetchInfiniteQuery(
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Lazy prefetch bridges tagged tRPC query options and TanStack infinite-query overloads; removing the generic adapter requires preserving their correlated types.
-      queryOptions as unknown as Parameters<
-        // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
-        typeof queryClient.prefetchInfiniteQuery
-      >[0]
+    void preloadQuery(
+      queryClient.infiniteQuery(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Lazy prefetch bridges tagged tRPC query options and TanStack infinite-query overloads; removing the generic adapter requires preserving their correlated types.
+        queryOptions as unknown as Parameters<
+          typeof queryClient.infiniteQuery
+        >[0]
+      )
     );
   } else {
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
-    void queryClient.prefetchQuery(queryOptions);
+    void preloadQuery(queryClient.query(queryOptions));
   }
 };
 /* oxlint-enable id-length, no-magic-numbers */

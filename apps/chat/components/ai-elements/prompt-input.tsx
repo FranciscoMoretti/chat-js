@@ -9,6 +9,12 @@ import {
   SquareIcon,
   XIcon,
 } from "lucide-react";
+import type {
+  JSX as ReactJSX,
+  ComponentProps,
+  HTMLAttributes,
+  RefObject,
+} from "react";
 import React, {
   Children,
   useCallback,
@@ -16,7 +22,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { ComponentProps, HTMLAttributes, RefObject } from "react";
 
 import {
   Command,
@@ -318,14 +323,14 @@ type PromptInputSpeechButtonProps = ComponentProps<typeof PromptInputButton> & {
   onTranscriptionChange?: (text: string) => void;
 };
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PromptInputSpeechButton: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including window.SpeechRecognition); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PromptInputSpeechButton: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including window.SpeechRecognition); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PromptInputSpeechButton = ({
   className,
   textareaRef,
   onTranscriptionChange,
   ...props
-}: PromptInputSpeechButtonProps) => {
+}: PromptInputSpeechButtonProps): ReactJSX.Element => {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
     null
@@ -348,15 +353,15 @@ const PromptInputSpeechButton = ({
       speechRecognition.interimResults = true;
       speechRecognition.lang = "en-US";
 
-      speechRecognition.onstart = () => {
+      speechRecognition.onstart = (): void => {
         setIsListening(true);
       };
 
-      speechRecognition.onend = () => {
+      speechRecognition.onend = (): void => {
         setIsListening(false);
       };
 
-      speechRecognition.onresult = (event) => {
+      speechRecognition.onresult = (event): void => {
         let finalTranscript = "";
 
         for (
@@ -392,7 +397,7 @@ const PromptInputSpeechButton = ({
       setRecognition(speechRecognition);
     }
 
-    return () => {
+    return (): void => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -426,7 +431,7 @@ const PromptInputSpeechButton = ({
     </PromptInputButton>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type PromptInputSelectProps = ComponentProps<typeof Select>;
 

@@ -1,35 +1,33 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-native-purge"; "../db/eve-queries"; "../env" dependency within this package instead of introducing an alias or barrel API.
- */
 import { Client } from "eve/client";
-
-import { retireEveNativeSessions } from "@/lib/eve/lifecycle/postgres/eve-native-purge";
+import type { SessionSnapshot } from "eve/client";
 
 import {
   beginEveConversationDeletion,
   getDeletingEveConversationForSession,
-} from "../db/eve-queries";
-import { env } from "../env";
+} from "@/lib/db/eve-queries";
+
 import { getEveConnectionOptions } from "./connection-options";
+import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
 import { reconcileEveSubagentUsage } from "./reconcile-usage";
 import { assertEveConfigured } from "./server";
 import { ingestEveUsage } from "./usage";
-import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): retireEveSessionForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): retireEveSessionForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-statements (#512): retireEveSessionForDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): retireEveSessionForDeletion uses 30_000, 15_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep retireEveSessionForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep retireEveSessionForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+const SESSION_RETIRE_TIMEOUT_MS = 30_000;
+const RETIRED_SNAPSHOT_TIMEOUT_MS = 15_000;
+
+/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-statements (#512): retireEveSessionForDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): retireEveSessionForDeletion accepts event; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): retireEveSessionForDeletion intentionally keeps the existing falsy-value behavior of await getDeletingEveConversationForSession(ownerId, sessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Retirement and cost settlement precede erasure; this never marks deletion complete. */
+/**
+ * Retires a deletion-pending session and settles its usage before erasure is allowed.
+ * @param ownerId Owner authorized by the conversation's deletion state.
+ * @param sessionId Bound native session to reset and inspect for terminal evidence.
+ * @returns The terminal snapshot after direct and subagent usage are reconciled; incomplete retirement throws.
+ */
 const retireEveSessionForDeletion = async (
   ownerId: string,
   sessionId: string
-) => {
+): Promise<SessionSnapshot> => {
   assertEveConfigured();
   if (!(await getDeletingEveConversationForSession(ownerId, sessionId))) {
     throw new Error("Conversation is not pending deletion.");
@@ -42,10 +40,10 @@ const retireEveSessionForDeletion = async (
   const session = client.sessions.attach(sessionId);
   await session.reset({
     reason: "Conversation deleted",
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(SESSION_RETIRE_TIMEOUT_MS),
   });
   const snapshot = await session.snapshot({
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(RETIRED_SNAPSHOT_TIMEOUT_MS),
   });
   if (
     !snapshot.events.some(
@@ -72,28 +70,25 @@ const retireEveSessionForDeletion = async (
   }
   return snapshot;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): retireEveFamilyForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): retireEveFamilyForDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep retireEveFamilyForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep retireEveFamilyForDeletion's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/strict-boolean-expressions (#610): retireEveFamilyForDeletion intentionally keeps the existing falsy-value behavior of databaseUrl; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Revoke family access and settle every bound member before resource erasure starts. */
+/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): retireEveFamilyForDeletion intentionally keeps the existing falsy-value behavior of databaseUrl; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/**
+ * Revokes family access and settles every bound session before resource erasure starts.
+ * @param ownerId Owner whose conversation family is placed into deletion state.
+ * @param conversationId Conversation identifying the family whose bound sessions are retired.
+ * @returns The deletion family after session retirement, or no result when no family is available.
+ */
 const retireEveFamilyForDeletion = async (
   ownerId: string,
   conversationId: string
-) => {
+): Promise<
+  | NonNullable<Awaited<ReturnType<typeof beginEveConversationDeletion>>>
+  | undefined
+> => {
   assertEveConfigured();
-  const databaseUrl = env.WORKFLOW_POSTGRES_URL;
-  if (
-    resolveWorkflowWorld(env) !== "@workflow/world-postgres" ||
-    !databaseUrl
-  ) {
-    throw new Error(
-      "This deletion operation requires the PostgreSQL workflow backend."
-    );
-  }
+  const lifecycle = requireEveDeletionLifecycle();
+  await lifecycle.check();
   const family = await beginEveConversationDeletion(ownerId, conversationId);
   if (!family) {
     return;
@@ -104,11 +99,11 @@ const retireEveFamilyForDeletion = async (
     }
     return conversation.sessionId;
   });
-  await retireEveNativeSessions(databaseUrl, sessionIds, async (sessionId) => {
+  await lifecycle.retire(sessionIds, async (sessionId) => {
     await retireEveSessionForDeletion(ownerId, sessionId);
   });
   // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return family;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 export { retireEveFamilyForDeletion, retireEveSessionForDeletion };

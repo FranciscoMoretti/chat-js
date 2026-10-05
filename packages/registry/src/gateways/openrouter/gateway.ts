@@ -8,18 +8,22 @@ import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { ImageModel } from "ai";
 
+const MODEL_OWNER_SEGMENT_INDEX = 0;
+const EMPTY_TAG_COUNT = 0;
+const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
+
 interface OpenRouterModelResponse {
-  architecture: {
+  architecture: Readonly<{
     modality?: string;
-    input_modalities?: string[];
-    output_modalities?: string[];
-  } | null;
+    input_modalities?: readonly string[];
+    output_modalities?: readonly string[];
+  }> | null;
   context_length: number | null;
   created: number;
   description: string;
   id: string;
   name: string;
-  pricing: {
+  pricing: Readonly<{
     prompt?: string;
     completion?: string;
     image?: string;
@@ -27,17 +31,16 @@ interface OpenRouterModelResponse {
     internal_reasoning?: string;
     input_cache_read?: string;
     input_cache_write?: string;
-  } | null;
-  supported_parameters?: string[] | null;
-  top_provider: {
+  }> | null;
+  supported_parameters?: readonly string[] | null;
+  top_provider: Readonly<{
     context_length?: number | null;
     max_completion_tokens: number | null;
-  } | null;
+  }> | null;
 }
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const deriveTags = (model: OpenRouterModelResponse): string[] => {
+const deriveTags = (model: Readonly<OpenRouterModelResponse>): string[] => {
   const inputMods = model.architecture?.input_modalities ?? ["text"];
   const outputMods = model.architecture?.output_modalities ?? ["text"];
   const supportedParams = model.supported_parameters ?? [];
@@ -63,13 +66,13 @@ const deriveTags = (model: OpenRouterModelResponse): string[] => {
   }
   return tags;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
+const UNKNOWN_MODEL_LIMIT = 0;
+const UNKNOWN_MODEL_TIMESTAMP = 0;
+const toAiGatewayModel = (
+  model: Readonly<OpenRouterModelResponse>
+): AiGatewayModel => {
   const tags = deriveTags(model);
   const outputMods = model.architecture?.output_modalities ?? ["text"];
 
@@ -78,14 +81,16 @@ const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
     type = "image";
   }
 
-  const owned_by = model.id.split("/")[0] ?? "unknown";
+  const owned_by =
+    model.id.split("/").at(MODEL_OWNER_SEGMENT_INDEX) ?? "unknown";
 
   return {
-    context_window: model.context_length ?? 0,
-    created: model.created ?? 0,
+    context_window: model.context_length ?? UNKNOWN_MODEL_LIMIT,
+    created: model.created ?? UNKNOWN_MODEL_TIMESTAMP,
     description: model.description ?? "",
     id: model.id,
-    max_tokens: model.top_provider?.max_completion_tokens ?? 0,
+    max_tokens:
+      model.top_provider?.max_completion_tokens ?? UNKNOWN_MODEL_LIMIT,
     name: model.name ?? model.id,
     object: "model",
     owned_by,
@@ -97,25 +102,21 @@ const toAiGatewayModel = (model: OpenRouterModelResponse): AiGatewayModel => {
       output: model.pricing?.completion,
       web_search: model.pricing?.web_search,
     },
-    tags: tags.length > 0 ? tags : undefined,
+    // oxlint-disable-next-line eslint/no-undefined -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.
+    tags: tags.length > EMPTY_TAG_COUNT ? tags : undefined,
     type,
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 class OpenRouterGateway
   extends GatewayRuntime
   implements GatewayProvider<"openrouter", string, never, never>
 {
   public readonly type = "openrouter" as const;
 
-  private getProvider() {
+  private getProvider(): ReturnType<typeof createOpenRouter> {
     const apiKey = this.getApiKey();
     if (!(typeof apiKey === "string" && apiKey !== "")) {
       throw new Error("OPENROUTER_API_KEY is not configured");
@@ -146,12 +147,6 @@ class OpenRouterGateway
     return this.env.OPENROUTER_API_KEY;
   }
 
-  // The models endpoint is fixed by the provider contract.
-  // eslint-disable-next-line class-methods-use-this -- Review debt #623: this provider URL helper is independent of instance state; review conversion to a static or module helper.
-  private getModelsUrl(): string {
-    return "https://openrouter.ai/api/v1/models";
-  }
-
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -160,7 +155,7 @@ class OpenRouterGateway
       return [...this.getFallbackModels(this.type)];
     }
 
-    const url = this.getModelsUrl();
+    const url = OPENROUTER_MODELS_URL;
     this.log.debug({ url }, "Fetching models from OpenRouter");
 
     try {
@@ -182,7 +177,8 @@ class OpenRouterGateway
       // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
       const body = await response.json();
       // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ?? []) as OpenRouterModelResponse[];
+      const models = (body.data ??
+        []) as readonly Readonly<OpenRouterModelResponse>[];
       const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(
@@ -199,8 +195,6 @@ class OpenRouterGateway
     }
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 export { OpenRouterGateway as Gateway, OpenRouterGateway };

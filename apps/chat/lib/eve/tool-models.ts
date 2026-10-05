@@ -1,12 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/active-gateway"; "../ai/app-model-id"; "../ai/gateways/registry"; "../ai/tool-context" dependency within this package instead of introducing an alias or barrel API.
- */
-import { getActiveGateway } from "../ai/active-gateway";
-import type { AppModelId } from "../ai/app-model-id";
-import type { InstalledGateway } from "../ai/gateways/registry";
-import type { ToolModelProvider } from "../ai/tool-context";
+import { getActiveGateway } from "@/lib/ai/active-gateway";
+import type { AppModelId } from "@/lib/ai/app-model-id";
+import type { InstalledGateway } from "@/lib/ai/gateways/registry";
+import type { ToolModelProvider } from "@/lib/ai/tool-context";
+
 import { loadEveModelDefinition } from "./model-selection";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): eveToolModelProvider uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

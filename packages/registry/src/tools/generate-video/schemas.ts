@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const MINIMUM_VIDEO_DURATION_SECONDS = 1;
+const MAXIMUM_VIDEO_DURATION_SECONDS = 10;
+
 const generateVideoInput = z.object({
   aspectRatio: z
     .enum(["16:9", "9:16", "1:1"])
@@ -9,15 +11,14 @@ const generateVideoInput = z.object({
   durationSeconds: z
     .number()
     .int()
-    .min(1)
-    .max(10)
+    .min(MINIMUM_VIDEO_DURATION_SECONDS)
+    .max(MAXIMUM_VIDEO_DURATION_SECONDS)
     .optional()
     .describe("Optional video duration in seconds. Defaults to 5."),
   prompt: z
     .string()
     .describe("A descriptive prompt for the video to generate."),
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
 const generateVideoResult = z.object({
   fileId: z.string().optional(),

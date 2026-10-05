@@ -2,9 +2,17 @@ import { builtInGateways } from "./registry/gateways";
 
 type PackageManager = "bun" | "npm" | "pnpm" | "yarn";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const GATEWAYS = builtInGateways.map((item) => item.meta.chatjs.id);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const GATEWAYS = builtInGateways.map(
+  (
+    item: Readonly<{
+      meta: Readonly<{
+        chatjs: Readonly<{
+          id: (typeof builtInGateways)[number]["meta"]["chatjs"]["id"];
+        }>;
+      }>;
+    }>
+  ) => item.meta.chatjs.id
+);
 
 type Gateway = string;
 

@@ -7,15 +7,14 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
 interface ChatMenuItemsProps {
-  isPinned: boolean;
-  onDelete?: () => void;
-  onMoveProject?: () => void;
-  onRename: () => void;
-  onShare?: () => void;
-  onTogglePin: () => void;
-  showShare?: boolean;
+  readonly isPinned: boolean;
+  readonly onDelete?: () => void;
+  readonly onMoveProject?: () => void;
+  readonly onRename: () => void;
+  readonly onShare?: () => void;
+  readonly onTogglePin: () => void;
+  readonly showShare?: boolean;
 }
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatMenuItems: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ChatMenuItems = ({
   isPinned,
@@ -57,4 +56,3 @@ export const ChatMenuItems = ({
     )}
   </>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

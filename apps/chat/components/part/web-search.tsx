@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX as ReactJSX } from "react";
 import React from "react";
 import { z } from "zod";
 
@@ -23,14 +24,14 @@ const webSearchOutput = z.object({
   ),
 });
 /* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- WebSearch: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including search); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including result.data.error). */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- WebSearch: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including search); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including result.data.error). */
 
 export const WebSearch = ({
   part,
 }: {
-  messageId: string;
-  part: { state: string; output?: unknown };
-}) => {
+  readonly messageId: string;
+  readonly part: { state: string; output?: unknown };
+}): ReactJSX.Element => {
   if (part.state === "output-error") {
     return <p role="alert">Search failed.</p>;
   }
@@ -54,4 +55,4 @@ export const WebSearch = ({
     </div>
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

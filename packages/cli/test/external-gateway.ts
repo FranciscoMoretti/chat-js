@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { builtInGateways } from "../src/registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
+import { builtInGateways } from "#cli/registry/gateways";
 
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */

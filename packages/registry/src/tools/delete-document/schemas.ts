@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const MINIMUM_DOCUMENT_TITLE_LENGTH = 1;
+const MAXIMUM_DOCUMENT_TITLE_LENGTH = 1000;
+
 export const deleteDocumentInput = z.object({
   documentId: z.uuid(),
   expectedRevisionId: z
@@ -8,10 +10,9 @@ export const deleteDocumentInput = z.object({
     .describe("Current revision ID returned by readDocument."),
   title: z
     .string()
-    .min(1)
-    .max(1000)
+    .min(MINIMUM_DOCUMENT_TITLE_LENGTH)
+    .max(MAXIMUM_DOCUMENT_TITLE_LENGTH)
     .describe(
       "Exact current title returned by readDocument, shown for approval."
     ),
 });
-/* oxlint-enable eslint/no-magic-numbers */

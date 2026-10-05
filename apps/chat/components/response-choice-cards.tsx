@@ -15,13 +15,18 @@ export interface ResponseChoiceSlot {
   disabled?: boolean;
   handleSelect: () => void;
 }
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ResponseChoiceCards: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { slots, }: { slots: readonly ResponseChoiceSlot[]; }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-magic-numbers, react/jsx-max-depth, unicorn/no-null -- ResponseChoiceCards: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-/** Layout only: controllers own ordering, lifecycle, and selection. */
+/**
+ * Layout only: controllers own ordering, lifecycle, and selection.
+ * @param props Response-card layout inputs.
+ * @param props.slots Controller-owned ordered choices and selection callbacks.
+ * @returns Choice buttons, or null when the controller provides no slots.
+ */
 export const ResponseChoiceCards = ({
   slots,
 }: {
-  slots: readonly ResponseChoiceSlot[];
+  readonly slots: readonly Readonly<ResponseChoiceSlot>[];
 }): React.JSX.Element | null => {
   if (slots.length === 0) {
     return null;
@@ -53,4 +58,4 @@ export const ResponseChoiceCards = ({
     </div>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, react/jsx-max-depth, unicorn/no-null */

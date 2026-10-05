@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-/* oxlint-disable no-magic-numbers -- useDebouncedSearch: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 250); */
+// Typing coalesces requests; clearing remains a cancellable asynchronous update.
+const typingDebounceDelayMs = 250;
+const clearedSearchDelayMs = 0;
 
 export const useDebouncedSearch = (value: string): string => {
   const normalized = value.trim();
@@ -9,10 +11,9 @@ export const useDebouncedSearch = (value: string): string => {
   useEffect(() => {
     const timeout = setTimeout(
       () => setSearch(normalized),
-      normalized ? 250 : 0
+      normalized ? typingDebounceDelayMs : clearedSearchDelayMs
     );
     return (): void => clearTimeout(timeout);
   }, [normalized]);
   return search;
 };
-/* oxlint-enable no-magic-numbers */

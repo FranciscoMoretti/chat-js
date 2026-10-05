@@ -1,13 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
- */
 import { and, eq, sql } from "drizzle-orm";
 
-import { MAX_SEARCH_QUERY_LENGTH } from "../eve/search-text";
-import type { EveSearchText } from "../eve/search-text";
+import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
+import type { EveSearchText } from "@/lib/eve/search-text";
+
 import { db } from "./client";
 import { eveConversation, eveSearchText } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): SearchTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

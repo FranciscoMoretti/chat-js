@@ -8,9 +8,10 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import type { SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
-import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 /* oxlint-enable import/no-nodejs-modules */
 
+const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -46,9 +47,6 @@ const titleBranch = "00000000-0000-4000-8000-000000000004";
 const otherChat = "00000000-0000-4000-8000-000000000005";
 const otherBranch = "00000000-0000-4000-8000-000000000006";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): beforeAll uses 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 beforeAll(async () => {
   for (const filename of [
     "0000_eve_baseline.sql",
@@ -87,8 +85,7 @@ beforeAll(async () => {
       [conversationId, id, ownerId]
     );
   }
-}, 30_000);
-/* oxlint-enable no-magic-numbers */
+}, DATABASE_SETUP_TIMEOUT_MS);
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -345,70 +342,85 @@ it("hides deleting chats and permanently erases text without allowing a late bac
  * no-magic-numbers (#517): it("repairs only the known unpublished preview history and preserves conversation dat uses 1_789_411_557_764, 1_789_979_176_755, 1_790_327_870_855, 3, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * unicorn/no-null (#570): it("repairs only the known unpublished preview history and preserves conversation dat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-it("repairs only the known unpublished preview history and preserves conversation data", async () => {
-  const preview = new PGlite();
-  try {
-    await preview.exec(`
+const repairPreviewSearchHistory = async (
+  preview: Readonly<Pick<PGlite, "exec" | "query">>
+): Promise<void> => {
+  await preview.exec(`
       create schema drizzle;
       create table drizzle.__drizzle_migrations (hash text not null, created_at bigint not null);
       create table "EveSearchText" (text text);
       create table "EveChat" (title text);
       insert into "EveChat" values ('Retained conversation');
     `);
-    for (const [file, at] of [
-      ["0000_eve_baseline.sql", 1_789_411_557_764],
-      ["0001_brainy_the_stranger.sql", 1_789_979_176_755],
-    ] as const) {
-      const hash = createHash("sha256")
-        .update(await readFile(new URL(`migrations/${file}`, import.meta.url)))
-        .digest("hex");
-      await preview.query(
-        "insert into drizzle.__drizzle_migrations values ($1, $2)",
-        [hash, at]
-      );
-    }
-    const repair = await readFile(
-      new URL("../../scripts/repair-search-preview.sql", import.meta.url),
-      "utf-8"
-    );
+  for (const [file, at] of [
+    ["0000_eve_baseline.sql", 1_789_411_557_764],
+    ["0001_brainy_the_stranger.sql", 1_789_979_176_755],
+  ] as const) {
+    const hash = createHash("sha256")
+      .update(await readFile(new URL(`migrations/${file}`, import.meta.url)))
+      .digest("hex");
     await preview.query(
       "insert into drizzle.__drizzle_migrations values ($1, $2)",
-      ["unrecognized", 1_790_327_870_855]
+      [hash, at]
     );
-    await expect(preview.exec(repair)).rejects.toThrow("Not the known");
-    await preview.exec("rollback");
-    const rejectedHistory = await preview.query(
-      "select * from drizzle.__drizzle_migrations"
-    );
-    expect(rejectedHistory.rows).toHaveLength(3);
-    const retainedTable = await preview.query(
-      "select to_regclass('public.\"EveSearchText\"') as table_name"
-    );
-    expect(retainedTable.rows[0]).toMatchObject({
-      table_name: '"EveSearchText"',
-    });
-    await preview.query(
-      "update drizzle.__drizzle_migrations set hash = $1 where created_at = $2",
-      [
-        "7e6be9466a37bdfe7d71ed3ccfbae93c26e50b31f80314b49a2ad298c6f6ab60",
-        1_790_327_870_855,
-      ]
-    );
-    await preview.exec(repair);
-    const repairedHistory = await preview.query(
-      "select * from drizzle.__drizzle_migrations"
-    );
-    expect(repairedHistory.rows).toHaveLength(2);
-    const retainedChats = await preview.query('select * from "EveChat"');
-    expect(retainedChats.rows).toEqual([{ title: "Retained conversation" }]);
-    const removedTable = await preview.query(
-      "select to_regclass('public.\"EveSearchText\"') as table_name"
-    );
-    expect(removedTable.rows[0]).toMatchObject({ table_name: null });
-  } finally {
-    await preview.close();
   }
-});
+  const repair = await readFile(
+    new URL("../../scripts/repair-search-preview.sql", import.meta.url),
+    "utf-8"
+  );
+  await preview.query(
+    "insert into drizzle.__drizzle_migrations values ($1, $2)",
+    ["unrecognized", 1_790_327_870_855]
+  );
+  await expect(preview.exec(repair)).rejects.toThrow("Not the known");
+  await preview.exec("rollback");
+  const rejectedHistory = await preview.query(
+    "select * from drizzle.__drizzle_migrations"
+  );
+  expect(rejectedHistory.rows).toHaveLength(3);
+  const retainedTable = await preview.query(
+    "select to_regclass('public.\"EveSearchText\"') as table_name"
+  );
+  expect(retainedTable.rows[0]).toMatchObject({
+    table_name: '"EveSearchText"',
+  });
+  await preview.query(
+    "update drizzle.__drizzle_migrations set hash = $1 where created_at = $2",
+    [
+      "7e6be9466a37bdfe7d71ed3ccfbae93c26e50b31f80314b49a2ad298c6f6ab60",
+      1_790_327_870_855,
+    ]
+  );
+  await preview.exec(repair);
+  const repairedHistory = await preview.query(
+    "select * from drizzle.__drizzle_migrations"
+  );
+  expect(repairedHistory.rows).toHaveLength(2);
+  const retainedChats = await preview.query('select * from "EveChat"');
+  expect(retainedChats.rows).toEqual([{ title: "Retained conversation" }]);
+  const removedTable = await preview.query(
+    "select to_regclass('public.\"EveSearchText\"') as table_name"
+  );
+  expect(removedTable.rows[0]).toMatchObject({ table_name: null });
+};
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
+
+describe("preview search history", (): void => {
+  const preview = new PGlite();
+
+  // WASM database startup belongs to fixture setup; keep the repair assertions
+  // under Vitest's normal test timeout, just like the other database cases.
+  beforeAll(async (): Promise<void> => {
+    await preview.waitReady;
+  }, DATABASE_SETUP_TIMEOUT_MS);
+
+  afterAll(async (): Promise<void> => {
+    await preview.close();
+  });
+
+  it("repairs only the known unpublished preview history and preserves conversation data", async (): Promise<void> => {
+    await repairPreviewSearchHistory(preview);
+  });
+});
 
 /* oxlint-disable max-lines -- #509: This eve-search.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

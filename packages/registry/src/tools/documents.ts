@@ -1,22 +1,19 @@
 import type { RegistryItem } from "shadcn/schema";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- This registry catalog reads its package-root metadata schema; the inherited @/ alias targets app code rather than packages/registry/metadata.ts.
 import { toolDefinitionSchema } from "../../metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- Document bundle versions come from this registry package's package.json; the inherited @/ alias points into apps/chat and would select a different package contract.
 import registryPackage from "../../package.json";
-/* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const documentFiles = (id: string, files: string[]) =>
+const documentFiles = (
+  id: string,
+  files: readonly string[]
+): { path: string; target: string; type: "registry:file" }[] =>
   files.map((file) => ({
     path: `src/tools/${id}/${file}`,
     target: `~/tools/chatjs/${id}/${file}`,
     type: "registry:file" as const,
   }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 const bundles = [
   {

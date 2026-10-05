@@ -13,13 +13,13 @@ const { join } = pathModule;
 
 const roots: string[] = [];
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
   await Promise.all(
-    roots.splice(0).map((root) => rm(root, { force: true, recursive: true }))
+    roots
+      .splice(0)
+      .map(async (root) => await rm(root, { force: true, recursive: true }))
   );
 });
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 const definition = toolDefinitionSchema.parse({
   contractVersion: 1,
@@ -27,6 +27,15 @@ const definition = toolDefinitionSchema.parse({
   kind: "tool",
   tools: [{ toolExport: "research", workflow: true }],
 });
+
+const validationFailure = async (root: string): Promise<string> => {
+  try {
+    await validateCustomToolKeys(root, [definition]);
+    return "Validation unexpectedly succeeded";
+  } catch (error: unknown) {
+    return error instanceof Error ? error.message : String(error);
+  }
+};
 
 test("preflight finds imported and spread keys without executing source", async () => {
   const root = await mkdtemp(join(tmpdir(), "chatjs-custom-keys-"));
@@ -41,10 +50,8 @@ test("preflight finds imported and spread keys without executing source", async 
     join(directory, "custom-tools.ts"),
     'import {shared} from "./shared"; export const customTools = {...shared};'
   );
-  expect(() => validateCustomToolKeys(root, [definition])).toThrow(
-    "Custom tools conflict"
-  );
-  expect(() => validateCustomToolKeys(root, [])).not.toThrow();
+  expect(await validationFailure(root)).toContain("Custom tools conflict");
+  await validateCustomToolKeys(root, []);
 });
 
 test("preflight rejects dynamic keys it cannot verify", async () => {
@@ -56,7 +63,7 @@ test("preflight rejects dynamic keys it cannot verify", async () => {
     join(directory, "custom-tools.ts"),
     "declare const name: string; export const customTools = {[name]: {}};"
   );
-  expect(() => validateCustomToolKeys(root, [definition])).toThrow(
+  expect(await validationFailure(root)).toContain(
     "Cannot determine customTools keys"
   );
 });

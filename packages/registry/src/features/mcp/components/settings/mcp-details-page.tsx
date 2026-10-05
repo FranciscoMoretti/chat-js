@@ -307,6 +307,17 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     })
   );
 
+  const { mutate: updateApproval, isPending: isUpdatingApproval } = useMutation(
+    trpc.mcp.update.mutationOptions({
+      onError: (): void => {
+        toast.error("Failed to update approval setting");
+      },
+      onSuccess: async (): Promise<void> => {
+        await queryClient.invalidateQueries({ queryKey });
+      },
+    })
+  );
+
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
       onError: (
@@ -412,6 +423,16 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       });
     },
     [connector, toggleEnabled]
+  );
+
+  const handleApprovalChange = useCallback(
+    (requireApproval: boolean): void => {
+      if (!connector || !canEdit) {
+        return;
+      }
+      updateApproval({ id: connector.id, updates: { requireApproval } });
+    },
+    [canEdit, connector, updateApproval]
   );
 
   const handleUninstall = useCallback((): void => {
@@ -524,6 +545,25 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
             </Button>
           ) : null}
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+        <div className="space-y-1">
+          <Label htmlFor="connector-require-approval">Require approval</Label>
+          <p
+            className="text-muted-foreground text-sm"
+            id="connector-approval-description"
+          >
+            Ask before running tools from this connection.
+          </p>
+        </div>
+        <Switch
+          aria-describedby="connector-approval-description"
+          checked={connector.requireApproval}
+          disabled={!canEdit || isUpdatingApproval}
+          id="connector-require-approval"
+          onCheckedChange={handleApprovalChange}
+        />
       </div>
 
       <Separator className="my-2" />

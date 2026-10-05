@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 
 import { config } from "@/lib/config";
 
@@ -6,21 +6,26 @@ const { appName, appPrefix, appUrl, organization } = config;
 const orgEmail =
   organization.contact?.privacyEmail || organization.contact?.legalEmail;
 
-/* oxlint-disable node/no-sync -- write-branding.ts: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
-/* oxlint-disable unicorn/no-null -- write-branding.ts: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable eslint/no-magic-numbers -- write-branding.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-writeFileSync(
-  new URL("../branding.json", import.meta.url),
-  JSON.stringify(
-    { appName, appPrefix, appUrl, orgEmail, orgName: organization.name },
-    null,
-    2
-  )
-);
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable node/no-sync */
+const JSON_INDENTATION_SPACES = 2;
+const FAILURE_EXIT_CODE = 1;
 
-/* oxlint-disable eslint/no-console -- branding.json written:: This command or desktop boundary reports startup, progress and failures to its operator. */
-console.log("branding.json written:", { appName, appPrefix, appUrl });
-/* oxlint-enable eslint/no-console */
+const brandingJson = JSON.stringify(
+  { appName, appPrefix, appUrl, orgEmail, orgName: organization.name },
+  // oxlint-disable-next-line unicorn/no-null -- JSON.stringify treats a null replacer as absent; the third argument controls indentation.
+  null,
+  JSON_INDENTATION_SPACES
+);
+const writeBranding = async (): Promise<void> => {
+  await writeFile(new URL("../branding.json", import.meta.url), brandingJson);
+  // oxlint-disable-next-line eslint/no-console -- Preserve its established command-line completion message and argument formatting.
+  console.log("branding.json written:", { appName, appPrefix, appUrl });
+};
+
+// The generated Node/tsx prebuild runs this file in a CommonJS package, which
+// cannot use top-level await. Handle the entry promise and report write failures.
+// oxlint-disable-next-line unicorn/prefer-top-level-await, promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- CommonJS requires this handled asynchronous entry point; top-level await fails the Node/tsx prebuild transform.
+writeBranding().catch((error: unknown): void => {
+  // oxlint-disable-next-line eslint/no-console -- Report failed branding generation to the invoking build command.
+  console.error(error);
+  process.exitCode = FAILURE_EXIT_CODE;
+});

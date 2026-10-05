@@ -1,6 +1,4 @@
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import { useSyncExternalStore as useReactSyncExternalStore } from "react";
 
 const MOBILE_BREAKPOINT = 768;
 /* oxlint-disable no-magic-numbers -- mobileQuery: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1). */
@@ -18,4 +16,4 @@ const getSnapshot = (): boolean => window.innerWidth < MOBILE_BREAKPOINT;
 
 const getServerSnapshot = (): boolean => false;
 export const useIsMobile = (): boolean =>
-  React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  useReactSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

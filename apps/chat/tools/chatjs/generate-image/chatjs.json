@@ -2,6 +2,8 @@
   "envRequirements": [],
   "id": "generate-image",
   "kind": "tool",
+  "requiresGateway": ["image"],
+  "requiresStorage": true,
   "requiresTools": [],
   "slot": "generateImage",
   "tools": [

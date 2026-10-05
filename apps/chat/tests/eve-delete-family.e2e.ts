@@ -187,3 +187,23 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
   expect(survivor.state).toBe("bound");
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
+
+test("compatibility failure blocks the complete coordinator before revoking access", async () => {
+  const target = await fixture();
+  await native`alter table graphile_worker._private_jobs disable trigger eve_queue_fence`;
+  try {
+    await expect(
+      deleteLocalEveConversationFamily(owner, target.id, "/fixture")
+    ).rejects.toThrow("Workflow lifecycle fences are missing or disabled");
+    const [binding] = await db
+      .select({ state: eveConversation.state })
+      .from(eveConversation)
+      .where(eq(eveConversation.id, target.id));
+    expect(binding).toEqual({ state: "bound" });
+    expect(
+      await native`select id from workflow.workflow_runs where id = ${target.sessionId}`
+    ).toEqual([{ id: target.sessionId }]);
+  } finally {
+    await native`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
+  }
+});

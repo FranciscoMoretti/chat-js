@@ -10,22 +10,28 @@ import { z } from "zod";
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 /* oxlint-enable import/no-nodejs-modules */
 
+const FIRST_ROW_INDEX = 0;
+
 const savedSchema = z.object({
   appRoot: z.string(),
   runIds: z.array(z.string()),
   sessionIds: z.array(z.string()),
 });
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): verifyEveSandboxCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): verifyEveSandboxCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep verifyEveSandboxCoverage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep verifyEveSandboxCoverage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage accepts connection: Sql; input: { sessionId: string; runIds: string[]; appRoot: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): verifyEveSandboxCoverage intentionally keeps the existing falsy-value behavior of raw; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Internal: caller authorizes the deleting family and canonical worker root. */
+typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage accepts connection: Sql; input: { sessionId: string; runIds: string[]; appRoot: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/**
+ * Internal: caller authorizes the deleting family and canonical worker root.
+ * @param connection Native workflow database connection used to retain proof under the purge lock.
+ * @param input Authorized root, canonical worker app root, and exact run inventory to cover.
+ * @param input.sessionId Root session included in the authorized run inventory.
+ * @param input.runIds Run identities whose writers must be fenced and workflow coverage complete.
+ * @param input.appRoot Canonical worker root bound into the retained coverage proof.
+ * @param verifyIdentity Checks each sandbox-owning session against the authorized native identity.
+ * @returns Sandbox-owning session IDs from matching retained proof or newly verified coverage.
+ */
 const verifyEveSandboxCoverage = async (
   connection: Sql,
   input: {
@@ -34,7 +40,7 @@ const verifyEveSandboxCoverage = async (
     appRoot: string;
   },
   verifyIdentity: (sessionId: string) => Promise<void>
-) => {
+): Promise<string[]> => {
   const runIds = [...new Set(input.runIds)].toSorted();
   if (!runIds.includes(input.sessionId)) {
     throw new Error("Sandbox coverage is missing its root session.");
@@ -44,8 +50,9 @@ const verifyEveSandboxCoverage = async (
     async (query) => {
       // Same lock as native payload erasure: retain the evidence until proof commits.
       await query`select pg_advisory_xact_lock(hashtextextended(${`eve-native-purge:${input.sessionId}`}, 0))`;
-      const [raw] =
+      const savedRows =
         await query`select app_root as "appRoot", run_ids as "runIds", sandbox_session_ids as "sessionIds" from workflow.eve_sandbox_coverage where session_id = ${input.sessionId}`;
+      const raw = savedRows.at(FIRST_ROW_INDEX);
       if (raw) {
         const saved = savedSchema.parse(raw);
         if (
@@ -101,13 +108,17 @@ const verifyEveSandboxCoverage = async (
     }
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): isFencedEveDescendant's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): isFencedEveDescendant's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): isFencedEveDescendant accepts query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Only call after authorizing the owner of rootSessionId's deleting binding. */
+/**
+ * Only call after authorizing the owner of rootSessionId's deleting binding.
+ * @param databaseUrl Native workflow database used to inspect the retained cleanup inventory.
+ * @param rootSessionId Authorized deleting binding whose retained queue inventory defines the family.
+ * @param sessionId Candidate descendant whose native run and resource fences must be present.
+ * @returns Whether the candidate is in the native inventory and both root and candidate writers are fenced.
+ */
 const isFencedEveDescendant = async (
   databaseUrl: string,
   rootSessionId: string,
@@ -146,5 +157,5 @@ const isFencedEveDescendant = async (
     await connection.end();
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { isFencedEveDescendant, verifyEveSandboxCoverage };

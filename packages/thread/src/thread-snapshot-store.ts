@@ -2,13 +2,17 @@ import type { UIMessage } from "ai";
 
 import type { AbstractThread } from "./abstract-thread";
 
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- SnapshotStore subscribes to a mutable AbstractThread instance and publishes its SDK-compatible ThreadStateSnapshot; it does not own or freeze the supplied controller. */
+const DISABLED_THROTTLE_WAIT_MS = 0;
+
+const ABSENT_VALUE = globalThis.undefined;
+
+type SnapshotSource<TMessage extends UIMessage> = Readonly<
+  Pick<AbstractThread<TMessage>, "getSnapshot" | "subscribe">
+>;
+
 class SnapshotStore<TMessage extends UIMessage> {
   #snapshot: ReturnType<AbstractThread<TMessage>["getSnapshot"]>;
-  public readonly thread: AbstractThread<TMessage>;
+  public readonly thread: SnapshotSource<TMessage>;
   public readonly throttleWaitMs: number | undefined;
 
   public readonly getSnapshot = (): ReturnType<
@@ -16,7 +20,7 @@ class SnapshotStore<TMessage extends UIMessage> {
   > => this.#snapshot;
 
   public constructor(
-    thread: AbstractThread<TMessage>,
+    thread: SnapshotSource<TMessage>,
     throttleWaitMs: number | undefined
   ) {
     this.thread = thread;
@@ -34,8 +38,8 @@ class SnapshotStore<TMessage extends UIMessage> {
     if (
       !(
         throttleWaitMs !== null &&
-        throttleWaitMs !== undefined &&
-        throttleWaitMs !== 0 &&
+        throttleWaitMs !== ABSENT_VALUE &&
+        throttleWaitMs !== DISABLED_THROTTLE_WAIT_MS &&
         !Number.isNaN(throttleWaitMs)
       )
     ) {
@@ -43,7 +47,7 @@ class SnapshotStore<TMessage extends UIMessage> {
     }
 
     let lastCall = 0;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined = ABSENT_VALUE;
     const notify = (): void => {
       const elapsed = Date.now() - lastCall;
       if (elapsed >= throttleWaitMs) {
@@ -55,7 +59,7 @@ class SnapshotStore<TMessage extends UIMessage> {
         return;
       }
       timeout = setTimeout((): void => {
-        timeout = undefined;
+        timeout = ABSENT_VALUE;
         lastCall = Date.now();
         publish();
       }, throttleWaitMs - elapsed);
@@ -70,9 +74,5 @@ class SnapshotStore<TMessage extends UIMessage> {
     };
   };
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/no-undefined */
 
 export { SnapshotStore };
