@@ -20,6 +20,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AlertDialog: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialog uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialog = ({
   ...props
 }: ReactComponentProps<typeof AlertDialogPrimitiveRoot>): ReactJSX.Element => (
@@ -29,9 +30,11 @@ const AlertDialog = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogTrigger = ({
   ...props
 }: ReactComponentProps<
@@ -43,10 +46,12 @@ const AlertDialogTrigger = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogPortal = ({
   ...props
 }: ReactComponentProps<
@@ -58,10 +63,12 @@ const AlertDialogPortal = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogOverlay uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogOverlay = ({
   className,
   ...props
@@ -78,10 +85,12 @@ const AlertDialogOverlay = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogContent = ({
   className,
   ...props
@@ -101,10 +110,12 @@ const AlertDialogContent = ({
     />
   </AlertDialogPortal>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogHeader = ({
   className,
   ...props
@@ -116,10 +127,12 @@ const AlertDialogHeader = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogFooter = ({
   className,
   ...props
@@ -134,10 +147,12 @@ const AlertDialogFooter = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogTitle = ({
   className,
   ...props
@@ -149,10 +164,12 @@ const AlertDialogTitle = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogDescription = ({
   className,
   ...props
@@ -166,10 +183,12 @@ const AlertDialogDescription = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogAction = ({
   className,
   ...props
@@ -182,10 +201,12 @@ const AlertDialogAction = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogCancel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDialogCancel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDialogCancel = ({
   className,
   ...props
@@ -198,6 +219,7 @@ const AlertDialogCancel = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {

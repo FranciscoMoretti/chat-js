@@ -15,6 +15,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable id-length, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- Slider: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- Slider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Slider = ({
   className,
   defaultValue,
@@ -73,6 +74,7 @@ const Slider = ({
     </SliderPrimitiveRoot>
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable id-length, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 export { Slider };

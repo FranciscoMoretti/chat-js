@@ -49,7 +49,7 @@ const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "sharp",
 ] as const;
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable node/no-sync -- Package-root and optional-template lookup expose synchronous path results to scaffold helpers; changing these contracts requires propagating async through both lookup callers. */
 const getCliPackageRoot = (): string => {
   const directory = import.meta.dirname;
 
@@ -67,7 +67,7 @@ const getCliPackageRoot = (): string => {
 const getRepoRoot = (): string =>
   pathModule.resolve(getCliPackageRoot(), "../..");
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable node/no-sync -- Package-root and optional-template lookup expose synchronous path results to scaffold helpers; changing these contracts requires propagating async through both lookup callers. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const findTemplateDir = (name: string): string | null => {
   const cliRoot = getCliPackageRoot();
@@ -142,13 +142,13 @@ const writePnpmWorkspaceConfig = async (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const applyChatTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
   await Promise.all(
-    ["components/github-link.tsx", "components/docs-link.tsx"].map((file) =>
-      rm(pathModule.join(destination, file), { force: true })
+    ["components/github-link.tsx", "components/docs-link.tsx"].map(
+      async (file): Promise<void> =>
+        await rm(pathModule.join(destination, file), { force: true })
     )
   );
 
@@ -199,7 +199,6 @@ const applyChatTemplateSourceTransforms = async (
     ),
   });
 };
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -362,7 +361,6 @@ const excludeElectronFromRootTypecheck = async (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const scaffoldFromTemplate = async (
   destination: string,
   options?: {
@@ -454,8 +452,9 @@ const scaffoldFromTemplate = async (
     "features/attachment-uploads/chatjs.json",
   ];
   await Promise.all(
-    optionalFiles.map((file) =>
-      rm(pathModule.join(destination, file), { force: true })
+    optionalFiles.map(
+      async (file): Promise<void> =>
+        await rm(pathModule.join(destination, file), { force: true })
     )
   );
   const directories = new Set<string>();
@@ -488,7 +487,6 @@ const scaffoldFromTemplate = async (
   await initializeFeatureUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */

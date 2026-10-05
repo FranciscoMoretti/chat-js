@@ -2,7 +2,7 @@
 
 The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-The ten rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
+The nine rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
 
 ## Rules awaiting source-scoped adoption
 
@@ -14,7 +14,6 @@ The ten rules below remain temporarily disabled during adoption. Their rationale
 | `oxc/no-optional-chaining` | [Oxlint recommends against this restriction for modern codebases](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-optional-chaining). Node ≥24 and `apps/chat/tsconfig.json`'s ESNext target support this syntax. |
 | `oxc/no-rest-spread-properties` | The [rule guards old-engine compatibility](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-rest-spread-properties). Modern targets support immutable object composition and typed prop forwarding; see `apps/chat/components/ui/button.tsx` and `oxlint.config.ts`. |
 | `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
-| `react/react-in-jsx-scope` | The [rule addresses React-in-scope JSX transforms](https://oxc.rs/docs/guide/usage/linter/rules/react/react-in-jsx-scope). `apps/chat/tsconfig.json` uses the automatic `react-jsx` runtime. |
 | `sort-imports` | [Oxlint sorts declarations by binding syntax/name](https://oxc.rs/docs/guide/usage/linter/rules/eslint/sort-imports.html). `oxfmt.config.ts` imports the Ultracite formatter preset, which owns ordering; `button.tsx` uses its module-path/type import order. One formatter convention avoids rewrite cycles. |
 | `react/forbid-component-props` | Tailwind styling and typed primitive APIs intentionally accept `className` and `style` on custom components. The [default restriction](https://oxc.rs/docs/guide/usage/linter/rules/react/forbid-component-props) forbids those supported props; `button.tsx`, `SidebarInset` and registry chart components demonstrate the contract. |
 | `react/jsx-no-literals` | Chat and registry UI have no translation-layer contract. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-no-literals) accepts expression-wrapped copy without providing localization; accessible text such as MessageAttachment's “Remove” remains ordinary UI content. |
@@ -36,6 +35,8 @@ The runtime-policy test loads the actual repository and standalone configuration
 The three `react-perf/jsx-no-new-{function,object,array}-as-prop` rules remain errors with `nativeAllowList: "all"`. Native DOM props do not establish custom component memoization boundaries. Custom component callbacks, arrays and objects remain checked; this batch adds no memoization and does not relax `jsx-no-jsx-as-prop`. Options are documented for [functions](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-function-as-prop), [objects](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-object-as-prop) and [arrays](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-array-as-prop).
 
 The earlier UI totals recorded removals achieved partly through directory exemptions; those totals are historical and do not describe the current source adoption. Current reviewed counts and validation are recorded in `docs/oxlint-cleanup-progress.md`.
+
+`react/react-in-jsx-scope` is enabled. Components compiled with the automatic JSX runtime retain declaration-level comments where the rule expects a classic-runtime React binding. Each changed module was checked against its actual compiler/bundler settings, and its emitted automatic-runtime JavaScript remains identical. No unused React imports were added.
 
 ## Module initialization
 
@@ -142,7 +143,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `react/no-array-index-key` | Enforced | [#551](https://github.com/FranciscoMoretti/chat-js/issues/551) |
 | `react/no-multi-comp` | Enforced | [#552](https://github.com/FranciscoMoretti/chat-js/issues/552) |
 | `react/only-export-components` | Enforced | [#553](https://github.com/FranciscoMoretti/chat-js/issues/553) |
-| `react/react-in-jsx-scope` | Off — policy | [#554](https://github.com/FranciscoMoretti/chat-js/issues/554) |
+| `react/react-in-jsx-scope` | Enforced; automatic-runtime component exceptions | [#554](https://github.com/FranciscoMoretti/chat-js/issues/554) |
 | `sort-imports` | Off — policy | [#521](https://github.com/FranciscoMoretti/chat-js/issues/521) |
 | `typescript/await-thenable` | Enforced | [#579](https://github.com/FranciscoMoretti/chat-js/issues/579) |
 | `typescript/consistent-return` | Enforced | [#580](https://github.com/FranciscoMoretti/chat-js/issues/580) |

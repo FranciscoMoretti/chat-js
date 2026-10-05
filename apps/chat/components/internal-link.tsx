@@ -18,6 +18,7 @@ type InternalLinkProps = Omit<ReactComponentProps<typeof Link>, "href"> & {
 };
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- InternalLink: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.MouseEvent<HTMLAnchorElement>). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InternalLink uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 export const InternalLink = ({
   onAuxClick,
   onClick,
@@ -79,4 +80,5 @@ export const InternalLink = ({
     />
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

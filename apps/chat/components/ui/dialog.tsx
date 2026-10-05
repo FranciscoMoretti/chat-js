@@ -19,6 +19,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Dialog: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- Dialog uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Dialog = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveRoot>): ReactJSX.Element => (
@@ -28,9 +29,11 @@ const Dialog = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogTrigger = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveTrigger>): ReactJSX.Element => (
@@ -40,10 +43,12 @@ const DialogTrigger = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogPortal = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitivePortal>): ReactJSX.Element => (
@@ -53,10 +58,12 @@ const DialogPortal = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogClose uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogClose = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveClose>): ReactJSX.Element => (
@@ -66,10 +73,12 @@ const DialogClose = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogOverlay uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogOverlay = ({
   className,
   ...props
@@ -84,10 +93,12 @@ const DialogOverlay = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogContent: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogContent = ({
   className,
   children,
@@ -120,10 +131,12 @@ const DialogContent = ({
     </DialogPrimitiveContent>
   </DialogPortal>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogHeader = ({
   className,
   ...props
@@ -135,10 +148,12 @@ const DialogHeader = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogFooter = ({
   className,
   ...props
@@ -153,10 +168,12 @@ const DialogFooter = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogTitle = ({
   className,
   ...props
@@ -168,10 +185,12 @@ const DialogTitle = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DialogDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DialogDescription = ({
   className,
   ...props
@@ -185,6 +204,7 @@ const DialogDescription = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {

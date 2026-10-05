@@ -81,6 +81,30 @@ describe("file content response", () => {
     assert.equal(await suffixResponse.text(), "lo");
   });
 
+  it.each(["bytes=2-", "bytes=2-99"])(
+    "clamps range %s to the stored file",
+    async (range) => {
+      const uploaded = await uploadFileAtKey(
+        createFileId(),
+        "hello.txt",
+        "hello",
+        "text/plain"
+      );
+      const key = keyFromFileUrl(uploaded.url);
+      assert.ok(key);
+      const response = await createFileContentResponse(
+        new Request(new URL(uploaded.url, "https://chat.example"), {
+          headers: { Range: range },
+        }),
+        key,
+        { allowRedirect: false }
+      );
+      assert.equal(response.status, 206);
+      assert.equal(response.headers.get("content-range"), "bytes 2-4/5");
+      assert.equal(await response.text(), "llo");
+    }
+  );
+
   it("rejects unsatisfiable ranges", async () => {
     const uploaded = await uploadFileAtKey(
       createFileId(),

@@ -15,6 +15,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Avatar: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Avatar uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Avatar = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveRoot>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveRoot>
@@ -29,10 +30,12 @@ const Avatar = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Avatar.displayName = AvatarPrimitiveRoot.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AvatarImage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AvatarImage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AvatarImage = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveImage>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveImage>
@@ -44,10 +47,12 @@ const AvatarImage = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AvatarImage.displayName = AvatarPrimitiveImage.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AvatarFallback: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AvatarFallback uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AvatarFallback = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveFallback>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveFallback>
@@ -62,6 +67,7 @@ const AvatarFallback = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AvatarFallback.displayName = AvatarPrimitiveFallback.displayName;
 

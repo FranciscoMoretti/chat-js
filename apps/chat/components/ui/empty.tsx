@@ -8,6 +8,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Empty: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Empty uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Empty = ({
   className,
   ...props
@@ -22,9 +23,11 @@ const Empty = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyHeader = ({
   className,
   ...props
@@ -39,6 +42,7 @@ const EmptyHeader = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const emptyMediaVariants = cva(
@@ -57,6 +61,7 @@ const emptyMediaVariants = cva(
 );
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyMedia: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyMedia uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyMedia = ({
   className,
   variant = "default",
@@ -71,10 +76,12 @@ const EmptyMedia = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyTitle = ({
   className,
   ...props
@@ -86,10 +93,12 @@ const EmptyTitle = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"p">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyDescription = ({
   className,
   ...props
@@ -104,10 +113,12 @@ const EmptyDescription = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyContent = ({
   className,
   ...props
@@ -122,6 +133,7 @@ const EmptyContent = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {

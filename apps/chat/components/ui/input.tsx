@@ -5,6 +5,7 @@ import type {
 
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable react/react-in-jsx-scope -- Input uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React input props, including native object refs. Deep readonly ref.current fails the input JSX receiver; preserving scalar string & {} aliases in type/autoComplete/role/style still triggers this rule.
 const Input = ({
   className,
@@ -24,5 +25,6 @@ const Input = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 
 export { Input };

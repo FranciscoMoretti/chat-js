@@ -58,8 +58,8 @@ export const auditedRestrictionRules = {
   "react/jsx-props-no-spreading": "error",
   "react/no-multi-comp": "error",
   "react/only-export-components": "error",
-  // The automatic react-jsx runtime does not require a React binding.
-  "react/react-in-jsx-scope": "off",
+  // Components using the automatic JSX runtime explain that compiler contract locally.
+  "react/react-in-jsx-scope": "error",
   // Oxfmt owns declaration and member ordering; a second sorter creates conflicting rewrites.
   "sort-imports": "off",
   "typescript/consistent-type-definitions": "error",

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 type ActionContainerProps = ReactComponentProps<"div">;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ActionContainer: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerProps). */
 
+/* oxlint-disable react/react-in-jsx-scope -- ActionContainer uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ActionContainer = ({
   className,
   ...props
@@ -24,11 +25,13 @@ const ActionContainer = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ActionContainerLinkProps = ReactComponentProps<typeof InternalLink>;
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerLink: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- ActionContainerLink uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ActionContainerLink = ({
   className,
   tabIndex,
@@ -41,11 +44,13 @@ const ActionContainerLink = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ActionContainerTopProps = ReactComponentProps<"div">;
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ActionContainerTop: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ActionContainerTopProps). */
 
+/* oxlint-disable react/react-in-jsx-scope -- ActionContainerTop uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ActionContainerTop = ({
   className,
   ...props
@@ -56,6 +61,7 @@ const ActionContainerTop = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { ActionContainer, ActionContainerLink, ActionContainerTop };

@@ -6,6 +6,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Card: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Card uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Card = ({
   className,
   ...props
@@ -20,9 +21,11 @@ const Card = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- CardHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardHeader = ({
   className,
   ...props
@@ -37,10 +40,12 @@ const CardHeader = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- CardTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardTitle = ({
   className,
   ...props
@@ -52,10 +57,12 @@ const CardTitle = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- CardDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardDescription = ({
   className,
   ...props
@@ -67,10 +74,12 @@ const CardDescription = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- CardAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardAction = ({
   className,
   ...props
@@ -85,10 +94,12 @@ const CardAction = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- CardContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardContent = ({
   className,
   ...props
@@ -100,10 +111,12 @@ const CardContent = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- CardFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CardFooter = ({
   className,
   ...props
@@ -115,6 +128,7 @@ const CardFooter = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {

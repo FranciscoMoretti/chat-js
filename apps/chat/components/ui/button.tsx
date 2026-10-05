@@ -37,6 +37,7 @@ const buttonVariants = cva(
   }
 );
 
+/* oxlint-disable react/react-in-jsx-scope -- Button uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React button props to the button or Radix Slot, including native object refs. Deep readonly ref.current fails their JSX receiver; preserving React/CSS string & {} aliases still triggers this rule.
 const Button = ({
   className,
@@ -59,6 +60,7 @@ const Button = ({
     />
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-disable react/only-export-components -- button.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Button, buttonVariants };

@@ -16,6 +16,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- TooltipProvider: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- TooltipProvider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipProvider = ({
   delayDuration = 0,
   ...props
@@ -27,9 +28,11 @@ const TooltipProvider = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Tooltip: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- Tooltip uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Tooltip = ({
   ...props
 }: ReactComponentProps<typeof TooltipPrimitiveRoot>): ReactJSX.Element => (
@@ -41,10 +44,12 @@ const Tooltip = ({
     />
   </TooltipProvider>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TooltipTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- TooltipTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipTrigger = ({
   ...props
 }: ReactComponentProps<typeof TooltipPrimitiveTrigger>): ReactJSX.Element => (
@@ -54,10 +59,12 @@ const TooltipTrigger = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TooltipContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- TooltipContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipContent = ({
   className,
   sideOffset = 0,
@@ -91,6 +98,7 @@ const TooltipContent = ({
     </TooltipPrimitiveContent>
   </TooltipPrimitivePortal>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

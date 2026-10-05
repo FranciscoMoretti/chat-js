@@ -1,3 +1,5 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 const FALLBACK_STREAM_ERROR_MESSAGE =
   "An error occurred while generating a response. Please try again.";
 
@@ -8,14 +10,11 @@ const genericErrorMessages = new Set([
   FALLBACK_STREAM_ERROR_MESSAGE,
 ]);
 
-/* oxlint-disable no-magic-numbers, unicorn/no-null --
- * no-magic-numbers (#517): getErrorText uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/no-null (#570): getErrorText preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable unicorn/no-null -- Null means no nonempty error text was extracted; callers use it to select fallback copy. */
 const getErrorText = (error: unknown): string | null => {
   if (typeof error === "string") {
     const trimmed = error.trim();
-    return trimmed.length > 0 ? trimmed : null;
+    return trimmed === "" ? null : trimmed;
   }
 
   if (
@@ -25,12 +24,12 @@ const getErrorText = (error: unknown): string | null => {
     typeof error.message === "string"
   ) {
     const trimmed = error.message.trim();
-    return trimmed.length > 0 ? trimmed : null;
+    return trimmed === "" ? null : trimmed;
   }
 
   return null;
 };
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 const mapKnownStreamErrorMessage = (message: string): string => {
   const normalized = message.toLowerCase();
@@ -74,36 +73,39 @@ const getStreamErrorMessage = (error: unknown): string =>
     getErrorText(error) ?? FALLBACK_STREAM_ERROR_MESSAGE
   );
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): getStreamErrorToastContent uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): getStreamErrorToastContent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): getStreamErrorToastContent accepts error: Error; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): getStreamErrorToastContent intentionally keeps the existing falsy-value behavior of rawCause; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const getStreamErrorToastContent = (
-  error: Error
+  error: ReadonlyNativeSurface<Error>
 ): {
   description?: string;
   message: string;
 } => {
   const rawMessage =
     typeof error.message === "string" ? error.message.trim() : "";
-  const rawCause =
-    error.cause === null || error.cause === undefined
-      ? undefined
-      : (getErrorText(error.cause) ?? undefined);
+  const rawCause = getErrorText(error.cause);
 
-  const rawResolved =
-    (rawMessage.length <= 1 || genericErrorMessages.has(rawMessage)) && rawCause
-      ? rawCause
-      : // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-        rawMessage || rawCause || FALLBACK_STREAM_ERROR_MESSAGE;
+  // A one-character SDK message can be a truncated stream error; prefer its cause.
+  const preferCause =
+    // oxlint-disable-next-line no-magic-numbers -- One character is the existing truncation cutoff for streamed error messages.
+    rawMessage.length <= 1 || genericErrorMessages.has(rawMessage);
+  let rawResolved =
+    rawMessage === ""
+      ? (rawCause ?? FALLBACK_STREAM_ERROR_MESSAGE)
+      : rawMessage;
+  if (preferCause && rawCause !== null) {
+    rawResolved = rawCause;
+  }
 
   const message = mapKnownStreamErrorMessage(rawResolved);
 
-  if (rawCause && rawCause !== message && !genericErrorMessages.has(rawCause)) {
+  if (
+    rawCause !== null &&
+    rawCause !== message &&
+    !genericErrorMessages.has(rawCause)
+  ) {
     return { description: rawCause, message };
   }
 
   return { message };
 };
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
 export { getStreamErrorMessage, getStreamErrorToastContent };

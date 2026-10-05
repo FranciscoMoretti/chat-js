@@ -81,6 +81,7 @@ const useSidebar = (): SidebarContextProps => {
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- SidebarProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1000); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: KeyboardEvent). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarProvider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarProvider = ({
   defaultOpen = true,
   open: openProp,
@@ -196,9 +197,11 @@ const SidebarProvider = ({
     </SidebarContext.Provider>
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- Sidebar uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Sidebar = ({
   side = "left",
   variant = "sidebar",
@@ -304,10 +307,12 @@ const Sidebar = ({
     </div>
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarTrigger: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarTrigger = ({
   className,
   onClick,
@@ -334,10 +339,12 @@ const SidebarTrigger = ({
     </Button>
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarRail: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"button">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarRail uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarRail = ({
   className,
   ...props
@@ -367,10 +374,12 @@ const SidebarRail = ({
     />
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarInset: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"main">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarInset uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarInset = ({
   className,
   ...props
@@ -386,10 +395,12 @@ const SidebarInset = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<typeof Input>). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarInput uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarInput = ({
   className,
   ...props
@@ -402,10 +413,12 @@ const SidebarInput = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarHeader = ({
   className,
   ...props
@@ -418,10 +431,12 @@ const SidebarHeader = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarFooter = ({
   className,
   ...props
@@ -434,10 +449,12 @@ const SidebarFooter = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarSeparator = ({
   className,
   ...props
@@ -453,10 +470,12 @@ const SidebarSeparator = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarContent = ({
   className,
   ...props
@@ -472,10 +491,12 @@ const SidebarContent = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarGroup = ({
   className,
   ...props
@@ -488,10 +509,12 @@ const SidebarGroup = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarGroupLabel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarGroupLabel = ({
   className,
   asChild = false,
@@ -513,10 +536,12 @@ const SidebarGroupLabel = ({
     />
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarGroupAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarGroupAction = ({
   className,
   asChild = false,
@@ -542,10 +567,12 @@ const SidebarGroupAction = ({
     />
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarGroupContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarGroupContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarGroupContent = ({
   className,
   ...props
@@ -558,10 +585,12 @@ const SidebarGroupContent = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"ul">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenu uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenu = ({
   className,
   ...props
@@ -574,10 +603,12 @@ const SidebarMenu = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"li">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuItem = ({
   className,
   ...props
@@ -590,6 +621,7 @@ const SidebarMenuItem = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const sidebarMenuButtonVariants = cva(
@@ -612,6 +644,7 @@ const sidebarMenuButtonVariants = cva(
 );
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- SidebarMenuButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including tooltip). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuButton = ({
   asChild = false,
   isActive = false,
@@ -660,10 +693,12 @@ const SidebarMenuButton = ({
     </Tooltip>
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuAction = ({
   className,
   asChild = false,
@@ -696,10 +731,12 @@ const SidebarMenuAction = ({
     />
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuBadge: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuBadge uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuBadge = ({
   className,
   ...props
@@ -720,10 +757,12 @@ const SidebarMenuBadge = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSkeleton: react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSkeleton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuSkeleton = ({
   className,
   showIcon = false,
@@ -752,10 +791,12 @@ const SidebarMenuSkeleton = ({
     />
   </div>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSub: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"ul">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSub uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuSub = ({
   className,
   ...props
@@ -772,10 +813,12 @@ const SidebarMenuSub = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSubItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"li">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSubItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuSubItem = ({
   className,
   ...props
@@ -788,10 +831,12 @@ const SidebarMenuSubItem = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SidebarMenuSubButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSubButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuSubButton = ({
   asChild = false,
   size = "md",
@@ -824,6 +869,7 @@ const SidebarMenuSubButton = ({
     />
   );
 };
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- sidebar.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */

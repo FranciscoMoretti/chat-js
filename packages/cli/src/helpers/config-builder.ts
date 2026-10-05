@@ -72,11 +72,11 @@ const compareEntryKeys = (
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const formatValue = (value: unknown, indent: number): string => {
   const spaces = "  ".repeat(indent);
   const inner = "  ".repeat(indent + 1);
 
+  // oxlint-disable-next-line eslint/no-undefined -- Missing config values serialize as the TypeScript undefined token; unicorn/no-typeof-undefined requires the direct comparison.
   if (value === null || value === undefined) {
     return "undefined";
   }
@@ -120,10 +120,9 @@ const formatValue = (value: unknown, indent: number): string => {
       .join(",\n")},\n${spaces}}`;
   }
 
-  // oxlint-disable-next-line typescript/no-base-to-string -- Diagnostic formatting intentionally accepts arbitrary third-party values; changing their representation requires an error-output contract decision.
+  // oxlint-disable-next-line typescript/no-base-to-string -- Objects and arrays are handled above; remaining symbols or callable config values preserve the existing source serializer fallback.
   return String(value);
 };
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -202,26 +201,29 @@ const toConfigInput = (
 });
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const buildConfigTs = (input: {
-  appName: string;
-  appPrefix: string;
-  appUrl: string;
-  withElectron: boolean;
-  gateway: Gateway;
-  gatewayDefaults?: GatewayDefinition["defaults"];
-  coreFeatures: Record<CoreFeatureKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
-}): string => {
+export const buildConfigTs = (
+  input: ReadonlyInput<{
+    appName: string;
+    appPrefix: string;
+    appUrl: string;
+    withElectron: boolean;
+    gateway: Gateway;
+    gatewayDefaults?: GatewayDefinition["defaults"];
+    coreFeatures: Record<CoreFeatureKey, boolean>;
+    auth: Record<AuthProvider, boolean>;
+  }>
+): string => {
   const partial = toConfigInput(input);
   const { ai, ...appConfig } = partial;
   const defaults = defaultsFor(input);
   const toolOverrides: Record<string, object> = ai.tools;
   const tools = Object.fromEntries(
-    Object.entries(defaults.tools).map(([name, value]) => [
-      name,
-      { ...value, ...toolOverrides[name] },
-    ])
+    Object.entries(defaults.tools).map(
+      ([name, value]: readonly [
+        string,
+        ReadonlyInput<(typeof defaults.tools)[keyof typeof defaults.tools]>,
+      ]) => [name, { ...value, ...toolOverrides[name] }]
+    )
   );
   const fullConfig = {
     ...applyDefaults(appConfig),
@@ -244,5 +246,4 @@ ${generateConfig(fullConfig, 1, "")}
 export default config;
 `;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

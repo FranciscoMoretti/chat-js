@@ -9,7 +9,7 @@ const isFileStorageKey = (value: string): boolean => STORAGE_KEY.test(value);
 const createFileUrl = (key: string): string =>
   `${FILES_PATH}/${encodeURIComponent(key)}`;
 
-/* oxlint-disable unicorn/no-null -- unicorn/no-null (#570): keyFromFileUrl preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+/* oxlint-disable unicorn/no-null -- keyFromFileUrl publicly returns null for malformed URLs and nonstorage paths; getFileImageProps uses that sentinel to preserve external image handling. */
 const keyFromFileUrl = (value: string): string | null => {
   try {
     const url = new URL(value, URL_PARSE_BASE);

@@ -12,6 +12,7 @@ import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
 import { collectEnvChecklist } from "#cli/helpers/env-checklist";
 import type { EnvVarEntry } from "#cli/helpers/env-checklist";
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+import { parseJsonObject } from "#cli/helpers/json-object";
 import {
   promptAssistantTools,
   promptAuth,
@@ -27,14 +28,14 @@ import {
   promptImageGenerationTool,
   promptVideoGenerationTool,
   promptCodeExecutionTool,
+  // oxlint-disable-next-line import/max-dependencies -- The creation command composes validation, prompts, source scaffolding, registry planning, configuration writing, and process installation directly.
 } from "#cli/helpers/prompts";
-/* oxlint-disable import/max-dependencies -- The create command orchestrates the CLI installation adapters and prompt catalog; keeping those dependencies explicit preserves its integration boundary. */
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
 import {
   scaffoldElectron,
   scaffoldFromGit,
   scaffoldFromTemplate,
 } from "#cli/helpers/scaffold";
-/* oxlint-enable import/max-dependencies */
 import { configureStorageProvider } from "#cli/helpers/storage-provider";
 import { resolveGateway } from "#cli/registry/gateways";
 import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
@@ -90,8 +91,7 @@ const resolveCreateTarget = (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const printEnvChecklist = (entries: EnvVarEntry[]): void => {
+const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
   logger.info("Required for your configuration:");
   logger.break();
 
@@ -119,12 +119,10 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
     entryIndex -= 1;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const createOptionsSchema = z.object({
   attachments: z.boolean().optional(),
   codeExecutionTool: z.string().optional(),
@@ -143,7 +141,11 @@ const createOptionsSchema = z.object({
           .map((id): string => id.trim())
           .filter(Boolean)
           .every((id): boolean =>
-            observabilityItems.some((item): boolean => item.name === id)
+            observabilityItems.some(
+              (
+                item: ReadonlyInput<(typeof observabilityItems)[number]>
+              ): boolean => item.name === id
+            )
           ),
       "Observability must select vercel-analytics, vercel-speed-insights or langfuse."
     )
@@ -156,7 +158,6 @@ const createOptionsSchema = z.object({
   videoGenerationTool: z.string().optional(),
   yes: z.boolean(),
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type CreateOptions = z.infer<typeof createOptionsSchema>;
 type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
@@ -173,10 +174,9 @@ interface ProjectTarget {
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const collectToolSources = async (
-  options: CreateOptions,
+  options: Readonly<CreateOptions>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Selection resolves deep research dependencies and explicit provider choices by updating the shared builtInTools flags consumed by configuration writing.
   assistantTools: AssistantTools,
   targetDir: string
 ): Promise<string[]> => {
@@ -220,10 +220,10 @@ const collectToolSources = async (
   ] as const;
 
   const addSelection = async (index: number): Promise<void> => {
-    const selection = selections[index];
-    if (!selection) {
+    if (index >= selections.length) {
       return;
     }
+    const selection = selections[index];
     if (typeof selection.source === "string" && selection.source !== "") {
       assistantTools.builtInTools[selection.feature] = true;
     }
@@ -247,15 +247,13 @@ const collectToolSources = async (
   await addSelection(0);
   return toolSources;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const promptProjectTarget = async (
-  options: CreateOptions
+  options: Readonly<CreateOptions>
 ): Promise<ProjectTarget> => {
   const initialTarget = resolveCreateTarget(options.target);
   const projectName = await promptProjectName(
@@ -287,7 +285,7 @@ const promptProjectTarget = async (
 /* oxlint-enable eslint/no-magic-numbers */
 
 const loadInstallableTools = async (
-  options: CreateOptions,
+  options: Readonly<CreateOptions>,
   targetDir: string
 ): Promise<Awaited<ReturnType<typeof listTools>>> => {
   if (options.yes) {
@@ -314,10 +312,11 @@ const loadInstallableTools = async (
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
-const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
+const promptCreateSetup = async (
+  options: Readonly<CreateOptions>,
+  targetDir: string
+) => {
   const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
   const coreFeatures = await promptCoreFeatures(
@@ -376,14 +375,20 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     coreFeatures.documents &&
     documentTypes.code &&
     selectedTools.some(
-      (tool) => tool.slot === "codeExecution" && tool.codeExecutorExport
+      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
+        tool.slot === "codeExecution" &&
+        typeof tool.codeExecutorExport === "string" &&
+        tool.codeExecutorExport !== ""
     )
   ) {
     toolSources.push(itemAddress("saved-code-execution", "tool"));
   }
   const usesStorage =
     coreFeatures.attachments ||
-    selectedTools.some((tool) => tool.requiresStorage === true) ||
+    selectedTools.some(
+      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
+        tool.requiresStorage === true
+    ) ||
     assistantTools.builtInTools.imageGeneration ||
     assistantTools.builtInTools.videoGeneration ||
     options.storageProvider !== undefined ||
@@ -431,16 +436,13 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     withElectron,
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const scaffoldProject = async (
-  project: ProjectTarget,
+  project: Readonly<ProjectTarget>,
   packageManager: PackageManager,
   withElectron: boolean
 ): Promise<void> => {
@@ -452,24 +454,20 @@ const scaffoldProject = async (
     });
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const writeConfiguration = async (
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
 ): Promise<void> => {
   const configSpinner = spinner("Writing configuration...").start();
   try {
     const packageJsonPath = path.join(project.targetDir, "package.json");
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Commander supplies an open option object that is immediately checked by the create-options schema.
-    const packageJson = JSON.parse(
-      await readFile(packageJsonPath, "utf-8")
-    ) as {
-      name?: string;
-    };
+    const packageJson = parseJsonObject(
+      await readFile(packageJsonPath, "utf-8"),
+      "Scaffold package.json"
+    );
     packageJson.name = project.projectName;
     await writeFile(
       packageJsonPath,
@@ -494,7 +492,6 @@ const writeConfiguration = async (
     throw error;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -510,11 +507,10 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const installRegistryItems = async (
   packageManager: PackageManager,
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
 ): Promise<Awaited<ReturnType<typeof syncTools>>> => {
   const installSpinner = spinner(
     "Installing selected registry items..."
@@ -576,19 +572,17 @@ const installRegistryItems = async (
     throw error;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const printNextSteps = (
   packageManager: PackageManager,
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>,
-  installedTools: Awaited<ReturnType<typeof syncTools>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>,
+  installedTools: ReadonlyInput<Awaited<ReturnType<typeof syncTools>>>
 ): void => {
   const envEntries = collectEnvChecklist({
     auth: setup.auth,
@@ -599,8 +593,14 @@ const printNextSteps = (
     installableToolEnvRequirements: [
       ...installedTools.flatMap((tool) => tool.envRequirements),
       ...observabilityItems
-        .filter((item): boolean => setup.observability.includes(item.name))
-        .flatMap((item) => item.meta.chatjs.envRequirements ?? []),
+        .filter(
+          (item: ReadonlyInput<(typeof observabilityItems)[number]>): boolean =>
+            setup.observability.includes(item.name)
+        )
+        .flatMap(
+          (item: ReadonlyInput<(typeof observabilityItems)[number]>) =>
+            item.meta.chatjs.envRequirements ?? []
+        ),
       ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
     ],
   });
@@ -637,7 +637,6 @@ const printNextSteps = (
     `  For detailed setup instructions, visit ${highlighter.info("https://www.chatjs.dev/docs/quickstart")}`
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -645,8 +644,9 @@ const printNextSteps = (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const createProject = async (options: CreateOptions): Promise<void> => {
+const createProject = async (
+  options: Readonly<CreateOptions>
+): Promise<void> => {
   const packageManager = launcherPackageManager();
   if (!options.yes) {
     intro("Create ChatJS App");
@@ -655,7 +655,7 @@ const createProject = async (options: CreateOptions): Promise<void> => {
   await ensureTargetEmpty(project.targetDir);
   if (typeof options.fromGit === "string" && options.fromGit !== "") {
     const selectionOptions = Object.entries(options).filter(
-      ([key, value]): boolean =>
+      ([key, value]: readonly [string, unknown]): boolean =>
         !["target", "fromGit", "yes"].includes(key) && value !== undefined
     );
     if (selectionOptions.length > 0) {
@@ -683,7 +683,6 @@ const createProject = async (options: CreateOptions): Promise<void> => {
   );
   printNextSteps(packageManager, project, setup, installedTools);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */
@@ -741,15 +740,19 @@ export const create = new Command()
     "--storage-config <json>",
     "non-secret JSON options for the storage adapter; credentials use env vars"
   )
-  .action(async (directory, opts): Promise<void> => {
-    try {
-      await createProject(
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Commander supplies an open option object that is immediately checked by the create-options schema.
-        createOptionsSchema.parse({ target: directory, ...opts })
-      );
-    } catch (error) {
-      handleError(error);
+  .action(
+    async (
+      directory: unknown,
+      opts: Readonly<Record<string, unknown>>
+    ): Promise<void> => {
+      try {
+        await createProject(
+          createOptionsSchema.parse({ target: directory, ...opts })
+        );
+      } catch (error) {
+        handleError(error);
+      }
     }
-  });
+  );
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

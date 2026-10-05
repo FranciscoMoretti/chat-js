@@ -11,6 +11,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Breadcrumb: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Breadcrumb uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Breadcrumb = reactForwardRef<
   HTMLElement,
   ReactComponentPropsWithoutRef<"nav"> & {
@@ -24,10 +25,12 @@ const Breadcrumb = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Breadcrumb.displayName = "Breadcrumb";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- BreadcrumbList uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbList = reactForwardRef<
   HTMLOListElement,
   ReactComponentPropsWithoutRef<"ol">
@@ -42,10 +45,12 @@ const BreadcrumbList = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbList.displayName = "BreadcrumbList";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- BreadcrumbItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbItem = reactForwardRef<
   HTMLLIElement,
   ReactComponentPropsWithoutRef<"li">
@@ -57,10 +62,12 @@ const BreadcrumbItem = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbItem.displayName = "BreadcrumbItem";
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- BreadcrumbLink: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { asChild, className, ...props }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including asChild). */
 
+/* oxlint-disable react/react-in-jsx-scope -- BreadcrumbLink uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbLink = reactForwardRef<
   HTMLAnchorElement,
   ReactComponentPropsWithoutRef<"a"> & {
@@ -78,10 +85,12 @@ const BreadcrumbLink = reactForwardRef<
     />
   );
 });
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 BreadcrumbLink.displayName = "BreadcrumbLink";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbPage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- BreadcrumbPage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbPage = reactForwardRef<
   HTMLSpanElement,
   ReactComponentPropsWithoutRef<"span">
@@ -95,10 +104,12 @@ const BreadcrumbPage = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbPage.displayName = "BreadcrumbPage";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- BreadcrumbSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbSeparator = ({
   children,
   className,
@@ -114,10 +125,12 @@ const BreadcrumbSeparator = ({
     {children ?? <ChevronRight />}
   </li>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- BreadcrumbEllipsis: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- BreadcrumbEllipsis uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbEllipsis = ({
   className,
   ...props
@@ -133,6 +146,7 @@ const BreadcrumbEllipsis = ({
     <span className="sr-only">More</span>
   </span>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";
 

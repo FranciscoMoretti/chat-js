@@ -45,18 +45,17 @@ const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const optionalFile = async (file: string): Promise<Buffer | null> => {
   try {
     return await readFile(file);
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      // oxlint-disable-next-line unicorn/no-null -- Snapshot absence must differ from an existing zero-byte Buffer during rollback.
       return null;
     }
     throw error;
   }
 };
-/* oxlint-enable unicorn/no-null */
 
 const readReceipt = async (
   cwd: string
@@ -102,7 +101,6 @@ const directoryFiles = async (
   return files.flat();
 };
 
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /**
  * Capture only source we actually installed. Never bless a skipped user file.
  * @param {string} cwd Project containing the receipt and installed source files.
@@ -124,10 +122,10 @@ const recordInstalledSource = async (
   await mkdir(path.join(cwd, ".chatjs"), { recursive: true });
   await writeFile(
     path.join(cwd, receiptFile),
+    // oxlint-disable-next-line unicorn/no-null -- The null replacer preserves every receipt field while applying indentation.
     `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`
   );
 };
-/* oxlint-enable unicorn/no-null */
 
 const plannedSourceTargets = sourceTargets;
 
@@ -140,9 +138,9 @@ const hasProviderKind = (
   "kind" in metadata &&
   metadata.kind === kind;
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
+/* oxlint-disable eslint/max-statements -- Protection checks, snapshots, staged retired providers, registration, finalization, and rollback share the same transaction state. */
+/* oxlint-disable eslint/max-lines-per-function -- The complete installation transaction keeps protected source snapshots and staged provider rollback in one failure boundary. */
+/* oxlint-disable eslint/max-params -- The existing installation API separates project, resolved plan, overwrite/rollback options, and the deferred registration callback. */
 /**
  * Validate protection before mutation; stage retired exclusive sources until registration succeeds.
  * @param {string} cwd Project whose installed source and receipts are protected.

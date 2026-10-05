@@ -6,6 +6,7 @@ import type {
 
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable react/react-in-jsx-scope -- Textarea uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Textarea = reactForwardRef<
   HTMLTextAreaElement,
   ReactComponentProps<"textarea">
@@ -23,6 +24,7 @@ const Textarea = reactForwardRef<
     />
   )
 );
+/* oxlint-enable react/react-in-jsx-scope */
 Textarea.displayName = "Textarea";
 
 export { Textarea };

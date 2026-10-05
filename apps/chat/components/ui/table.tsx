@@ -9,6 +9,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Table: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Table uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Table = reactForwardRef<
   HTMLTableElement,
   ReactHTMLAttributes<HTMLTableElement>
@@ -22,10 +23,12 @@ const Table = reactForwardRef<
     />
   </div>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Table.displayName = "Table";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TableHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TableHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TableHeader = reactForwardRef<
   HTMLTableSectionElement,
   ReactHTMLAttributes<HTMLTableSectionElement>
@@ -37,10 +40,12 @@ const TableHeader = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableHeader.displayName = "TableHeader";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TableBody: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TableBody uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TableBody = reactForwardRef<
   HTMLTableSectionElement,
   ReactHTMLAttributes<HTMLTableSectionElement>
@@ -52,10 +57,12 @@ const TableBody = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableBody.displayName = "TableBody";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TableFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TableFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TableFooter = reactForwardRef<
   HTMLTableSectionElement,
   ReactHTMLAttributes<HTMLTableSectionElement>
@@ -70,10 +77,12 @@ const TableFooter = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableFooter.displayName = "TableFooter";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TableRow: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TableRow uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TableRow = reactForwardRef<
   HTMLTableRowElement,
   ReactHTMLAttributes<HTMLTableRowElement>
@@ -88,10 +97,12 @@ const TableRow = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableRow.displayName = "TableRow";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TableHead: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TableHead uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TableHead = reactForwardRef<
   HTMLTableCellElement,
   ReactThHTMLAttributes<HTMLTableCellElement>
@@ -106,10 +117,12 @@ const TableHead = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableHead.displayName = "TableHead";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TableCell: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TableCell uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TableCell = reactForwardRef<
   HTMLTableCellElement,
   ReactTdHTMLAttributes<HTMLTableCellElement>
@@ -121,10 +134,12 @@ const TableCell = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableCell.displayName = "TableCell";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TableCaption: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TableCaption uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TableCaption = reactForwardRef<
   HTMLTableCaptionElement,
   ReactHTMLAttributes<HTMLTableCaptionElement>
@@ -136,6 +151,7 @@ const TableCaption = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableCaption.displayName = "TableCaption";
 

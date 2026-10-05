@@ -15,6 +15,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Checkbox: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Checkbox uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Checkbox = reactForwardRef<
   ReactComponentRef<typeof CheckboxPrimitiveRoot>,
   ReactComponentPropsWithoutRef<typeof CheckboxPrimitiveRoot>
@@ -35,6 +36,7 @@ const Checkbox = reactForwardRef<
     </CheckboxPrimitiveIndicator>
   </CheckboxPrimitiveRoot>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Checkbox.displayName = CheckboxPrimitiveRoot.displayName;
 

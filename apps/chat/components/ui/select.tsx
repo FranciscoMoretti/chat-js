@@ -34,6 +34,7 @@ const SelectGroup = SelectPrimitiveGroup;
 const SelectValue = SelectPrimitiveValue;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectTrigger: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SelectTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectTrigger = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveTrigger>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveTrigger>
@@ -53,10 +54,12 @@ const SelectTrigger = reactForwardRef<
     </SelectPrimitiveIcon>
   </SelectPrimitiveTrigger>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectTrigger.displayName = SelectPrimitiveTrigger.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectScrollUpButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SelectScrollUpButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectScrollUpButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollUpButton>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollUpButton>
@@ -73,10 +76,12 @@ const SelectScrollUpButton = reactForwardRef<
     <ChevronUp className="h-4 w-4" />
   </SelectPrimitiveScrollUpButton>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectScrollUpButton.displayName = SelectPrimitiveScrollUpButton.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectScrollDownButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SelectScrollDownButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectScrollDownButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollDownButton>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollDownButton>
@@ -93,11 +98,13 @@ const SelectScrollDownButton = reactForwardRef<
     <ChevronDown className="h-4 w-4" />
   </SelectPrimitiveScrollDownButton>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectScrollDownButton.displayName =
   SelectPrimitiveScrollDownButton.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, position = "popper", ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SelectContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectContent = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveContent>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveContent>
@@ -134,10 +141,12 @@ const SelectContent = reactForwardRef<
     </SelectPrimitivePortal>
   )
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectContent.displayName = SelectPrimitiveContent.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SelectLabel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectLabel = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveLabel>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveLabel>
@@ -149,10 +158,12 @@ const SelectLabel = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectLabel.displayName = SelectPrimitiveLabel.displayName;
 /* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SelectItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SelectItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectItem = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveItem>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveItem>
@@ -175,10 +186,12 @@ const SelectItem = reactForwardRef<
     <SelectPrimitiveItemText>{children}</SelectPrimitiveItemText>
   </SelectPrimitiveItem>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 SelectItem.displayName = SelectPrimitiveItem.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- SelectSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectSeparator = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveSeparator>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveSeparator>
@@ -190,6 +203,7 @@ const SelectSeparator = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectSeparator.displayName = SelectPrimitiveSeparator.displayName;
 

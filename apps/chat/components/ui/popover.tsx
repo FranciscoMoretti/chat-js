@@ -15,6 +15,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Popover: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- Popover uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Popover = ({
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveRoot>): ReactJSX.Element => (
@@ -24,9 +25,11 @@ const Popover = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- PopoverTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const PopoverTrigger = ({
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveTrigger>): ReactJSX.Element => (
@@ -36,10 +39,12 @@ const PopoverTrigger = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- PopoverContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const PopoverContent = ({
   className,
   align = "center",
@@ -60,10 +65,12 @@ const PopoverContent = ({
     />
   </PopoverPrimitivePortal>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverAnchor: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- PopoverAnchor uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const PopoverAnchor = ({
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveAnchor>): ReactJSX.Element => (
@@ -73,6 +80,7 @@ const PopoverAnchor = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger };

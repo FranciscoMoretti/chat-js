@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 const Tabs = TabsPrimitiveRoot;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TabsList: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TabsList uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TabsList = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveList>,
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveList>
@@ -32,10 +33,12 @@ const TabsList = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TabsList.displayName = TabsPrimitiveList.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TabsTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TabsTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TabsTrigger = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveTrigger>,
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveTrigger>
@@ -50,10 +53,12 @@ const TabsTrigger = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TabsTrigger.displayName = TabsPrimitiveTrigger.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- TabsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- TabsContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TabsContent = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveContent>,
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveContent>
@@ -68,6 +73,7 @@ const TabsContent = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TabsContent.displayName = TabsPrimitiveContent.displayName;
 

@@ -25,6 +25,7 @@ const alertVariants = cva(
 );
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Alert: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Alert uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Alert = reactForwardRef<
   HTMLDivElement,
   ReactHTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
@@ -37,10 +38,12 @@ const Alert = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Alert.displayName = "Alert";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AlertTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertTitle = reactForwardRef<
   HTMLParagraphElement,
   ReactHTMLAttributes<HTMLHeadingElement>
@@ -55,10 +58,12 @@ const AlertTitle = reactForwardRef<
     />
   </>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AlertTitle.displayName = "AlertTitle";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AlertDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AlertDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AlertDescription = reactForwardRef<
   HTMLParagraphElement,
   ReactHTMLAttributes<HTMLParagraphElement>
@@ -70,6 +75,7 @@ const AlertDescription = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AlertDescription.displayName = "AlertDescription";
 

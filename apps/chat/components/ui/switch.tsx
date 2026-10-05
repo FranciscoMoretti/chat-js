@@ -14,6 +14,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Switch: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Switch uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Switch = reactForwardRef<
   ReactComponentRef<typeof SwitchPrimitivesRoot>,
   ReactComponentPropsWithoutRef<typeof SwitchPrimitivesRoot>
@@ -34,6 +35,7 @@ const Switch = reactForwardRef<
     />
   </SwitchPrimitivesRoot>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Switch.displayName = SwitchPrimitivesRoot.displayName;
 

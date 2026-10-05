@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- InputGroup: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroup = ({
   className,
   ...props
@@ -41,6 +42,7 @@ const InputGroup = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const inputGroupAddonVariants = cva(
@@ -65,6 +67,7 @@ const inputGroupAddonVariants = cva(
 );
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupAddon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupAddon uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupAddon = ({
   className,
   align = "inline-start",
@@ -94,6 +97,7 @@ const InputGroupAddon = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const inputGroupButtonVariants = cva(
@@ -115,6 +119,7 @@ const inputGroupButtonVariants = cva(
 );
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupButton = ({
   className,
   type = "button",
@@ -132,10 +137,12 @@ const InputGroupButton = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupText: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupText uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupText = ({
   className,
   ...props
@@ -149,10 +156,12 @@ const InputGroupText = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"input">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupInput uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupInput = ({
   className,
   ...props
@@ -167,10 +176,12 @@ const InputGroupInput = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupTextarea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"textarea">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupTextarea uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupTextarea = ({
   className,
   ...props
@@ -185,6 +196,7 @@ const InputGroupTextarea = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {

@@ -17,6 +17,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ScrollBar: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, orientation = "vertical", ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- ScrollBar uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ScrollBar = reactForwardRef<
   ReactComponentRef<typeof ScrollAreaPrimitiveScrollAreaScrollbar>,
   ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveScrollAreaScrollbar>
@@ -43,10 +44,12 @@ const ScrollBar = reactForwardRef<
     </ScrollAreaPrimitiveScrollAreaScrollbar>
   )
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ScrollBar.displayName = ScrollAreaPrimitiveScrollAreaScrollbar.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- ScrollArea uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ScrollArea = reactForwardRef<
   ReactComponentRef<typeof ScrollAreaPrimitiveRoot>,
   ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveRoot>
@@ -64,6 +67,7 @@ const ScrollArea = reactForwardRef<
     <ScrollAreaPrimitiveCorner />
   </ScrollAreaPrimitiveRoot>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ScrollArea.displayName = ScrollAreaPrimitiveRoot.displayName;
 

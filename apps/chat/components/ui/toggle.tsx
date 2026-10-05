@@ -30,6 +30,7 @@ const toggleVariants = cva(
 );
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Toggle: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- Toggle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Toggle = ({
   className,
   variant,
@@ -44,6 +45,7 @@ const Toggle = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/only-export-components -- toggle.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 

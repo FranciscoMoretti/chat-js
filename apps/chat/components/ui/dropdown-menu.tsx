@@ -26,6 +26,7 @@ import type {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- DropdownMenu: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenu uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenu = ({
   ...props
 }: ReactComponentProps<typeof DropdownMenuPrimitiveRoot>): ReactJSX.Element => (
@@ -35,9 +36,11 @@ const DropdownMenu = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuPortal = ({
   ...props
 }: ReactComponentProps<
@@ -49,10 +52,12 @@ const DropdownMenuPortal = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuTrigger = ({
   ...props
 }: ReactComponentProps<
@@ -64,10 +69,12 @@ const DropdownMenuTrigger = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuContent = ({
   className,
   sideOffset = 4,
@@ -88,10 +95,12 @@ const DropdownMenuContent = ({
     />
   </DropdownMenuPrimitivePortal>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuGroup = ({
   ...props
 }: ReactComponentProps<
@@ -103,10 +112,12 @@ const DropdownMenuGroup = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuItem = ({
   className,
   inset,
@@ -128,10 +139,12 @@ const DropdownMenuItem = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuCheckboxItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuCheckboxItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuCheckboxItem = ({
   className,
   children,
@@ -158,10 +171,12 @@ const DropdownMenuCheckboxItem = ({
     {children}
   </DropdownMenuPrimitiveCheckboxItem>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuRadioGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuRadioGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuRadioGroup = ({
   ...props
 }: ReactComponentProps<
@@ -173,10 +188,12 @@ const DropdownMenuRadioGroup = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuRadioItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuRadioItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuRadioItem = ({
   className,
   children,
@@ -201,10 +218,12 @@ const DropdownMenuRadioItem = ({
     {children}
   </DropdownMenuPrimitiveRadioItem>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuLabel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuLabel = ({
   className,
   inset,
@@ -223,10 +242,12 @@ const DropdownMenuLabel = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuSeparator = ({
   className,
   ...props
@@ -240,10 +261,12 @@ const DropdownMenuSeparator = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuShortcut: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuShortcut uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuShortcut = ({
   className,
   ...props
@@ -258,10 +281,12 @@ const DropdownMenuShortcut = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuSub: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSub uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuSub = ({
   ...props
 }: ReactComponentProps<typeof DropdownMenuPrimitiveSub>): ReactJSX.Element => (
@@ -271,10 +296,12 @@ const DropdownMenuSub = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuSubTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSubTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuSubTrigger = ({
   className,
   inset,
@@ -297,10 +324,12 @@ const DropdownMenuSubTrigger = ({
     <ChevronRightIcon className="ml-auto size-4" />
   </DropdownMenuPrimitiveSubTrigger>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuSubContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- DropdownMenuSubContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DropdownMenuSubContent = ({
   className,
   ...props
@@ -317,6 +346,7 @@ const DropdownMenuSubContent = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {

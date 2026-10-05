@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Command: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- Command uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Command = ({
   className,
   ...props
@@ -31,9 +32,11 @@ const Command = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandDialog: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandDialog uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandDialog = ({
   title = "Command Palette",
   description = "Search for a command to run...",
@@ -65,10 +68,12 @@ const CommandDialog = ({
     </DialogContent>
   </Dialog>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandInput uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandInput = ({
   className,
   containerClassName,
@@ -92,10 +97,12 @@ const CommandInput = ({
     />
   </div>
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandList uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandList = ({
   className,
   ...props
@@ -110,10 +117,12 @@ const CommandList = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandEmpty: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandEmpty uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandEmpty = ({
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Empty>): ReactJSX.Element => (
@@ -124,10 +133,12 @@ const CommandEmpty = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandGroup: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandGroup = ({
   className,
   ...props
@@ -142,10 +153,12 @@ const CommandGroup = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandSeparator = ({
   className,
   ...props
@@ -159,10 +172,12 @@ const CommandSeparator = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandItem = ({
   className,
   ...props
@@ -177,10 +192,12 @@ const CommandItem = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CommandShortcut: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- CommandShortcut uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandShortcut = ({
   className,
   ...props
@@ -195,6 +212,7 @@ const CommandShortcut = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {

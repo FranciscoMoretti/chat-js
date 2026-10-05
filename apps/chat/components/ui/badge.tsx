@@ -34,6 +34,7 @@ interface BadgeProps
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Badge: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }: BadgeProps). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Badge uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Badge = ({
   className,
   variant,
@@ -45,6 +46,7 @@ const Badge = ({
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- #620: Consumers import Badge, badgeVariants from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */

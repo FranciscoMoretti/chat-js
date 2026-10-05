@@ -52,66 +52,92 @@ const parseRange = (
 };
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null -- * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): createFileContentResponse uses 206, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): createFileContentResponse uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): createFileContentResponse preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+const resolveRequestRange = async (
+  request: ReadonlyNativeSurface<Request>,
+  key: string,
+  supportsRange: boolean
+): Promise<
+  | Response
+  | {
+      readonly range?: { readonly start: number; readonly end: number };
+      readonly fullSize?: number;
+    }
+> => {
+  const rangeHeader = request.headers.get("range");
+  if (rangeHeader === null || rangeHeader === "" || !supportsRange) {
+    return {};
+  }
+  const metadata = await getFileMetadata(key);
+  const range = parseRange(rangeHeader, metadata.size);
+  if (range === null) {
+    // oxlint-disable-next-line unicorn/no-null -- An unsatisfiable byte range has no response body.
+    return new Response(null, {
+      headers: { "Content-Range": `bytes */${metadata.size}` },
+      status: 416,
+    });
+  }
+  return { fullSize: metadata.size, range };
+};
+
+const createDownloadResponse = async (
+  key: string,
+  supportsRange: boolean,
+  {
+    range,
+    fullSize,
+  }: {
+    readonly range?: { readonly start: number; readonly end: number };
+    readonly fullSize?: number;
+  }
+): Promise<Response> => {
+  const file = await downloadFile(key, range);
+  const headers = new Headers({
+    "Accept-Ranges": supportsRange ? "bytes" : "none",
+    "Cache-Control": "private, no-store",
+    "Content-Length": String(file.size),
+    "Content-Type": file.type || "application/octet-stream",
+    "X-Content-Type-Options": "nosniff",
+  });
+  if (range && typeof fullSize === "number") {
+    headers.set(
+      "Content-Range",
+      `bytes ${range.start}-${range.end}/${fullSize}`
+    );
+  }
+  return new Response(file.stream(), {
+    headers,
+    // oxlint-disable-next-line no-magic-numbers -- HTTP distinguishes partial content (206) from a complete download (200).
+    status: range ? 206 : 200,
+  });
+};
+
+// oxlint-disable-next-line max-statements -- Keep redirect selection, range rejection, streaming, and storage-error translation in one ordered request boundary; the range parser and response builder are separate helpers.
 export const createFileContentResponse = async (
   request: ReadonlyNativeSurface<Request>,
   key: string,
   { allowRedirect = true }: { readonly allowRedirect?: boolean } = {}
 ): Promise<Response> => {
   try {
-    const providerUrl = allowRedirect
-      ? await getFileProviderUrl(key)
-      : undefined;
-    if (typeof providerUrl === "string" && providerUrl !== "") {
-      return new Response(null, {
-        headers: {
-          "Cache-Control": "private, no-store",
-          Location: providerUrl,
-        },
-        status: 307,
-      });
-    }
-
-    const rangeHeader = request.headers.get("range");
-    const supportsRange = storageSupportsRange();
-    let range: { start: number; end: number } | undefined;
-    let fullSize: number | undefined;
-    if (rangeHeader !== null && rangeHeader !== "" && supportsRange) {
-      const metadata = await getFileMetadata(key);
-      fullSize = metadata.size;
-      const parsed = parseRange(rangeHeader, fullSize);
-      if (!parsed) {
+    if (allowRedirect) {
+      const providerUrl = await getFileProviderUrl(key);
+      if (typeof providerUrl === "string" && providerUrl !== "") {
+        // oxlint-disable-next-line unicorn/no-null -- A temporary redirect carries its target in Location and has no response body.
         return new Response(null, {
-          headers: { "Content-Range": `bytes */${fullSize}` },
-          status: 416,
+          headers: {
+            "Cache-Control": "private, no-store",
+            Location: providerUrl,
+          },
+          status: 307,
         });
       }
-      range = parsed;
     }
 
-    const file = await downloadFile(key, range);
-    const headers = new Headers({
-      "Accept-Ranges": supportsRange ? "bytes" : "none",
-      "Cache-Control": "private, no-store",
-      "Content-Length": String(file.size),
-      "Content-Type": file.type || "application/octet-stream",
-      "X-Content-Type-Options": "nosniff",
-    });
-    if (range && fullSize !== undefined) {
-      headers.set(
-        "Content-Range",
-        `bytes ${range.start}-${range.end}/${fullSize}`
-      );
+    const supportsRange = storageSupportsRange();
+    const rangeResult = await resolveRequestRange(request, key, supportsRange);
+    if (rangeResult instanceof Response) {
+      return rangeResult;
     }
-    return new Response(file.stream(), {
-      headers,
-      status: range ? 206 : 200,
-    });
+    return await createDownloadResponse(key, supportsRange, rangeResult);
   } catch (error) {
     if (error instanceof FilesError && error.code === "NotFound") {
       return new Response("File not found", { status: 404 });
@@ -119,4 +145,3 @@ export const createFileContentResponse = async (
     return new Response("File download failed", { status: 500 });
   }
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */

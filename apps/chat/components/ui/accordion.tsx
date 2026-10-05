@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 const Accordion = AccordionPrimitiveRoot;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AccordionItem: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AccordionItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AccordionItem = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveItem>,
   ReactComponentPropsWithoutRef<typeof AccordionPrimitiveItem>
@@ -31,10 +32,12 @@ const AccordionItem = reactForwardRef<
     {...props}
   />
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AccordionItem.displayName = "AccordionItem";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AccordionTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AccordionTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AccordionTrigger = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveTrigger>,
   ReactComponentPropsWithoutRef<typeof AccordionPrimitiveTrigger>
@@ -54,10 +57,12 @@ const AccordionTrigger = reactForwardRef<
     </AccordionPrimitiveTrigger>
   </AccordionPrimitiveHeader>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AccordionTrigger.displayName = AccordionPrimitiveTrigger.displayName;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AccordionContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
+/* oxlint-disable react/react-in-jsx-scope -- AccordionContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const AccordionContent = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveContent>,
   ReactComponentPropsWithoutRef<typeof AccordionPrimitiveContent>
@@ -71,6 +76,7 @@ const AccordionContent = reactForwardRef<
     <div className={cn("pt-0 pb-4", className)}>{children}</div>
   </AccordionPrimitiveContent>
 ));
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 AccordionContent.displayName = AccordionPrimitiveContent.displayName;

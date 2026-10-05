@@ -5,12 +5,12 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptors outside the CLI package are bundled into the published executable.
 import { toolDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptor types live outside the CLI package.
 import type { ToolDefinition } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 import { validateCustomToolKeys } from "./custom-tool-keys";
 import { generatedRegistrationSource } from "./generated-registration-source";
 import { preflight } from "./preflight";
@@ -84,8 +84,9 @@ const selectionSlots = [
   "webSearch",
 ] as const;
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const registrationsFor = (definitions: ToolDefinition[]) =>
+const registrationsFor = (
+  definitions: readonly ReadonlyInput<ToolDefinition>[]
+) =>
   definitions.flatMap((item) =>
     item.tools.map((tool) => ({
       ...tool,
@@ -94,7 +95,6 @@ const registrationsFor = (definitions: ToolDefinition[]) =>
       provider: Boolean(item.slot),
     }))
   );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 type Registration = ReturnType<typeof registrationsFor>[number];
@@ -228,10 +228,9 @@ const missingPreviousRegistration = (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const validateExpected = (
-  definitions: ToolDefinition[],
-  expected: ToolDefinition[]
+  definitions: readonly ReadonlyInput<ToolDefinition>[],
+  expected: readonly ReadonlyInput<ToolDefinition>[]
 ): void => {
   for (const requested of expected) {
     const installed = definitions.find(
@@ -244,11 +243,11 @@ const validateExpected = (
     }
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const validateSelections = (definitions: ToolDefinition[]): void => {
+const validateSelections = (
+  definitions: readonly ReadonlyInput<ToolDefinition>[]
+): void => {
   for (const slot of selectionSlots) {
     if (definitions.filter((item): boolean => item.slot === slot).length > 1) {
       throw new Error(
@@ -257,7 +256,6 @@ const validateSelections = (definitions: ToolDefinition[]): void => {
     }
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -350,11 +348,14 @@ const sourceFor = (
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const validateToolDependencies = (definitions: ToolDefinition[]): void => {
+const validateToolDependencies = (
+  definitions: readonly ReadonlyInput<ToolDefinition>[]
+): void => {
   const availableKeys = new Set(
-    registrationsFor(definitions).map((item): string => registrationKey(item))
+    registrationsFor(definitions).map(
+      (item: ReadonlyInput<Registration>): string => registrationKey(item)
+    )
   );
   for (const definition of definitions) {
     const missingTools = definition.requiresTools.filter(
@@ -375,7 +376,8 @@ const validateToolDependencies = (definitions: ToolDefinition[]): void => {
   );
   if (
     registrationsFor(definitions).some(
-      (item): boolean => registrationKey(item) === "runCodeDocument"
+      (item: ReadonlyInput<Registration>): boolean =>
+        registrationKey(item) === "runCodeDocument"
     ) &&
     !executor?.codeExecutorExport
   ) {
@@ -385,7 +387,6 @@ const validateToolDependencies = (definitions: ToolDefinition[]): void => {
   }
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -470,10 +471,9 @@ const readInstalledTools = async (cwd: string): Promise<ToolDefinition[]> => {
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const validateToolInstallation = async (
   cwd: string,
-  definitions: ToolDefinition[]
+  definitions: readonly ReadonlyInput<ToolDefinition>[]
 ): Promise<void> => {
   validateSelections(definitions);
   const documents = definitions.filter((item) => item.documentKind);
@@ -483,8 +483,8 @@ const validateToolInstallation = async (
   ) {
     throw new Error("Only one bundle per document kind can be installed.");
   }
-  const keys = registrationsFor(definitions).map((item): string =>
-    registrationKey(item)
+  const keys = registrationsFor(definitions).map(
+    (item: ReadonlyInput<Registration>): string => registrationKey(item)
   );
   if (new Set(keys).size !== keys.length) {
     throw new Error("Duplicate installed tool registration key.");
@@ -492,7 +492,6 @@ const validateToolInstallation = async (
   await validateCustomToolKeys(cwd, definitions);
   validateToolDependencies(definitions);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -501,7 +500,10 @@ const validateToolInstallation = async (
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const syncTools = async (
   cwd: string,
-  options: { checkOnly?: boolean; expected?: ToolDefinition[] } = {}
+  options: {
+    readonly checkOnly?: boolean;
+    readonly expected?: readonly ReadonlyInput<ToolDefinition>[];
+  } = {}
 ): Promise<ToolDefinition[]> => {
   const definitions = await readInstalledTools(cwd);
   validateExpected(definitions, options.expected ?? []);
