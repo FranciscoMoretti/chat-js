@@ -889,7 +889,9 @@ const ThreadShowcase = (): React.JSX.Element => (
     <ThreadInstallCommand />
   </>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ThreadInstallCommand, ThreadPlayground, ThreadShowcase); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable max-lines -- ThreadShowcase: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */
 export { ThreadInstallCommand, ThreadPlayground, ThreadShowcase };
+/* oxlint-enable import/no-named-export */

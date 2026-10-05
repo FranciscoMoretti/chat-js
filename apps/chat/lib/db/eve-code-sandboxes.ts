@@ -210,6 +210,7 @@ const listEveCodeSandboxesForDeletion = async (
       )
     );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (confirmEveCodeSandboxCreation, listEveCodeSandboxesForDeletion, recordEveCodeSandboxDeletion, reserveEveCodeSandbox); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 export {
@@ -218,3 +219,4 @@ export {
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
 };
+/* oxlint-enable import/no-named-export */

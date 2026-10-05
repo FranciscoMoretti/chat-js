@@ -32,6 +32,7 @@ const hasUnsafeSegments = (
   );
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (isSafeTarget); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const isSafeTarget = (targetPath: string, root: string): boolean => {
   const decodedPath = targetPath.includes("\0")
     ? false
@@ -55,3 +56,4 @@ export const isSafeTarget = (targetPath: string, root: string): boolean => {
     resolvedPath.startsWith(`${normalizedRoot}${path.sep}`)
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

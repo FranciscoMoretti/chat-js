@@ -23,6 +23,7 @@ const Sparkle = ({
     <path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8Z" />
   </svg>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Hero); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- Hero renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -174,6 +175,7 @@ export const Hero = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */

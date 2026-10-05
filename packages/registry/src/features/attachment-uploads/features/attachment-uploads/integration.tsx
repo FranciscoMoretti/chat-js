@@ -143,6 +143,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
   };
   /* oxlint-enable oxc/no-async-await */
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (attachmentUploads); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -158,3 +159,4 @@ export const attachmentUploads = {
   ],
   useUploads,
 } satisfies AttachmentUploadIntegration;
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

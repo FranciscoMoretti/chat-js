@@ -112,6 +112,8 @@ const waitForEveCheckpoint = async (
     "Source checkpoint is not ready. Retry the same operation shortly."
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readEveCheckpoint, waitForEveCheckpoint); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, no-magic-numbers, unicorn/max-nested-calls */
 export { readEveCheckpoint, waitForEveCheckpoint };
+/* oxlint-enable import/no-named-export */

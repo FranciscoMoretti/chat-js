@@ -10,6 +10,7 @@ import { MessageAction } from "@/components/ai-elements/message";
 /* oxlint-enable sort-imports */
 import { MessageVoteActions } from "@/components/message-vote-actions";
 import { useTRPC } from "@/trpc/react";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveFeedbackActions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return -- EveFeedbackActions: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including previous); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 export const EveFeedbackActions = ({
@@ -73,4 +74,5 @@ export const EveFeedbackActions = ({
     />
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return */

@@ -114,6 +114,7 @@ const createDownloadResponse = async (
     status: range ? 206 : 200,
   });
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createFileContentResponse); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createFileContentResponse's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line max-statements -- Keep redirect selection, range rejection, streaming, and storage-error translation in one ordered request boundary; the range parser and response builder are separate helpers.
@@ -150,4 +151,5 @@ export const createFileContentResponse = async (
     return new Response("File download failed", { status: 500 });
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

@@ -18,6 +18,7 @@ interface AuthCardSkeletonProps {
   readonly cardClassName?: string;
   readonly variant?: "form" | "device";
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (AuthCardSkeleton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-max-depth -- AuthCardSkeleton: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const AuthCardSkeleton = ({
@@ -77,4 +78,5 @@ export const AuthCardSkeleton = ({
     </Card>
   </div>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-max-depth */

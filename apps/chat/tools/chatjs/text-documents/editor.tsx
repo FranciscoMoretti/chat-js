@@ -172,6 +172,8 @@ const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean =>
   prevProps.content === nextProps.content &&
   prevProps.onSaveContent === nextProps.onSaveContent &&
   prevProps.isReadonly === nextProps.isReadonly;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Editor); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export const Editor = memo(PureEditor, areEqual);
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

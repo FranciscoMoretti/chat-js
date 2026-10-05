@@ -76,9 +76,11 @@ export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(
     ...definition.optionalEnv,
   ]);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (configureStorageProvider, INSTALLABLE_STORAGE_PROVIDERS, parseStorageOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export {
   configureStorageProvider,
   INSTALLABLE_STORAGE_PROVIDERS,
   parseStorageOptions,
 };
+/* oxlint-enable import/no-named-export */

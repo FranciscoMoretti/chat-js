@@ -36,6 +36,8 @@ const editSheetDocument = defineTool({
   inputSchema: eveDocumentEditInput,
   outputSchema: eveDocumentWriteResult,
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createSheetDocument, editSheetDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { createSheetDocument, editSheetDocument };
+/* oxlint-enable import/no-named-export */

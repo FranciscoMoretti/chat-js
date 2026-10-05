@@ -54,6 +54,7 @@ type ReadonlyNative<Value> = Value extends (
 
 const EMPTY_DEPENDENCY_COUNT = 0;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (planInstallation); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve planInstallation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -348,6 +349,7 @@ export const planInstallation = async (
     sources: [...items.keys()],
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-undefined */

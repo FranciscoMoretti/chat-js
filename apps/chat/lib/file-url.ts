@@ -36,6 +36,7 @@ const getFileImageProps = (
     : { src: createFileUrl(key), unoptimized: true };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createFileUrl, FILES_PATH, getFileImageProps, isFileStorageKey, keyFromFileUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   createFileUrl,
   FILES_PATH,
@@ -43,3 +44,4 @@ export {
   isFileStorageKey,
   keyFromFileUrl,
 };
+/* oxlint-enable import/no-named-export */

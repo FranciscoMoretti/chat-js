@@ -393,6 +393,7 @@ const retainEveDocumentFiles = async (
     .values(files.map(({ key }) => ({ conversationId, key, ownerId })))
     .onConflictDoNothing();
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveFilesOwned, canReadEveFile, isEveFileUnavailable, referenceEveFiles, registerEveStoredFile, reserveEveGeneratedFile, reserveEveUpload, retainEveDocumentFiles, writeEveGeneratedFile, writeEveUpload); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export {
@@ -407,3 +408,4 @@ export {
   writeEveGeneratedFile,
   writeEveUpload,
 };
+/* oxlint-enable import/no-named-export */

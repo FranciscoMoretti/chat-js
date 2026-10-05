@@ -142,6 +142,10 @@ const runImageRequest = async (
     async (usage: Readonly<ToolUsage>) =>
       await executeImageRequest(createImageRequest(prompt, context, usage))
   );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (runImageRequest); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { runImageRequest };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ImageRequestContext); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ImageRequestContext };
+/* oxlint-enable import/no-named-export */

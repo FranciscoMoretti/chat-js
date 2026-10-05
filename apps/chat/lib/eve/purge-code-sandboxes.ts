@@ -12,6 +12,7 @@ import {
 } from "../db/eve-code-sandboxes";
 /* oxlint-enable sort-imports */
 import { eveCodeSandboxName } from "./code-sandbox-name";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEveFamilyCodeSandboxes); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyCodeSandboxes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -79,5 +80,6 @@ export const purgeEveFamilyCodeSandboxes = async (
     );
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

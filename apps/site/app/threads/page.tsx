@@ -361,6 +361,7 @@ const ThreadsPage = (): React.JSX.Element => (
     <Footer />
   </div>
 );
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -373,6 +374,7 @@ const ThreadsPage = (): React.JSX.Element => (
 /* oxlint-disable max-lines -- page.tsx: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default ThreadsPage;

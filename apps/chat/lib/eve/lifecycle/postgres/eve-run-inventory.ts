@@ -139,9 +139,11 @@ const readEvePostgresRunInventory = async (
     async (query) =>
       await readEvePostgresRunInventoryInTransaction(query, sessionId)
   );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readEvePostgresRunInventory, readEvePostgresRunInventoryInTransaction); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 export {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
 };
+/* oxlint-enable import/no-named-export */

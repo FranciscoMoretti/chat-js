@@ -111,6 +111,8 @@ const executeMultiQuerySearch = async ({
   );
   return { searches: searchResults, ...(error ? { error } : {}) };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema };
+/* oxlint-enable import/no-named-export */

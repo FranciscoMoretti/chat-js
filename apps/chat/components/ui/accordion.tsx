@@ -92,4 +92,6 @@ const AccordionContent = reactForwardRef<
 
 AccordionContent.displayName = AccordionPrimitiveContent.displayName;
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Accordion, AccordionContent, AccordionItem, AccordionTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };
+/* oxlint-enable import/no-named-export */

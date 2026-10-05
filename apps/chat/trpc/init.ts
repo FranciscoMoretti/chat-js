@@ -165,6 +165,7 @@ const protectedProcedure = trpc.procedure.use(({ ctx, next }) => {
     },
   });
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createCallerFactory, createTRPCContext, createTRPCRouter, protectedProcedure, publicProcedure); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-console, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 export {
   createCallerFactory,
@@ -173,4 +174,7 @@ export {
   protectedProcedure,
   publicProcedure,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (Context); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { Context };
+/* oxlint-enable import/no-named-export */

@@ -1,7 +1,10 @@
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (TextSplitterParams); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface TextSplitterParams {
   chunkOverlap: number;
   chunkSize: number;
 }
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (TextSplitter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-statements (#512): TextSplitter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): TextSplitter emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -104,4 +107,5 @@ export abstract class TextSplitter implements TextSplitterParams {
     return docs;
   }
 }
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable max-statements, no-console, no-continue, no-magic-numbers, no-undefined, no-underscore-dangle, typescript/prefer-readonly-parameter-types, unicorn/no-null */

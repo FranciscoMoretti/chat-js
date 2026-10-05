@@ -189,5 +189,9 @@ const createDaytonaProvider = (
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (commandSandbox, createDaytonaProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { commandSandbox, createDaytonaProvider };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (DaytonaProvider, DaytonaResource); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { DaytonaProvider, DaytonaResource };
+/* oxlint-enable import/no-named-export */

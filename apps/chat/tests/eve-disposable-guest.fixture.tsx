@@ -53,6 +53,7 @@ const messages: EveMessage[] = [
     role: "assistant",
   },
 ];
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GuestVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- GuestVisualFixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-disable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- * react-perf/jsx-no-new-array-as-prop (#556): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react-perf/jsx-no-new-function-as-prop (#557): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
@@ -101,5 +102,6 @@ export const GuestVisualFixture = (): React.JSX.Element => {
     </ChatModelsProvider>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */

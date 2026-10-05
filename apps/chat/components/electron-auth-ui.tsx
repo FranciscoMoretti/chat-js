@@ -165,6 +165,8 @@ const ElectronTransferUser = ({
     </div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ElectronBrowserSignIn, ElectronTransferUser); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { ElectronBrowserSignIn, ElectronTransferUser };
+/* oxlint-enable import/no-named-export */

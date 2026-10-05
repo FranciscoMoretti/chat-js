@@ -11,6 +11,7 @@ import { eveCopyBoundaries } from "./copy-boundaries";
 import { prepareEveCopyTranscript } from "./copy-transcript";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readPublicEveCopySource); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopySource's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
@@ -43,5 +44,6 @@ export const readPublicEveCopySource = async (id: string) => {
     title: row.title ?? row.firstMessage.slice(0, 100),
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */

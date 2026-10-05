@@ -14,6 +14,8 @@ const Skeleton = ({
     {...props}
   />
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Skeleton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Skeleton };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

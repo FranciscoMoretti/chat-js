@@ -5,6 +5,7 @@ import { createElement } from "react";
 
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveToolResult: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including platformOutput?.success); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveToolResult = ({
@@ -45,4 +46,5 @@ export const EveToolResult = ({
     : part;
   return createElement(Renderer, { isReadonly, messageId, tool });
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { builtInGateways } from "#cli/registry/gateways";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (externalGatewayFixture); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
@@ -66,6 +67,7 @@ export const externalGatewayFixture = () => {
     },
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable typescript/explicit-function-return-type */

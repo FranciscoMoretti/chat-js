@@ -36,6 +36,7 @@ const latestImageAttachments = (messages: readonly ModelMessage[]) => {
   }
   return attachments;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveImageContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -83,4 +84,5 @@ export const eveImageContext = (messages: readonly ModelMessage[]) => {
   }
   return { attachments, lastGeneratedImage };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

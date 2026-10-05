@@ -102,7 +102,9 @@ const TooltipContent = ({
     </TooltipPrimitiveContent>
   </TooltipPrimitivePortal>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Tooltip, TooltipContent, TooltipProvider, TooltipTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
+/* oxlint-enable import/no-named-export */

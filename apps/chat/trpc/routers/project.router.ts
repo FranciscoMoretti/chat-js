@@ -16,6 +16,7 @@ import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
 import { generateUUID } from "@/lib/utils";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (projectRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve projectRouter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
@@ -150,5 +151,6 @@ export const projectRouter = createTRPCRouter({
       return { success: true };
     }),
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

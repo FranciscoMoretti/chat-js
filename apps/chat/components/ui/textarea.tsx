@@ -29,4 +29,6 @@ const Textarea = reactForwardRef<
 /* oxlint-enable react/react-in-jsx-scope */
 Textarea.displayName = "Textarea";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Textarea); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Textarea };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

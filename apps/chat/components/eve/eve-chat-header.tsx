@@ -255,5 +255,7 @@ const EveChatHeader = ({
     </>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveChatHeader, EveSharedBadge); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 export { EveChatHeader, EveSharedBadge };
+/* oxlint-enable import/no-named-export */

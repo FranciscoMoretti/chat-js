@@ -304,7 +304,9 @@ const gatewayConfigEdit = async (
     source.slice(gateway.initializer.end)
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (gatewayConfigEdit, readProviderId, readProviderLiteral); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
 export { gatewayConfigEdit, readProviderId, readProviderLiteral };
+/* oxlint-enable import/no-named-export */

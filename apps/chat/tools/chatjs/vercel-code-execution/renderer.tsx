@@ -61,6 +61,10 @@ const CodeExecution = defineToolRenderer({
     title: codeExecutionInput.shape.title.optional().catch(undefined),
   }),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CodeExecution); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable eslint/no-undefined */
 export { CodeExecution };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (CodeExecutionTool); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { CodeExecutionTool };
+/* oxlint-enable import/no-named-export */

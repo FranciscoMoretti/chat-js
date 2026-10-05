@@ -42,6 +42,7 @@ const parseUrl = (url: string): URL | null => {
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const redactUrl = (url: URL): string => `${url.origin}${url.pathname}`;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (retrieveUrl); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retrieveUrl's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -153,6 +154,7 @@ Avoid:
   inputSchema: retrievedInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */

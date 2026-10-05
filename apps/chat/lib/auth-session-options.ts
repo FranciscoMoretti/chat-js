@@ -2,6 +2,7 @@
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
 import { createHash } from "node:crypto";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (authSessionOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-magic-numbers --
@@ -46,4 +47,5 @@ export const authSessionOptions = ({
     },
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-magic-numbers */

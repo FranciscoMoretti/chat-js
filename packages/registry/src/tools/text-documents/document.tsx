@@ -20,6 +20,7 @@ const Editor = dynamic(
     ssr: false,
   }
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (documentUi); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 
@@ -47,5 +48,6 @@ export const documentUi: DocumentUi = {
     </ScrollArea>
   ),
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-props-no-spreading */

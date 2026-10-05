@@ -15,6 +15,7 @@ import type { SearchResultItem } from "@/tools/platform/research-updates-schema"
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { Favicon } from "./favicon";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (WebSourceBadge); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable sort-imports */
 /* oxlint-disable react/jsx-max-depth -- WebSourceBadge: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
@@ -61,4 +62,5 @@ export const WebSourceBadge = ({
     </TooltipContent>
   </Tooltip>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-max-depth */

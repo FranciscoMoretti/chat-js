@@ -28,11 +28,14 @@ import {
 /* oxlint-enable sort-imports */
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ProjectDetailsData); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface ProjectDetailsData {
   color: ProjectColorName;
   icon: ProjectIconName;
   name: string;
 }
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ProjectDetailsDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ProjectDetailsDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- ProjectDetailsDialog: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including data: ProjectDetailsData); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -193,5 +196,6 @@ export const ProjectDetailsDialog = ({
     </Dialog>
   );
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, max-statements, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */

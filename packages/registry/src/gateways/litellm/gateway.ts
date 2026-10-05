@@ -150,6 +150,8 @@ class LiteLLMGateway
   }
   /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, LiteLLMGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 export { LiteLLMGateway as Gateway, LiteLLMGateway };
+/* oxlint-enable import/no-named-export */

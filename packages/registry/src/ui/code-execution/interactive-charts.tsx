@@ -20,11 +20,13 @@ const ChartSkeleton = () => (
     </div>
   </Card>
 );
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (BaseChart); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/only-export-components */
 
 /* oxlint-enable typescript/explicit-function-return-type */
 
 export type { BaseChart } from "./interactive-chart-impl";
+/* oxlint-enable import/no-named-export */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-default-export, react/only-export-components -- #623: The chart loader and dynamic import consume this existing default chart entrypoint; preserving that contract retains its established Fast Refresh exception. */
 export default dynamic(

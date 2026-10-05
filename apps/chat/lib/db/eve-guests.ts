@@ -621,6 +621,7 @@ const readEveGuestOwner = async (
     .where(eq(eveGuest.ownerId, ownerId));
   return guest;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (commitEveGuestMessage, createEveGuest, readEveGuestOwner, readExistingEveGuestMessage, releaseEveGuestCreation, releaseEveGuestMessage, reserveEveGuestMessage, reserveEveGuestMessages); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- #509: This eve-guests.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
  */
@@ -634,3 +635,4 @@ export {
   reserveEveGuestMessage,
   reserveEveGuestMessages,
 };
+/* oxlint-enable import/no-named-export */

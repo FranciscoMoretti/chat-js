@@ -163,4 +163,6 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
 /* oxlint-enable eslint/max-statements */
 
 ConnectorsControl.isAvailable = (): boolean => installedFeatures.has("mcp");
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ConnectorsControl); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { ConnectorsControl };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -2,6 +2,7 @@ import type { LanguageModelUsage } from "ai";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (StoredLanguageModelUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 // Saved conversations may predate SDK 7's nested usage fields.
 export type StoredLanguageModelUsage = Pick<
   LanguageModelUsage,
@@ -13,7 +14,9 @@ export type StoredLanguageModelUsage = Pick<
     cachedInputTokens?: number;
     reasoningTokens?: number;
   };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getUsageTokenDetails); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const getUsageTokenDetails = (
   usage?: ReadonlyNativeSurface<StoredLanguageModelUsage>
 ): { cachedInputTokens: number; reasoningTokens: number } => ({
@@ -24,3 +27,4 @@ export const getUsageTokenDetails = (
     // oxlint-disable-next-line no-magic-numbers -- Historical records with neither reasoning count represent zero known reasoning tokens.
     usage?.outputTokenDetails?.reasoningTokens ?? usage?.reasoningTokens ?? 0,
 });
+/* oxlint-enable import/no-named-export */

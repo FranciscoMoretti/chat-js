@@ -162,9 +162,11 @@ const validateRequestedKind = (
   }
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (registryMetadataKind, validateRequestedKind, validateProviderRequirements, validateCodeExecutionRequirements); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   registryMetadataKind,
   validateRequestedKind,
   validateProviderRequirements,
   validateCodeExecutionRequirements,
 };
+/* oxlint-enable import/no-named-export */

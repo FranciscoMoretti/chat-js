@@ -60,5 +60,7 @@ const EveShareButton = ({
     )}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveShareButton, EveShareDialogContent); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */
 export { EveShareButton, EveShareDialogContent };
+/* oxlint-enable import/no-named-export */

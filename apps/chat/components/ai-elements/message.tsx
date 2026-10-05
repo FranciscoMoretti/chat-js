@@ -577,6 +577,7 @@ const MessageToolbar = ({
     {children}
   </div>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Message, MessageAction, MessageActions, MessageAttachment, MessageAttachments, MessageBranch, MessageBranchContent, MessageBranchNext, MessageBranchPage, MessageBranchPrevious, MessageBranchSelector, MessageContent, MessageResponse, MessageToolbar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- message keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
@@ -596,6 +597,8 @@ export {
   MessageResponse,
   MessageToolbar,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (MessageActionProps, MessageActionsProps, MessageAttachmentProps, MessageAttachmentsProps, MessageBranchContentProps, MessageBranchNextProps, MessageBranchPageProps, MessageBranchPreviousProps, MessageBranchProps, MessageBranchSelectorProps, MessageContentProps, MessageProps, MessageResponseProps, MessageToolbarProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   MessageActionProps,
   MessageActionsProps,
@@ -612,3 +615,4 @@ export type {
   MessageResponseProps,
   MessageToolbarProps,
 };
+/* oxlint-enable import/no-named-export */

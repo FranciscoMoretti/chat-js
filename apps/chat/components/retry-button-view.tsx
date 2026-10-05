@@ -10,6 +10,7 @@ import { Action } from "@/components/ai-elements/actions";
 /* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RetryButtonView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const RetryButtonView = ({
   onRetry,
   disabled = false,
@@ -35,3 +36,4 @@ export const RetryButtonView = ({
     />
   </Action>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -565,6 +565,7 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
   }
   await syncFeatures(cwd);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertSupportedFeatureInstallation, initializeFeatureUi, syncFeatures); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -578,3 +579,4 @@ export {
   initializeFeatureUi,
   syncFeatures,
 };
+/* oxlint-enable import/no-named-export */

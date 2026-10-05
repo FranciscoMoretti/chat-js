@@ -33,6 +33,7 @@ const baseUrl =
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
   env.APP_URL ||
   (process.env.VERCEL_ENV === "production" ? config.appUrl : getBaseUrl());
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (auth); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
@@ -102,7 +103,10 @@ export const auth = betterAuth({
     ...(config.desktopApp.enabled ? ELECTRON_TRUSTED_ORIGINS : []),
   ],
 });
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (Session); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
 // Infer session type from the auth instance for type safety
 export type Session = typeof auth.$Infer.Session;
+/* oxlint-enable import/no-named-export */

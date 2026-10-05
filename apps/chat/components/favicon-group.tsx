@@ -19,6 +19,7 @@ interface FaviconGroupProps {
   // Use the simpler interface
   readonly sources: readonly FaviconSource[];
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (FaviconGroup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- FaviconGroup: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership */
 
 export const FaviconGroup: React.FC<FaviconGroupProps> = ({
@@ -51,4 +52,5 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
     </div>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop */

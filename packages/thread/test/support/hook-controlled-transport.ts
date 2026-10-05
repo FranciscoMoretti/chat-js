@@ -9,6 +9,7 @@ const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
     null
   );
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ControlledTransport); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: ReadableStreamDefaultController<UIMessageChunk>[] =
     [];
@@ -38,3 +39,4 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.requests[requestIndex]?.close();
   }
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -3,6 +3,7 @@ import type { RegistryItem } from "shadcn/schema";
 // oxlint-disable-next-line import/no-relative-parent-imports -- The registry catalog imports its package-local descriptor schema; the inherited @/ alias resolves app code and cannot address packages/registry/metadata.ts.
 import { featureDefinitionSchema } from "../../metadata";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (observabilityItems); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const observabilityItems = [
   {
     dependencies: ["@vercel/analytics@^1.5.0"],
@@ -60,3 +61,4 @@ export const observabilityItems = [
     type: "registry:item" as const,
   })
 ) satisfies RegistryItem[];
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

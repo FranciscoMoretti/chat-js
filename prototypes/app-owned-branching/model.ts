@@ -526,6 +526,7 @@ const modelHistory = async (
   const messages = await history(sql, owner, head);
   return messages.map(({ parts, role }) => ({ parts, role }));
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (append, beginWriter, complete, editDocument, endWriter, fork, history, message, modelHistory, removeBranch, reserve, validatePrefix, writeFile); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -545,4 +546,7 @@ export {
   validatePrefix,
   writeFile,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (Message, SnapshotProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { Message, SnapshotProvider };
+/* oxlint-enable import/no-named-export */

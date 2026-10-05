@@ -330,5 +330,7 @@ const serverEnvSchema = {
     eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
   ),
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (clientEnvSchema, getEveRuntimeEnvOptions, serverEnvSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, no-undefined, node/no-process-env */
 export { clientEnvSchema, getEveRuntimeEnvOptions, serverEnvSchema };
+/* oxlint-enable import/no-named-export */

@@ -284,7 +284,11 @@ const replaceFilePartUrlByBinaryDataInMessages = async (
     .filter((message) => message.role === "system");
   return [...leadingSystemMessages, ...availableMessages.slice(firstUserIndex)];
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (replaceFilePartUrlByBinaryDataInMessages); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { replaceFilePartUrlByBinaryDataInMessages };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (DownloadImplementation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { DownloadImplementation };
+/* oxlint-enable import/no-named-export */

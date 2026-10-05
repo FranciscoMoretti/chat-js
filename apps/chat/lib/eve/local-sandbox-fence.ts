@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 /* oxlint-enable sort-imports */
 import nodePath from "node:path";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fenceLocalEveSandboxMutations); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceLocalEveSandboxMutations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
@@ -67,5 +68,6 @@ export const fenceLocalEveSandboxMutations = async (
     }
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */

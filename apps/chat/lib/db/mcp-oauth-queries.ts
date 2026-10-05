@@ -292,6 +292,7 @@ const deleteSessionsByConnectorId = async ({
     .delete(mcpOAuthSession)
     .where(eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId));
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createOAuthSession, deletePendingSessionByState, deleteSessionByState, deleteSessionsByConnectorId, getAuthenticatedSession, getSessionByState, saveTokensAndCleanup, setOAuthClientInfoOnceByState, setOAuthCodeVerifierOnceByState, updateSessionByState); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export {
   createOAuthSession,
@@ -305,4 +306,7 @@ export {
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (OAuthClientInformationFull); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { OAuthClientInformationFull };
+/* oxlint-enable import/no-named-export */

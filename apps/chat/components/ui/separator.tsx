@@ -31,7 +31,9 @@ const Separator = ({
     {...props}
   />
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Separator); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Separator };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

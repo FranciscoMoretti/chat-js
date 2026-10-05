@@ -226,6 +226,7 @@ const moveRejectedProjectCreation = (
   finishCreation(storage, ownerId, scope);
   return next;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (finishCreation, moveRejectedProjectCreation, prepareCreation, prepareResponseGroupCreation, prepareSelectedCreation, readCreation, readCreationRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-params, no-undefined */
 export {
   finishCreation,
@@ -236,4 +237,7 @@ export {
   readCreation,
   readCreationRequest,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (CreationScope); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { CreationScope };
+/* oxlint-enable import/no-named-export */

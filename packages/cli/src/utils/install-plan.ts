@@ -342,8 +342,10 @@ const installPlan = async (
     })
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (installPlan, plannedSourceTargets, recordInstalledSource); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 export { installPlan, plannedSourceTargets, recordInstalledSource };
+/* oxlint-enable import/no-named-export */

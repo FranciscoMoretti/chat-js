@@ -55,6 +55,8 @@ const SummarizeIcon = ({
     />
   </svg>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (GitIcon, SummarizeIcon); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp */
 export { GitIcon, SummarizeIcon };
+/* oxlint-enable import/no-named-export */

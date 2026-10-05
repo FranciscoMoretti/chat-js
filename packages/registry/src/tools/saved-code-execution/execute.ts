@@ -21,6 +21,7 @@ import {
   documentExecutionLanguage,
   eveCodeExecutionResult,
 } from "./schemas";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveCodeDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeEveCodeDocument's asynchronous iteration and rejection behavior. */
 /* oxlint-enable sort-imports */
 
@@ -96,6 +97,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
     },
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */

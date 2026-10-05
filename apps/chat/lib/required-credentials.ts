@@ -57,5 +57,7 @@ const requireCredentials = (
     throw new MissingCredentialsError(integration, missing);
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (MissingCredentialsError, requireCredentials); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { MissingCredentialsError, requireCredentials };
+/* oxlint-enable import/no-named-export */

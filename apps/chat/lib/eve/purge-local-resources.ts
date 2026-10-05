@@ -12,6 +12,7 @@ import { purgeEveFamilyFiles } from "./purge-files";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
 import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeLocalEveFamilyResources); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeLocalEveFamilyResources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): purgeLocalEveFamilyResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -54,5 +55,6 @@ export const purgeLocalEveFamilyResources = async (
   await purgeEveFamilyFiles(ownerId, family.rootId);
   return family;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */

@@ -37,8 +37,10 @@ const Progress = ({
     />
   </ProgressPrimitiveRoot>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Progress); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 export { Progress };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

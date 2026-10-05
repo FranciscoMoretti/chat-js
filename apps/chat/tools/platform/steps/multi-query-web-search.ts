@@ -128,7 +128,11 @@ const multiQueryWebSearchStep = async ({
     };
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (multiQueryWebSearchStep); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
 export { multiQueryWebSearchStep };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };
+/* oxlint-enable import/no-named-export */

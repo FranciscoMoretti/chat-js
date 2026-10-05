@@ -28,6 +28,7 @@ import { latestDocumentRun } from "./document-runs";
 import { EveDocumentRunResult } from "./result";
 /* oxlint-enable sort-imports */
 import { documentExecutionLanguage } from "./schemas";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveDocumentRun); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- EveDocumentRun renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -107,6 +108,7 @@ export const EveDocumentRun = ({
     </div>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/strict-void-return */

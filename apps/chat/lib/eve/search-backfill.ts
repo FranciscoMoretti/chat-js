@@ -13,6 +13,7 @@ import { eveEventSearchText } from "./search-text";
 const SEARCH_SNAPSHOT_TIMEOUT_MS = 30_000;
 const SEARCH_INDEX_BATCH_SIZE = 100;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (backfillEveSearchConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve backfillEveSearchConversation's awaited sequencing and rejected-Promise behavior. */
 /**
  * Recover from durable events, including text omitted from the bounded live retry buffer.
@@ -43,4 +44,5 @@ export const backfillEveSearchConversation = async (
   }
   await indexEveSearchText(ownerId, conversationId, batch);
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

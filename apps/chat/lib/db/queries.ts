@@ -299,6 +299,7 @@ const assignEveConversationProject = (
       .where(eq(eveChat.id, logicalChat.id));
     return { conversationId: routeId, projectId };
   });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assignEveConversationProject, createProject, deleteProject, getEveMessageVotes, getProjectById, getProjectsByUserId, getUserById, getUserModelPreferences, saveEveMessageVote, updateProject, upsertUserModelPreference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 export {
@@ -314,3 +315,4 @@ export {
   updateProject,
   upsertUserModelPreference,
 };
+/* oxlint-enable import/no-named-export */

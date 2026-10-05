@@ -291,6 +291,7 @@ const RetrieveUrlView = ({
     </div>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RetrieveUrlRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
@@ -304,3 +305,4 @@ export const RetrieveUrlRenderer = defineToolRenderer({
   outputSchema: retrievedResult,
   render: RetrieveUrlView,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -321,5 +321,7 @@ const truncateMessages = (
     ? [systemMessage, ...truncatedMessages]
     : truncatedMessages;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (calculateMessagesTokens, truncateMessages); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { calculateMessagesTokens, truncateMessages };
+/* oxlint-enable import/no-named-export */

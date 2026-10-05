@@ -67,4 +67,6 @@ const ModelRow = memo(
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions */
 
 ModelRow.displayName = "PureModelRow";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ModelRow); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { ModelRow };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -318,4 +318,6 @@ const handle = async (
 const GET = handle;
 
 const POST = handle;
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (GET, POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { GET, POST };
+/* oxlint-enable import/no-named-export */

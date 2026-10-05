@@ -73,7 +73,9 @@ const EveOptimisticResponseGroup = ({
     </div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveOptimisticResponseGroup, shouldAppendEveOptimisticResponseGroup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: Consumers import EveOptimisticResponseGroup, shouldAppendEveOptimisticResponseGroup from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { EveOptimisticResponseGroup, shouldAppendEveOptimisticResponseGroup };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

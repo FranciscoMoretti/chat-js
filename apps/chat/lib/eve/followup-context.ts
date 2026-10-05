@@ -1,11 +1,14 @@
 import type { HookEvent } from "eve/hooks";
 
 const MAX_CONTEXT_CHARACTERS = 12_000;
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (FollowupContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface FollowupContext {
   user: string;
   assistant: string;
 }
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (followupContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): followupContext accepts current: FollowupContext; event: HookEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -39,4 +42,5 @@ export const followupContext = (
   }
   return current;
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

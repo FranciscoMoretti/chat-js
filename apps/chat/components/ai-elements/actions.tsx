@@ -86,6 +86,10 @@ const Action = ({
 
   return button;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Action, Actions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { Action, Actions };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ActionProps, ActionsProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ActionProps, ActionsProps };
+/* oxlint-enable import/no-named-export */

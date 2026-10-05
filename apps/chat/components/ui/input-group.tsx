@@ -201,6 +201,7 @@ const InputGroupTextarea = ({
     {...props}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupText, InputGroupTextarea); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -212,3 +213,4 @@ export {
   InputGroupText,
   InputGroupTextarea,
 };
+/* oxlint-enable import/no-named-export */

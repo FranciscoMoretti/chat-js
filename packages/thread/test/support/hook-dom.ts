@@ -39,4 +39,6 @@ const createHookDom = (): { close: () => Promise<void> } => {
   };
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createHookDom); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createHookDom };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

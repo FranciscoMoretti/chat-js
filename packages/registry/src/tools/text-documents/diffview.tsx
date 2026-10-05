@@ -212,6 +212,7 @@ interface DiffEditorProps {
   oldContent: string;
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DiffView); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -246,6 +247,7 @@ export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
     </div>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 

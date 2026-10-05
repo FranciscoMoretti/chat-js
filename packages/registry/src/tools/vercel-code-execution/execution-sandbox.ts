@@ -255,6 +255,7 @@ const getErrorMessage = (err: unknown): string => {
   }
   return "Unknown error";
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (cleanupSandbox, codeSandboxCleanupCapability, createSandbox, getErrorMessage, getSandboxRuntime, getTokenAuth, resolveSandboxAuth); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -264,4 +265,7 @@ export {
   getTokenAuth,
   resolveSandboxAuth,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SandboxAuth); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { SandboxAuth };
+/* oxlint-enable import/no-named-export */

@@ -97,10 +97,14 @@ const getMissingRequirement = (
     ? // oxlint-disable-next-line unicorn/no-null -- Missing requirements use null as the existing exported success sentinel.
       null
     : formatRequirementDescription(requirement);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (authEnvRequirements, formatRequirementDescription, getMissingRequirement, isRequirementSatisfied); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   authEnvRequirements,
   formatRequirementDescription,
   getMissingRequirement,
   isRequirementSatisfied,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EnvRequirement); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EnvRequirement };
+/* oxlint-enable import/no-named-export */

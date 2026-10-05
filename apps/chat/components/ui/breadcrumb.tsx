@@ -160,6 +160,7 @@ const BreadcrumbEllipsis = ({
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -169,3 +170,4 @@ export {
   BreadcrumbPage,
   BreadcrumbSeparator,
 };
+/* oxlint-enable import/no-named-export */

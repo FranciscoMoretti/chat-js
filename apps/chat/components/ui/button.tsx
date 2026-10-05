@@ -63,8 +63,10 @@ const Button = ({
     />
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Button, buttonVariants); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-disable react/only-export-components -- button.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 
 export { Button, buttonVariants };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

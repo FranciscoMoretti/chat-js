@@ -167,6 +167,7 @@ const deleteMcpConnector = async ({
     throw error;
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createMcpConnector, deleteMcpConnector, getMcpConnectorById, getMcpConnectorByNameId, getMcpConnectorsByUserId, updateMcpConnector); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export {
   createMcpConnector,
@@ -176,3 +177,4 @@ export {
   getMcpConnectorsByUserId,
   updateMcpConnector,
 };
+/* oxlint-enable import/no-named-export */

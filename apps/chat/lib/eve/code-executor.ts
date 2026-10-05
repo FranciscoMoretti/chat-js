@@ -24,6 +24,7 @@ type CodeExecutor = (
   input: CodeExecutionInput,
   context: CodeExecutionContext
 ) => Promise<ToolResult<CodeExecutionOutput>>;
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (CodeExecutionContext, CodeExecutionInput, CodeExecutionOutput, CodeExecutor); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export type {
   CodeExecutionContext,
@@ -31,3 +32,4 @@ export type {
   CodeExecutionOutput,
   CodeExecutor,
 };
+/* oxlint-enable import/no-named-export */

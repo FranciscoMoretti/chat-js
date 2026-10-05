@@ -200,5 +200,7 @@ const initializeObservability = async (cwd: string): Promise<void> => {
   }
   await writeFile(manifestPath, formattedManifest(manifest));
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (initializeObservability, planObservability); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { initializeObservability, planObservability };
+/* oxlint-enable import/no-named-export */

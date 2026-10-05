@@ -89,6 +89,7 @@ const installItems = async (
     });
   });
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (installItems, itemAddress, listTools, readItem, registryConfig, registryUrl); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export {
   installItems,
@@ -98,3 +99,4 @@ export {
   registryConfig,
   registryUrl,
 };
+/* oxlint-enable import/no-named-export */

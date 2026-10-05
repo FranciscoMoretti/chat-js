@@ -8,6 +8,7 @@ const coveredWorkflows = new Set([
   "workflow//eve@0.61.0//executeSleepTool",
 ]);
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (classifyEveSandboxRuns); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): classifyEveSandboxRuns's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): classifyEveSandboxRuns's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -73,4 +74,5 @@ export const classifyEveSandboxRuns = (
       .toSorted(),
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

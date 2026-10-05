@@ -285,6 +285,7 @@ const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
     </div>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ConnectorsSettings); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ConnectorsSettings renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -588,6 +589,7 @@ export const ConnectorsSettings = (): React.JSX.Element => {
     </SettingsPageContent>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */

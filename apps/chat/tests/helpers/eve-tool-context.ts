@@ -6,6 +6,7 @@ import type { ToolContext } from "eve/tools";
 const unexpected = () => {
   throw new Error("Unexpected native resource access in test");
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (testToolContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): testToolContext accepts overrides: Partial<ToolContext> = {}; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -28,4 +29,5 @@ export const testToolContext = (
   toolName: "test",
   ...overrides,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */

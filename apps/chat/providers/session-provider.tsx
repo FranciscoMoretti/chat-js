@@ -120,6 +120,8 @@ const useSession = (): SessionContextValue => {
   return ctx;
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (SessionProvider, SessionSeed, useSession); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/only-export-components -- #620: Consumers import SessionProvider, SessionSeed, useSession from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { SessionProvider, SessionSeed, useSession };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

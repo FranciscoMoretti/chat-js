@@ -234,6 +234,7 @@ const SandboxOutput = ({
     />
   </CodeBlock>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Sandbox, SandboxCode, SandboxContent, SandboxHeader, SandboxOutput, SandboxTabContent, SandboxTabs, SandboxTabsBar, SandboxTabsList, SandboxTabsTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export {
   Sandbox,
@@ -247,6 +248,8 @@ export {
   SandboxTabsList,
   SandboxTabsTrigger,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SandboxCodeProps, SandboxContentProps, SandboxHeaderProps, SandboxOutputProps, SandboxRootProps, SandboxTabContentProps, SandboxTabsBarProps, SandboxTabsListProps, SandboxTabsProps, SandboxTabsTriggerProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   SandboxCodeProps,
   SandboxContentProps,
@@ -259,3 +262,4 @@ export type {
   SandboxTabsProps,
   SandboxTabsTriggerProps,
 };
+/* oxlint-enable import/no-named-export */

@@ -234,5 +234,9 @@ const ReasoningContent = memo(
 Reasoning.displayName = "Reasoning";
 ReasoningTrigger.displayName = "ReasoningTrigger";
 ReasoningContent.displayName = "ReasoningContent";
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Reasoning, ReasoningContent, ReasoningTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Reasoning, ReasoningContent, ReasoningTrigger };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ReasoningContentProps, ReasoningProps, ReasoningTriggerProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ReasoningContentProps, ReasoningProps, ReasoningTriggerProps };
+/* oxlint-enable import/no-named-export */

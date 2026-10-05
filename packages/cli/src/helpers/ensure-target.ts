@@ -15,6 +15,7 @@ const rejectTarget = (messages: readonly string[]): never => {
   process.exit(FAILURE_EXIT_CODE);
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ensureTargetEmpty); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ensureTargetEmpty's awaited sequencing and rejected-Promise behavior. */
 export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
   const targetStats = await lstat(targetDir).catch((error: unknown) => {
@@ -44,4 +45,5 @@ export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
     ]);
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

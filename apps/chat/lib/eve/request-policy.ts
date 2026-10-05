@@ -118,4 +118,6 @@ const sameOrigin = (
         request.headers.get("sec-fetch-site") !== "cross-site";
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (parseSessionRequest, safeStreamQuery, sameOrigin); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { parseSessionRequest, safeStreamQuery, sameOrigin };
+/* oxlint-enable import/no-named-export */

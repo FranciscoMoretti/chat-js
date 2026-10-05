@@ -17,6 +17,44 @@ import { installItems } from "#cli/registry/shadcn";
 import { observabilityItems } from "../../../registry/src/features/observability";
 import { syncFeatures } from "./sync-features";
 
+/* oxlint-disable oxc/no-async-await -- Await native export validation of the actual syncFeatures output before this integration case finishes. */
+const lintInstalledObservability = async (root: string): Promise<void> => {
+  const config = path.join(root, "export-rules.json");
+  await writeFile(config, JSON.stringify({ rules: {} }));
+  const lintProcess = Bun.spawn({
+    cmd: [
+      path.join(import.meta.dir, "../../../../node_modules/.bin/oxlint"),
+      "-c",
+      config,
+      "--import-plugin",
+      "-A",
+      "all",
+      "-D",
+      "import/no-named-export",
+      "-D",
+      "import/prefer-default-export",
+      "-D",
+      "sort-imports",
+      "--no-ignore",
+      "--report-unused-disable-directives-severity",
+      "error",
+      path.join(root, "features/installed-layout.ts"),
+      path.join(root, "features/installed-instrumentation.ts"),
+    ],
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([
+    lintProcess.exited,
+    new Response(lintProcess.stdout).text(),
+    new Response(lintProcess.stderr).text(),
+  ]);
+  const diagnosticOutput = `Native export validation failed:\n${stdout}\n${stderr}`;
+  // oxlint-disable-next-line no-magic-numbers -- Zero exit status proves both generated export scopes and unused-directive validation pass.
+  expect(exitCode, diagnosticOutput).toBe(0);
+};
+/* oxlint-enable oxc/no-async-await */
+
 const roots: string[] = [];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -87,6 +125,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
       })
     );
     await syncFeatures(root);
+    await lintInstalledObservability(root);
     const layout = await readFile(
       path.join(root, "features/installed-layout.ts"),
       "utf-8"

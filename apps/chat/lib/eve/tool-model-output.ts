@@ -3,6 +3,7 @@ import { toolOutput } from "eve/tools";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolOutput, ToolResult } from "./tool-result";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (toolResultToModelOutput); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -19,4 +20,5 @@ export const toolResultToModelOutput = (
   toolOutput.json(
     result.status === "error" ? { error: result.error } : result.output
   );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

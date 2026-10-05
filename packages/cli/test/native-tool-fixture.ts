@@ -165,6 +165,7 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
     180_000
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (nativeToolFixture, verifyNativeToolRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
@@ -172,3 +173,4 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 export { nativeToolFixture, verifyNativeToolRuntime };
+/* oxlint-enable import/no-named-export */

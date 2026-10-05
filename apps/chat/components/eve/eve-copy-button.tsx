@@ -166,4 +166,6 @@ const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
   }
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveCopyButton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { EveCopyButton };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

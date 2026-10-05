@@ -9,6 +9,7 @@ import type { UiToolName } from "@/lib/ai/types";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveCreationContentHash); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
@@ -25,3 +26,4 @@ export const eveCreationContentHash = (
     .update(JSON.stringify(selectedTool ? { message, selectedTool } : message))
     .digest("hex");
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

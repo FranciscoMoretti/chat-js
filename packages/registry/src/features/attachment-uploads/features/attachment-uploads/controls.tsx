@@ -101,4 +101,6 @@ AttachFilesControl.isAvailable = (): boolean =>
   installedFeatures.has("attachment-uploads");
 TakePhotoControl.isAvailable = (mobile: boolean): boolean =>
   installedFeatures.has("attachment-uploads") && mobile;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (AttachFilesControl, TakePhotoControl); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { AttachFilesControl, TakePhotoControl };
+/* oxlint-enable import/no-named-export */

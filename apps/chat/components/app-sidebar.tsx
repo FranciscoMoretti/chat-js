@@ -83,6 +83,7 @@ const RegisteredEveProjects = async () => {
     </SidebarGroup>
   ) : null;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (AppSidebar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- AppSidebar renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable oxc/no-async-await */
@@ -135,6 +136,7 @@ export const AppSidebar = (): React.JSX.Element => (
     </SidebarFooter>
   </Sidebar>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */

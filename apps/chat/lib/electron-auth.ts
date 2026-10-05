@@ -82,6 +82,7 @@ const buildSocialAuthRequest = (
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ELECTRON_AUTH_CLIENT_ID, ELECTRON_AUTH_COOKIE_PREFIX, ELECTRON_AUTH_CALLBACK_PATH, ELECTRON_APP_SCHEME, ELECTRON_TRUSTED_ORIGINS, isDesktopAppEnabled, isElectronRenderer, toSearchParamRecord, isElectronTransferQuery, buildSocialAuthRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
@@ -94,3 +95,4 @@ export {
   isElectronTransferQuery,
   buildSocialAuthRequest,
 };
+/* oxlint-enable import/no-named-export */

@@ -570,6 +570,7 @@ const getEveResponseGroupForConversation = async (
     ),
   });
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEveResponseGroup, getEveResponseGroupForConversation, recordEveResponseGroupRejection, reserveEveResponseGroup, reserveEveResponseGroupInTransaction, tombstoneEveResponseGroups); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
@@ -583,3 +584,4 @@ export {
   reserveEveResponseGroupInTransaction,
   tombstoneEveResponseGroups,
 };
+/* oxlint-enable import/no-named-export */

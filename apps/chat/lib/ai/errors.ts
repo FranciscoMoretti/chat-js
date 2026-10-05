@@ -148,5 +148,9 @@ class ChatSDKError extends Error {
   }
 }
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatSDKError); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { ChatSDKError };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ErrorCode, ErrorType, Surface); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ErrorCode, ErrorType, Surface };
+/* oxlint-enable import/no-named-export */

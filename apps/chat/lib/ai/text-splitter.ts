@@ -1,9 +1,12 @@
 import { TextSplitter } from "./text-splitter-base";
 import type { TextSplitterParams } from "./text-splitter-base";
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (RecursiveCharacterTextSplitterParams); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface RecursiveCharacterTextSplitterParams extends TextSplitterParams {
   separators: string[];
 }
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (RecursiveCharacterTextSplitter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-statements (#512): RecursiveCharacterTextSplitter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): RecursiveCharacterTextSplitter uses -1, 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -100,4 +103,5 @@ export class RecursiveCharacterTextSplitter
     return finalChunks;
   }
 }
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */

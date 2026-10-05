@@ -296,6 +296,8 @@ const reconcileEveOwnerUsage = async (
     }
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };
+/* oxlint-enable import/no-named-export */

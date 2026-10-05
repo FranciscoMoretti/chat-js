@@ -107,7 +107,9 @@ const EveDeletionProvider = ({
     </DeletionContext.Provider>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveDeletionProvider, useEveDeletion); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable react/only-export-components -- #620: Consumers import EveDeletionProvider, useEveDeletion from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { EveDeletionProvider, useEveDeletion };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

@@ -667,6 +667,7 @@ const syncTools = async (
   await writeFile(uiPath, generatedSource(uiBody));
   return definitions;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readInstalledTools, syncTools, toolRegistrationTargets, validateToolInstallation); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -681,3 +682,4 @@ export {
   toolRegistrationTargets,
   validateToolInstallation,
 };
+/* oxlint-enable import/no-named-export */

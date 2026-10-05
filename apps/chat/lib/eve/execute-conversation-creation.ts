@@ -103,6 +103,7 @@ const creationFailure = (cause: unknown): Response => {
   );
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveConversationCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveConversationCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
 
@@ -252,5 +253,6 @@ export const executeEveConversationCreation = async (
     return creationFailure(error);
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

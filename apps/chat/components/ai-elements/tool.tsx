@@ -216,9 +216,12 @@ const ToolOutput = ({
     </div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: Consumers import getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { getStatusBadge, Tool, ToolContent, ToolHeader, ToolInput, ToolOutput };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ToolContentProps, ToolHeaderProps, ToolInputProps, ToolOutputProps, ToolProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/only-export-components */
 export type {
   ToolContentProps,
@@ -227,3 +230,4 @@ export type {
   ToolOutputProps,
   ToolProps,
 };
+/* oxlint-enable import/no-named-export */

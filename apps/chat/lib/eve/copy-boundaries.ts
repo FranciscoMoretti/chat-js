@@ -17,12 +17,15 @@ const importedMessage = z
   .string()
   .regex(/^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u);
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveCopyBoundary); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface EveCopyBoundary {
   messageIndex: number;
   sourceKind: "turn" | "imported";
   sourceIndex: number;
 }
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyBoundaries); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): eveCopyBoundaries accepts events: readonly MessageStreamEvent[]; state; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -72,4 +75,5 @@ export const eveCopyBoundaries = (
       })
   );
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

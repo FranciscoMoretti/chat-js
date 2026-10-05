@@ -2,4 +2,5 @@
 import type { InstalledRouters } from "@/lib/installation-contracts";
 import { mcpRouter } from "@/trpc/routers/mcp.router";
 
+// oxlint-disable-next-line import/no-named-export, import/prefer-default-export -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export const installedRouters = { mcp: mcpRouter } satisfies InstalledRouters;

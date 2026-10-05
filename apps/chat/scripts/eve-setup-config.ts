@@ -2,6 +2,7 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/env-schema" dependency within this package instead of introducing an alias or barrel API.
  */
 import { getEveRuntimeEnvOptions } from "../lib/env-schema";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveEveSetup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -56,4 +57,5 @@ export const resolveEveSetup = (
     managed: false,
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

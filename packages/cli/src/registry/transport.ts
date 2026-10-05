@@ -30,6 +30,7 @@ const requireSecure = (url: string, redirect = false): void => {
     "Registry requests must use HTTPS (HTTP is allowed only on loopback, without redirects)."
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (withRegistryTransport); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withRegistryTransport's awaited sequencing and rejected-Promise behavior. */
 export const withRegistryTransport = async <Result>(
   operation: () => Promise<Result>
@@ -82,4 +83,5 @@ export const withRegistryTransport = async <Result>(
   })();
   return await result;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

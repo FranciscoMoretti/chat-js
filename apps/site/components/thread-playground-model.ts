@@ -299,6 +299,7 @@ const buildTreeLayout = ({
     width: Math.max(430, Math.max(0, nextLeaf - 2) * 164 + 184),
   };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (buildTreeLayout, createPlaygroundTransport, initialTree); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -306,9 +307,12 @@ const buildTreeLayout = ({
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 export { buildTreeLayout, createPlaygroundTransport, initialTree };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (LayoutNode, PlaygroundChat, PlaygroundMessage, PlaygroundMetadata); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type {
   LayoutNode,
   PlaygroundChat,
   PlaygroundMessage,
   PlaygroundMetadata,
 };
+/* oxlint-enable import/no-named-export */

@@ -144,6 +144,7 @@ ImageControl.isAvailable = (): boolean =>
 VideoControl.isAvailable = (): boolean =>
   installedToolNames.has("generateVideo");
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CanvasControl, ImageControl, ResearchControl, SearchControl, VideoControl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   CanvasControl,
   ImageControl,
@@ -151,3 +152,4 @@ export {
   SearchControl,
   VideoControl,
 };
+/* oxlint-enable import/no-named-export */

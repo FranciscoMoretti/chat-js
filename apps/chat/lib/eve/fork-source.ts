@@ -81,6 +81,10 @@ const resolveForkSource = (
   }
   throw new Error("The source version is unavailable. Reload before editing.");
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveUserForkBoundary, resolveForkSource); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
 export { eveUserForkBoundary, resolveForkSource };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveBranchReference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveBranchReference };
+/* oxlint-enable import/no-named-export */

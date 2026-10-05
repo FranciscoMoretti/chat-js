@@ -542,6 +542,7 @@ if (import.meta.main) {
   await main();
 }
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (checkExceptions, parseBaseline, readExceptions, reviewBaselineUpdate, snapshotExceptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   checkExceptions,
   parseBaseline,
@@ -549,6 +550,9 @@ export {
   reviewBaselineUpdate,
   snapshotExceptions,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ExceptionBaseline, LintException); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ExceptionBaseline, LintException };
+/* oxlint-enable import/no-named-export */
 
 /* oxlint-disable eslint/max-lines -- This file-level EOF diagnostic counts the standalone parser, persisted-budget validation and CLI policy together. */

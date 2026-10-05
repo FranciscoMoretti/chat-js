@@ -15,6 +15,7 @@ import type { GatewayProvider } from "./gateways/registry";
 // oxlint-disable-next-line unicorn/no-null -- Module-local null marks an adapter not yet created; lazy initialization reuses the existing provider on later calls.
 let activeGateway: GatewayProvider | null = null;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getActiveGateway); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const getActiveGateway = (): GatewayProvider => {
   activeGateway ??= new Gateway({
     env: gatewayEnv,
@@ -26,3 +27,4 @@ export const getActiveGateway = (): GatewayProvider => {
   });
   return activeGateway;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

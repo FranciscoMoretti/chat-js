@@ -509,8 +509,12 @@ const projectBranch = (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): logicalChatBusy accepts snapshot: LogicalChatSnapshot; agent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const logicalChatBusy = (snapshot: LogicalChatSnapshot): boolean =>
   [...snapshot.agents.values()].some((agent) => busy(agent));
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (LogicalChat, logicalChatBusy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This logical-chat.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export { LogicalChat, logicalChatBusy };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (LogicalBranch, LogicalChatSnapshot, NativeChatAgent); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { LogicalBranch, LogicalChatSnapshot, NativeChatAgent };
+/* oxlint-enable import/no-named-export */

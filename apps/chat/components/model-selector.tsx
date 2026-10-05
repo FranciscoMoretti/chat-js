@@ -794,6 +794,7 @@ const PureModelSelector = ({
     </Popover>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ModelSelector); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
@@ -806,5 +807,6 @@ export const ModelSelector = memo(
     prev.className === next.className &&
     prev.onModelSelectionChangeAction === next.onModelSelectionChangeAction
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 
 /* oxlint-disable max-lines -- model-selector keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

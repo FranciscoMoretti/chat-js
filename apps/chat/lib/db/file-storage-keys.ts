@@ -41,7 +41,9 @@ const fileIdsForStorageKeys = async (
     .where(inArray(eveStoredFile.storageKey, storageKeys));
   return new Map(files.map((file) => [file.storageKey, file.fileId]));
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (storageKeyForFile, fileIdsForStorageKeys); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 export { storageKeyForFile, fileIdsForStorageKeys };
+/* oxlint-enable import/no-named-export */

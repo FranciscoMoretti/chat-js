@@ -15,6 +15,7 @@ import { weatherInput, weatherResult } from "./schemas";
 
 const UNBILLED_TOOL_COST_USD = 0;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getWeather); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getWeather's awaited sequencing and rejected-Promise behavior. */
 export const getWeather = defineTool({
   description: "Get the current weather at a location",
@@ -39,4 +40,5 @@ export const getWeather = defineTool({
   inputSchema: weatherInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

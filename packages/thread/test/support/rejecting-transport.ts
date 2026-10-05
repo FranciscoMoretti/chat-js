@@ -10,6 +10,7 @@ const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
     null
   );
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RejectingTransport); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class RejectingTransport implements ChatTransport<UIMessage> {
   public requests = ZERO_COUNT;
 
@@ -22,3 +23,4 @@ export class RejectingTransport implements ChatTransport<UIMessage> {
   /* oxlint-enable oxc/no-async-await */
   public reconnectToStream = reconnectToNoStream;
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

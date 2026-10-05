@@ -112,4 +112,6 @@ const inferPackageManager = (cwd = process.cwd()): PackageManager => {
   }
   return launcherPackageManager();
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (inferPackageManager, launcherPackageManager); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { inferPackageManager, launcherPackageManager };
+/* oxlint-enable import/no-named-export */

@@ -8,6 +8,7 @@ import { db } from "./client";
  * init-declarations (#507): pending assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  */
 let pending: Promise<void> | undefined;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (checkDatabase); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable init-declarations */
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async --
  * no-undefined (#519): checkDatabase uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -27,4 +28,5 @@ export const checkDatabase = (): Promise<void> => {
   /* oxlint-enable oxc/no-async-await */
   return pending;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async */

@@ -403,7 +403,9 @@ const DisposableGuestChat = (): ReactJSX.Element => {
     </ChatLayout>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DisposableGuestChat, GuestConversationView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- disposable-guest-chat keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { DisposableGuestChat, GuestConversationView };
+/* oxlint-enable import/no-named-export */

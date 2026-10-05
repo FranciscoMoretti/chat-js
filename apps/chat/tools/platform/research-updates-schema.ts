@@ -62,5 +62,9 @@ const ResearchUpdateSchema = z.discriminatedUnion("type", [
 ]);
 
 type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ResearchUpdateSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { ResearchUpdateSchema };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ResearchUpdate, SearchResultItem, WebSearchUpdate); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ResearchUpdate, SearchResultItem, WebSearchUpdate };
+/* oxlint-enable import/no-named-export */

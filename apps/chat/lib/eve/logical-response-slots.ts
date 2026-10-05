@@ -113,6 +113,7 @@ const selectedSlotAttempt = (
   };
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (logicalResponseSlots); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-undefined (#519): logicalResponseSlots uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): logicalResponseSlots accepts snapshot: LogicalChatSnapshot; branch; candidate; attempt; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -172,4 +173,5 @@ export const logicalResponseSlots = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: logicalResponseSlots has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId, slots };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

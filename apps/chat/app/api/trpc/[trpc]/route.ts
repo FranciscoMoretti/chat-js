@@ -18,6 +18,8 @@ const handler = (req: Request): Promise<Response> =>
     req,
     router: appRouter,
   });
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (GET, POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 export { handler as GET, handler as POST };
+/* oxlint-enable import/no-named-export */

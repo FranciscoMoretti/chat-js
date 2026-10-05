@@ -1,5 +1,6 @@
 import { env } from "@/lib/env";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getBaseUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Returns the base URL for the application.
  * Priority: APP_URL > preview branch URL > VERCEL_URL > localhost
@@ -24,3 +25,4 @@ export const getBaseUrl = (): string => {
   const port = process.env.PORT;
   return `http://localhost:${typeof port === "string" && port !== "" ? port : "3000"}`;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

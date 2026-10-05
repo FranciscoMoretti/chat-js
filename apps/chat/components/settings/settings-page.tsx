@@ -70,6 +70,7 @@ const SettingsPageScrollArea = ({
     {children}
   </ScrollArea>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (SettingsPage, SettingsPageContent, SettingsPageHeader, SettingsPageScrollArea); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp */
 export {
   SettingsPage,
@@ -77,3 +78,4 @@ export {
   SettingsPageHeader,
   SettingsPageScrollArea,
 };
+/* oxlint-enable import/no-named-export */

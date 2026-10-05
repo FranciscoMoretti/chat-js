@@ -55,6 +55,7 @@ const assertNativeReceipt = async (
     throw new EveSessionMappingError("binding_conflict");
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveEveConversationScope); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEveConversationScope's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-params, max-statements, no-magic-numbers */
@@ -118,5 +119,6 @@ export const resolveEveConversationScope = async (
   await bindAcceptedEveConversation(ownerId, row.id, sessionId);
   return { conversationId: row.id, ownerId };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, max-statements, typescript/strict-boolean-expressions */

@@ -60,6 +60,7 @@ const gatewayEnvRequirements = [
   { options: [["AI_GATEWAY_API_KEY"], ["VERCEL_OIDC_TOKEN"]] },
 ];
 const gatewayEnvVariables = ["AI_GATEWAY_API_KEY", "VERCEL_OIDC_TOKEN"];
+// oxlint-disable-next-line import/no-named-export -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export {
   gatewayType,
   gatewayModelDefaults,

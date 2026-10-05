@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MessageAction } from "./ai-elements/message";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MessageVoteActions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable sort-imports */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- MessageVoteActions: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -53,4 +54,5 @@ export const MessageVoteActions = ({
     </MessageAction>
   </>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */

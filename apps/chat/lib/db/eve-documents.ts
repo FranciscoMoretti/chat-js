@@ -1361,6 +1361,7 @@ const removeEveDocumentFromConversation = async (
       title: revision.title,
     };
   });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (captureEveDocumentCheckpoint, captureEveNamedDocumentCheckpoint, getAccessibleEveDocument, getEveDocumentHistory, getEveDocumentRevision, initializeEveForkDocuments, purgeEveFamilyDocuments, removeEveDocumentFromConversation, saveEveDocumentRevision); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
@@ -1376,3 +1377,4 @@ export {
   removeEveDocumentFromConversation,
   saveEveDocumentRevision,
 };
+/* oxlint-enable import/no-named-export */

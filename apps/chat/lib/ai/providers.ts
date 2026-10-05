@@ -120,6 +120,7 @@ const getModelProviderOptions = async (
   providerModelId: AppModelId
 ): Promise<SharedV4ProviderOptions> =>
   modelProviderOptions(await getAppModelDefinition(providerModelId));
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getImageModel, getLanguageModel, getModelProviderOptions, getMultimodalImageModel, getVideoModel); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 export {
   getImageModel,
@@ -128,3 +129,4 @@ export {
   getMultimodalImageModel,
   getVideoModel,
 };
+/* oxlint-enable import/no-named-export */

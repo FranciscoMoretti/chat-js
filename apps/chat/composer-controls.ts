@@ -12,6 +12,7 @@ import {
 import { attachmentUploads } from "@/features/attachment-uploads/integration";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ConnectorsControl } from "@/features/mcp/composer";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (composerControls); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable sort-imports */
 
 export const composerControls: ComposerControl[] = [
@@ -23,3 +24,4 @@ export const composerControls: ComposerControl[] = [
   { Component: VideoControl, id: "video" },
   { Component: ConnectorsControl, id: "mcp" },
 ];
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -524,6 +524,7 @@ const ConversationTree = ({
     )}
   </div>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ThreadsLaunch); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ThreadsLaunch renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -618,6 +619,7 @@ export const ThreadsLaunch = ({
     </AbsoluteFill>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

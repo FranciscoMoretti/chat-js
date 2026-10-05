@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 /* oxlint-enable sort-imports */
 import { NextResponse } from "next/server";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): POST uses 60, 24, 365 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -49,5 +50,6 @@ export const POST = async (
     );
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, no-undefined, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

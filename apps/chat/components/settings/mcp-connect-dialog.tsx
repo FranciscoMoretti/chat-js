@@ -45,6 +45,7 @@ import type { McpConnector } from "@/lib/db/schema";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { useTRPC } from "@/trpc/react";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpConnectDialog); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- McpConnectDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -278,6 +279,7 @@ export const McpConnectDialog = ({
     </Dialog>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

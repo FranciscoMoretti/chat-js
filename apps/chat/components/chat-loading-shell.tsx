@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ChatLoadingShell); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-max-depth -- ChatLoadingShell: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries. */
 
 export const ChatLoadingShell = (): React.JSX.Element => (
@@ -47,4 +48,5 @@ export const ChatLoadingShell = (): React.JSX.Element => (
     </div>
   </div>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-max-depth */

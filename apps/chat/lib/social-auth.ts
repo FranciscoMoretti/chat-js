@@ -49,9 +49,13 @@ const sortSocialAuthProvidersByLastUsed = <
   ];
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isSocialAuthProvider, getEnabledSocialAuthProviders, sortSocialAuthProvidersByLastUsed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   isSocialAuthProvider,
   getEnabledSocialAuthProviders,
   sortSocialAuthProvidersByLastUsed,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SocialAuthSignInOptions, SocialAuthProvider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { SocialAuthSignInOptions, SocialAuthProvider };
+/* oxlint-enable import/no-named-export */

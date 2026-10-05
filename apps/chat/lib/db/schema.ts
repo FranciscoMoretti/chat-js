@@ -1077,6 +1077,7 @@ const eveSearchText = pgTable(
     ),
   ]
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (account, eveChat, eveChatProject, eveCodeSandbox, eveConversation, eveConversationCopy, eveConversationCopyFile, eveDocumentCheckpoint, eveDocumentCheckpointEntry, eveDocumentHead, eveDocumentRevision, eveFileReference, eveGuest, eveGuestMessage, eveGuestRate, eveImportedDocumentCheckpoint, eveImportedDocumentCheckpointEntry, eveNamedDocumentCheckpoint, eveNamedDocumentCheckpointEntry, eveResponseGroup, eveSearchText, eveStoredFile, eveSubagentSession, eveUsage, eveVote, eveWorkflowBackend, mcpConnector, mcpOAuthSession, project, schema, session, user, userCredit, userModelPreference, verification); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This schema.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
@@ -1117,6 +1118,8 @@ export {
   userModelPreference,
   verification,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveChat, EveDocumentRevision, McpConnector, McpOAuthSession, Project, User, UserCredit, UserModelPreference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   EveChat,
   EveDocumentRevision,
@@ -1127,3 +1130,4 @@ export type {
   UserCredit,
   UserModelPreference,
 };
+/* oxlint-enable import/no-named-export */

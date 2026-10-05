@@ -287,5 +287,9 @@ const LexicalChatInput = ({
 /* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 LexicalChatInput.displayName = "LexicalChatInput";
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (LexicalChatInput); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { LexicalChatInput };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (LexicalChatInputRef); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { LexicalChatInputRef };
+/* oxlint-enable import/no-named-export */

@@ -111,6 +111,10 @@ const parseToolId = (
     toolName: rest,
   };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createToolId, generateMcpNameId, MCP_NAME_MAX_LENGTH, parseToolId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null */
 export { createToolId, generateMcpNameId, MCP_NAME_MAX_LENGTH, parseToolId };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (GenerateMcpNameIdResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { GenerateMcpNameIdResult };
+/* oxlint-enable import/no-named-export */

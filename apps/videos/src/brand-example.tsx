@@ -4,6 +4,7 @@ import { AbsoluteFill } from "remotion";
 /* oxlint-enable sort-imports */
 
 import { Logo } from "./shared/brand";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (BrandExample); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- BrandExample renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- BrandExample: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
@@ -28,5 +29,6 @@ export const BrandExample = (): React.JSX.Element => (
     </p>
   </AbsoluteFill>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */

@@ -4,6 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ThemeToggle); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable sort-imports */
 
 export const ThemeToggle = (): React.JSX.Element => {
@@ -29,3 +30,4 @@ export const ThemeToggle = (): React.JSX.Element => {
     </button>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

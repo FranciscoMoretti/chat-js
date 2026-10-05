@@ -54,6 +54,7 @@ const completeGroup: EveResponseGroupResult = {
     },
   ],
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (completeGroup, firstConversation, firstModel, groupId, ownerId, partialGroup, secondConversation, secondModel); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers */
 export {
   completeGroup,
@@ -65,3 +66,4 @@ export {
   secondConversation,
   secondModel,
 };
+/* oxlint-enable import/no-named-export */

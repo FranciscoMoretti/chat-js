@@ -81,6 +81,8 @@ const getEvePostgresStreamPositions = async (
     await connection.end();
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEvePostgresStreamPositions, readEvePostgresStreamPositions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 export { getEvePostgresStreamPositions, readEvePostgresStreamPositions };
+/* oxlint-enable import/no-named-export */

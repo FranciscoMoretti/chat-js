@@ -11,6 +11,7 @@ import type { ToolOutput, ToolResult } from "./tool-result";
 import type { ToolUsage } from "./tool-usage";
 import { executeWithToolProgress } from "./tool-usage";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeWithResearchProgress); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 
  * typescript/prefer-readonly-parameter-types (#565): executeWithResearchProgress accepts context: Pick<ToolContext, "abortSignal">; options: { abortSignal: AbortSignal; usage: ToolUsage; dataStream: ToolProgressWriter; { abortSignal, usage, publish }; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -40,4 +41,5 @@ export const executeWithResearchProgress = <Output extends ToolOutput>(
       });
     }
   );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

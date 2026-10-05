@@ -70,4 +70,6 @@ const getModelProviderOptions = (
   }
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing package entry bindings (getModelProviderOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { getModelProviderOptions };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

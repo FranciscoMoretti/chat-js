@@ -85,5 +85,7 @@ const getEnabledFeatures = () =>
   Object.values(AVAILABLE_FEATURES)
     .filter((feature) => feature.enabled)
     .toSorted((left, right) => left.order - right.order);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (AVAILABLE_FEATURES, getEnabledFeatures); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 export { AVAILABLE_FEATURES, getEnabledFeatures };
+/* oxlint-enable import/no-named-export */

@@ -115,4 +115,6 @@ interface StepWrapperProps {
   isLast: boolean;
   update: ResearchUpdate;
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ResearchTasks); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { ResearchTasks };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -120,6 +120,7 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
   }
   return false;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareDependencyUpdate); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareDependencyUpdate's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. Keep this installation operation and its rollback or test assertions together.
@@ -206,4 +207,5 @@ export const prepareDependencyUpdate = async (
     );
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

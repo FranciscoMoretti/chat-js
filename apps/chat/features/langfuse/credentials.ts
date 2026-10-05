@@ -1,6 +1,7 @@
 import descriptor from "@/features/langfuse/chatjs.json";
 import { requireCredentials } from "@/lib/required-credentials";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getLangfuseEnvironment); the enabled import/no-default-export convention rejects the default-export alternative. */
 // Read at registration time so an omitted integration never validates credentials.
 export const getLangfuseEnvironment = (
   // oxlint-disable-next-line node/no-process-env -- Next's Node instrumentation registration reads process.env only when the optional Langfuse integration is present; injected environments remain supported for callers and tests.
@@ -22,3 +23,4 @@ export const getLangfuseEnvironment = (
     secretKey: environment.LANGFUSE_SECRET_KEY,
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

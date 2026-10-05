@@ -99,6 +99,7 @@ const BrowserFrame = ({
     />
   </svg>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Platforms); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- Platforms renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
 
@@ -256,6 +257,7 @@ export const Platforms = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */

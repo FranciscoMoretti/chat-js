@@ -57,6 +57,7 @@ const getSafeReturnTo = (url: URL): string | null => {
   }
   return returnTo;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (proxy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve proxy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
@@ -99,6 +100,8 @@ export const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(new URL("/login", url));
   }
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (config); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
@@ -122,4 +125,5 @@ export const config = {
     "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

@@ -175,6 +175,10 @@ const resolveEveResponseGroupLineage = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: resolveEveResponseGroupLineage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId: group.id, replacements };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveEveResponseGroupLineage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 export { resolveEveResponseGroupLineage };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveResponseGroupLineage, EveResponseGroupLineageConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveResponseGroupLineage, EveResponseGroupLineageConversation };
+/* oxlint-enable import/no-named-export */

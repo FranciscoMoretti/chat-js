@@ -36,6 +36,7 @@ interface ProjectIconPickerProps {
   readonly onColorChange: (color: ProjectColorName) => void;
   readonly onIconChange: (icon: ProjectIconName) => void;
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectIconPicker); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth -- ProjectIconPicker: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ProjectIconPicker = ({
@@ -111,4 +112,5 @@ export const ProjectIconPicker = ({
     </Popover>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable max-lines-per-function, react/jsx-max-depth */

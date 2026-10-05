@@ -205,6 +205,7 @@ const getFileProviderUrl = async (key: string): Promise<string | null> => {
   const url = new URL(value);
   return url.protocol === "http:" || url.protocol === "https:" ? value : null;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createFileId, uploadFileAtKey, iterateStoredFiles, listFiles, deleteFilesByUrls, downloadFile, getFileMetadata, storageSupportsRange, getFileProviderUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 
@@ -219,4 +220,7 @@ export {
   storageSupportsRange,
   getFileProviderUrl,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (FileUploader); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { FileUploader };
+/* oxlint-enable import/no-named-export */

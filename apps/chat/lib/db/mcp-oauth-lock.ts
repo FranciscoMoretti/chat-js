@@ -103,6 +103,7 @@ const createLockedRefresh =
     options.cancellation.markStarted();
     return { value: await options.run() };
   };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (withMcpOAuthRefreshLock); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withMcpOAuthRefreshLock's awaited sequencing and rejected-Promise behavior. */
 /** Bound refresh lock waiters separately from the app pool used by the refresh callback.
@@ -129,4 +130,5 @@ export const withMcpOAuthRefreshLock = async <Result>(
     cancellation.dispose();
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

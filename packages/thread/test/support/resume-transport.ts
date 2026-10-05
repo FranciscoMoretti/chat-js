@@ -7,6 +7,7 @@ const COUNT_INCREMENT = 1;
 const rejectSendMessages: ChatTransport<UIMessage>["sendMessages"] =
   async (): ReturnType<ChatTransport<UIMessage>["sendMessages"]> =>
     await Promise.reject(new Error("Unexpected send"));
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ResumeTransport); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export class ResumeTransport implements ChatTransport<UIMessage> {
   public reconnects = ZERO_COUNT;
@@ -21,3 +22,4 @@ export class ResumeTransport implements ChatTransport<UIMessage> {
   }
   /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

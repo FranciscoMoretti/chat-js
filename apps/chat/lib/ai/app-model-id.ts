@@ -22,4 +22,6 @@ type ModelId = GatewayModelIdMap[ActiveGatewayType];
 type AppModelId = ModelId;
 
 type ImageModelId = GatewayImageModelIdMap[ActiveGatewayType];
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ActiveGatewayType, AppModelId, ImageModelId, ModelId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ActiveGatewayType, AppModelId, ImageModelId, ModelId };
+/* oxlint-enable import/no-named-export */

@@ -285,6 +285,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
     </motion.div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (BarChart, BaseChart, LineChart, ScatterChart); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-module-boundary-types */
@@ -299,6 +300,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
 /* oxlint-enable eslint/max-statements */
 
 export type { BarChart, BaseChart, LineChart, ScatterChart };
+/* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-default-export -- #623: The chart loader and dynamic import consume this existing default chart entrypoint; preserving that contract retains its established Fast Refresh exception. */
 export default InteractiveChart;
 /* oxlint-enable import/no-default-export */

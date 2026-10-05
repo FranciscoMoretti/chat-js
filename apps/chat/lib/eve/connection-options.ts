@@ -1,5 +1,6 @@
 import { env } from "@/lib/env";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getEveConnectionOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients.
  * @param {string} ownerId Owner identity sent to the trusted EVE gateway.
@@ -36,3 +37,4 @@ export const getEveConnectionOptions = (
     redirect: "error",
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

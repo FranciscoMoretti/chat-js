@@ -157,6 +157,7 @@ const TableCaption = reactForwardRef<
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableCaption.displayName = "TableCaption";
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   Table,
   TableBody,
@@ -167,3 +168,4 @@ export {
   TableHeader,
   TableRow,
 };
+/* oxlint-enable import/no-named-export */

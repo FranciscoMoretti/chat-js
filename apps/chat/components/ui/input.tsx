@@ -25,6 +25,8 @@ const Input = ({
     {...props}
   />
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Input); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 
 export { Input };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

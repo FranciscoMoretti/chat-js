@@ -303,5 +303,7 @@ const EveRuntimeRoute = ({
     </div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveRuntimeProvider, EveRuntimeRoute); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { EveRuntimeProvider, EveRuntimeRoute };
+/* oxlint-enable import/no-named-export */

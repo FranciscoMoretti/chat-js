@@ -81,4 +81,6 @@ const ScrollArea = reactForwardRef<
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ScrollArea.displayName = ScrollAreaPrimitiveRoot.displayName;
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ScrollArea, ScrollBar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { ScrollArea, ScrollBar };
+/* oxlint-enable import/no-named-export */

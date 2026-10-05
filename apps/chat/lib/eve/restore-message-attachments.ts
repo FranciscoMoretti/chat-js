@@ -77,6 +77,7 @@ const inlineAttachment = (url: string, contentType: string): Blob => {
   return blob;
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (restoreMessageAttachments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve restoreMessageAttachments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -177,5 +178,6 @@ export const restoreMessageAttachments = async (
   }
   return attachments;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -191,6 +191,8 @@ const areEqual = (
   prevProps.content === nextProps.content &&
   prevProps.saveContent === nextProps.saveContent &&
   prevProps.isReadonly === nextProps.isReadonly;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SpreadsheetEditor); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export const SpreadsheetEditor = memo(PureSpreadsheetEditor, areEqual);
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

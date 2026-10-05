@@ -114,6 +114,8 @@ const retireEveFamilyForDeletion = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return family;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (retireEveFamilyForDeletion, retireEveSessionForDeletion); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 export { retireEveFamilyForDeletion, retireEveSessionForDeletion };
+/* oxlint-enable import/no-named-export */

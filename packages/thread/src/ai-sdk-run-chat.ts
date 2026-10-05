@@ -250,6 +250,10 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   /* oxlint-enable oxc/no-async-await */
 }
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ThreadRunChat); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { ThreadRunChat };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ThreadRunSpec, ThreadRunHost, RequestReader); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ThreadRunSpec, ThreadRunHost, RequestReader };
+/* oxlint-enable import/no-named-export */

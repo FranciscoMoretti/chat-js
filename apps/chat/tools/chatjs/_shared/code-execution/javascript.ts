@@ -196,6 +196,7 @@ const formatExecutionMessage = (
     .trim();
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeJavaScriptInSandbox); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeJavaScriptInSandbox's awaited sequencing and rejected-Promise behavior. */
 export const executeJavaScriptInSandbox = async ({
   sandbox,
@@ -223,4 +224,5 @@ export const executeJavaScriptInSandbox = async ({
     ),
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

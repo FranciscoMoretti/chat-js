@@ -57,6 +57,7 @@ const pngSchema = z.object({
   base64: z.string().min(1),
   format: z.literal("png"),
 });
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (CodeExecutionChart); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -93,6 +94,7 @@ export const CodeExecutionChart = ({ value }: { value: unknown }) => {
     </>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable unicorn/no-null */

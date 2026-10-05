@@ -23,4 +23,6 @@ const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) &&
   value.every((item: unknown) => typeof item === "string");
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isJsonObject, isStringArray, parseJsonObject, requireJsonObject); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { isJsonObject, isStringArray, parseJsonObject, requireJsonObject };
+/* oxlint-enable import/no-named-export */

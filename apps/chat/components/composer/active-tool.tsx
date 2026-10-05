@@ -10,6 +10,7 @@ import type { UiToolName } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
 import { getToolDisplay } from "./tool-display";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ActiveTool); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable unicorn/no-null --  unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const ActiveTool = ({
@@ -55,4 +56,5 @@ export const ActiveTool = ({
     </Button>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable unicorn/no-null */

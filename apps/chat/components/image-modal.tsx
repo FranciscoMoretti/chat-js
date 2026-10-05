@@ -204,6 +204,8 @@ const ImageModal = ({
     </Dialog>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ImageActions, ImageModal); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp */
 export { ImageActions, ImageModal };
+/* oxlint-enable import/no-named-export */

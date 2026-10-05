@@ -86,6 +86,7 @@ const readGuestCredential = (
     return null;
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (GUEST_SESSION_DURATION_MS, issueGuestCredential, newGuestClaims, readGuestCredential); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-statements, unicorn/no-null */
 export {
   GUEST_SESSION_DURATION_MS,
@@ -93,3 +94,4 @@ export {
   newGuestClaims,
   readGuestCredential,
 };
+/* oxlint-enable import/no-named-export */

@@ -93,4 +93,6 @@ if (import.meta.main) {
   }
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runHostedCleanup); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { runHostedCleanup };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

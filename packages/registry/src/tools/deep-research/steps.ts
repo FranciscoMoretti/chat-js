@@ -104,5 +104,7 @@ async function researchCompletionTime(): Promise<number> {
   "use step";
   return Date.now();
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (prepareResearch, saveResearchReport, researchCompletionTime); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { prepareResearch, saveResearchReport, researchCompletionTime };
+/* oxlint-enable import/no-named-export */

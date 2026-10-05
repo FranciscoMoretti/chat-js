@@ -167,6 +167,7 @@ const PureSidebarChatItem = ({
     </SidebarMenuItem>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SidebarChatItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
 /* oxlint-disable max-statements -- SidebarChatItem: ; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prevProps). */
@@ -203,4 +204,5 @@ export const SidebarChatItem = memo(
     return true;
   }
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable max-statements */

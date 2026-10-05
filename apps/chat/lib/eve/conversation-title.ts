@@ -160,6 +160,7 @@ const persistGeneratedEveConversationTitle = async ({
   // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EVE_TITLE_MAX_LENGTH, eveConversationTitleFallback, generateEveConversationTitleResult, persistGeneratedEveConversationTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */
 export {
@@ -168,3 +169,4 @@ export {
   generateEveConversationTitleResult,
   persistGeneratedEveConversationTitle,
 };
+/* oxlint-enable import/no-named-export */

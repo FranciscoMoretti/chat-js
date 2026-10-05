@@ -152,7 +152,9 @@ const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean => {
 
   return true;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (CodeEditor); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
 export const CodeEditor = memo(PureCodeEditor, areEqual);
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

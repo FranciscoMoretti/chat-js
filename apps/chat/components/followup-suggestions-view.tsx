@@ -8,6 +8,7 @@ import type { JSX as ReactJSX } from "react";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 /* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (FollowUpSuggestionsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- FollowUpSuggestionsView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null -- FollowUpSuggestionsView: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -69,5 +70,6 @@ export const FollowUpSuggestionsView = ({
     </fieldset>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */

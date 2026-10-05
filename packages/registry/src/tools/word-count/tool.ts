@@ -16,6 +16,7 @@ const EMPTY_COUNT = 0;
 const WORD_SPLIT_REGEX = /\s+/u;
 const SENTENCE_SPLIT_REGEX = /[.!?]+/u;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (wordCount); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve wordCount's awaited sequencing and rejected-Promise behavior. */
 export const wordCount = defineTool({
   description: "Count the words, characters, and sentences in a given text",
@@ -43,4 +44,5 @@ export const wordCount = defineTool({
   inputSchema: wordCountInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

@@ -233,6 +233,7 @@ const CommandShortcut = ({
     {...props}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -247,3 +248,4 @@ export {
   CommandSeparator,
   CommandShortcut,
 };
+/* oxlint-enable import/no-named-export */

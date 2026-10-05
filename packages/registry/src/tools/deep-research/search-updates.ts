@@ -60,6 +60,7 @@ const readResearchSnapshots = async (
   }
   return await Promise.all(requests);
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (researchSearchUpdates); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve researchSearchUpdates's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires this durable researchSearchUpdates step to be a top-level named async function declaration.
@@ -108,4 +109,5 @@ export async function researchSearchUpdates(
     })
   );
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

@@ -10,6 +10,7 @@ import type { WebpackOverrideFn } from "@remotion/bundler";
 /* oxlint-enable sort-imports */
 
 const require = createRequire(path.resolve("package.json"));
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (webpackOverride); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- webpackOverride: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 // Resolve both peers from this workspace, including imports inside hoisted Remotion packages.
 export const webpackOverride: WebpackOverrideFn = (config) => ({
@@ -24,4 +25,5 @@ export const webpackOverride: WebpackOverrideFn = (config) => ({
     },
   },
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

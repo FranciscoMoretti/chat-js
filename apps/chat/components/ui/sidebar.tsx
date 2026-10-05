@@ -899,6 +899,7 @@ const SidebarMenuSubButton = ({
     />
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInput, SidebarInset, SidebarMenu, SidebarMenuAction, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem, SidebarMenuSkeleton, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider, SidebarRail, SidebarSeparator, SidebarTrigger, useSidebar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -930,6 +931,7 @@ export {
   SidebarTrigger,
   useSidebar,
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 
 /* oxlint-disable max-lines -- sidebar keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

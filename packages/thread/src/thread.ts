@@ -32,6 +32,8 @@ class Thread<
 const createThread = <TMessage extends UIMessage = UIMessage>(
   options: ThreadInit<TMessage> = {}
 ): Thread<TMessage> => new Thread(options);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Thread, createThread); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Thread, createThread };
+/* oxlint-enable import/no-named-export */

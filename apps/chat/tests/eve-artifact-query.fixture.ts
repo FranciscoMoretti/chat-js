@@ -180,5 +180,7 @@ const trpcClient = createTRPCClient<AppRouter>({
     }),
   ],
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (conversationId, existingId, queryClient, trpcClient); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 export { conversationId, existingId, queryClient, trpcClient };
+/* oxlint-enable import/no-named-export */

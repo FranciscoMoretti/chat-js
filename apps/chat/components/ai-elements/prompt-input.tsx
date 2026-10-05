@@ -828,6 +828,7 @@ const PromptInputCommandSeparator = ({
     {...props}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (PromptInput, PromptInputActionMenu, PromptInputActionMenuContent, PromptInputActionMenuItem, PromptInputActionMenuTrigger, PromptInputButton, PromptInputCommand, PromptInputCommandEmpty, PromptInputCommandGroup, PromptInputCommandInput, PromptInputCommandItem, PromptInputCommandList, PromptInputCommandSeparator, PromptInputFooter, PromptInputHeader, PromptInputHoverCard, PromptInputHoverCardContent, PromptInputHoverCardTrigger, PromptInputSelect, PromptInputSelectContent, PromptInputSelectItem, PromptInputSelectTrigger, PromptInputSelectValue, PromptInputSpeechButton, PromptInputSubmit, PromptInputTab, PromptInputTabBody, PromptInputTabItem, PromptInputTabLabel, PromptInputTabsList, PromptInputTools); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- prompt-input keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
@@ -864,6 +865,8 @@ export {
   PromptInputTabsList,
   PromptInputTools,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (PromptInputActionMenuContentProps, PromptInputActionMenuItemProps, PromptInputActionMenuProps, PromptInputActionMenuTriggerProps, PromptInputButtonProps, PromptInputCommandEmptyProps, PromptInputCommandGroupProps, PromptInputCommandInputProps, PromptInputCommandItemProps, PromptInputCommandListProps, PromptInputCommandProps, PromptInputCommandSeparatorProps, PromptInputFooterProps, PromptInputHeaderProps, PromptInputHoverCardContentProps, PromptInputHoverCardProps, PromptInputHoverCardTriggerProps, PromptInputProps, PromptInputSelectContentProps, PromptInputSelectItemProps, PromptInputSelectProps, PromptInputSelectTriggerProps, PromptInputSelectValueProps, PromptInputSpeechButtonProps, PromptInputSubmitProps, PromptInputTabBodyProps, PromptInputTabItemProps, PromptInputTabLabelProps, PromptInputTabProps, PromptInputTabsListProps, PromptInputToolsProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   PromptInputActionMenuContentProps,
   PromptInputActionMenuItemProps,
@@ -897,3 +900,4 @@ export type {
   PromptInputTabsListProps,
   PromptInputToolsProps,
 };
+/* oxlint-enable import/no-named-export */

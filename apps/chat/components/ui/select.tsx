@@ -231,6 +231,7 @@ const SelectSeparator = reactForwardRef<
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectSeparator.displayName = SelectPrimitiveSeparator.displayName;
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   Select,
   SelectContent,
@@ -243,3 +244,4 @@ export {
   SelectTrigger,
   SelectValue,
 };
+/* oxlint-enable import/no-named-export */

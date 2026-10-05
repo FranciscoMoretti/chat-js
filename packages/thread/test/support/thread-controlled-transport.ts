@@ -7,6 +7,7 @@ const SDK_PARAMETER_INDEX = 0;
 // oxlint-disable-next-line unicorn/no-null -- The reconnect stream uses the SDK-required null sentinel for its empty state.
 const NO_RECONNECT_STREAM = null;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ControlledTransport); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: {
     abortSignal: AbortSignal | undefined;
@@ -103,3 +104,4 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     controller?.close();
   }
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

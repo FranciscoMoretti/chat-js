@@ -54,6 +54,7 @@ const envelope = z.object({
 const InvalidResult = (): React.JSX.Element => (
   <p role="alert">This tool result could not be displayed.</p>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (defineToolRenderer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/only-export-components */
 
@@ -184,8 +185,13 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     validatedToolRenderer: true as const,
   });
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isValidatedToolRenderer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 // oxlint-disable-next-line import/group-exports -- Keep defineToolRenderer directly exported to preserve Oxlint Fast Refresh factory classification; group the remaining value export here.
 export { isValidatedToolRenderer };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ValidatedToolRenderer, ToolRendererProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ValidatedToolRenderer, ToolRendererProps };
+/* oxlint-enable import/no-named-export */

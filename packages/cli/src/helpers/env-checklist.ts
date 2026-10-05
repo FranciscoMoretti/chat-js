@@ -184,5 +184,9 @@ const collectEnvChecklist = (input: EnvChecklistInput): EnvVarEntry[] => {
     ...collectAuthEntries(input),
   ];
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (collectEnvChecklist); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { collectEnvChecklist };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EnvVarEntry); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { EnvVarEntry };
+/* oxlint-enable import/no-named-export */

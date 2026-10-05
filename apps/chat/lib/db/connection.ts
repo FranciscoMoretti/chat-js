@@ -63,5 +63,7 @@ const databaseConnection = (
     url,
   };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (databaseConnection, databaseEnvOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { databaseConnection, databaseEnvOptions };
+/* oxlint-enable import/no-named-export */

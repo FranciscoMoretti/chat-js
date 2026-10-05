@@ -57,4 +57,6 @@ const handleEditorChange = ({
 
   onSaveContent(updatedContent, shouldDebounce);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createEditorConfig, handleEditorChange); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createEditorConfig, handleEditorChange };
+/* oxlint-enable import/no-named-export */

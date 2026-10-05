@@ -72,9 +72,11 @@ const ClickPulse = ({
       }}
     />
   ) : null;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Caption, ClickPulse, Pointer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
 export { Caption, ClickPulse, Pointer };
+/* oxlint-enable import/no-named-export */

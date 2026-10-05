@@ -195,5 +195,7 @@ const LegacyUserMessageReference = ({
     </Message>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (LegacyMessageActionsReference, LegacyUserMessageReference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { LegacyMessageActionsReference, LegacyUserMessageReference };
+/* oxlint-enable import/no-named-export */

@@ -256,6 +256,10 @@ const runGenerateImageMultimodal = async (
   }
   return await storeMultimodalImage(options, selection, imageFile);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (runGenerateImageTraditional, runGenerateImageMultimodal); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { runGenerateImageTraditional, runGenerateImageMultimodal };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ImageGenerationOptions, GeneratedImageResult, ImageStoreFile); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ImageGenerationOptions, GeneratedImageResult, ImageStoreFile };
+/* oxlint-enable import/no-named-export */

@@ -108,6 +108,7 @@ const expandSelectedModelValue = (
   }
   return expanded;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (expandSelectedModelValue, frontendToolsSchema, getPrimarySelectedModelId, isSelectedModelCounts, isSelectedModelValue, toolNameSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-continue, no-magic-numbers */
 export {
   expandSelectedModelValue,
@@ -117,4 +118,7 @@ export {
   isSelectedModelValue,
   toolNameSchema,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SelectedModelCounts, SelectedModelValue, ToolName, UiToolName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { SelectedModelCounts, SelectedModelValue, ToolName, UiToolName };
+/* oxlint-enable import/no-named-export */

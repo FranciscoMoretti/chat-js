@@ -201,6 +201,8 @@ class OpenRouterGateway
   }
   /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, OpenRouterGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 export { OpenRouterGateway as Gateway, OpenRouterGateway };
+/* oxlint-enable import/no-named-export */

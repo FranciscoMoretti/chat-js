@@ -230,6 +230,7 @@ const FormMessage = ({
     </p>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, useFormField); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
@@ -245,4 +246,5 @@ export {
   FormMessage,
   useFormField,
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

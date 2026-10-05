@@ -55,6 +55,10 @@ const resolveImageModel = async (
     ? fallback
     : { modelId: defaultId, multimodal: false };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveImageModel); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { resolveImageModel };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ImageModelSelection); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ImageModelSelection };
+/* oxlint-enable import/no-named-export */

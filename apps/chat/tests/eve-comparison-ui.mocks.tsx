@@ -172,6 +172,7 @@ const EveConversation = ({
     </main>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatWelcomeView, ConnectorsControl, EveArtifactLayout, EveConversation, InternalLink, useChatModels, usePathname, useRouter, useSession); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: This comparison fixture intentionally exports hook mocks and reference components from one test module; it is not a production Fast Refresh boundary. */
@@ -186,4 +187,5 @@ export {
   useRouter,
   useSession,
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

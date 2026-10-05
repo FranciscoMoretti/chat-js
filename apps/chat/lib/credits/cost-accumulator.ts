@@ -196,5 +196,9 @@ class CostAccumulator {
     return this.entries.length > 0;
   }
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CostAccumulator); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { CostAccumulator };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (UsageInfo); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { UsageInfo };
+/* oxlint-enable import/no-named-export */

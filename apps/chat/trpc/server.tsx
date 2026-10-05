@@ -60,7 +60,9 @@ const prefetch = <T extends ReturnType<TRPCQueryOptions<ResolverDef>>>(
     void preloadQuery(queryClient.query(queryOptions));
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getQueryClient, HydrateClient, prefetch, trpc); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable id-length, no-magic-numbers */
 /* oxlint-disable react/only-export-components -- #619: Consumers import getQueryClient, HydrateClient, prefetch, trpc from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { getQueryClient, HydrateClient, prefetch, trpc };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

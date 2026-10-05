@@ -94,5 +94,7 @@ const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
     yield output;
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (describeMcpTool, executeMcpTool); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { describeMcpTool, executeMcpTool };
+/* oxlint-enable import/no-named-export */

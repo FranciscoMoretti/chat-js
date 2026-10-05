@@ -54,9 +54,11 @@ const getErrorDebugInfo = (
     typeof error === "object" && error !== null ? Object.keys(error) : [],
   errorType: typeof error,
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (serializeError, resolveError, getErrorDebugInfo, ABSENT_DIAGNOSTIC_VALUE); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   serializeError,
   resolveError,
   getErrorDebugInfo,
   ABSENT_DIAGNOSTIC_VALUE,
 };
+/* oxlint-enable import/no-named-export */

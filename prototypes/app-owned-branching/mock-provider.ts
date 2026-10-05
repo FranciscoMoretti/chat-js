@@ -2,6 +2,7 @@ import type { Sql } from "postgres";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SnapshotProvider } from "./model";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (mockProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- mockProvider: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -49,5 +50,6 @@ export const mockProvider = (sql: Sql): SnapshotProvider => ({
   },
   /* oxlint-enable oxc/no-async-await */
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -599,6 +599,8 @@ const scaffoldFromGit = async (
     recursive: true,
   });
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (scaffoldElectron, scaffoldFromGit, scaffoldFromTemplate); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export { scaffoldElectron, scaffoldFromGit, scaffoldFromTemplate };
+/* oxlint-enable import/no-named-export */

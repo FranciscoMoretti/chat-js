@@ -84,4 +84,6 @@ const codeExecution = withCodeSandboxCleanup(
   { createCleanupSession: () => provider().cleanup }
 );
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecution, executeCode); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { codeExecution, executeCode };
+/* oxlint-enable import/no-named-export */

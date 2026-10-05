@@ -118,7 +118,9 @@ const TRPCReactProvider = (props: {
     </QueryClientProvider>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #619: Consumers import TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

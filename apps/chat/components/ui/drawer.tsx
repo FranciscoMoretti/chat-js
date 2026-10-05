@@ -152,6 +152,7 @@ const DrawerDescription = reactForwardRef<
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerOverlay, DrawerPortal, DrawerTitle, DrawerTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   Drawer,
   DrawerClose,
@@ -164,3 +165,4 @@ export {
   DrawerTitle,
   DrawerTrigger,
 };
+/* oxlint-enable import/no-named-export */

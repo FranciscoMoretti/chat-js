@@ -79,6 +79,7 @@ const renderInstalledTool = <T extends InstalledToolType>(
   const Renderer = toolRendererRegistry[type];
   return Renderer ? createElement(Renderer, props) : null;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEveInstalledToolRenderer, isInstalledToolType, renderInstalledTool, toolRendererRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable id-length, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export {
   getEveInstalledToolRenderer,
@@ -86,6 +87,8 @@ export {
   renderInstalledTool,
   toolRendererRegistry,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (InstalledToolName, InstalledToolPart, InstalledToolType, InstalledToolUIPart, ToolRendererProps, ToolRendererRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   InstalledToolName,
   InstalledToolPart,
@@ -94,3 +97,4 @@ export type {
   ToolRendererProps,
   ToolRendererRegistry,
 };
+/* oxlint-enable import/no-named-export */

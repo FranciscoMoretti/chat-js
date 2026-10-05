@@ -19,6 +19,7 @@ import { readEvePostgresRunInventory } from "./eve-run-inventory";
 
 const taskIdentifier = "workflow_flows";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createPostgresLifecycle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the small provider operations together so the compatibility gate is visible at every entrypoint. */
 export const createPostgresLifecycle = (
   databaseUrl: string
@@ -92,3 +93,4 @@ export const createPostgresLifecycle = (
   };
   /* oxlint-enable oxc/no-async-await */
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

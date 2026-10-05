@@ -29,5 +29,7 @@ const eveMessageTool = (
   const value = message.metadata?.custom?.chatjs;
   return value === undefined ? null : selection.parse(value).selectedTool;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveMessageTool, eveToolMetadata); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined, unicorn/no-null */
 export { eveMessageTool, eveToolMetadata };
+/* oxlint-enable import/no-named-export */

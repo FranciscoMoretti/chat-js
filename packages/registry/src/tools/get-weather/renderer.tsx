@@ -308,6 +308,7 @@ const GetWeatherView = ({
 
   return <WeatherCard weatherAtLocation={tool.output} />;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GetWeatherRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -319,3 +320,4 @@ export const GetWeatherRenderer = defineToolRenderer({
   outputSchema: weatherResult,
   render: GetWeatherView,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

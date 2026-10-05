@@ -361,6 +361,7 @@ const deletePreviewIfStillSafe = async ({
   });
   return { kind: "deleted" };
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (cleanupPreviewDatabase); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupPreviewDatabase's awaited sequencing and rejected-Promise behavior. */
 // Maintainer infrastructure only: never copied into generated applications.
@@ -396,4 +397,5 @@ export const cleanupPreviewDatabase = async ({
     ? `Deleted preview database for PR #${number}.`
     : outcome.result;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

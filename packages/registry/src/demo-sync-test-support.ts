@@ -131,11 +131,15 @@ const observeGeneratorFailure = (): {
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (observeGeneratorFailure, prepareReplacement, replacementFailure, verifyRollback); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   observeGeneratorFailure,
   prepareReplacement,
   replacementFailure,
   verifyRollback,
 };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ReadonlyNativeSurface); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ReadonlyNativeSurface };
+/* oxlint-enable import/no-named-export */

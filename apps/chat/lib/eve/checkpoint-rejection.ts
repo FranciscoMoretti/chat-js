@@ -19,4 +19,6 @@ class CheckpointRejectedError extends Error {
     this.reason = reason;
   }
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CheckpointRejectedError, checkpointRejectionReason); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { CheckpointRejectedError, checkpointRejectionReason };
+/* oxlint-enable import/no-named-export */

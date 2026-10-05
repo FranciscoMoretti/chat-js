@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ResponseChoiceSlot); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface ResponseChoiceSlot {
   id: string;
   modelName: string;
@@ -17,6 +18,8 @@ export interface ResponseChoiceSlot {
   disabled?: boolean;
   handleSelect: () => void;
 }
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ResponseChoiceCards); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-magic-numbers, react/jsx-max-depth, unicorn/no-null -- ResponseChoiceCards: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /**
@@ -65,4 +68,5 @@ export const ResponseChoiceCards = ({
     </div>
   );
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable no-magic-numbers, react/jsx-max-depth, unicorn/no-null */

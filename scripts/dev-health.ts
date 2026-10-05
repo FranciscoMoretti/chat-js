@@ -61,4 +61,6 @@ if (import.meta.main) {
     process.exitCode = 1;
   }
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (checkHealth); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { checkHealth };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -1515,6 +1515,7 @@ const bindAcceptedEveConversation = async (
   await db.transaction((tx) =>
     bindConversationSession(tx, ownerId, reservationId, sessionId)
   );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (beginEveConversationDeletion, bindAcceptedEveConversation, createEveConversation, CreationConflictError, CreationProjectNotFoundError, getBoundEveConversationForSession, getDeletingEveConversationForSession, getEveChatIdentity, getEveChatPageConversation, getEveConversation, getEveConversationProject, getEveCreation, getPublicEveConversation, isEveRootTitlePending, listEveConversationBranches, listEveConversations, listEveOwnerBindings, listPendingEveCreations, ownsEveSession, readEveSessionMapping, recordEveConversationActivity, replaceEveRootFallbackTitle, settleEveRootFallbackTitle, updateEveConversationMetadata); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
@@ -1546,3 +1547,4 @@ export {
   settleEveRootFallbackTitle,
   updateEveConversationMetadata,
 };
+/* oxlint-enable import/no-named-export */

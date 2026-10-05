@@ -218,6 +218,7 @@ const retireEveNativeSessions = async (
     await connection.end();
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (prepareEveNativeSessionPurge, purgeEveNativeSession, retireEveNativeSessions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 export {
@@ -225,3 +226,4 @@ export {
   purgeEveNativeSession,
   retireEveNativeSessions,
 };
+/* oxlint-enable import/no-named-export */

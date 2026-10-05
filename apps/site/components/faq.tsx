@@ -22,6 +22,7 @@ const FAQS = [
     question: "Is ChatJS suitable for production use?",
   },
 ];
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Faq); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- Faq renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/jsx-max-depth -- Faq: The nested JSX preserves this component's layout/accessibility hierarchy; extracting nodes needs a component/state-boundary review. */
@@ -69,6 +70,7 @@ export const Faq = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */

@@ -27,5 +27,7 @@ const env = createEnv({
 const gatewayEnv = Object.fromEntries(
   gatewayEnvVariables.map((name) => [name, process.env[name]])
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (env, gatewayEnv); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env */
 export { env, gatewayEnv };
+/* oxlint-enable import/no-named-export */

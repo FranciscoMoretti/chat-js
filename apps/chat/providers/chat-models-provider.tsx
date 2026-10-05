@@ -103,7 +103,9 @@ const useChatModels = () => {
   }
   return context;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatModelsProvider, useChatModels); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 /* oxlint-disable react/only-export-components -- #620: Consumers import ChatModelsProvider, useChatModels from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { ChatModelsProvider, useChatModels };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

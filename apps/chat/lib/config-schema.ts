@@ -530,6 +530,7 @@ const applyDefaults = (input: ReadonlyNativeSurface<ConfigInput>): Config => {
   return configSchema.parse({ ...input, ai: mergedAi });
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (aiConfigSchema, ANONYMOUS_DEFAULTS, anonymousConfigObjectSchema, anonymousConfigSchema, applyDefaults, ATTACHMENTS_DEFAULTS, attachmentsConfigObjectSchema, attachmentsConfigSchema, AUTHENTICATION_DEFAULTS, authenticationConfigObjectSchema, authenticationConfigSchema, configDescriptionSchema, configSchema, defineConfig, DESKTOP_APP_DEFAULTS, desktopAppConfigObjectSchema, desktopAppConfigSchema, FEATURES_DEFAULTS, featuresConfigObjectSchema, featuresConfigSchema, pricingConfigSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable max-lines -- #509: This config-schema.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {
   aiConfigSchema,
@@ -554,6 +555,8 @@ export {
   featuresConfigSchema,
   pricingConfigSchema,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (AiConfig, AnonymousConfig, AttachmentsConfig, AuthenticationConfig, Config, ConfigInput, DesktopAppConfig, FeaturesConfig, PricingConfig); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   AiConfig,
   AnonymousConfig,
@@ -565,4 +568,7 @@ export type {
   FeaturesConfig,
   PricingConfig,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (GatewayType); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { GatewayType } from "@/lib/ai/gateways/registry";
+/* oxlint-enable import/no-named-export */

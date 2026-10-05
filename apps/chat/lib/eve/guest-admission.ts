@@ -296,6 +296,7 @@ const settleGuestCreation = async (
     }
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (admitGuestCreation, guestRequestIpHash, settleGuestCreation, validateGuestCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params */
 export {
@@ -304,3 +305,4 @@ export {
   settleGuestCreation,
   validateGuestCreation,
 };
+/* oxlint-enable import/no-named-export */

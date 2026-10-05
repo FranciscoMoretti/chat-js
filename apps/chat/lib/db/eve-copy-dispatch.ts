@@ -179,6 +179,8 @@ const rejectUnacceptedEveCopy = async (
     }
     return { id: conversationId, neverDispatched: true };
   });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 export { dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed };
+/* oxlint-enable import/no-named-export */

@@ -4,6 +4,7 @@ import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ResearchProgress } from "./progress-panel";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ReasonSearchResearchProgress); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -22,6 +23,7 @@ export const ReasonSearchResearchProgress = ({
       updates={updates}
     />
   ) : null;
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */

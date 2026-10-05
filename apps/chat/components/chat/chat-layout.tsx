@@ -134,5 +134,7 @@ const ChatLayoutHandle = ({
     />
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatLayout, ChatLayoutHandle, ChatLayoutMain, ChatLayoutSecondary); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { ChatLayout, ChatLayoutHandle, ChatLayoutMain, ChatLayoutSecondary };
+/* oxlint-enable import/no-named-export */

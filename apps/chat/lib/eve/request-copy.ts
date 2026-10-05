@@ -131,6 +131,7 @@ const requestEveCopy = async (
     throw copyRequestError(error, signal.aborted);
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveCopyRequestError, finishPendingEveCopy, preparePendingEveCopy, requestEveCopy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 export {
   EveCopyRequestError,
@@ -138,3 +139,4 @@ export {
   preparePendingEveCopy,
   requestEveCopy,
 };
+/* oxlint-enable import/no-named-export */

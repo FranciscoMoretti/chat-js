@@ -327,7 +327,9 @@ const ShareButton = ({
     </ShareDialog>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ShareButton, ShareDialog, ShareDialogView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { ShareButton, ShareDialog, ShareDialogView };
+/* oxlint-enable import/no-named-export */

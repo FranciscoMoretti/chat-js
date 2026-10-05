@@ -346,6 +346,7 @@ const withManagedUsageReconciliation = async (
     await connection.end();
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveUsageCursor, getEveUsageCursor, recordEveUsage, withManagedUsageReconciliation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export {
@@ -354,3 +355,4 @@ export {
   recordEveUsage,
   withManagedUsageReconciliation,
 };
+/* oxlint-enable import/no-named-export */

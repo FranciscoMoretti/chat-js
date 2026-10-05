@@ -65,6 +65,10 @@ const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
   }
   return [];
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { eveEventSearchText, eveSeedSearchText, MAX_SEARCH_QUERY_LENGTH };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveSearchText };
+/* oxlint-enable import/no-named-export */

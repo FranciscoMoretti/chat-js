@@ -216,6 +216,7 @@ const toConfigInput = (
   },
 });
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (buildConfigTs); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 export const buildConfigTs = (
   input: ReadonlyInput<{
@@ -262,4 +263,5 @@ ${generateConfig(fullConfig, 1, "")}
 export default config;
 `;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable eslint/no-magic-numbers */

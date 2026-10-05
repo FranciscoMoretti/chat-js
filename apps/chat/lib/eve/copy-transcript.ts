@@ -675,6 +675,7 @@ const materializeEveCopyTranscript = async (
   }
   return copied;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyInlineAttachments, EveCopyNotReadyError, eveCopyResources, materializeEveCopyTranscript, prepareEveCopyTranscript, rewriteEveCopyResources); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
@@ -687,3 +688,4 @@ export {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 };
+/* oxlint-enable import/no-named-export */

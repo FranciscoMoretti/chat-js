@@ -234,6 +234,7 @@ const cursorAt = (t: number) => {
   const k = ease((t - start) / duration);
   return { x: ax + (bx - ax) * k, y: ay + (by - ay) * k };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (beats, captionBeats, clamp, cursorAt, DURATION, ease, FPS, presentationAt, script, stateAt); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -252,4 +253,7 @@ export {
   script,
   stateAt,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (LaunchScript, PathId, ReplyState, StoryState); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { LaunchScript, PathId, ReplyState, StoryState };
+/* oxlint-enable import/no-named-export */

@@ -1,4 +1,5 @@
 import React from "react";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ThinkingMessage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ThinkingMessage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 export const ThinkingMessage = (): React.JSX.Element => {
@@ -16,4 +17,5 @@ export const ThinkingMessage = (): React.JSX.Element => {
     </div>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */

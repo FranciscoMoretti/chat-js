@@ -26,6 +26,7 @@ import { EveSharedBadge } from "./eve-chat-header";
 import { EveCopyButton } from "./eve-copy-button";
 /* oxlint-enable sort-imports */
 import { EveSharedMessages } from "./eve-shared-messages";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveSharedPage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve EveSharedPage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth -- EveSharedPage: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { id }: { id: string }). */
 
@@ -81,5 +82,6 @@ export const EveSharedPage = async ({
     </EveArtifactLayout>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth */

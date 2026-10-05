@@ -8,6 +8,7 @@ import { eveFileReference, eveStoredFile } from "./schema";
 
 const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveOrphanedFilePurge); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable max-lines-per-function -- Keep candidate ownership checks and per-owner advisory-locked fencing in one transaction workflow. */
 /**
  * Storage inventory is only a candidate list; durable ownership and references decide deletion.
@@ -71,5 +72,6 @@ export const prepareEveOrphanedFilePurge = async (
   }
   return files;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function */

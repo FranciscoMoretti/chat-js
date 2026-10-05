@@ -1,3 +1,4 @@
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (assertEveTestDatabase); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): assertEveTestDatabase's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -25,4 +26,5 @@ export function assertEveTestDatabase(databaseUrl: string): void {
     );
   }
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions */

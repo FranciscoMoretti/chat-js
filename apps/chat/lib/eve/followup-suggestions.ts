@@ -18,5 +18,7 @@ const messageFollowupSuggestions = (
   );
   return parsed.success ? [...new Set(parsed.data.suggestions)] : [];
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveFollowupSuggestions, messageFollowupSuggestions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 export { eveFollowupSuggestions, messageFollowupSuggestions };
+/* oxlint-enable import/no-named-export */

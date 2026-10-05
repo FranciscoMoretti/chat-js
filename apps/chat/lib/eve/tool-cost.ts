@@ -32,6 +32,7 @@ const tokenCost = (
   }
   return tokens * rate;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createEveToolCost); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
@@ -93,4 +94,5 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
   },
   totalUsd: usage.totalUsd.bind(usage),
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

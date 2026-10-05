@@ -48,6 +48,7 @@ const sdkPackage = z
 /* oxlint-enable node/no-sync */
 
 const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (builtInStorage); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const builtInStorage = PROVIDER_NAMES.filter(
   (id) => !unsupported.has(id)
@@ -97,4 +98,5 @@ export const builtInStorage = PROVIDER_NAMES.filter(
     type: "registry:item" as const,
   };
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

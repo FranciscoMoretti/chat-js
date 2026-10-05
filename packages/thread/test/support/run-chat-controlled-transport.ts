@@ -12,6 +12,7 @@ const reconnectToNoStream: ChatTransport<UIMessage>["reconnectToStream"] =
 const SDK_PARAMETER_INDEX = 0;
 const LAST_REQUEST_INDEX = -1;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ControlledTransport); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class ControlledTransport implements ChatTransport<UIMessage> {
   public readonly requests: {
     controller: ReadableStreamDefaultController<UIMessageChunk>;
@@ -66,3 +67,4 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.requests.at(LAST_REQUEST_INDEX)?.controller.error(error);
   }
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

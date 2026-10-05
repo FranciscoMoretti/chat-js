@@ -63,4 +63,6 @@ class MemoryThreadState<
   };
 }
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createThreadStateSnapshot, MemoryThreadState); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createThreadStateSnapshot, MemoryThreadState };
+/* oxlint-enable import/no-named-export */

@@ -9,6 +9,7 @@ const isEnabledFlag = (value: string | undefined): boolean => {
   const normalizedValue = value.trim().toLowerCase();
   return !["0", "false", "no", "off"].includes(normalizedValue);
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (isPlaywrightTestEnvironment); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -25,4 +26,5 @@ export const isPlaywrightTestEnvironment = (
     isEnabledFlag(env.PLAYWRIGHT) ||
     isEnabledFlag(env.CI_PLAYWRIGHT)
   );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

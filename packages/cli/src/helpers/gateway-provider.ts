@@ -84,6 +84,7 @@ export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirement
 export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definition))};
 `);
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (configureGatewayProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve configureGatewayProvider's awaited sequencing and rejected-Promise behavior. */
 /**
  * Wire the installed gateway; source and dependencies are installed by shadcn.
@@ -137,4 +138,5 @@ export const models: readonly AiGatewayModel[] = [];
     ...definition.optionalEnv,
   ]);
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

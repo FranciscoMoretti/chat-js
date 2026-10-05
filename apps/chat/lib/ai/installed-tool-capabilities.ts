@@ -48,6 +48,10 @@ const getCodeSandboxCleanup = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getCodeSandboxCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return hasCodeSandboxCleanup(tool) ? tool[codeSandboxCleanup] : undefined;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getCodeSandboxCleanup, withCodeSandboxCleanup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined */
 export { getCodeSandboxCleanup, withCodeSandboxCleanup };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (CodeSandboxCleanupCapability, CodeSandboxCleanupSession); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { CodeSandboxCleanupCapability, CodeSandboxCleanupSession };
+/* oxlint-enable import/no-named-export */

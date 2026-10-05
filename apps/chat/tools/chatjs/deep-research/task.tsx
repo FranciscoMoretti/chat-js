@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import { UpdateTitle } from "./update-title";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ResearchTask); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- ResearchTask renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -118,6 +119,7 @@ export const ResearchTask = ({
     </motion.div>
   </div>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

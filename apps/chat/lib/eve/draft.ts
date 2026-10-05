@@ -72,7 +72,11 @@ const attachmentDigest = async (bytes: ArrayBuffer): Promise<string> =>
     new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
     (byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, "0")
   ).join("");
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (attachmentDigest, draftAttachment, draftMessage, restoreDraft); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { attachmentDigest, draftAttachment, draftMessage, restoreDraft };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (DraftAttachment); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { DraftAttachment };
+/* oxlint-enable import/no-named-export */

@@ -60,7 +60,9 @@ const PureHeaderActions = (): ReactJSX.Element => {
     </div>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (HeaderActions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */
 
 export const HeaderActions = memo(PureHeaderActions);
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

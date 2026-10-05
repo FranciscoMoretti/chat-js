@@ -308,7 +308,13 @@ const useThread = <TMessage extends UIMessage = UIMessage>(
   });
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (useThread); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { useThread };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (UseThreadOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { UseThreadOptions };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (TreeHelpers, UseThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { TreeHelpers, UseThreadHelpers } from "./thread-hook-helpers";
+/* oxlint-enable import/no-named-export */

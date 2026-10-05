@@ -35,5 +35,7 @@ const InlineDocumentSkeleton = (): React.JSX.Element => (
     <div className="bg-muted-foreground/20 h-4 w-64 animate-pulse rounded-lg" />
   </div>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DocumentSkeleton, InlineDocumentSkeleton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp */
 export { DocumentSkeleton, InlineDocumentSkeleton };
+/* oxlint-enable import/no-named-export */

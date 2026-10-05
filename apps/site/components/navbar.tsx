@@ -16,6 +16,7 @@ const NAV_LINKS = [
     label: "GitHub",
   },
 ];
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Navbar); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- Navbar renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- Navbar: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
@@ -97,6 +98,7 @@ export const Navbar = (): React.JSX.Element => (
     </nav>
   </header>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */

@@ -3,6 +3,7 @@ import React from "react";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (UpdateTitle); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
@@ -30,6 +31,7 @@ export const UpdateTitle = ({
 
   return <h3 className={cn("text-sm font-medium", className)}>{title}</h3>;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable typescript/explicit-function-return-type */

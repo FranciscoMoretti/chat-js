@@ -581,6 +581,7 @@ const reserveEveCopyOperation = async (
     return await readEveCopy(tx, ownerId, conversation.id);
   });
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveCopySourceAvailable, EveCopySourceChangedError, getEveCopyOperation, isUnacceptedEveCopy, lockEveCopyOwners, readEveCopy, rejectEveCopyPreflight, reserveEveCopyOperation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
@@ -595,3 +596,4 @@ export {
   rejectEveCopyPreflight,
   reserveEveCopyOperation,
 };
+/* oxlint-enable import/no-named-export */

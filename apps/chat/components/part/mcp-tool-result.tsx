@@ -16,6 +16,7 @@ import {
 } from "@/components/ai-elements/tool";
 /* oxlint-enable sort-imports */
 import { parseToolId } from "@/lib/ai/mcp-name-id";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const McpToolResult = ({
@@ -49,4 +50,5 @@ export const McpToolResult = ({
     </Tool>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */

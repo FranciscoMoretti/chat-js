@@ -30,5 +30,7 @@ const runTestProcess = async (
   ]);
   return { exitCode, stderr, stdout };
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runTestProcess); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { runTestProcess };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

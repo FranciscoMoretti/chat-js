@@ -89,6 +89,7 @@ const createToolError = (
   output: null,
   status: "error",
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createToolError, createToolResult, hasEveToolReceipt, toolOutputSchema, toolResultSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export {
   createToolError,
@@ -97,4 +98,7 @@ export {
   toolOutputSchema,
   toolResultSchema,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ToolOutput, ToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ToolOutput, ToolResult };
+/* oxlint-enable import/no-named-export */

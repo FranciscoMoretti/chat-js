@@ -29,6 +29,7 @@ type McpClientStatus =
   | "authorizing"
   | "incompatible";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MCPClient); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -421,6 +422,7 @@ export class MCPClient {
   }
   /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */

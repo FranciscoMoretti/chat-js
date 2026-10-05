@@ -10,6 +10,7 @@ import { eveForkInput } from "./contracts";
 /* oxlint-enable sort-imports */
 import { eveMessageInput } from "./message-input";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveResponseGroupInput); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): eveResponseGroupInput uses 1, 200, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): eveResponseGroupInput accepts input; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -38,4 +39,5 @@ export const eveResponseGroupInput = z
     ...input,
     operationId: input.operationId.toLowerCase(),
   }));
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

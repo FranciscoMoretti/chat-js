@@ -267,6 +267,7 @@ const DiscoveryContent = ({
 
   return null;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpDetailsPage); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- McpDetailsPage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -678,6 +679,7 @@ export const McpDetailsPage = ({
     </SettingsPageContent>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */

@@ -21,6 +21,7 @@ type ReadonlyNavItem = Readonly<
   }) => ReturnType<SettingsItem["icon"]>;
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SettingsNav); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const SettingsNav = ({
   orientation = "vertical",
 }: {
@@ -66,3 +67,4 @@ export const SettingsNav = ({
     </nav>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

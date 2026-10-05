@@ -145,9 +145,13 @@ const invalidateAllMcpCaches = (connectorId: string): void => {
   invalidateConnectionStatus(connectorId);
   invalidateDiscovery(connectorId);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createCachedConnectionStatus, createCachedDiscovery, invalidateAllMcpCaches); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   createCachedConnectionStatus,
   createCachedDiscovery,
   invalidateAllMcpCaches,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ConnectionStatusResult, DiscoveryResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ConnectionStatusResult, DiscoveryResult };
+/* oxlint-enable import/no-named-export */

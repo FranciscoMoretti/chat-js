@@ -1,5 +1,6 @@
 const defaultFaviconSizePx = 128;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getGoogleFaviconUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Gets a favicon URL via Google's favicon service for any URL/hostname.
  * @param {string} urlOrHostname URL or hostname whose favicon is requested.
@@ -19,3 +20,4 @@ export const getGoogleFaviconUrl = (
     return "";
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

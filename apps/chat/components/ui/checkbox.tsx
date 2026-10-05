@@ -47,4 +47,6 @@ const Checkbox = reactForwardRef<
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Checkbox.displayName = CheckboxPrimitiveRoot.displayName;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Checkbox); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Checkbox };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

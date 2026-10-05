@@ -214,6 +214,7 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   }
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (add); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve add's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- The command confirms replacement, installs transactionally with rollback, regenerates registrations, and prints requirements only after success. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep confirmation, transactional provider registration, package installation, and success reporting in their existing execution order. */
@@ -351,5 +352,6 @@ export const add = new Command("add")
       }
     }
   );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable eslint/max-lines -- Keep the add command and its ordered provider-installation transaction together. */

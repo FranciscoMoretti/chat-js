@@ -771,6 +771,7 @@ const promptObservability = async (yes: boolean): Promise<string[]> => {
   }
   return result;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (promptAssistantTools, promptAuth, promptCodeExecutionTool, promptCoreFeatures, promptDocumentTypes, promptElectron, promptGateway, promptImageGenerationTool, promptObservability, promptProjectName, promptSearchTool, promptStorage, promptUrlRetrievalTool, promptVideoGenerationTool); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export {
@@ -789,3 +790,4 @@ export {
   promptUrlRetrievalTool,
   promptVideoGenerationTool,
 };
+/* oxlint-enable import/no-named-export */

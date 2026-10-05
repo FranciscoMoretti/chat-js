@@ -11,10 +11,59 @@ const registrationRules = (line: string): string[] => {
   return rules;
 };
 
+const singleExport = 1;
+
+const registrationExportRules = (
+  line: string,
+  preferDefault: boolean
+): string[] => {
+  if (
+    !line.startsWith("export ") ||
+    line.startsWith("export default ") ||
+    /^export \{[^},]+ as default\s*\}/u.test(line)
+  ) {
+    return [];
+  }
+  const rules = ["import/no-named-export"];
+  if (preferDefault) {
+    rules.push("import/prefer-default-export");
+  }
+  return rules;
+};
+
+const singleValueRegistration = (line: string): boolean => {
+  if (
+    /^export const [A-Za-z_$][\w$]*\s*[:=]/u.test(line) ||
+    /^export \* as [A-Za-z_$][\w$]* /u.test(line)
+  ) {
+    return true;
+  }
+  const reexport = /^export \{(?<bindings>[^}]*)\}/u.exec(line)?.groups;
+  if (!reexport) {
+    return false;
+  }
+  const bindings = reexport.bindings
+    .split(",")
+    .map((binding) => binding.trim())
+    .filter((binding) => binding !== "");
+  return (
+    bindings.length === singleExport &&
+    bindings.every(
+      (binding) =>
+        !binding.startsWith("type ") && !binding.endsWith(" as default")
+    )
+  );
+};
+
 const noRules = 0;
 
-const registrationLine = (line: string, rendered: string): string => {
+const registrationLine = (
+  line: string,
+  rendered: string,
+  preferDefault = false
+): string => {
   const rules = registrationRules(line);
+  rules.push(...registrationExportRules(rendered, preferDefault));
   if (rules.length === noRules) {
     return rendered;
   }
@@ -24,7 +73,8 @@ const defaultDependencyLimit = 10;
 
 const renderRegistration = (
   line: string,
-  grouped: boolean
+  grouped: boolean,
+  preferDefault: boolean
 ): {
   readonly source: string;
   readonly value?: string;
@@ -47,7 +97,8 @@ const renderRegistration = (
   }
   const source = registrationLine(
     line,
-    grouped ? line.slice("export ".length) : line
+    grouped ? line.slice("export ".length) : line,
+    preferDefault
   );
   return grouped && declaration
     ? {
@@ -59,17 +110,51 @@ const renderRegistration = (
     : { source };
 };
 
+const registrationExportPlan = (
+  lines: readonly string[]
+): { grouped: boolean; preferDefault: boolean } => {
+  const exports = lines.filter((line) => line.startsWith("export "));
+  return {
+    grouped: exports.length > singleExport,
+    preferDefault:
+      exports.length === singleExport &&
+      exports.some((line) => singleValueRegistration(line)),
+  };
+};
+
+const registrationExports = (
+  values: readonly string[],
+  types: readonly string[]
+): string[] => {
+  const clauses: string[] = [];
+  if (values.length > noRules) {
+    const clause = `export { ${values.join(", ")} };`;
+    clauses.push(
+      registrationLine(
+        "",
+        clause,
+        values.length === singleExport && types.length === noRules
+      )
+    );
+  }
+  if (types.length > noRules) {
+    const clause = `export type { ${types.join(", ")} };`;
+    clauses.push(registrationLine("", clause, false));
+  }
+  return clauses;
+};
+
 const generatedRegistrationSource = (source: string): string => {
-  const singleExport = 1;
   const lines = source.split("\n");
   // These templates emit identifier-named const/type declarations, not arbitrary
   // application source. Gateway/storage, sync-tools and sync-features pass
   // fixed templates with one identifier declaration per export line; payload
   // strings are JSON-escaped, never raw multiline template literals. Preserve
   // initializers and directives; single reexports stay untouched.
-  const grouped =
-    lines.filter((line) => line.startsWith("export ")).length > singleExport;
-  const registrations = lines.map((line) => renderRegistration(line, grouped));
+  const { grouped, preferDefault } = registrationExportPlan(lines);
+  const registrations = lines.map((line) =>
+    renderRegistration(line, grouped, preferDefault)
+  );
   const values = registrations.flatMap((item) =>
     typeof item.value === "string" ? [item.value] : []
   );
@@ -81,8 +166,7 @@ const generatedRegistrationSource = (source: string): string => {
       .map((item) => item.source)
       .join("\n")
       .trimEnd(),
-    ...(values.length > noRules ? [`export { ${values.join(", ")} };`] : []),
-    ...(types.length > noRules ? [`export type { ${types.join(", ")} };`] : []),
+    ...registrationExports(values, types),
   ].join("\n")}\n`;
   if (
     lines.filter((line) => line.startsWith("import ")).length >
@@ -92,4 +176,6 @@ const generatedRegistrationSource = (source: string): string => {
   }
   return rendered;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (generatedRegistrationSource); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { generatedRegistrationSource };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

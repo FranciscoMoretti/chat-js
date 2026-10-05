@@ -233,7 +233,15 @@ const resolveWorktreeRuntime = (
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (loadWorktreeConfig); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { loadWorktreeConfig } from "./worktree-config";
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveWorktreeRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { resolveWorktreeRuntime };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ResolvedWorktreeApp, WorktreeRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ResolvedWorktreeApp, WorktreeRuntime };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (WorktreeAppConfig, WorktreeEnvConfig); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { WorktreeAppConfig, WorktreeEnvConfig } from "./worktree-config";
+/* oxlint-enable import/no-named-export */

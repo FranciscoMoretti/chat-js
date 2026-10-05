@@ -65,6 +65,8 @@ const deductCredits = async (userId: string, amount: number): Promise<void> => {
     })
     .where(eq(userCredit.userId, userId));
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (canSpend, deductCredits, getCredits); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param */
 export { canSpend, deductCredits, getCredits };
+/* oxlint-enable import/no-named-export */

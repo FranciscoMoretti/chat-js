@@ -7,6 +7,7 @@ import type { ThreadState } from "#thread-source/types";
 
 const ZERO_COUNT = 0;
 const COUNT_INCREMENT = 1;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RecordingThreadState); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class RecordingThreadState implements ThreadState {
   readonly #state: MemoryThreadState;
   public updateCount = ZERO_COUNT;
@@ -26,3 +27,4 @@ export class RecordingThreadState implements ThreadState {
     this.#state.update(updater);
   };
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

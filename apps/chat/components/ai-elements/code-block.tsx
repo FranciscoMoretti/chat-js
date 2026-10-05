@@ -210,8 +210,12 @@ const CodeBlockCopyButton = ({
     </Button>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CodeBlock, CodeBlockCopyButton, highlightCode); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 /* oxlint-disable react/only-export-components -- #620: Consumers import CodeBlock, CodeBlockCopyButton, highlightCode from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { CodeBlock, CodeBlockCopyButton, highlightCode };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (CodeBlockCopyButtonProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/only-export-components */
 export type { CodeBlockCopyButtonProps };
+/* oxlint-enable import/no-named-export */

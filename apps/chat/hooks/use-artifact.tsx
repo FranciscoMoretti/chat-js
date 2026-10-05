@@ -189,7 +189,9 @@ const useArtifact = (): ArtifactHookValue => {
     [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ArtifactProvider, useArtifact, useArtifactSelector); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: Consumers import ArtifactProvider, useArtifact, useArtifactSelector from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { ArtifactProvider, useArtifact, useArtifactSelector };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

@@ -170,6 +170,8 @@ const PureDocumentToolCall = ({
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const DocumentToolCall = memo(PureDocumentToolCall, () => true);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/only-export-components -- #620: Consumers import DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

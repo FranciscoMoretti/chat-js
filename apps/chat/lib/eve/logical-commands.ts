@@ -16,6 +16,7 @@ const idle: CommandState = {
   pending: false,
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (LogicalCommands); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-undefined --
  * no-undefined (#519): LogicalCommands uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
@@ -47,4 +48,5 @@ export class LogicalCommands {
     return true;
   }
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-undefined */

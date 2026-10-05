@@ -217,6 +217,7 @@ const ArtifactContent = ({
     {...props}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Artifact, ArtifactAction, ArtifactActions, ArtifactClose, ArtifactContent, ArtifactDescription, ArtifactHeader, ArtifactTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export {
   Artifact,
@@ -228,6 +229,8 @@ export {
   ArtifactHeader,
   ArtifactTitle,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ArtifactActionProps, ArtifactActionsProps, ArtifactCloseProps, ArtifactContentProps, ArtifactDescriptionProps, ArtifactHeaderProps, ArtifactProps, ArtifactTitleProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   ArtifactActionProps,
   ArtifactActionsProps,
@@ -238,3 +241,4 @@ export type {
   ArtifactProps,
   ArtifactTitleProps,
 };
+/* oxlint-enable import/no-named-export */

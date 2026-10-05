@@ -5,6 +5,7 @@ import { executeDocumentDeletion, requestDocumentDeletion } from "./execute";
 /* oxlint-enable sort-imports */
 import { deleteDocumentInput } from "./schemas";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (deleteDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const deleteDocument = defineTool({
@@ -23,5 +24,6 @@ export const deleteDocument = defineTool({
   execute: executeDocumentDeletion,
   inputSchema: deleteDocumentInput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

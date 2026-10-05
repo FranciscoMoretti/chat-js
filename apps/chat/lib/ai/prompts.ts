@@ -1,3 +1,4 @@
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (systemPrompt); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const systemPrompt = (): string => `You are a friendly assistant!
 
 ## Your Goals
@@ -23,3 +24,4 @@ export const systemPrompt = (): string => `You are a friendly assistant!
 Today's Date: ${new Date().toLocaleDateString("en-US", { day: "2-digit", month: "short", weekday: "short", year: "numeric" })}
   
   `;
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

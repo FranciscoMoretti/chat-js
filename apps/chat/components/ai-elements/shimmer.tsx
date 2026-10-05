@@ -67,5 +67,9 @@ const ShimmerComponent = ({
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
 
 const Shimmer = memo(ShimmerComponent);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Shimmer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Shimmer };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (TextShimmerProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { TextShimmerProps };
+/* oxlint-enable import/no-named-export */

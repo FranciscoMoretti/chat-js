@@ -52,6 +52,7 @@ const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
     </div>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GenerateVideoRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -63,3 +64,4 @@ export const GenerateVideoRenderer = defineToolRenderer({
   outputSchema: generateVideoResult,
   render: GenerateVideoView,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

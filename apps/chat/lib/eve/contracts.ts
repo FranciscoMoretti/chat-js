@@ -67,6 +67,7 @@ const conversationBinding = z.object({
   id: z.uuid(),
   sessionId: z.string().min(1),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (conversationBinding, createConversationInput, eveForkInput, eveForkKind); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers */
 export {
   conversationBinding,
@@ -74,4 +75,7 @@ export {
   eveForkInput,
   eveForkKind,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveForkInput, EveForkKind); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveForkInput, EveForkKind };
+/* oxlint-enable import/no-named-export */

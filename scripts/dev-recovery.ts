@@ -6,6 +6,7 @@ const READY_FAILURE_GRACE_MS = 120_000;
 const MIN_READINESS_FAILURES = 3;
 const NO_PREVIOUS_START_FAILURES = 0;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (shouldRestartAfterReadinessFailures); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable eslint/max-params -- shouldRestartAfterReadinessFailures: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /**
  * Allow cold compilation and brief resource contention before replacing a runtime.
@@ -31,4 +32,5 @@ export const shouldRestartAfterReadinessFailures = (
     unreadyForMs >= (hasBeenReady ? READY_FAILURE_GRACE_MS : startupGraceMs)
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable eslint/max-params */

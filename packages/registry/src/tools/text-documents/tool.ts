@@ -36,6 +36,8 @@ const editTextDocument = defineTool({
   inputSchema: eveDocumentEditInput,
   outputSchema: eveDocumentWriteResult,
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createTextDocument, editTextDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { createTextDocument, editTextDocument };
+/* oxlint-enable import/no-named-export */

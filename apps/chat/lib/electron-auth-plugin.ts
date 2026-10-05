@@ -44,4 +44,6 @@ const electronAuthPlugin = {
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (electronAuthPlugin); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { electronAuthPlugin };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

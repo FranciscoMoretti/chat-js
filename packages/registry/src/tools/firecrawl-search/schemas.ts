@@ -23,4 +23,6 @@ const webSearchResult = z.object({
   error: z.string().optional(),
   searches: z.array(queryResults),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (webSearchInput, webSearchResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { webSearchInput, webSearchResult };
+/* oxlint-enable import/no-named-export */

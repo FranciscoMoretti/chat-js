@@ -231,6 +231,7 @@ const removeRecordedSnapshots = async (
     }
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeLocalEveSandboxes); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeLocalEveSandboxes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
@@ -295,5 +296,6 @@ export const purgeLocalEveSandboxes = async (
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, typescript/promise-function-async */

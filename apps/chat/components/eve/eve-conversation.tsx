@@ -785,7 +785,9 @@ const retainedToolSelection = (
   const retained = comparison ?? pending;
   return retained ? (retained.selectedTool ?? null) : draft;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- eve-conversation keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { EveConversation };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

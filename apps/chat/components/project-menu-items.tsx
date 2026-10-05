@@ -11,6 +11,7 @@ interface ProjectMenuItemsProps {
   readonly onDelete: () => void;
   readonly onRename: () => void;
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectMenuItems); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ProjectMenuItems renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 export const ProjectMenuItems = ({
@@ -36,4 +37,5 @@ export const ProjectMenuItems = ({
     </DropdownMenuItem>
   </>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */

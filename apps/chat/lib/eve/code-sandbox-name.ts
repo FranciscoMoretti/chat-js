@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 const DIGEST_PREFIX_START = 0;
 const SANDBOX_DIGEST_LENGTH = 48;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveCodeSandboxName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Stable provider identity without exposing account IDs in resource names.
  * @param {{ readonly ownerId: string | undefined; readonly sessionId: string | undefined; readonly callId: string; readonly provider: { readonly teamId: string; readonly projectId: string; }; }} options Native tool call and provider identity used to isolate a code-execution sandbox.
@@ -57,3 +58,4 @@ export const eveCodeSandboxName = ({
     .digest("hex");
   return `chatjs-code-${digest.slice(DIGEST_PREFIX_START, SANDBOX_DIGEST_LENGTH)}`;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

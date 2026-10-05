@@ -496,6 +496,7 @@ const ContextCacheUsage = ({
     </div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Context, ContextCacheUsage, ContextContent, ContextContentBody, ContextContentFooter, ContextContentHeader, ContextInputUsage, ContextOutputUsage, ContextReasoningUsage, ContextTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, no-undefined, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
@@ -512,6 +513,8 @@ export {
   ContextReasoningUsage,
   ContextTrigger,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ContextCacheUsageProps, ContextContentBodyProps, ContextContentFooterProps, ContextContentHeaderProps, ContextContentProps, ContextInputUsageProps, ContextOutputUsageProps, ContextProps, ContextReasoningUsageProps, ContextTriggerProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   ContextCacheUsageProps,
   ContextContentBodyProps,
@@ -524,3 +527,4 @@ export type {
   ContextReasoningUsageProps,
   ContextTriggerProps,
 };
+/* oxlint-enable import/no-named-export */

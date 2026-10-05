@@ -164,6 +164,8 @@ const isFencedEveDescendant = async (
     await connection.end();
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isFencedEveDescendant, verifyEveSandboxCoverage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { isFencedEveDescendant, verifyEveSandboxCoverage };
+/* oxlint-enable import/no-named-export */

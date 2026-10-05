@@ -20,6 +20,7 @@ interface McpToolHeaderProps {
   className?: string;
   icon?: ReactNode;
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpToolHeader); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- McpToolHeader: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const McpToolHeader = ({
@@ -57,4 +58,5 @@ export const McpToolHeader = ({
     />
   </CollapsibleTrigger>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

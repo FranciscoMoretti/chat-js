@@ -38,6 +38,7 @@ const researchReport = z.object({
   content: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
   title: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (researchBrief, researchClarification, researchDecision, researchFindings, researchInput, researchOutput, researchReport); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   researchBrief,
   researchClarification,
@@ -47,3 +48,4 @@ export {
   researchOutput,
   researchReport,
 };
+/* oxlint-enable import/no-named-export */

@@ -2,6 +2,7 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import type { ModelData } from "./model-data";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (toModelData); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ModelData shares tags and pricing with the gateway record; accepting deep-readonly arrays would require copying those references or changing the public mutable output contract.
 export const toModelData = (model: AiGatewayModel): ModelData => {
   const tags = model.tags ?? [];
@@ -37,3 +38,4 @@ export const toModelData = (model: AiGatewayModel): ModelData => {
     type: model.type,
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

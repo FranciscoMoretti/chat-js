@@ -152,6 +152,7 @@ const normalizeElectronDevDependencies = (
     devDependencies.tsx = tsxVersion;
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (normalizeScaffoldedPackageJson); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -222,6 +223,7 @@ export const normalizeScaffoldedPackageJson = (
 
   return packageJson;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/no-magic-numbers */

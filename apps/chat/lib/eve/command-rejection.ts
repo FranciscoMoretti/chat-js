@@ -14,4 +14,6 @@ const rejectEveCommand = (message: string, status: number): Response =>
 const isEveCommandRejection = (error: unknown): error is ClientError =>
   error instanceof ClientError &&
   (error.code === code || isEveAdmissionBusy(error));
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isEveCommandRejection, rejectEveCommand); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { isEveCommandRejection, rejectEveCommand };
+/* oxlint-enable import/no-named-export */

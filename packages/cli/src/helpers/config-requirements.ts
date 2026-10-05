@@ -110,6 +110,7 @@ const envVarDescriptions: Record<string, string> = {
   VERCEL_TEAM_ID: "Vercel team id for sandbox execution",
   VERCEL_TOKEN: "Vercel token for sandbox execution",
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (authEnvRequirements, builtInToolEnvRequirements, coreFeatureEnvRequirements, envVarDescriptions, gatewayEnvRequirements); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   authEnvRequirements,
   builtInToolEnvRequirements,
@@ -117,4 +118,7 @@ export {
   envVarDescriptions,
   gatewayEnvRequirements,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EnvRequirement); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { EnvRequirement };
+/* oxlint-enable import/no-named-export */

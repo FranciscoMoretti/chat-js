@@ -12,12 +12,15 @@ type RegistryFile = NonNullable<
   Awaited<ReturnType<typeof readItem>>["files"]
 >[number];
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (StorageSelection); the enabled import/no-default-export convention rejects the default-export alternative. */
 export interface StorageSelection {
   source: string;
   definition: StorageDefinition;
   options: Record<string, unknown>;
 }
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveStorage); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveStorage's awaited sequencing and rejected-Promise behavior. */
 export const resolveStorage = async (
   source: string,
@@ -41,4 +44,5 @@ export const resolveStorage = async (
   }
   return { definition, options: {}, source: address };
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

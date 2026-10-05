@@ -3,6 +3,7 @@ import { Component as Component0 } from "@/features/vercel-analytics/component";
 import { Component as Component1 } from "@/features/vercel-speed-insights/component";
 import type { InstalledLayoutComponent } from "@/lib/installation-contracts";
 
+// oxlint-disable-next-line import/no-named-export, import/prefer-default-export -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export const installedLayoutComponents: readonly {
   id: string;
   Component: InstalledLayoutComponent;

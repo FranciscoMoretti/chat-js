@@ -173,8 +173,10 @@ if (import.meta.main) {
     process.exitCode = 1;
   }
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runMaintainerBuild); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable node/no-process-env */
 export { runMaintainerBuild };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

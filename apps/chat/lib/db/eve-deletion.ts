@@ -216,6 +216,8 @@ const getEveDeletionState = async (ownerId: string, conversationId: string) => {
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDeletionState has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return member ? { rootId: row.chatId, state: member.state } : undefined;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (completeEveConversationDeletion, getEveDeletionState); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 export { completeEveConversationDeletion, getEveDeletionState };
+/* oxlint-enable import/no-named-export */

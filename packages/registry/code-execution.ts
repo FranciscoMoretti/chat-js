@@ -113,8 +113,10 @@ const daytonaCodeExecutionItem: RegistryItem = {
   type: "registry:item",
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecutionRuntimeItem, codeExecutionItem, daytonaCodeExecutionItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   codeExecutionRuntimeItem,
   codeExecutionItem,
   daytonaCodeExecutionItem,
 };
+/* oxlint-enable import/no-named-export */

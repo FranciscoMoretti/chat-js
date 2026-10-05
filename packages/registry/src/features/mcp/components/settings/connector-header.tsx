@@ -9,6 +9,7 @@ import { getGoogleFaviconUrl } from "@/components/get-google-favicon-url";
 import { getUrlWithoutParams } from "@/components/get-url-without-params";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ConnectorHeader); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- ConnectorHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 
@@ -88,6 +89,7 @@ export const ConnectorHeader = ({
     </div>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable unicorn/no-null */
 

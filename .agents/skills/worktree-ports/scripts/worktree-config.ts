@@ -64,6 +64,10 @@ const loadWorktreeConfig = async (
   }
   return parsedConfig;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isWorktreeEnvConfig, loadWorktreeConfig); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { isWorktreeEnvConfig, loadWorktreeConfig };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (WorktreeAppConfig, WorktreeEnvConfig); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { WorktreeAppConfig, WorktreeEnvConfig };
+/* oxlint-enable import/no-named-export */

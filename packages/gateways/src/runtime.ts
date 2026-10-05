@@ -61,6 +61,10 @@ class GatewayRuntime {
   }
 }
 
+/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (GatewayRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { GatewayRuntime };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (GatewayOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { GatewayOptions };
+/* oxlint-enable import/no-named-export */

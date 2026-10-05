@@ -2,14 +2,12 @@
 
 The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-The five rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
+The three rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
 
 ## Rules awaiting source-scoped adoption
 
 | Rule | Rationale and evidence |
 | --- | --- |
-| `import/no-named-export` | Existing registry/package APIs expose named symbols. Requiring defaults conflicts with retained `import/no-default-export`; see the [rule definition](https://oxc.rs/docs/guide/usage/linter/rules/import/no-named-export) and `packages/registry/src/gateways/vercel/gateway.ts`. |
-| `import/prefer-default-export` | A single named export is still an intentional public API. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/import/prefer-default-export) opposes the retained named-export preference. Required framework defaults keep narrow exceptions to `import/no-default-export`. |
 | `oxc/no-optional-chaining` | [Oxlint recommends against this restriction for modern codebases](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-optional-chaining). Node ≥24 and `apps/chat/tsconfig.json`'s ESNext target support this syntax. |
 | `oxc/no-rest-spread-properties` | The [rule guards old-engine compatibility](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-rest-spread-properties). Modern targets support immutable object composition and typed prop forwarding; see `apps/chat/components/ui/button.tsx` and `oxlint.config.ts`. |
 | `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
@@ -37,6 +35,12 @@ The earlier UI totals recorded removals achieved partly through directory exempt
 `react/forbid-component-props` is enabled. Reviewed `className` and `style` attributes explain their recipient's styling or layout contract. Most exceptions cover one attribute; bounded composition scopes preserve JSX text boundaries or existing directive attachment where an inline comment would change them. Compiler prop checks and source review verify the recipient contracts, and the annotation-only changes retain equivalent emitted JavaScript.
 
 `react/jsx-no-literals` is enabled. All 854 findings were reviewed as authored interface/legal/marketing/demo/fixture text or intentional punctuation and glyphs. There is no translation-layer contract in these modules. The 754 canonical findings use 182 declaration/statement scopes; 100 installed findings inherit 27 generated scopes. Nested named render helpers receive their own scopes. Text is neither wrapped in expressions nor moved into constants merely to bypass this rule. Every affected canonical and installed TSX file emits byte-identical JavaScript, preserving JSX child and whitespace semantics.
+
+## Export contracts
+
+`import/no-named-export` and `import/prefer-default-export` are enabled. Declaration-local comments identify actual named bindings and their conflict with the retained `import/no-default-export` convention. Application guidance also requires named exports within `apps/chat`; it is not claimed as a rule for unrelated subtrees. Framework HTTP handlers/metadata and manifest-confirmed package entry bindings retain their named APIs. These convention reviews do not establish that every exported declaration has a caller; independently verified unused code is removed separately.
+
+The CLI registration emitter adds comments to the actual named export statements it generates. Single-value, grouped-value, type-only, mixed, namespace and re-export forms use the native rule's actual export counting; defaults receive no named-export comments. Observability plans pass through this same emitter when written, avoiding duplicate comments in intermediate templates. Native generated-output checks reject both export violations and unused directives. Regeneration updates installed copies rather than patching them by hand.
 
 ## Import ordering
 
@@ -112,12 +116,12 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `import/max-dependencies` | Enforced | [#524](https://github.com/FranciscoMoretti/chat-js/issues/524) |
 | `import/no-commonjs` | Enforced | [#525](https://github.com/FranciscoMoretti/chat-js/issues/525) |
 | `import/no-default-export` | Enforced | [#526](https://github.com/FranciscoMoretti/chat-js/issues/526) |
-| `import/no-named-export` | Off — policy | [#527](https://github.com/FranciscoMoretti/chat-js/issues/527) |
+| `import/no-named-export` | Enforced | [#527](https://github.com/FranciscoMoretti/chat-js/issues/527) |
 | `import/no-namespace` | Enforced | [#528](https://github.com/FranciscoMoretti/chat-js/issues/528) |
 | `import/no-nodejs-modules` | Enforced outside reviewed Node/Bun boundaries | [#529](https://github.com/FranciscoMoretti/chat-js/issues/529) |
 | `import/no-relative-parent-imports` | Enforced | [#530](https://github.com/FranciscoMoretti/chat-js/issues/530) |
 | `import/no-unassigned-import` | Enforced | [#531](https://github.com/FranciscoMoretti/chat-js/issues/531) |
-| `import/prefer-default-export` | Off — policy | [#532](https://github.com/FranciscoMoretti/chat-js/issues/532) |
+| `import/prefer-default-export` | Enforced | [#532](https://github.com/FranciscoMoretti/chat-js/issues/532) |
 | `import/unambiguous` | Enforced | [#533](https://github.com/FranciscoMoretti/chat-js/issues/533) |
 | `init-declarations` | Enforced | [#507](https://github.com/FranciscoMoretti/chat-js/issues/507) |
 | `jsdoc/require-param` | Enforced | [#534](https://github.com/FranciscoMoretti/chat-js/issues/534) |

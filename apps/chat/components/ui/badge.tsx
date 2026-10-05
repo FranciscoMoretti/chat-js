@@ -48,10 +48,14 @@ const Badge = ({
     {...props}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Badge, badgeVariants); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- #620: Consumers import Badge, badgeVariants from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { Badge, badgeVariants };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (BadgeProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/only-export-components */
 export type { BadgeProps };
+/* oxlint-enable import/no-named-export */

@@ -144,6 +144,7 @@ const advanceEveSubagentUsageCursor = async (
       )
     );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveSubagentUsageCursor, getEveSubagent, listEveSubagents, registerEveSubagent); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 export {
@@ -152,3 +153,4 @@ export {
   listEveSubagents,
   registerEveSubagent,
 };
+/* oxlint-enable import/no-named-export */

@@ -79,5 +79,7 @@ const encryptedJson = <T>() =>
     fromDriver: (value) => JSON.parse(decrypt(value)) as T,
     toDriver: (value): string => encrypt(JSON.stringify(value)),
   });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (encryptedJson, encryptedText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable id-length, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 export { encryptedJson, encryptedText };
+/* oxlint-enable import/no-named-export */

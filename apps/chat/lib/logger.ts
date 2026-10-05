@@ -26,7 +26,9 @@ const logger: Logger = pino({
   },
   timestamp: stdTimeFunctions.isoTime,
 });
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createModuleLogger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env */
 
 export const createModuleLogger = (moduleName: string): Logger =>
   logger.child({ module: moduleName });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

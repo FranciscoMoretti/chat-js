@@ -144,7 +144,11 @@ const executeWithToolProgress = async function* executeWithToolProgress<
   });
   yield* stream;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createToolUsage, executeWithToolProgress, executeWithToolUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types */
 export { createToolUsage, executeWithToolProgress, executeWithToolUsage };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ToolUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ToolUsage };
+/* oxlint-enable import/no-named-export */

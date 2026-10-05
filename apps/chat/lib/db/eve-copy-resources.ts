@@ -339,6 +339,8 @@ const acceptEveCopy = async (
     return "accepted";
   });
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 export { acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile };
+/* oxlint-enable import/no-named-export */

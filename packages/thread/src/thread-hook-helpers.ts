@@ -201,5 +201,9 @@ const createThreadHelpers = <TMessage extends UIMessage>({
   tree: createTreeHelpers({ snapshot, status: treeStatus, thread }),
 });
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createThreadHelpers };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (TreeHelpers, UseThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { TreeHelpers, UseThreadHelpers };
+/* oxlint-enable import/no-named-export */

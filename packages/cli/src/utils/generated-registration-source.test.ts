@@ -1,5 +1,12 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- The generator contract test creates isolated files for the installed native linter.
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Node/Bun generator contract test uses the host temporary directory.
+import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules, sort-imports -- Oxfmt groups native modules by path before binding syntax; this Node/Bun test resolves isolated fixture and installed linter paths.
+import path from "node:path";
 
+// oxlint-disable-next-line sort-imports -- Oxfmt places the package-local generator after native imports; retain its module grouping.
 import { generatedRegistrationSource } from "./generated-registration-source";
 
 const registrationReason =
@@ -64,11 +71,13 @@ test("keeps the no-undefined exception for a multiline empty capability", () => 
 
 test("preserves empty, single value and single type reexport registrations", () => {
   expect(generatedRegistrationSource("").trim()).toBe("");
-  expect(generatedRegistrationSource("export const empty = {};\n")).toBe(
-    "export const empty = {};\n"
-  );
+  expect(
+    generatedRegistrationSource("export const empty = {};\n").endsWith(
+      "export const empty = {};\n"
+    )
+  ).toBe(true);
   const reexport = 'export type { Contract } from "./contract";\n';
-  expect(generatedRegistrationSource(reexport)).toBe(reexport);
+  expect(generatedRegistrationSource(reexport).endsWith(reexport)).toBe(true);
 });
 
 test("rejects unsupported mixed exports rather than narrowing their public API", () => {
@@ -101,5 +110,81 @@ test("preserves trailing dollar signs in public registration bindings", async ()
   expect(loaded.item$).toBe("first");
   expect(loaded.second).toBe("second");
   expect(Object.keys(loaded).toSorted()).toEqual(["item$", "second"]);
+});
+/* oxlint-enable oxc/no-async-await */
+
+const exportPolicyFixtures: Readonly<Record<string, string>> = {
+  capability: "export const capability: string | undefined =\n  undefined;\n",
+  clause: "const one = 1, two = 2;\nexport { one, two };\n",
+  default: "export default 1;\n",
+  defaultAlias: "const one = 1;\nexport { one as default };\n",
+  empty: "",
+  inlineTypeReexport: 'export { type Contract } from "./source";\n',
+  mixed:
+    "export const one = 1;\nexport type WorkflowTools = { tool: string };\n",
+  mixedReexport: 'export { one, type Contract } from "./source";\n',
+  multiple: "export const one = 1;\nexport const two = 2;\n",
+  multipleReexport: 'export { one, two } from "./source";\n',
+  namespace: 'export * as contracts from "./source";\n',
+  reexport: 'export { one } from "./source";\n',
+  single: "export const one = 1;\n",
+  star: 'export * from "./source";\n',
+  type: "export type WorkflowTools = { tool: string };\n",
+  typeReexport: 'export type { Contract } from "./source";\n',
+};
+
+const generatedExportRules: readonly string[] = [
+  "import/no-named-export",
+  "import/prefer-default-export",
+  "no-undefined",
+  "typescript/consistent-type-definitions",
+];
+
+/* oxlint-disable oxc/no-async-await -- Await isolated fixture writes and cleanup before the generator contract test completes. */
+test("generated named contracts satisfy native export rules without unused exceptions", async (): Promise<void> => {
+  const directory = await mkdtemp(
+    path.join(tmpdir(), "chatjs-registration-exports-")
+  );
+  try {
+    const config = path.join(directory, "oxlint.json");
+    await writeFile(config, JSON.stringify({ rules: {} }));
+    await Promise.all(
+      Object.entries(exportPolicyFixtures).map(
+        async ([name, source]: readonly [string, string]): Promise<void> => {
+          await writeFile(
+            path.join(directory, `${name}.ts`),
+            generatedRegistrationSource(source)
+          );
+        }
+      )
+    );
+    const result = Bun.spawn({
+      cmd: [
+        path.join(import.meta.dir, "../../../../node_modules/.bin/oxlint"),
+        "-c",
+        config,
+        "--import-plugin",
+        "-A",
+        "all",
+        ...generatedExportRules.flatMap((rule): string[] => ["-D", rule]),
+        "--no-ignore",
+        "--report-unused-disable-directives-severity",
+        "error",
+        directory,
+      ],
+      stderr: "pipe",
+      stdout: "pipe",
+    });
+    const [exitCode, stdout, stderr] = await Promise.all([
+      result.exited,
+      new Response(result.stdout).text(),
+      new Response(result.stderr).text(),
+    ]);
+    const diagnosticOutput = `Native export validation failed:\n${stdout}\n${stderr}`;
+    // oxlint-disable-next-line no-magic-numbers -- Exit status zero confirms all generated export scopes pass native lint and unused-directive validation.
+    expect(exitCode, diagnosticOutput).toBe(0);
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
 });
 /* oxlint-enable oxc/no-async-await */

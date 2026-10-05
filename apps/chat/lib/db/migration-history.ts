@@ -78,6 +78,10 @@ const getMigrationHistoryProblem = ({
     ? null
     : "This database uses a migration history from before the EVE-only baseline.";
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getMigrationHistoryProblem, KNOWN_CHATJS_TABLE_NAMES); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { getMigrationHistoryProblem, KNOWN_CHATJS_TABLE_NAMES };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (MigrationIdentity); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { MigrationIdentity };
+/* oxlint-enable import/no-named-export */

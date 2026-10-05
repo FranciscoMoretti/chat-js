@@ -1,5 +1,6 @@
 import type { OxlintConfig } from "oxlint";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (auditedRestrictionRules); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 // Audited policy is shared by the repository and generated apps.
 // Deliberate policy exclusions are documented here; retained-rule exceptions belong beside the source.
 export const auditedRestrictionRules = {
@@ -8,13 +9,13 @@ export const auditedRestrictionRules = {
   "import/group-exports": "error",
   "import/max-dependencies": "error",
   "import/no-default-export": "error",
-  // Named exports are the documented package and application API convention.
-  "import/no-named-export": "off",
+  // Existing named module contracts explain the conflicting export convention locally.
+  "import/no-named-export": "error",
   "import/no-namespace": "error",
   "import/no-nodejs-modules": "error",
   "import/no-relative-parent-imports": "error",
-  // A single named export preserves the same API convention as multi-export modules.
-  "import/prefer-default-export": "off",
+  // Single named bindings retain their reviewed module/API contracts beside the source.
+  "import/prefer-default-export": "error",
   "init-declarations": "error",
   "jsdoc/require-param": "error",
   "jsdoc/require-param-type": "error",
@@ -72,3 +73,4 @@ export const auditedRestrictionRules = {
   "unicorn/max-nested-calls": "error",
   "unicorn/no-null": "error",
 } satisfies NonNullable<OxlintConfig["rules"]>;
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

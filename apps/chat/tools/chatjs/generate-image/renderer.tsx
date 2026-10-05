@@ -108,6 +108,7 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
     </>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GenerateImageRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -125,3 +126,4 @@ export const GenerateImageRenderer = defineToolRenderer({
   outputSchema: generateImageResult,
   render: GenerateImageView,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

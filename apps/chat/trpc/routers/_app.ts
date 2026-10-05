@@ -33,5 +33,9 @@ type AppRouter = typeof appRouter;
  *       ^? Post[]
  */
 const createCaller = createCallerFactory(appRouter);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (appRouter, createCaller); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { appRouter, createCaller };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (AppRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { AppRouter };
+/* oxlint-enable import/no-named-export */

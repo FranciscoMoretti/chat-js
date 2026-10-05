@@ -219,5 +219,9 @@ const registry = registrySchema.parse({
   ],
   name: "chatjs",
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecutionItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { codeExecutionItem } from "./code-execution";
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (registry, searchToolItems, toolItems); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { registry, searchToolItems, toolItems };
+/* oxlint-enable import/no-named-export */

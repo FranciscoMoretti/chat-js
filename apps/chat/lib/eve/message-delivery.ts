@@ -186,6 +186,7 @@ const eveMessageOperationId = (
   event.type === "message.received"
     ? deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
     : undefined;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery, eveMessageDeliveryMetadata, eveMessageOperationId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 export {
   EVE_MESSAGE_OPERATION_HEADER,
@@ -193,4 +194,7 @@ export {
   eveMessageDeliveryMetadata,
   eveMessageOperationId,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ActivePendingEveMessage, PendingEveMessage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ActivePendingEveMessage, PendingEveMessage };
+/* oxlint-enable import/no-named-export */

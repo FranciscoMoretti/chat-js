@@ -70,6 +70,7 @@ const filterEveTools = <T extends object>(tools: T): Partial<T> => {
   }
   return available;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveInstalledToolEnabled, eveToolAllowed, eveTurnGuest, eveTurnTool, filterEveTools); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable id-length */
 export {
   eveInstalledToolEnabled,
@@ -78,3 +79,4 @@ export {
   eveTurnTool,
   filterEveTools,
 };
+/* oxlint-enable import/no-named-export */

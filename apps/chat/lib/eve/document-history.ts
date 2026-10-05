@@ -2,6 +2,7 @@ import type { MessageStreamEvent } from "eve/client";
 
 const nativeTurnId = /^turn_\d+$/u;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (documentHistoryTurns); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): documentHistoryTurns accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -38,4 +39,5 @@ export const documentHistoryTurns = (
   }
   return [...turns];
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -33,6 +33,7 @@ const enabled = (): boolean => {
   }
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (startLocalEveGuestCleanup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return --
  * init-declarations (#507): startLocalEveGuestCleanup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * jsdoc/require-returns (#535): startLocalEveGuestCleanup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -116,4 +117,5 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   // oxlint-disable-next-line typescript/consistent-return -- #580: startLocalEveGuestCleanup has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return scheduler.stop;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return */

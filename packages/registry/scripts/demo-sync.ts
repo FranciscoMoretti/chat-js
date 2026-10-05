@@ -512,6 +512,8 @@ if (import.meta.main) {
   });
 }
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (baselinePath, demoRoot, demoSource, generateDemo, syncDemo); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 /* oxlint-enable eslint/no-magic-numbers */
 export { baselinePath, demoRoot, demoSource, generateDemo, syncDemo };
+/* oxlint-enable import/no-named-export */

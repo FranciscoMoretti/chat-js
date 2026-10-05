@@ -162,6 +162,8 @@ const DELETE = async (
     );
   }
 };
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (DELETE, GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { DELETE, GET };
+/* oxlint-enable import/no-named-export */

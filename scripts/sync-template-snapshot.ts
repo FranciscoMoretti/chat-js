@@ -129,7 +129,11 @@ const collectSnapshot = (
   options: SnapshotOptions = {}
 ): Promise<Map<string, string>> =>
   collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (collectSnapshot, SNAPSHOT_CONCURRENCY); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { collectSnapshot, SNAPSHOT_CONCURRENCY };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SnapshotOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { SnapshotOptions };
+/* oxlint-enable import/no-named-export */

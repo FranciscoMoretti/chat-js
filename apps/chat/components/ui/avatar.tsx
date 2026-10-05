@@ -76,4 +76,6 @@ const AvatarFallback = reactForwardRef<
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AvatarFallback.displayName = AvatarPrimitiveFallback.displayName;
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Avatar, AvatarFallback, AvatarImage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Avatar, AvatarFallback, AvatarImage };
+/* oxlint-enable import/no-named-export */
