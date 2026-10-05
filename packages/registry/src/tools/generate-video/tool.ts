@@ -30,7 +30,12 @@ const DEFAULT_ASPECT_RATIO = "16:9";
 const DEFAULT_DURATION_SECONDS = 5;
 const FIRST_SUBTYPE_INDEX = 0;
 const FIRST_PARAMETER_INDEX = 0;
-const ALLOWED_EXTENSIONS = new Set(["mp4", "webm", "mov"]);
+const videoExtensions: ReadonlyMap<string, string> = new Map([
+  ["mp4", "mp4"],
+  ["webm", "webm"],
+  ["mov", "mov"],
+  ["quicktime", "mov"],
+]);
 
 const resolveVideoExtension = (mediaType?: string): string => {
   if (!(typeof mediaType === "string" && mediaType !== "")) {
@@ -52,8 +57,7 @@ const resolveVideoExtension = (mediaType?: string): string => {
     return "mp4";
   }
 
-  const mappedSubtype = subtype === "quicktime" ? "mov" : subtype;
-  return ALLOWED_EXTENSIONS.has(mappedSubtype) ? mappedSubtype : "mp4";
+  return videoExtensions.get(subtype) ?? "mp4";
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveVideoModel's awaited sequencing and rejected-Promise behavior. */

@@ -71,7 +71,7 @@ import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
 /* oxlint-disable react/jsx-no-literals -- EveConversation renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- EveConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including failure?: Error); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including snapshot.cursorId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- EveConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including failure?: Error); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including snapshot.cursorId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // This controller coordinates streaming, optimistic delivery, recovery, and comparison state.
 // oxlint-disable-next-line eslint/complexity -- Review debt #620: split this state/render orchestration only after verifying its pending, recovery and failure transitions.
@@ -181,7 +181,9 @@ const EveConversation = ({
         Boolean(fork.editingBoundary)
     )?.id;
   const responseModels = responseModelReferences(agent.events);
-  const modelForMessage = (message: (typeof messages)[number]) => {
+  const modelForMessage = (
+    message: (typeof messages)[number]
+  ): string | undefined => {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const reference = message.metadata?.turnId
       ? responseModels.get(message.metadata.turnId)
@@ -189,9 +191,10 @@ const EveConversation = ({
         message.metadata?.modelId;
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading indexOf from reference; preserve one receiver evaluation, skipped accesses and the existing -1 fallback. The app guidance prefers optional chaining.
     const separator = reference?.indexOf("/") ?? -1;
-    return reference && separator > 0 && separator < reference.length - 1
-      ? reference.slice(separator + 1)
-      : undefined;
+    if (reference && separator > 0 && separator < reference.length - 1) {
+      return reference.slice(separator + 1);
+    }
+    return undefined;
   };
   const busy =
     agent.status === "streaming" ||
@@ -711,7 +714,7 @@ const EveConversation = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- sameComposerDraft: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: ReturnType<typeof restoreDraft>). */
 

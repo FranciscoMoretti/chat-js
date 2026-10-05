@@ -38,13 +38,16 @@ const toVariable = (
   secret: variable.secret,
 });
 
-const credentialOptions = (
+const collectCredentialModes = (
   modes: readonly Readonly<{
     label: string;
     vars: readonly Readonly<EnvGroup["vars"][number]>[];
   }>[],
   adapterOptions: Readonly<Record<string, unknown>>
-): StorageEnvironmentVariable[][] => {
+): {
+  credentialModes: StorageEnvironmentVariable[][];
+  hasUnvalidatedCredentialMode: boolean;
+} => {
   const credentialModes: StorageEnvironmentVariable[][] = [];
   let hasUnvalidatedCredentialMode = false;
   for (const mode of modes) {
@@ -61,10 +64,25 @@ const credentialOptions = (
         adapterOptions[optionName] !== ABSENT_ADAPTER_OPTION;
     }
   }
-  return credentialModes.length > EMPTY_VARIABLE_COUNT &&
+  return { credentialModes, hasUnvalidatedCredentialMode };
+};
+
+const credentialOptions = (
+  modes: readonly Readonly<{
+    label: string;
+    vars: readonly Readonly<EnvGroup["vars"][number]>[];
+  }>[],
+  adapterOptions: Readonly<Record<string, unknown>>
+): StorageEnvironmentVariable[][] => {
+  const { credentialModes, hasUnvalidatedCredentialMode } =
+    collectCredentialModes(modes, adapterOptions);
+  if (
+    credentialModes.length > EMPTY_VARIABLE_COUNT &&
     !hasUnvalidatedCredentialMode
-    ? credentialModes
-    : [];
+  ) {
+    return credentialModes;
+  }
+  return [];
 };
 
 const requiresEnvironmentVariable = (

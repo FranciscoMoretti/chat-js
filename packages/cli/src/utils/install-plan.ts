@@ -1,18 +1,7 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI hashes installed source using the native cryptographic implementation.
 import { createHash, randomUUID } from "node:crypto";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
-import type { Dirent } from "node:fs";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import {
-  mkdir,
-  readFile,
-  readdir,
-  rename,
-  rm,
-  writeFile,
-} from "node:fs/promises";
-/* oxlint-enable sort-imports */
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
@@ -25,10 +14,9 @@ import { installItems } from "#cli/registry/shadcn";
 import { updateEnvironmentExample } from "./environment-example";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { prepareDependencyUpdate } from "./installation-dependencies";
+import { directoryFiles, optionalFile } from "./installation-files";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { planInstallation } from "./installation-plan";
-/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { assertMcpApprovalSchema } from "./mcp-schema";
 /* oxlint-enable sort-imports */
@@ -54,26 +42,16 @@ const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve optionalFile's awaited sequencing and rejected-Promise behavior. */
-const optionalFile = async (file: string): Promise<Buffer | null> => {
-  try {
-    return await readFile(file);
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      // oxlint-disable-next-line unicorn/no-null -- Snapshot absence must differ from an existing zero-byte Buffer during rollback.
-      return null;
-    }
-    throw error;
-  }
-};
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readReceipt's awaited sequencing and rejected-Promise behavior. */
 const readReceipt = async (
   cwd: string
 ): Promise<z.infer<typeof receiptSchema>> => {
   await preflight(cwd, [receiptFile]);
   const source = await optionalFile(path.join(cwd, receiptFile));
-  return source ? receiptSchema.parse(JSON.parse(source.toString())) : {};
+  if (source) {
+    return receiptSchema.parse(JSON.parse(source.toString()));
+  }
+  return {};
 };
 /* oxlint-enable oxc/no-async-await */
 const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
@@ -96,26 +74,6 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ),
 ];
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve directoryFiles's awaited sequencing and rejected-Promise behavior. */
-const directoryFiles = async (
-  cwd: string,
-  directory: string
-): Promise<string[]> => {
-  const entries = await readdir(path.join(cwd, directory), {
-    withFileTypes: true,
-  });
-  const files = await Promise.all(
-    entries.map(async (entry: Readonly<Dirent>) => {
-      const target = `${directory}/${entry.name}`;
-      if (entry.isSymbolicLink()) {
-        throw new Error(`Invalid or symlinked ChatJS target: ${target}`);
-      }
-      return entry.isDirectory() ? await directoryFiles(cwd, target) : [target];
-    })
-  );
-  return files.flat();
-};
-/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordInstalledSource's awaited sequencing and rejected-Promise behavior. */
 /**
  * Capture only source we actually installed. Never bless a skipped user file.

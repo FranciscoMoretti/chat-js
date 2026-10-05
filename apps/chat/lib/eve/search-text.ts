@@ -27,10 +27,37 @@ const eveSeedSearchText = (
       .map((part) => part.text ?? "")
       .join("\n")
       .trim();
-    return text && ["user", "assistant"].includes(message.role)
-      ? [{ key: `seed:${index}`, text }]
-      : [];
+    if (text && ["user", "assistant"].includes(message.role)) {
+      return [{ key: `seed:${index}`, text }];
+    }
+    return [];
   });
+
+/** Read the display text of an incoming event without trimming its stored value.
+ * @param {{ readonly data: { readonly message: string; readonly parts?: readonly { readonly type: string; readonly text?: string }[]; }; readonly meta: { readonly id: string; }; }} event Incoming message fields needed to extract visible text and preserve its event identity.
+ * @returns {EveSearchText[]} The nonempty display text item, or an empty array.
+ */
+const incomingMessageSearchText = (event: {
+  readonly data: {
+    readonly message: string;
+    readonly parts?: readonly {
+      readonly type: string;
+      readonly text?: string;
+    }[];
+  };
+  readonly meta: { readonly id: string };
+}): EveSearchText[] => {
+  const text = event.data.parts
+    ? event.data.parts
+        .filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("\n")
+    : event.data.message;
+  if (text.trim()) {
+    return [{ key: `event:${event.meta.id}`, text }];
+  }
+  return [];
+};
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -48,13 +75,7 @@ const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
     return event.data.events.flatMap(eveEventSearchText);
   }
   if (event.type === "message.received" && !event.data.kind) {
-    const text = event.data.parts
-      ? event.data.parts
-          .filter((part) => part.type === "text")
-          .map((part) => part.text)
-          .join("\n")
-      : event.data.message;
-    return text.trim() ? [{ key: `event:${event.meta.id}`, text }] : [];
+    return incomingMessageSearchText(event);
   }
   if (
     event.type === "message.completed" &&

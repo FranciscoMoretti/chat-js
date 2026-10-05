@@ -50,12 +50,12 @@ interface EditContext {
   modelSelection?: SelectedModelValue;
   response?: EveMessage;
 }
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- responseModelSelection: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including response: EveMessage). */
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- responseModelSelection: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including response: EveMessage). */
 
 const responseModelSelection = (
   response: EveMessage,
   events: readonly MessageStreamEvent[]
-) => {
+): Extract<SelectedModelValue, string> | undefined => {
   const modelId = responseModel(
     events,
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from response.metadata; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
@@ -63,26 +63,35 @@ const responseModelSelection = (
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from response.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     response.metadata?.modelId
   );
-  return isSelectedModelValue(modelId) ? modelId : undefined;
+  if (isSelectedModelValue(modelId)) {
+    return modelId;
+  }
+  return undefined;
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- operationModelSelection: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: Operation); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including operation.modelId). */
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- operationModelSelection: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: Operation); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including operation.modelId). */
 
-const operationModelSelection = (operation: Operation) => {
+const operationModelSelection = (
+  operation: Operation
+): SelectedModelValue | undefined => {
   if (!("modelIds" in operation)) {
-    return operation.modelId && isSelectedModelValue(operation.modelId)
-      ? operation.modelId
-      : undefined;
+    if (operation.modelId && isSelectedModelValue(operation.modelId)) {
+      return operation.modelId;
+    }
+    return undefined;
   }
   const selection: Record<string, number> = {};
   for (const modelId of operation.modelIds) {
     selection[modelId] = (selection[modelId] ?? 0) + 1;
   }
-  return isSelectedModelValue(selection) ? selection : undefined;
+  if (isSelectedModelValue(selection)) {
+    return selection;
+  }
+  return undefined;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useEveFork); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- useEveFork: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message: EveMessageInput); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editingMessageId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useEveFork = (

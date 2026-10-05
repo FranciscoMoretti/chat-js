@@ -204,7 +204,7 @@ vi.mock("@/components/internal-link", () => ({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type -- composer-menu.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-disable no-undefined -- composer-menu.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value;  */
 
 vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
   const actual = await importOriginal<{
@@ -214,16 +214,17 @@ vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
     composerTools: {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actual.composerTools own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...actual.composerTools,
-      get webSearch() {
-        return state.removedTool || state.missingMetadata
-          ? undefined
-          : actual.composerTools.webSearch;
+      get webSearch(): (typeof composerTools)["webSearch"] | undefined {
+        if (state.removedTool || state.missingMetadata) {
+          return undefined;
+        }
+        return actual.composerTools.webSearch;
       },
     },
   };
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable typescript/explicit-function-return-type -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 

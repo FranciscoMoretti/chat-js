@@ -10,12 +10,13 @@ const canvasTools: UiToolName[] = [
 ];
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (selectedEveTools); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, unicorn/no-null --
- * jsdoc/require-param (#534): selectedEveTools's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): selectedEveTools's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): selectedEveTools preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** Canvas editing needs Eve's read operation to obtain the current revision. */
+/** Canvas editing needs Eve's read operation to obtain the current revision.
+ * @param {UiToolName | null} selectedTool User-selected tool, or null when no explicit tool restriction is requested.
+ * @returns {string[] | null} Selected execution names; canvas tools share their editing family and document operations also include readDocument. Null preserves unrestricted selection.
+ */
 export const selectedEveTools = (
   selectedTool: UiToolName | null
 ): string[] | null => {
@@ -32,4 +33,4 @@ export const selectedEveTools = (
   return names;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */

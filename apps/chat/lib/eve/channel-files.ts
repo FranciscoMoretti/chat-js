@@ -12,19 +12,19 @@ type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchEveChannelFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): fetchEveChannelFile intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): fetchEveChannelFile preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** Interpret owned storage keys locally; never fetch the URL's hostname. */
+/** Interpret owned storage keys locally; never fetch the URL's hostname.
+ * @param {string} url Attachment URL used only to extract a recognized stored-file identity.
+ * @param {FileContext} [context] Native file-fetch context supplying the session's current authenticated owner.
+ * @returns {Promise<{ bytes: Buffer; mediaType: string } | null>} Authorized stored bytes and MIME type, or null for an unrecognized storage-key URL. Recognized keys require an authenticated owner and pass the ownership check before storage is read.
+ */
 export const fetchEveChannelFile = async (
   url: string,
   context?: FileContext
-) => {
+): Promise<{ bytes: Buffer; mediaType: string } | null> => {
   const key = keyFromFileUrl(url);
   if (!key) {
     return null;
@@ -43,4 +43,4 @@ export const fetchEveChannelFile = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */

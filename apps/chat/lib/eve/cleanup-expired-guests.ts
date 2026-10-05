@@ -9,19 +9,25 @@ import { localDeletionAvailable } from "./local-deletion-available";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (cleanupExpiredEveGuests); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupExpiredEveGuests's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-console, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): cleanupExpiredEveGuests's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): cleanupExpiredEveGuests's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-console, no-continue, no-magic-numbers, typescript/strict-boolean-expressions --
  * max-statements (#512): cleanupExpiredEveGuests keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): cleanupExpiredEveGuests emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-continue (#515): cleanupExpiredEveGuests skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * no-magic-numbers (#517): cleanupExpiredEveGuests uses 5, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep cleanupExpiredEveGuests's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep cleanupExpiredEveGuests's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): cleanupExpiredEveGuests intentionally keeps the existing falsy-value behavior of family; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-/** The appRoot is the trusted worker directory. Guest and billing identities are retained. */
-export const cleanupExpiredEveGuests = async (appRoot: string) => {
+/** The appRoot is the trusted worker directory. Guest and billing identities are retained.
+ * @param {string} appRoot Trusted local worker root used for supported family resource cleanup.
+ * @returns {ReturnType<typeof cleanupExpiredEveGuests>} Deleted and pending attempt counts for the bounded cleanup batch. Unsupported runtimes skip without a pendingCount because no inventory was read; per-family uncertainty remains pending without aborting later attempts.
+ */
+export const cleanupExpiredEveGuests = async (
+  appRoot: string
+): Promise<
+  { deletedCount: number; skipped: boolean } & (
+    | { reason: string; pendingCount?: undefined }
+    | { pendingCount: number; reason?: undefined }
+  )
+> => {
   if (!localDeletionAvailable()) {
     // Omit pendingCount: no inventory was read, so the backlog is unknown.
     return {
@@ -69,4 +75,4 @@ export const cleanupExpiredEveGuests = async (appRoot: string) => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-console, no-continue, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-console, no-continue, no-magic-numbers, typescript/strict-boolean-expressions */

@@ -107,7 +107,7 @@
     "tools/chatjs/generate-video/chatjs.json": "a741668d0dfc7b64e879a3f0befc0c8bbf979e0cebaabc5b7cc2fb0f90a4f66c",
     "tools/chatjs/generate-video/renderer.tsx": "9398ea06f8af27a607645e9c659dc71730ef201e6c0d04100ab01c1cc1e52a6a",
     "tools/chatjs/generate-video/schemas.ts": "f9790939103c8da5f814a189ef09b4cd822dfd2a974475b77dc89f05460536c0",
-    "tools/chatjs/generate-video/tool.ts": "48a87e96450f01c12dab86ce4f2bb2774d7486f32921b5b2c0eb2f2e4e39d029",
+    "tools/chatjs/generate-video/tool.ts": "b355335fb566b6ba59eb489ca71deb2c776dcdcf201871a4b84f71128d907ece",
     "tools/chatjs/get-weather/chatjs.json": "1eb97bf9dff67e0223da39c6be4b1e258f6c9af7f8bad268d3f3bd617956c908",
     "tools/chatjs/get-weather/renderer.tsx": "1a66d34eba9df50c19ad693497599f734a17d016d7642779aa551d98ec1ddbce",
     "tools/chatjs/get-weather/schemas.ts": "8be3874fd016a5738fd095c8c64f60a688e45ee653b488a55229a51ccdc218d7",

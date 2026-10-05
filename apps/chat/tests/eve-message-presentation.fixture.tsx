@@ -152,18 +152,24 @@ const Transcript = ({
   title: string;
 }): React.JSX.Element => {
   const [editingId, setEditingId] = useState<string>();
-  const edit = useMemo(
-    () =>
-      editingId
-        ? {
-            content: <Editor onSubmit={(value) => onLog(`submit:${value}`)} />,
-            disabled: false,
-            messageId: editingId,
-            onCancel: (): void => setEditingId(undefined),
-          }
-        : undefined,
-    [editingId, onLog]
-  );
+  const edit = useMemo(():
+    | {
+        content: React.JSX.Element;
+        disabled: boolean;
+        messageId: string;
+        onCancel: () => void;
+      }
+    | undefined => {
+    if (editingId) {
+      return {
+        content: <Editor onSubmit={(value) => onLog(`submit:${value}`)} />,
+        disabled: false,
+        messageId: editingId,
+        onCancel: (): void => setEditingId(undefined),
+      };
+    }
+    return undefined;
+  }, [editingId, onLog]);
   return (
     <section
       aria-label={title}

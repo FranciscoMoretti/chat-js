@@ -1,13 +1,7 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- */
+// oxlint-disable-next-line import/no-nodejs-modules -- The server session namespace uses Node's SHA-256 implementation to hash the application/database scope.
 import { createHash } from "node:crypto";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (authSessionOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): authSessionOptions uses 0, 16, 60, 5 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 /**
  * Localhost cookies span ports; isolate local app/database pairs and bypass cached development sessions.
  * @param {{ readonly baseUrl: string; readonly databaseUrl: string; readonly development: boolean; }} options Deployment inputs used to isolate the session cookie namespace.
@@ -37,15 +31,16 @@ export const authSessionOptions = ({
       .update("\0")
       .update(database.toString())
       .digest("hex")
+      // oxlint-disable-next-line no-magic-numbers -- The cookie namespace uses the first 16 hexadecimal digest characters; preserve its existing scope identifier.
       .slice(0, 16);
     cookiePrefix = `chatjs-dev-${scope}`;
   }
   return {
     advanced: { cookiePrefix },
     session: {
+      // oxlint-disable-next-line no-magic-numbers -- The session cookie cache lasts five minutes; maxAge is measured in seconds.
       cookieCache: { enabled: !development, maxAge: 60 * 5 },
     },
   };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable no-magic-numbers */

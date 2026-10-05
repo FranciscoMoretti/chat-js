@@ -72,6 +72,21 @@ const registrationLine = (
 };
 const defaultDependencyLimit = 10;
 
+const registrationDeclaration = (
+  line: string,
+  grouped: boolean
+): Record<string, string> | undefined => {
+  const declaration =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from /^export (?<kind>const|type) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+    /^export (?<kind>const|type) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(
+      line
+    )?.groups;
+  if (grouped && !declaration) {
+    throw new Error("Unsupported generated registration export.");
+  }
+  return declaration;
+};
+
 const renderRegistration = (
   line: string,
   grouped: boolean,
@@ -89,28 +104,22 @@ const renderRegistration = (
   if (!line.startsWith("export ")) {
     return { source: line };
   }
-  const declaration =
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from /^export (?<kind>const|type) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    /^export (?<kind>const|type) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(
-      line
-    )?.groups;
-  if (grouped && !declaration) {
-    throw new Error("Unsupported generated registration export.");
-  }
+  const declaration = registrationDeclaration(line, grouped);
   const source = registrationLine(
     line,
     grouped ? line.slice("export ".length) : line,
     preferDefault
   );
-  return grouped && declaration
-    ? {
-        source,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (declaration.kind === "type"           ? { type: declaration.name }           : { value: declaration.name }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
-        ...(declaration.kind === "type"
-          ? { type: declaration.name }
-          : { value: declaration.name }),
-      }
-    : { source };
+  if (grouped && declaration) {
+    return {
+      source,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (declaration.kind === "type"           ? { type: declaration.name }           : { value: declaration.name }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+      ...(declaration.kind === "type"
+        ? { type: declaration.name }
+        : { value: declaration.name }),
+    };
+  }
+  return { source };
 };
 
 const registrationExportPlan = (

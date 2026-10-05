@@ -59,13 +59,12 @@ export const NewEveConversation = ({
   readonly onPendingChange?: (pending: boolean) => void;
 }): ReactJSX.Element => {
   const openRuntime = useEveRuntime();
-  const scope = useMemo(
-    () =>
-      typeof projectId === "string" && projectId !== ""
-        ? { projectId }
-        : undefined,
-    [projectId]
-  );
+  const scope = useMemo((): { projectId: string } | undefined => {
+    if (typeof projectId === "string" && projectId !== "") {
+      return { projectId };
+    }
+    return undefined;
+  }, [projectId]);
   const selectedModel = useDefaultModel();
   const changeModel = useModelChange();
   const [selection, setSelection] = useState<SelectedModelValue>();

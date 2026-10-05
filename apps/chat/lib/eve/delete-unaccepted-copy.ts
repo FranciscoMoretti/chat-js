@@ -11,11 +11,14 @@ import { purgeEveFamilyFiles } from "./purge-files";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (deleteUnacceptedEveCopy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-param, max-statements --
- * jsdoc/require-param (#534): deleteUnacceptedEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements --
  * max-statements (#512): deleteUnacceptedEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-/** Never-dispatched proof replaces native retirement; accepted copies cannot enter this path. */
+/** Never-dispatched proof replaces native retirement; accepted copies cannot enter this path.
+ * @param {string} ownerId Owner authorizing removal of the undispatched copy.
+ * @param {string} conversationId Copy identity checked for deletion state and never-accepted dispatch proof.
+ * @returns {Promise<void>} Completes document/file cleanup and the deletion tombstone, or succeeds when a concurrent cleanup already completed. Missing identities, accepted dispatches and unresolved cleanup failures reject.
+ */
 export const deleteUnacceptedEveCopy = async (
   ownerId: string,
   conversationId: string
@@ -43,4 +46,4 @@ export const deleteUnacceptedEveCopy = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, max-statements */
+/* oxlint-enable max-statements */
