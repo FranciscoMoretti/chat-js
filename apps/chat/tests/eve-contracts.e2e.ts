@@ -190,9 +190,10 @@ test("a lost create reply is recovered through the same native operation", async
   const nativeSession = `test-${crypto.randomUUID()}`;
   const start = (id: string): Promise<string> => {
     dispatched.push(id);
-    return dispatched.length === 1
-      ? Promise.reject(new Error("lost reply"))
-      : Promise.resolve(nativeSession);
+    if (dispatched.length === 1) {
+      return Promise.reject(new Error("lost reply"));
+    }
+    return Promise.resolve(nativeSession);
   };
   await expect(
     createEveConversation(owner, operation, "uncertain", start)

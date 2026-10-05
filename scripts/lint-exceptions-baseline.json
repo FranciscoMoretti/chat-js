@@ -2447,15 +2447,13 @@
     "[\"apps/chat/components/ui/popover.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/popover.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/popover.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/progress.tsx\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/progress.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/progress.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/progress.tsx\",\"react/forbid-component-props\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/progress.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/chat/components/ui/progress.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/components/ui/progress.tsx\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/progress.tsx\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/components/ui/progress.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 3,
+    "[\"apps/chat/components/ui/progress.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/progress.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/progress.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/resizable.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
@@ -2593,6 +2591,7 @@
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"react/jsx-no-literals\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/components/upgrade-cta/login-cta-banner.tsx\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/components/upgrade-cta/login-cta-banner.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
@@ -3136,8 +3135,6 @@
     "[\"apps/chat/lib/db/connection.test.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/connection.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/db/connection.ts\",\"no-undefined\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/db/connection.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/connection.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/connection.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/connection.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/connection.ts\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": 1,
@@ -3236,8 +3233,6 @@
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
@@ -3303,8 +3298,6 @@
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-guests.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
@@ -3382,8 +3375,6 @@
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"no-continue\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-search.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-search.test.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": 1,
@@ -3493,7 +3484,6 @@
     "[\"apps/chat/lib/db/migrate.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/migrate.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/migrate.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/migrate.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/migrate.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/db/migration-history.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/migration-history.test.ts\",\"sort-imports\",\"oxlint-disable\"]": 2,
@@ -3877,8 +3867,6 @@
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": 1,
@@ -4168,7 +4156,6 @@
     "[\"apps/chat/lib/eve/image-context.test.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/image-context.test.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/image-context.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/image-context.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/image-context.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -4176,7 +4163,6 @@
     "[\"apps/chat/lib/eve/image-context.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/image-context.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/image-context.ts\",\"no-continue\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/image-context.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/installed-tools.test.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
@@ -4216,8 +4202,6 @@
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-fence.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-fence.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -4232,8 +4216,6 @@
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-purge.ts\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-purge.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
@@ -4281,8 +4263,6 @@
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-stream-positions.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
@@ -4354,8 +4334,6 @@
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"no-continue\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -5188,8 +5166,6 @@
     "[\"apps/chat/lib/eve/world-config.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/world-config.ts\",\"node/no-process-env\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/features-config.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/features-config.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/features-config.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/features-config.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/features-config.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/file-content-response.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
@@ -7038,8 +7014,10 @@
     "[\"apps/chat/tests/visual/primitive-mount.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"eslint/sort-imports\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"oxc/no-async-await\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"eslint/require-await\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"typescript/require-await\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tests/visual/share-dialog.browser.tsx\",\"sort-imports\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/tests/visual/share-dialog.browser.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tests/visual/share-dialog.browser.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 2,
@@ -20068,38 +20046,34 @@
     "[\"apps/chat/components/ui/popover.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "a96e7cded9c6b3e9694f984760046fdfb16713ceb320e4f6de8d9e1fbf5edb53"
     ],
-    "[\"apps/chat/components/ui/progress.tsx\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "71f1617cefef6fb0246b835c9be90a3238cdbe049b5bc2ab7aa487958dd4d81a"
-    ],
-    "[\"apps/chat/components/ui/progress.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": [
-      "71f1617cefef6fb0246b835c9be90a3238cdbe049b5bc2ab7aa487958dd4d81a"
-    ],
-    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "71f1617cefef6fb0246b835c9be90a3238cdbe049b5bc2ab7aa487958dd4d81a"
-    ],
-    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "71f1617cefef6fb0246b835c9be90a3238cdbe049b5bc2ab7aa487958dd4d81a"
-    ],
-    "[\"apps/chat/components/ui/progress.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "a21d5daabd0cc67582173971fd7b49d1f1bc33401e130073cecd5b6bff97e45a"
-    ],
-    "[\"apps/chat/components/ui/progress.tsx\",\"react/forbid-component-props\",\"oxlint-disable\"]": [
-      "b652fadcd688d869f83c65cef11181209c4637471a350ef907d5cec4598c7cb7"
+    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "788289735793b9a3f09239049c6ffff4320907c177640679b925b2df6a579df9"
     ],
     "[\"apps/chat/components/ui/progress.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "964dd14ddc054de4cafd3960c4b976a68aa78d45414bbca6b0449812e9dc211c"
+      "b2ecc2cf78acc2cea7ddc6d0f7f035b3604fce445cdba392bd6614dae8e179dd"
     ],
-    "[\"apps/chat/components/ui/progress.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
-      "46f0edf08846b6816fa0d54024b7201dfb18f20b87339e0bd92dd07db863ffd2"
+    "[\"apps/chat/components/ui/progress.tsx\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "e77fbec3afb8c36a1fb4bcafe280833004e916c86c6febbde36a46c888a8e19c"
+    ],
+    "[\"apps/chat/components/ui/progress.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": [
+      "e77fbec3afb8c36a1fb4bcafe280833004e916c86c6febbde36a46c888a8e19c"
     ],
     "[\"apps/chat/components/ui/progress.tsx\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": [
-      "0e414f4c090828b1e092c9715e855402f5e018d28498ab4d481cd0534dc896b0"
+      "e77fbec3afb8c36a1fb4bcafe280833004e916c86c6febbde36a46c888a8e19c"
+    ],
+    "[\"apps/chat/components/ui/progress.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
+      "def2b580bedac5e024f14c29cfc85b95ec8457ef2d48e13149d1c117c0b90ae0",
+      "91de7e8198b8a8bced1b9cc69200b8c5589028cc5b9e05a0a94b2c2f21a4bffd",
+      "3f0236878835b22dfbf084015c1492ad758de0af4fda5a4643cca074fa79629b"
+    ],
+    "[\"apps/chat/components/ui/progress.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
+      "ddce86f57daeafbaa3eeff759c441f2816cc834cc2fcb5db67164667c68eb78b"
     ],
     "[\"apps/chat/components/ui/progress.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "ff8795ae9dead3be15dd85ff27752b2fde966ad36ffc4530c09d1b5620cf6798"
+      "2f89ffc3f9539f70c13147d38e26067ff3d2e5df3b406de8cc80c976df992d83"
     ],
     "[\"apps/chat/components/ui/progress.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "ff8795ae9dead3be15dd85ff27752b2fde966ad36ffc4530c09d1b5620cf6798"
+      "2f89ffc3f9539f70c13147d38e26067ff3d2e5df3b406de8cc80c976df992d83"
     ],
     "[\"apps/chat/components/ui/resizable.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "8624d585183aabf4910690d8190490389ae69d6c55a978386d511a034ac4fdf9"
@@ -20766,19 +20740,22 @@
       "72df1beab77ada3e5be5a01bf4ea4192108ae007ab48f9ae4c3b7c77981f9e4c"
     ],
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "33d53dbc61a66751c9c3a8946a7c0e0f22a957be52c3e0f1fcfcec10c61b747d"
+      "50b735905549ad93d7fd70c41ddc5b4ca87c905086df15dd75675963caed5922"
     ],
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "33d53dbc61a66751c9c3a8946a7c0e0f22a957be52c3e0f1fcfcec10c61b747d"
+      "50b735905549ad93d7fd70c41ddc5b4ca87c905086df15dd75675963caed5922"
     ],
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"react/jsx-no-literals\",\"oxlint-disable\"]": [
-      "c024861437661f279c53b4ef88d297663580c742c0896f282552efa7af216134"
+      "6b64be32d9dee1f81df196c5ab0e06ecf18a320ea670058a573e400cc6411523"
     ],
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "5219649e47f7bdcb745025ad1ed2c2848c2b8f1813615cfe6d086b197ed69a98"
+      "cbc52c5e5bb4bf4c432b45c757f190e42d4cdc4e241faf67fbd7230ff6e56807"
     ],
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": [
-      "5219649e47f7bdcb745025ad1ed2c2848c2b8f1813615cfe6d086b197ed69a98"
+      "cbc52c5e5bb4bf4c432b45c757f190e42d4cdc4e241faf67fbd7230ff6e56807"
+    ],
+    "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
+      "051d3c5101b0835dd2110c83cbbca3509adc4652e8dda1ea23b4f9dad8cc8f40"
     ],
     "[\"apps/chat/components/ui/ui-primitives-visual-fixture.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
       "95b8aafe5a607e0469e557c6df85873ff27096671be8e5b7b7eb3c9c555751c4",
@@ -22740,23 +22717,17 @@
     ],
     "[\"apps/chat/lib/db/connection.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "386205c0a8335d31a6f60380f420eb38a53bb8252249d76e56b687098d4c1f31",
-      "a2d9607474436088dbcf7b37fefe01e4042e3b2dc3f38e5829057f62540f98a4"
+      "25dae719aed973467e7530d0298e3314a5469647a56b5df342d754f0dd012abd"
     ],
     "[\"apps/chat/lib/db/connection.ts\",\"no-undefined\",\"oxlint-disable\"]": [
       "386205c0a8335d31a6f60380f420eb38a53bb8252249d76e56b687098d4c1f31",
-      "a2d9607474436088dbcf7b37fefe01e4042e3b2dc3f38e5829057f62540f98a4"
-    ],
-    "[\"apps/chat/lib/db/connection.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "a2d9607474436088dbcf7b37fefe01e4042e3b2dc3f38e5829057f62540f98a4"
-    ],
-    "[\"apps/chat/lib/db/connection.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "a2d9607474436088dbcf7b37fefe01e4042e3b2dc3f38e5829057f62540f98a4"
+      "25dae719aed973467e7530d0298e3314a5469647a56b5df342d754f0dd012abd"
     ],
     "[\"apps/chat/lib/db/connection.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "a2d9607474436088dbcf7b37fefe01e4042e3b2dc3f38e5829057f62540f98a4"
+      "25dae719aed973467e7530d0298e3314a5469647a56b5df342d754f0dd012abd"
     ],
     "[\"apps/chat/lib/db/connection.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "a2d9607474436088dbcf7b37fefe01e4042e3b2dc3f38e5829057f62540f98a4"
+      "25dae719aed973467e7530d0298e3314a5469647a56b5df342d754f0dd012abd"
     ],
     "[\"apps/chat/lib/db/connection.ts\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": [
       "5008f250487dee0becae254c246f73b45fda44c9222987ee6374b0dba3c4cdef"
@@ -22765,7 +22736,7 @@
       "444cad02dcb854ed5620db0fcecc6c0b60121358ad06540c1b3b4f92ef69aad4"
     ],
     "[\"apps/chat/lib/db/connection.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "af5f47994e168161707cc61a1d113ff33cf9d8e86ea839d948b446a171225afb"
+      "c4152a9e7eee4a606937cb5161efcde80cb70ef79d92430f0b002ba3aa81d086"
     ],
     "[\"apps/chat/lib/db/credits.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "bd52369cfe8be5fdc5f282374ed110f4477070b34267eef7bb05cc896139b7fb",
@@ -23110,31 +23081,25 @@
       "71c521769c581ce35b4d3ba667b241e1abec836090b0351ecbbbed618c73837b"
     ],
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "f4ed9ec7f85c0d6150febfcd2fb1bc975e812085b35de9d857dbc8cf25f26bb9"
+      "a0dcc23e5797aa45d5095281189e44ad22e6346e9862e67b4944a3735ee6faa7"
     ],
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "f4ed9ec7f85c0d6150febfcd2fb1bc975e812085b35de9d857dbc8cf25f26bb9"
+      "a0dcc23e5797aa45d5095281189e44ad22e6346e9862e67b4944a3735ee6faa7"
     ],
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "cc31360803963ac0cd1e4af525b670292fb22f05c7844294a8fe72205a4f4374"
+      "88da3af7e84534f0fa8309b6b9593e10feb2e3cc68b733a6418b06dda59d365e"
     ],
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "85149db5f772fafbd72041a3de7b15806684a5b16354ec5476148714db7e187c"
+      "2924297bc2aaf6bcf237227e7adea111de801768e66ed700cd369c96bf0fe2f8"
     ],
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "85149db5f772fafbd72041a3de7b15806684a5b16354ec5476148714db7e187c"
-    ],
-    "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "85149db5f772fafbd72041a3de7b15806684a5b16354ec5476148714db7e187c"
-    ],
-    "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "85149db5f772fafbd72041a3de7b15806684a5b16354ec5476148714db7e187c"
+      "2924297bc2aaf6bcf237227e7adea111de801768e66ed700cd369c96bf0fe2f8"
     ],
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "85149db5f772fafbd72041a3de7b15806684a5b16354ec5476148714db7e187c"
+      "2924297bc2aaf6bcf237227e7adea111de801768e66ed700cd369c96bf0fe2f8"
     ],
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "85149db5f772fafbd72041a3de7b15806684a5b16354ec5476148714db7e187c"
+      "2924297bc2aaf6bcf237227e7adea111de801768e66ed700cd369c96bf0fe2f8"
     ],
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "59a8b0e3da3e68f8934ab46c0d60308bc9575342f0941ca731c8c825c36b724c"
@@ -23444,31 +23409,25 @@
       "48459bfe41f443cfb62c92e3cdf17bedc52013653a926cd84f60a57aae0f6b4c"
     ],
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "62c9bb0076c6d5f3c1cb26cf0d505f887306e180710b16549f5cf67061887d11"
+      "a2cd26666c8d69245360616b6a483ff0853c361ab1b0eea3e07bf2bb772c1ab9"
     ],
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "62c9bb0076c6d5f3c1cb26cf0d505f887306e180710b16549f5cf67061887d11"
+      "a2cd26666c8d69245360616b6a483ff0853c361ab1b0eea3e07bf2bb772c1ab9"
     ],
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "2c8f47058228a01d18d280040b2ba6c2cdaae35ccad3d7916c22919a25914800"
+      "b98b0ecdd1b45455eb8065c912a9fd7c27aea047685697ce7685c9f8e87e5838"
     ],
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "87ab75d9d5f9a832d4df7c3aeeee34f375725d1277477804827fd8b6cc0ae5af"
+      "93c7aa52894189bb81d89e7006e50f2f28047f4905c8882a4e2c3fa6fba7222f"
     ],
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "87ab75d9d5f9a832d4df7c3aeeee34f375725d1277477804827fd8b6cc0ae5af"
-    ],
-    "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "87ab75d9d5f9a832d4df7c3aeeee34f375725d1277477804827fd8b6cc0ae5af"
-    ],
-    "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "87ab75d9d5f9a832d4df7c3aeeee34f375725d1277477804827fd8b6cc0ae5af"
+      "93c7aa52894189bb81d89e7006e50f2f28047f4905c8882a4e2c3fa6fba7222f"
     ],
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "87ab75d9d5f9a832d4df7c3aeeee34f375725d1277477804827fd8b6cc0ae5af"
+      "93c7aa52894189bb81d89e7006e50f2f28047f4905c8882a4e2c3fa6fba7222f"
     ],
     "[\"apps/chat/lib/db/eve-guest-cleanup.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": [
-      "87ab75d9d5f9a832d4df7c3aeeee34f375725d1277477804827fd8b6cc0ae5af"
+      "93c7aa52894189bb81d89e7006e50f2f28047f4905c8882a4e2c3fa6fba7222f"
     ],
     "[\"apps/chat/lib/db/eve-guests.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "e498793009da34d22be4fc32110ac57c92a2af9035c89d16ca30793c6ef5d07f"
@@ -23860,37 +23819,31 @@
       "a2ce4b84111a8baa656c08cf0fca68597db7e32023a8ecc1f057a1099c9d00c5"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "0415dc83684f0e218854c6a16ace050458a4386c2cd06ee92b876ce4480cc5b1"
+      "370cff876644c65b8065f78dfdb312b13382bd382b0ea55e121b6cb30bcbd2af"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "0415dc83684f0e218854c6a16ace050458a4386c2cd06ee92b876ce4480cc5b1"
+      "370cff876644c65b8065f78dfdb312b13382bd382b0ea55e121b6cb30bcbd2af"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
+      "8dacda08c212857eeaf7f678c1496ea49226586d70cdd0970dcb24c77c0f71e0"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
+      "8dacda08c212857eeaf7f678c1496ea49226586d70cdd0970dcb24c77c0f71e0"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
+      "8dacda08c212857eeaf7f678c1496ea49226586d70cdd0970dcb24c77c0f71e0"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
+      "8dacda08c212857eeaf7f678c1496ea49226586d70cdd0970dcb24c77c0f71e0"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"no-continue\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
+      "8dacda08c212857eeaf7f678c1496ea49226586d70cdd0970dcb24c77c0f71e0"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
-    ],
-    "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
-    ],
-    "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
+      "8dacda08c212857eeaf7f678c1496ea49226586d70cdd0970dcb24c77c0f71e0"
     ],
     "[\"apps/chat/lib/db/eve-sandbox-run-coverage.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "4ec753d7744fd6c85c04eb068cd3deee26a81ebda80a4d99b5c710cb1191382f"
+      "8dacda08c212857eeaf7f678c1496ea49226586d70cdd0970dcb24c77c0f71e0"
     ],
     "[\"apps/chat/lib/db/eve-search.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "3bb0f39a4a17f653d310080d9f82d9eaec6f8e48702e2ace56479e1cb84e102c"
@@ -24297,7 +24250,7 @@
     ],
     "[\"apps/chat/lib/db/migrate.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "b3c306133aadc16a3a0126556958f1758a15e1e0fa2cc9a81b002268e7a9a56d",
-      "469600c8da2a420f872a59d58c437da5fd2ac92a554c67021f59c8bf23c71ce4"
+      "77a8d946eea974f6775734b5ed2dc04a640a248a1814c90ec430f2aad0411461"
     ],
     "[\"apps/chat/lib/db/migrate.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
       "90e76350d675aecfe740de45aec6614e41b38ce6959cfc59a62619dffbe6daa8"
@@ -24307,7 +24260,7 @@
     ],
     "[\"apps/chat/lib/db/migrate.ts\",\"no-console\",\"oxlint-disable\"]": [
       "90e76350d675aecfe740de45aec6614e41b38ce6959cfc59a62619dffbe6daa8",
-      "9f0eb74a027f5fd3019aca9cf56a1723b8fb6b4ab6a14314512128a2a2eb1731"
+      "867d6ca0a3b24a7f858b9a859b24571c069e2527739adaf39b12c87562d51f21"
     ],
     "[\"apps/chat/lib/db/migrate.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "90e76350d675aecfe740de45aec6614e41b38ce6959cfc59a62619dffbe6daa8"
@@ -24321,11 +24274,8 @@
     "[\"apps/chat/lib/db/migrate.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "90e76350d675aecfe740de45aec6614e41b38ce6959cfc59a62619dffbe6daa8"
     ],
-    "[\"apps/chat/lib/db/migrate.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "9f0eb74a027f5fd3019aca9cf56a1723b8fb6b4ab6a14314512128a2a2eb1731"
-    ],
     "[\"apps/chat/lib/db/migrate.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": [
-      "d35d68d63b7f607a5fb0a0f63c81b53a6831339751e13848e1284b05c4bf94cc"
+      "8a7878a8472f0f05151ecfbe78736ebd2e55261bed0915f803e9e4f65d9a5b09"
     ],
     "[\"apps/chat/lib/db/migration-history.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "3de2bbe3ded2b0f0c0c28289acf5367b0910a39a4b95398c3a0135761c5a86f8"
@@ -25864,31 +25814,25 @@
       "3bd9380e26ccd4c1205b69cf62cd064e22081b6e969a41bbe3f9ec7df0763207"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "67acd744d4fad583abed10217762678e14b94ffa3ad04d9a9f77aca1e4a9b344"
+      "05cd1b821c0854519686b8a46842c72320d8e58dc99ac7fca574e4a735fbca04"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "67acd744d4fad583abed10217762678e14b94ffa3ad04d9a9f77aca1e4a9b344"
+      "05cd1b821c0854519686b8a46842c72320d8e58dc99ac7fca574e4a735fbca04"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "ea1f7bded4fed673024f2c4e511c0f5f10b81e1eaaa27c72277723541abdaf8a"
+      "dd656d95cc6b46b7355e1436d3b77db85b18f8dddd974b13428da5176f4c3152"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "e5eaceb6342b074ea5a5aecfadd730d7e75ef22ada99ab60cd5c5fb1193b42de"
+      "780fb6bc07e4f052c9acaeda582e2c63a6c324502e15827bb05bf4ca8e5728e2"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "e5eaceb6342b074ea5a5aecfadd730d7e75ef22ada99ab60cd5c5fb1193b42de"
+      "780fb6bc07e4f052c9acaeda582e2c63a6c324502e15827bb05bf4ca8e5728e2"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "e5eaceb6342b074ea5a5aecfadd730d7e75ef22ada99ab60cd5c5fb1193b42de"
-    ],
-    "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "e5eaceb6342b074ea5a5aecfadd730d7e75ef22ada99ab60cd5c5fb1193b42de"
-    ],
-    "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "e5eaceb6342b074ea5a5aecfadd730d7e75ef22ada99ab60cd5c5fb1193b42de"
+      "780fb6bc07e4f052c9acaeda582e2c63a6c324502e15827bb05bf4ca8e5728e2"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "e5eaceb6342b074ea5a5aecfadd730d7e75ef22ada99ab60cd5c5fb1193b42de"
+      "780fb6bc07e4f052c9acaeda582e2c63a6c324502e15827bb05bf4ca8e5728e2"
     ],
     "[\"apps/chat/lib/eve/delete-local-conversation.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "6583dc98bb3ff5c9f9312a2ad9c06aad210dc7e8bf8255c2cdb6231f4fffdb43"
@@ -26942,40 +26886,33 @@
     "[\"apps/chat/lib/eve/image-context.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "0998ca5710aec9ebc74f87d362c84a7a39cd5595682cbec716a3fb470ffdef18"
     ],
-    "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "81c9d6ecdc96220844ec19ea4f10959cb5a571fd15c4eb61f41d4b21bf31b6b0",
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
-    ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "81c9d6ecdc96220844ec19ea4f10959cb5a571fd15c4eb61f41d4b21bf31b6b0",
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
+      "3558e0710eb1d15a3629f9949c682c493c2db807968897b6ecff862744787947",
+      "31dcc00487c9e84dd1a650ace8734f1a5419d8c5470c36a4b4b3b71cce4b9c04"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "99aa1f568d2a8467976a0ca7dab17203602e90269be338bc551aaf4d97d73665"
+      "d262f279d2d0168d4065b527ad18d43308758cf840d976b1f14c29acf56f1667"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "99aa1f568d2a8467976a0ca7dab17203602e90269be338bc551aaf4d97d73665"
+      "d262f279d2d0168d4065b527ad18d43308758cf840d976b1f14c29acf56f1667"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
+      "31dcc00487c9e84dd1a650ace8734f1a5419d8c5470c36a4b4b3b71cce4b9c04"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
+      "31dcc00487c9e84dd1a650ace8734f1a5419d8c5470c36a4b4b3b71cce4b9c04"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
+      "31dcc00487c9e84dd1a650ace8734f1a5419d8c5470c36a4b4b3b71cce4b9c04"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"no-continue\",\"oxlint-disable\"]": [
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
-    ],
-    "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
+      "31dcc00487c9e84dd1a650ace8734f1a5419d8c5470c36a4b4b3b71cce4b9c04"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
+      "31dcc00487c9e84dd1a650ace8734f1a5419d8c5470c36a4b4b3b71cce4b9c04"
     ],
     "[\"apps/chat/lib/eve/image-context.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "58b0b9805ccd56f35f3d599afe4fc932d3c3e9657749a9bf6e9609b0b432c3b4"
+      "31dcc00487c9e84dd1a650ace8734f1a5419d8c5470c36a4b4b3b71cce4b9c04"
     ],
     "[\"apps/chat/lib/eve/installed-tools.test.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "5c1f7c90a035aa193c30a04ae17112282204ddde21b49a8615e98ec98264b7d1"
@@ -27095,42 +27032,36 @@
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "2bb788fd674cbbebf09c4e64dd6de79432a1a46c2e41ae64f6e6529666a676fc",
-      "137cc07dcc357ad2bbd1340ca78d49a85c0f80dd2de0e85d40ab16af1c7eea44"
+      "e4c148ffb1bd600ca4d028525a8fbe0e169507654060fd2fe70c38d13efeb131"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "2562b00c31be7f8825119c365701e4622abe13efdd27b4517ca8c1fb06e4e980",
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
+      "9aa532f0fdec8ace720196b137b5fc98ad5e39770c319f2439dc6d5ced782830"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "2562b00c31be7f8825119c365701e4622abe13efdd27b4517ca8c1fb06e4e980",
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
+      "9aa532f0fdec8ace720196b137b5fc98ad5e39770c319f2439dc6d5ced782830"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "4624f6110a3010aee03065fe57708282267dc542bb92249405da415e6d0028b1"
+      "82ce44cd2efa356e7d0faefadb6736b798be1d5b6bfedf56186e8c9dad1cd9b7"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "4624f6110a3010aee03065fe57708282267dc542bb92249405da415e6d0028b1"
+      "82ce44cd2efa356e7d0faefadb6736b798be1d5b6bfedf56186e8c9dad1cd9b7"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
+      "9aa532f0fdec8ace720196b137b5fc98ad5e39770c319f2439dc6d5ced782830"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
+      "9aa532f0fdec8ace720196b137b5fc98ad5e39770c319f2439dc6d5ced782830"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
+      "9aa532f0fdec8ace720196b137b5fc98ad5e39770c319f2439dc6d5ced782830"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
-    ],
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
-    ],
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
+      "9aa532f0fdec8ace720196b137b5fc98ad5e39770c319f2439dc6d5ced782830"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-payload-purge.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "2b4ddffa3060fce8319f39d6b5aa4ee36377d7baeef23027957fd8615be58abc"
+      "9aa532f0fdec8ace720196b137b5fc98ad5e39770c319f2439dc6d5ced782830"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-fence.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "f36c3f4582eb24f9ab58fb7f5715781b1c3dfcae02e1716c70b5c595ffdd6c85"
@@ -27151,34 +27082,28 @@
       "c7b76906a2116964bf75b8bb8b2c0daaed1f7c5129de3a04347569b741317679"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "618213c5da0827d1b24ef3278869142fcb1ff5e841218cd1dde755fee5d414d9"
+      "4d36e941590246ea38abc7276312ec9f4baa568232b143535520feb36932a127"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "618213c5da0827d1b24ef3278869142fcb1ff5e841218cd1dde755fee5d414d9"
+      "4d36e941590246ea38abc7276312ec9f4baa568232b143535520feb36932a127"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "db9b8dbfd262ef67228aea6b8ba9745ee3b396df58cedfe8606cde428b5f8a7c"
+      "6561ebc197ba485ff3ece66e7b001605388d9093d3398e4ada250993f9916b12"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "f2bbb38afc4b96fed9e2f201ea257bbc91f903c5b49d6d0741f77c9237480778"
+      "80142c6002537e2c1f1538d099762e47b6e0bc90d057bcba4fd457d7fae856bc"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "f2bbb38afc4b96fed9e2f201ea257bbc91f903c5b49d6d0741f77c9237480778"
+      "80142c6002537e2c1f1538d099762e47b6e0bc90d057bcba4fd457d7fae856bc"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "f2bbb38afc4b96fed9e2f201ea257bbc91f903c5b49d6d0741f77c9237480778"
+      "80142c6002537e2c1f1538d099762e47b6e0bc90d057bcba4fd457d7fae856bc"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "f2bbb38afc4b96fed9e2f201ea257bbc91f903c5b49d6d0741f77c9237480778"
-    ],
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "f2bbb38afc4b96fed9e2f201ea257bbc91f903c5b49d6d0741f77c9237480778"
-    ],
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "f2bbb38afc4b96fed9e2f201ea257bbc91f903c5b49d6d0741f77c9237480778"
+      "80142c6002537e2c1f1538d099762e47b6e0bc90d057bcba4fd457d7fae856bc"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-inventory.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "f2bbb38afc4b96fed9e2f201ea257bbc91f903c5b49d6d0741f77c9237480778"
+      "80142c6002537e2c1f1538d099762e47b6e0bc90d057bcba4fd457d7fae856bc"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-queue-purge.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "3227b9522ce8b6979cdaca7897e31f74f56e79c0abf947c06f85ac90a9396d23",
@@ -27318,37 +27243,31 @@
       "68e839ba55f3a40a29c432839ea682eed93028fc8bb0c4ce6717ebc407d160bb"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "8972f261a4b67bd79978e20a377152c5f182675baa3287f91cacc567686304c6"
+      "a96d4495ae79da347323adaad00bbc30c6f5540b5fb5931c61b360316adfc939"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "8972f261a4b67bd79978e20a377152c5f182675baa3287f91cacc567686304c6"
+      "a96d4495ae79da347323adaad00bbc30c6f5540b5fb5931c61b360316adfc939"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "670e60c769fc54910208460d4f1cc284acf6f97c72f4ba2b5aee5793cfc28bdd"
+      "2282ac6b4113d205b471d64d34ac4a7ca31e1b5d141182ea4907f4a83d9a8080"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
+      "38c6906c1ef35c130f8c5ecbbbd7e3479eff6e8c4c3f49b032770ccb8ff1651c"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
+      "38c6906c1ef35c130f8c5ecbbbd7e3479eff6e8c4c3f49b032770ccb8ff1651c"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
+      "38c6906c1ef35c130f8c5ecbbbd7e3479eff6e8c4c3f49b032770ccb8ff1651c"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
+      "38c6906c1ef35c130f8c5ecbbbd7e3479eff6e8c4c3f49b032770ccb8ff1651c"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
-    ],
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
-    ],
-    "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
+      "38c6906c1ef35c130f8c5ecbbbd7e3479eff6e8c4c3f49b032770ccb8ff1651c"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "f2374c66282fb9de482681b05907bf512bb1354a62ecd10c64577991b211dec4"
+      "38c6906c1ef35c130f8c5ecbbbd7e3479eff6e8c4c3f49b032770ccb8ff1651c"
     ],
     "[\"apps/chat/lib/eve/lifecycle/postgres/eve-session-fence.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "b9f589543dc4b915b4b3a0defca30997ad4c6fb10193c7f20470a9730a83e82b",
@@ -27566,46 +27485,40 @@
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "eccbaf47dc1845dfb0a15a67944cbf5711837ff9fede2d1fa6903f8a23df6a31",
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "ccb6f306008d0aafe59da8ed939b9344d933ae2540a326fcb9f3bc41ccf07a8c"
+      "e6cebd570e104bee7f6b2f3058cf31bdc315055729728bfa2196e9d42b5c763b"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"init-declarations\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"no-continue\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
-    ],
-    "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
-    ],
-    "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "1ed3f3ea0d2e1356cf8a21e5b5672ec145e3a2cd99104822527c32870e95372e"
+      "d314889a6fae2b4698b4acfe819ad432347c338865b9145d5423a014bf188f1a"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "42f2d2ab48cb73280d3ec2c0a4dfbb45c3527bf266ea9065a70b05f3ad611754"
     ],
     "[\"apps/chat/lib/eve/local-sandbox-inventory.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "22deaf9523206cd4343bd9f8463772aeece5b59db7bb6db25ce96e02562d0cf8"
+      "336c66d92d81ab629ac2f8b66862780929768bbdabefaf8e0cb27d5e77567442"
     ],
     "[\"apps/chat/lib/eve/logical-chat.test.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "1b5830c44c8862567568f3cd446673402df96d57a0babfa68d6257f2b9cb5093",
@@ -30795,17 +30708,11 @@
     "[\"apps/chat/lib/features-config.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "da94d8a2c217640da073fad0aff8a7ed14d4de77596d97663f4b27fce13bb0ce"
     ],
-    "[\"apps/chat/lib/features-config.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "2a852fa9192dc1a468f1586a2d45ed65fd0d404104feceb0a233c364b9f2f2d5"
-    ],
-    "[\"apps/chat/lib/features-config.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "2a852fa9192dc1a468f1586a2d45ed65fd0d404104feceb0a233c364b9f2f2d5"
-    ],
     "[\"apps/chat/lib/features-config.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "2a852fa9192dc1a468f1586a2d45ed65fd0d404104feceb0a233c364b9f2f2d5"
+      "4fecd7f4fd9220e7dd75de7cc661f4c9448dfce6ef0c5749c89cc24f24f40d75"
     ],
     "[\"apps/chat/lib/features-config.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "f522965f2e1048436281bc5bb291fc25b402a5b0d2f634390918a8a9602c9f9a"
+      "93bd0f20cd22f980720e80761e5feecb7af5f949993afbf3d14ea12c0dd06477"
     ],
     "[\"apps/chat/lib/file-content-response.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "6642b8f978b3286aa0ef5a36823a81239d86cc12c19efa0397519b1634f40615"
@@ -32678,31 +32585,31 @@
       "208aa4f36da59f60bc0cfbfa918605e87af5fa4af8b9ce11fec815d11414dc41"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "380f9db208fc6c84da292d2536f29ef40a878f993a80555b666b65cacc8f634a"
+      "6a5b1d8e37b7d462cf1def27bf2cbaf3556287dd9085c403e22bc5d0307735aa"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "24ced3ce279ff31afd61790229e7faaca1b77b16fcde47bebe980ba5ddde778c"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"eslint/no-promise-executor-return\",\"oxlint-disable\"]": [
-      "3c04641e96d7d29d14f787ed965014d50ef06246cf2f0456a96c0a9eea69208e"
+      "0dd1f0e058d2efeba0bc8e1ebcf5426aceeeb4f1d4e1f41f51e4e91880d695f7"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"promise/avoid-new\",\"oxlint-disable\"]": [
-      "e3c4b145b758b3456c23532671c9842c6783a9875ef5d0e3325dc67242c0aa74"
+      "cc6f91cd2cfebd05b704090bd32eb1959972a34e08298e6781ab572c15f0364f"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
-      "26d8700508deba6e0b094c192b2406f6a37f3d26b29414bb55e39a0a25425025"
+      "8db66b282aba8519781e5fc04deefe2e9aa1c1248e995772189c7d97d371fced"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"eslint/require-await\",\"oxlint-disable\"]": [
-      "e7d60e9e91f17b00f8a5641f297c989d4f9bb99bcfdac7114ceb56795494ee81"
+      "d471d3f4886e239a058138b43b5da9c89c479a19e943ff01b42c2ce2b7662661"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"eslint/sort-keys\",\"oxlint-disable\"]": [
-      "e60b52242ad099ebf8e8e41b6a2658bbe86ed69e693150d82b1011703461bf8b"
+      "6d69d6c9781c0c366c36edadbaf57f5211f1dc45cd93aab8e35a9da89fcb5258"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"unicorn/consistent-function-scoping\",\"oxlint-disable\"]": [
-      "de0c81bb7b43e8c23cce33a4f95f934c4fad55011f98bd22624ce8a8c903f03c"
+      "d264222dad3225ff4c5273376b7d7f4063e44658da4e8b7c4ab03ab840799833"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"unicorn/no-await-expression-member\",\"oxlint-disable\"]": [
-      "54fd6b1d733da17324994ed4b1cf3eb5a0d069c4bea9eeefad66215e00ec7ecf"
+      "b92c6c16a38ab5521341b70f41d8f6c75ea9541810e324cab25dc46384de9c98"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "a72d25851dd15263b2214ab77da26133c375a94182bed5bb0720683cdcbbc88c",
@@ -32718,7 +32625,7 @@
       "1dccf16b453d9c3941e8102b69a2178b8bed3bfea72fd0598b3b2e5eb02bf20a",
       "c862df77ca8e45819ab34c8aa36af0a9da3350a85a1da80d509fc283c30f1117",
       "82272484a05ec9fdb8a7c32f21fb3059225e490a909d5dfcd2f0b3b5c5f09389",
-      "78513cfad25f08e3caa6ba7d1491aa5e06d03ecf5c510235812a0bf930b259d1",
+      "7b2e79aa35fad7d6fc444b6c14601165d434957bca381f76f07add27b2de6a3c",
       "2a388eb79cb022236e4236718fee1b3559272005594b1e4d95218295bd69782c",
       "0a09e4af97b0bd2f69c6af9b93284c53fbfc6cc96d5396093c8fc6a7fc9b0fb2",
       "d3198f93e0d98adcd680a333233e7a1c46716d2e1b1791475ab99379d2283551",
@@ -32754,7 +32661,7 @@
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "bccd6e5462cafe92f769b27d10a3508ecf672e81dff9085bbed5bb17ab302616",
       "b4d59a80c77b35de44ec78df5859751b2082e541534bda407d5b52ee4d367ce4",
-      "c571a44eb228b240d7ce9dfb48f56a328cfcee274e0ddcdb8bb38c12694eb114",
+      "affe9ea7f3cf8058ed06c69a805f60919c2bf65ed0e221bf6c5fad3877dee217",
       "399df5762ba0072623621bf6779826318448ec27a0762751e9eb0ef93a3fff1f",
       "54859a1dde698bc0ffeecc82ea63d0aa95d8f3b46ee24968f0dcf8a40e684fc9",
       "ee37e38693e8b4a19cb154feb88c70043d08d5c66e99dc7089927b508bc48e8f",
@@ -32769,7 +32676,7 @@
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "bccd6e5462cafe92f769b27d10a3508ecf672e81dff9085bbed5bb17ab302616",
       "b4d59a80c77b35de44ec78df5859751b2082e541534bda407d5b52ee4d367ce4",
-      "c571a44eb228b240d7ce9dfb48f56a328cfcee274e0ddcdb8bb38c12694eb114",
+      "affe9ea7f3cf8058ed06c69a805f60919c2bf65ed0e221bf6c5fad3877dee217",
       "a1d66623f5a648ead1e9bf4daab45ee6e1057a14b3b77468eb2aad2b54dfa140",
       "54859a1dde698bc0ffeecc82ea63d0aa95d8f3b46ee24968f0dcf8a40e684fc9",
       "2d70ce11b800d6a067e0b12b38637649374baf57a0844e6be49e5ed0e50d4628",
@@ -32841,7 +32748,7 @@
       "5206d76d7df51a3565bfe8af6134079ff8c0fb5a08ab33739a859ef26a3a88be"
     ],
     "[\"apps/chat/tests/eve-contracts.e2e.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "6828396fcf5d2cdfe6338bb5eb2d1e548233d991eba03d20bdb6238c29382278"
+      "9430b7e9524a938e79ffffc58cf9d66376a86ede6824a7eaec17209607f73b0e"
     ],
     "[\"apps/chat/tests/eve-conversation-fixture.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "f8cb14584a7756c772f2ee3ad22494ec0704e54e0e07d1b5adf85d0344233279"
@@ -33271,7 +33178,7 @@
       "05090004ebe541bedf17938e06ec051ad9164500e905749c0fd9855e51c4247c"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "2ed84449f30479cc41dc5f54a8c63fd630c46a91d82dc6e7642741aa59a52ccf"
+      "076eab73fa5d0ab1ea2e7adf0899a6c8ea1e55de451a08ae789963578d95c9ae"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "93c8d22e5ce4a466821875489afb0d78c0ca9bd6c2e0f9ffc893b929f14fe266"
@@ -33286,39 +33193,39 @@
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "b9591df9687ab82d709fadbe040c9eca3a68a1d4e81d2d062cb028a3c969fc90",
       "5b9c60438bc480589c56fc841503c42b76fc5827dfab2d4b6b370e295fee3943",
-      "fdc76137030af480ca2175a46e899112b764b683cabae220d2bbd653369d7214",
+      "c5bb81f2157f9db6b9153cf4e3397ab0cd8bce2ef044fe4186d18cfc013eff01",
       "040df56d556b2bafc5c9a4028f8eedbd6065e3f0c86eee75dd72fceb62de50cc"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "64f90f76bb7abbfc1668505df346b1758b844683dc8ac478aac7499bd586c50d",
-      "36353f2dd1be4eff328a5056220ce6fe7ad8831b8b7a302bd820328dfbcbd204",
+      "68b33d8f6e1561011db11aba78901258e9371d3b523ceef9bcf33494695fcbcd",
       "4b5b5c18c70e44ef888fdb55d742b9db10eca518968ac500ae58ffb1415509ed",
       "0caf11f88ac03092de8672f59276e98e1627d027319e425a826e5e490039dc43",
       "b4e87a95f85931e55ed50cd0b149e9d970db03e07c226a589f6c3842f2fc3a50"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "fdc76137030af480ca2175a46e899112b764b683cabae220d2bbd653369d7214",
+      "c5bb81f2157f9db6b9153cf4e3397ab0cd8bce2ef044fe4186d18cfc013eff01",
       "6265efac6cb6de6bc0525de98c1298b2ea87e1c8877cc60eb0ad319b85f2e841"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "fdc76137030af480ca2175a46e899112b764b683cabae220d2bbd653369d7214",
+      "c5bb81f2157f9db6b9153cf4e3397ab0cd8bce2ef044fe4186d18cfc013eff01",
       "6265efac6cb6de6bc0525de98c1298b2ea87e1c8877cc60eb0ad319b85f2e841"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "fdc76137030af480ca2175a46e899112b764b683cabae220d2bbd653369d7214",
+      "c5bb81f2157f9db6b9153cf4e3397ab0cd8bce2ef044fe4186d18cfc013eff01",
       "ac64e1acdcdab3779f3126c6fc0b9fc2d87bcd08c7ef8ef905097f27a5dba47d",
       "040df56d556b2bafc5c9a4028f8eedbd6065e3f0c86eee75dd72fceb62de50cc",
       "6265efac6cb6de6bc0525de98c1298b2ea87e1c8877cc60eb0ad319b85f2e841"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "fdc76137030af480ca2175a46e899112b764b683cabae220d2bbd653369d7214",
+      "c5bb81f2157f9db6b9153cf4e3397ab0cd8bce2ef044fe4186d18cfc013eff01",
       "040df56d556b2bafc5c9a4028f8eedbd6065e3f0c86eee75dd72fceb62de50cc"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "fdc76137030af480ca2175a46e899112b764b683cabae220d2bbd653369d7214"
+      "c5bb81f2157f9db6b9153cf4e3397ab0cd8bce2ef044fe4186d18cfc013eff01"
     ],
     "[\"apps/chat/tests/eve-creation-recovery.e2e.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "fdc76137030af480ca2175a46e899112b764b683cabae220d2bbd653369d7214",
+      "c5bb81f2157f9db6b9153cf4e3397ab0cd8bce2ef044fe4186d18cfc013eff01",
       "ac64e1acdcdab3779f3126c6fc0b9fc2d87bcd08c7ef8ef905097f27a5dba47d",
       "6265efac6cb6de6bc0525de98c1298b2ea87e1c8877cc60eb0ad319b85f2e841"
     ],
@@ -34474,16 +34381,16 @@
       "52d2a9f3cd683749b7424e46c72b8a71e91056999368d65781fa95afd1625271"
     ],
     "[\"apps/chat/tests/eve-fixture/agent/tools/confirm_note.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "753af132ce7697194a782409afbd7b38a07391c256d4da0ab6f8b23dcb96a200"
+      "f097b6bcb20ec2bb14d819d5b29b7ff237aadfa50bf262ca8dd948eec861cab0"
     ],
     "[\"apps/chat/tests/eve-fixture/agent/tools/confirm_note.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "753af132ce7697194a782409afbd7b38a07391c256d4da0ab6f8b23dcb96a200"
+      "f097b6bcb20ec2bb14d819d5b29b7ff237aadfa50bf262ca8dd948eec861cab0"
     ],
     "[\"apps/chat/tests/eve-fixture/agent/tools/confirm_note.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
-      "753af132ce7697194a782409afbd7b38a07391c256d4da0ab6f8b23dcb96a200"
+      "f097b6bcb20ec2bb14d819d5b29b7ff237aadfa50bf262ca8dd948eec861cab0"
     ],
     "[\"apps/chat/tests/eve-fixture/agent/tools/confirm_note.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "3fa92d2c3431f3e05cec1739cddb7ec5478451086f13c4ad375f4c543dc3d1da"
+      "83c33b0247b22e102f439f0a25370d75249a016735866ab4c2298619e0095473"
     ],
     "[\"apps/chat/tests/eve-fixture/agent/tools/confirm_note.ts\",\"import/no-default-export\",\"oxlint-disable\"]": [
       "ce0535b447fa3366ece481db457c0d35f46988f3fda8814e5ebaf029b0df7f3b"
@@ -34617,7 +34524,7 @@
       "68ddfec8ce6c1d7b52852d739f015f3553ce7d7816dacb6b9648599cc2228872"
     ],
     "[\"apps/chat/tests/eve-guest-cleanup.e2e.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
-      "300d7423fa163151da40254e7ce4907b3f20b8b0c2b533caa2f32af41a17331a"
+      "3c6d45c96da55377a1b064215cad393c89ee6dd9d70e0275ca49c2f8c303ed43"
     ],
     "[\"apps/chat/tests/eve-guest-cleanup.e2e.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "3d9264065a8273ca88e49c56e1edb4e307a8590dc4a8926ea204afec646833db",
@@ -34630,17 +34537,17 @@
     ],
     "[\"apps/chat/tests/eve-guest-cleanup.e2e.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "da9b02774199341a6cd8c8ff60c18e09488800eebdcc8dd32c681dd1481c8db0",
-      "1325d824b46f8a7c8103de145c8f51d64924b52322ac4cb7b12838ececa649e6"
+      "464e5f05ab1345fb9dd8a274ba5b3faf16d42fb65ba1d981943048198db19c00"
     ],
     "[\"apps/chat/tests/eve-guest-cleanup.e2e.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "dddb1bd38f93472f63480eb5adfdf8578325f451842a59ca2211c41f1bbc1b5c",
-      "393a6e94aa034c757b37cadc4d2d8d8a57eabe9a31eb3607ae12a9ef769ae180"
+      "c1c685609257ca669789b0b292f407e750d9be44ecd253964e5b7a47b1e7c32d"
     ],
     "[\"apps/chat/tests/eve-guest-cleanup.e2e.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "393a6e94aa034c757b37cadc4d2d8d8a57eabe9a31eb3607ae12a9ef769ae180"
+      "c1c685609257ca669789b0b292f407e750d9be44ecd253964e5b7a47b1e7c32d"
     ],
     "[\"apps/chat/tests/eve-guest-cleanup.e2e.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "393a6e94aa034c757b37cadc4d2d8d8a57eabe9a31eb3607ae12a9ef769ae180"
+      "c1c685609257ca669789b0b292f407e750d9be44ecd253964e5b7a47b1e7c32d"
     ],
     "[\"apps/chat/tests/eve-guest-cleanup.e2e.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "bbbf6d83e79f5e5aad42635c183ce5fde9f5ee9c4d1a725201f6c37053d19a4b",
@@ -35226,19 +35133,19 @@
       "feddc7b23b5650c1d67ec0eff98ad5f5e16b092cb48288b23bb1da38f130f8b1"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"eslint/no-loop-func\",\"oxlint-disable\"]": [
-      "5ab851884e77774bab4edd4364f9323a15644577de1c09f998f7c4e56182b96d"
+      "10a08a9de525db4651576b94c39e6fa2d9a5fbc653e6ce2d9e7900855e2f1d91"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"eslint/func-style\",\"oxlint-disable\"]": [
-      "d018abdd4a4ae9daa837aa6541723aceb622c82d74432ba9016971584e15676e"
+      "8f55dd51e15edac04176218eee2c1f79c8fcbc18abc98ef6e86c3d66df2e04d0"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
-      "61e33c628849eaeca93f743b791cb11bfa01854405c9844fad756cc60dbc794a"
+      "dbf192abba44c132d11f418d60cdf4523f7cb349f65301bab9ad83f052908df2"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"eslint/require-await\",\"oxlint-disable\"]": [
-      "d5929e651f0a52b1ae5b3aaf3562972f36b3d7054c1249c101c4a0d968ca928b"
+      "0276bcb4bab37d92f8b2d9fbade95a2a885c7382b9786e30c4b09236d1f0c6f9"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"eslint/sort-keys\",\"oxlint-disable\"]": [
-      "b25612d0ec1a183c233a320dd678fa7223031b7db12a55a12a4667dc761504c4"
+      "479d72b39acdd94a4ef71583d3d6aa428a8a1091ee87b9b6d6384b2573055928"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
       "6ffb9ef2a9fbcbdf49ed819fce533877b6db4e355077718478fa5b8a3f92bec9"
@@ -35256,29 +35163,29 @@
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
       "d01f07b6eb5279054cc9b7b8e2773713cc48a1f3fbf7e1f34936c80a37ecf63b",
-      "bb0ede5c80c0319a03cd03708fc61d9ef230ab04c81c82ff3230de7866ebf8b9"
+      "eaeb83bca5054a1cb844f4a67a1dc562cc9852ed36d8c782d71551cc9d076343"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "89d9d42d76e5f664119eeeecfb02dc9146f6b013f443ea087752c84ff58784bd",
-      "d8c04ed84e9fffe162155ae93af7d634dc54e860d774ea17313ebfac2a47521c"
+      "12f8efaf1ab031eb20d5e133495760da3c830253e2fca77d7159bd5fa46e111d"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "26ae69ac40a6019b251653c5bf38b1d8731f77f61f4ae638c317fc86b4a81a45",
-      "bb0ede5c80c0319a03cd03708fc61d9ef230ab04c81c82ff3230de7866ebf8b9"
+      "eaeb83bca5054a1cb844f4a67a1dc562cc9852ed36d8c782d71551cc9d076343"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"max-statements\",\"oxlint-disable\"]": [
       "3004e75b299d4d9a7de88e45ebad722d45e3f8bf6ff98d470cc925119d4a840f",
-      "bb0ede5c80c0319a03cd03708fc61d9ef230ab04c81c82ff3230de7866ebf8b9"
+      "eaeb83bca5054a1cb844f4a67a1dc562cc9852ed36d8c782d71551cc9d076343"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "3004e75b299d4d9a7de88e45ebad722d45e3f8bf6ff98d470cc925119d4a840f",
-      "bb0ede5c80c0319a03cd03708fc61d9ef230ab04c81c82ff3230de7866ebf8b9"
+      "eaeb83bca5054a1cb844f4a67a1dc562cc9852ed36d8c782d71551cc9d076343"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "bb0ede5c80c0319a03cd03708fc61d9ef230ab04c81c82ff3230de7866ebf8b9"
+      "eaeb83bca5054a1cb844f4a67a1dc562cc9852ed36d8c782d71551cc9d076343"
     ],
     "[\"apps/chat/tests/eve-mcp-native-approval.test.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
-      "bb0ede5c80c0319a03cd03708fc61d9ef230ab04c81c82ff3230de7866ebf8b9"
+      "eaeb83bca5054a1cb844f4a67a1dc562cc9852ed36d8c782d71551cc9d076343"
     ],
     "[\"apps/chat/tests/eve-mcp-oauth.e2e.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "d9b369f5267af6a83d794908c9214c97472a36c5fab0f8417f4cc059891cbf08"
@@ -35364,19 +35271,19 @@
       "8cd9fefc6345d0874a94bff77dc7a5d09063e2504e0c3b2dbc2335f94603baa8"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"eslint/no-promise-executor-return\",\"oxlint-disable\"]": [
-      "31985ced64d2f5496d99cc0534ee6a22aa957ca6d1f3e350001e29ac60d1bfc9"
+      "947408cc91db1ef8b55e2bbdff18173052b649868b740805f4fb51a7fe5c4eb5"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"promise/avoid-new\",\"oxlint-disable\"]": [
-      "47fa5854b3d572050ce188442f3fd9f4a860649ce70ef0c6f17a12d1e942324e"
+      "6c371dc7da8db31747a0bcafa22a96b780899345e64457f63d3eaee0ea80b334"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"eslint/func-style\",\"oxlint-disable\"]": [
-      "75f688531cf422986f72e1b40f3fe3054cc62b738475c672b0581b3b46906540"
+      "7cf20a05f2c58d35307cafc6b82e6bc6fca486f89db82ee27eb755824543a47d"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"eslint/sort-keys\",\"oxlint-disable\"]": [
-      "fa893e629c90b2974e29b71c8a4baca0c7d2f9f84c7e76234ee84f1ccf1b81a6"
+      "2f3c8e3d3a436a44382bd8fab5156ae6dd1ff6364c57bb8bbe653c4cae42a3f3"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"unicorn/no-await-expression-member\",\"oxlint-disable\"]": [
-      "fec1fdc15a431d2fb5268d5abb5d9c6bf2a08dc97ad89fcbb32d0f167e9aeb0e"
+      "db49241e70956dd6b53f6f81da3d680e08277fbc4baa12eeb39484e53660af75"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "f0582cf899243919e88dde18b6781be0e668a20dc671f245853f1d5ded433a44",
@@ -35387,59 +35294,59 @@
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "84f6eb1287b35bf977d0dda6848b099b10b0405479d9b6d90f06fbdb41d24932",
-      "f71f83024d69ce80bf338cdb80b24b9d2567a712cdd48f71c8b0d0289fdc7dab",
-      "b901d784afa928cab42fb3e3dfb289960308c62999081f7b92556d23d8d66dcd",
-      "9c9ccbaea5f3d4906e13a7849803e111478295ef4b1c6400d3ed06ddb8b0ee63",
-      "51a8296b01a20a41beed128d01552045c5d69cb0e2d25635aa89abe11eb72d10"
+      "37914c386e1bb0dca82b3d101bd654401b0dfe2675106c1e6367ec6a952d85bd",
+      "35155c7bd23cc46524750037c1c37d76465135827f72a2daae81de1a657f1ad5",
+      "cbd48618c9bff63b986dc311d36f63c7601e9e8b5e2482d62225c4fec37f2e64",
+      "f4555315ac68e884e1c19f0f4aaab21a4a280fcfa5d5f370c5a6e9111f23b159"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"init-declarations\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa",
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02",
-      "8a3b809f834d6863eb2e3f7c41a1584e9833a6e9df5a06154009d37f0e6acb6e",
-      "08a7c67e148e5a21be483f918675c1db1acbdde25aebddf49670bcc416ade0e8",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e",
+      "07ceb5fcbf05b09b039241aebec417feff3daac031f9e4bb90c49fb571e0dcd9",
+      "cdc238ea0463c8a0c0f4428df02bcc74c6214221f3fbefc0de51017cfed2d77f",
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"max-statements\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa",
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02",
-      "8a3b809f834d6863eb2e3f7c41a1584e9833a6e9df5a06154009d37f0e6acb6e",
-      "08a7c67e148e5a21be483f918675c1db1acbdde25aebddf49670bcc416ade0e8",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e",
+      "07ceb5fcbf05b09b039241aebec417feff3daac031f9e4bb90c49fb571e0dcd9",
+      "cdc238ea0463c8a0c0f4428df02bcc74c6214221f3fbefc0de51017cfed2d77f",
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa",
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02",
-      "8a3b809f834d6863eb2e3f7c41a1584e9833a6e9df5a06154009d37f0e6acb6e",
-      "08a7c67e148e5a21be483f918675c1db1acbdde25aebddf49670bcc416ade0e8",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e",
+      "07ceb5fcbf05b09b039241aebec417feff3daac031f9e4bb90c49fb571e0dcd9",
+      "cdc238ea0463c8a0c0f4428df02bcc74c6214221f3fbefc0de51017cfed2d77f",
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"no-undefined\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa",
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa",
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02",
-      "8a3b809f834d6863eb2e3f7c41a1584e9833a6e9df5a06154009d37f0e6acb6e",
-      "08a7c67e148e5a21be483f918675c1db1acbdde25aebddf49670bcc416ade0e8",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e",
+      "07ceb5fcbf05b09b039241aebec417feff3daac031f9e4bb90c49fb571e0dcd9",
+      "cdc238ea0463c8a0c0f4428df02bcc74c6214221f3fbefc0de51017cfed2d77f",
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"typescript/strict-void-return\",\"oxlint-disable\"]": [
       "4a9dd59d07ff0b3e438c6b191d0ffe3ce62649f1a50194d426e00e49a1a19baa",
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02",
-      "8a3b809f834d6863eb2e3f7c41a1584e9833a6e9df5a06154009d37f0e6acb6e",
-      "08a7c67e148e5a21be483f918675c1db1acbdde25aebddf49670bcc416ade0e8",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e",
+      "07ceb5fcbf05b09b039241aebec417feff3daac031f9e4bb90c49fb571e0dcd9",
+      "cdc238ea0463c8a0c0f4428df02bcc74c6214221f3fbefc0de51017cfed2d77f",
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"typescript/no-misused-promises\",\"oxlint-disable-next-line\"]": [
       "7932ef8f6cec6e6f6a42abd6040750c2411010fd4cb95008c2af6d03603fcb3e"
@@ -35450,17 +35357,17 @@
       "b517dfb0d23a8db7ce5f127a84b17349439e45484ce64d9d7ebf917e9d2309af"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02",
-      "8a3b809f834d6863eb2e3f7c41a1584e9833a6e9df5a06154009d37f0e6acb6e",
-      "08a7c67e148e5a21be483f918675c1db1acbdde25aebddf49670bcc416ade0e8",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e",
+      "07ceb5fcbf05b09b039241aebec417feff3daac031f9e4bb90c49fb571e0dcd9",
+      "cdc238ea0463c8a0c0f4428df02bcc74c6214221f3fbefc0de51017cfed2d77f",
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "0250116e839b72663f23d0ea3d1ad7bf2298865110c4361bd1c4179763bafc02",
-      "9b5f6cd62ca9c38c14f9d3a431d38a7b79d5b7f50598cb8011f56160fc76b96a"
+      "59d50412f8c81c731e90e99ab230be9539ea0145f791db6179b6604f5162722e",
+      "25c4633a058939d8a8ae97ec3721e20a0f14268e1519b7af65c6df3ea63746f9"
     ],
     "[\"apps/chat/tests/eve-mcp.e2e.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "55a3d3c7574ec3cbd29913a45a6f9fa6d880958b7e4e7f9d05dc83dd5601c359"
+      "6aa98cf881c3c355819927fc518abf93593fd1d326f9c6db11d94cdc1541c1e2"
     ],
     "[\"apps/chat/tests/eve-message-delivery.fixture.tsx\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
       "7db741bbc5a1ddd6da952023a6cac0d3f54e2d875b35b1f3c2fe828ed3a3fa6a"
@@ -37451,61 +37358,61 @@
       "00f95d7d4faa32d184f1ba9b2099d07622e0ef3e08acf13100645efdac07f071"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"eslint/no-promise-executor-return\",\"oxlint-disable\"]": [
-      "d4365730f3d1499647f098a82fa1f11fc689cc9d29cbe28005dcc3afb5441b95"
+      "8031ab91b687a022185341051e6f5d7811642533612140037d877f2566c85217"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"eslint/no-shadow\",\"oxlint-disable\"]": [
-      "891d0a13fabd1ee5ebb54c9f3ce635e2ce81fcbebcf43e988c7429b285be066b"
+      "a3374c54bbd4dacbf14630b261b21eea0807aba7e19491993dfd0696472a8bb8"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"promise/avoid-new\",\"oxlint-disable\"]": [
-      "3b6ef42290f92da413b472fad95bcf54b4c49570f1c197f8e286235457763dbf"
+      "5686cc36640599247afd77efbe92582d5551ebd94ed5e57ba88f934795f3c4d6"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"eslint/func-style\",\"oxlint-disable\"]": [
-      "98964694c404769317987234bf8b613e9b08c0be773b22b2b9b96b38461f3cf9"
+      "c445a3c828f874a0dfdff0d48c20438b4b120bc9270372f823f832d0b37a2ad2"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "0182828ae7885b08ec71e96e4a9e3ebc44231393e9de906ebcabf0537c610686"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "2d783348d5b7fc5b15c2c8a747be2a3956aa479f8202da2f40d2ee1ba805bad9",
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "6b422677c57e04011c3dcc649fdc960ec8db7eecf0ccea365c4b7e59f6a77f32",
       "8e19ee8f8a476dfddd5e8a963b98e78e43befddb11224ba6471a6b45dbcce3ac",
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "6b422677c57e04011c3dcc649fdc960ec8db7eecf0ccea365c4b7e59f6a77f32"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "c24fb435624b7566836a74f5244866b809c7dfb6bedd70444d91b25801e3a8c3"
+      "536a3c9ea0e5f3a2f77a5afb9e2698c45d42eb4bf7dae9ddeb4673e47c8fc7e8"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "c24fb435624b7566836a74f5244866b809c7dfb6bedd70444d91b25801e3a8c3"
+      "536a3c9ea0e5f3a2f77a5afb9e2698c45d42eb4bf7dae9ddeb4673e47c8fc7e8"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "afe9a532aec945c3e185d6f3ddfa5da8c7a09bae587c4321e2db85388bd06631"
+      "d591a8e9979688403b4d6cbb89c1a0bff3b88ff14c0321f66792b458fd384f61"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"typescript/strict-void-return\",\"oxlint-disable\"]": [
-      "7d0c9a233c5ffa38fdc3c84bc51059e9a0f8ba5dd48b0d7bc578c47cdb921ce1"
+      "5208f0a3e77a08c78261ee9c852ecf72e43f34e75b66ef269321e4d5d92ff323"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "a20454512b5d06c469e12013e0d1ca12ca11c04d77e2273a8e6a4092ed2e34d2"
@@ -37520,7 +37427,7 @@
       "031e499981ce73281c08e4e7f02b211a6d538c507a9ddacba9c7958b7626a2eb"
     ],
     "[\"apps/chat/tests/fixtures/eve-oauth-mcp-server.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "94bb948780dfeb3beb1db51062a0d024485ac4d6ec92577fd6f32ee4dbdc812c"
+      "caf39effbfb5aa136631ddb61d5ae58e1882061aa572366997f45efb5b2741c1"
     ],
     "[\"apps/chat/tests/fixtures/eve-subagent-tool.ts\",\"import/no-default-export\",\"oxlint-disable\"]": [
       "385601a86aca816122e85224236412d560147029f42e2018dc3d03b11d8aaf8c"
@@ -38137,11 +38044,18 @@
     ],
     "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "7624f030bee3b354038e51ca92270bbb98a004f092034de0399e6fdf747d97c6",
-      "f062c97a3817d9263fd4cdf6003cb01823eadd89f1d45309fc40ee5d8ff260ee"
+      "f062c97a3817d9263fd4cdf6003cb01823eadd89f1d45309fc40ee5d8ff260ee",
+      "5c60bc8a82872b65e6aaa104f0eacc098bcb86786333d5bb4d626df2ac0eeb52"
     ],
     "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "7624f030bee3b354038e51ca92270bbb98a004f092034de0399e6fdf747d97c6",
       "f062c97a3817d9263fd4cdf6003cb01823eadd89f1d45309fc40ee5d8ff260ee"
+    ],
+    "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"eslint/require-await\",\"oxlint-disable-next-line\"]": [
+      "fb6effd5653507396b0a23658f668c79b2f7601e4bb8c4f7460d976ef4bb84cc"
+    ],
+    "[\"apps/chat/tests/visual/primitive-overlays.browser.tsx\",\"typescript/require-await\",\"oxlint-disable-next-line\"]": [
+      "fb6effd5653507396b0a23658f668c79b2f7601e4bb8c4f7460d976ef4bb84cc"
     ],
     "[\"apps/chat/tests/visual/share-dialog.browser.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "847000d8128030ae10e0fbd9b577066d3b725fc28f640d0884166dc9e1e1503f",
@@ -41915,14 +41829,14 @@
       "d91ded37f0272acc13643f9ed306f26cd20f923f177917c64b7d9cd32789cfae",
       "f64f601b06bf4026d7cf8c92e41c73464f20452aa8bdc9ccb3e8468997807acb",
       "8257487af8cdbd031589fa59b6f762498d08f3a66d543202bb8caf06fbd20650",
-      "a1252670c632eb6d44fcf345493d833adf81887a09c6fa651b8688b9380256e0",
+      "31a52fc26afffa25fde701c1279ee6aba83426081110a67d92632c581d480b35",
       "f35e5af7cb5cafff079ef1c662acad8575037da91dc37478aceaf2db198fca51",
       "6e0e667b3b523dec0e34029fe5a1f47aade8462c81b62f37a4266ca6188a095c",
       "9e27d49e99e646833dee875f16f6b965bb9260a0a6ff978ee6a53b685ed143ff",
       "6b5c1593eeb5a9a74fc8aa034628938c1f5e8e0ec3f317b74a7d0c3832df9237"
     ],
     "[\"apps/videos/src/story.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "50e1228ef4475a5d7629026b3515fab4b3056472a5c27e3dc335aa60bf24118e",
+      "1ec1ca6a3e06329a1d6854a3d8e9377e868de9edfa8f483173d5f10b8e6db204",
       "dc7a27a72071b55154437192a6654cd47996de9f53f44c59af60747e7ab9e0f9",
       "782cc0ba8ef571f1c84e3918ee856a2edb1603cd8227691cf47f0555f6579532",
       "4fbb44778c89796d47aa770715c1c46767418fb328868a5b8a72462072273073"
@@ -50682,7 +50596,7 @@
       "74838120e8e76f20d70be76d425e04d1d2291e2bcc92241fa462e068b198f2e5",
       "85ef92e0606636cf0d5db58352d63e5dbff80ac28db10f209f984f698eea68f1",
       "fcc32fc7d2f95e6a14f381242ff3f5b0888b9f25f6d0cffe74870e060303ca1b",
-      "b00e8d39aa3ea98f008fa6d1aebf8234e62e198b66d227365743cb974b37a217"
+      "8a4075074360e1a8714b7582ce764ee4a8ebec4fc9dd222db2af0a89d3cbeab9"
     ],
     "[\"scripts/cleanup-preview-database.mjs\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
       "2940fee7feb9d92a4c08f8f50e55051155feb86ccbcbdb7506156ad0bab62f9e",
@@ -50699,10 +50613,10 @@
       "d649ce4e4e2f48208ae5128af2ca62db2e6413ca817bc05f324715d0ff9e0a1b"
     ],
     "[\"scripts/cleanup-preview-database.mjs\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "17127738f296d870d7d66de9847cfc15ba314aa8e05ecbca5365d390a3f7b481"
+      "0f51bf358800272b800f46943eaf47bd5c20d3e1edf8009a281b02503c5afc96"
     ],
     "[\"scripts/cleanup-preview-database.mjs\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "17127738f296d870d7d66de9847cfc15ba314aa8e05ecbca5365d390a3f7b481"
+      "0f51bf358800272b800f46943eaf47bd5c20d3e1edf8009a281b02503c5afc96"
     ],
     "[\"scripts/cleanup-preview-database.test.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
       "dcaf4388dcd7ae709e07c280904f60663ebc82f821ad8dbe861713e9d0f69562"

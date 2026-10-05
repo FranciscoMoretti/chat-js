@@ -19,11 +19,13 @@ import { filterEveTools } from "../../../../lib/eve/turn-tools";
 const confirmNote = defineTool({
   approval: {
     request: always(),
-    response: ({ responder, session }) =>
+    response: ({ responder, session }) => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from session.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      responder.principalId === session.initiator?.principalId
-        ? { status: "allowed" }
-        : { reason: "Only the owner may respond", status: "rejected" },
+      if (responder.principalId === session.initiator?.principalId) {
+        return { status: "allowed" };
+      }
+      return { reason: "Only the owner may respond", status: "rejected" };
+    },
   },
   description:
     "Confirm a short note after explicit human approval. No external side effects.",

@@ -149,12 +149,11 @@ const runMigrate = async (): Promise<void> => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
+/* oxlint-disable no-console --
  * no-console (#514): void (async () => { try { await runMigrate(); } catch ( emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await runMigrate(); } catch ('s return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
-void (async () => {
+void (async (): Promise<void> => {
   try {
     await runMigrate();
   } catch (error) {
@@ -164,4 +163,4 @@ void (async () => {
   }
 })();
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, typescript/explicit-function-return-type */
+/* oxlint-enable no-console */

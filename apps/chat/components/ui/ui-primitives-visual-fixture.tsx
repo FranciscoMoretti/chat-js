@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 /* oxlint-enable sort-imports */
+import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -33,7 +34,11 @@ import {
 /* oxlint-enable sort-imports */
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth -- UiPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
-export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
+export const UiPrimitivesVisualFixture = ({
+  progressValue,
+}: {
+  readonly progressValue?: number;
+} = {}): React.JSX.Element => (
   <main
     className="space-y-8 px-8 pt-8 pb-40"
     data-testid="ui-primitives-fixture"
@@ -74,6 +79,45 @@ export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
         <ButtonGroupSeparator orientation="horizontal" />
         <Button>Bottom</Button>
       </ButtonGroup>
+    </section>
+
+    <section className="max-w-3xl space-y-3" data-testid="progress-states">
+      <h2>Progress states</h2>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <p>Missing value</p>
+          <Progress aria-label="Missing value" />
+        </div>
+        <div className="space-y-2">
+          <p>Null value</p>
+          {/* oxlint-disable-next-line unicorn/no-null -- Radix progress explicitly accepts null as the indeterminate value; cover that native input contract. */}
+          <Progress aria-label="Null value" value={null} />
+        </div>
+        <div className="space-y-2">
+          <p>NaN value</p>
+          <Progress aria-label="NaN value" value={Number.NaN} />
+        </div>
+        <div className="space-y-2">
+          <p>Zero</p>
+          <Progress aria-label="Zero" value={0} />
+        </div>
+        <div className="space-y-2">
+          <p>Complete</p>
+          <Progress aria-label="Complete" value={100} />
+        </div>
+        <div className="space-y-2">
+          <p>Negative</p>
+          <Progress aria-label="Negative" value={-10} />
+        </div>
+        <div className="space-y-2">
+          <p>Above full scale</p>
+          <Progress aria-label="Above full scale" value={150} />
+        </div>
+        <div className="space-y-2">
+          <p>Updating</p>
+          <Progress aria-label="Updating" value={progressValue} />
+        </div>
+      </div>
     </section>
 
     <section className="grid max-w-3xl grid-cols-[auto_6rem_auto_auto_auto_auto] items-center gap-3">

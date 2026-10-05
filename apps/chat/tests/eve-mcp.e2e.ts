@@ -277,7 +277,13 @@ test("composer connector controls persist and fence native tool execution", asyn
     await db.delete(mcpConnector).where(eq(mcpConnector.id, id));
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve()))
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      })
     );
   }
 });
@@ -416,7 +422,13 @@ test("native MCP executes and its saved result survives connector removal and re
   } finally {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     await new Promise<void>((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve()))
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      })
     );
   }
 });
@@ -520,7 +532,13 @@ test("stopping a pending MCP call closes its transport and permits another messa
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve()))
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      })
     );
   }
 });
@@ -592,7 +610,13 @@ test("the real MCP client aborts an in-flight HTTP tool request", async () => {
     await db.delete(mcpConnector).where(eq(mcpConnector.id, connectorId));
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve()))
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      })
     );
   }
 });

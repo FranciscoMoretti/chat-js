@@ -62,3 +62,51 @@ test("layout primitives preserve alert dialog and sheet portals", async () => {
   }
 });
 /* oxlint-enable eslint/max-statements, oxc/no-async-await, typescript/promise-function-async */
+
+const readProgressTransforms = (
+  container: Readonly<Pick<HTMLElement, "querySelectorAll">>
+): readonly string[] => {
+  const transforms: string[] = [];
+  for (const indicator of container.querySelectorAll<HTMLElement>(
+    '[data-testid="progress-states"] [data-slot="progress-indicator"]'
+  )) {
+    transforms.push(indicator.style.transform);
+  }
+  return transforms;
+};
+
+/* oxlint-disable oxc/no-async-await -- This browser scenario awaits React commits, state assertions and captures before cleanup. */
+test("progress states preserve numeric fallbacks and updates", async () => {
+  const fixture = await mount(<UiPrimitivesVisualFixture progressValue={25} />);
+  try {
+    expect(readProgressTransforms(fixture.container)).toEqual([
+      "translateX(-100%)",
+      "translateX(-100%)",
+      "translateX(-100%)",
+      "translateX(-100%)",
+      "translateX(0%)",
+      "translateX(-110%)",
+      "",
+      "translateX(-75%)",
+    ]);
+    await takeSnapshot("primitives-progress-initial");
+    // oxlint-disable-next-line eslint/require-await, typescript/require-await -- React act's async overload returns the completion promise for this synchronous render commit.
+    await act(async () => {
+      fixture.root.render(<UiPrimitivesVisualFixture progressValue={75} />);
+    });
+    expect(readProgressTransforms(fixture.container)).toEqual([
+      "translateX(-100%)",
+      "translateX(-100%)",
+      "translateX(-100%)",
+      "translateX(-100%)",
+      "translateX(0%)",
+      "translateX(-110%)",
+      "",
+      "translateX(-25%)",
+    ]);
+    await takeSnapshot("primitives-progress-updated");
+  } finally {
+    await unmount(fixture);
+  }
+});
+/* oxlint-enable oxc/no-async-await */

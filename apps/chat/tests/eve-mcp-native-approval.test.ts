@@ -183,10 +183,12 @@ test.each(["owner", "stranger"])(
     const tool = {
       approval: {
         request: () => "user-approval" as const,
-        response: ({ responder }: { responder: { principalId: string } }) =>
-          responder.principalId === "owner"
-            ? { status: "allowed" as const }
-            : { status: "rejected" as const, reason: "Owner only" },
+        response: ({ responder }: { responder: { principalId: string } }) => {
+          if (responder.principalId === "owner") {
+            return { status: "allowed" as const };
+          }
+          return { status: "rejected" as const, reason: "Owner only" };
+        },
       },
       description: "write",
       execute,

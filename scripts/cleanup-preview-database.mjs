@@ -400,9 +400,10 @@ export const cleanupPreviewDatabase = async ({
     repository,
     request,
   });
-  return outcome.kind === "deleted"
-    ? `Deleted preview database for PR #${number}.`
-    : outcome.result;
+  if (outcome.kind === "deleted") {
+    return `Deleted preview database for PR #${number}.`;
+  }
+  return outcome.result;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

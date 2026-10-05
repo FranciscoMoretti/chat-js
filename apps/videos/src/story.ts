@@ -86,9 +86,10 @@ const editTextAt = (timeSeconds: number, content: LaunchScript): string => {
   }
   const editPrefix = content.porto.prompt.slice(0, prefixLength);
   const editSuffix = content.porto.prompt.slice(prefixLength);
-  return timeSeconds < 42.6
-    ? content.prompt
-    : `${editPrefix}${textAt(editSuffix, (timeSeconds - 42.6) / 1.1)}`;
+  if (timeSeconds < 42.6) {
+    return content.prompt;
+  }
+  return `${editPrefix}${textAt(editSuffix, (timeSeconds - 42.6) / 1.1)}`;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

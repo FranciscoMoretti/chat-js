@@ -70,7 +70,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     id: registeredOwner,
     name: "Cleanup fixture",
   });
-  const excluded = [
+  const excluded: string[] = [
     crypto.randomUUID(),
     crypto.randomUUID(),
     crypto.randomUUID(),
@@ -101,9 +101,11 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     },
   ]);
   const expiredGuestClaims = await claimExpiredEveGuestFamilies();
-  expect(expiredGuestClaims.some((row) => row.ownerId === guest.ownerId)).toBe(
-    false
-  );
+  expect(
+    expiredGuestClaims.some(
+      (row: { readonly ownerId: string }) => row.ownerId === guest.ownerId
+    )
+  ).toBe(false);
   await db
     .update(eveGuest)
     .set({ expiresAt: new Date(0) })
@@ -117,11 +119,15 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     ]);
     for (const batch of batches) {
       expect(batch.length).toBeLessThanOrEqual(1);
-      expect(batch.some((row) => excluded.includes(row.id))).toBe(false);
+      expect(
+        batch.some((row: { readonly id: string }) => excluded.includes(row.id))
+      ).toBe(false);
       claimed.push(
         ...batch
-          .filter((row) => row.ownerId === guest.ownerId)
-          .map((row) => row.id)
+          .filter(
+            (row: { readonly ownerId: string }) => row.ownerId === guest.ownerId
+          )
+          .map((row: { readonly id: string }) => row.id)
       );
     }
   }
@@ -139,7 +145,9 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     .set({ guestCleanupAttemptedAt: new Date(0) })
     .where(eq(eveConversation.id, first.id));
   const expiredGuestClaimIds = await claimExpiredEveGuestFamilies();
-  expect(expiredGuestClaimIds.map((row) => row.id)).toContain(first.id);
+  expect(
+    expiredGuestClaimIds.map((row: { readonly id: string }) => row.id)
+  ).toContain(first.id);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

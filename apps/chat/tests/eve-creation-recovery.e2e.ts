@@ -99,12 +99,13 @@ test.each(["before-dispatch", "lost-response"])(
       (_owner: string, path: string, init: RequestInit) => {
         if (path.startsWith("/eve/chat/v1/operation/")) {
           const sessionId = receipts.get(path.split("/").at(-1) ?? "");
-          return sessionId
-            ? Response.json({ sessionId })
-            : Response.json(
-                { code: "eve_operation_not_found" },
-                { status: 404 }
-              );
+          if (sessionId) {
+            return Response.json({ sessionId });
+          }
+          return Response.json(
+            { code: "eve_operation_not_found" },
+            { status: 404 }
+          );
         }
         if (fail && failure === "before-dispatch") {
           throw new TypeError("connection refused");

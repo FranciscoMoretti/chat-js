@@ -7,16 +7,16 @@ import { eveConversation, eveGuest } from "./schema";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve claimExpiredEveGuestFamilies's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * jsdoc/require-returns (#535): claimExpiredEveGuestFamilies's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): claimExpiredEveGuestFamilies uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep claimExpiredEveGuestFamilies's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep claimExpiredEveGuestFamilies's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): claimExpiredEveGuestFamilies accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): claimExpiredEveGuestFamilies keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 /** Claim the next fair attempt; the timestamp is a retry cooldown, not an exclusive lease. */
-export const claimExpiredEveGuestFamilies = async () =>
+export const claimExpiredEveGuestFamilies = async (): Promise<
+  { id: string; ownerId: string }[]
+> =>
   await db.transaction(async (tx) => {
     const rows = await tx
       .select({ id: eveConversation.id, ownerId: eveConversation.ownerId })
@@ -57,4 +57,4 @@ export const claimExpiredEveGuestFamilies = async () =>
   });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
