@@ -545,7 +545,7 @@ describe("useEveFork", () => {
         pendingStorage.getItem(
           `chatjs.eve.pending:${ownerId}:fork:${conversationId}`
         )
-      ).toContain(operation?.operationId);
+      ).toContain(operation.operationId);
 
       delayed.resolve("11111111-1111-4111-8111-111111111115");
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.

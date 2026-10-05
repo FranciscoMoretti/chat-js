@@ -93,8 +93,7 @@ const contributionBinding = (
     (node: ReadonlyNative<ts.ImportDeclaration>): boolean =>
       ts.isStringLiteral(node.moduleSpecifier) &&
       node.moduleSpecifier.text === marker &&
-      // oxlint-disable-next-line typescript/no-deprecated -- The installer reads the existing TypeScript import-clause flag to preserve type-only imports across supported templates.
-      node.importClause?.isTypeOnly !== true
+      (!node.importClause || !ts.isTypeOnlyImportDeclaration(node.importClause))
   );
   const bindings = imported?.importClause?.namedBindings;
   const namedBindings =
@@ -103,11 +102,10 @@ const contributionBinding = (
     (item: ReadonlyNative<ts.ImportSpecifier>): boolean =>
       !item.isTypeOnly && (item.propertyName ?? item.name).text === symbol
   );
-  const binding =
-    bindings && ts.isNamespaceImport(bindings)
-      ? `${bindings.name.text}.${symbol}`
-      : (specifier?.name.text ?? symbol);
-  return { binding, bindings, specifier };
+  if (bindings && ts.isNamespaceImport(bindings)) {
+    return { binding: `${bindings.name.text}.${symbol}`, bindings, specifier };
+  }
+  return { binding: specifier?.name.text ?? symbol, bindings, specifier };
 };
 interface PlannedContribution {
   content: string;

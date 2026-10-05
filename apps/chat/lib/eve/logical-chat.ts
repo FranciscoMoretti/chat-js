@@ -239,11 +239,20 @@ class LogicalChat {
     return this.snapshot.aliases.get(aliasKey(conversationId, nativeId));
   }
 
-  public siblings(conversationId: string, nativeId: string) {
+  public siblings(
+    conversationId: string,
+    nativeId: string
+  ): { ids: readonly string[]; index: number } {
     const id = this.logicalId(conversationId, nativeId);
-    const node = id ? this.snapshot.nodes.get(id) : undefined;
-    const ids = node ? (this.snapshot.children.get(node.parentId) ?? []) : [];
-    return { ids, index: id ? ids.indexOf(id) : -1 };
+    if (!id) {
+      return { ids: [], index: -1 };
+    }
+    const node = this.snapshot.nodes.get(id);
+    if (!node) {
+      return { ids: [], index: -1 };
+    }
+    const ids = this.snapshot.children.get(node.parentId) ?? [];
+    return { ids, index: ids.indexOf(id) };
   }
 
   // oxlint-disable-next-line eslint/complexity -- Atomically publish topology, aliases and selection after ordered projection.
@@ -364,11 +373,10 @@ class LogicalChat {
 }
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): sourcePrefix keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): sourcePrefix uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): sourcePrefix uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep sourcePrefix's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): sourcePrefix accepts branch: LogicalBranch; aliases: ReadonlyMap<string, string>; sourceAgent?: NativeChatAgent; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): sourcePrefix intentionally keeps the existing falsy-value behavior of branch.parentConversationId; branch.forkMessageId; boundaryId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -377,7 +385,7 @@ const sourcePrefix = (
   source: readonly string[],
   aliases: ReadonlyMap<string, string>,
   sourceAgent?: NativeChatAgent
-) => {
+): { prefix: string[]; replaced: string | undefined } => {
   if (!branch.parentConversationId) {
     return { prefix: [], replaced: undefined };
   }
@@ -406,14 +414,13 @@ const sourcePrefix = (
   }
   return { prefix: source.slice(0, index), replaced: boundaryId };
 };
-/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): projectBranch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): projectBranch uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep projectBranch's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): projectBranch accepts branch: LogicalBranch; agent: NativeChatAgent; paths: ReadonlyMap<string, string[]>; nodes: Map<string, LogicalNode>; aliases: Map<string, string>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): projectBranch intentionally keeps the existing falsy-value behavior of replaced; branch.responseGroupId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): projectBranch preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -426,7 +433,7 @@ const projectBranch = (
   nodes: Map<string, LogicalNode>,
   aliases: Map<string, string>,
   sourceAgent?: NativeChatAgent
-) => {
+): { hasLocalMessage: boolean; path: string[] } => {
   const source = paths.get(branch.parentConversationId ?? "") ?? [];
   const { prefix, replaced } = sourcePrefix(
     branch,
@@ -487,14 +494,17 @@ const projectBranch = (
   const needsResponse =
     branch.forkKind === "regenerate" ||
     (Boolean(branch.responseGroupId) && branch.forkKind !== "edit");
-  const hasLocalMessage = needsResponse
-    ? messages
+  if (needsResponse) {
+    return {
+      hasLocalMessage: messages
         .slice(prefix.length)
-        .some((message) => message.role === "assistant")
-    : messages.length > prefix.length;
-  return { hasLocalMessage, path };
+        .some((message) => message.role === "assistant"),
+      path,
+    };
+  }
+  return { hasLocalMessage: messages.length > prefix.length, path };
 };
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): logicalChatBusy accepts snapshot: LogicalChatSnapshot; agent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const logicalChatBusy = (snapshot: LogicalChatSnapshot): boolean =>

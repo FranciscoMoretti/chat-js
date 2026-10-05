@@ -36,7 +36,10 @@ const sortJsonKeys = (value: unknown): unknown => {
             if (left === right) {
               return KEYS_EQUAL;
             }
-            return left < right ? KEY_BEFORE : KEY_AFTER;
+            if (left < right) {
+              return KEY_BEFORE;
+            }
+            return KEY_AFTER;
           }
         )
         .map(([key, nestedValue]: readonly [string, unknown]) => [

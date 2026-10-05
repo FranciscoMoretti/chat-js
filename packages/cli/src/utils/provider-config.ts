@@ -125,22 +125,27 @@ const activeProperty = (
         ts.isStringLiteralLike(property.name)) &&
       property.name.text === name
     ) {
-      selected = ts.isPropertyAssignment(property) ? property : undefined;
+      selected = undefined;
+      if (ts.isPropertyAssignment(property)) {
+        selected = property;
+      }
     }
   }
   return selected;
 };
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable eslint/max-statements -- File absence, provider-specific discriminator selection and literal AST validation determine one installed-provider lookup result. */
 const readProviderId = async (
   cwd: string,
   kind: "gateway" | "storage"
 ): Promise<string | undefined> => {
-  const file =
-    kind === "gateway"
-      ? "lib/ai/gateway-model-defaults.ts"
-      : "lib/storage-options.ts";
+  let file = "lib/storage-options.ts";
+  let name = "storageId";
+  if (kind === "gateway") {
+    file = "lib/ai/gateway-model-defaults.ts";
+    name = "gatewayType";
+  }
   const source = await readFile(path.join(cwd, file), "utf-8").catch(
     (error: unknown): string => {
       if (
@@ -159,7 +164,6 @@ const readProviderId = async (
     ts.ScriptTarget.Latest,
     true
   );
-  const name = kind === "gateway" ? "gatewayType" : "storageId";
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
     .flatMap(
@@ -184,8 +188,7 @@ const readProviderId = async (
 };
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- The gateway edit resolves one const/export chain against a shared declaration list and cycle/reference tracking before replacing only the verified discriminator span. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /**
  * Change the discriminator; preserve editable model/parameter selections.
@@ -227,8 +230,7 @@ const gatewayConfigEdit = async (
       return value;
     }
     if (seen.has(value.text)) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+      return undefined;
     }
     seen.add(value.text);
     // A binding used elsewhere may have its object mutated before configuration.
@@ -242,40 +244,50 @@ const gatewayConfigEdit = async (
     };
     visit(parsed);
     if (references !== SINGLE_BINDING_REFERENCE_COUNT) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+      return undefined;
     }
     const initializer = declarations.find(
       (declaration: ReadonlyNative<ts.VariableDeclaration>): boolean =>
         declaration.name.getText(parsed) === value.text
     )?.initializer;
-    return initializer === undefined ? undefined : resolve(initializer);
+    if (initializer === undefined) {
+      return undefined;
+    }
+    return resolve(initializer);
   };
-  const expression =
-    exported === undefined ? undefined : resolve(exported.expression);
-  const configArgument =
+  let expression: ts.Expression | undefined = undefined;
+  if (exported !== undefined) {
+    expression = resolve(exported.expression);
+  }
+  let configArgument: ts.Expression | undefined = undefined;
+  if (
     expression !== undefined &&
     ts.isCallExpression(expression) &&
     ts.isIdentifier(expression.expression) &&
     expression.expression.text === "defineConfig"
-      ? expression.arguments[CONFIG_ARGUMENT_INDEX]
-      : undefined;
-  const resolvedConfigArgument =
-    configArgument === undefined ? undefined : resolve(configArgument);
-  const config =
-    expression !== undefined && ts.isCallExpression(expression)
-      ? resolvedConfigArgument
-      : expression;
-  const aiProperty =
-    config !== undefined && ts.isObjectLiteralExpression(config)
-      ? activeProperty(config, "ai")
-      : undefined;
-  const ai =
-    aiProperty === undefined ? undefined : unwrap(aiProperty.initializer);
-  const gateway =
-    ai !== undefined && ts.isObjectLiteralExpression(ai)
-      ? activeProperty(ai, "gateway")
-      : undefined;
+  ) {
+    configArgument = expression.arguments[CONFIG_ARGUMENT_INDEX];
+  }
+  let resolvedConfigArgument: ts.Expression | undefined = undefined;
+  if (configArgument !== undefined) {
+    resolvedConfigArgument = resolve(configArgument);
+  }
+  let config = expression;
+  if (expression !== undefined && ts.isCallExpression(expression)) {
+    config = resolvedConfigArgument;
+  }
+  let aiProperty: ts.PropertyAssignment | undefined = undefined;
+  if (config !== undefined && ts.isObjectLiteralExpression(config)) {
+    aiProperty = activeProperty(config, "ai");
+  }
+  let ai: ts.Expression | undefined = undefined;
+  if (aiProperty !== undefined) {
+    ai = unwrap(aiProperty.initializer);
+  }
+  let gateway: ts.PropertyAssignment | undefined = undefined;
+  if (ai !== undefined && ts.isObjectLiteralExpression(ai)) {
+    gateway = activeProperty(ai, "gateway");
+  }
   if (gateway === undefined) {
     throw new Error(
       "chat.config.ts must have a literal ai.gateway without later spreads or computed keys that could override it to replace the gateway automatically. Integrate the new gateway configuration manually."
@@ -288,6 +300,5 @@ const gatewayConfigEdit = async (
   );
 };
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
 export { gatewayConfigEdit, readProviderId, readProviderLiteral };

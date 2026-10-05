@@ -1,9 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/app-models" dependency within this package instead of introducing an alias or barrel API.
- */
-import type { AppModelDefinition, AppModelId } from "../ai/app-models";
-import { getAppModelDefinition } from "../ai/app-models";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
+import { getAppModelDefinition } from "@/lib/ai/app-models";
+
+const CENTS_PER_DOLLAR = 100;
+const NO_TOKEN_USAGE = 0;
+const NO_COST_CENTS = 0;
+const NO_IMAGE_PRICE = 0;
 
 /** Minimal usage info needed for cost calculation */
 interface UsageInfo {
@@ -11,9 +12,6 @@ interface UsageInfo {
   outputTokens?: number;
 }
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): calculateLLMCost uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 /**
  * Calculate LLM cost in CENTS from AI SDK usage data and model pricing.
  * Pricing is per-token in dollars (e.g., "0.00000006" = $0.06 per million tokens).
@@ -28,11 +26,12 @@ const calculateLLMCost = (
     readonly output: string;
   }
 ): number => {
-  const inputCost = (usage.inputTokens ?? 0) * Number(pricing.input);
-  const outputCost = (usage.outputTokens ?? 0) * Number(pricing.output);
-  return (inputCost + outputCost) * 100;
+  const inputCost =
+    (usage.inputTokens ?? NO_TOKEN_USAGE) * Number(pricing.input);
+  const outputCost =
+    (usage.outputTokens ?? NO_TOKEN_USAGE) * Number(pricing.output);
+  return (inputCost + outputCost) * CENTS_PER_DOLLAR;
 };
-/* oxlint-enable no-magic-numbers */
 interface LLMCostEntry {
   modelId: AppModelId;
   source: string;
@@ -52,17 +51,27 @@ interface ImageCostEntry {
   usage: UsageInfo;
 }
 type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
-/* oxlint-disable import/no-relative-parent-imports, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/models" dependency within this package instead of introducing an alias or barrel API.
- * max-params (#511): CostAccumulator keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): CostAccumulator keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): CostAccumulator skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): CostAccumulator uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): CostAccumulator accepts usage: UsageInfo; entry; model; e; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): CostAccumulator preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): CostAccumulator intentionally keeps the existing falsy-value behavior of model?.pricing?.input; model?.pricing?.output; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): CostAccumulator preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+type CostEntryTag = Readonly<Pick<CostEntry, "type">>;
+
+const addImageCosts = (
+  initialCost: number,
+  entries: readonly { readonly modelId: string; readonly count: number }[],
+  models: readonly {
+    readonly id: string;
+    readonly pricing?: { readonly image?: string };
+  }[]
+): number => {
+  let total = initialCost;
+  for (const entry of entries) {
+    const price = Number(
+      models.find((model) => model.id === entry.modelId)?.pricing?.image
+    );
+    if (Number.isFinite(price) && price > NO_IMAGE_PRICE) {
+      total += price * entry.count * CENTS_PER_DOLLAR;
+    }
+  }
+  return total;
+};
 /**
  * Accumulates costs from multiple LLM and external API calls.
  * Pass through call chain, collect at request end.
@@ -77,6 +86,7 @@ class CostAccumulator {
    */
   public addLLMCost(
     modelId: AppModelId,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- getEntries exposes the same mutable usage object; accepting deep-readonly ownership would require changing that public aliasing contract.
     usage: UsageInfo,
     source: string
   ): void {
@@ -89,9 +99,11 @@ class CostAccumulator {
    * @param {UsageInfo} usage Original usage metadata retained in the breakdown.
    * @param {string} source Calling operation recorded in the cost breakdown.
    */
+  // oxlint-disable-next-line max-params -- The public tool cost interface supplies model, count, usage and source as four positional arguments.
   public addImageCost(
     modelId: string,
     count: number,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- getEntries exposes the same mutable usage object; accepting deep-readonly ownership would require changing that public aliasing contract.
     usage: UsageInfo,
     source: string
   ): void {
@@ -103,7 +115,7 @@ class CostAccumulator {
    * @param {number} cost Fixed charge in cents.
    */
   public addAPICost(apiName: string, cost: number): void {
-    if (cost > 0) {
+    if (cost > NO_COST_CENTS) {
       this.entries.push({ apiName, cost, type: "api" });
     }
   }
@@ -111,40 +123,43 @@ class CostAccumulator {
    * Resolve known catalog prices and total the recorded charges.
    * @returns {Promise<number>} Total cents rounded up after summation; unavailable LLM/image prices contribute no charge.
    */
+  // oxlint-disable-next-line max-statements -- Snapshot entries before awaiting catalogs, then price images and deduplicated LLMs in order; splitting this sequence must preserve concurrent recording and final-rounding behavior.
   public async getTotalCost(): Promise<number> {
-    let total = 0;
+    let total = NO_COST_CENTS;
     const llmEntries = this.entries.filter(
-      (entry): entry is LLMCostEntry => entry.type === "llm"
+      (entry: CostEntryTag): entry is LLMCostEntry => entry.type === "llm"
     );
     const apiEntries = this.entries.filter(
-      (entry): entry is APICostEntry => entry.type === "api"
+      (entry: CostEntryTag): entry is APICostEntry => entry.type === "api"
     );
     // Sum API costs directly
     for (const entry of apiEntries) {
       total += entry.cost;
     }
-    const imageEntries = this.entries.filter((entry) => entry.type === "image");
+    const imageEntries = this.entries.filter(
+      (entry: CostEntryTag): entry is ImageCostEntry => entry.type === "image"
+    );
+    // oxlint-disable-next-line no-magic-numbers -- The explicit length check uses zero to distinguish an empty image batch.
     if (imageEntries.length > 0) {
-      const { fetchModels } = await import("../ai/models");
+      const { fetchModels } = await import("@/lib/ai/models");
       // Match LLM pricing: skip unavailable catalog prices and finalize known costs.
       const models = await fetchModels().catch(() => []);
-      for (const entry of imageEntries) {
-        const price = Number(
-          models.find((model) => model.id === entry.modelId)?.pricing?.image
-        );
-        if (Number.isFinite(price) && price > 0) {
-          total += price * entry.count * 100;
-        }
-      }
+      total = addImageCosts(total, imageEntries, models);
     }
+    // oxlint-disable-next-line no-magic-numbers -- An empty LLM batch needs no model lookups.
     if (llmEntries.length === 0) {
       return Math.ceil(total);
     }
     // Batch model definition lookups (dedupe by modelId)
     const uniqueModelIds = [
-      ...new Set(llmEntries.map((entry) => entry.modelId)),
+      ...new Set(
+        llmEntries.map(
+          (entry: { readonly modelId: AppModelId }) => entry.modelId
+        )
+      ),
     ];
     const modelDefinitions = await Promise.all(
+      // oxlint-disable-next-line typescript/promise-function-async, unicorn/no-null -- Preserve each catalog promise's timing; failed lookups use the existing null sentinel so only known models contribute charges.
       uniqueModelIds.map((id) => getAppModelDefinition(id).catch(() => null))
     );
     const modelById = new Map<AppModelId, AppModelDefinition | null>(
@@ -153,14 +168,13 @@ class CostAccumulator {
     // Sum LLM costs (unrounded) then ceil at the end
     for (const entry of llmEntries) {
       const model = modelById.get(entry.modelId);
-      if (!(model?.pricing?.input && model?.pricing?.output)) {
-        // Skip unknown models
-        continue;
+      // oxlint-disable-next-line typescript/strict-boolean-expressions -- Nonempty pricing strings narrow optional catalog rates while preserving one guard read per rate and the existing getter order.
+      if (model?.pricing?.input && model.pricing?.output) {
+        total += calculateLLMCost(entry.usage, {
+          input: model.pricing.input,
+          output: model.pricing.output,
+        });
       }
-      total += calculateLLMCost(entry.usage, {
-        input: model.pricing.input,
-        output: model.pricing.output,
-      });
     }
     return Math.ceil(total);
   }
@@ -176,9 +190,9 @@ class CostAccumulator {
    * @returns {boolean} Whether at least one LLM, image or positive API charge was recorded.
    */
   public hasEntries(): boolean {
+    // oxlint-disable-next-line no-magic-numbers -- Zero entries is the public empty-accumulator state.
     return this.entries.length > 0;
   }
 }
-/* oxlint-enable import/no-relative-parent-imports, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 export { CostAccumulator };
 export type { UsageInfo };

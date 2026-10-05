@@ -152,8 +152,8 @@ it.each([
     expect(failure.message).toBe(
       `Maintainer build failed during ${phase} (53000).`
     );
-    expect(failure?.cause).toBeUndefined();
-    expect(failure?.stack).not.toContain("postgres://");
+    expect(failure.cause).toBeUndefined();
+    expect(failure.stack).not.toContain("postgres://");
     expect(test.events.includes("close")).toBe(closes);
     expect(test.events.includes("build")).toBe(step === "build");
   }

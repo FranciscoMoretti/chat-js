@@ -60,7 +60,7 @@
     "lib/storage-options.ts": "aa77cd63c7a5cf53e241764905eebac2bedf598625524cc1aa6a2a23a10950ce",
     "lib/storage-provider.ts": "760adc0ff40d46832cd08e0b9533ae656c1f4b236228fe51551b055e5c6d1224",
     "tools/chatjs/_shared/code-execution/code-execution-chart.tsx": "c7821dab09556cab750ca164a33802049da4595c7875249cd5b9d20a81834e0d",
-    "tools/chatjs/_shared/code-execution/interactive-chart-impl.tsx": "2e16aa8d442ee6aa38914c4bae1124a3c55a813243ebdc0002a6ae6be8ed1ce2",
+    "tools/chatjs/_shared/code-execution/interactive-chart-impl.tsx": "b465afec2e2b13828810eb07437d9a95e3f8b1b50432548a7714eba9ac7cb4e5",
     "tools/chatjs/_shared/code-execution/interactive-charts.tsx": "399063245201789571c1bdc8a6c3f4954ee06f3c4f03a9b742ae3f26b3ccf5da",
     "tools/chatjs/_shared/code-execution/javascript.ts": "4fb514cb01979e9526ddaf919ae297919837309773d027304fc72710e514a7d2",
     "tools/chatjs/_shared/code-execution/python.ts": "672704d9372a8f3534143ccae40821221ffd7cfbf8130a8911a9d23b307bd8f4",

@@ -53,13 +53,13 @@ interface EnvChecklistInput {
 const requirementToEntries = (
   requirement: EnvRequirementLike
 ): EnvVarEntry[] => {
-  const oneOfGroup =
-    requirement.options.length > singleAlternative
-      ? requirement.options
-          .map((group) => group.map(String).join("+"))
-          .join("|")
-      : // oxlint-disable-next-line eslint/no-undefined -- Preserve the own oneOfGroup property as undefined for a single credential alternative.
-        undefined;
+  // oxlint-disable-next-line eslint/no-undefined -- Preserve the own oneOfGroup property as undefined for a single credential alternative.
+  let oneOfGroup: string | undefined = undefined;
+  if (requirement.options.length > singleAlternative) {
+    oneOfGroup = requirement.options
+      .map((group) => group.map(String).join("+"))
+      .join("|");
+  }
 
   return requirement.options.map((group) => {
     let description = group
@@ -68,10 +68,13 @@ const requirementToEntries = (
 
     if (description === "") {
       const fallbackDescription = requirement.description;
-      description =
-        typeof fallbackDescription === "string" && fallbackDescription !== ""
-          ? fallbackDescription
-          : "Required environment variable";
+      description = "Required environment variable";
+      if (
+        typeof fallbackDescription === "string" &&
+        fallbackDescription !== ""
+      ) {
+        description = fallbackDescription;
+      }
     }
     return {
       description,

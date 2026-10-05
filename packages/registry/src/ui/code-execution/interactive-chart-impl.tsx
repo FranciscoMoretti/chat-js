@@ -217,7 +217,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
       }
 
       const series = Object.entries(data).map(([group, elements], index) => ({
-        data: elements?.map((e) => [e.label, e.value]),
+        data: elements.map((e) => [e.label, e.value]),
         emphasis: {
           itemStyle: {
             shadowBlur: 10,

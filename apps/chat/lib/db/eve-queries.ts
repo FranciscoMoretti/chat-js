@@ -285,17 +285,18 @@ const getEveConversation = async (
       )
     )
     .limit(1);
-  return row
-    ? {
-        ...row.conversation,
-        chatId: row.chat.id,
-        id: row.conversation.id,
-        isPinned: row.chat.isPinned,
-        title: row.chat.title,
-        titleStatus: row.chat.titleStatus,
-        updatedAt: row.chat.updatedAt,
-      }
-    : undefined;
+  if (!row) {
+    return undefined;
+  }
+  return {
+    ...row.conversation,
+    chatId: row.chat.id,
+    id: row.conversation.id,
+    isPinned: row.chat.isPinned,
+    title: row.chat.title,
+    titleStatus: row.chat.titleStatus,
+    updatedAt: row.chat.updatedAt,
+  };
 };
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
@@ -353,7 +354,10 @@ const getEveChatPageConversation = async (
       eveConversation.id
     )
     .limit(1);
-  return member ? await getEveConversation(ownerId, member.id) : undefined;
+  if (member) {
+    return await getEveConversation(ownerId, member.id);
+  }
+  return undefined;
 };
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
@@ -432,18 +436,19 @@ const assertCreationAvailable = (
   }
 };
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * no-undefined (#519): boundConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): boundConversation accepts row: typeof eveConversation.$inferSelect | undefined; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): boundConversation intentionally keeps the existing falsy-value behavior of row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable no-undefined, typescript/strict-boolean-expressions --
+ * no-undefined (#519): boundConversation returns the existing optional-result sentinel for unbound rows or missing/empty session IDs.
+ * typescript/strict-boolean-expressions (#610): A bound row needs a nonempty session ID; preserve the existing single condition read before constructing its result.
  */
 const boundConversation = (
-  row: typeof eveConversation.$inferSelect | undefined
-): BoundConversation | undefined =>
-  row?.state === "bound" && row.sessionId
-    ? { id: row.id, sessionId: row.sessionId }
-    : undefined;
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+  row: Readonly<Pick<ConversationRow, "id" | "state" | "sessionId">> | undefined
+): BoundConversation | undefined => {
+  if (row?.state === "bound" && row.sessionId) {
+    return { id: row.id, sessionId: row.sessionId };
+  }
+  return undefined;
+};
+/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
 const getEveCreation = async (
   ownerId: string,
@@ -1104,9 +1109,8 @@ const listEveOwnerBindings = async (
       )
     );
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-undefined (#519): updateEveConversationMetadata uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): updateEveConversationMetadata accepts updates: { title?: string; isPinned?: boolean; visibility?: "private" | "public"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): updateEveConversationMetadata intentionally keeps the existing falsy-value behavior of updates.title; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- no-undefined (#519): Omit titleStatus in the Drizzle update unless a nonempty title is supplied; visibility updates retain their separate conversation-row path.
+typescript/strict-boolean-expressions (#610): Empty title text leaves titleStatus unchanged; keep the original title getter read before the update payload is built.
  */
 const updateEveConversationMetadata = async (
   ownerId: string,
@@ -1131,7 +1135,10 @@ const updateEveConversationMetadata = async (
       .returning({ id: eveConversation.id });
     return conversation;
   }
-  const titleStatus = updates.title ? "manual" : undefined;
+  let titleStatus: "manual" | undefined = undefined;
+  if (updates.title) {
+    titleStatus = "manual";
+  }
   const [row] = await db
     .update(eveChat)
     .set({
@@ -1285,7 +1292,10 @@ const getPublicEveConversation = async (
       )
     )
     .limit(1);
-  return row ? { ...row.conversation, title: row.chat.title } : undefined;
+  if (row) {
+    return { ...row.conversation, title: row.chat.title };
+  }
+  return undefined;
 };
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 

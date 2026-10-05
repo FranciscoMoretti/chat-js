@@ -6,7 +6,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { gatewayModelDefaults } from "../ai/gateway-model-defaults";
 /* oxlint-enable import/no-relative-parent-imports */
 
-const { getAppModelDefinition } = vi.hoisted(() => ({
+const { fetchModels, getAppModelDefinition } = vi.hoisted(() => ({
+  fetchModels:
+    vi.fn<() => Promise<{ id: string; pricing: { image: string } }[]>>(),
   getAppModelDefinition:
     vi.fn<
       (
@@ -16,8 +18,10 @@ const { getAppModelDefinition } = vi.hoisted(() => ({
 }));
 
 vi.mock("../ai/app-models", () => ({ getAppModelDefinition }));
+vi.mock("@/lib/ai/models", () => ({ fetchModels }));
 
 beforeEach(() => {
+  fetchModels.mockReset().mockResolvedValue([]);
   getAppModelDefinition.mockReset().mockResolvedValue({
     pricing: { input: "0.00001", output: "0.00003" },
   });
@@ -151,6 +155,34 @@ describe("CostAccumulator", () => {
       expect(getAppModelDefinition).toHaveBeenCalledExactlyOnceWith(
         gatewayModelDefaults.workflows.chat
       );
+    });
+  });
+  describe("image cost tracking", () => {
+    it("preserves recorded addition order before final cent rounding", async () => {
+      fetchModels.mockResolvedValue([
+        { id: "first-image", pricing: { image: "0.0085" } },
+        { id: "second-image", pricing: { image: "0.0011" } },
+      ]);
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("base", 0.04);
+      accumulator.addImageCost("first-image", 1, {}, "first");
+      accumulator.addImageCost("second-image", 1, {}, "second");
+      // Keep sequential floating-point additions: regrouping image costs
+      // before adding the API subtotal would round this boundary to one cent.
+      expect(await accumulator.getTotalCost()).toBe(2);
+      expect(fetchModels).toHaveBeenCalledOnce();
+    });
+    it("retains known charges when the image catalog lookup fails", async () => {
+      fetchModels.mockRejectedValue(new Error("Catalog unavailable"));
+      const accumulator = new CostAccumulator();
+      accumulator.addAPICost("base", 5);
+      accumulator.addImageCost("unknown-image", 1, {}, "image");
+      accumulator.addLLMCost(
+        gatewayModelDefaults.workflows.chat,
+        { inputTokens: 1000 },
+        "chat"
+      );
+      expect(await accumulator.getTotalCost()).toBe(6);
     });
   });
   describe("getEntries", () => {

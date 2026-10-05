@@ -80,13 +80,15 @@ const getRepoRoot = (): string =>
   pathModule.resolve(getCliPackageRoot(), "../..");
 
 /* oxlint-disable node/no-sync -- Package-root and optional-template lookup expose synchronous path results to scaffold helpers; changing these contracts requires propagating async through both lookup callers. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const findTemplateDir = (name: string): string | null => {
   const cliRoot = getCliPackageRoot();
   const candidate = pathModule.join(cliRoot, "templates", name);
-  return existsSync(candidate) ? candidate : null;
+  if (existsSync(candidate)) {
+    return candidate;
+  }
+  // oxlint-disable-next-line unicorn/no-null -- The existing template lookup result distinguishes a missing packaged directory with null.
+  return null;
 };
-/* oxlint-enable unicorn/no-null */
 /* oxlint-enable node/no-sync */
 
 const shouldCopyChatAppFilePath = (
@@ -133,10 +135,10 @@ const writePnpmWorkspaceConfig = async (
     "allowBuilds:",
     ...PNPM_BUILD_SCRIPT_ALLOWLIST.map((name) => `  ${name}: true`),
   ];
-  const supplyChainLines =
-    typeof options?.blockExoticSubdeps === "boolean"
-      ? [`blockExoticSubdeps: ${options.blockExoticSubdeps}`]
-      : [];
+  let supplyChainLines: string[] = [];
+  if (typeof options?.blockExoticSubdeps === "boolean") {
+    supplyChainLines = [`blockExoticSubdeps: ${options.blockExoticSubdeps}`];
+  }
 
   await writeFile(
     pathModule.join(destination, "pnpm-workspace.yaml"),

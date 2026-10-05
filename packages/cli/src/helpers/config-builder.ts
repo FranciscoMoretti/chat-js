@@ -33,6 +33,13 @@ const defaultsFor = (
   return defaults;
 };
 
+const configPropertyPath = (prefix: string, key: string): string => {
+  if (prefix === "") {
+    return key;
+  }
+  return `${prefix}.${key}`;
+};
+
 const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
   const result = new Map<string, string>();
   const visit = (node: unknown, prefix: string): void => {
@@ -49,7 +56,7 @@ const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
 
     if (node instanceof z.ZodObject) {
       for (const [key, property] of Object.entries(node.shape)) {
-        visit(property, prefix === "" ? key : `${prefix}.${key}`);
+        visit(property, configPropertyPath(prefix, key));
       }
     }
     if (node instanceof z.ZodDiscriminatedUnion) {
@@ -66,8 +73,12 @@ const descriptions = extractDescriptions(configDescriptionSchema);
 
 const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u;
 
-const formatKey = (key: string): string =>
-  VALID_KEY_REGEX.test(key) ? key : JSON.stringify(key);
+const formatKey = (key: string): string => {
+  if (VALID_KEY_REGEX.test(key)) {
+    return key;
+  }
+  return JSON.stringify(key);
+};
 
 const compareEntryKeys = (
   [left]: readonly [string, unknown],
@@ -130,7 +141,6 @@ const formatValue = (value: unknown, indent: number): string => {
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const generateConfig = (
   obj: object,
   indent: number,
@@ -141,16 +151,19 @@ const generateConfig = (
   return Object.entries(obj)
     .toSorted(compareEntryKeys)
     .map(([key, value]: readonly [string, unknown]): string => {
-      const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+      const path = configPropertyPath(pathPrefix, key);
       const desc = descriptions.get(path);
-      const comment =
-        typeof desc === "string" && desc !== "" ? `${spaces}// ${desc}\n` : "";
+      let comment = "";
+      if (typeof desc === "string" && desc !== "") {
+        comment = `${spaces}// ${desc}\n`;
+      }
 
       if (
         typeof value === "object" &&
         value !== null &&
         !Array.isArray(value)
       ) {
+        // oxlint-disable-next-line eslint/no-magic-numbers -- Each nested configuration object advances indentation by exactly one level.
         const nested = generateConfig(value, indent + 1, path);
         return `${comment}${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
       }
@@ -159,7 +172,6 @@ const generateConfig = (
     })
     .join("\n");
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 const toConfigInput = (
   input: ReadonlyInput<{

@@ -260,12 +260,13 @@ const normalizeStandaloneLintConfig = async (
   const lintPath = path.join(destination, "oxlint.config.ts");
   const lint = await readFile(lintPath, "utf-8");
   // The copied app config becomes the project root, where Oxlint permits typeAware.
-  const standaloneLint = lint.includes("options: { typeAware: true }")
-    ? lint
-    : lint.replace(
-        "  overrides: [",
-        "  options: { typeAware: true },\n  overrides: ["
-      );
+  let standaloneLint = lint;
+  if (!lint.includes("options: { typeAware: true }")) {
+    standaloneLint = lint.replace(
+      "  overrides: [",
+      "  options: { typeAware: true },\n  overrides: ["
+    );
+  }
   await writeFile(
     lintPath,
     standaloneLint.replace(

@@ -212,7 +212,7 @@ const FormMessage = ({
   ...props
 }: ReactComponentProps<"p">): ReactJSX.Element | null => {
   const { error, formMessageId } = useFormField();
-  const body = error ? (error?.message ?? "") : props.children;
+  const body = error ? (error.message ?? "") : props.children;
 
   if (!body) {
     return null;
