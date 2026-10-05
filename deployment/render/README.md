@@ -47,7 +47,7 @@ If the Supabase role or connection cannot meet Workflow requirements, use a sepa
 
 ## Scheduled cleanup and provider dependency
 
-The cron service calls the existing `/api/cron/cleanup` at 02:00 UTC with the shared bearer secret. `scripts/hosted-cleanup.ts` rejects redirects, non-HTTPS origins, HTTP errors and bodies without `success: true`. It prints no response payload or credentials and exits nonzero when cleanup is partial, unsupported or failed. Inspect protected application logs and rerun after fixing the cause. A timeout is uncertain, so rely on the route's idempotent claim/retry behavior rather than declaring deletion complete.
+The cron service calls the existing `/api/cron/cleanup` at 02:00 UTC with the shared bearer secret. `scripts/hosted-cleanup.ts` rejects redirects, non-HTTPS origins, HTTP errors and bodies without `success: true`. It repeats successful guest batches until a batch deletes zero families, with one 120-second deadline and a 100-request limit; reaching either bound requires retry. It prints no response payload or credentials and exits nonzero when cleanup is partial, unsupported or failed. Inspect protected application logs and rerun after fixing the cause. A timeout is uncertain, so rely on the route's idempotent claim/retry behavior rather than declaring deletion complete.
 
 The current remote lifecycle gate will make this cron fail truthfully. #652 / merged PR #656 owns the native provider compatibility/fence contract; #651 / merged PR #658 wires callers to it. The initial base `881acebba08f3479a7129eeae768bdf3a183992d` includes #656 and earlier reporting fixes but not #658. Even the reviewed #658 contract intentionally limits support to loopback. This work does not duplicate or loosen that guard.
 

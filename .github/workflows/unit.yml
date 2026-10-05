@@ -59,8 +59,9 @@ jobs:
           key: ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-
-      - if: steps.affected.outputs.run == 'true'
-        run: bun install --frozen-lockfile
+      - run: bun install --frozen-lockfile
+      - name: Test hosted cleanup scheduler
+        run: bun run test:hosting
       - if: steps.affected.outputs.run == 'true'
         env:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
