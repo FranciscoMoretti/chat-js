@@ -5,10 +5,8 @@ import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installationSelectionSchema } from "../../../registry/installation";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type { InstallationSelection } from "../../../registry/installation";
+import { installationSelectionSchema } from "../../../registry/installation";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
@@ -27,7 +25,12 @@ import type {
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { itemAddress, readItem } from "../registry/shadcn";
 /* oxlint-enable import/no-relative-parent-imports */
-import { validateProviderRequirements } from "./installation-requirements";
+import {
+  registryMetadataKind,
+  validateRequestedKind,
+  validateCodeExecutionRequirements,
+  validateProviderRequirements,
+} from "./installation-requirements";
 import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
@@ -41,24 +44,6 @@ type ReadonlyNative<Value> = Value extends (
     : Value;
 
 const EMPTY_DEPENDENCY_COUNT = 0;
-
-const registryMetadataKind = (metadata: unknown): unknown =>
-  typeof metadata === "object" &&
-  metadata !== null &&
-  "kind" in metadata &&
-  metadata.kind;
-
-const validateRequestedKind = (
-  source: string,
-  kind: string | undefined,
-  actual: unknown
-): void => {
-  if (typeof kind === "string" && kind !== "" && kind !== actual) {
-    throw new Error(
-      `Selected ${kind} item has incompatible ChatJS metadata: ${source}`
-    );
-  }
-};
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -133,6 +118,7 @@ export const planInstallation = async (
       }
       case "tool": {
         const definition = toolDefinitionSchema.parse(metadata);
+        validateCodeExecutionRequirements(definition);
         const previous = expected.get(definition.id);
         if (
           previous &&

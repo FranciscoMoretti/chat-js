@@ -1,6 +1,8 @@
-import type { Sandbox } from "@vercel/sandbox";
-
-import type { CodeExecutionContext, CodeExecutionResult } from "./types";
+import type {
+  ExecutionSandbox,
+  CodeExecutionContext,
+  CodeExecutionResult,
+} from "./types";
 
 const WHITESPACE_REGEX = /\s+/u;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
@@ -15,7 +17,7 @@ const packageName = (spec: string): string =>
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const installBasePackages = async (
-  sandbox: Sandbox,
+  sandbox: ExecutionSandbox,
   basePackages: readonly string[],
   requestId: string,
   log: CodeExecutionContext["log"]
@@ -28,7 +30,10 @@ const installBasePackages = async (
     cmd: "pip",
   });
   if (installStep.exitCode !== 0) {
-    const installStderr = await installStep.stderr();
+    const errorOutput = await installStep.stderr();
+    const standardOutput =
+      errorOutput.trim() === "" ? await installStep.stdout() : "";
+    const installStderr = errorOutput.trim() || standardOutput.trim();
     log.error(
       { requestId, stderr: installStderr },
       "base package installation failed"
@@ -57,7 +62,7 @@ const installBasePackages = async (
 const processExtraPackages = async (
   code: string,
   basePackages: readonly string[],
-  sandbox: Sandbox,
+  sandbox: ExecutionSandbox,
   requestId: string,
   log: CodeExecutionContext["log"]
 ): Promise<{
@@ -101,7 +106,10 @@ const processExtraPackages = async (
     cmd: "pip",
   });
   if (dynamicInstall.exitCode !== 0) {
-    const stderr = await dynamicInstall.stderr();
+    const errorOutput = await dynamicInstall.stderr();
+    const standardOutput =
+      errorOutput.trim() === "" ? await dynamicInstall.stdout() : "";
+    const stderr = errorOutput.trim() || standardOutput.trim();
     log.error(
       { exitCode: dynamicInstall.exitCode, requestId },
       "dynamic package installation failed"
@@ -257,7 +265,7 @@ const parseExecutionOutput = async (execResult: {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const checkForChart = async (
-  sandbox: Sandbox,
+  sandbox: ExecutionSandbox,
   chartPath: string,
   requestId: string,
   log: CodeExecutionContext["log"]

@@ -629,6 +629,11 @@ const promptCodeExecutionTool = async (
         label: "Vercel Sandbox",
         value: "vercel-code-execution",
       },
+      {
+        hint: "Python and JavaScript; Daytona API key and organization required",
+        label: "Daytona",
+        value: "daytona-code-execution",
+      },
       { label: "External registry item", value: "external" },
     ],
   });

@@ -1,4 +1,12 @@
 {
+  "codeExecutionCapabilities": {
+    "cancellation": "terminate",
+    "cleanup": "durable-allocation",
+    "files": "ephemeral",
+    "languages": ["python", "javascript"],
+    "timeout": "bounded",
+    "usage": "single-receipt"
+  },
   "codeExecutorExport": "executeCode",
   "envRequirements": [
     {

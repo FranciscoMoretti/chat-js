@@ -1,5 +1,3 @@
-import type { Sandbox } from "@vercel/sandbox";
-
 import type { createModuleLogger } from "@/lib/logger";
 
 const supportedExecutionLanguages = ["python", "javascript"] as const;
@@ -11,14 +9,24 @@ interface CodeExecutionResult {
   message: string;
 }
 
+interface ExecutionSandbox {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Vercel SDK command overloads require mutable argument arrays; preserve structural compatibility for both providers.
+  runCommand: (command: Readonly<{ cmd: string; args: string[] }>) => Promise<{
+    exitCode: number;
+    stdout: () => Promise<string>;
+    stderr: () => Promise<string>;
+  }>;
+}
+
 interface CodeExecutionContext {
   code: string;
   log: ReturnType<typeof createModuleLogger>;
   requestId: string;
-  sandbox: Sandbox;
+  sandbox: ExecutionSandbox;
 }
 export { supportedExecutionLanguages };
 export type {
+  ExecutionSandbox,
   CodeExecutionContext,
   CodeExecutionResult,
   SupportedExecutionLanguage,

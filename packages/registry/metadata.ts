@@ -38,8 +38,24 @@ const toolRegistrationSchema = z.object({
   workflow: z.literal(true).optional(),
 });
 
+const executionCapabilities = z.object({
+  cancellation: z.literal("terminate"),
+  cleanup: z.literal("durable-allocation"),
+  files: z.literal("ephemeral"),
+  languages: z
+    .array(z.enum(["python", "javascript"]))
+    .refine(
+      (languages: readonly string[]) =>
+        languages.includes("python") && languages.includes("javascript"),
+      "Code execution requires Python and JavaScript"
+    ),
+  timeout: z.literal("bounded"),
+  usage: z.literal("single-receipt"),
+});
+
 const toolDefinitionBase = z.object({
   availabilityExport: identifier.optional(),
+  codeExecutionCapabilities: executionCapabilities.optional(),
   codeExecutorExport: identifier.optional(),
   documentKind: z.enum(["text", "code", "sheet"]).optional(),
   documentRunExport: identifier.optional(),
@@ -76,6 +92,12 @@ const toolDefinitionSchema = toolDefinitionBase
       message:
         "Code executor capabilities apply only to a codeExecution provider",
     }
+  )
+  .refine(
+    (item: Readonly<{ codeExecutionCapabilities?: unknown; slot?: string }>) =>
+      typeof item.codeExecutionCapabilities !== "object" ||
+      item.slot === "codeExecution",
+    { message: "Code execution capabilities require a codeExecution provider" }
   )
   .refine(
     (

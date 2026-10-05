@@ -7,6 +7,9 @@ import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 import { createModuleLogger } from "@/lib/logger";
+import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
 
 import {
   cleanupSandbox,
@@ -16,9 +19,6 @@ import {
   getSandboxRuntime,
   resolveSandboxAuth,
 } from "./execution-sandbox";
-import { executeJavaScriptInSandbox } from "./javascript";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import { executePythonInSandbox } from "./python";
 /* oxlint-enable import/max-dependencies */
 import { codeExecutionResult, codeExecutionInput } from "./schemas";
 

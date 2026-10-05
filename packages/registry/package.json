@@ -55,6 +55,7 @@
     "@codemirror/state": "^6.5.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.35.3",
+    "@daytona/sdk": "0.220.0",
     "@hookform/resolvers": "^5.2.1",
     "@lexical/code": "^0.32.1",
     "@lexical/link": "^0.32.1",

@@ -4,8 +4,7 @@ import { APIError, Sandbox } from "@vercel/sandbox";
 import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
 import { env } from "@/lib/env";
 import { createModuleLogger } from "@/lib/logger";
-
-import type { SupportedExecutionLanguage } from "./types";
+import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
 
 interface SandboxAuth {
   projectId: string;

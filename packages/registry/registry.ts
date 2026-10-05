@@ -1,6 +1,12 @@
+/* oxlint-disable import/max-dependencies -- The registry explicitly composes source-owned provider and feature catalogs at its public assembly boundary. */
 import { registrySchema } from "shadcn/schema";
 import type { RegistryItem } from "shadcn/schema";
 
+import {
+  codeExecutionRuntimeItem,
+  codeExecutionItem,
+  daytonaCodeExecutionItem,
+} from "./code-execution";
 import { toolDefinitionSchema } from "./metadata";
 import registryPackage from "./package.json";
 import { attachmentUploadsItem } from "./src/features/attachment-uploads";
@@ -183,52 +189,6 @@ const searchToolItems = (
   type: "registry:item" as const,
 }));
 
-const codeExecutionItem = {
-  dependencies: [
-    "ai",
-    "zod",
-    `@vercel/oidc@${registryPackage.devDependencies["@vercel/oidc"]}`,
-    `@vercel/sandbox@${registryPackage.devDependencies["@vercel/sandbox"]}`,
-  ],
-  description: "Execute Python and JavaScript with Vercel Sandbox",
-  files: [
-    "tool.ts",
-    "execution-sandbox.ts",
-    "python.ts",
-    "javascript.ts",
-    "types.ts",
-    "renderer.tsx",
-    "schemas.ts",
-  ].map((file) => ({
-    path: `src/tools/vercel-code-execution/${file}`,
-    target: `~/tools/chatjs/vercel-code-execution/${file}`,
-    type: "registry:file" as const,
-  })),
-  meta: {
-    chatjs: toolDefinitionSchema.parse({
-      codeExecutorExport: "executeCode",
-      contractVersion: 1,
-      envRequirements: [
-        {
-          description: "Vercel OIDC or team/project/token credentials",
-          options: [
-            ["VERCEL_OIDC_TOKEN"],
-            ["VERCEL_TEAM_ID", "VERCEL_PROJECT_ID", "VERCEL_TOKEN"],
-          ],
-          runtimeAuth: "vercel-oidc",
-        },
-      ],
-      id: "vercel-code-execution",
-      kind: "tool",
-      slot: "codeExecution",
-      tools: [{ rendererExport: "CodeExecution", toolExport: "codeExecution" }],
-    }),
-  },
-  name: "vercel-code-execution",
-  registryDependencies: ["@chatjs/code-execution-ui"],
-  type: "registry:item",
-} satisfies RegistryItem;
-
 const registry = registrySchema.parse({
   homepage: "https://chatjs.dev",
   items: [
@@ -244,7 +204,10 @@ const registry = registrySchema.parse({
     codeExecutionUiItem,
     ...searchToolItems,
     codeExecutionItem,
+    codeExecutionRuntimeItem,
+    daytonaCodeExecutionItem,
   ],
   name: "chatjs",
 });
-export { codeExecutionItem, registry, searchToolItems, toolItems };
+export { codeExecutionItem } from "./code-execution";
+export { registry, searchToolItems, toolItems };

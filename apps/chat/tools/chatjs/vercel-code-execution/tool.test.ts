@@ -24,8 +24,10 @@ vi.mock("./execution-sandbox", () => ({
   resolveSandboxAuth: mocks.resolveAuth,
 }));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-vi.mock("./python", () => ({ executePythonInSandbox: mocks.python }));
-vi.mock("./javascript", () => ({
+vi.mock("@/tools/chatjs/_shared/code-execution/python", () => ({
+  executePythonInSandbox: mocks.python,
+}));
+vi.mock("@/tools/chatjs/_shared/code-execution/javascript", () => ({
   executeJavaScriptInSandbox: mocks.javascript,
 }));
 /* oxlint-disable typescript/explicit-function-return-type --

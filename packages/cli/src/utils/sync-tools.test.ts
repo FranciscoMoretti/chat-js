@@ -441,6 +441,15 @@ test("saved-code registration requires an explicitly compatible executor", async
   const definition = JSON.parse(await readFile(descriptor, "utf-8"));
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   definition.codeExecutorExport = "executeCode";
+  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Amend the parsed external descriptor fixture before validating it through sync.
+  definition.codeExecutionCapabilities = {
+    cancellation: "terminate",
+    cleanup: "durable-allocation",
+    files: "ephemeral",
+    languages: ["python", "javascript"],
+    timeout: "bounded",
+    usage: "single-receipt",
+  };
   await writeFile(descriptor, JSON.stringify(definition));
   await writeFile(
     join(root, "tools/chatjs/external-runner/tool.ts"),
