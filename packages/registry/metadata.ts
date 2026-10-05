@@ -95,7 +95,7 @@ const toolDefinitionSchema = toolDefinitionBase
   )
   .refine(
     (item: Readonly<{ codeExecutionCapabilities?: unknown; slot?: string }>) =>
-      typeof item.codeExecutionCapabilities === "undefined" ||
+      typeof item.codeExecutionCapabilities !== "object" ||
       item.slot === "codeExecution",
     { message: "Code execution capabilities require a codeExecution provider" }
   )
