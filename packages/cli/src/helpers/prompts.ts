@@ -204,11 +204,14 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (gateway === "__external__") {
     const source = await text({
       message: "Gateway registry item URL or local JSON path:",
-      validate: (value) =>
+      validate: (value): "Enter a registry item address" | undefined => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-        (value?.trim() ?? "") === ""
-          ? "Enter a registry item address"
-          : globalThis.undefined,
+        if ((value?.trim() ?? "") === "") {
+          return "Enter a registry item address";
+        }
+        // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+        return undefined;
+      },
     });
     handleCancel(source);
     return source.trim();
@@ -279,11 +282,14 @@ const promptStorage = async (
     if (source === "__external__") {
       const address = await text({
         message: "Storage registry item address:",
-        validate: (value) =>
+        validate: (value): "Enter an item address" | undefined => {
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-          (value?.trim() ?? "") === ""
-            ? "Enter an item address"
-            : globalThis.undefined,
+          if ((value?.trim() ?? "") === "") {
+            return "Enter an item address";
+          }
+          // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+          return undefined;
+        },
       });
       handleCancel(address);
       source = address.trim();
@@ -625,9 +631,14 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "Search tool registry address:",
-    validate: (value) =>
+    validate: (value): "Enter an address" | undefined => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
@@ -662,9 +673,14 @@ const promptCodeExecutionTool = async (
   }
   const address = await text({
     message: "Code-execution tool registry address:",
-    validate: (value) =>
+    validate: (value): "Enter an address" | undefined => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
@@ -692,9 +708,14 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "URL retrieval tool registry address:",
-    validate: (value) =>
+    validate: (value): "Enter an address" | undefined => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
@@ -724,9 +745,14 @@ const promptImageGenerationTool = async (
   }
   const address = await text({
     message: "image generation tool registry address:",
-    validate: (value) =>
+    validate: (value): "Enter an address" | undefined => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
@@ -756,9 +782,14 @@ const promptVideoGenerationTool = async (
   }
   const address = await text({
     message: "video generation tool registry address:",
-    validate: (value) =>
+    validate: (value): "Enter an address" | undefined => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();

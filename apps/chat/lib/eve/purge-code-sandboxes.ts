@@ -16,15 +16,19 @@ import { eveCodeSandboxName } from "./code-sandbox-name";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyCodeSandboxes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): purgeEveFamilyCodeSandboxes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): purgeEveFamilyCodeSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): purgeEveFamilyCodeSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): purgeEveFamilyCodeSandboxes uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): purgeEveFamilyCodeSandboxes uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): purgeEveFamilyCodeSandboxes accepts [name]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-/** Native work must already be retired. Never infer a failed create from provider absence. */
+/**
+ * Delete confirmed family sandboxes and release ownership only after confirmed absence.
+ * Native work must already be retired. Uncertain creation intents prevent completion.
+ * @param {string} ownerId - Authorized owner used to read and retire durable sandbox allocations.
+ * @param {string} rootId - Conversation-family root whose sandbox allocations are being purged.
+ */
 export const purgeEveFamilyCodeSandboxes = async (
   ownerId: string,
   rootId: string
@@ -83,4 +87,4 @@ export const purgeEveFamilyCodeSandboxes = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

@@ -36,16 +36,20 @@ import { resolveWorkflowWorld } from "./world-config";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveSubagentUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): reconcileEveSubagentUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-continue (#515): reconcileEveSubagentUsage skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
 no-magic-numbers (#517): reconcileEveSubagentUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): reconcileEveSubagentUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/strict-boolean-expressions (#610): reconcileEveSubagentUsage intentionally keeps the existing falsy-value behavior of nested; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Settle native descendants before admission or erasing a root session. */
+/**
+ * Settle native descendants before admission or erasing a root session.
+ * @param {string} ownerId - Owner whose child sessions and billing cursors are reconciled.
+ * @param {string} sessionId - Root session binding required for every discovered descendant.
+ * @param {boolean} replayUnpriced - Replay from the beginning instead of each saved child cursor.
+ * @returns {Promise<boolean>} Whether every visited child has resolved usage; unresolved children keep their cursors.
+ */
 const reconcileEveSubagentUsage = async (
   ownerId: string,
   sessionId: string,
@@ -108,15 +112,19 @@ const reconcileEveSubagentUsage = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
 init-declarations (#507): reconcileEveUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): reconcileEveUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 max-lines-per-function (#510): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): reconcileEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): reconcileEveUsage uses 0, 15_000, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-/** Repair missed hooks from the unread suffix of Eve's authoritative stream. */
+/**
+ * Repair missed usage/activity hooks from Eve's authoritative stream.
+ * @param {string} ownerId - Owner whose root and descendant usage will be ingested.
+ * @param {string} sessionId - Root session whose cursor advances only after reconciliation succeeds.
+ * @param {boolean} replayUnpriced - Replay the root and descendants from the beginning to retry pricing.
+ */
 const reconcileEveUsage = async (
   ownerId: string,
   sessionId: string,
@@ -171,7 +179,7 @@ const reconcileEveUsage = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileAllOwnerUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * init-declarations (#507): reconcileAllOwnerUsage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.

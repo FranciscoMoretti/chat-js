@@ -34,16 +34,19 @@ const enabled = (): boolean => {
 };
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (startLocalEveGuestCleanup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return --
  * init-declarations (#507): startLocalEveGuestCleanup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-returns (#535): startLocalEveGuestCleanup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): startLocalEveGuestCleanup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): startLocalEveGuestCleanup emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-undefined (#519): startLocalEveGuestCleanup uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/strict-void-return (#611): startLocalEveGuestCleanup's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
-/** Development only. Never load database clients for a remote or disabled runtime. */
+/**
+ * Start or refresh the development-only guest cleanup scheduler.
+ * Never load database clients for a remote or disabled runtime.
+ * @returns {(() => void) | undefined} The scheduler stop callback, or undefined when local cleanup is disabled.
+ */
 export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   if (!enabled()) {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading stop from schedulerGlobal.chatjsEveGuestCleanup; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -119,4 +122,4 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   return scheduler.stop;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable init-declarations, jsdoc/require-returns, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, no-undefined, typescript/strict-void-return */

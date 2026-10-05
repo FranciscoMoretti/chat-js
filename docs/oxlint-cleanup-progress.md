@@ -184,6 +184,10 @@ Run-inventory documentation and exact schema-derived return annotations fix eigh
 
 Final validation passes full lint, all seven type-check tasks, all 203 CLI tests (1,102 assertions), 38 focused app tests and template parity. Native typed/unused output exactly matches the six established cross-environment warnings. Suppression entries total **19,865**, down 33. Independent review of the five contained CLI/registry refactors found no actionable regressions. Final rule adoption and original-scope review remain unfinished; no PR has been opened.
 
+The twenty-third batch converts seven Clack validator ternaries to guards with exact literal-error-or-undefined return annotations. Existing callback and public export types remain mutually assignable; 63 actual callback cases, 14 thrown-value identity checks and seven wrong-branch controls verify behavior. Seven precise undefined exceptions replace previous globalThis.undefined workarounds and document Clack acceptance semantics.
+
+Five backend modules gain concrete parameter/return documentation, removing seven documentation entries with byte-identical emitted JavaScript. Full lint, all seven type tasks, all 203 CLI tests (1,102 assertions), 39 focused app tests and regenerated template parity pass. Typed/unused native diagnostics match the six established warnings. Total suppression entries remain **19,865**: seven documentation removals offset seven explicit validator absence contracts. Final conditional adoption and original-scope review remain open.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records

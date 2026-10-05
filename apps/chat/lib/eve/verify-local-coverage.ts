@@ -49,14 +49,19 @@ const receiptSchema = z.strictObject({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyLocalEveFamilyCoverage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): verifyLocalEveFamilyCoverage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): verifyLocalEveFamilyCoverage uses 15_000, 16_384 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): verifyLocalEveFamilyCoverage accepts inventories: { sessionId: string; runIds: string[]; }[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-/** Called only after family authorization, retirement and native/local fences. */
+/**
+ * Verify native and local sandbox identity evidence for every retired family inventory.
+ * Call only after family authorization, retirement and native/local fences.
+ * @param {string} ownerId - Authorized family owner sent with native deletion-evidence requests.
+ * @param {string} appRoot - Worker application root, canonicalized before comparing identity receipts.
+ * @param {{ sessionId: string; runIds: string[]; }[]} inventories - Session roots and run IDs whose sandbox coverage must be proven.
+ */
 export const verifyLocalEveFamilyCoverage = async (
   ownerId: string,
   appRoot: string,
@@ -155,4 +160,4 @@ export const verifyLocalEveFamilyCoverage = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
