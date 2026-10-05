@@ -1,116 +1,67 @@
 ---
 title: "Introduction"
-description: "The prod-ready AI chat app"
+description: "The foundation for your AI apps"
 seo:
-  title: "Build Production-Ready AI Chat Applications"
-  description: "Complete documentation for ChatJS, the production-ready AI chat app. Learn authentication, streaming, tool calling, multi-model support, and deployment best practices."
+  title: "ChatJS: The foundation for your AI apps"
+  description: "Start with a working AI chat app. Add the tools and integrations you need, choose your providers, and customize the code to make it yours."
 ---
+
+Start with a working AI chat app. Add the tools and integrations you need, choose your providers, and customize the code to make it yours.
 
 <img
   class="block dark:hidden"
   src="/docs/images/hero-light.png"
-  alt="Hero Light"
+  alt="ChatJS logo on a light background"
 />
 <img
   class="hidden dark:block"
   src="/docs/images/hero-dark.png"
-  alt="Hero Dark"
+  alt="ChatJS logo on a dark background"
 />
 
-Stop rebuilding the same AI chat infrastructure. ChatJS gives you a production-ready foundation with authentication, hundreds of models via pluggable gateways, streaming, and tools so you can focus on what makes your app unique.
+The [live demo](https://demo.chatjs.dev) shows an app built with ChatJS, including optional tools and integrations.
 
-<CardGroup cols={2}>
-  <Card title="Live Demo" icon="sparkles" href="https://demo.chatjs.dev">
-    See what you're building.
-  </Card>
-  <Card title="Get Started" icon="rocket" href="/quickstart">
-    Create, configure, deploy. Go from zero to production in minutes.
-  </Card>
-  <Card title="Web Platform" icon="globe" href="/platforms/web">
-    Run ChatJS in the browser by default and deploy it like any Next.js app.
-  </Card>
-  <Card title="Desktop Platform" icon="monitor" href="/platforms/desktop">
-    Package the same app as a native macOS, Windows, or Linux desktop app.
-  </Card>
-</CardGroup>
+## Start building
 
-## Why ChatJS?
+You get a working foundation with authentication, saved conversations, and streaming responses.
 
-Every AI chat app needs the same boring stuff: auth, message persistence, streaming, file uploads, model switching. You've probably built it before. Maybe twice.
-
-ChatJS packages all of that into a single, well-architected codebase. Scaffold it, customize it, ship it.
+Built with Next.js, React, TypeScript, and AI SDK. Powered by [EVE](./core/architecture) for durable conversations, tool execution, and stream recovery.
 
 ```bash
 npx @chat-js/cli@latest create my-app
 ```
 
-## What's Included
+Choose your [AI gateway](./gateways/overview), authentication providers, and optional capabilities during setup. The CLI assembles your app and lists the credentials your selections require.
 
-<CardGroup cols={3}>
-  <Card title="Multi-Gateway" icon="bot" href="/core/multi-model">
-    Hundreds of models via Vercel AI Gateway or OpenRouter
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="./quickstart">
+    Create your app, configure your providers, and send your first message.
   </Card>
-  <Card title="Auth" icon="lock" href="/core/authentication">
-    GitHub, Google, anonymous. Ready to go.
-  </Card>
-  <Card title="Attachments" icon="paperclip" href="/features/attachments">
-    Images, PDFs, docs. Drag and drop.
-  </Card>
-  <Card title="Native EVE Runtime" icon="bolt" href="/core/architecture">
-    Durable conversations, approvals, and stream recovery
-  </Card>
-  <Card title="Branching" icon="git-branch" href="/features/branching">
-    Fork conversations, explore alternatives
-  </Card>
-  <Card
-    title="Syntax Highlighting"
-    icon="code"
-    href="/core/syntax-highlighting"
-  >
-    Beautiful code formatting with themes
-  </Card>
-  <Card title="Sharing" icon="share" href="/features/sharing">
-    Share conversations with public links
-  </Card>
-  <Card title="Web Search" icon="globe" href="/features/web-search">
-    Real-time web search integration
-  </Card>
-  <Card title="Image Generation" icon="image" href="/features/image-generation">
-    AI-powered image creation built-in
-  </Card>
-  <Card title="MCP" icon="plug" href="/features/mcp">
-    Model Context Protocol support
-  </Card>
-  <Card title="Projects" icon="folder" href="/features/projects">
-    Organize chats into workspaces
-  </Card>
-  <Card title="Code Execution" icon="terminal" href="/features/code-execution">
-    Run Python and JavaScript in sandbox
+  <Card title="Architecture" icon="code" href="./core/architecture">
+    Learn how the application and conversation runtime fit together.
   </Card>
 </CardGroup>
 
-## Stack
+## Add capabilities
 
-- [Next.js](https://nextjs.org) - App Router, React Server Components
-- [TypeScript](https://www.typescriptlang.org) - Full type safety
-- [AI SDK](https://ai-sdk.dev/) - The AI Toolkit for TypeScript
-- [AI Gateway](https://vercel.com/ai-gateway) / [OpenRouter](https://openrouter.ai) - Pluggable multi-gateway for AI models
-- [Better Auth](https://www.better-auth.com) - Authentication & authorization
-- [Drizzle ORM](https://orm.drizzle.team) - Type-safe database queries
-- [PostgreSQL](https://www.postgresql.org) - Primary database
-- [Files SDK](https://files-sdk.dev) - Provider-agnostic file storage
-- [Shadcn/UI](https://ui.shadcn.com) - Beautiful, accessible components
-- [Tailwind CSS](https://tailwindcss.com) - Styling
-- [tRPC](https://trpc.io) - End-to-end type-safe APIs
-- [Zod](https://zod.dev) - Schema validation
-- [Motion](https://motion.dev) - Animations
-- [t3-env](https://env.t3.gg) - Environment variables
-- [Pino](https://getpino.io) - Structured Logging
-- [Langfuse](https://langfuse.com) - LLM observability & analytics
-- [Vercel Analytics](https://vercel.com/analytics) - Web analytics
-- [Oxlint and Oxfmt](https://oxc.rs) - Code linting and formatting
-- [Ultracite](https://ultracite.ai) - Oxlint and Oxfmt presets for humans and AI
-- [Streamdown](https://streamdown.ai/) - Markdown for AI streaming
-- [AI Elements](https://ai-sdk.dev/elements/overview) - AI-native Components
-- [AI SDK Tools](https://ai-sdk-tools.dev/) - Developer tools for AI SDK
-- [`@chat-js/thread`](./threads) - Branching conversations with a `useChat`-compatible interface
+Install tools and integrations as you need them. Uploads, web search, image generation, and MCP connectors are optional. Each installation adds the source and dependencies that capability requires.
+
+<CardGroup cols={3}>
+  <Card title="Tools" icon="sparkles" href="./tools/overview">
+    Add web search, image generation, code execution, or your own tools.
+  </Card>
+  <Card title="Uploads" icon="paperclip" href="./features/attachments">
+    Let users attach files to conversations.
+  </Card>
+  <Card title="MCP connectors" icon="plug" href="./features/mcp">
+    Connect your app to external tools and services.
+  </Card>
+</CardGroup>
+
+## Make it yours
+
+Installed tools and integrations live as editable source in your project. Change their behavior, customize the interface, or build your own tools for your product.
+
+Use [configuration](./core/configuration) to adjust branding, models, and app settings. Follow the [tool authoring guide](./tools/authoring) to add your own capabilities, or explore the [registry](./registry) to learn how source is distributed and installed.
+
+Deploy your app [on the web](./platforms/web), or add [desktop support](./platforms/desktop) to package it for macOS, Windows, and Linux.
